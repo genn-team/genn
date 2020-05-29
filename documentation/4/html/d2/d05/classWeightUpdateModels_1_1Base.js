@@ -1,5 +1,6 @@
 var classWeightUpdateModels_1_1Base =
 [
+    [ "canBeMerged", "d2/d05/classWeightUpdateModels_1_1Base.html#a039c4568a9235e31b269d161f3727873", null ],
     [ "getEventCode", "d2/d05/classWeightUpdateModels_1_1Base.html#a8c4939c38b32ae603cd237f0e8d76b8a", null ],
     [ "getEventThresholdConditionCode", "d2/d05/classWeightUpdateModels_1_1Base.html#aab9670aee177fafc6908f177b322b791", null ],
     [ "getLearnPostCode", "d2/d05/classWeightUpdateModels_1_1Base.html#a0bb39d77c70d759d9036352d316ee044", null ],

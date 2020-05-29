@@ -98,13 +98,14 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d2/dc3/classNeuronModels_1_1TraubMiles.html#a9c141ce37428493b4fdfb0f55e63d303",
-"d5/d1f/classNeuronModels_1_1SpikeSource.html#aff7b59b7164c8f39fc9c44d326023c99",
-"d6/d97/classModels_1_1Base.html",
-"da/d3e/synapseGroup_8cc.html",
-"db/db9/classSpineMLSimulator_1_1NetworkClient.html#af183b028ead473c3b08e4961edd6e66baf31bbdd1b3e85bccd652680e16935819",
-"dd/d9b/classSpikeRecorder.html",
-"functions_v.html"
+"d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#a788a8a4c49c71a1ca8ecea63043c1c7b",
+"d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html",
+"d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a8903b59bf2af200967126ea4daae8592",
+"d7/dac/generateInit_8cc.html",
+"da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#a86200bb64b2dc0bae13735fa8a311cc5",
+"dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#ad07f41074e0cdfbe35e08d0ef5bd46bc",
+"dd/d5d/structSnippet_1_1Base_1_1EGP.html#af7b55cdff8fe940576cccd5b26d56a6e",
+"df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html#a09f23b5d2ea479285f07e519a18ce9fb"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

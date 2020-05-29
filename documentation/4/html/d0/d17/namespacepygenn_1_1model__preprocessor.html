@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -113,9 +113,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a029f48e8c8c01ba4a24e11ff4d578d11"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a029f48e8c8c01ba4a24e11ff4d578d11">prepare_model</a> (model, param_space, var_space, pre_var_space=None, post_var_space=None, model_family=None)</td></tr>
-<tr class="memdesc:a029f48e8c8c01ba4a24e11ff4d578d11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a model by checking its validity and extracting information about variables and parameters.  <a href="#a029f48e8c8c01ba4a24e11ff4d578d11">More...</a><br /></td></tr>
-<tr class="separator:a029f48e8c8c01ba4a24e11ff4d578d11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a698da20e6a95c9e0624aaba819b4a71b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a698da20e6a95c9e0624aaba819b4a71b">prepare_model</a> (model, group, param_space, var_space, pre_var_space=None, post_var_space=None, model_family=None)</td></tr>
+<tr class="memdesc:a698da20e6a95c9e0624aaba819b4a71b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a model by checking its validity and extracting information about variables and parameters.  <a href="#a698da20e6a95c9e0624aaba819b4a71b">More...</a><br /></td></tr>
+<tr class="separator:a698da20e6a95c9e0624aaba819b4a71b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef83afc60aa51f177264dcb416a6035c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aef83afc60aa51f177264dcb416a6035c">prepare_snippet</a> (snippet, param_space, snippet_family)</td></tr>
 <tr class="memdesc:aef83afc60aa51f177264dcb416a6035c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a snippet by checking its validity and extracting information about parameters.  <a href="#aef83afc60aa51f177264dcb416a6035c">More...</a><br /></td></tr>
 <tr class="separator:aef83afc60aa51f177264dcb416a6035c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -337,8 +337,8 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<a id="a029f48e8c8c01ba4a24e11ff4d578d11"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a029f48e8c8c01ba4a24e11ff4d578d11">&#9670;&nbsp;</a></span>prepare_model()</h2>
+<a id="a698da20e6a95c9e0624aaba819b4a71b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a698da20e6a95c9e0624aaba819b4a71b">&#9670;&nbsp;</a></span>prepare_model()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -348,6 +348,12 @@ Variables</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>group</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -391,6 +397,7 @@ Variables</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.NeuronModels.Custom</code> or <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> or <code>pygenn.genn_wrapper.CurrentSourceModels.Custom</code> </td></tr>
+    <tr><td class="paramname">group</td><td>group model will belong to </td></tr>
     <tr><td class="paramname">param_space</td><td>dict with model parameters </td></tr>
     <tr><td class="paramname">var_space</td><td>dict with model variables </td></tr>
     <tr><td class="paramname">pre_var_space</td><td>optional dict with (weight update) model presynaptic variables </td></tr>
@@ -522,7 +529,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html">model_preprocessor</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:34 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:47 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

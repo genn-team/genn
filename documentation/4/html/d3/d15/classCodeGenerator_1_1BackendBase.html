@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -117,51 +117,67 @@ Inheritance diagram for CodeGenerator::BackendBase:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
+<tr class="memitem:a1ec13cdda649e931462efe7c26d2e549"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a></td></tr>
+<tr class="separator:a1ec13cdda649e931462efe7c26d2e549"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab56bdf519ec4ae2c476bf1915c9a3cc5"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a></td></tr>
 <tr class="separator:ab56bdf519ec4ae2c476bf1915c9a3cc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adba20f0748ab61dd226b26bf116b04c2"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:adba20f0748ab61dd226b26bf116b04c2"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a> = std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const T &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;)&gt;</td></tr>
 <tr class="separator:adba20f0748ab61dd226b26bf116b04c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a55e34429d3f08186318fe811d5bc6531"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a></td></tr>
-<tr class="memdesc:a55e34429d3f08186318fe811d5bc6531"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standard callback type which provides a <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write platform-independent code for the specified <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> to.  <a href="#a55e34429d3f08186318fe811d5bc6531">More...</a><br /></td></tr>
-<tr class="separator:a55e34429d3f08186318fe811d5bc6531"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a85aea4cafbf9a7e9ceb6b0d12e9d4997"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a></td></tr>
-<tr class="memdesc:a85aea4cafbf9a7e9ceb6b0d12e9d4997"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standard callback type which provides a <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write platform-independent code for the specified <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> to.  <a href="#a85aea4cafbf9a7e9ceb6b0d12e9d4997">More...</a><br /></td></tr>
-<tr class="separator:a85aea4cafbf9a7e9ceb6b0d12e9d4997"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a938379883f4cdf06998dd969a3d74a73"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a938379883f4cdf06998dd969a3d74a73">NeuronGroupSimHandler</a></td></tr>
-<tr class="memdesc:a938379883f4cdf06998dd969a3d74a73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback function type for generation neuron group simulation code.  <a href="#a938379883f4cdf06998dd969a3d74a73">More...</a><br /></td></tr>
-<tr class="separator:a938379883f4cdf06998dd969a3d74a73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05d118c7cea7d61d3c635ad54775d378"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html">NeuronInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a></td></tr>
+<tr class="memdesc:a05d118c7cea7d61d3c635ad54775d378"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standard callback type which provides a <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write platform-independent code for the specified <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> to.  <a href="#a05d118c7cea7d61d3c635ad54775d378">More...</a><br /></td></tr>
+<tr class="separator:a05d118c7cea7d61d3c635ad54775d378"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad36b2a42177de4433fc1ffd197924daf"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a></td></tr>
+<tr class="separator:ad36b2a42177de4433fc1ffd197924daf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a436d06ecbed5e432e2bf06e3dd49b094"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a></td></tr>
+<tr class="separator:a436d06ecbed5e432e2bf06e3dd49b094"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3e3b87c30f6e8f8d0657c029c9b3a0fe"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html">PostsynapticUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a></td></tr>
+<tr class="separator:a3e3b87c30f6e8f8d0657c029c9b3a0fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69d2a8b89bcd3d01fdc0bbe2f83b09f7"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html">SynapseDynamicsGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a></td></tr>
+<tr class="separator:a69d2a8b89bcd3d01fdc0bbe2f83b09f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44a8647e5cc32e8883064e93def1ff6d"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html">SynapseConnectivityInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a></td></tr>
+<tr class="separator:a44a8647e5cc32e8883064e93def1ff6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8fc7e4cb214d545f08c9a95cd08affe"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html">SynapseDenseInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a></td></tr>
+<tr class="separator:ab8fc7e4cb214d545f08c9a95cd08affe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2460e47c9ef8eb5cf9c2fe4ab8b28b31"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html">SynapseSparseInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a></td></tr>
+<tr class="separator:a2460e47c9ef8eb5cf9c2fe4ab8b28b31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a18d700c2c55565aba980600fbb872f63"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const <a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a> &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a></td></tr>
+<tr class="memdesc:a18d700c2c55565aba980600fbb872f63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback function type for generation neuron group simulation code.  <a href="#a18d700c2c55565aba980600fbb872f63">More...</a><br /></td></tr>
+<tr class="separator:a18d700c2c55565aba980600fbb872f63"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1bbf7fdd326351be7af8f575d116a8ab"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, size_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">MemorySpaces</a></td></tr>
+<tr class="memdesc:a1bbf7fdd326351be7af8f575d116a8ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vector of prefixes required to allocate in memory space and size of memory space.  <a href="#a1bbf7fdd326351be7af8f575d116a8ab">More...</a><br /></td></tr>
+<tr class="separator:a1bbf7fdd326351be7af8f575d116a8ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a0ce0c48ea6c5041fb3a6d3d3cd1d24bc"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a0ce0c48ea6c5041fb3a6d3d3cd1d24bc">BackendBase</a> (int localHostID, const std::string &amp;scalarType)</td></tr>
-<tr class="separator:a0ce0c48ea6c5041fb3a6d3d3cd1d24bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bec557b31b65921f4c1608e96248874"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3bec557b31b65921f4c1608e96248874">BackendBase</a> (const std::string &amp;scalarType)</td></tr>
+<tr class="separator:a3bec557b31b65921f4c1608e96248874"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4ba1c12b2a97dfb6cb4f3cd5df10f50"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac4ba1c12b2a97dfb6cb4f3cd5df10f50">~BackendBase</a> ()</td></tr>
 <tr class="separator:ac4ba1c12b2a97dfb6cb4f3cd5df10f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8915df91011c1c65ff2a9b52bc8e05c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ae8915df91011c1c65ff2a9b52bc8e05c">genNeuronUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a938379883f4cdf06998dd969a3d74a73">NeuronGroupSimHandler</a> simHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a> wuVarUpdateHandler) const =0</td></tr>
-<tr class="memdesc:ae8915df91011c1c65ff2a9b52bc8e05c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all neurons.  <a href="#ae8915df91011c1c65ff2a9b52bc8e05c">More...</a><br /></td></tr>
-<tr class="separator:ae8915df91011c1c65ff2a9b52bc8e05c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5e36ea538f6d29ec1a16551974e58a2"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ae5e36ea538f6d29ec1a16551974e58a2">genSynapseUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> wumThreshHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> wumSimHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> wumEventHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> wumProceduralConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> postLearnHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> synapseDynamicsHandler) const =0</td></tr>
-<tr class="memdesc:ae5e36ea538f6d29ec1a16551974e58a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all synapses.  <a href="#ae5e36ea538f6d29ec1a16551974e58a2">More...</a><br /></td></tr>
-<tr class="separator:ae5e36ea538f6d29ec1a16551974e58a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a879f4a9c41a101ba527729733cdc0a9e"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a879f4a9c41a101ba527729733cdc0a9e">genInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a> localNGHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a> remoteNGHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> sgDenseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> sgSparseConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a> sgSparseInitHandler) const =0</td></tr>
-<tr class="separator:a879f4a9c41a101ba527729733cdc0a9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1a0a436f9a09d66107c8ba5db48d5499"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1a0a436f9a09d66107c8ba5db48d5499">genNeuronUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a> simHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a> wuVarUpdateHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
+<tr class="memdesc:a1a0a436f9a09d66107c8ba5db48d5499"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all neurons.  <a href="#a1a0a436f9a09d66107c8ba5db48d5499">More...</a><br /></td></tr>
+<tr class="separator:a1a0a436f9a09d66107c8ba5db48d5499"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac6a4db53af0c0c3d9ce05a75bcc13e3f"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac6a4db53af0c0c3d9ce05a75bcc13e3f">genSynapseUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumThreshHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumSimHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumEventHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumProceduralConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a> postLearnHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a> synapseDynamicsHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
+<tr class="memdesc:ac6a4db53af0c0c3d9ce05a75bcc13e3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all synapses.  <a href="#ac6a4db53af0c0c3d9ce05a75bcc13e3f">More...</a><br /></td></tr>
+<tr class="separator:ac6a4db53af0c0c3d9ce05a75bcc13e3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7217f8f3059553dce6e06d755702c1a2"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a7217f8f3059553dce6e06d755702c1a2">genInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a> localNGHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a> sgDenseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgSparseConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a> sgSparseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> initPushEGPHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> initSparsePushEGPHandler) const =0</td></tr>
+<tr class="separator:a7217f8f3059553dce6e06d755702c1a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b0f6ecb339e4e8598b0fcc72b4ccef1"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a5b0f6ecb339e4e8598b0fcc72b4ccef1">getSynapticMatrixRowStride</a> (const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg) const =0</td></tr>
 <tr class="memdesc:a5b0f6ecb339e4e8598b0fcc72b4ccef1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc.  <a href="#a5b0f6ecb339e4e8598b0fcc72b4ccef1">More...</a><br /></td></tr>
 <tr class="separator:a5b0f6ecb339e4e8598b0fcc72b4ccef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4acfe87333c492de09808f148cacc45"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ae4acfe87333c492de09808f148cacc45">genDefinitionsPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model) const =0</td></tr>
-<tr class="memdesc:ae4acfe87333c492de09808f148cacc45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.  <a href="#ae4acfe87333c492de09808f148cacc45">More...</a><br /></td></tr>
-<tr class="separator:ae4acfe87333c492de09808f148cacc45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9e2a8ab08e38ce4e5d24f93111b7c0b2"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a9e2a8ab08e38ce4e5d24f93111b7c0b2">genDefinitionsInternalPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model) const =0</td></tr>
-<tr class="memdesc:a9e2a8ab08e38ce4e5d24f93111b7c0b2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.  <a href="#a9e2a8ab08e38ce4e5d24f93111b7c0b2">More...</a><br /></td></tr>
-<tr class="separator:a9e2a8ab08e38ce4e5d24f93111b7c0b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2f5994d7a19123a2c877c1660189c10d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2f5994d7a19123a2c877c1660189c10d">genRunnerPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model) const =0</td></tr>
-<tr class="separator:a2f5994d7a19123a2c877c1660189c10d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a044451afab7cb5aeaffe801e9a0f2b73"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a044451afab7cb5aeaffe801e9a0f2b73">genAllocateMemPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model) const =0</td></tr>
-<tr class="separator:a044451afab7cb5aeaffe801e9a0f2b73"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6706c769fd857c084ca85e27985b18b7"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6706c769fd857c084ca85e27985b18b7">genStepTimeFinalisePreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model) const =0</td></tr>
-<tr class="memdesc:a6706c769fd857c084ca85e27985b18b7"><td class="mdescLeft">&#160;</td><td class="mdescRight">After all timestep logic is complete.  <a href="#a6706c769fd857c084ca85e27985b18b7">More...</a><br /></td></tr>
-<tr class="separator:a6706c769fd857c084ca85e27985b18b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f01b0d362892758364d86a17eba4706"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1f01b0d362892758364d86a17eba4706">genDefinitionsPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="memdesc:a1f01b0d362892758364d86a17eba4706"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.  <a href="#a1f01b0d362892758364d86a17eba4706">More...</a><br /></td></tr>
+<tr class="separator:a1f01b0d362892758364d86a17eba4706"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aded19522a63e1d95cd475890dc843ee3"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aded19522a63e1d95cd475890dc843ee3">genDefinitionsInternalPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="memdesc:aded19522a63e1d95cd475890dc843ee3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.  <a href="#aded19522a63e1d95cd475890dc843ee3">More...</a><br /></td></tr>
+<tr class="separator:aded19522a63e1d95cd475890dc843ee3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69eb5a2ba23bd05476534527ea325b47"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69eb5a2ba23bd05476534527ea325b47">genRunnerPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="separator:a69eb5a2ba23bd05476534527ea325b47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad19d1407b465ff369eabba8b3be32f45"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad19d1407b465ff369eabba8b3be32f45">genAllocateMemPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="separator:ad19d1407b465ff369eabba8b3be32f45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a98f39c0d92e366648ce85661bf2884ed"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a98f39c0d92e366648ce85661bf2884ed">genStepTimeFinalisePreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="memdesc:a98f39c0d92e366648ce85661bf2884ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">After all timestep logic is complete.  <a href="#a98f39c0d92e366648ce85661bf2884ed">More...</a><br /></td></tr>
+<tr class="separator:a98f39c0d92e366648ce85661bf2884ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0c979af40143720432811dd1768eaec2"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a0c979af40143720432811dd1768eaec2">genVariableDefinition</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitions, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const =0</td></tr>
 <tr class="separator:a0c979af40143720432811dd1768eaec2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9c337953415ab88551891ced09d8aa6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ae9c337953415ab88551891ced09d8aa6">genVariableImplementation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const =0</td></tr>
@@ -174,18 +190,27 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4ccb6a0724f29df2a999bd1daf645585"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5007d624c8dec1ae8cc2a180a8405214"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a5007d624c8dec1ae8cc2a180a8405214">genExtraGlobalParamImplementation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const =0</td></tr>
 <tr class="separator:a5007d624c8dec1ae8cc2a180a8405214"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4d5d7e06e8e7176ece20c8fb08cffca4"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a4d5d7e06e8e7176ece20c8fb08cffca4">genExtraGlobalParamAllocation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const =0</td></tr>
-<tr class="separator:a4d5d7e06e8e7176ece20c8fb08cffca4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a113a50a43bdc1d52ab5ea67409f66fe1"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a113a50a43bdc1d52ab5ea67409f66fe1">genExtraGlobalParamPush</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const =0</td></tr>
-<tr class="separator:a113a50a43bdc1d52ab5ea67409f66fe1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48febc23266ae499c211af7d8c4b52d3"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a48febc23266ae499c211af7d8c4b52d3">genExtraGlobalParamPull</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const =0</td></tr>
-<tr class="separator:a48febc23266ae499c211af7d8c4b52d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ae3becde57e41f1151b280aaac90f26"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6ae3becde57e41f1151b280aaac90f26">genPopVariableInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const =0</td></tr>
-<tr class="separator:a6ae3becde57e41f1151b280aaac90f26"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37be1d74b9fa1bdd516f1afa5638077a"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a37be1d74b9fa1bdd516f1afa5638077a">genVariableInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, size_t count, const std::string &amp;indexVarName, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const =0</td></tr>
-<tr class="separator:a37be1d74b9fa1bdd516f1afa5638077a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa99d6c99c1fbf2e12bf15de68518f542"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aa99d6c99c1fbf2e12bf15de68518f542">genSynapseVariableRowInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const =0</td></tr>
-<tr class="separator:aa99d6c99c1fbf2e12bf15de68518f542"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7370e5d073493481e7c201590dd9439"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac7370e5d073493481e7c201590dd9439">genExtraGlobalParamAllocation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, const std::string &amp;countVarName=&quot;count&quot;, const std::string &amp;prefix=&quot;&quot;) const =0</td></tr>
+<tr class="separator:ac7370e5d073493481e7c201590dd9439"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ace3a008c9b7e7f8bba951603d1f77a35"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ace3a008c9b7e7f8bba951603d1f77a35">genExtraGlobalParamPush</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, const std::string &amp;countVarName=&quot;count&quot;, const std::string &amp;prefix=&quot;&quot;) const =0</td></tr>
+<tr class="separator:ace3a008c9b7e7f8bba951603d1f77a35"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cffac350212ea48d4811ddfee2eca09"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a4cffac350212ea48d4811ddfee2eca09">genExtraGlobalParamPull</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, const std::string &amp;countVarName=&quot;count&quot;, const std::string &amp;prefix=&quot;&quot;) const =0</td></tr>
+<tr class="separator:a4cffac350212ea48d4811ddfee2eca09"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf4eaaa5ced5a08daaa66400146eba95"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#abf4eaaa5ced5a08daaa66400146eba95">genMergedGroupImplementation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;memorySpace, const std::string &amp;suffix, size_t idx, size_t numGroups) const =0</td></tr>
+<tr class="memdesc:abf4eaaa5ced5a08daaa66400146eba95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for declaring merged group data to the 'device'.  <a href="#abf4eaaa5ced5a08daaa66400146eba95">More...</a><br /></td></tr>
+<tr class="separator:abf4eaaa5ced5a08daaa66400146eba95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a200132a767c41a58a72b448ce371bcd6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a200132a767c41a58a72b448ce371bcd6">genMergedGroupPush</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;suffix, size_t idx, size_t numGroups) const =0</td></tr>
+<tr class="memdesc:a200132a767c41a58a72b448ce371bcd6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for pushing merged group data to the 'device'.  <a href="#a200132a767c41a58a72b448ce371bcd6">More...</a><br /></td></tr>
+<tr class="separator:a200132a767c41a58a72b448ce371bcd6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea491599f4db5115a59390baedc02875"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aea491599f4db5115a59390baedc02875">genMergedExtraGlobalParamPush</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;suffix, size_t mergedGroupIdx, const std::string &amp;groupIdx, const std::string &amp;fieldName, const std::string &amp;egpName) const =0</td></tr>
+<tr class="memdesc:aea491599f4db5115a59390baedc02875"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for pushing an updated EGP value into the merged group structure on 'device'.  <a href="#aea491599f4db5115a59390baedc02875">More...</a><br /></td></tr>
+<tr class="separator:aea491599f4db5115a59390baedc02875"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b21ce30ffb0eaf0f860fc3b974939b6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3b21ce30ffb0eaf0f860fc3b974939b6">genPopVariableInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const =0</td></tr>
+<tr class="separator:a3b21ce30ffb0eaf0f860fc3b974939b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d04ec464ef22a7461ef38cb5642b4a6"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a5d04ec464ef22a7461ef38cb5642b4a6">genVariableInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;count, const std::string &amp;indexVarName, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const =0</td></tr>
+<tr class="separator:a5d04ec464ef22a7461ef38cb5642b4a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8466852061a93582a5884843317563e"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad8466852061a93582a5884843317563e">genSynapseVariableRowInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const =0</td></tr>
+<tr class="separator:ad8466852061a93582a5884843317563e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa04def4fec77c03d419b79e11abfb035"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aa04def4fec77c03d419b79e11abfb035">genVariablePush</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, bool autoInitialized, size_t count) const =0</td></tr>
 <tr class="memdesc:aa04def4fec77c03d419b79e11abfb035"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for pushing a variable to the 'device'.  <a href="#aa04def4fec77c03d419b79e11abfb035">More...</a><br /></td></tr>
 <tr class="separator:aa04def4fec77c03d419b79e11abfb035"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -210,9 +235,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8fcf09ea91aaa84d16ff44cb44b6b472"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a8fcf09ea91aaa84d16ff44cb44b6b472">genCurrentSpikeLikeEventPull</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> &amp;ng) const =0</td></tr>
 <tr class="memdesc:a8fcf09ea91aaa84d16ff44cb44b6b472"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for pulling spike-like events emitted by a neuron group in the current timestep from the 'device'.  <a href="#a8fcf09ea91aaa84d16ff44cb44b6b472">More...</a><br /></td></tr>
 <tr class="separator:a8fcf09ea91aaa84d16ff44cb44b6b472"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7e5423859beca0ae9d1a2b1f12c1eff4"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d2/d06/classCodeGenerator_1_1MemAlloc.html">MemAlloc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a7e5423859beca0ae9d1a2b1f12c1eff4">genGlobalRNG</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitions, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runner, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;allocations, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;free) const =0</td></tr>
-<tr class="memdesc:a7e5423859beca0ae9d1a2b1f12c1eff4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a single RNG instance.  <a href="#a7e5423859beca0ae9d1a2b1f12c1eff4">More...</a><br /></td></tr>
-<tr class="separator:a7e5423859beca0ae9d1a2b1f12c1eff4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a895aec1a32ea7235de0dd7f7849b2f3d"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d2/d06/classCodeGenerator_1_1MemAlloc.html">MemAlloc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a895aec1a32ea7235de0dd7f7849b2f3d">genGlobalDeviceRNG</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitions, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runner, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;allocations, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;free) const =0</td></tr>
+<tr class="memdesc:a895aec1a32ea7235de0dd7f7849b2f3d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a single RNG instance.  <a href="#a895aec1a32ea7235de0dd7f7849b2f3d">More...</a><br /></td></tr>
+<tr class="separator:a895aec1a32ea7235de0dd7f7849b2f3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45611d965af4bf0c86285add875cdeaa"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d2/d06/classCodeGenerator_1_1MemAlloc.html">MemAlloc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a45611d965af4bf0c86285add875cdeaa">genPopulationRNG</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitions, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runner, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;allocations, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;free, const std::string &amp;name, size_t count) const =0</td></tr>
 <tr class="memdesc:a45611d965af4bf0c86285add875cdeaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate an RNG with a state per population member.  <a href="#a45611d965af4bf0c86285add875cdeaa">More...</a><br /></td></tr>
 <tr class="separator:a45611d965af4bf0c86285add875cdeaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -238,11 +263,19 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aaa0922c18f30dabce3693503a5df3a3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3530f453f5bc8d354d16958a09da56ed"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3530f453f5bc8d354d16958a09da56ed">genMSBuildImportTarget</a> (std::ostream &amp;os) const =0</td></tr>
 <tr class="separator:a3530f453f5bc8d354d16958a09da56ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac66d53f7f18bb431ae53eb572a330c28"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac66d53f7f18bb431ae53eb572a330c28">getVarPrefix</a> () const</td></tr>
-<tr class="separator:ac66d53f7f18bb431ae53eb572a330c28"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd63eb9b142bf73c95921747ad708f14"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#abd63eb9b142bf73c95921747ad708f14">isGlobalRNGRequired</a> (const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model) const =0</td></tr>
-<tr class="memdesc:abd63eb9b142bf73c95921747ad708f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends use different RNGs for different things. Does this one require a global RNG for the specified model?  <a href="#abd63eb9b142bf73c95921747ad708f14">More...</a><br /></td></tr>
-<tr class="separator:abd63eb9b142bf73c95921747ad708f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9e524b793038c8db76ad90a1fada917f"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a9e524b793038c8db76ad90a1fada917f">getArrayPrefix</a> () const</td></tr>
+<tr class="separator:a9e524b793038c8db76ad90a1fada917f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca54debeeabd3f15e1e38a92fde503c7"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aca54debeeabd3f15e1e38a92fde503c7">getScalarPrefix</a> () const</td></tr>
+<tr class="separator:aca54debeeabd3f15e1e38a92fde503c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8f20a57e1714c61615ba421869e655eb"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a8f20a57e1714c61615ba421869e655eb">isGlobalHostRNGRequired</a> (const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="memdesc:a8f20a57e1714c61615ba421869e655eb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?  <a href="#a8f20a57e1714c61615ba421869e655eb">More...</a><br /></td></tr>
+<tr class="separator:a8f20a57e1714c61615ba421869e655eb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b43f9214245d1c15e713ee25ffde8da"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1b43f9214245d1c15e713ee25ffde8da">isGlobalDeviceRNGRequired</a> (const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="memdesc:a1b43f9214245d1c15e713ee25ffde8da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model?  <a href="#a1b43f9214245d1c15e713ee25ffde8da">More...</a><br /></td></tr>
+<tr class="separator:a1b43f9214245d1c15e713ee25ffde8da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60b2bc7c3be9d6e3e014a6efe3dacbeb"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a60b2bc7c3be9d6e3e014a6efe3dacbeb">isPopulationRNGRequired</a> () const =0</td></tr>
+<tr class="memdesc:a60b2bc7c3be9d6e3e014a6efe3dacbeb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends use different RNGs for different things. Does this one require population RNGs?  <a href="#a60b2bc7c3be9d6e3e014a6efe3dacbeb">More...</a><br /></td></tr>
+<tr class="separator:a60b2bc7c3be9d6e3e014a6efe3dacbeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a064f208bb1d5c47dad599d737fe9e3bc"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a064f208bb1d5c47dad599d737fe9e3bc">isSynRemapRequired</a> () const =0</td></tr>
 <tr class="memdesc:a064f208bb1d5c47dad599d737fe9e3bc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure?  <a href="#a064f208bb1d5c47dad599d737fe9e3bc">More...</a><br /></td></tr>
 <tr class="separator:a064f208bb1d5c47dad599d737fe9e3bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -252,9 +285,17 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0dec1489071ffbfe15a80cfebceb91fc"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a0dec1489071ffbfe15a80cfebceb91fc">isAutomaticCopyEnabled</a> () const =0</td></tr>
 <tr class="memdesc:a0dec1489071ffbfe15a80cfebceb91fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is automatic copy mode enabled in the preferences?  <a href="#a0dec1489071ffbfe15a80cfebceb91fc">More...</a><br /></td></tr>
 <tr class="separator:a0dec1489071ffbfe15a80cfebceb91fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a531c9aee3c41552fc6882be455d10104"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a531c9aee3c41552fc6882be455d10104">shouldGenerateEmptyStatePushPull</a> () const =0</td></tr>
+<tr class="memdesc:a531c9aee3c41552fc6882be455d10104"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should GeNN generate empty state push and pull functions?  <a href="#a531c9aee3c41552fc6882be455d10104">More...</a><br /></td></tr>
+<tr class="separator:a531c9aee3c41552fc6882be455d10104"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59a451d1740ee75480a5b4c6f2bc0740"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a59a451d1740ee75480a5b4c6f2bc0740">shouldGenerateExtraGlobalParamPull</a> () const =0</td></tr>
+<tr class="memdesc:a59a451d1740ee75480a5b4c6f2bc0740"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should GeNN generate pull functions for extra global parameters? These are very rarely used.  <a href="#a59a451d1740ee75480a5b4c6f2bc0740">More...</a><br /></td></tr>
+<tr class="separator:a59a451d1740ee75480a5b4c6f2bc0740"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a034f408b28b10f750cd501a4dfecceac"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a034f408b28b10f750cd501a4dfecceac">getDeviceMemoryBytes</a> () const =0</td></tr>
 <tr class="memdesc:a034f408b28b10f750cd501a4dfecceac"><td class="mdescLeft">&#160;</td><td class="mdescRight">How many bytes of memory does 'device' have.  <a href="#a034f408b28b10f750cd501a4dfecceac">More...</a><br /></td></tr>
 <tr class="separator:a034f408b28b10f750cd501a4dfecceac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6b945361e1522c6a8b4bf66f2aa30ff"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">MemorySpaces</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aa6b945361e1522c6a8b4bf66f2aa30ff">getMergedGroupMemorySpaces</a> (const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="separator:aa6b945361e1522c6a8b4bf66f2aa30ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3adc59ef44b8c052dc8038c59ae743a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3adc59ef44b8c052dc8038c59ae743a3">genVariablePushPull</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;push, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;pull, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, bool autoInitialized, size_t count) const</td></tr>
 <tr class="memdesc:a3adc59ef44b8c052dc8038c59ae743a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to generate matching push and pull functions for a variable.  <a href="#a3adc59ef44b8c052dc8038c59ae743a3">More...</a><br /></td></tr>
 <tr class="separator:a3adc59ef44b8c052dc8038c59ae743a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -267,16 +308,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2fee5243cf9b6abb870190f3933a23de"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2fee5243cf9b6abb870190f3933a23de">genScalar</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitions, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runner, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc) const</td></tr>
 <tr class="memdesc:a2fee5243cf9b6abb870190f3933a23de"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to generate matching definition and declaration code for a scalar variable.  <a href="#a2fee5243cf9b6abb870190f3933a23de">More...</a><br /></td></tr>
 <tr class="separator:a2fee5243cf9b6abb870190f3933a23de"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb346f249dd810eb388ed8882410b5d2"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#acb346f249dd810eb388ed8882410b5d2">getLocalHostID</a> () const</td></tr>
-<tr class="memdesc:acb346f249dd810eb388ed8882410b5d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets ID of local host backend is building code for.  <a href="#acb346f249dd810eb388ed8882410b5d2">More...</a><br /></td></tr>
-<tr class="separator:acb346f249dd810eb388ed8882410b5d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77cff530242ae51c349a7f09bb942b41"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a77cff530242ae51c349a7f09bb942b41">getSize</a> (const std::string &amp;type) const</td></tr>
+<tr class="memdesc:a77cff530242ae51c349a7f09bb942b41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the size of the type.  <a href="#a77cff530242ae51c349a7f09bb942b41">More...</a><br /></td></tr>
+<tr class="separator:a77cff530242ae51c349a7f09bb942b41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a70d012f95c388904a7ea64a5509ee124"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a70d012f95c388904a7ea64a5509ee124">addType</a> (const std::string &amp;type, size_t size)</td></tr>
 <tr class="separator:a70d012f95c388904a7ea64a5509ee124"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77cff530242ae51c349a7f09bb942b41"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a77cff530242ae51c349a7f09bb942b41">getSize</a> (const std::string &amp;type) const</td></tr>
-<tr class="separator:a77cff530242ae51c349a7f09bb942b41"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="adba20f0748ab61dd226b26bf116b04c2"></a>
@@ -309,30 +348,44 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a55e34429d3f08186318fe811d5bc6531"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a55e34429d3f08186318fe811d5bc6531">&#9670;&nbsp;</a></span>NeuronGroupHandler</h2>
+<a id="a1ec13cdda649e931462efe7c26d2e549"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ec13cdda649e931462efe7c26d2e549">&#9670;&nbsp;</a></span>HostHandler</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">CodeGenerator::BackendBase::NeuronGroupHandler</a></td>
+          <td class="memname">typedef std::function&lt;void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;)&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">CodeGenerator::BackendBase::HostHandler</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Standard callback type which provides a <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write platform-independent code for the specified <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> to. </p>
-
 </div>
 </div>
-<a id="a938379883f4cdf06998dd969a3d74a73"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a938379883f4cdf06998dd969a3d74a73">&#9670;&nbsp;</a></span>NeuronGroupSimHandler</h2>
+<a id="a1bbf7fdd326351be7af8f575d116a8ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1bbf7fdd326351be7af8f575d116a8ab">&#9670;&nbsp;</a></span>MemorySpaces</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef std::function&lt;void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>&amp;, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>)&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a938379883f4cdf06998dd969a3d74a73">CodeGenerator::BackendBase::NeuronGroupSimHandler</a></td>
+          <td class="memname">typedef std::vector&lt;std::pair&lt;std::string, size_t&gt; &gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">CodeGenerator::BackendBase::MemorySpaces</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Vector of prefixes required to allocate in memory space and size of memory space. </p>
+
+</div>
+</div>
+<a id="a18d700c2c55565aba980600fbb872f63"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a18d700c2c55565aba980600fbb872f63">&#9670;&nbsp;</a></span>NeuronGroupSimHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::function&lt;void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const <a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a> &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>&amp;, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>)&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">CodeGenerator::BackendBase::NeuronGroupSimHandler</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -342,14 +395,14 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a85aea4cafbf9a7e9ceb6b0d12e9d4997"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a85aea4cafbf9a7e9ceb6b0d12e9d4997">&#9670;&nbsp;</a></span>SynapseGroupHandler</h2>
+<a id="a05d118c7cea7d61d3c635ad54775d378"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05d118c7cea7d61d3c635ad54775d378">&#9670;&nbsp;</a></span>NeuronInitGroupMergedHandler</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">CodeGenerator::BackendBase::SynapseGroupHandler</a></td>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html">NeuronInitGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">CodeGenerator::BackendBase::NeuronInitGroupMergedHandler</a></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -358,9 +411,107 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="ad36b2a42177de4433fc1ffd197924daf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad36b2a42177de4433fc1ffd197924daf">&#9670;&nbsp;</a></span>NeuronUpdateGroupMergedHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">CodeGenerator::BackendBase::NeuronUpdateGroupMergedHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3e3b87c30f6e8f8d0657c029c9b3a0fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3e3b87c30f6e8f8d0657c029c9b3a0fe">&#9670;&nbsp;</a></span>PostsynapticUpdateGroupMergedHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html">PostsynapticUpdateGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">CodeGenerator::BackendBase::PostsynapticUpdateGroupMergedHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a436d06ecbed5e432e2bf06e3dd49b094"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a436d06ecbed5e432e2bf06e3dd49b094">&#9670;&nbsp;</a></span>PresynapticUpdateGroupMergedHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">CodeGenerator::BackendBase::PresynapticUpdateGroupMergedHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a44a8647e5cc32e8883064e93def1ff6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44a8647e5cc32e8883064e93def1ff6d">&#9670;&nbsp;</a></span>SynapseConnectivityInitMergedGroupHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html">SynapseConnectivityInitGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">CodeGenerator::BackendBase::SynapseConnectivityInitMergedGroupHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab8fc7e4cb214d545f08c9a95cd08affe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8fc7e4cb214d545f08c9a95cd08affe">&#9670;&nbsp;</a></span>SynapseDenseInitGroupMergedHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html">SynapseDenseInitGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">CodeGenerator::BackendBase::SynapseDenseInitGroupMergedHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a69d2a8b89bcd3d01fdc0bbe2f83b09f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">&#9670;&nbsp;</a></span>SynapseDynamicsGroupMergedHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html">SynapseDynamicsGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">CodeGenerator::BackendBase::SynapseDynamicsGroupMergedHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2460e47c9ef8eb5cf9c2fe4ab8b28b31"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">&#9670;&nbsp;</a></span>SynapseSparseInitGroupMergedHandler</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt;<a class="el" href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html">SynapseSparseInitGroupMerged</a>&gt; <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">CodeGenerator::BackendBase::SynapseSparseInitGroupMergedHandler</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a0ce0c48ea6c5041fb3a6d3d3cd1d24bc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0ce0c48ea6c5041fb3a6d3d3cd1d24bc">&#9670;&nbsp;</a></span>BackendBase()</h2>
+<a id="a3bec557b31b65921f4c1608e96248874"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bec557b31b65921f4c1608e96248874">&#9670;&nbsp;</a></span>BackendBase()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -368,19 +519,9 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="memname">CodeGenerator::BackendBase::BackendBase </td>
           <td>(</td>
-          <td class="paramtype">int&#160;</td>
-          <td class="paramname"><em>localHostID</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>scalarType</em>&#160;</td>
-        </tr>
-        <tr>
+          <td class="paramname"><em>scalarType</em></td><td>)</td>
           <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -449,8 +590,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a044451afab7cb5aeaffe801e9a0f2b73"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a044451afab7cb5aeaffe801e9a0f2b73">&#9670;&nbsp;</a></span>genAllocateMemPreamble()</h2>
+<a id="ad19d1407b465ff369eabba8b3be32f45"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad19d1407b465ff369eabba8b3be32f45">&#9670;&nbsp;</a></span>genAllocateMemPreamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -467,8 +608,8 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -484,7 +625,7 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 <p>Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once. Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a4d1687bdddf44ec71b727ea02400827a">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a253c535f8ce422d868a76772720f19ca">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a136217d93d2f194135f9cc874ff18f78">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ad3ad2bd19cf29ebce50143446add8f13">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -906,8 +1047,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a9e2a8ab08e38ce4e5d24f93111b7c0b2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9e2a8ab08e38ce4e5d24f93111b7c0b2">&#9670;&nbsp;</a></span>genDefinitionsInternalPreamble()</h2>
+<a id="aded19522a63e1d95cd475890dc843ee3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aded19522a63e1d95cd475890dc843ee3">&#9670;&nbsp;</a></span>genDefinitionsInternalPreamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -924,8 +1065,8 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -943,12 +1084,12 @@ template&lt;typename T &gt; </div>
 <p>Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file. </p>
 <p>This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a03c7b5fbd220420484703308c37393d4">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a6519a44b062cc0f84fe1a8b10b364ac3">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a633b89fac967ae4195dff5c0b0008ba9">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a392ecfe6819932735b2a8ce8bc1c1b11">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="ae4acfe87333c492de09808f148cacc45"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae4acfe87333c492de09808f148cacc45">&#9670;&nbsp;</a></span>genDefinitionsPreamble()</h2>
+<a id="a1f01b0d362892758364d86a17eba4706"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1f01b0d362892758364d86a17eba4706">&#9670;&nbsp;</a></span>genDefinitionsPreamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -965,8 +1106,8 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -984,12 +1125,12 @@ template&lt;typename T &gt; </div>
 <p>Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file. </p>
 <p>This will be included from a standard C++ compiler so shouldn't include any platform-specific types or headers </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7efa7711e2c4aac7ec6b4c7bce184c6a">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a37a8b27ff1149c10703f3a9ff0ced87f">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acc9d4e87d1a48d57db8c1f3d9de03e71">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a7a5c576af58b606b97449a5607922044">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="a4d5d7e06e8e7176ece20c8fb08cffca4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4d5d7e06e8e7176ece20c8fb08cffca4">&#9670;&nbsp;</a></span>genExtraGlobalParamAllocation()</h2>
+<a id="ac7370e5d073493481e7c201590dd9439"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7370e5d073493481e7c201590dd9439">&#9670;&nbsp;</a></span>genExtraGlobalParamAllocation()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1019,7 +1160,19 @@ template&lt;typename T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>loc</em>&#160;</td>
+          <td class="paramname"><em>loc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>countVarName</em> = <code>&quot;count&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>prefix</em> = <code>&quot;&quot;</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1034,7 +1187,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#afeda7210082ace94714fbbf6db957398">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a9059b19c801525d33bbbdd676b92762f">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a05d95eb83382195ae2dfceee36fcb20b">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a230ebfd92d35cbc8e8da22a83f066436">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -1138,8 +1291,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a48febc23266ae499c211af7d8c4b52d3"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a48febc23266ae499c211af7d8c4b52d3">&#9670;&nbsp;</a></span>genExtraGlobalParamPull()</h2>
+<a id="a4cffac350212ea48d4811ddfee2eca09"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4cffac350212ea48d4811ddfee2eca09">&#9670;&nbsp;</a></span>genExtraGlobalParamPull()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1169,7 +1322,19 @@ template&lt;typename T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>loc</em>&#160;</td>
+          <td class="paramname"><em>loc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>countVarName</em> = <code>&quot;count&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>prefix</em> = <code>&quot;&quot;</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1184,12 +1349,12 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acb57d65a381315ec0812bb4525b05f4f">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ab1bc0a2e39dd62a17f97580d5e8dde23">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a302c5e72df517ee274f846b9e6762fa1">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a8dceb0ccfff76a3bb761373bdec4434e">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="a113a50a43bdc1d52ab5ea67409f66fe1"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a113a50a43bdc1d52ab5ea67409f66fe1">&#9670;&nbsp;</a></span>genExtraGlobalParamPush()</h2>
+<a id="ace3a008c9b7e7f8bba951603d1f77a35"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ace3a008c9b7e7f8bba951603d1f77a35">&#9670;&nbsp;</a></span>genExtraGlobalParamPush()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1219,7 +1384,19 @@ template&lt;typename T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>loc</em>&#160;</td>
+          <td class="paramname"><em>loc</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>countVarName</em> = <code>&quot;count&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>prefix</em> = <code>&quot;&quot;</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1234,12 +1411,12 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a8cc904c2dd8b652b279db9c8e83fd9d2">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a81b154153c7d5a23fec5410e5d7631cb">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae67789142a85b8a13d9e602f1e938240">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a6d2f32662530249bdbe35b6fe23bc0af">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="a7e5423859beca0ae9d1a2b1f12c1eff4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7e5423859beca0ae9d1a2b1f12c1eff4">&#9670;&nbsp;</a></span>genGlobalRNG()</h2>
+<a id="a895aec1a32ea7235de0dd7f7849b2f3d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a895aec1a32ea7235de0dd7f7849b2f3d">&#9670;&nbsp;</a></span>genGlobalDeviceRNG()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1248,7 +1425,7 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual <a class="el" href="../../d2/d06/classCodeGenerator_1_1MemAlloc.html">MemAlloc</a> CodeGenerator::BackendBase::genGlobalRNG </td>
+          <td class="memname">virtual <a class="el" href="../../d2/d06/classCodeGenerator_1_1MemAlloc.html">MemAlloc</a> CodeGenerator::BackendBase::genGlobalDeviceRNG </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
           <td class="paramname"><em>definitions</em>, </td>
@@ -1293,12 +1470,12 @@ template&lt;typename T &gt; </div>
 <p>Generate a single RNG instance. </p>
 <p>On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a223c030dfdfd1851bbc9fa89fcc849a0">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#abda46c0c1eafda10628379a2d4921451">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a5306785ed4844c6ae3ff0630572f8d61">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a4257a1c73639c145e11a1c85d8daeef7">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="a879f4a9c41a101ba527729733cdc0a9e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a879f4a9c41a101ba527729733cdc0a9e">&#9670;&nbsp;</a></span>genInit()</h2>
+<a id="a7217f8f3059553dce6e06d755702c1a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7217f8f3059553dce6e06d755702c1a2">&#9670;&nbsp;</a></span>genInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1315,38 +1492,44 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>localNGHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>remoteNGHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>sgDenseInitHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a>&#160;</td>
           <td class="paramname"><em>sgSparseConnectHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>sgSparseInitHandler</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a>&#160;</td>
+          <td class="paramname"><em>sgSparseInitHandler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a>&#160;</td>
+          <td class="paramname"><em>initPushEGPHandler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a>&#160;</td>
+          <td class="paramname"><em>initSparsePushEGPHandler</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1361,7 +1544,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#abe93b38aadfe4ed096af8813b24ae0ce">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a2cec658116cf31c1ce3e1a5988d30bf7">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa8e99ef59a5acc2b5f22884648520ed1">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#adbbdd44b2361d861c15e335945549cff">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -1450,6 +1633,180 @@ template&lt;typename T &gt; </div>
 <p>This function can be used to generate a preamble for the GNU makefile used to build. </p>
 
 <p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7ed64a7cf237943bf788247522ffb755">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a42c17e768cdc14d7f1eb8d948400609e">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="aea491599f4db5115a59390baedc02875"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aea491599f4db5115a59390baedc02875">&#9670;&nbsp;</a></span>genMergedExtraGlobalParamPush()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void CodeGenerator::BackendBase::genMergedExtraGlobalParamPush </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>suffix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>mergedGroupIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>groupIdx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>fieldName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Generate code for pushing an updated EGP value into the merged group structure on 'device'. </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ad4215bf86ae742887c34d9184865ff59">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a42b5d9bdc825f957ff83aaef22fd9d6f">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="abf4eaaa5ced5a08daaa66400146eba95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf4eaaa5ced5a08daaa66400146eba95">&#9670;&nbsp;</a></span>genMergedGroupImplementation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void CodeGenerator::BackendBase::genMergedGroupImplementation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>memorySpace</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>suffix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>idx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>numGroups</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Generate code for declaring merged group data to the 'device'. </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa33346b77655e18cb994d9cfe1ef6b43">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a9ba30ae5f6b4099774372d766b3f458c">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="a200132a767c41a58a72b448ce371bcd6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a200132a767c41a58a72b448ce371bcd6">&#9670;&nbsp;</a></span>genMergedGroupPush()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void CodeGenerator::BackendBase::genMergedGroupPush </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>suffix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>idx</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>numGroups</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Generate code for pushing merged group data to the 'device'. </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acb670a37a03beb9a056b6f07c8ea650b">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ac91b7472028bb1e104d74de211363e3b">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -1607,8 +1964,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="ae8915df91011c1c65ff2a9b52bc8e05c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae8915df91011c1c65ff2a9b52bc8e05c">&#9670;&nbsp;</a></span>genNeuronUpdate()</h2>
+<a id="a1a0a436f9a09d66107c8ba5db48d5499"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1a0a436f9a09d66107c8ba5db48d5499">&#9670;&nbsp;</a></span>genNeuronUpdate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1625,20 +1982,26 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a938379883f4cdf06998dd969a3d74a73">NeuronGroupSimHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a>&#160;</td>
           <td class="paramname"><em>simHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">NeuronGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>wuVarUpdateHandler</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>&#160;</td>
+          <td class="paramname"><em>wuVarUpdateHandler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a>&#160;</td>
+          <td class="paramname"><em>pushEGPHandler</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1657,14 +2020,14 @@ template&lt;typename T &gt; </div>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">os</td><td><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write function to </td></tr>
-    <tr><td class="paramname">model</td><td>model to generate code for </td></tr>
+    <tr><td class="paramname">model</td><td>merged model to generate code for </td></tr>
     <tr><td class="paramname">simHandler</td><td>callback to write platform-independent code to update an individual <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> </td></tr>
     <tr><td class="paramname">wuVarUpdateHandler</td><td>callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes </td></tr>
   </table>
   </dd>
 </dl>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aac00294b1ef371c52c105bcd85abf790">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a840069e30f8bd7f51cb3d7add3b821bc">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a33a4de478dc8479f23b0fa167d23c724">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a7b5936e6d05ba842660d8ed922f0872d">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -1738,8 +2101,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a6ae3becde57e41f1151b280aaac90f26"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ae3becde57e41f1151b280aaac90f26">&#9670;&nbsp;</a></span>genPopVariableInit()</h2>
+<a id="a3b21ce30ffb0eaf0f860fc3b974939b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b21ce30ffb0eaf0f860fc3b974939b6">&#9670;&nbsp;</a></span>genPopVariableInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1752,12 +2115,6 @@ template&lt;typename T &gt; </div>
           <td>(</td>
           <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
           <td class="paramname"><em>os</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>loc</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1784,7 +2141,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acf63cb845f7143a4d88e805e9451a336">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a870e0b239f15c42009c729fce4c26eda">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a5d2ba2232c85d9c0536d6177023b04d0">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a5b8cb2269c6d93d46deedba26c88bbf6">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -1818,8 +2175,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a2f5994d7a19123a2c877c1660189c10d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2f5994d7a19123a2c877c1660189c10d">&#9670;&nbsp;</a></span>genRunnerPreamble()</h2>
+<a id="a69eb5a2ba23bd05476534527ea325b47"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a69eb5a2ba23bd05476534527ea325b47">&#9670;&nbsp;</a></span>genRunnerPreamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1836,8 +2193,8 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1852,7 +2209,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a61441377f5148eafe23c5129236f2045">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a1c99375499c0eb4a8ec40a207f0ce4d4">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a103c1df72726248843f2eb2c44961d60">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ade615fc3ab4b9e6befd3cdbfac1b8b07">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -1918,8 +2275,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a6706c769fd857c084ca85e27985b18b7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6706c769fd857c084ca85e27985b18b7">&#9670;&nbsp;</a></span>genStepTimeFinalisePreamble()</h2>
+<a id="a98f39c0d92e366648ce85661bf2884ed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a98f39c0d92e366648ce85661bf2884ed">&#9670;&nbsp;</a></span>genStepTimeFinalisePreamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1936,8 +2293,8 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1954,12 +2311,12 @@ template&lt;typename T &gt; </div>
 
 <p>After all timestep logic is complete. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a87840adc59004fb10082c9ca41e23521">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a25856606583a2538c3e4c91dcc20dfba">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a0659dd4ad6d4e655184f697c60d7c63e">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a4763e8d83d05b1f8ad1ea17d9a936279">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="ae5e36ea538f6d29ec1a16551974e58a2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae5e36ea538f6d29ec1a16551974e58a2">&#9670;&nbsp;</a></span>genSynapseUpdate()</h2>
+<a id="ac6a4db53af0c0c3d9ce05a75bcc13e3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac6a4db53af0c0c3d9ce05a75bcc13e3f">&#9670;&nbsp;</a></span>genSynapseUpdate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1976,44 +2333,50 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumThreshHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumSimHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumEventHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumProceduralConnectHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>postLearnHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">SynapseGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>synapseDynamicsHandler</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a>&#160;</td>
+          <td class="paramname"><em>synapseDynamicsHandler</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a>&#160;</td>
+          <td class="paramname"><em>pushEGPHandler</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -2043,12 +2406,12 @@ template&lt;typename T &gt; </div>
   </dd>
 </dl>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac20bdba0616b19da52041b5aea4c40f8">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#af53440a18a46ed88ad4e61df561c5dd5">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a3a5873899abc0b9b2e997bd8c6b10bf5">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a24af5595128a73678230658dbcbeb79f">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
-<a id="aa99d6c99c1fbf2e12bf15de68518f542"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa99d6c99c1fbf2e12bf15de68518f542">&#9670;&nbsp;</a></span>genSynapseVariableRowInit()</h2>
+<a id="ad8466852061a93582a5884843317563e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8466852061a93582a5884843317563e">&#9670;&nbsp;</a></span>genSynapseVariableRowInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2065,13 +2428,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>loc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a> &amp;&#160;</td>
           <td class="paramname"><em>sg</em>, </td>
         </tr>
         <tr>
@@ -2099,7 +2456,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a2dbbe8b4b880a1fb433c6226565df124">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a159551202e469da2f5fa75a64dc8b6e9">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a3b873af6ecb7eb316e3135bb0b15664b">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a2dd89f8d66ff44dfec15c38dea1cbefd">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -2383,8 +2740,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a37be1d74b9fa1bdd516f1afa5638077a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a37be1d74b9fa1bdd516f1afa5638077a">&#9670;&nbsp;</a></span>genVariableInit()</h2>
+<a id="a5d04ec464ef22a7461ef38cb5642b4a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d04ec464ef22a7461ef38cb5642b4a6">&#9670;&nbsp;</a></span>genVariableInit()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2401,13 +2758,7 @@ template&lt;typename T &gt; </div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
-          <td class="paramname"><em>loc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">size_t&#160;</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>count</em>, </td>
         </tr>
         <tr>
@@ -2441,7 +2792,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a9e6a42b4b655cad7f5aca8ff7caa1ad4">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#aaa9c0a602e910a7b2c1905e6a6117443">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a0e0404e640a56bb368c17faef362257c">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a4a110aa288c5e5abcf1e7a784ee22846">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -2635,6 +2986,34 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a9e524b793038c8db76ad90a1fada917f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9e524b793038c8db76ad90a1fada917f">&#9670;&nbsp;</a></span>getArrayPrefix()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::string CodeGenerator::BackendBase::getArrayPrefix </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix. This function returns this prefix so it can be used in otherwise platform-independent code. </p>
+
+<p>Reimplemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aadbc4f02983e7c72acdac5daa2613301">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a60f5389f71c2fb82151b4953ac5fce7b">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
 <a id="a034f408b28b10f750cd501a4dfecceac"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a034f408b28b10f750cd501a4dfecceac">&#9670;&nbsp;</a></span>getDeviceMemoryBytes()</h2>
 
@@ -2664,8 +3043,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="acb346f249dd810eb388ed8882410b5d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acb346f249dd810eb388ed8882410b5d2">&#9670;&nbsp;</a></span>getLocalHostID()</h2>
+<a id="aa6b945361e1522c6a8b4bf66f2aa30ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6b945361e1522c6a8b4bf66f2aa30ff">&#9670;&nbsp;</a></span>getMergedGroupMemorySpaces()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2674,7 +3053,36 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">int CodeGenerator::BackendBase::getLocalHostID </td>
+          <td class="memname">virtual <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">MemorySpaces</a> CodeGenerator::BackendBase::getMergedGroupMemorySpaces </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Some backends will have additional small, fast, memory spaces for read-only data which might Be well-suited to storing merged group structs. This method returns the prefix required to Place arrays in these and their size in preferential order </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a2263d51de2f7dac90a678301610f0b4d">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a79eb59b904c044171091aa7030565d6b">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="aca54debeeabd3f15e1e38a92fde503c7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aca54debeeabd3f15e1e38a92fde503c7">&#9670;&nbsp;</a></span>getScalarPrefix()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual std::string CodeGenerator::BackendBase::getScalarPrefix </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -2682,12 +3090,12 @@ template&lt;typename T &gt; </div>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Gets ID of local host backend is building code for. </p>
+<p>Reimplemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a015daded4c5bd80e858ebbfcb3e947fc">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a093b0951d479aa126b5de751bbca19bb">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -2696,9 +3104,6 @@ template&lt;typename T &gt; </div>
 
 <div class="memitem">
 <div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">size_t CodeGenerator::BackendBase::getSize </td>
@@ -2708,12 +3113,9 @@ template&lt;typename T &gt; </div>
           <td> const</td>
         </tr>
       </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
 </div><div class="memdoc">
+
+<p>Get the size of the type. </p>
 
 </div>
 </div>
@@ -2747,34 +3149,6 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="ac66d53f7f18bb431ae53eb572a330c28"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac66d53f7f18bb431ae53eb572a330c28">&#9670;&nbsp;</a></span>getVarPrefix()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual std::string CodeGenerator::BackendBase::getVarPrefix </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-<p>When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix. This function returns this prefix so it can be used in otherwise platform-independent code. </p>
-
-<p>Reimplemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a4b10e92d9f9f86252136e0b31a769464">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a610f903352603e14ed50951b8c526dc9">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
-
-</div>
-</div>
 <a id="a0dec1489071ffbfe15a80cfebceb91fc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0dec1489071ffbfe15a80cfebceb91fc">&#9670;&nbsp;</a></span>isAutomaticCopyEnabled()</h2>
 
@@ -2804,8 +3178,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="abd63eb9b142bf73c95921747ad708f14"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abd63eb9b142bf73c95921747ad708f14">&#9670;&nbsp;</a></span>isGlobalRNGRequired()</h2>
+<a id="a1b43f9214245d1c15e713ee25ffde8da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b43f9214245d1c15e713ee25ffde8da">&#9670;&nbsp;</a></span>isGlobalDeviceRNGRequired()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2814,10 +3188,10 @@ template&lt;typename T &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual bool CodeGenerator::BackendBase::isGlobalRNGRequired </td>
+          <td class="memname">virtual bool CodeGenerator::BackendBase::isGlobalDeviceRNGRequired </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em></td><td>)</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -2828,9 +3202,68 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Different backends use different RNGs for different things. Does this one require a global RNG for the specified model? </p>
+<p>Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model? </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#acd9a5796a357e5b633eb81bee2c35d65">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a88af0f853c733bbb3043c2b8dfe30cec">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa017fb9d84956c15284f7e15d69780c2">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ab966570457bfbbac8d429cc249fa704f">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="a8f20a57e1714c61615ba421869e655eb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8f20a57e1714c61615ba421869e655eb">&#9670;&nbsp;</a></span>isGlobalHostRNGRequired()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool CodeGenerator::BackendBase::isGlobalHostRNGRequired </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model? </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac96535da397dddf93ec0e27e70123d2e">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a0812678e8b29597509a403fe77b13bcd">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="a60b2bc7c3be9d6e3e014a6efe3dacbeb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a60b2bc7c3be9d6e3e014a6efe3dacbeb">&#9670;&nbsp;</a></span>isPopulationRNGRequired()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool CodeGenerator::BackendBase::isPopulationRNGRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Different backends use different RNGs for different things. Does this one require population RNGs? </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a23d13bac42091dbedcca7024108eb3bd">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ac5219c47e156425cde0a7a5742858d02">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -2892,6 +3325,64 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a531c9aee3c41552fc6882be455d10104"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a531c9aee3c41552fc6882be455d10104">&#9670;&nbsp;</a></span>shouldGenerateEmptyStatePushPull()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool CodeGenerator::BackendBase::shouldGenerateEmptyStatePushPull </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Should GeNN generate empty state push and pull functions? </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aba494f84fcb64b749b40577114503b0b">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#aedd0e62590220e4e3c580c8aecc1a855">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="a59a451d1740ee75480a5b4c6f2bc0740"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59a451d1740ee75480a5b4c6f2bc0740">&#9670;&nbsp;</a></span>shouldGenerateExtraGlobalParamPull()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool CodeGenerator::BackendBase::shouldGenerateExtraGlobalParamPull </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Should GeNN generate pull functions for extra global parameters? These are very rarely used. </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7cf18371a263718eb47784bf747b3bad">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a558aabf23726c53f4b14e6a90584d231">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li><a class="el" href="../../d9/d67/backendBase_8h_source.html">backendBase.h</a></li>
 <li><a class="el" href="../../d7/df6/backendBase_8cc.html">backendBase.cc</a></li>
@@ -2902,7 +3393,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:17 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:25 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -10,6 +10,13 @@ var searchData=
   ['matrix_5ftype',['matrix_type',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8a83848fea29eb821b094759b7448891',1,'pygenn.genn_groups.SynapseGroup.matrix_type(self)'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2f68c883612f6cba26d9ce34a2572c2f',1,'pygenn.genn_groups.SynapseGroup.matrix_type(self, matrix_type)']]],
   ['max_5frow_5flength',['max_row_length',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2208fcc9522823d65c1f95775fa27982',1,'pygenn::genn_groups::SynapseGroup']]],
   ['memalloc',['MemAlloc',['../d2/d06/classCodeGenerator_1_1MemAlloc.html',1,'CodeGenerator']]],
+  ['memoryspaces',['MemorySpaces',['../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab',1,'CodeGenerator::BackendBase']]],
+  ['mergedegp',['MergedEGP',['../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html',1,'CodeGenerator::MergedStructData::MergedEGP'],['../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#abbedf96de0fe4fda0d283e2417fcd147',1,'CodeGenerator::MergedStructData::MergedEGP::MergedEGP()']]],
+  ['mergedegpmap',['MergedEGPMap',['../d2/dbe/classCodeGenerator_1_1MergedStructData.html#a53f99576377339aa0da8ff61a3be5d70',1,'CodeGenerator::MergedStructData']]],
+  ['mergedgroupindex',['mergedGroupIndex',['../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#af786ee25acd8b4ad7cbbc0aede30e875',1,'CodeGenerator::MergedStructData::MergedEGP']]],
+  ['mergedstructdata',['MergedStructData',['../d2/dbe/classCodeGenerator_1_1MergedStructData.html',1,'CodeGenerator']]],
+  ['mergedstructgenerator',['MergedStructGenerator',['../dc/d85/classCodeGenerator_1_1MergedStructGenerator.html',1,'CodeGenerator::MergedStructGenerator&lt; T &gt;'],['../dc/d85/classCodeGenerator_1_1MergedStructGenerator.html#a1c464d5290ce5a6442e0fadc92976fde',1,'CodeGenerator::MergedStructGenerator::MergedStructGenerator()']]],
+  ['mergedstructgenerator_2eh',['mergedStructGenerator.h',['../db/d9f/mergedStructGenerator_8h.html',1,'']]],
   ['mergeincomingpsm',['mergeIncomingPSM',['../d7/d3b/classNeuronGroup.html#a78122b3ec7116cd38cbb3ad9fca04fbf',1,'NeuronGroup']]],
   ['mode',['Mode',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#af183b028ead473c3b08e4961edd6e66b',1,'SpineMLSimulator::NetworkClient']]],
   ['model_5fname',['model_name',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab1164b8374a4b390e77bc32effed638c',1,'pygenn.genn_model.GeNNModel.model_name()'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a657e703ee01779146f1ccb8351ede55b',1,'pygenn.genn_model.GeNNModel.model_name(self)'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4e21fa1268613abb29d4d85de6084638',1,'pygenn.genn_model.GeNNModel.model_name(self, model_name)']]],
@@ -23,5 +30,8 @@ var searchData=
   ['modelspec_2eh',['modelSpec.h',['../dc/de1/modelSpec_8h.html',1,'']]],
   ['modelspecinternal',['ModelSpecInternal',['../dc/dfa/classModelSpecInternal.html',1,'']]],
   ['modelspecinternal_2eh',['modelSpecInternal.h',['../db/de4/modelSpecInternal_8h.html',1,'']]],
+  ['modelspecmerged',['ModelSpecMerged',['../de/d52/classCodeGenerator_1_1ModelSpecMerged.html',1,'CodeGenerator::ModelSpecMerged'],['../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ace40c8962b82c37a10daec00ab42de1d',1,'CodeGenerator::ModelSpecMerged::ModelSpecMerged()']]],
+  ['modelspecmerged_2ecc',['modelSpecMerged.cc',['../d8/d07/modelSpecMerged_8cc.html',1,'']]],
+  ['modelspecmerged_2eh',['modelSpecMerged.h',['../df/dac/modelSpecMerged_8h.html',1,'']]],
   ['most_5fmemory',['MOST_MEMORY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a7091742b1aa4b0be2bcb9750a1f4b0b9',1,'CodeGenerator::CUDA']]]
 ];

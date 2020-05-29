@@ -10,5 +10,6 @@ var snippet_8h =
     [ "DECLARE_SNIPPET", "de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a", null ],
     [ "IMPLEMENT_SNIPPET", "de/d6c/snippet_8h.html#af3c47debe5fc34060e716d7db25462ab", null ],
     [ "SET_DERIVED_PARAMS", "de/d6c/snippet_8h.html#aa592bfe3ce05ffc19a8f21d8482add6b", null ],
+    [ "SET_EXTRA_GLOBAL_PARAMS", "de/d6c/snippet_8h.html#aa33e3634a531794ddac1ad49bde09071", null ],
     [ "SET_PARAM_NAMES", "de/d6c/snippet_8h.html#a75315265035fd71c5b5f7d7f449edbd7", null ]
 ];

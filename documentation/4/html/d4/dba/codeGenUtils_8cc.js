@@ -4,9 +4,7 @@ var codeGenUtils_8cc =
     [ "checkUnreplacedVariables", "d4/dba/codeGenUtils_8cc.html#a10af4d74175240a715403e6b5f2103cf", null ],
     [ "ensureFtype", "d4/dba/codeGenUtils_8cc.html#a22199ae12a7875826210e2f57ee0b1ee", null ],
     [ "functionSubstitute", "d4/dba/codeGenUtils_8cc.html#a7308be23a7721f3913894290bcdd7831", null ],
-    [ "neuronSubstitutionsInSynapticCode", "d4/dba/codeGenUtils_8cc.html#aeffa872d440945d9d6170adff0fc8c11", null ],
-    [ "postNeuronSubstitutionsInSynapticCode", "d4/dba/codeGenUtils_8cc.html#acc546df68c6a87e2e08a6935fa0e68f7", null ],
-    [ "preNeuronSubstitutionsInSynapticCode", "d4/dba/codeGenUtils_8cc.html#a6f111f70eb87a0fae09fc1bf755fea9b", null ],
+    [ "genScalarEGPPush", "d4/dba/codeGenUtils_8cc.html#a31edfe13f230e73808699a318b0bf70a", null ],
     [ "regexFuncSubstitute", "d4/dba/codeGenUtils_8cc.html#a6f8f82386dbf754701a2c5968614594f", null ],
     [ "regexVarSubstitute", "d4/dba/codeGenUtils_8cc.html#a80838daf20cefe142f4af7ec2361bfd5", null ],
     [ "substitute", "d4/dba/codeGenUtils_8cc.html#aa4e4834ac812b0cb4663112e4bd49eb2", null ]

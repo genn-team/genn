@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -113,10 +113,14 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4973a04263365c9a251098b7df644be0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a62576a6b780dbbb666f028081006652b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a62576a6b780dbbb666f028081006652b">open</a> (const std::string &amp;pathToModel, const std::string &amp;modelName)</td></tr>
 <tr class="separator:a62576a6b780dbbb666f028081006652b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad001c93e5f2632c5d6f191af52931223"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#ad001c93e5f2632c5d6f191af52931223">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, unsigned int count)</td></tr>
-<tr class="separator:ad001c93e5f2632c5d6f191af52931223"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9cbadd59366ff700844877084fa661be"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a9cbadd59366ff700844877084fa661be">freeExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName)</td></tr>
-<tr class="separator:a9cbadd59366ff700844877084fa661be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a12e8318b0e210e2e4529b7562e5ff800"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a12e8318b0e210e2e4529b7562e5ff800">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;egpName, unsigned int count)</td></tr>
+<tr class="separator:a12e8318b0e210e2e4529b7562e5ff800"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8500728c95b4d48ddd600456ea23ee28"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a8500728c95b4d48ddd600456ea23ee28">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, const std::string &amp;egpName, unsigned int count)</td></tr>
+<tr class="separator:a8500728c95b4d48ddd600456ea23ee28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22329447b2a6ef50ac0bec7e7f79a346"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a22329447b2a6ef50ac0bec7e7f79a346">freeExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;egpName)</td></tr>
+<tr class="separator:a22329447b2a6ef50ac0bec7e7f79a346"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bea2b336a4a5e95d32ec24893c343ab"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a8bea2b336a4a5e95d32ec24893c343ab">freeExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, const std::string &amp;egpName)</td></tr>
+<tr class="separator:a8bea2b336a4a5e95d32ec24893c343ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2e8b0538bef3905ae636174d70661b4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#ac2e8b0538bef3905ae636174d70661b4">pullStateFromDevice</a> (const std::string &amp;popName)</td></tr>
 <tr class="separator:ac2e8b0538bef3905ae636174d70661b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3a511a379b48ef2dd185846047d3210f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a3a511a379b48ef2dd185846047d3210f">pullSpikesFromDevice</a> (const std::string &amp;popName)</td></tr>
@@ -127,8 +131,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a4b7f7e6f05a42324a7313f0459e3f99b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af99fed274b4d6e768b7f2c23416685fe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#af99fed274b4d6e768b7f2c23416685fe">pullVarFromDevice</a> (const std::string &amp;popName, const std::string &amp;varName)</td></tr>
 <tr class="separator:af99fed274b4d6e768b7f2c23416685fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3c80e8caf4ef55b8879f57d9f7e30efa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a3c80e8caf4ef55b8879f57d9f7e30efa">pullExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, unsigned int count)</td></tr>
-<tr class="separator:a3c80e8caf4ef55b8879f57d9f7e30efa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf7929b9a306315df2b774feda4edb04"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aaf7929b9a306315df2b774feda4edb04">pullExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;egpName, unsigned int count)</td></tr>
+<tr class="separator:aaf7929b9a306315df2b774feda4edb04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56dc227e9e1273ce52da0f199e305945"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a56dc227e9e1273ce52da0f199e305945">pullExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, const std::string &amp;egpName, unsigned int count)</td></tr>
+<tr class="separator:a56dc227e9e1273ce52da0f199e305945"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab965f7b4609f77e1a78ad2cbdedc6591"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#ab965f7b4609f77e1a78ad2cbdedc6591">pushStateToDevice</a> (const std::string &amp;popName, bool uninitialisedOnly=false)</td></tr>
 <tr class="separator:ab965f7b4609f77e1a78ad2cbdedc6591"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38b5f014414ec355b06d60349797df22"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a38b5f014414ec355b06d60349797df22">pushSpikesToDevice</a> (const std::string &amp;popName, bool uninitialisedOnly=false)</td></tr>
@@ -139,8 +145,13 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a47221b4935e105ca2a09d0dfc0c58394"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aeb55925d39439c5b6d073fef80a60045"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aeb55925d39439c5b6d073fef80a60045">pushVarToDevice</a> (const std::string &amp;popName, const std::string &amp;varName, bool uninitialisedOnly=false)</td></tr>
 <tr class="separator:aeb55925d39439c5b6d073fef80a60045"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a81bc0052cc4f74d3c1dca19d2e0784"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a9a81bc0052cc4f74d3c1dca19d2e0784">pushExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, unsigned int count)</td></tr>
-<tr class="separator:a9a81bc0052cc4f74d3c1dca19d2e0784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54daca8dbff14e01c1bfd76510de5f44"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a54daca8dbff14e01c1bfd76510de5f44">pushExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;egpName, unsigned int count)</td></tr>
+<tr class="separator:a54daca8dbff14e01c1bfd76510de5f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade6903395fd342e4b3b1e47c43f44f5f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#ade6903395fd342e4b3b1e47c43f44f5f">pushExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, const std::string &amp;egpName, unsigned int count)</td></tr>
+<tr class="separator:ade6903395fd342e4b3b1e47c43f44f5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79fcf458218cd34378a45a80a8751b11"><td class="memTemplParams" colspan="2">template&lt;typename Writer , typename... WriterArgs&gt; </td></tr>
+<tr class="memitem:a79fcf458218cd34378a45a80a8751b11"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt; Writer &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a79fcf458218cd34378a45a80a8751b11">getSpikeRecorder</a> (const std::string &amp;popName, WriterArgs &amp;&amp;... writerArgs)</td></tr>
+<tr class="separator:a79fcf458218cd34378a45a80a8751b11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa84deec973dcc3684ccdf2793852322f"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:aa84deec973dcc3684ccdf2793852322f"><td class="memTemplItemLeft" align="right" valign="top">T *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aa84deec973dcc3684ccdf2793852322f">getArray</a> (const std::string &amp;varName)</td></tr>
 <tr class="separator:aa84deec973dcc3684ccdf2793852322f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -276,8 +287,52 @@ template&lt;typename scalar  = float&gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="ad001c93e5f2632c5d6f191af52931223"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad001c93e5f2632c5d6f191af52931223">&#9670;&nbsp;</a></span>allocateExtraGlobalParam()</h2>
+<a id="a12e8318b0e210e2e4529b7562e5ff800"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a12e8318b0e210e2e4529b7562e5ff800">&#9670;&nbsp;</a></span>allocateExtraGlobalParam() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::allocateExtraGlobalParam </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>popName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8500728c95b4d48ddd600456ea23ee28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8500728c95b4d48ddd600456ea23ee28">&#9670;&nbsp;</a></span>allocateExtraGlobalParam() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -298,6 +353,12 @@ template&lt;typename scalar  = float&gt; </div>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -347,8 +408,8 @@ template&lt;typename scalar  = float&gt; </div>
 
 </div>
 </div>
-<a id="a9cbadd59366ff700844877084fa661be"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9cbadd59366ff700844877084fa661be">&#9670;&nbsp;</a></span>freeExtraGlobalParam()</h2>
+<a id="a22329447b2a6ef50ac0bec7e7f79a346"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22329447b2a6ef50ac0bec7e7f79a346">&#9670;&nbsp;</a></span>freeExtraGlobalParam() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -368,7 +429,51 @@ template&lt;typename scalar  = float&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>varName</em>&#160;</td>
+          <td class="paramname"><em>egpName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8bea2b336a4a5e95d32ec24893c343ab"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8bea2b336a4a5e95d32ec24893c343ab">&#9670;&nbsp;</a></span>freeExtraGlobalParam() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::freeExtraGlobalParam </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>popName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -623,6 +728,46 @@ template&lt;typename T &gt; </div>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>varName</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a79fcf458218cd34378a45a80a8751b11"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a79fcf458218cd34378a45a80a8751b11">&#9670;&nbsp;</a></span>getSpikeRecorder()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<div class="memtemplate">
+template&lt;typename Writer , typename... WriterArgs&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt;Writer&gt; <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::getSpikeRecorder </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>popName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">WriterArgs &amp;&amp;...&#160;</td>
+          <td class="paramname"><em>writerArgs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -907,8 +1052,52 @@ template&lt;typename scalar  = float&gt; </div>
 
 </div>
 </div>
-<a id="a3c80e8caf4ef55b8879f57d9f7e30efa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3c80e8caf4ef55b8879f57d9f7e30efa">&#9670;&nbsp;</a></span>pullExtraGlobalParam()</h2>
+<a id="aaf7929b9a306315df2b774feda4edb04"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf7929b9a306315df2b774feda4edb04">&#9670;&nbsp;</a></span>pullExtraGlobalParam() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::pullExtraGlobalParam </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>popName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a56dc227e9e1273ce52da0f199e305945"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56dc227e9e1273ce52da0f199e305945">&#9670;&nbsp;</a></span>pullExtraGlobalParam() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -929,6 +1118,12 @@ template&lt;typename scalar  = float&gt; </div>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1121,8 +1316,52 @@ template&lt;typename scalar  = float&gt; </div>
 
 </div>
 </div>
-<a id="a9a81bc0052cc4f74d3c1dca19d2e0784"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9a81bc0052cc4f74d3c1dca19d2e0784">&#9670;&nbsp;</a></span>pushExtraGlobalParam()</h2>
+<a id="a54daca8dbff14e01c1bfd76510de5f44"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a54daca8dbff14e01c1bfd76510de5f44">&#9670;&nbsp;</a></span>pushExtraGlobalParam() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::pushExtraGlobalParam </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>popName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>count</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ade6903395fd342e4b3b1e47c43f44f5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade6903395fd342e4b3b1e47c43f44f5f">&#9670;&nbsp;</a></span>pushExtraGlobalParam() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1143,6 +1382,12 @@ template&lt;typename scalar  = float&gt; </div>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>egpName</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1377,7 +1622,7 @@ template&lt;typename scalar  = float&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:16 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:24 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

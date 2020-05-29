@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -161,6 +161,12 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a77badded2963f6e73982f6f2c0c4eacc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCurrentSource.html#a77badded2963f6e73982f6f2c0c4eacc">isInitRNGRequired</a> () const</td></tr>
 <tr class="memdesc:a77badded2963f6e73982f6f2c0c4eacc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this current source group require an RNG for it's init code.  <a href="#a77badded2963f6e73982f6f2c0c4eacc">More...</a><br /></td></tr>
 <tr class="separator:a77badded2963f6e73982f6f2c0c4eacc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae45bd70e908b89b2bf43ce3d04b508c3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCurrentSource.html#ae45bd70e908b89b2bf43ce3d04b508c3">canBeMerged</a> (const <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> &amp;other) const</td></tr>
+<tr class="memdesc:ae45bd70e908b89b2bf43ce3d04b508c3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this current source be merged with other? i.e. can they be simulated using same generated code.  <a href="#ae45bd70e908b89b2bf43ce3d04b508c3">More...</a><br /></td></tr>
+<tr class="separator:ae45bd70e908b89b2bf43ce3d04b508c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27ef38617ceb1eaf3204c45fb0c7dd91"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCurrentSource.html#a27ef38617ceb1eaf3204c45fb0c7dd91">canInitBeMerged</a> (const <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> &amp;other) const</td></tr>
+<tr class="memdesc:a27ef38617ceb1eaf3204c45fb0c7dd91"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can the initialisation of these current sources be merged together? i.e. can they be initialised using same generated code.  <a href="#a27ef38617ceb1eaf3204c45fb0c7dd91">More...</a><br /></td></tr>
+<tr class="separator:a27ef38617ceb1eaf3204c45fb0c7dd91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a23699d48b18506030c0d5afdf72ffd20"></a>
@@ -275,6 +281,64 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="ae45bd70e908b89b2bf43ce3d04b508c3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae45bd70e908b89b2bf43ce3d04b508c3">&#9670;&nbsp;</a></span>canBeMerged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CurrentSource::canBeMerged </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Can this current source be merged with other? i.e. can they be simulated using same generated code. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="a27ef38617ceb1eaf3204c45fb0c7dd91"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27ef38617ceb1eaf3204c45fb0c7dd91">&#9670;&nbsp;</a></span>canInitBeMerged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CurrentSource::canInitBeMerged </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Can the initialisation of these current sources be merged together? i.e. can they be initialised using same generated code. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
 <a id="a4db1f74f237b66e235981ea290d86ada"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4db1f74f237b66e235981ea290d86ada">&#9670;&nbsp;</a></span>getCurrentSourceModel()</h2>
 
@@ -651,7 +715,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:14 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

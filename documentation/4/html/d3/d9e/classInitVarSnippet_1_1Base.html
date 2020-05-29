@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -108,13 +108,15 @@ Inheritance diagram for InitVarSnippet::Base:</div>
  <div class="center">
   <img src="../../d3/d9e/classInitVarSnippet_1_1Base.png" usemap="#InitVarSnippet::Base_map" alt=""/>
   <map id="InitVarSnippet::Base_map" name="InitVarSnippet::Base_map">
-<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="435,0,599,24"/>
-<area href="../../dd/dcb/classInitVarSnippet_1_1Constant.html" title="Initialises variable to a constant value. " alt="InitVarSnippet::Constant" shape="rect" coords="0,112,164,136"/>
-<area href="../../d8/d70/classInitVarSnippet_1_1Exponential.html" title="Initialises variable by sampling from the exponential distribution. " alt="InitVarSnippet::Exponential" shape="rect" coords="174,112,338,136"/>
-<area href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the exponential distribution. " alt="InitVarSnippet::Gamma" shape="rect" coords="348,112,512,136"/>
-<area href="../../d5/dc1/classInitVarSnippet_1_1Normal.html" title="Initialises variable by sampling from the normal distribution. " alt="InitVarSnippet::Normal" shape="rect" coords="522,112,686,136"/>
-<area href="../../dd/da0/classInitVarSnippet_1_1Uniform.html" title="Initialises variable by sampling from the uniform distribution. " alt="InitVarSnippet::Uniform" shape="rect" coords="696,112,860,136"/>
-<area href="../../d9/db6/classInitVarSnippet_1_1Uninitialised.html" title="Used to mark variables as uninitialised - no initialisation code will be run. " alt="InitVarSnippet::Uninitialised" shape="rect" coords="870,112,1034,136"/>
+<area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="0,0,213,24"/>
+<area href="../../dd/dcb/classInitVarSnippet_1_1Constant.html" title="Initialises variable to a constant value. " alt="InitVarSnippet::Constant" shape="rect" coords="223,112,436,136"/>
+<area href="../../d8/d70/classInitVarSnippet_1_1Exponential.html" title="Initialises variable by sampling from the exponential distribution. " alt="InitVarSnippet::Exponential" shape="rect" coords="223,168,436,192"/>
+<area href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the exponential distribution. " alt="InitVarSnippet::Gamma" shape="rect" coords="223,224,436,248"/>
+<area href="../../d5/dc1/classInitVarSnippet_1_1Normal.html" title="Initialises variable by sampling from the normal distribution. " alt="InitVarSnippet::Normal" shape="rect" coords="223,280,436,304"/>
+<area href="../../d7/d22/classInitVarSnippet_1_1NormalClipped.html" alt="InitVarSnippet::NormalClipped" shape="rect" coords="223,336,436,360"/>
+<area href="../../d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html" alt="InitVarSnippet::NormalClippedDelay" shape="rect" coords="223,392,436,416"/>
+<area href="../../dd/da0/classInitVarSnippet_1_1Uniform.html" title="Initialises variable by sampling from the uniform distribution. " alt="InitVarSnippet::Uniform" shape="rect" coords="223,448,436,472"/>
+<area href="../../d9/db6/classInitVarSnippet_1_1Uninitialised.html" title="Used to mark variables as uninitialised - no initialisation code will be run. " alt="InitVarSnippet::Uninitialised" shape="rect" coords="223,504,436,528"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -122,6 +124,9 @@ Inheritance diagram for InitVarSnippet::Base:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa3b44c4812a379342d46f8a9f5a0fcbf"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d9e/classInitVarSnippet_1_1Base.html#aa3b44c4812a379342d46f8a9f5a0fcbf">getCode</a> () const</td></tr>
 <tr class="separator:aa3b44c4812a379342d46f8a9f5a0fcbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03840013717fcecc0660000e42aa6bc1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d9e/classInitVarSnippet_1_1Base.html#a03840013717fcecc0660000e42aa6bc1">canBeMerged</a> (const <a class="el" href="../../d3/d9e/classInitVarSnippet_1_1Base.html">Base</a> *other) const</td></tr>
+<tr class="memdesc:a03840013717fcecc0660000e42aa6bc1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this neuron model be merged with other? i.e. can they be simulated using same generated code.  <a href="#a03840013717fcecc0660000e42aa6bc1">More...</a><br /></td></tr>
+<tr class="separator:a03840013717fcecc0660000e42aa6bc1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a17a9ca158277401f2c190afb1e791d1f inherit pub_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a17a9ca158277401f2c190afb1e791d1f">~Base</a> ()</td></tr>
 <tr class="separator:a17a9ca158277401f2c190afb1e791d1f inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -130,6 +135,11 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aad4f3bb00c5f29cb9d0e3585db3f4e20 inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a450c7783570d875e19bcd8a88d10bbf6 inherit pub_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#ad14217cebf11eddffa751a4d5c4792cb">DerivedParamVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a450c7783570d875e19bcd8a88d10bbf6">getDerivedParams</a> () const</td></tr>
 <tr class="separator:a450c7783570d875e19bcd8a88d10bbf6 inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acae8a5d250c2b75e8c5e1ec944cbe314 inherit pub_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6">EGPVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#acae8a5d250c2b75e8c5e1ec944cbe314">getExtraGlobalParams</a> () const</td></tr>
+<tr class="separator:acae8a5d250c2b75e8c5e1ec944cbe314 inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a255afab75f23b3e49f14b13f413b23aa inherit pub_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a255afab75f23b3e49f14b13f413b23aa">getExtraGlobalParamIndex</a> (const std::string &amp;paramName) const</td></tr>
+<tr class="memdesc:a255afab75f23b3e49f14b13f413b23aa inherit pub_methods_classSnippet_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Find the index of a named extra global parameter.  <a href="../../db/d97/classSnippet_1_1Base.html#a255afab75f23b3e49f14b13f413b23aa">More...</a><br /></td></tr>
+<tr class="separator:a255afab75f23b3e49f14b13f413b23aa inherit pub_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
@@ -142,12 +152,35 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:a0156727ddf8f9c9cbcbc0d3d913b6b48 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad14217cebf11eddffa751a4d5c4792cb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="../../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html">DerivedParam</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#ad14217cebf11eddffa751a4d5c4792cb">DerivedParamVec</a></td></tr>
 <tr class="separator:ad14217cebf11eddffa751a4d5c4792cb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="inherit_header pro_methods_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
+<tr class="memitem:a9d722773e634fc452ddc257027f85faf inherit pro_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9d722773e634fc452ddc257027f85faf">canBeMerged</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Base</a> *other) const</td></tr>
+<tr class="separator:a9d722773e634fc452ddc257027f85faf inherit pro_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_static_methods_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_static_methods_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Static Protected Member Functions inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a971c6611ab5994a31d6f21badb54c975 inherit pro_static_methods_classSnippet_1_1Base"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a971c6611ab5994a31d6f21badb54c975 inherit pro_static_methods_classSnippet_1_1Base"><td class="memTemplItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a971c6611ab5994a31d6f21badb54c975">getNamedVecIndex</a> (const std::string &amp;name, const std::vector&lt; T &gt; &amp;vec)</td></tr>
 <tr class="separator:a971c6611ab5994a31d6f21badb54c975 inherit pro_static_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a03840013717fcecc0660000e42aa6bc1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03840013717fcecc0660000e42aa6bc1">&#9670;&nbsp;</a></span>canBeMerged()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool InitVarSnippet::Base::canBeMerged </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d3/d9e/classInitVarSnippet_1_1Base.html">Base</a> *&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Can this neuron model be merged with other? i.e. can they be simulated using same generated code. </p>
+
+</div>
+</div>
 <a id="aa3b44c4812a379342d46f8a9f5a0fcbf"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa3b44c4812a379342d46f8a9f5a0fcbf">&#9670;&nbsp;</a></span>getCode()</h2>
 
@@ -173,8 +206,9 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following file:<ul>
+<hr/>The documentation for this class was generated from the following files:<ul>
 <li><a class="el" href="../../d9/ddf/initVarSnippet_8h_source.html">initVarSnippet.h</a></li>
+<li><a class="el" href="../../d1/dfe/initVarSnippet_8cc.html">initVarSnippet.cc</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -182,7 +216,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d2/dfc/namespaceInitVarSnippet.html">InitVarSnippet</a></li><li class="navelem"><a class="el" href="../../d3/d9e/classInitVarSnippet_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:25 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:37 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

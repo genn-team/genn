@@ -1,5 +1,6 @@
 var classNeuronModels_1_1Base =
 [
+    [ "canBeMerged", "d7/dad/classNeuronModels_1_1Base.html#a53f6db4e53abb7c337170c24011a35ec", null ],
     [ "getAdditionalInputVars", "d7/dad/classNeuronModels_1_1Base.html#a31b37d82e943c8f8e9221f0012411eca", null ],
     [ "getResetCode", "d7/dad/classNeuronModels_1_1Base.html#a723efc11dd8743ec033ab9b0f8f0ac7e", null ],
     [ "getSimCode", "d7/dad/classNeuronModels_1_1Base.html#a86ee36307800205642da8b80b20deb18", null ],

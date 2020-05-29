@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -123,8 +123,14 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>GetCurrentSpikesFunc
 : <a class="el" href="dd/d9b/classSpikeRecorder.html#a669f71a4fa8b383541e6d3bc98141184">SpikeRecorder&lt; Writer &gt;</a>
 </li>
+<li>GetFieldValueFunc
+: <a class="el" href="dc/d85/classCodeGenerator_1_1MergedStructGenerator.html#a3e36010b66fe34fac4fe409b0f8f9e50">CodeGenerator::MergedStructGenerator&lt; T &gt;</a>
+</li>
 <li>GroupHandler
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">CodeGenerator::BackendBase</a>
+</li>
+<li>GroupInternal
+: <a class="el" href="df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">CodeGenerator::GroupMerged&lt; G &gt;</a>
 </li>
 </ul>
 
@@ -133,18 +139,34 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>Handler
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">CodeGenerator::BackendBase</a>
 </li>
+<li>HostHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">CodeGenerator::BackendBase</a>
+</li>
+</ul>
+
+
+<h3><a id="index_m"></a>- m -</h3><ul>
+<li>MemorySpaces
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">CodeGenerator::BackendBase</a>
+</li>
+<li>MergedEGPMap
+: <a class="el" href="d2/dbe/classCodeGenerator_1_1MergedStructData.html#a53f99576377339aa0da8ff61a3be5d70">CodeGenerator::MergedStructData</a>
+</li>
 </ul>
 
 
 <h3><a id="index_n"></a>- n -</h3><ul>
-<li>NeuronGroupHandler
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a55e34429d3f08186318fe811d5bc6531">CodeGenerator::BackendBase</a>
-</li>
 <li>NeuronGroupSimHandler
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a938379883f4cdf06998dd969a3d74a73">CodeGenerator::BackendBase</a>
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">CodeGenerator::BackendBase</a>
 </li>
 <li>NeuronGroupValueType
 : <a class="el" href="da/dfd/classModelSpec.html#ac724c12166b5ee5fb4492277c1d8deb5">ModelSpec</a>
+</li>
+<li>NeuronInitGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">CodeGenerator::BackendBase</a>
+</li>
+<li>NeuronUpdateGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">CodeGenerator::BackendBase</a>
 </li>
 </ul>
 
@@ -153,6 +175,7 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>ParamValues
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#a3999840df60dc6284d6209e8f21f72b3">CurrentSourceModels::DC</a>
 , <a class="el" href="d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a306b35cee4a320067542a8cc3c4ce6a3">CurrentSourceModels::GaussianNoise</a>
+, <a class="el" href="d6/d0b/classCurrentSourceModels_1_1PoissonExp.html#a8a3ed6156e02dc786d7e1d20e8f25708">CurrentSourceModels::PoissonExp</a>
 , <a class="el" href="d7/d0a/classNeuronModels_1_1Izhikevich.html#ae94c10cb33862aef367793f56cdbddd8">NeuronModels::Izhikevich</a>
 , <a class="el" href="dc/d87/classNeuronModels_1_1IzhikevichVariable.html#a96e038918c5db3058040d60e6e67c400">NeuronModels::IzhikevichVariable</a>
 , <a class="el" href="d0/d6d/classNeuronModels_1_1LIF.html#a72afa71cfddb72bd8a58a2d3a485fa4d">NeuronModels::LIF</a>
@@ -172,9 +195,13 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>ParamValVec
 : <a class="el" href="db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48">Snippet::Base</a>
 </li>
+<li>PostsynapticUpdateGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">CodeGenerator::BackendBase</a>
+</li>
 <li>PostVarValues
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#a961309e28760d0e81122bb660716aa54">CurrentSourceModels::DC</a>
 , <a class="el" href="d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#aa2774064d89602d90e78cb4a503736a0">CurrentSourceModels::GaussianNoise</a>
+, <a class="el" href="d6/d0b/classCurrentSourceModels_1_1PoissonExp.html#ab8efc9e53fa46fa8edfce854ebb608a1">CurrentSourceModels::PoissonExp</a>
 , <a class="el" href="d7/d0a/classNeuronModels_1_1Izhikevich.html#a674301f3dc07282505a2350217791ee0">NeuronModels::Izhikevich</a>
 , <a class="el" href="dc/d87/classNeuronModels_1_1IzhikevichVariable.html#aa35945b830120db0dddbc465f1e724fa">NeuronModels::IzhikevichVariable</a>
 , <a class="el" href="d0/d6d/classNeuronModels_1_1LIF.html#aeffcbbbab2fa431e151fe80a5ac1bf6d">NeuronModels::LIF</a>
@@ -191,9 +218,13 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 , <a class="el" href="d5/d27/classPostsynapticModels_1_1ExpCond.html#ad851b9cfc3d0601f0464ff0eda9b6479">PostsynapticModels::ExpCond</a>
 , <a class="el" href="d5/d1e/classPostsynapticModels_1_1ExpCurr.html#a13b9ec21322cb9db92ca490949ddefa6">PostsynapticModels::ExpCurr</a>
 </li>
+<li>PresynapticUpdateGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">CodeGenerator::BackendBase</a>
+</li>
 <li>PreVarValues
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#a979def8db5dd3d0bd585afe965f93698">CurrentSourceModels::DC</a>
 , <a class="el" href="d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a077dd38255bda0c91be7b343ba71b72c">CurrentSourceModels::GaussianNoise</a>
+, <a class="el" href="d6/d0b/classCurrentSourceModels_1_1PoissonExp.html#a88463ef3c0b3f2ea94169be15594f270">CurrentSourceModels::PoissonExp</a>
 , <a class="el" href="d7/d0a/classNeuronModels_1_1Izhikevich.html#a59bb450aa8a6e840d9445d52095c1486">NeuronModels::Izhikevich</a>
 , <a class="el" href="dc/d87/classNeuronModels_1_1IzhikevichVariable.html#a7a76ca4abb9214d8da22bd2987906e26">NeuronModels::IzhikevichVariable</a>
 , <a class="el" href="d0/d6d/classNeuronModels_1_1LIF.html#abcaa32e32259e7a2cc983645b71f8dfb">NeuronModels::LIF</a>
@@ -220,11 +251,20 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>StringVec
 : <a class="el" href="db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">Snippet::Base</a>
 </li>
-<li>SynapseGroupHandler
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">CodeGenerator::BackendBase</a>
+<li>SynapseConnectivityInitMergedGroupHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">CodeGenerator::BackendBase</a>
+</li>
+<li>SynapseDenseInitGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">CodeGenerator::BackendBase</a>
+</li>
+<li>SynapseDynamicsGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">CodeGenerator::BackendBase</a>
 </li>
 <li>SynapseGroupValueType
 : <a class="el" href="da/dfd/classModelSpec.html#a8af14d4e037788bb97854c4d0da801df">ModelSpec</a>
+</li>
+<li>SynapseSparseInitGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">CodeGenerator::BackendBase</a>
 </li>
 </ul>
 
@@ -233,6 +273,7 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>VarValues
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#a5f87cf43404ed2416185be2e85f6bd74">CurrentSourceModels::DC</a>
 , <a class="el" href="d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a28b334e3b77583f34c5b64330307a856">CurrentSourceModels::GaussianNoise</a>
+, <a class="el" href="d6/d0b/classCurrentSourceModels_1_1PoissonExp.html#aeeca68627c4dc95d48e4ef0f6afaffc7">CurrentSourceModels::PoissonExp</a>
 , <a class="el" href="d7/d0a/classNeuronModels_1_1Izhikevich.html#aed21c7cc4971268506c9114d17e6bf22">NeuronModels::Izhikevich</a>
 , <a class="el" href="dc/d87/classNeuronModels_1_1IzhikevichVariable.html#adbf8876ce890d29615b5f4e3bd9ac46a">NeuronModels::IzhikevichVariable</a>
 , <a class="el" href="d0/d6d/classNeuronModels_1_1LIF.html#a77d46529f1b92cf61dc2cb2152e24294">NeuronModels::LIF</a>
@@ -258,7 +299,7 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:57 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:53:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

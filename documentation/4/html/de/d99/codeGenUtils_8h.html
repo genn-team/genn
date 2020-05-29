@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -101,20 +101,28 @@ $(document).ready(function(){initNavTree('de/d99/codeGenUtils_8h.html','../../')
 <div class="title">codeGenUtils.h File Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><code>#include &lt;iomanip&gt;</code><br />
-<code>#include &lt;limits&gt;</code><br />
+<div class="textblock"><code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;set&gt;</code><br />
 <code>#include &lt;string&gt;</code><br />
-<code>#include &lt;sstream&gt;</code><br />
+<code>#include &lt;unordered_map&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
-<code>#include &quot;<a class="el" href="../../d4/d13/models_8h_source.html">models.h</a>&quot;</code><br />
-<code>#include &quot;<a class="el" href="../../de/d6c/snippet_8h_source.html">snippet.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d1/d8e/gennExport_8h_source.html">gennExport.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/d59/gennUtils_8h_source.html">gennUtils.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d2/dfe/neuronGroupInternal_8h_source.html">neuronGroupInternal.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d6/d8f/variableMode_8h_source.html">variableMode.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/d67/backendBase_8h_source.html">backendBase.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d0/dbb/codeStream_8h_source.html">codeStream.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/d7a/substitutions_8h_source.html">substitutions.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d5/dff/teeStream_8h_source.html">teeStream.h</a>&quot;</code><br />
 </div>
 <p><a href="../../de/d99/codeGenUtils_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/df1/structCodeGenerator_1_1FunctionTemplate.html">CodeGenerator::FunctionTemplate</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/dbe/classCodeGenerator_1_1MergedStructData.html">CodeGenerator::MergedStructData</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html">CodeGenerator::MergedStructData::MergedEGP</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Immutable structure for tracking where an extra global variable ends up after merging.  <a href="../../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -137,35 +145,27 @@ Functions</h2></td></tr>
 <tr class="memitem:a7308be23a7721f3913894290bcdd7831"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a7308be23a7721f3913894290bcdd7831">CodeGenerator::functionSubstitute</a> (std::string &amp;code, const std::string &amp;funcName, unsigned int numParams, const std::string &amp;replaceFuncTemplate)</td></tr>
 <tr class="memdesc:a7308be23a7721f3913894290bcdd7831"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function substitutes function calls in the form:  <a href="../../d0/d02/namespaceCodeGenerator.html#a7308be23a7721f3913894290bcdd7831">More...</a><br /></td></tr>
 <tr class="separator:a7308be23a7721f3913894290bcdd7831"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab6085ea1d46a8959cf26df18c9675b61"><td class="memTemplParams" colspan="2">template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &gt;::value &gt;::type *  = nullptr&gt; </td></tr>
-<tr class="memitem:ab6085ea1d46a8959cf26df18c9675b61"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#ab6085ea1d46a8959cf26df18c9675b61">CodeGenerator::writePreciseString</a> (std::ostream &amp;os, T value)</td></tr>
-<tr class="memdesc:ab6085ea1d46a8959cf26df18c9675b61"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function writes a floating point value to a stream -setting the precision so no digits are lost.  <a href="../../d0/d02/namespaceCodeGenerator.html#ab6085ea1d46a8959cf26df18c9675b61">More...</a><br /></td></tr>
-<tr class="separator:ab6085ea1d46a8959cf26df18c9675b61"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ada66f2dbbdc1120868dcdd7e994d467c"><td class="memTemplParams" colspan="2">template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &gt;::value &gt;::type *  = nullptr&gt; </td></tr>
-<tr class="memitem:ada66f2dbbdc1120868dcdd7e994d467c"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#ada66f2dbbdc1120868dcdd7e994d467c">CodeGenerator::writePreciseString</a> (T value)</td></tr>
-<tr class="memdesc:ada66f2dbbdc1120868dcdd7e994d467c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function writes a floating point value to a string - setting the precision so no digits are lost.  <a href="../../d0/d02/namespaceCodeGenerator.html#ada66f2dbbdc1120868dcdd7e994d467c">More...</a><br /></td></tr>
-<tr class="separator:ada66f2dbbdc1120868dcdd7e994d467c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a38f97aa2e801ffd3aedff316b4827b1c"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a38f97aa2e801ffd3aedff316b4827b1c">CodeGenerator::ceilDivide</a> (size_t numerator, size_t denominator)</td></tr>
 <tr class="memdesc:a38f97aa2e801ffd3aedff316b4827b1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Divide two integers, rounding up i.e. effectively taking ceil.  <a href="../../d0/d02/namespaceCodeGenerator.html#a38f97aa2e801ffd3aedff316b4827b1c">More...</a><br /></td></tr>
 <tr class="separator:a38f97aa2e801ffd3aedff316b4827b1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af83b93cdf22728d8973b5f6dae21b2f6"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#af83b93cdf22728d8973b5f6dae21b2f6">CodeGenerator::padSize</a> (size_t size, size_t blockSize)</td></tr>
 <tr class="memdesc:af83b93cdf22728d8973b5f6dae21b2f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pad an integer to a multiple of another.  <a href="../../d0/d02/namespaceCodeGenerator.html#af83b93cdf22728d8973b5f6dae21b2f6">More...</a><br /></td></tr>
 <tr class="separator:af83b93cdf22728d8973b5f6dae21b2f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aec5eff3312a298b457c6a20b4c8dc673"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:aec5eff3312a298b457c6a20b4c8dc673"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#aec5eff3312a298b457c6a20b4c8dc673">CodeGenerator::genMergedGroupPush</a> (CodeStream &amp;os, const std::vector&lt; T &gt; &amp;groups, const MergedStructData &amp;mergedStructData, const std::string &amp;suffix, const BackendBase &amp;backend, BackendBase::MemorySpaces &amp;memorySpaces)</td></tr>
+<tr class="separator:aec5eff3312a298b457c6a20b4c8dc673"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a31edfe13f230e73808699a318b0bf70a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a31edfe13f230e73808699a318b0bf70a">CodeGenerator::genScalarEGPPush</a> (CodeStream &amp;os, const MergedStructData &amp;mergedStructData, const std::string &amp;suffix, const BackendBase &amp;backend)</td></tr>
+<tr class="separator:a31edfe13f230e73808699a318b0bf70a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22199ae12a7875826210e2f57ee0b1ee"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee">CodeGenerator::ensureFtype</a> (const std::string &amp;oldcode, const std::string &amp;type)</td></tr>
 <tr class="memdesc:a22199ae12a7875826210e2f57ee0b1ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).  <a href="../../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee">More...</a><br /></td></tr>
 <tr class="separator:a22199ae12a7875826210e2f57ee0b1ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10af4d74175240a715403e6b5f2103cf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">CodeGenerator::checkUnreplacedVariables</a> (const std::string &amp;code, const std::string &amp;codeName)</td></tr>
 <tr class="memdesc:a10af4d74175240a715403e6b5f2103cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function checks for unknown variable definitions and returns a gennError if any are found.  <a href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">More...</a><br /></td></tr>
 <tr class="separator:a10af4d74175240a715403e6b5f2103cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6f111f70eb87a0fae09fc1bf755fea9b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a6f111f70eb87a0fae09fc1bf755fea9b">CodeGenerator::preNeuronSubstitutionsInSynapticCode</a> (Substitutions &amp;substitutions, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;offset, const std::string &amp;axonalDelayOffset, const std::string &amp;postIdx, const std::string &amp;devPrefix, const std::string &amp;preVarPrefix=&quot;&quot;, const std::string &amp;preVarSuffix=&quot;&quot;)</td></tr>
-<tr class="memdesc:a6f111f70eb87a0fae09fc1bf755fea9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for presynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="../../d0/d02/namespaceCodeGenerator.html#a6f111f70eb87a0fae09fc1bf755fea9b">More...</a><br /></td></tr>
-<tr class="separator:a6f111f70eb87a0fae09fc1bf755fea9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acc546df68c6a87e2e08a6935fa0e68f7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#acc546df68c6a87e2e08a6935fa0e68f7">CodeGenerator::postNeuronSubstitutionsInSynapticCode</a> (Substitutions &amp;substitutions, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;offset, const std::string &amp;backPropDelayOffset, const std::string &amp;preIdx, const std::string &amp;devPrefix, const std::string &amp;postVarPrefix=&quot;&quot;, const std::string &amp;postVarSuffix=&quot;&quot;)</td></tr>
-<tr class="memdesc:acc546df68c6a87e2e08a6935fa0e68f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">suffix to be used for postsynaptic variable accesses - typically combined with prefix to wrap in function call such as __ldg(&amp;XXX)  <a href="../../d0/d02/namespaceCodeGenerator.html#acc546df68c6a87e2e08a6935fa0e68f7">More...</a><br /></td></tr>
-<tr class="separator:acc546df68c6a87e2e08a6935fa0e68f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aeffa872d440945d9d6170adff0fc8c11"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#aeffa872d440945d9d6170adff0fc8c11">CodeGenerator::neuronSubstitutionsInSynapticCode</a> (Substitutions &amp;substitutions, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const std::string &amp;preIdx, const std::string &amp;postIdx, const std::string &amp;devPrefix, double dt, const std::string &amp;preVarPrefix=&quot;&quot;, const std::string &amp;preVarSuffix=&quot;&quot;, const std::string &amp;postVarPrefix=&quot;&quot;, const std::string &amp;postVarSuffix=&quot;&quot;)</td></tr>
-<tr class="memdesc:aeffa872d440945d9d6170adff0fc8c11"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="../../d0/d02/namespaceCodeGenerator.html#aeffa872d440945d9d6170adff0fc8c11">More...</a><br /></td></tr>
-<tr class="separator:aeffa872d440945d9d6170adff0fc8c11"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab02197d02e37befa6c995d17294af73c"><td class="memTemplParams" colspan="2">template&lt;typename P , typename D &gt; </td></tr>
+<tr class="memitem:ab02197d02e37befa6c995d17294af73c"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#ab02197d02e37befa6c995d17294af73c">CodeGenerator::neuronSubstitutionsInSynapticCode</a> (<a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;substitutions, const <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> *archetypeNG, const std::string &amp;offset, const std::string &amp;delayOffset, const std::string &amp;idx, const std::string &amp;sourceSuffix, const std::string &amp;destSuffix, const std::string &amp;varPrefix, const std::string &amp;varSuffix, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)</td></tr>
+<tr class="memdesc:ab02197d02e37befa6c995d17294af73c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.  <a href="../../d0/d02/namespaceCodeGenerator.html#ab02197d02e37befa6c995d17294af73c">More...</a><br /></td></tr>
+<tr class="separator:ab02197d02e37befa6c995d17294af73c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -173,7 +173,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_bfcf4f9550e1b5a58432e10443191e70.html">code_generator</a></li><li class="navelem"><a class="el" href="../../de/d99/codeGenUtils_8h.html">codeGenUtils.h</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:11 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:18 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

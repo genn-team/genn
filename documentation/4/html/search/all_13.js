@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['rationalapproximation',['rationalApproximation',['../df/d38/normalDistribution_8h.html#a0d1594b19d534bdc01be681a2f8ffd72',1,'normalDistribution.h']]],
   ['read_5fonly',['READ_ONLY',['../d4/d13/models_8h.html#a5a5f7e906a7fdc27f3e5eb66b7115240a47c7e7cb36a953a8c47e02000036bb44',1,'models.h']]],
   ['read_5fwrite',['READ_WRITE',['../d4/d13/models_8h.html#a5a5f7e906a7fdc27f3e5eb66b7115240aa7b843fb734e3b3fea8e5f902d3f4144',1,'models.h']]],
   ['receive',['receive',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#abe7143dbd8fe8f3a9286315aab657bf2',1,'SpineMLSimulator::NetworkClient']]],
@@ -9,8 +10,9 @@ var searchData=
   ['regexfuncsubstitute',['regexFuncSubstitute',['../d0/d02/namespaceCodeGenerator.html#a6f8f82386dbf754701a2c5968614594f',1,'CodeGenerator']]],
   ['regexvarsubstitute',['regexVarSubstitute',['../d0/d02/namespaceCodeGenerator.html#a80838daf20cefe142f4af7ec2361bfd5',1,'CodeGenerator']]],
   ['regularspikerate',['RegularSpikeRate',['../d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html',1,'SpineMLSimulator::Input::RegularSpikeRate'],['../d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html#af68c1a6596cfecec9afde2a78e8b7441',1,'SpineMLSimulator::Input::RegularSpikeRate::RegularSpikeRate()']]],
-  ['reinitialise',['reinitialise',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#aad5a7be34e8bf7ee1ef233b094e8cbd9',1,'pygenn.genn_groups.NeuronGroup.reinitialise()'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aec3de8b797bcc7ef6ec7d2c7f9a41e6f',1,'pygenn.genn_groups.SynapseGroup.reinitialise()'],['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a0593259780b1ea7857b9a37a5456f391',1,'pygenn.genn_groups.CurrentSource.reinitialise()'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2',1,'pygenn.genn_model.GeNNModel.reinitialise()']]],
+  ['reinitialise',['reinitialise',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0aff9793321ff449d330915d64f1da13',1,'pygenn.genn_groups.NeuronGroup.reinitialise()'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a32f140cac7c05bac242e956346553384',1,'pygenn.genn_groups.SynapseGroup.reinitialise()'],['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#afa9d5db2fa981e746ad33e7e32f43794',1,'pygenn.genn_groups.CurrentSource.reinitialise()'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2',1,'pygenn.genn_model.GeNNModel.reinitialise()']]],
   ['release_20notes',['Release Notes',['../df/ddb/ReleaseNotes.html',1,'']]],
+  ['role',['Role',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1',1,'CodeGenerator::SynapseGroupMergedBase']]],
   ['row_5flengths',['row_lengths',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#adeae076892f9c8028bb381f4691ce6c3',1,'pygenn::genn_groups::SynapseGroup']]],
   ['rulkovmap',['RulkovMap',['../db/d23/classNeuronModels_1_1RulkovMap.html',1,'NeuronModels']]],
   ['runtools',['runTools',['../d4/d40/classGenerateRunBase.html#a02db3a39c6c39f63724066a308cd7c8e',1,'GenerateRunBase']]]

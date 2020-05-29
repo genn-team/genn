@@ -1,6 +1,6 @@
 var classpygenn_1_1genn__groups_1_1SynapseGroup =
 [
-    [ "__init__", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ada93239064c29c7587a3cc23c7a26b1b", null ],
+    [ "__init__", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a3f1cad39927cdce8e59bd4d071303d4b", null ],
     [ "add_extra_global_param", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac5806934aaf2a806aa7d5e6199f07335", null ],
     [ "add_to", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7661170e06a9fbc945f697599618a285", null ],
     [ "get_sparse_post_inds", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8e3a0f310ee5ce1afcfffea3eb0fe67c", null ],
@@ -12,13 +12,15 @@ var classpygenn_1_1genn__groups_1_1SynapseGroup =
     [ "is_connectivity_init_required", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a50c4e431ff060ee5156ee78113c75908", null ],
     [ "is_dense", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac4de8bf08ebcf36115712b639dee0b3f", null ],
     [ "is_ragged", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aeda75ea52b1cc1c75444a0371fe4b664", null ],
-    [ "load", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a1b67ba944d1622a571a79a1040918419", null ],
-    [ "load_connectivity_init_egps", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aca21be64509f5146cb9fa4425995e6b1", null ],
+    [ "load", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a54678edce2755ba36d995da8f4e00ba8", null ],
+    [ "load_init_egps", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a83d1803c62b00ae737941ebaa8e54224", null ],
     [ "matrix_type", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8a83848fea29eb821b094759b7448891", null ],
     [ "matrix_type", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2f68c883612f6cba26d9ce34a2572c2f", null ],
     [ "max_row_length", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2208fcc9522823d65c1f95775fa27982", null ],
     [ "num_synapses", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a47259ad1e1fb0b61ec07652dd272cc8e", null ],
-    [ "reinitialise", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aec3de8b797bcc7ef6ec7d2c7f9a41e6f", null ],
+    [ "pull_connectivity_from_device", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a726e27ca3ff43e9faec20d57fb7d8495", null ],
+    [ "push_connectivity_to_device", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a4da6b5ca742c0301fa9ab3f4c817f302", null ],
+    [ "reinitialise", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a32f140cac7c05bac242e956346553384", null ],
     [ "set_connected_populations", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a6d22f60a1997a803c8fe4de2ee59d926", null ],
     [ "set_connectivity_extra_global_param", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2d508f6f1e04c3ba6b9b1f7f2d00dfdd", null ],
     [ "set_extra_global_param", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a829091e00dc8537cdaac58855543fa63", null ],
@@ -44,5 +46,6 @@ var classpygenn_1_1genn__groups_1_1SynapseGroup =
     [ "src", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a146bc27cb532ff83bdfc3b8ee77a4837", null ],
     [ "synapse_order", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a36817bb142198afef42d4b76a45651ab", null ],
     [ "trg", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a13fe205aafc106f284fbc43ea2cb5399", null ],
-    [ "w_update", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7cb6fa144610d947d3226a7baa610043", null ]
+    [ "w_update", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7cb6fa144610d947d3226a7baa610043", null ],
+    [ "weight_sharing_master", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a91acb21bdd15c4c44ee10f6afa614cf6", null ]
 ];

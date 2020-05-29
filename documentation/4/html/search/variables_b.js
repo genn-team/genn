@@ -4,5 +4,5 @@ var searchData=
   ['needs_5fallocation',['needs_allocation',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#ae07f5351586f4c3475c6d58a940ad99e',1,'pygenn::model_preprocessor::Variable']]],
   ['neuron',['neuron',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#ad69938b27e2ae30629c960edd5e1bafa',1,'pygenn::genn_groups::NeuronGroup']]],
   ['neuron_5fpopulations',['neuron_populations',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a64509d979db91e40ebb1c92e0e246e94',1,'pygenn::genn_model::GeNNModel']]],
-  ['numarguments',['numArguments',['../dc/df1/structCodeGenerator_1_1FunctionTemplate.html#acbaeb772934eb40f024283602624d0f1',1,'CodeGenerator::FunctionTemplate']]]
+  ['numarguments',['numArguments',['../d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html#a56cd00bbd6872717c8ef33147b253874',1,'CodeGenerator::Substitutions::FunctionTemplate']]]
 ];

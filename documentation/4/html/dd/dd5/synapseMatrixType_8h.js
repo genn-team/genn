@@ -10,6 +10,7 @@ var synapseMatrixType_8h =
       [ "DENSE_GLOBALG", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca0103dab4be5e9b66601b43a52ffa00f0", null ],
       [ "DENSE_GLOBALG_INDIVIDUAL_PSM", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca05bf2ba82e234d9d8ba1b92b6287945e", null ],
       [ "DENSE_INDIVIDUALG", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cac125fea63eb10ca9b8951ddbe787d7ce", null ],
+      [ "DENSE_PROCEDURALG", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9caad60cd331dc84ca330a3b0c479b7cfb8", null ],
       [ "BITMASK_GLOBALG", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca1655cb54ae8edd2462977f30072f8bf8", null ],
       [ "BITMASK_GLOBALG_INDIVIDUAL_PSM", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca1afc3ca441931cf66047766d6a135ff4", null ],
       [ "SPARSE_GLOBALG", "dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d", null ],
@@ -25,6 +26,8 @@ var synapseMatrixType_8h =
       [ "PROCEDURAL", "dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa71de203441306efe17e882a16d439b89", null ],
       [ "INDIVIDUAL_PSM", "dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa", null ]
     ] ],
+    [ "getSynapseMatrixConnectivity", "dd/dd5/synapseMatrixType_8h.html#a53a7d786f56e6158981af48e0945dde4", null ],
+    [ "getSynapseMatrixWeight", "dd/dd5/synapseMatrixType_8h.html#ab1fa99d8e68235875e687a6082333a42", null ],
     [ "operator&", "dd/dd5/synapseMatrixType_8h.html#a9db79f3b247e8d79603f0208ca397489", null ],
     [ "operator&", "dd/dd5/synapseMatrixType_8h.html#aa412c5ba30707662878ddbb8b04154c4", null ],
     [ "operator|", "dd/dd5/synapseMatrixType_8h.html#ac70199b3851e323c188061b2e40b29ee", null ]

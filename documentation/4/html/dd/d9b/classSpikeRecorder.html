@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -127,6 +127,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a82af209245b907b75bad00d7cd03ba5f"><td class="memTemplParams" colspan="2">template&lt;typename... WriterArgs&gt; </td></tr>
 <tr class="memitem:a82af209245b907b75bad00d7cd03ba5f"><td class="memTemplItemLeft" align="right" valign="top">&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d9b/classSpikeRecorder.html#a82af209245b907b75bad00d7cd03ba5f">SpikeRecorder</a> (<a class="el" href="../../dd/d9b/classSpikeRecorder.html#a669f71a4fa8b383541e6d3bc98141184">GetCurrentSpikesFunc</a> getCurrentSpikes, <a class="el" href="../../dd/d9b/classSpikeRecorder.html#a32532f11a1a0a8c0be3af26169ccc420">GetCurrentSpikeCountFunc</a> getCurrentSpikeCount, WriterArgs &amp;&amp;... writerArgs)</td></tr>
 <tr class="separator:a82af209245b907b75bad00d7cd03ba5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a001b405e1f037a62f011c5dfdc8b3f20"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d9b/classSpikeRecorder.html#a001b405e1f037a62f011c5dfdc8b3f20">SpikeRecorder</a> (<a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt; Writer &gt; &amp;&amp;other)=default</td></tr>
+<tr class="separator:a001b405e1f037a62f011c5dfdc8b3f20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a21b330d826d19928542757b5b93e5b4b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d9b/classSpikeRecorder.html#a21b330d826d19928542757b5b93e5b4b">record</a> (double t)</td></tr>
 <tr class="separator:a21b330d826d19928542757b5b93e5b4b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e5ac385020b590fcb7c2fce889b25b7"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d9b/classSpikeRecorder.html#a8e5ac385020b590fcb7c2fce889b25b7">getSum</a> () const</td></tr>
@@ -144,7 +146,7 @@ class SpikeRecorder&lt; Writer &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename Writer  = SpikeWriterText&gt; </div>
+template&lt;typename Writer = SpikeWriterText&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">typedef unsigned int&amp;(* <a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt; Writer &gt;::GetCurrentSpikeCountFunc) ()</td>
@@ -160,7 +162,7 @@ template&lt;typename Writer  = SpikeWriterText&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename Writer  = SpikeWriterText&gt; </div>
+template&lt;typename Writer = SpikeWriterText&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">typedef unsigned int*(* <a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt; Writer &gt;::GetCurrentSpikesFunc) ()</td>
@@ -172,12 +174,12 @@ template&lt;typename Writer  = SpikeWriterText&gt; </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a82af209245b907b75bad00d7cd03ba5f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a82af209245b907b75bad00d7cd03ba5f">&#9670;&nbsp;</a></span>SpikeRecorder()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a82af209245b907b75bad00d7cd03ba5f">&#9670;&nbsp;</a></span>SpikeRecorder() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename Writer  = SpikeWriterText&gt; </div>
+template&lt;typename Writer = SpikeWriterText&gt; </div>
 <div class="memtemplate">
 template&lt;typename... WriterArgs&gt; </div>
 <table class="mlabels">
@@ -217,6 +219,34 @@ template&lt;typename... WriterArgs&gt; </div>
 
 </div>
 </div>
+<a id="a001b405e1f037a62f011c5dfdc8b3f20"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a001b405e1f037a62f011c5dfdc8b3f20">&#9670;&nbsp;</a></span>SpikeRecorder() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename Writer = SpikeWriterText&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt; Writer &gt;::<a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a> </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a>&lt; Writer &gt; &amp;&amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">default</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a8e5ac385020b590fcb7c2fce889b25b7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8e5ac385020b590fcb7c2fce889b25b7">&#9670;&nbsp;</a></span>getSum()</h2>
@@ -224,7 +254,7 @@ template&lt;typename... WriterArgs&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename Writer  = SpikeWriterText&gt; </div>
+template&lt;typename Writer = SpikeWriterText&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -251,7 +281,7 @@ template&lt;typename Writer  = SpikeWriterText&gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename Writer  = SpikeWriterText&gt; </div>
+template&lt;typename Writer = SpikeWriterText&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -282,7 +312,7 @@ template&lt;typename Writer  = SpikeWriterText&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:16 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:24 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

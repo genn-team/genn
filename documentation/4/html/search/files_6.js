@@ -6,8 +6,6 @@ var searchData=
   ['generateinit_2eh',['generateInit.h',['../d7/d53/generateInit_8h.html',1,'']]],
   ['generatemakefile_2ecc',['generateMakefile.cc',['../d3/d6c/generateMakefile_8cc.html',1,'']]],
   ['generatemakefile_2eh',['generateMakefile.h',['../df/d24/generateMakefile_8h.html',1,'']]],
-  ['generatempi_2ecc',['generateMPI.cc',['../da/d2c/generateMPI_8cc.html',1,'']]],
-  ['generatempi_2eh',['generateMPI.h',['../da/d16/generateMPI_8h.html',1,'']]],
   ['generatemsbuild_2ecc',['generateMSBuild.cc',['../d6/d80/generateMSBuild_8cc.html',1,'']]],
   ['generatemsbuild_2eh',['generateMSBuild.h',['../d2/d70/generateMSBuild_8h.html',1,'']]],
   ['generateneuronupdate_2ecc',['generateNeuronUpdate.cc',['../d8/daf/generateNeuronUpdate_8cc.html',1,'']]],
@@ -23,5 +21,7 @@ var searchData=
   ['genn_5fmodel_2epy',['genn_model.py',['../de/db7/genn__model_8py.html',1,'']]],
   ['gennexport_2eh',['gennExport.h',['../d1/d8e/gennExport_8h.html',1,'']]],
   ['gennutils_2ecc',['gennUtils.cc',['../d1/d04/gennUtils_8cc.html',1,'']]],
-  ['gennutils_2eh',['gennUtils.h',['../d9/d59/gennUtils_8h.html',1,'']]]
+  ['gennutils_2eh',['gennUtils.h',['../d9/d59/gennUtils_8h.html',1,'']]],
+  ['groupmerged_2ecc',['groupMerged.cc',['../d3/d35/groupMerged_8cc.html',1,'']]],
+  ['groupmerged_2eh',['groupMerged.h',['../dd/dfd/groupMerged_8h.html',1,'']]]
 ];

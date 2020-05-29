@@ -5,6 +5,7 @@ var searchData=
   ['sharedlibrarymodel',['SharedLibraryModel',['../d9/d7e/classSharedLibraryModel.html',1,'']]],
   ['simulator',['Simulator',['../db/d3e/classSpineMLSimulator_1_1Simulator.html',1,'SpineMLSimulator']]],
   ['spikebase',['SpikeBase',['../d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html',1,'SpineMLSimulator::Input']]],
+  ['spikeeventthreshold',['SpikeEventThreshold',['../d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html',1,'NeuronGroup']]],
   ['spikerecorder',['SpikeRecorder',['../dd/d9b/classSpikeRecorder.html',1,'']]],
   ['spikesource',['SpikeSource',['../d5/d1f/classNeuronModels_1_1SpikeSource.html',1,'NeuronModels']]],
   ['spikesourcearray',['SpikeSourceArray',['../db/d38/classNeuronModels_1_1SpikeSourceArray.html',1,'NeuronModels']]],
@@ -17,6 +18,14 @@ var searchData=
   ['staticpulse',['StaticPulse',['../d9/d74/classWeightUpdateModels_1_1StaticPulse.html',1,'WeightUpdateModels']]],
   ['staticpulsedendriticdelay',['StaticPulseDendriticDelay',['../d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html',1,'WeightUpdateModels']]],
   ['substitutions',['Substitutions',['../de/d22/classCodeGenerator_1_1Substitutions.html',1,'CodeGenerator']]],
+  ['supportcodemerged',['SupportCodeMerged',['../d1/db8/classCodeGenerator_1_1SupportCodeMerged.html',1,'CodeGenerator']]],
+  ['synapseconnectivityhostinitgroupmerged',['SynapseConnectivityHostInitGroupMerged',['../d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html',1,'CodeGenerator']]],
+  ['synapseconnectivityinitgroupmerged',['SynapseConnectivityInitGroupMerged',['../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html',1,'CodeGenerator']]],
+  ['synapsedendriticdelayupdategroupmerged',['SynapseDendriticDelayUpdateGroupMerged',['../d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html',1,'CodeGenerator']]],
+  ['synapsedenseinitgroupmerged',['SynapseDenseInitGroupMerged',['../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html',1,'CodeGenerator']]],
+  ['synapsedynamicsgroupmerged',['SynapseDynamicsGroupMerged',['../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html',1,'CodeGenerator']]],
   ['synapsegroup',['SynapseGroup',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html',1,'pygenn.genn_groups.SynapseGroup'],['../dc/dfa/classSynapseGroup.html',1,'SynapseGroup']]],
-  ['synapsegroupinternal',['SynapseGroupInternal',['../dd/d48/classSynapseGroupInternal.html',1,'']]]
+  ['synapsegroupinternal',['SynapseGroupInternal',['../dd/d48/classSynapseGroupInternal.html',1,'']]],
+  ['synapsegroupmergedbase',['SynapseGroupMergedBase',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html',1,'CodeGenerator']]],
+  ['synapsesparseinitgroupmerged',['SynapseSparseInitGroupMerged',['../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html',1,'CodeGenerator']]]
 ];

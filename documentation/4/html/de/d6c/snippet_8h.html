@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -107,6 +107,7 @@ $(document).ready(function(){initNavTree('de/d6c/snippet_8h.html','../../');});
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &lt;cassert&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../d1/d8e/gennExport_8h_source.html">gennExport.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d9/d59/gennUtils_8h_source.html">gennUtils.h</a>&quot;</code><br />
 </div>
 <p><a href="../../de/d6c/snippet_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -146,6 +147,8 @@ Macros</h2></td></tr>
 <tr class="separator:a75315265035fd71c5b5f7d7f449edbd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa592bfe3ce05ffc19a8f21d8482add6b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6c/snippet_8h.html#aa592bfe3ce05ffc19a8f21d8482add6b">SET_DERIVED_PARAMS</a>(...)&#160;&#160;&#160;virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:aa592bfe3ce05ffc19a8f21d8482add6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa33e3634a531794ddac1ad49bde09071"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6c/snippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>(...)&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td></tr>
+<tr class="separator:aa33e3634a531794ddac1ad49bde09071"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ac5727a6720d28f034afadde948ed6e9a"></a>
@@ -174,7 +177,7 @@ Macros</h2></td></tr>
       </table>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line"><span class="keyword">private</span>:                                                \</div><div class="line">    GENN_EXPORT <span class="keyword">static</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a> *s_Instance;                \</div><div class="line">public:                                                 \</div><div class="line">    static <span class="keyword">const</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a> *getInstance()                    \</div><div class="line">    {                                                   \</div><div class="line">        if(s_Instance == NULL)                          \</div><div class="line">        {                                               \</div><div class="line">            s_Instance = <span class="keyword">new</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>;                      \</div><div class="line">        }                                               \</div><div class="line">        return s_Instance;                              \</div><div class="line">    }                                                   \</div><div class="line">    typedef <a class="code" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase&lt;NUM_PARAMS&gt;</a> ParamValues  \</div><div class="ttc" id="backendBase_8cc_html_a250d7d96debe4c60c4d0449c2a96ba78"><div class="ttname"><a href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a></div><div class="ttdeci">#define TYPE(T)</div><div class="ttdef"><b>Definition:</b> backendBase.cc:8</div></div>
-<div class="ttc" id="classSnippet_1_1ValueBase_html"><div class="ttname"><a href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a></div><div class="ttdef"><b>Definition:</b> snippet.h:46</div></div>
+<div class="ttc" id="classSnippet_1_1ValueBase_html"><div class="ttname"><a href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a></div><div class="ttdef"><b>Definition:</b> snippet.h:48</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -214,6 +217,24 @@ Macros</h2></td></tr>
 
 </div>
 </div>
+<a id="aa33e3634a531794ddac1ad49bde09071"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa33e3634a531794ddac1ad49bde09071">&#9670;&nbsp;</a></span>SET_EXTRA_GLOBAL_PARAMS</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_EXTRA_GLOBAL_PARAMS</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>...</em></td><td>)</td>
+          <td>&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a75315265035fd71c5b5f7d7f449edbd7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a75315265035fd71c5b5f7d7f449edbd7">&#9670;&nbsp;</a></span>SET_PARAM_NAMES</h2>
 
@@ -238,7 +259,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../de/d6c/snippet_8h.html">snippet.h</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:12 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:20 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

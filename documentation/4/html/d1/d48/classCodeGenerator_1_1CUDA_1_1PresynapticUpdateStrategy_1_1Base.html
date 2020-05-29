@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -126,20 +126,20 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8f58d287e37a57e591d63cf1cd42823c"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a8f58d287e37a57e591d63cf1cd42823c">isCompatible</a> (const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const cudaDeviceProp &amp;deviceProps, const <a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html">Preferences</a> &amp;preferences) const =0</td></tr>
 <tr class="memdesc:a8f58d287e37a57e591d63cf1cd42823c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is this presynaptic update strategy compatible with a given synapse group?  <a href="#a8f58d287e37a57e591d63cf1cd42823c">More...</a><br /></td></tr>
 <tr class="separator:a8f58d287e37a57e591d63cf1cd42823c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9f6bbaa43a352eb6664dea43ca0b3d9"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#aa9f6bbaa43a352eb6664dea43ca0b3d9">getSharedMemoryPerThread</a> (const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend) const =0</td></tr>
-<tr class="memdesc:aa9f6bbaa43a352eb6664dea43ca0b3d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">How many neurons does each thread accumulate the outputs of into shared memory.  <a href="#aa9f6bbaa43a352eb6664dea43ca0b3d9">More...</a><br /></td></tr>
-<tr class="separator:aa9f6bbaa43a352eb6664dea43ca0b3d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0a14848ec873698bb44f07cbe263a8a9"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a0a14848ec873698bb44f07cbe263a8a9">genPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend, size_t idStart) const =0</td></tr>
-<tr class="separator:a0a14848ec873698bb44f07cbe263a8a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae416e79522f4ff2737c14ffc19e62c16"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#ae416e79522f4ff2737c14ffc19e62c16">genUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend, bool trueSpike, size_t idStart, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">BackendBase::SynapseGroupHandler</a> wumThreshHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">BackendBase::SynapseGroupHandler</a> wumSimHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">BackendBase::SynapseGroupHandler</a> wumProceduralConnectHandler) const =0</td></tr>
-<tr class="memdesc:ae416e79522f4ff2737c14ffc19e62c16"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate presynaptic update code.  <a href="#ae416e79522f4ff2737c14ffc19e62c16">More...</a><br /></td></tr>
-<tr class="separator:ae416e79522f4ff2737c14ffc19e62c16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13aa60cca2467cb71f9e4120f4fb7698"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a13aa60cca2467cb71f9e4120f4fb7698">genPostamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;model, const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend, size_t idStart) const =0</td></tr>
-<tr class="separator:a13aa60cca2467cb71f9e4120f4fb7698"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39dd392cc674cd3989195aa32f2e5d32"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#a39dd392cc674cd3989195aa32f2e5d32">getSharedMemoryPerThread</a> (const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;sg, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend) const =0</td></tr>
+<tr class="memdesc:a39dd392cc674cd3989195aa32f2e5d32"><td class="mdescLeft">&#160;</td><td class="mdescRight">How many neurons does each thread accumulate the outputs of into shared memory.  <a href="#a39dd392cc674cd3989195aa32f2e5d32">More...</a><br /></td></tr>
+<tr class="separator:a39dd392cc674cd3989195aa32f2e5d32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa808e0f06424015d0436b3673b5c9592"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#aa808e0f06424015d0436b3673b5c9592">genPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend, size_t idStart) const =0</td></tr>
+<tr class="separator:aa808e0f06424015d0436b3673b5c9592"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4c7d82243dfc62ccccda278be635a12"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#ab4c7d82243dfc62ccccda278be635a12">genUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend, bool trueSpike, size_t idStart, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">BackendBase::PresynapticUpdateGroupMergedHandler</a> wumThreshHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">BackendBase::PresynapticUpdateGroupMergedHandler</a> wumSimHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">BackendBase::PresynapticUpdateGroupMergedHandler</a> wumProceduralConnectHandler) const =0</td></tr>
+<tr class="memdesc:ab4c7d82243dfc62ccccda278be635a12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate presynaptic update code.  <a href="#ab4c7d82243dfc62ccccda278be635a12">More...</a><br /></td></tr>
+<tr class="separator:ab4c7d82243dfc62ccccda278be635a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab536787e940f5d24f6fbec0abdecfab1"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html#ab536787e940f5d24f6fbec0abdecfab1">genPostamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs, const <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a> &amp;backend, size_t idStart) const =0</td></tr>
+<tr class="separator:ab536787e940f5d24f6fbec0abdecfab1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a13aa60cca2467cb71f9e4120f4fb7698"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a13aa60cca2467cb71f9e4120f4fb7698">&#9670;&nbsp;</a></span>genPostamble()</h2>
+<a id="ab536787e940f5d24f6fbec0abdecfab1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab536787e940f5d24f6fbec0abdecfab1">&#9670;&nbsp;</a></span>genPostamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -156,13 +156,13 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>sg</em>, </td>
         </tr>
         <tr>
@@ -196,12 +196,12 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#a7e9e498a7fafafa7b057468ca6d557ad">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a2ff5e6a146c07cd5ae1fabb93f498040">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#abccd78bdd4427d81782269c6100af947">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a65664acd51885c13bb21c1fbd6071e81">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
+<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#a94cc0abf2bea7f6ec8c1498a12864c44">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a1bc11aa1c4a6025bbd788095b9389300">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a0edc7be3d7fafb2b73273ab5f5f5fe2f">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a2b53009c8c193328cd3ff7d330a8488b">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
 
 </div>
 </div>
-<a id="a0a14848ec873698bb44f07cbe263a8a9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0a14848ec873698bb44f07cbe263a8a9">&#9670;&nbsp;</a></span>genPreamble()</h2>
+<a id="aa808e0f06424015d0436b3673b5c9592"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa808e0f06424015d0436b3673b5c9592">&#9670;&nbsp;</a></span>genPreamble()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -218,13 +218,13 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>sg</em>, </td>
         </tr>
         <tr>
@@ -258,12 +258,12 @@ Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#aedfc880a830a074134af3b3c860f755f">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#aedc211def35b14f29f8ef3e817609afc">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a6352b0009b3181d72e10562c51d2aa58">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a02ee34748feb1940e08f56acaab72442">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
+<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#a062e769efe92a8e09f69492352fec4f3">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a7b2b83b384793340fbd67831753b6987">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#ab62387e8f0bfa76162a5a51c8deff0a4">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#ab366aa029eba1d4f514fe7253e922971">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
 
 </div>
 </div>
-<a id="ae416e79522f4ff2737c14ffc19e62c16"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae416e79522f4ff2737c14ffc19e62c16">&#9670;&nbsp;</a></span>genUpdate()</h2>
+<a id="ab4c7d82243dfc62ccccda278be635a12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab4c7d82243dfc62ccccda278be635a12">&#9670;&nbsp;</a></span>genUpdate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -280,13 +280,13 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classModelSpecInternal.html">ModelSpecInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>model</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>sg</em>, </td>
         </tr>
         <tr>
@@ -316,19 +316,19 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">BackendBase::SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">BackendBase::PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumThreshHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">BackendBase::SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">BackendBase::PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumSimHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a85aea4cafbf9a7e9ceb6b0d12e9d4997">BackendBase::SynapseGroupHandler</a>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">BackendBase::PresynapticUpdateGroupMergedHandler</a>&#160;</td>
           <td class="paramname"><em>wumProceduralConnectHandler</em>&#160;</td>
         </tr>
         <tr>
@@ -346,7 +346,7 @@ Public Member Functions</h2></td></tr>
 
 <p>Generate presynaptic update code. </p>
 
-<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#ade00f8e7857014fcbc6bb92e580eab5e">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a349a226cc5074f863254d8b8b4d62223">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a6eab422f8c7da1797132ced828ce2a7b">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#acb4ed08c13c34c5ff4ded23b8b2ea5d9">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
+<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#ac46024e56e2e67cad609a1647f704b9c">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a5ba70964e07724c36e04b44e2c0ae098">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a8b445508d386dcb2acc22718657630de">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a5d1e31fffee43dee293f524fdb838117">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
 
 </div>
 </div>
@@ -380,8 +380,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="aa9f6bbaa43a352eb6664dea43ca0b3d9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa9f6bbaa43a352eb6664dea43ca0b3d9">&#9670;&nbsp;</a></span>getSharedMemoryPerThread()</h2>
+<a id="a39dd392cc674cd3989195aa32f2e5d32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a39dd392cc674cd3989195aa32f2e5d32">&#9670;&nbsp;</a></span>getSharedMemoryPerThread()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -392,7 +392,7 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">virtual size_t CodeGenerator::CUDA::PresynapticUpdateStrategy::Base::getSharedMemoryPerThread </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
+          <td class="paramtype">const <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>sg</em>, </td>
         </tr>
         <tr>
@@ -416,7 +416,7 @@ Public Member Functions</h2></td></tr>
 
 <p>How many neurons does each thread accumulate the outputs of into shared memory. </p>
 
-<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#a7cd90249b0c84bfbf322f50e24c64603">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a3b51a0e4d8543bdd657085d63f4882f8">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a7dcc1146e7add9fb8c6b5158bc5d8630">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a465538531b689210c66e764b7ba45d49">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
+<p>Implemented in <a class="el" href="../../d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html#ae2c5cd624f948dc7c329269ca61b8fce">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural</a>, <a class="el" href="../../d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a3628f9308388758ae92e3039a0843399">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask</a>, <a class="el" href="../../d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html#a8ecbf5fce97eacebbac0f1492e6571c0">CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan</a>, and <a class="el" href="../../db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html#a0c53fb8e2aee3cf7d9df821432a89311">CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan</a>.</p>
 
 </div>
 </div>
@@ -505,7 +505,7 @@ Public Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a></li><li class="navelem"><a class="el" href="../../da/d97/namespaceCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy.html">PresynapticUpdateStrategy</a></li><li class="navelem"><a class="el" href="../../d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:20 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:31 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

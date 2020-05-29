@@ -41,8 +41,6 @@ var files =
     [ "generateInit.h", "d7/d53/generateInit_8h.html", "d7/d53/generateInit_8h" ],
     [ "generateMakefile.cc", "d3/d6c/generateMakefile_8cc.html", null ],
     [ "generateMakefile.h", "df/d24/generateMakefile_8h.html", "df/d24/generateMakefile_8h" ],
-    [ "generateMPI.cc", "da/d2c/generateMPI_8cc.html", null ],
-    [ "generateMPI.h", "da/d16/generateMPI_8h.html", "da/d16/generateMPI_8h" ],
     [ "generateMSBuild.cc", "d6/d80/generateMSBuild_8cc.html", null ],
     [ "generateMSBuild.h", "d2/d70/generateMSBuild_8h.html", "d2/d70/generateMSBuild_8h" ],
     [ "generateNeuronUpdate.cc", "d8/daf/generateNeuronUpdate_8cc.html", null ],
@@ -61,6 +59,23 @@ var files =
     [ "gennExport.h", "d1/d8e/gennExport_8h.html", "d1/d8e/gennExport_8h" ],
     [ "gennUtils.cc", "d1/d04/gennUtils_8cc.html", "d1/d04/gennUtils_8cc" ],
     [ "gennUtils.h", "d9/d59/gennUtils_8h.html", "d9/d59/gennUtils_8h" ],
+    [ "groupMerged.cc", "d3/d35/groupMerged_8cc.html", null ],
+    [ "groupMerged.h", "dd/dfd/groupMerged_8h.html", [
+      [ "GroupMerged", "df/dfd/classCodeGenerator_1_1GroupMerged.html", "df/dfd/classCodeGenerator_1_1GroupMerged" ],
+      [ "NeuronSpikeQueueUpdateGroupMerged", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged.html", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged" ],
+      [ "NeuronGroupMergedBase", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase" ],
+      [ "NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged" ],
+      [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged" ],
+      [ "SynapseDendriticDelayUpdateGroupMerged", "d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html", "d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged" ],
+      [ "SynapseConnectivityHostInitGroupMerged", "d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html", "d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged" ],
+      [ "SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged" ],
+      [ "SynapseGroupMergedBase", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase" ],
+      [ "PresynapticUpdateGroupMerged", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged" ],
+      [ "PostsynapticUpdateGroupMerged", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged" ],
+      [ "SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged" ],
+      [ "SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged" ],
+      [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged" ]
+    ] ],
     [ "initSparseConnectivitySnippet.cc", "d4/d88/initSparseConnectivitySnippet_8cc.html", "d4/d88/initSparseConnectivitySnippet_8cc" ],
     [ "initSparseConnectivitySnippet.h", "de/d51/initSparseConnectivitySnippet_8h.html", "de/d51/initSparseConnectivitySnippet_8h" ],
     [ "initVarSnippet.cc", "d1/dfe/initVarSnippet_8cc.html", "d1/dfe/initVarSnippet_8cc" ],
@@ -89,6 +104,9 @@ var files =
       [ "Event", "d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html", "d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event" ]
     ] ],
     [ "logWriter.h", "d9/d69/logWriter_8h.html", null ],
+    [ "mergedStructGenerator.h", "db/d9f/mergedStructGenerator_8h.html", [
+      [ "MergedStructGenerator", "dc/d85/classCodeGenerator_1_1MergedStructGenerator.html", "dc/d85/classCodeGenerator_1_1MergedStructGenerator" ]
+    ] ],
     [ "model_preprocessor.py", "d2/d3e/model__preprocessor_8py.html", "d2/d3e/model__preprocessor_8py" ],
     [ "modelProperty.cc", "d2/d42/modelProperty_8cc.html", null ],
     [ "modelProperty.h", "d8/df1/modelProperty_8h.html", "d8/df1/modelProperty_8h" ],
@@ -98,19 +116,25 @@ var files =
     [ "modelSpecInternal.h", "db/de4/modelSpecInternal_8h.html", [
       [ "ModelSpecInternal", "dc/dfa/classModelSpecInternal.html", null ]
     ] ],
+    [ "modelSpecMerged.cc", "d8/d07/modelSpecMerged_8cc.html", null ],
+    [ "modelSpecMerged.h", "df/dac/modelSpecMerged_8h.html", [
+      [ "ModelSpecMerged", "de/d52/classCodeGenerator_1_1ModelSpecMerged.html", "de/d52/classCodeGenerator_1_1ModelSpecMerged" ]
+    ] ],
     [ "networkClient.cc", "d5/d0a/networkClient_8cc.html", null ],
     [ "networkClient.h", "da/d24/networkClient_8h.html", [
       [ "NetworkClient", "db/db9/classSpineMLSimulator_1_1NetworkClient.html", "db/db9/classSpineMLSimulator_1_1NetworkClient" ]
     ] ],
     [ "neuronGroup.cc", "dd/de9/neuronGroup_8cc.html", null ],
     [ "neuronGroup.h", "dd/d44/neuronGroup_8h.html", [
-      [ "NeuronGroup", "d7/d3b/classNeuronGroup.html", "d7/d3b/classNeuronGroup" ]
+      [ "NeuronGroup", "d7/d3b/classNeuronGroup.html", "d7/d3b/classNeuronGroup" ],
+      [ "SpikeEventThreshold", "d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html", "d6/dba/structNeuronGroup_1_1SpikeEventThreshold" ]
     ] ],
     [ "neuronGroupInternal.h", "d2/dfe/neuronGroupInternal_8h.html", [
       [ "NeuronGroupInternal", "dc/da3/classNeuronGroupInternal.html", "dc/da3/classNeuronGroupInternal" ]
     ] ],
     [ "neuronModels.cc", "dc/dbc/neuronModels_8cc.html", "dc/dbc/neuronModels_8cc" ],
     [ "neuronModels.h", "d3/dc0/neuronModels_8h.html", "d3/dc0/neuronModels_8h" ],
+    [ "normalDistribution.h", "df/d38/normalDistribution_8h.html", "df/d38/normalDistribution_8h" ],
     [ "cuda/optimiser.cc", "d7/dff/cuda_2optimiser_8cc.html", "d7/dff/cuda_2optimiser_8cc" ],
     [ "single_threaded_cpu/optimiser.cc", "dd/da2/single__threaded__cpu_2optimiser_8cc.html", "dd/da2/single__threaded__cpu_2optimiser_8cc" ],
     [ "cuda/optimiser.h", "d5/d50/cuda_2optimiser_8h.html", "d5/d50/cuda_2optimiser_8h" ],
@@ -141,8 +165,13 @@ var files =
     [ "stateVar.h", "d4/dc9/stateVar_8h.html", [
       [ "StateVar", "dc/db2/classSpineMLSimulator_1_1StateVar.html", "dc/db2/classSpineMLSimulator_1_1StateVar" ]
     ] ],
+    [ "substitutions.cc", "de/d16/substitutions_8cc.html", null ],
     [ "substitutions.h", "d9/d7a/substitutions_8h.html", [
-      [ "Substitutions", "de/d22/classCodeGenerator_1_1Substitutions.html", "de/d22/classCodeGenerator_1_1Substitutions" ]
+      [ "Substitutions", "de/d22/classCodeGenerator_1_1Substitutions.html", "de/d22/classCodeGenerator_1_1Substitutions" ],
+      [ "FunctionTemplate", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate" ]
+    ] ],
+    [ "supportCodeMerged.h", "df/dd5/supportCodeMerged_8h.html", [
+      [ "SupportCodeMerged", "d1/db8/classCodeGenerator_1_1SupportCodeMerged.html", "d1/db8/classCodeGenerator_1_1SupportCodeMerged" ]
     ] ],
     [ "synapseGroup.cc", "da/d3e/synapseGroup_8cc.html", null ],
     [ "synapseGroup.h", "de/db0/synapseGroup_8h.html", [

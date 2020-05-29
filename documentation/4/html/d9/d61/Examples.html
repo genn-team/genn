@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -349,6 +349,107 @@ Insect olfaction model</h1>
 Locust olfactory system (Nowotny et al. 2005)
 =============================================
 
+This project implements the insect olfaction model by Nowotny et al. that demonstrates 
+self-organized clustering of odours in a simulation of the insect antennal lobe and 
+mushroom body. As provided, the model works with conductance based Hodgkin-Huxley neurons 
+and several different synapse types, conductance based (but pulse-coupled) excitatory 
+synapses, graded inhibitory synapses and synapses with a simplified STDP rule.  
+This example project contains a helper executable called "generate_run", which 
+prepares input pattern data, before compiling and executing the model.
+
+To compile it, navigate to genn/userproject/MBody1_project and type:
+
+msbuild ..\userprojects.sln /t:generate_mbody1_runner /p:Configuration=Release
+
+for Windows users, or:
+
+make
+
+for Linux, Mac and other UNIX users. 
+
+
+USAGE
+-----
+
+generate_run [OPTIONS] &lt;outname&gt; 
+
+Mandatory arguments:
+outname: The base name of the output location and output files
+
+Optional arguments:
+--debug: Builds a debug version of the simulation and attaches the debugger
+--cpu-only: Uses CPU rather than CUDA backend for GeNN
+--timing: Uses GeNN's timing mechanism to measure performance and displays it at the end of the simulation
+--ftype: Sets the floating point precision of the model to either float or double (defaults to float)
+--gpu-device: Sets which GPU device to use for the simulation (defaults to -1 which picks automatically)
+--num-al: Number of neurons in the antennal lobe (AL), the input neurons to this model (defaults to 100)
+--num-kc: Number of Kenyon cells (KC) in the "hidden layer" (defaults to 1000)
+--num-lhi: Number of lateral horn interneurons, implementing gain control (defaults to 20)
+--num-dn: Number of decision neurons (DN) in the output layer (defaults to 100)
+--gscale: A general rescaling factor for synaptic strength (defaults to 0.0025)
+--bitmask: Use bitmasks to represent sparse PN-&gt;KC connectivity rather than dense connectivity
+--delayed-synapses: Rather than use constant delays of DT throughough, use delays of (5 * DT) ms on KC-&gt;DN and 
+of (3 * DT) ms on DN-&gt;DN synapse populations
+
+An example invocation of generate_run using these defaults and recording results with a base name of `test' would be:
+
+generate_run.exe test
+
+for Windows users, or:
+
+./generate_run test
+
+for Linux, Mac and other UNIX users. 
+
+Such a command would generate a locust olfaction model with 100 antennal lobe neurons,
+1000 mushroom body Kenyon cells, 20 lateral horn interneurons and 100 mushroom body
+output neurons, and launch a simulation of it on a CUDA-enabled GPU using single
+precision floating point numbers. All output files will be prefixed with "test"
+and will be created under the "test" directory. The model that is run is defined
+in `model/MBody1.cc`, debugging is switched off and the model would be simulated using
+float (single precision floating point) variables.
+
+In more details, what generate_run program does is: 
+a) use other tools to generate input patterns.
+
+b) build the source code for the model by writing neuron numbers into
+   ./model/sizes.h, and executing "genn-buildmodel.sh ./model/MBody1.cc.
+
+c) compile the generated code by invoking "make clean &amp;&amp; make" 
+   running the code, e.g. "./classol_sim r1".
+
+Another example of an invocation that runs the simulation using CPU rather than GPU, 
+records timing information and uses bitmask connectivity would be: 
+
+generate_run.exe --cpu-only --timing --bitmask test
+
+for Windows users, or:
+
+./generate_run --cpu-only --timing --bitmask test
+
+for Linux, Mac and other UNIX users.
+
+As provided, the model outputs  `test.dn.st', `test.kc.st', `test.lhi.st' and `test.pn.st' files 
+which contain the spiking activity observed in each population in the simulation. There are two
+columns in this ASCII file, the first one containing the time of a spike and the second one, 
+the ID of the neuron that spiked. MATLAB users can use the scripts in the `matlab` directory to plot
+the results of a simulation and Python users can use the plot_spikes.py script in userproject/python. 
+For more about the model itself and the scientific insights gained from it, see Nowotny et al. referenced below.
+
+
+MODEL INFORMATION
+-----------------
+
+For information regarding the locust olfaction model implemented in this example project, see:
+
+T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
+olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
+doi:10.1007/s00422-005-0019-7 
+=======
+
+Locust olfactory system (Nowotny et al. 2005)
+=============================================
+
 This project implements the insect olfaction model by Nowotny et
 al. that demonstrates self-organized clustering of odours in a
 simulation of the insect antennal lobe and mushroom body. As provided
@@ -446,8 +547,7 @@ For information regarding the locust olfaction model implemented in this example
 
 T. Nowotny, R. Huerta, H. D. I. Abarbanel, and M. I. Rabinovich Self-organization in the
 olfactory system: One shot odor recognition in insects, Biol Cyber, 93 (6): 436-446 (2005),
-doi:10.1007/s00422-005-0019-7 
-</pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[3]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[7]</a> <br />
+doi:10.1007/s00422-005-0019-7 </pre><p> Nowotny insect olfaction model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[5]</a>; Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[10]</a> <br />
  </p>
 <h1><a class="anchor" id="ex_Vclamp"></a>
 Voltage clamp simulation to estimate Hodgkin-Huxley parameters</h1>
@@ -514,76 +614,72 @@ for Windows users, or:
 ./generate_run --timing --total-time 10000
 
 for Linux, Mac and other UNIX users.
-</pre><p> Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[7]</a> <br />
+</pre><p> Traub-Miles Hodgkin-Huxley neuron model: <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[10]</a> <br />
  </p>
 <h1><a class="anchor" id="ex_Schmuker"></a>
 A neuromorphic network for generic multivariate data classification</h1>
-<pre class="fragment">Author: Alan Diamond, University of Sussex, 2014
+<pre class="fragment">A neuromorphic network for generic multivariate data classification
+===================================================================
 
-This project recreates using GeNN the spiking classifier design used in the paper
+This project recreates the spiking classifier proposed in the paper by 
+Michael Schmuker, Thomas Pfeil and Martin Paul Nawrota using GeNN. The classifier design is based on an 
+abstraction of the insect olfactory system. This example uses the IRIS standard data set 
+as a test for the classifier.
 
-"A neuromorphic network for generic multivariate data classification"
- Authors: Michael Schmuker, Thomas Pfeil, Martin Paul Nawrota
-    
-The classifier design is based on an abstraction of the insect olfactory system.
-This example uses the IRIS stadard data set as a test for the classifier
-
-BUILD / RUN INSTRUCTIONS 
-
-Install GeNN from the internet released build, following instruction on setting your PATH etc
-
-Start a terminal session
-
-cd to this project directory (userproject/Model_Schmuker_2014_project)
-
-To build the model using the GENN meta compiler type:
-
-genn-buildmodel.sh Model_Schmuker_2014_classifier.cc
-
-for Linux, Mac and other UNIX systems, or:
+To build the model using the GENN meta compiler, navigate to genn/userproject/Model_Schmuker_2014_project and type:
 
 genn-buildmodel.bat Model_Schmuker_2014_classifier.cc
 
-for Windows systems (add -d for a debug build).
+for Windows users (add -d for a debug build), or:
 
-You should only have to do this at the start, or when you change your actual network model  (i.e. editing the file Model_Schmuker_2014_classifier.cc )
+genn-buildmodel.sh Model_Schmuker_2014_classifier.cc
 
-Then to compile the experiment plus the GeNN created C/CUDA code type:-
+for Linux, Mac and other UNIX users. 
 
-make
+You would only have to do this at the start, or when you change your actual network model, 
+i.e. on editing the file, Model_Schmuker_2014_classifier.cc 
 
-for Linux, Mac and other UNIX users (add DEBUG=1 if using debug mode), or:
+Then to compile the experiment and the GeNN created C/CUDA code type:
 
 msbuild Schmuker2014_classifier.vcxproj /p:Configuration=Release
 
-for Windows users (change Release to Debug if using debug mode).
+for Windows users (change Release to Debug if using debug mode), or:
 
-Once it compiles you should be able to run the classifier against the included Iris dataset.
+make
 
-type
+for Linux, Mac and other UNIX users (add DEBUG=1 if using debug mode).
 
-./experiment .
-
-for Linux, Mac and other UNIX systems, or:
+Once it compiles you should be able to run the classifier against the included Iris dataset by typing:
 
 Schmuker2014_classifier .
 
-for Windows systems.
+for Windows users, or:
 
-This is how it works roughly.
-The experiment (experiment.cu) controls the experiment at a high level. It mostly does this by instructing the classifier (Schmuker2014_classifier.cu) which does the grunt work.
+./experiment .
 
-So the experiment first tells the classifier to set up the GPU with the model and synapse data.
+for Linux, Mac and other UNIX systems.
+
+This is how it works roughly. The experiment (experiment.cu) controls the experiment at a high level. 
+It mostly does this by instructing the classifier (Schmuker2014_classifier.cu) which does the grunt work.
+
+So the experiment first tells the classifier to set up the GPU with the model and the synapse data.
 
 Then it chooses the training and test set data.
 
-It runs through the training set , with plasticity ON , telling the classifier to run with the specfied observation and collecting the classifier decision.
+It runs through the training set with plasticity ON, telling the classifier to run with the specfied 
+observation and collecting the classifier decisions.
 
-Then it runs through the test set with plasticity OFF  and collects the results in various reporting files.
+Then it runs through the test set with plasticity OFF and collects the results in various reporting files.
 
-At the highest level it also has a loop where you can cycle through a list of parameter values e.g. some threshold value for the classifier to use. It will then report on the performance for each value. You should be aware that some parameter changes won't actually affect the classifier unless you invoke a re-initialisation of some sort. E.g. anything to do with VRs will require the input data cache to be reset between values, anything to do with non-plastic synapse weights won't get cleared down until you upload a changed set to the GPU etc.
+At the highest level, it also has a loop where you can cycle through a list of parameter values e.g. some 
+threshold value for the classifier to use. It will then report on the performance for each value. 
+You should be aware that some parameter changes won't actually affect the classifier unless you invoke 
+a re-initialisation of some sort. E.g. anything to do with VRs will require the input data cache to be 
+reset between values, anything to do with non-plastic synapse weights won't get cleared down until you 
+upload a changed set to the GPU etc.
 
-You should also note there is no option currently to run on CPU, this is not due to the demanding task, it just hasn't been tweaked yet to allow for this (small change).
+You should also note there is no option currently to run on CPU, this is not due to the demanding task, but 
+just hasn't been tweaked yet to allow for this (a small change).
 </pre><p> <br />
 </p><hr/>
 <p> <a class="el" href="../../d7/d98/Quickstart.html">Previous</a> | <a class="el" href="../../d9/d61/Examples.html">Top</a> | <a class="el" href="../../d2/dba/SpineML.html">Next</a> </p>
@@ -592,7 +688,7 @@ You should also note there is no option currently to run on CPU, this is not due
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:13 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

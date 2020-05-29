@@ -5,5 +5,6 @@ var searchData=
   ['m_5findirect',['m_Indirect',['../dc/db2/classSpineMLSimulator_1_1StateVar.html#a4a610bfd3668dd8e08053fe5e9df729c',1,'SpineMLSimulator::StateVar']]],
   ['manualblocksizes',['manualBlockSizes',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda',1,'CodeGenerator::CUDA::Preferences']]],
   ['manualdeviceid',['manualDeviceID',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d',1,'CodeGenerator::CUDA::Preferences']]],
+  ['mergedgroupindex',['mergedGroupIndex',['../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#af786ee25acd8b4ad7cbbc0aede30e875',1,'CodeGenerator::MergedStructData::MergedEGP']]],
   ['model_5fname',['model_name',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab1164b8374a4b390e77bc32effed638c',1,'pygenn::genn_model::GeNNModel']]]
 ];

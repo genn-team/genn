@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -128,6 +128,11 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html">InitSparseConnectivitySnippet::FixedProbabilityNoAutapse</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html">InitSparseConnectivitySnippet::FixedNumberPostWithReplacement</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialises connectivity with a fixed number of random synapses per row.  <a href="../../db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html">InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
 Namespaces</h2></td></tr>
@@ -141,6 +146,8 @@ Macros</h2></td></tr>
 <tr class="separator:a3758f6bc5bc997383426d5f277b8acc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abfe3722618884af89eb9c64e1345c03f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#abfe3722618884af89eb9c64e1345c03f">SET_ROW_BUILD_STATE_VARS</a>(...)&#160;&#160;&#160;virtual ParamValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:abfe3722618884af89eb9c64e1345c03f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0ca9368168c21395871f838a9280db3c"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#a0ca9368168c21395871f838a9280db3c">SET_HOST_INIT_CODE</a>(CODE)&#160;&#160;&#160;virtual std::string getHostInitCode() const override{ return CODE; }</td></tr>
+<tr class="separator:a0ca9368168c21395871f838a9280db3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adc763f727358b11685ddeab7ca8434f2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#adc763f727358b11685ddeab7ca8434f2">SET_CALC_MAX_ROW_LENGTH_FUNC</a>(FUNC)&#160;&#160;&#160;virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }</td></tr>
 <tr class="separator:adc763f727358b11685ddeab7ca8434f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad59a50b968b2b9dc03093ea1306eec40"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#ad59a50b968b2b9dc03093ea1306eec40">SET_CALC_MAX_COL_LENGTH_FUNC</a>(FUNC)&#160;&#160;&#160;virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }</td></tr>
@@ -149,8 +156,6 @@ Macros</h2></td></tr>
 <tr class="separator:a338915170111c85ba647e848d28ee2a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d72764eb9a910bba6d4a1776717ba02"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#a9d72764eb9a910bba6d4a1776717ba02">SET_MAX_COL_LENGTH</a>(MAX_COL_LENGTH)&#160;&#160;&#160;virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector&lt;double&gt; &amp;){ return MAX_COL_LENGTH; }; }</td></tr>
 <tr class="separator:a9d72764eb9a910bba6d4a1776717ba02"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa33e3634a531794ddac1ad49bde09071"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>(...)&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td></tr>
-<tr class="separator:aa33e3634a531794ddac1ad49bde09071"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ad59a50b968b2b9dc03093ea1306eec40"></a>
@@ -189,18 +194,18 @@ Macros</h2></td></tr>
 
 </div>
 </div>
-<a id="aa33e3634a531794ddac1ad49bde09071"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa33e3634a531794ddac1ad49bde09071">&#9670;&nbsp;</a></span>SET_EXTRA_GLOBAL_PARAMS</h2>
+<a id="a0ca9368168c21395871f838a9280db3c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0ca9368168c21395871f838a9280db3c">&#9670;&nbsp;</a></span>SET_HOST_INIT_CODE</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">#define SET_EXTRA_GLOBAL_PARAMS</td>
+          <td class="memname">#define SET_HOST_INIT_CODE</td>
           <td>(</td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>...</em></td><td>)</td>
-          <td>&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td>
+          <td class="paramname">CODE</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual std::string getHostInitCode() const override{ return CODE; }</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -285,7 +290,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html">initSparseConnectivitySnippet.h</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:11 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:19 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

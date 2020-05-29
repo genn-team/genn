@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.2.1</span>
+   &#160;<span id="projectnumber">4.3.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -128,7 +128,7 @@ Defining your own neuron type</h1>
 Support code</h2>
 <p>Support code enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as <code>__host__ __device__</code> functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the <a class="el" href="../../d3/dc0/neuronModels_8h.html#a11d60ec86ac6804c9c8a133f7bec526d">SET_SUPPORT_CODE()</a> macro, for example: </p><div class="fragment"><div class="line"><a class="code" href="../../d3/dc0/neuronModels_8h.html#a11d60ec86ac6804c9c8a133f7bec526d">SET_SUPPORT_CODE</a>(<span class="stringliteral">&quot;__device__ __host__ scalar mysin(float x){ return sin(x); }&quot;</span>);</div></div><!-- fragment --><h2><a class="anchor" id="neuron_extra_global_param"></a>
 Extra global parameters</h2>
-<p>Extra global parameters are parameters common to all neurons in the population. However, unlike the standard neuron parameters, they can be varied at runtime meaning they could, for example, be used to provide a global reward signal. These parameters are defined by using the <a class="el" href="../../de/d51/initSparseConnectivitySnippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS()</a> macro to specify a list of variable names and type strings (like the <a class="el" href="../../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS()</a> macro). For example: </p><div class="fragment"><div class="line"><a class="code" href="../../de/d51/initSparseConnectivitySnippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>({{<span class="stringliteral">&quot;R&quot;</span>, <span class="stringliteral">&quot;float&quot;</span>}});</div></div><!-- fragment --><p>These variables are available to all neurons in the population. They can also be used in synaptic code snippets; in this case it need to be addressed with a <code>_pre</code> or <code>_post</code> postfix.</p>
+<p>Extra global parameters are parameters common to all neurons in the population. However, unlike the standard neuron parameters, they can be varied at runtime meaning they could, for example, be used to provide a global reward signal. These parameters are defined by using the <a class="el" href="../../de/d6c/snippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS()</a> macro to specify a list of variable names and type strings (like the <a class="el" href="../../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS()</a> macro). For example: </p><div class="fragment"><div class="line"><a class="code" href="../../de/d6c/snippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>({{<span class="stringliteral">&quot;R&quot;</span>, <span class="stringliteral">&quot;float&quot;</span>}});</div></div><!-- fragment --><p>These variables are available to all neurons in the population. They can also be used in synaptic code snippets; in this case it need to be addressed with a <code>_pre</code> or <code>_post</code> postfix.</p>
 <p>For example, if the model with the "R" parameter was used for the pre-synaptic neuron population, the weight update model of a synapse population could have simulation code like: </p><div class="fragment"><div class="line"><a class="code" href="../../d3/dc0/neuronModels_8h.html#a8d014c818d8ee68f3a16838dcd4f030f">SET_SIM_CODE</a>(<span class="stringliteral">&quot;$(x)= $(x)+$(R_pre);&quot;</span>);</div></div><!-- fragment --><p> where we have assumed that the weight update model has a variable <code>x</code> and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter <code>R</code>. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.</p>
 <h2><a class="anchor" id="neuron_additional_input"></a>
 Additional input variables</h2>
@@ -150,7 +150,7 @@ Random number generation</h2>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Mon Apr 27 2020 17:13:13 for GeNN by
+    <li class="footer">Generated on Fri May 29 2020 14:52:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
