@@ -100,6 +100,42 @@ void updateSynapseGroupExtraGlobalParams(const SynapseGroupInternal& sg, std::ma
     // Finally add any weight update model extra global parameters referenced in code strings to the map of kernel paramters
     updateExtraGlobalParams(sg.getName(), "", sg.getWUModel()->getExtraGlobalParams(), kernelParameters, codeStrings);
 }
+//--------------------------------------------------------------------------
+void genSupportCode(CodeGenerator::CodeStream& os, const ModelSpecInternal& model)
+{
+    using namespace CodeGenerator;
+    // Support code
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// support code" << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "#define SUPPORT_CODE_FUNC" << std::endl;
+    os << "// support code for neuron groups" << std::endl;
+    for (const auto& n : model.getLocalNeuronGroups()) {
+        if (!n.second.getNeuronModel()->getSupportCode().empty()) {
+            os << ensureFtype(n.second.getNeuronModel()->getSupportCode(), model.getPrecision()) << std::endl;
+        }
+    }
+    os << std::endl;
+    os << "// support code for synapse groups" << std::endl;
+    for (const auto& s : model.getLocalSynapseGroups()) {
+        const auto* wu = s.second.getWUModel();
+        const auto* psm = s.second.getPSModel();
+
+        if (!wu->getSimSupportCode().empty()) {
+            os << ensureFtype(wu->getSimSupportCode(), model.getPrecision()) << std::endl;
+        }
+        if (!wu->getLearnPostSupportCode().empty()) {
+            os << ensureFtype(wu->getLearnPostSupportCode(), model.getPrecision()) << std::endl;
+        }
+        if (!wu->getSynapseDynamicsSuppportCode().empty()) {
+            os << ensureFtype(wu->getSynapseDynamicsSuppportCode(), model.getPrecision()) << std::endl;
+        }
+        if (!psm->getSupportCode().empty()) {
+            os << ensureFtype(psm->getSupportCode(), model.getPrecision()) << std::endl;
+        }
+    }
+    os << std::endl;
+}
 }
 
 namespace CodeGenerator
@@ -237,7 +273,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             updateNeuronsKernelBody << "volatile __local unsigned int shPosSpkEvnt;" << std::endl;
             updateNeuronsKernelBody << "volatile __local unsigned int shSpkEvntCount;" << std::endl;
             updateNeuronsKernelBody << std::endl;
-            updateNeuronsKernelBody << "if (localId == 1);";
+            updateNeuronsKernelBody << "if (localId == 1)";
             {
                 CodeStream::Scope b(updateNeuronsKernelBody);
                 updateNeuronsKernelBody << "shSpkEvntCount = 0;" << std::endl;
@@ -252,7 +288,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
             updateNeuronsKernelBody << "volatile __local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
             updateNeuronsKernelBody << "volatile __local unsigned int shPosSpk;" << std::endl;
             updateNeuronsKernelBody << "volatile __local unsigned int shSpkCount;" << std::endl;
-            updateNeuronsKernelBody << "if (localId == 0);";
+            updateNeuronsKernelBody << "if (localId == 0)";
             {
                 CodeStream::Scope b(updateNeuronsKernelBody);
                 updateNeuronsKernelBody << "shSpkCount = 0;" << std::endl;
@@ -387,11 +423,16 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     // Neuron update kernels
     os << "extern \"C\" const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
+    
+    // Defines
     os << "#define DT " << std::to_string(model.getDT());
     if (model.getTimePrecision() == "float") {
         os << "f";
     }
     os << std::endl << std::endl;
+
+    ::genSupportCode(os, model);
+
     // KernelPreNeuronReset definition
     os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
     {
@@ -421,7 +462,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     for (const auto& ng : model.getLocalNeuronGroups()) {
         auto* nm = ng.second.getNeuronModel();
         for (const auto& v : nm->getVars()) {
-            updateNeuronsKernelParams.insert({ getVarPrefix() + v.name + ng.second.getName(), "__global " + v.type + "*" });
+            updateNeuronsKernelParams[getVarPrefix() + v.name + ng.second.getName()] = "__global " + v.type + "*";
         }
     }
     // Local synapse groups
@@ -430,9 +471,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             auto* psm = sg.second.getPSModel();
             for (const auto& v : psm->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    updateNeuronsKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                }
+                updateNeuronsKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
             }
         }
     }
@@ -918,6 +957,8 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << "#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1" << std::endl;
     os << "#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0" << std::endl;
     os << std::endl;
+
+    ::genSupportCode(os, model);
 
     // Float atomic add function
     if (hasPresynapticUpdateKernel || hasSynapseDynamicsUpdateKernel) {
@@ -1447,11 +1488,9 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             auto* psm = sg.second.getPSModel();
             for (const auto& v : psm->getVars()) {
-                if (v.access == VarAccess::READ_WRITE) {
-                    initializeKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                    if (hasInitializeSparseKernel) {
-                        initializeSparseKernelParams.insert({ getVarPrefix() + v.name + sg.second.getName(), "__global " + v.type + "*" });
-                    }
+                initializeKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
+                if (hasInitializeSparseKernel) {
+                    initializeSparseKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
                 }
             }
         }
@@ -1470,7 +1509,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
         for (const auto& v : nm->getVars()) {
             // Initialize only READ_WRITE variables
             if (v.access == VarAccess::READ_WRITE) {
-                initializeKernelParams.insert({ getVarPrefix() + v.name + ng.second.getName(), "__global " + v.type + "*" });
+                initializeKernelParams[getVarPrefix() + v.name + ng.second.getName()] = "__global " + v.type + "*";
             }
         }
     }
