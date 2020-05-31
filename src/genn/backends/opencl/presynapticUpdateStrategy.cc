@@ -123,9 +123,6 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 
             std::string code = threshOsStream.str();
 
-            std::regex toReplace("fmodf");
-            code = std::regex_replace(code, toReplace, "fmod");
-
             os << code;
 
             // Collect device variables in code
@@ -315,9 +312,6 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                     wumThreshHandler(threshOs, sg, threshSubs);
 
                     std::string code = threshOsStream.str();
-
-                    std::regex toReplace("fmodf");
-                    code = std::regex_replace(code, toReplace, "fmod");
 
                     os << code;
 

@@ -423,7 +423,8 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     // Neuron update kernels
     os << "extern \"C\" const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
-    
+
+    os << "#define fmodf fmod" << std::endl;
     // Defines
     os << "#define DT " << std::to_string(model.getDT());
     if (model.getTimePrecision() == "float") {
@@ -481,8 +482,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     os << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
-        std::regex toReplace("fmodf");
-        os << std::regex_replace(updateNeuronsKernelBodyStream.str(), toReplace, "fmod");
+        os << updateNeuronsKernelBodyStream.str();
     }
     // Closing the multiline char* containing all kernels for updating neurons
     os << ")\";" << std::endl;
@@ -950,6 +950,7 @@ void Backend::genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
     os << "typedef unsigned char uint8_t;" << std::endl;
     os << std::endl;
 
+    os << "#define fmodf fmod" << std::endl;
     // Definitions for bitmask
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// bit tool macros" << std::endl;
@@ -1479,6 +1480,7 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     // Initialization kernels
     os << "extern \"C\" const char* " << ProgramNames[ProgramInitialize] << "Src = R\"(typedef float scalar;" << std::endl;
     os << std::endl;
+    os << "#define fmodf fmod" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
     // Collecting common parameters for KernelInitialize and KernelInitializeSparse
