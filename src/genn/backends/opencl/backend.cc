@@ -26,7 +26,7 @@ namespace {
 
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
-    {"gennrand_uniform", 0, "uniform_double($(rng))", "uniform($(rng))"},
+    {"gennrand_uniform", 0, "uniform_double($(rng))", "uniform_clrngLfsr113($(rng))"},
     {"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "log_normal_double($(rng), $(0), $(1))", "log_normal_float($(rng), $(0), $(1))"},
@@ -319,6 +319,7 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 //! TO BE IMPLEMENTED - Not using rng at this point - 2020/03/08
                 if (ng.isSimRNGRequired()) {
                     popSubs.addVarSubstitution("rng", "&d_rng" + ng.getName() + "[" + popSubs["id"] + "]");
+                    updateNeuronsKernelParams.insert({ "d_rng" + ng.getName(), "__global clrngLfsr113HostStream*" });
                 }
 
                 // Call handler to generate generic neuron code
@@ -433,6 +434,24 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
     os << std::endl << std::endl;
 
     ::genSupportCode(os, model);
+
+    // RNG functions
+    if (std::any_of(model.getLocalNeuronGroups().cbegin(), model.getLocalNeuronGroups().cend(),
+        [](const ModelSpec::NeuronGroupValueType& s) { return s.second.isSimRNGRequired(); })) {
+        os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
+        os << "#include <clRNG/lfsr113.clh>" << std::endl;
+        os << std::endl;
+        os << model.getPrecision() << " uniform_clrngLfsr113(__global const clrngLfsr113HostStream* srcStreams)";
+        {
+            CodeStream::Scope b(os);
+            os << "clrngLfsr113Stream localStream;" << std::endl;
+            os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, srcStreams);" << std::endl;
+            os << model.getPrecision() << " val = clrngLfsr113RandomU01(&localStream);" << std::endl;
+            os << "clrngLfsr113CopyOverStreamsToGlobal(1, srcStreams, &localStream);" << std::endl;
+            os << "return val;" << std::endl;
+        }
+        os << std::endl;
+    }
 
     // KernelPreNeuronReset definition
     os << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
@@ -1665,6 +1684,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
     os << "// OpenCL includes" << std::endl;
     os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
     os << "#include <CL/cl.hpp>" << std::endl;
+    os << "#include \"clRNG/lfsr113.h\"" << std::endl;
     os << std::endl;
     os << "#define DEVICE_INDEX " << m_ChosenDeviceID << std::endl;
     os << std::endl;
@@ -1683,13 +1703,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os) const
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// OpenCL functions declaration" << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "namespace opencl";
-    {
-        CodeStream::Scope b(os);
-        os << "void setUpContext(cl::Context& context, cl::Device& device, const int deviceIndex);" << std::endl;
-        os << "void createProgram(const char* kernelSource, cl::Program& program, cl::Context& context);" << std::endl;
-        os << "const char* clGetErrorString(cl_int error);" << std::endl;
-    }
+    os << "namespace opencl {" << std::endl;
+    os << "void setUpContext(cl::Context& context, cl::Device& device, const int deviceIndex);" << std::endl;
+    os << "void createProgram(const char* kernelSource, cl::Program& program, cl::Context& context);" << std::endl;
+    os << "const char* clGetErrorString(cl_int error);" << std::endl;
+    os << "}" << std::endl;
 
     os << std::endl;
 
@@ -1806,7 +1824,7 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         CodeStream::Scope b(os);
         os << "// Reading the kernel source for execution" << std::endl;
         os << "program = cl::Program(context, kernelSource, true);" << std::endl;
-        os << "program.build(\"-cl-std=CL1.2\");" << std::endl;
+        os << "program.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
     }
     os << std::endl;
     os << "// Get OpenCL error as string" << std::endl;
@@ -2106,8 +2124,18 @@ MemAlloc Backend::genGlobalRNG(CodeStream& definitions, CodeStream& definitionsI
 MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free,
     const std::string& name, size_t count) const
 {
-    printf("TO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genPopulationRNG\n");
-    return MemAlloc::zero();
+    genVariableDefinition(definitionsInternal, definitionsInternal, "clrngLfsr113Stream*", name, VarLocation::DEVICE);
+    genVariableImplementation(runner, "clrngLfsr113Stream*", name, VarLocation::DEVICE);
+    genVariableFree(free, name, VarLocation::DEVICE);
+
+    // genVariableAllocation
+    auto allocation = MemAlloc::zero();
+
+    allocations << "size_t " << name << "Count = " << count << ";" << std::endl;
+    allocations << name << " = clrngLfsr113CreateStreams(NULL, " << count << ", &" << name << "Count, NULL);" << std::endl;
+    allocations << getVarPrefix() << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << name << "Count, " << name << ");" << std::endl;
+
+    return allocation;
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free,
@@ -2156,7 +2184,7 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<AdditionalIncludeDirectories>$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
+    os << "\t\t\t<AdditionalIncludeDirectories>clRNG\\include;$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
@@ -2165,8 +2193,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
     os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
     os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
-    os << "\t\t\t<AdditionalLibraryDirectories>$(OPENCL_PATH)\\lib\\x64;$(OPENCL_PATH)\\lib\\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
-    os << "\t\t\t<AdditionalDependencies>OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
+    os << "\t\t\t<AdditionalLibraryDirectories>clRNG\\lib;$(OPENCL_PATH)\\lib\\x64;$(OPENCL_PATH)\\lib\\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
+    os << "\t\t\t<AdditionalDependencies>clRNG.lib;OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
     os << "\t\t</Link>" << std::endl;
 }
 //--------------------------------------------------------------------------
