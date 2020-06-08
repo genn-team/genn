@@ -4,6 +4,7 @@ and defines class Variable
 """
 from collections import namedtuple
 from numbers import Number
+from weakref import proxy
 import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
@@ -244,7 +245,7 @@ class Variable(object):
         """
         self.name = variable_name
         self.type = variable_type
-        self.group = group
+        self.group = proxy(group)
         self.extra_global_params = {}
         self.view = None
         self.needs_allocation = False
