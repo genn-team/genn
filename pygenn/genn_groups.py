@@ -7,6 +7,7 @@ try:
 except NameError:  # Python 3
     xrange = range
 
+from weakref import proxy
 from deprecated import deprecated
 from six import iteritems
 import numpy as np
@@ -32,7 +33,7 @@ class Group(object):
         name    --  string name of the Group
         """
         self.name = name
-        self._model = model
+        self._model = proxy(model)
         self.vars = {}
         self.extra_global_params = {}
 
@@ -392,7 +393,7 @@ class SynapseGroup(Group):
         self.connectivity_extra_global_params = {}
         self.connectivity_initialiser = None
         self.weight_sharing_master = weight_sharing_master
-    
+
     @property
     def num_synapses(self):
         """Number of synapses in group"""
@@ -957,7 +958,7 @@ class CurrentSource(Group):
 
         # Load current source extra global parameters
         self._load_egp()
-    
+
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()

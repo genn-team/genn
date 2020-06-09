@@ -486,7 +486,7 @@ class GeNNModel(object):
         if self._loaded:
             raise Exception("GeNN model already loaded")
         self._path_to_model = path_to_model
-        
+
         self._slm.open(self._path_to_model, self.model_name)
 
         self._slm.allocate_mem()
@@ -495,7 +495,7 @@ class GeNNModel(object):
         # extra global parameters required for initialization
         for pop_data in itervalues(self.neuron_populations):
             pop_data.load_init_egps()
-            
+
         # Loop through synapse populations and load any 
         # extra global parameters required for initialization
         for pop_data in itervalues(self.synapse_populations):
@@ -504,7 +504,7 @@ class GeNNModel(object):
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load_init_egps()
-    
+
         # Initialize model
         self._slm.initialize()
 
@@ -651,7 +651,7 @@ class GeNNModel(object):
                     if egp_dat.needsAllocation:
                         self._slm.free_extra_global_param(g_name, egp_name)
         # "normal" variables are freed when SharedLibraryModel is destoyed
-    
+
     def _validate_neuron_group(self, group, context):
         # If group is a string
         if isinstance(group, string_types):
@@ -668,7 +668,7 @@ class GeNNModel(object):
         # Otherwise, raise error
         else:
             raise ValueError("'%s' must be a NeuronGroup or string" % context)
-    
+
     def _validate_synapse_group(self, group, context):
         # If group is a string
         if isinstance(group, string_types):
