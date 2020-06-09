@@ -25,3 +25,4 @@
 /documentation/
 /build/
 /pygenn.egg-info/
+.vscode/

@@ -195,14 +195,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
-                    os << model.getPrecision() << " &denDelayFront = ";
-                    os << "group.denDelayInSyn" << i << "[(*group.denDelayPtrInSyn" << i << " * group.numNeurons) + " << popSubs["id"] << "];" << std::endl;
+                    os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront = ";
+                    os << "&group.denDelayInSyn" << i << "[(*group.denDelayPtrInSyn" << i << " * group.numNeurons) + " << popSubs["id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
-                    os << "linSyn += denDelayFront;" << std::endl;
+                    os << "linSyn += *denDelayFront;" << std::endl;
 
                     // Zero delay buffer slot
-                    os << "denDelayFront = " << model.scalarExpr(0.0) << ";" << std::endl;
+                    os << "*denDelayFront = " << model.scalarExpr(0.0) << ";" << std::endl;
                 }
 
                 // If synapse group has individual postsynaptic variables, also pull these in a coalesced access

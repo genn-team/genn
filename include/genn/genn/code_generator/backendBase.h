@@ -212,8 +212,9 @@ public:
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
-    //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
+    //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' and 'postamble' to this function.
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+    virtual void genAllocateMemPostamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
@@ -317,6 +318,9 @@ public:
     virtual std::string getArrayPrefix() const{ return ""; }
 
     virtual std::string getScalarPrefix() const{ return ""; }
+
+    //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
+    virtual std::string getPointerPrefix() const { return ""; }
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const = 0;

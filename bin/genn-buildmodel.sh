@@ -5,6 +5,7 @@ genn_help () {
     echo "genn-buildmodel.sh script usage:"
     echo "genn-buildmodel.sh [cdho] model"
     echo "-c            only generate simulation code for the CPU"
+    echo "-l            generate simulation code for OpenCL"
     echo "-d            enables the debugging mode"
     echo "-m            generate MPI simulation code"
     echo "-v            generates coverage information"
@@ -27,9 +28,10 @@ BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++11"
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cdmvs:o:i:h" option; do
+    while getopts "cldmvs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
+        l) GENERATOR_MAKEFILE="MakefileOpenCL";;
         d) DEBUG=1;;
         m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
