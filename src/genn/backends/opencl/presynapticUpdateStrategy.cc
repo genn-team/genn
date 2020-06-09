@@ -29,6 +29,11 @@ size_t PreSpan::getNumThreads(const SynapseGroupInternal &sg) const
     return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getNumThreadsPerSpike();
 }
 //----------------------------------------------------------------------------
+size_t PreSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    return sg.getMaxConnections();
+}
+//----------------------------------------------------------------------------
 bool PreSpan::isCompatible(const SynapseGroupInternal &sg) const
 {
     // Presynaptic parallelism can be used when synapse groups request it and they have sparse connectivity
@@ -56,10 +61,10 @@ bool PreSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, con
 }
 //----------------------------------------------------------------------------
 void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                      BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string> &params) const
+                      BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandlers) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+    /*const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getWUModel();
 
     if(sg.getNumThreadsPerSpike() > 1) {
@@ -77,9 +82,6 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
     else {
         os << "d_glbSpkCnt" << eventSuffix << sg.getSrcNeuronGroup()->getName() << "[0])";
     }
-
-    params.insert({ "d_glbSpkCnt" + eventSuffix + sg.getSrcNeuronGroup()->getName(), "__global unsigned int*" });
-
     {
         CodeStream::Scope b(os);
 
@@ -96,8 +98,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             os << "[spike];" << std::endl;
         }
 
-        params.insert({ "d_glbSpk" + eventSuffix + sg.getSrcNeuronGroup()->getName(), "__global unsigned int*" });
-
+     
         if(sg.getNumThreadsPerSpike() > 1) {
             os << "unsigned int synAddress = (preInd * " << std::to_string(sg.getMaxConnections()) << ") + thread;" << std::endl;
         }
@@ -105,8 +106,6 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
             os << "unsigned int synAddress = preInd * " << std::to_string(sg.getMaxConnections()) << ";" << std::endl;
         }
         os << "const unsigned int npost = d_rowLength" << sg.getName() << "[preInd];" << std::endl;
-
-        params.insert({ "d_rowLength" + sg.getName(), "__global unsigned int*" });
 
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << "if(";
@@ -184,7 +183,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
         if (!trueSpike && sg.isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);
         }
-    }
+    }*/
 }
 
 //----------------------------------------------------------------------------
@@ -193,6 +192,16 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syna
 size_t PostSpan::getNumThreads(const SynapseGroupInternal &sg) const
 {
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        return sg.getMaxConnections();
+    }
+    else {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//----------------------------------------------------------------------------
+size_t PostSpan::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxConnections();
     }
     else {
@@ -229,10 +238,10 @@ bool PostSpan::shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, co
 }
 //----------------------------------------------------------------------------
 void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                       BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const
+                       BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const
 {
     // Get suffix based on type of events
-    const std::string eventSuffix = trueSpike ? "" : "Evnt";
+    /*const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
     //! TO BE IMPLEMENTED - Possibly respecifying localId in this block
     os << "const size_t localIdi = get_local_id(0);" << std::endl;
@@ -388,7 +397,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecInternal &model, const Syn
                 }
             }
         }
-    }
+    }*/
 }
 }   // namespace PresynapticUpdateStrategy
 }   // namespace OpenCL

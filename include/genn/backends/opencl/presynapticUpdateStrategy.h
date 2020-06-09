@@ -33,6 +33,9 @@ public:
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const = 0;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
+
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const = 0;
 
@@ -44,7 +47,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const = 0;
+                         BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -60,6 +63,9 @@ public:
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
@@ -71,7 +77,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const override;
+                         BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -87,6 +93,9 @@ public:
     //! Get the number of threads that presynaptic updates should be parallelised across
     virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
 
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
@@ -98,7 +107,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
-                         BackendBase::SynapseGroupHandler wumThreshHandler, BackendBase::SynapseGroupHandler wumSimHandler, std::map<std::string, std::string>& params) const override;
+                         BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const override;
 };
 }   // namespace PresynapticUpdateStrategy
 }   // namespace OpenCL

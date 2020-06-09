@@ -38,10 +38,15 @@ namespace CodeGenerator
 {
 namespace OpenCL
 {
+//! Methods for selecting OpenCL platform
+enum class PlatformSelect
+{
+    MANUAL,         //!< Use platform specified by user
+};
+
 //! Methods for selecting OpenCL device
 enum class DeviceSelect
 {
-    OPTIMAL,        //!< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy
     MOST_MEMORY,    //!< Pick device with most global memory
     MANUAL,         //!< Use device specified by user
 };
@@ -52,7 +57,6 @@ enum class DeviceSelect
 //! Methods for selecting OpenCL kernel workgroup size
 enum class WorkGroupSizeSelect
 {
-    OCCUPANCY,  //!< Pick optimal workgroup size for each kernel based on occupancy
     MANUAL,     //!< Use workgroup sizes specified by user
 };
 
@@ -98,22 +102,23 @@ struct Preferences : public PreferencesBase
         std::fill(manualWorkGroupSizes.begin(), manualWorkGroupSizes.end(), 32);
     }
 
-    //! Should we use the constant cache for storing merged structures - improves performance but may overflow for large models
-    bool useConstantCacheForMergedStructs = true;
+    //! How to select OpenCL platform
+    PlatformSelect platformSelectMethod = PlatformSelect::MANUAL;
 
-    //! How to select GPU device
-    DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
+    //! If platform select method is set to PlatformSelect::MANUAL, id of platform to use
+    unsigned int manualPlatformID = 0;
+
+    //! How to select OpenCL device
+    DeviceSelect deviceSelectMethod = DeviceSelect::MOST_MEMORY;
 
     //! If device select method is set to DeviceSelect::MANUAL, id of device to use
     unsigned int manualDeviceID = 0;
 
     //! How to select OpenCL workgroup size
-    WorkGroupSizeSelect workGroupSizeSelectMethod = WorkGroupSizeSelect::OCCUPANCY;
+    WorkGroupSizeSelect workGroupSizeSelectMethod = WorkGroupSizeSelect::MANUAL;
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelWorkGroupSize manualWorkGroupSizes;
-
-    //! TO BE IMPLEMENTED - Additional libraries in kernels for passing to program.build
 };
 
 //--------------------------------------------------------------------------
@@ -123,28 +128,35 @@ class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferences& preferences,
-        int localHostID, const std::string& scalarType, int device);
+            const std::string& scalarType, unsigned int platformIndex, unsigned int deviceIndex);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, NeuronGroupSimHandler simHandler, NeuronGroupHandler wuVarUpdateHandler) const override;
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+                                 HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream& os, const ModelSpecInternal& model,
-        SynapseGroupHandler wumThreshHandler, SynapseGroupHandler wumSimHandler, SynapseGroupHandler wumEventHandler,
-        SynapseGroupHandler postLearnHandler, SynapseGroupHandler synapseDynamicsHandler) const override;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
+                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream& os, const ModelSpecInternal& model,
-        NeuronGroupHandler localNGHandler, NeuronGroupHandler remoteNGHandler,
-        SynapseGroupHandler sgDenseInitHandler, SynapseGroupHandler sgSparseConnectHandler,
-        SynapseGroupHandler sgSparseInitHandler) const override;
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
+                         NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
+                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
-    virtual void genDefinitionsPreamble(CodeStream& os) const override;
-    virtual void genDefinitionsInternalPreamble(CodeStream& os) const override;
-    virtual void genRunnerPreamble(CodeStream& os) const override;
-    virtual void genAllocateMemPreamble(CodeStream& os, const ModelSpecInternal& model) const override;
-    virtual void genAllocateMemPostamble(CodeStream& os, const ModelSpecInternal& model) const override;
-    virtual void genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecInternal& model) const override;
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
+    virtual void genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genRunnerPreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genAllocateMemPostamble(CodeStream& os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged &modelMergedl) const override;
 
     virtual void genVariableDefinition(CodeStream& definitions, CodeStream& definitionsInternal, const std::string& type, const std::string& name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const override;
@@ -153,15 +165,30 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream& definitions, const std::string& type, const std::string& name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamPush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamPull(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name,
+                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
+                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
+                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
 
-    virtual void genPopVariableInit(CodeStream& os, VarLocation loc, const Substitutions& kernelSubs, Handler handler) const override;
-    virtual void genVariableInit(CodeStream& os, VarLocation loc, size_t count, const std::string& indexVarName,
-        const Substitutions& kernelSubs, Handler handler) const override;
-    virtual void genSynapseVariableRowInit(CodeStream& os, VarLocation loc, const SynapseGroupInternal& sg,
-        const Substitutions& kernelSubs, Handler handler) const override;
+    //! Generate code for declaring merged group data to the 'device'
+    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
+                                              size_t idx, size_t numGroups) const override;
+
+    //! Generate code for pushing merged group data to the 'device'
+    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
+
+    //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
+    virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx,
+                                               const std::string &groupIdx, const std::string &fieldName,
+                                               const std::string &egpName) const override;
+
+    virtual void genPopVariableInit(CodeStream& os, const Substitutions& kernelSubs, Handler handler) const override;
+    virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
+                                 const Substitutions &kernelSubs, Handler handler) const override;
+    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
+                                           const Substitutions &kernelSubs, Handler handler) const override;
 
     virtual void genVariablePush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const override;
@@ -186,12 +213,15 @@ public:
         genCurrentSpikePull(os, ng, true);
     }
 
-    virtual MemAlloc genGlobalRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free, const ModelSpecInternal& model) const override;
+    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
     virtual MemAlloc genPopulationRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner,
-        CodeStream& allocations, CodeStream& free, const std::string& name, size_t count) const override;
+                                      CodeStream& allocations, CodeStream& free, const std::string& name, size_t count) const override;
     virtual void genTimer(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner,
-        CodeStream& allocations, CodeStream& free, CodeStream& stepTimeFinalise,
-        const std::string& name, bool updateInStepTime) const override;
+                          CodeStream& allocations, CodeStream& free, CodeStream& stepTimeFinalise,
+                          const std::string& name, bool updateInStepTime) const override;
+
+    //! Generate code to return amount of free 'device' memory in bytes
+    virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
 
     virtual void genMakefilePreamble(std::ostream& os) const override;
     virtual void genMakefileLinkRule(std::ostream& os) const override;
@@ -203,23 +233,42 @@ public:
     virtual void genMSBuildCompileModule(const std::string& moduleName, std::ostream& os) const override;
     virtual void genMSBuildImportTarget(std::ostream& os) const override;
 
-    virtual std::string getVarPrefix() const override { return "d_"; }
+    virtual std::string getArrayPrefix() const override { return m_Preferences.automaticCopy ? "" : "d_"; }
+    virtual std::string getScalarPrefix() const override { return "d_"; }
+    virtual std::string getPointerPrefix() const override { return "__global "; };
 
-    virtual bool isGlobalRNGRequired(const ModelSpecInternal& model) const override;
+    //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
+
+    //! Different backends use different RNGs for different things. Does this one require a global device RNG for the specified model?
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
+
+    virtual bool isPopulationRNGRequired() const override { return true; }
     virtual bool isSynRemapRequired() const override { return true; }
     virtual bool isPostsynapticRemapRequired() const override { return true; }
 
+    //! Is automatic copy mode enabled in the preferences?
+    virtual bool isAutomaticCopyEnabled() const override { return m_Preferences.automaticCopy; }
+
+    //! Should GeNN generate empty state push and pull functions?
+    virtual bool shouldGenerateEmptyStatePushPull() const override { return m_Preferences.generateEmptyStatePushPull; }
+
+    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
+    virtual bool shouldGenerateExtraGlobalParamPull() const override { return m_Preferences.generateExtraGlobalParamPull; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override { return m_ChosenDevice.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>(); }
-    virtual std::string getPointerPrefix() const override { return "__global "; };
+    
+    //! Some backends will have additional small, fast, memory spaces for read-only data which might
+    //! Be well-suited to storing merged group structs. This method returns the prefix required to
+    //! Place arrays in these and their size in preferential order
+    virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
     const cl::Device& getChosenOpenCLDevice() const { return m_ChosenDevice; }
-    int getChosenDeviceID() const { return m_ChosenDeviceID; }
-    int getRuntimeVersion() const { return m_RuntimeVersion; }
-
+    
     std::string getFloatAtomicAdd(const std::string& ftype, const char* memoryType = "global") const;
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelWorkGroupSizes.at(kernel); }
@@ -246,74 +295,77 @@ private:
     // Type definitions
     //--------------------------------------------------------------------------
     template<typename T>
-    using GetPaddedGroupSizeFunc = std::function<size_t(const T&)>;
-
-    template<typename T>
-    using FilterGroupFunc = std::function<bool(const T&)>;
+    using GetPaddedGroupSizeFunc = std::function<size_t(const T &)>;
 
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart, std::map<std::string, std::string>& params,
-        GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
-        FilterGroupFunc<T> filter,
-        GroupHandler<T> handler) const
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, const std::string &mergedGroupPrefix, size_t &idStart,
+                          GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
+                          GroupHandler<T> handler) const
     {
-        // Populate neuron update groups
-        for (const auto& g : groups) {
-            // If this synapse group should be processed
-            Substitutions popSubs(&kernelSubs);
-            if (filter(g.second)) {
-                const size_t paddedSize = getPaddedSizeFunc(g.second);
+        // Loop through groups
+        for(const auto &gMerge : groups) {
+            // Sum padded sizes of each group within merged group
+            const size_t paddedSize = std::accumulate(
+                gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
+                [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+            {
+                return (acc + getPaddedSizeFunc(g.get()));
+            });
 
-                os << "// " << g.first << std::endl;
+            os << "// merged" << gMerge.getIndex() << std::endl;
 
-                // If this is the first  group
-                if (idStart == 0) {
-                    os << "if(id < " << paddedSize << ")" << CodeStream::OB(1);
-                    popSubs.addVarSubstitution("id", "id");
+            // If this is the first  group
+            if(idStart == 0) {
+                os << "if(id < " << paddedSize << ")";
+            }
+            else {
+                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
+            }
+            {
+                CodeStream::Scope b(os);
+                Substitutions popSubs(&kernelSubs);
+
+                if(gMerge.getGroups().size() == 1) {
+                    os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[0];" << std::endl;
+                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
                 }
                 else {
-                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")" << CodeStream::OB(1);
-                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-                    popSubs.addVarSubstitution("id", "lid");
-                }
+                    // Perform bisect operation to get index of merged struct
+                    os << "unsigned int lo = 0;" << std::endl;
+                    os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                    os << "while(lo < hi)" << std::endl;
+                    {
+                        CodeStream::Scope b(os);
+                        os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                std::stringstream subOsStream;
-                CodeStream subOs(subOsStream);
-
-                handler(subOs, g.second, popSubs);
-
-                std::string code = subOsStream.str();
-
-                // Collect device variables in code
-                std::regex rgx("\\b" + getVarPrefix() + "\\w+\\b");
-                for (std::sregex_iterator it(code.begin(), code.end(), rgx), end; it != end; it++) {
-                    if (it->str().find("denDelayPtr") != std::string::npos) {
-                        std::regex toReplace(getVarPrefix() + "denDelayPtr");
-                        code = std::regex_replace(code, toReplace, "denDelayPtr");
-                        params.insert({ it->str().erase(0, getVarPrefix().size()), "volatile unsigned int" });
-                        continue;
+                        os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "hi = mid;" << std::endl;
+                        }
+                        os << "else";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "lo = mid + 1;" << std::endl;
+                        }
                     }
-                    params.insert({ it->str(), "__global scalar*" });
-                }
 
-                os << code;
+                    // Use this to get reference to merged group structure
+                    os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+
+                    // Use this and starting thread of merged group to calculate local id within neuron group
+                    os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+
+                }
+                popSubs.addVarSubstitution("id", "lid");
+                handler(os, gMerge, popSubs);
 
                 idStart += paddedSize;
-                os << CodeStream::CB(1) << std::endl;
             }
         }
-    }
-
-    template<typename T>
-    void genParallelGroup(CodeStream& os, const Substitutions& kernelSubs, const std::map<std::string, T>& groups, size_t& idStart, std::map<std::string, std::string>& params,
-        GetPaddedGroupSizeFunc<T> getPaddedSizeFunc,
-        GroupHandler<T> handler) const
-    {
-        genParallelGroup<T>(os, kernelSubs, groups, idStart, params, getPaddedSizeFunc,
-            [](const T&) { return true; }, handler);
     }
 
     void genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const;
@@ -323,15 +375,13 @@ private:
 
     void genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const;
 
-    void genKernelHostArgs(CodeStream& os, Kernel kernel, const std::map<std::string, std::string>& params) const;
-
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string& type, size_t size);
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string& type) const;
 
-    void divideKernelStreamInParts(CodeStream& os, std::stringstream& kernelCode, int partLength) const;
+    void divideKernelStreamInParts(CodeStream& os, const std::stringstream& kernelCode, size_t partLength) const;
 
     //--------------------------------------------------------------------------
     // Private static methods
@@ -345,7 +395,8 @@ private:
     const KernelWorkGroupSize m_KernelWorkGroupSizes;
     const Preferences m_Preferences;
 
-    const int m_ChosenDeviceID;
+    const unsigned int m_ChosenPlatformIndex;
+    const unsigned int m_ChosenDeviceIndex;
     cl::Device m_ChosenDevice;
 
     int m_RuntimeVersion;

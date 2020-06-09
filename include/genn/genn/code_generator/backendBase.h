@@ -208,7 +208,6 @@ public:
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
