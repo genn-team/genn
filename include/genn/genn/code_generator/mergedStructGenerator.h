@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <functional>
+#include <memory>
 #include <vector>
 #include <unordered_map>
 
@@ -14,10 +15,70 @@
 #include "code_generator/groupMerged.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator::MergedStructGenerator
+// CodeGenerator::MergedStruct
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
+class MergedStruct
+{
+public:
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef std::tuple<std::string, std::string> Field;
+
+    MergedStruct(const std::string &name, size_t index, const std::vector<Field> &sortedFields)
+    :   m_Name(name), m_Index(index), m_SortedFields(sortedFields)
+    {
+    }
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Generate declaration of struct
+    void generateStruct(CodeStream &os, const std::string &prefix = "") const
+    {
+        os << "struct Merged" << m_Name << "Group" << m_Index << std::endl;
+        {
+            // Loop through fields and write to structure
+            CodeStream::Scope b(os);
+            for(const auto &f : m_SortedFields) {
+                os << prefix << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+            }
+            os << std::endl;
+        }
+
+        os << ";" << std::endl;
+    }
+
+    void generatePushFuncArgs(const BackendBase &backend, CodeStream &os) const
+    {
+        // Loop through fields 
+        const size_t lastFieldIndex = m_SortedFields.size() - 1;
+        for(size_t fieldIndex = 0; fieldIndex < m_SortedFields.size(); fieldIndex++) {
+            const auto &f = m_SortedFields[fieldIndex];
+            os << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << std::get<1>(f);
+            if(fieldIndex != lastFieldIndex) {
+                os << ", ";
+            }
+        }
+    }
+
+    const std::vector<Field> &getSortedFields() const { return m_SortedFields; }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::string m_Name;
+    const size_t m_Index;
+    const std::vector<Field> m_SortedFields;
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::MergedStructGenerator
+//--------------------------------------------------------------------------
+
 template<typename T>
 class MergedStructGenerator
 {
@@ -166,36 +227,11 @@ public:
         }
     }
 
-    //! Generate declaration of struct
-    void generateStruct(const BackendBase &backend, CodeStream &os, 
-                        const std::string &name, const std::string &prefix = "") const
-    {
-        // Make a copy of fields and sort so largest come first. This should mean that due
-        // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = m_Fields;
-        std::sort(sortedFields.begin(), sortedFields.end(),
-                  [&backend](const Field &a, const Field &b)
-                  {
-                      return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
-                  });
 
-        os << "struct Merged" << name << "Group" << getMergedGroup().getIndex() << std::endl;
-        {
-            // Loop through fields and write to structure
-            CodeStream::Scope b(os);
-            for(const auto &f : sortedFields) {
-                os << prefix << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
-            }
-            os << std::endl;
-        }
-
-        os << ";" << std::endl;
-    }
-
-    void generate(const BackendBase &backend, CodeStream &definitionsInternal, 
-                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                  MergedStructData &mergedStructData, const std::string &name, bool host = false) const
+    std::unique_ptr<MergedStruct> generate(const BackendBase &backend, CodeStream &definitionsInternal, 
+                                           CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
+                                           CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                                           MergedStructData &mergedStructData, const std::string &name, bool host = false) const
     {
         const size_t mergedGroupIndex = getMergedGroup().getIndex();
 
@@ -208,17 +244,17 @@ public:
                       return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
                   });
 
+        std::vector<MergedStruct::Field> frozenFields;
+        frozenFields.reserve(sortedFields.size());
+        std::transform(sortedFields.cbegin(), sortedFields.cend(), std::back_inserter(frozenFields),
+                       [](const Field &field) { return std::make_tuple(std::get<0>(field), std::get<1>(field)); });
+        
+        auto mergedStruct = std::make_unique<MergedStruct>(name, mergedGroupIndex, frozenFields);
+
         // If this isn't a host merged structure, generate definition for function to push group
         if(!host) {
             definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(unsigned int idx, ";
-            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
-                const auto &f = sortedFields[fieldIndex];
-                definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << std::get<1>(f);
-                if(fieldIndex != (sortedFields.size() - 1)) {
-                    definitionsInternalFunc << ", ";
-                }
-            }
-            definitionsInternalFunc << ");" << std::endl;
+            mergedStruct->generatePushFuncArgs(backend, definitionsInternalFunc);
         }
 
         // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
@@ -246,7 +282,7 @@ public:
         // If merged group is used on host
         if(host) {
             // Generate struct directly into internal definitions
-            generateStruct(backend, definitionsInternal, name);
+            mergedStruct->generateStruct(definitionsInternal);
 
             // Declare array of these structs containing individual neuron group pointers etc
             runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
@@ -290,6 +326,8 @@ public:
             else {
                 runnerMergedStructAlloc << ");" << std::endl;
             }
+
+            return mergedStruct;
 
         }
     }
