@@ -645,10 +645,6 @@ void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPostamble(CodeStream&, const ModelSpecMerged&) const
-{
-}
-//--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }

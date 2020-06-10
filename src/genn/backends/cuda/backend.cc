@@ -1487,10 +1487,6 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPostamble(CodeStream&, const ModelSpecMerged&) const
-{
-}
-//--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // Synchronise if automatic copying or zero-copy are in use

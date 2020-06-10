@@ -1209,9 +1209,6 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         // Write merged struct allocations to runner
         runner << runnerMergedStructAllocStream.str();
-
-        // Generate postamble
-        backend.genAllocateMemPostamble(runner, modelMerged);
     }
     runner << std::endl;
 

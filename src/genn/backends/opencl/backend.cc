@@ -133,11 +133,6 @@ const char* Backend::KernelNames[KernelMax] = {
     "preNeuronResetKernel",
     "preSynapseResetKernel" };
 //--------------------------------------------------------------------------
-const char* Backend::ProgramNames[ProgramMax] = {
-    "initProgram",
-    "updateNeuronsProgram",
-    "updateSynapsesProgram" };
-//--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategy::PreSpan,
     new PresynapticUpdateStrategy::PostSpan,
@@ -396,25 +391,35 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     //! KernelNeuronUpdate END
 
     // Write out kernel source string literal
-    os << "const char* " << ProgramNames[ProgramNeuronsUpdate] << "Src = ";
+    os << "const char* neuronUpdateSrc = ";
     divideKernelStreamInParts(os, neuronUpdateKernelsStream, 5000);
     os << ";" << std::endl;
+    os << "cl::Program neuronUpdateProgram;" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
+    os << std::endl;
 
     // Function for initializing the KernelNeuronUpdate kernels
     os << "// Initialize the neuronUpdate kernels" << std::endl;
-    os << "void " << ProgramNames[ProgramNeuronsUpdate] << "Kernels()";
+    os << "void buildNeuronUpdateProgram()";
     {
         CodeStream::Scope b(os);
+        os << "// Reading the kernel source for execution" << std::endl;
+        os << "neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, true);" << std::endl;
+        os << "neuronUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
 
         // KernelPreNeuronReset initialization
-        os << KernelNames[KernelPreNeuronReset] << " = cl::Kernel(" << ProgramNames[ProgramNeuronsUpdate] << ", \"" << KernelNames[KernelPreNeuronReset] << "\");" << std::endl;
-        setMergedGroupKernelParams(os, KernelNames[KernelPreNeuronReset], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
-        
-        os << std::endl;
+        if(idPreNeuronReset > 0) {
+            os << KernelNames[KernelPreNeuronReset] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelPreNeuronReset] << "\");" << std::endl;
+            setMergedGroupKernelParams(os, KernelNames[KernelPreNeuronReset], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+            os << std::endl;
+        }
 
         // KernelNeuronUpdate initialization
-        os << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(" << ProgramNames[ProgramNeuronsUpdate] << ", \"" << KernelNames[KernelNeuronUpdate] << "\");" << std::endl;
-        setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
+        if(idStart > 0) {
+            os << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronUpdate] << "\");" << std::endl;
+            setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
+        }
     }
 
     os << std::endl;
@@ -1400,22 +1405,29 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     //! KernelInitializeSparse BODY END
 
     // Write out kernel source string literal
-    os << "const char* " << ProgramNames[ProgramInitialize] << "Src = ";
+    os << "const char* initializeSrc = ";
     divideKernelStreamInParts(os, initializeKernelsStream, 5000);
     os << ";" << std::endl;
+    os << "cl::Program initializeProgram;" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelInitializeSparse] << ";" << std::endl;
+    os << std::endl;
 
     // Function for initializing the initialization kernels
     os << "// Initialize the initialization kernel(s)" << std::endl;
-    os << "void " << ProgramNames[ProgramInitialize] << "Kernels()";
+    os << "void buildInitializeProgram()";
     {
         CodeStream::Scope b(os);
+        os << "// Reading the kernel source for execution" << std::endl;
+        os << "initializeProgram = cl::Program(clContext, initializeSrc, true);" << std::endl;
+        os << "initializeProgram.build(\"-cl-std=CL1.2\");" << std::endl;
 
         if (idInitStart > 0) {
             // KernelInitialize initialization
-            os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+            os << KernelNames[KernelInitialize] << " = cl::Kernel(initializeProgram, \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
         }
 
         /*if (hasInitializeSparseKernel && idSparseInitStart > 0)
@@ -1515,7 +1527,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
     os << "// OpenCL includes" << std::endl;
     os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
     os << "#include <CL/cl.hpp>" << std::endl;
-    os << "#include \"clRNG/lfsr113.h\"" << std::endl;
+    //os << "#include \"clRNG/lfsr113.h\"" << std::endl;
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking OpenCL calls" << std::endl;
@@ -1543,21 +1555,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
     os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
     os << std::endl;
 
-    // **TODO** move into kernels
-    os << "// OpenCL programs" << std::endl;
-    for (const auto& programName : ProgramNames) {
-        os << "EXPORT_VAR cl::Program " << programName << ";" << std::endl;
-    }
-    os << std::endl;
-    os << "// OpenCL kernels" << std::endl;
-    for (const auto& kernelName : KernelNames) {
-        os << "EXPORT_VAR cl::Kernel " << kernelName << ";" << std::endl;
-    }
-    os << "// OpenCL kernels initialization functions and kernels sources" << std::endl;
-    for (const auto& programName : ProgramNames) {
-        os << "EXPORT_FUNC void " << programName << "Kernels();" << std::endl;
-        os << "EXPORT_VAR const char* " << programName << "Src;" << std::endl;
-    }
+    os << "// OpenCL program initialization functions" << std::endl;
+    os << "EXPORT_FUNC void buildInitializeProgram();" << std::endl;
+    os << "EXPORT_FUNC void buildNeuronUpdateProgram();" << std::endl;
+    os << "EXPORT_FUNC void buildSynapseUpdateProgram();" << std::endl;
+    
     os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1569,17 +1571,7 @@ void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged &) const
     os << "cl::Device clDevice;" << std::endl;
     os << "cl::CommandQueue commandQueue;" << std::endl;
     os << std::endl;
-    os << "// OpenCL programs" << std::endl;
-    for (const auto& programName : ProgramNames) {
-        os << "cl::Program " << programName << ";" << std::endl;
-    }
-    os << std::endl;
-    os << "// OpenCL kernels" << std::endl;
-    for(const auto &kernelName : KernelNames) {
-        os << "cl::Kernel " << kernelName << ";" << std::endl;
-    }
 
-    os << std::endl;
     os << "// Get OpenCL error as string" << std::endl;
     os << "const char* clGetErrorString(cl_int error)";
     {
@@ -1627,31 +1619,20 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged&) con
     os << "// Get platforms" << std::endl;
     os << "std::vector<cl::Platform> platforms; " << std::endl;
     os << "cl::Platform::get(&platforms);" << std::endl;
+    
     os << "// Get platform devices" << std::endl;
     os << "std::vector<cl::Device> platformDevices; " << std::endl;
     os << "platforms[" << m_ChosenPlatformIndex << "].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
+    
     os << "// Select device and create context and command queue" << std::endl;
     os << "clDevice = platformDevices[" << m_ChosenDeviceIndex << "];" << std::endl;
     os << "clContext = cl::Context(clDevice);" << std::endl;
     os << "commandQueue = cl::CommandQueue(clContext, clDevice);" << std::endl;
-    os << std::endl;
-    os << "// Create programs for kernels" << std::endl;
-    for(const auto &programName : ProgramNames) {
-        os << "// Reading the kernel source for execution" << std::endl;
-        os << programName << " = cl::Program(clContext, " << programName << "Src, true);" << std::endl;
-        os << programName << ".build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genAllocateMemPostamble(CodeStream& os, const ModelSpecMerged&) const
-{
-    // Initializing OpenCL kernels - after buffer initialization
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// OpenCL kernels initialization" << std::endl;
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    for (const auto& programName : ProgramNames) {
-        os << programName << "Kernels();" << std::endl;
-    }
+
+    os << "// Build OpenCL programs" << std::endl;
+    os << "buildInitializeProgram();" << std::endl;
+    os << "buildNeuronUpdateProgram();" << std::endl;
+    os << "buildSynapseUpdateProgram();" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged&) const
