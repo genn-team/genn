@@ -65,9 +65,9 @@ template<typename T>
 void genMergedGroupKernelParams(CodeStream &os, const std::vector<T> &groups, const std::string &name, bool includeFinalComma = false)
 {
     // Loop through groups and add pointer
-    // **NOTE** __constant is more of a hint in OpenCL - hopefully will work out ok..
+    // **NOTE** ideally we'd use __constant here (which in OpenCL appears to be more of a hint) but seems to cause weird ptx errors
     for(size_t i = 0; i < groups.size(); i++) {
-        os << "__constant Merged" << name << "Group" << i << " *d_merged" << name << "Group" << i;
+        os << "__global struct Merged" << name << "Group" << i << " *d_merged" << name << "Group" << i;
         if(includeFinalComma || i != (groups.size() - 1)) {
             os << ", ";
         }
@@ -223,7 +223,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 CodeStream::Scope b(neuronUpdateKernels);
 
                 // Use this to get reference to merged group structure
-                neuronUpdateKernels << "const MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "*group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idPreNeuronReset << "]; " << std::endl;
+                neuronUpdateKernels << "const __global struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "*group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idPreNeuronReset << "]; " << std::endl;
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
                     neuronUpdateKernels << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
