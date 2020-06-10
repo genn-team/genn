@@ -247,7 +247,7 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
 
     // Substitute spike times
     substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group.sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
 
     // Substitute neuron variables
     const auto *nm = archetypeNG->getNeuronModel();
@@ -255,16 +255,16 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
         const std::string varIdx = archetypeNG->isVarQueueRequired(v.name) ? offset + idx : idx;
 
         substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                         varPrefix + "group." + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
+                                         varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
     }
 
     // Substitute (potentially heterogeneous) parameters and derived parameters from neuron model
     substitutions.addParamValueSubstitution(nm->getParamNames(), archetypeNG->getParams(), isParamHeterogeneousFn,
-                                            sourceSuffix, "group.", destSuffix);
+                                            sourceSuffix, "group->", destSuffix);
     substitutions.addVarValueSubstitution(nm->getDerivedParams(), archetypeNG->getDerivedParams(), isDerivedParamHeterogeneousFn,
-                                          sourceSuffix, "group.", destSuffix);
+                                          sourceSuffix, "group->", destSuffix);
 
     // Substitute extra global parameters from neuron model
-    substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group.", destSuffix);
+    substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);
 }
 }   // namespace CodeGenerator

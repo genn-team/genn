@@ -40,11 +40,11 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
                     os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << "group." << spikeCntName << "[d] = 0;" << std::endl;
+                        os << "group->" << spikeCntName << "[d] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << "group." << spikeCntName << "[0] = 0;" << std::endl;
+                    os << "group->" << spikeCntName << "[0] = 0;" << std::endl;
                 }
             });
     }
@@ -60,7 +60,7 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
         // Generate variable initialisation code
-        backend.genVariableInit(os, "group.numNeurons", "id", popSubs,
+        backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
             [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
             {
                 // Get variable name
@@ -75,11 +75,11 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
                     os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                     {
                         CodeStream::Scope b(os);
-                        os << "group." << spikeName << "[(d * group.numNeurons) + " + varSubs["id"] + "] = 0;" << std::endl;
+                        os << "group->" << spikeName << "[(d * group->numNeurons) + " + varSubs["id"] + "] = 0;" << std::endl;
                     }
                 }
                 else {
-                    os << "group." << spikeName << "[" << varSubs["id"] << "] = 0;" << std::endl;
+                    os << "group->" << spikeName << "[" << varSubs["id"] << "] = 0;" << std::endl;
                 }
             });
     }
@@ -93,7 +93,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 {
     using namespace CodeGenerator;
 
-    const std::string count = "group." + countMember;
+    const std::string count = "group->" + countMember;
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
 
@@ -109,12 +109,12 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                     // Substitute in parameters and derived parameters for initialising variables
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
-                                                      "", "group.", vars[k].name + fieldSuffix);
+                                                      "", "group->", vars[k].name + fieldSuffix);
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                     [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
-                                                    "", "group.", vars[k].name + fieldSuffix);
+                                                    "", "group->", vars[k].name + fieldSuffix);
                     varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group.", vars[k].name + fieldSuffix);
+                                                   "", "group->", vars[k].name + fieldSuffix);
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -132,11 +132,11 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                         os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
                         {
                             CodeStream::Scope b(os);
-                            os << "group." + vars[k].name << fieldSuffix << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
+                            os << "group->" + vars[k].name << fieldSuffix << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
                         }
                     }
                     else {
-                        varSubs.addVarSubstitution("value", "group." + vars[k].name + fieldSuffix + "[" + varSubs["id"] + "]");
+                        varSubs.addVarSubstitution("value", "group->" + vars[k].name + fieldSuffix + "[" + varSubs["id"] + "]");
 
                         std::string code = varInit.getSnippet()->getCode();
                         varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
@@ -180,15 +180,15 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                 [&backend, &vars, &varInit, &sg, &ftype, k]
                 (CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", "group." + vars[k].name + "[" + varSubs["id_syn"] +  "]");
+                    varSubs.addVarSubstitution("value", "group->" + vars[k].name + "[" + varSubs["id_syn"] +  "]");
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
-                                                      "", "group.", vars[k].name);
+                                                      "", "group->", vars[k].name);
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
-                                                      "", "group.", vars[k].name);
+                                                      "", "group->", vars[k].name);
                     varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group.", vars[k].name);
+                                                   "", "group->", vars[k].name);
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
@@ -234,7 +234,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             // If spike times are required
             if(ng.getArchetype().isSpikeTimeRequired()) {
                 // Generate variable initialisation code
-                backend.genVariableInit(os, "group.numNeurons", "id", popSubs,
+                backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                     [&backend, &ng] (CodeStream &os, Substitutions &varSubs)
                     {
                         // Is delay required
@@ -242,11 +242,11 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
                             os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                os << "group.sT[(d * group.numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
+                                os << "group->sT[(d * group->numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
                             }
                         }
                         else {
-                            os << "group.sT[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
+                            os << "group->sT[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
                         }
                     });
             }
@@ -267,22 +267,22 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
 
                 // If this synapse group's input variable should be initialised on device
                 // Generate target-specific code to initialise variable
-                backend.genVariableInit(os, "group.numNeurons", "id", popSubs,
+                backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                     [&backend, &model, sg, i] (CodeStream &os, Substitutions &varSubs)
                     {
-                        os << "group.inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                        os << "group->inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     });
 
                 // If dendritic delays are required
                 if(sg->isDendriticDelayRequired()) {
-                    backend.genVariableInit(os, "group.numNeurons", "id", popSubs,
+                    backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                         [&backend, &model, sg, i](CodeStream &os, Substitutions &varSubs)
                         {
                             os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
                             {
                                 CodeStream::Scope b(os);
-                                const std::string denDelayIndex = "(d * group.numNeurons) + " + varSubs["id"];
-                                os << "group.denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                                const std::string denDelayIndex = "(d * group->numNeurons) + " + varSubs["id"];
+                                os << "group->denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
                         });
                 }
@@ -343,7 +343,7 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
         [&backend, &model](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
             // Loop through rows
-            os << "for(unsigned int i = 0; i < group.numSrcNeurons; i++)";
+            os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
             {
                 CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");
@@ -360,11 +360,11 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             popSubs.addFuncSubstitution("endRow", 0, "break");
             popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
                                               [&sg](size_t i) { return sg.isConnectivityInitParamHeterogeneous(i);  },
-                                              "", "group.");
+                                              "", "group->");
             popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
                                             [&sg](size_t i) { return sg.isConnectivityInitDerivedParamHeterogeneous(i);  },
-                                            "", "group.");
-            popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
+                                            "", "group->");
+            popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
 
             // Initialise row building state variables and loop on generated code to initialise sparse connectivity
             os << "// Build sparse connectivity" << std::endl;

@@ -336,16 +336,16 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
         // Create substitutions
         Substitutions subs;
         subs.addVarSubstitution("rng", "rng");
-        subs.addVarSubstitution("num_pre", "group.numSrcNeurons");
-        subs.addVarSubstitution("num_post", "group.numTrgNeurons");
+        subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+        subs.addVarSubstitution("num_post", "group->numTrgNeurons");
         subs.addVarSubstitution("num_threads", std::to_string(numThreads));
-        subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group.");
+        subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group->");
         subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
                                        [&sg](size_t p) { return sg.isConnectivityInitParamHeterogeneous(p); },
-                                       "", "group.");
+                                       "", "group->");
         subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
                                      [&sg](size_t p) { return sg.isConnectivityInitDerivedParamHeterogeneous(p); },
-                                     "", "group.");
+                                     "", "group->");
 
         // Loop through EGPs
         const auto egps = connectInit.getSnippet()->getExtraGlobalParams();
@@ -357,7 +357,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 std::stringstream allocStream;
                 CodeGenerator::CodeStream alloc(allocStream);
                 backend.genExtraGlobalParamAllocation(alloc, egps[i].type + "*", egps[i].name,
-                                                      loc, "$(0)", "group.");
+                                                      loc, "$(0)", "group->");
 
                 // Add substitution
                 subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
@@ -366,7 +366,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
                 backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
-                                                loc, "$(0)", "group.");
+                                                loc, "$(0)", "group->");
 
 
                 // Add substitution
