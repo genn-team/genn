@@ -166,6 +166,32 @@ public:
         }
     }
 
+    //! Generate declaration of struct
+    void generateStruct(const BackendBase &backend, CodeStream &os, 
+                        const std::string &name, const std::string &prefix = "") const
+    {
+        // Make a copy of fields and sort so largest come first. This should mean that due
+        // to structure packing rules, significant memory is saved and estimate is more precise
+        auto sortedFields = m_Fields;
+        std::sort(sortedFields.begin(), sortedFields.end(),
+                  [&backend](const Field &a, const Field &b)
+                  {
+                      return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
+                  });
+
+        os << "struct Merged" << name << "Group" << getMergedGroup().getIndex() << std::endl;
+        {
+            // Loop through fields and write to structure
+            CodeStream::Scope b(os);
+            for(const auto &f : sortedFields) {
+                os << prefix << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+            }
+            os << std::endl;
+        }
+
+        os << ";" << std::endl;
+    }
+
     void generate(const BackendBase &backend, CodeStream &definitionsInternal, 
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -182,49 +208,74 @@ public:
                       return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
                   });
 
-        // Write struct declation to top of definitions internal
-        size_t structSize = 0;
-        size_t largestFieldSize = 0;
-        definitionsInternal << "struct Merged" << name << "Group" << mergedGroupIndex << std::endl;
-        {
-            CodeStream::Scope b(definitionsInternal);
-            for(const auto &f : sortedFields) {
-                // Add field to structure
-                definitionsInternal << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
-
-                // Add size of field to total
-                const size_t fieldSize = backend.getSize(std::get<0>(f));
-                structSize += fieldSize;
-
-                // Update largest field size
-                largestFieldSize = std::max(fieldSize, largestFieldSize);
-
-                // If this field is for a pointer EGP, also declare function to push it
-                if(std::get<3>(f) == FieldType::PointerEGP) {
-                    definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << mergedGroupIndex << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
+        // If this isn't a host merged structure, generate definition for function to push group
+        if(!host) {
+            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(unsigned int idx, ";
+            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+                const auto &f = sortedFields[fieldIndex];
+                definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << std::get<1>(f);
+                if(fieldIndex != (sortedFields.size() - 1)) {
+                    definitionsInternalFunc << ", ";
                 }
             }
-            definitionsInternal << std::endl;
+            definitionsInternalFunc << ");" << std::endl;
         }
 
-        definitionsInternal << ";" << std::endl;
+        // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
+        size_t structSize = 0;
+        size_t largestFieldSize = 0;
+        for(const auto &f : sortedFields) {
+            // Add size of field to total
+            const size_t fieldSize = backend.getSize(std::get<0>(f));
+            structSize += fieldSize;
+
+            // Update largest field size
+            largestFieldSize = std::max(fieldSize, largestFieldSize);
+
+            // If this field is for a pointer EGP, also declare function to push it
+            if(std::get<3>(f) == FieldType::PointerEGP) {
+                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << mergedGroupIndex << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
+            }
+        }
 
         // Add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
         const size_t arraySize = padSize(structSize, largestFieldSize) * getMergedGroup().getGroups().size();
         mergedStructData.addMergedGroupSize(name, mergedGroupIndex, arraySize);
 
-        // Declare array of these structs containing individual neuron group pointers etc
-        runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
+        // If merged group is used on host
+        if(host) {
+            // Generate struct directly into internal definitions
+            generateStruct(backend, definitionsInternal, name);
 
+            // Declare array of these structs containing individual neuron group pointers etc
+            runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
+            
+            // Export it
+            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "]; " << std::endl;
+        }
+
+        // Loop through groups
         for(size_t groupIndex = 0; groupIndex < getMergedGroup().getGroups().size(); groupIndex++) {
             const auto &g = getMergedGroup().getGroups()[groupIndex];
 
-            // Set all fields in array of structs
-            runnerMergedStructAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
-            for(const auto &f : sortedFields) {
+            // If this is a merged group used on the host, directly set array entry
+            if(host) {
+                runnerMergedStructAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
+            }
+            // Otherwise, call function to push to device
+            else {
+                runnerMergedStructAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(" << groupIndex << ", ";
+            }
+
+            // Loop through fields
+            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+                const auto &f = sortedFields[fieldIndex];
                 const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
-                runnerMergedStructAlloc << fieldInitVal << ", ";
+                runnerMergedStructAlloc << fieldInitVal;
+                if(fieldIndex != (sortedFields.size() - 1)) {
+                    runnerMergedStructAlloc << ", ";
+                }
 
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
@@ -232,21 +283,14 @@ public:
                                                   std::get<0>(f), std::get<1>(f));
                 }
             }
-            runnerMergedStructAlloc << "};" << std::endl;
 
-        }
+            if(host) {
+                runnerMergedStructAlloc << "};" << std::endl;
+            }
+            else {
+                runnerMergedStructAlloc << ");" << std::endl;
+            }
 
-        // If this is a host merged struct, export the variable
-        if(host) {
-            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "]; " << std::endl;
-        }
-        // Otherwise
-        else {
-            // Then generate call to function to copy local array to device
-            runnerMergedStructAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
-
-            // Finally add declaration to function to definitions internal
-            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(const Merged" << name << "Group" << mergedGroupIndex << " *group);" << std::endl;
         }
     }
 

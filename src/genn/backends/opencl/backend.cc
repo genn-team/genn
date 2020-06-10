@@ -1790,6 +1790,18 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << ", &egpName));" << std::endl;
 }
 //--------------------------------------------------------------------------
+std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
+{
+    // If type is a pointer, on the host it is represented by an OpenCL buffer
+    if(::Utils::isTypePointer(type)) {
+        return "cl::Buffer";
+    }
+    // Otherwise, type remains the same
+    else {
+        return type;
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream& os, const Substitutions& kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
