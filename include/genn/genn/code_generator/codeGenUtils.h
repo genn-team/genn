@@ -217,6 +217,8 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
 
 void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend);
 
+void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix);
+
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */

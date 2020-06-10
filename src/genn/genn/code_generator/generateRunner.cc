@@ -25,30 +25,6 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
-{
-    os << "#define " << prefix << "_MIN ";
-    if (precision == "float") {
-        Utils::writePreciseString(os, std::numeric_limits<float>::min());
-        os << "f" << std::endl;
-    }
-    else {
-        Utils::writePreciseString(os, std::numeric_limits<double>::min());
-        os << std::endl;
-    }
-
-    os << "#define " << prefix << "_MAX ";
-    if (precision == "float") {
-        Utils::writePreciseString(os, std::numeric_limits<float>::max());
-        os << "f" << std::endl;
-    }
-    else {
-        Utils::writePreciseString(os, std::numeric_limits<double>::max());
-        os << std::endl;
-    }
-    os << std::endl;
-}
-//-------------------------------------------------------------------------
 void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
 {
     const bool delayRequired = trueSpike

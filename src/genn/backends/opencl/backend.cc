@@ -1089,17 +1089,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
-    /*os << std::endl;
+    os << std::endl;
     //! TO BE IMPLEMENTED - Generating minimal kernel
     //! TO BE IMPLEMENTED - initializeRNGKernel - if needed
-
-    // Build map of extra global parameters for init kernel
-    std::map<std::string, std::string> initializeKernelParams;
-    for (const auto& s : model.getLocalSynapseGroups()) {
-        const auto* initSparseConnectivitySnippet = s.second.getConnectivityInitialiser().getSnippet();
-        updateExtraGlobalParams(s.first, "", initSparseConnectivitySnippet->getExtraGlobalParams(), initializeKernelParams,
-            { initSparseConnectivitySnippet->getRowBuildCode() });
-    }
+    // Generate reset kernel to be run before the neuron kernel
+    const ModelSpecInternal &model = modelMerged.getModel();
 
     // initialization kernel code
     size_t idInitStart = 0;
@@ -1107,80 +1101,109 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     //! KernelInitialize BODY START
     Substitutions kernelSubs(openclFunctions, model.getPrecision());
 
-    // Creating the kernel body separately to collect all arguments and put them into the main kernel
-    std::stringstream initializeKernelBodyStream;
+    // Creating the kernel body separately so it can be split into multiple string literals
+    std::stringstream initializeKernelsStream;
+    CodeStream initializeKernels(initializeKernelsStream);
+
+    // Include definitions
+    initializeKernels << "typedef " << model.getPrecision() << " scalar;" << std::endl;
+    genTypeRange(initializeKernels, model.getTimePrecision(), "TIME");
+
+    // Generate data structure for accessing merged groups from within initialisation kernel
+    // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
+    genMergedKernelDataStructures(initializeKernels, m_KernelWorkGroupSizes[KernelInitialize],
+                                  modelMerged.getMergedNeuronInitGroups(), "NeuronInit",
+                                  [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); },
+                                  modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit",
+                                  [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getNumNeurons(); },
+                                  modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit",
+                                  [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
+
+    // Generate data structure for accessing merged groups from within sparse initialisation kernel
+    genMergedKernelDataStructures(initializeKernels, m_KernelWorkGroupSizes[KernelInitializeSparse],
+                                  modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit",
+                                  [](const SynapseGroupInternal &sg) { return sg.getMaxConnections(); });
+    initializeKernels << std::endl;
+
+
+    initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), "NeuronInit", true);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit", true);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit", true);
+    initializeKernels << "unsigned int deviceRNGSeed";  // **TODO** check type
+    initializeKernels << ")";
     {
-        CodeStream initializeKernelBody(initializeKernelBodyStream);
+        CodeStream::Scope b(initializeKernels);
 
-        initializeKernelBody << "const size_t localId = get_local_id(0);" << std::endl;
-        initializeKernelBody << "const unsigned int id = get_global_id(0);" << std::endl;
+        initializeKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
+        initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
 
-        initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernelBody << "// Local neuron groups" << std::endl;
-        genParallelGroup<NeuronGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalNeuronGroups(), idInitStart, initializeKernelParams,
-            [this](const NeuronGroupInternal& ng) { return Utils::padSize(ng.getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
-            [this](const NeuronGroupInternal&) { return true; },
-            [this, &model, localNGHandler](CodeStream& initializeKernelBody, const NeuronGroupInternal& ng, Substitutions& popSubs)
+        initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
+        initializeKernels << "// Local neuron groups" << std::endl;
+        // Parallelise over neuron groups
+        genParallelGroup<NeuronInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedNeuronInitGroups(), "NeuronInit", idInitStart,
+            [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
+            [localNGHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
             {
-                initializeKernelBody << "// only do this for existing neurons" << std::endl;
-                initializeKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << popSubs["id"] << " < group->numNeurons)";
                 {
-                    CodeStream::Scope b(initializeKernelBody);
+                    CodeStream::Scope b(os);
 
                     //! TO BE IMPLEMENTED - isSimRNGRequired - isInitRNGRequired
 
-                    localNGHandler(initializeKernelBody, ng, popSubs);
+                    localNGHandler(os, ng, popSubs);
                 }
             });
-        initializeKernelBody << std::endl;
+        initializeKernels << std::endl;
 
-        initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernelBody << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart, initializeKernelParams,
+        /*initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
+        initializeKernels << "// Synapse groups with dense connectivity" << std::endl;
+        genParallelGroup<SynapseGroupInternal>(initializeKernels, kernelSubs, model.getLocalSynapseGroups(), idInitStart, initializeKernelParams,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [](const SynapseGroupInternal& sg) { return (sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && (sg.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && sg.isWUVarInitRequired(); },
-            [sgDenseInitHandler](CodeStream& initializeKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
+            [sgDenseInitHandler](CodeStream& os, const SynapseGroupInternal& sg, Substitutions& popSubs)
             {
-                initializeKernelBody << "// only do this for existing postsynaptic neurons" << std::endl;
-                initializeKernelBody << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
+                os << "// only do this for existing postsynaptic neurons" << std::endl;
+                os << "if(" << popSubs["id"] << " < " << sg.getTrgNeuronGroup()->getNumNeurons() << ")";
                 {
-                    CodeStream::Scope b(initializeKernelBody);
+                    CodeStream::Scope b(os);
 
                     //! TO BE IMPLEMENTED - isWUInitRNGRequired
 
                     popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                    sgDenseInitHandler(initializeKernelBody, sg, popSubs);
+                    sgDenseInitHandler(os, sg, popSubs);
                 }
             });
-        initializeKernelBody << std::endl;
+        initializeKernels << std::endl;
 
-        initializeKernelBody << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernelBody << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseGroupInternal>(initializeKernelBody, kernelSubs, model.getLocalSynapseGroups(), idInitStart, initializeKernelParams,
+        initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
+        initializeKernels << "// Synapse groups with sparse connectivity" << std::endl;
+        genParallelGroup<SynapseGroupInternal>(initializeKernels, kernelSubs, model.getLocalSynapseGroups(), idInitStart, initializeKernelParams,
             [this](const SynapseGroupInternal& sg) { return Utils::padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelWorkGroupSizes[KernelInitialize]); },
             [](const SynapseGroupInternal& sg) { return sg.isSparseConnectivityInitRequired(); },
-            [sgSparseConnectHandler, &initializeKernelParams](CodeStream& initializeKernelBody, const SynapseGroupInternal& sg, Substitutions& popSubs)
+            [sgSparseConnectHandler, &initializeKernelParams](CodeStream& initializeKernels, const SynapseGroupInternal& sg, Substitutions& popSubs)
             {
                 const size_t numSrcNeurons = sg.getSrcNeuronGroup()->getNumNeurons();
                 const size_t numTrgNeurons = sg.getTrgNeuronGroup()->getNumNeurons();
 
-                initializeKernelBody << "// only do this for existing presynaptic neurons" << std::endl;
-                initializeKernelBody << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
+                initializeKernels << "// only do this for existing presynaptic neurons" << std::endl;
+                initializeKernels << "if(" << popSubs["id"] << " < " << numSrcNeurons << ")";
                 {
-                    CodeStream::Scope b(initializeKernelBody);
+                    CodeStream::Scope b(initializeKernels);
 
                     //! TO BE IMPLEMENTED - ::Utils::isRNGRequired
 
                     // If the synapse group has bitmask connectivity
                     if (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                         // Calculate indices of bits at start and end of row
-                        initializeKernelBody << "// Calculate indices" << std::endl;
+                        initializeKernels << "// Calculate indices" << std::endl;
                         const size_t maxSynapses = numSrcNeurons * numTrgNeurons;
                         if ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            initializeKernelBody << "const ulong rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << "ull;" << std::endl;
+                            initializeKernels << "const ulong rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << "ull;" << std::endl;
                         }
                         else {
-                            initializeKernelBody << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << ";" << std::endl;
+                            initializeKernels << "const unsigned int rowStartGID = " << popSubs["id"] << " * " << numTrgNeurons << ";" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
@@ -1197,7 +1220,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                         initializeKernelParams.insert({ "d_ind" + sg.getName(), "__global unsigned int*" });
 
                         // Zero row length
-                        initializeKernelBody << rowLength << " = 0;" << std::endl;
+                        initializeKernels << rowLength << " = 0;" << std::endl;
 
                         // Build function template to increment row length and insert synapse into ind array
                         popSubs.addFuncSubstitution("addSynapse", 1,
@@ -1208,11 +1231,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                     }
 
                     popSubs.addVarSubstitution("id_pre", popSubs["id"]);
-                    sgSparseConnectHandler(initializeKernelBody, sg, popSubs);
+                    sgSparseConnectHandler(initializeKernels, sg, popSubs);
                 }
-            });
+            });*/
     }
-    os << std::endl;
+    /*os << std::endl;
     const size_t numStaticInitThreads = idInitStart;
 
     //! KernelInitialize BODY END
@@ -1373,86 +1396,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                 }
             });
         initializeSparseKernelBody << std::endl;
-    }
+    }*/
     //! KernelInitializeSparse BODY END
 
-    // Initialization kernels
-    os << "extern \"C\" const char* " << ProgramNames[ProgramInitialize] << "Src = R\"(typedef float scalar;" << std::endl;
-    os << std::endl;
-    os << "#define fmodf fmod" << std::endl;
-    genTypeRange(os, model.getTimePrecision(), "TIME");
-
-    // Collecting common parameters for KernelInitialize and KernelInitializeSparse
-    // Local synapse groups params
-    for (const auto& sg : model.getLocalSynapseGroups()) {
-        // Postsynaptic model
-        if (sg.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            auto* psm = sg.second.getPSModel();
-            for (const auto& v : psm->getVars()) {
-                initializeKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
-                if (hasInitializeSparseKernel) {
-                    initializeSparseKernelParams[getVarPrefix() + v.name + sg.second.getName()] = "__global " + v.type + "*";
-                }
-            }
-        }
-    }
-
-    // KernelInitialize definition
-    os << "__kernel void " << KernelNames[KernelInitialize] << "(";
-    std::string nmName = model.getLocalNeuronGroups().begin()->second.getName();
-    // Local neuron groups params
-    for (const auto& ng : model.getLocalNeuronGroups()) {
-        // Overwriting / inserting glbSpk variables
-        initializeKernelParams[getVarPrefix() + "glbSpkCnt" + ng.second.getName()] = "__global unsigned int*";
-        initializeKernelParams[getVarPrefix() + "glbSpk" + ng.second.getName()] = "__global unsigned int*";
-
-        auto* nm = ng.second.getNeuronModel();
-        for (const auto& v : nm->getVars()) {
-            // Initialize only READ_WRITE variables
-            if (v.access == VarAccess::READ_WRITE) {
-                initializeKernelParams[getVarPrefix() + v.name + ng.second.getName()] = "__global " + v.type + "*";
-            }
-        }
-    }
-    // Collected params
-    for (const auto& p : initializeKernelParams) {
-        os << p.second << " " << p.first << ", ";
-    }
-    os << "unsigned int deviceRNGSeed)";
-    {
-        CodeStream::Scope b(os);
-        os << initializeKernelBodyStream.str();
-    }
-
-    os << std::endl;
-
-    if (hasInitializeSparseKernel)
-    {
-        // KernelInitializeSparse definition
-        os << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
-        // Collected params
-        int argCnt = 0;
-        for (const auto& p : initializeSparseKernelParams) {
-            if (argCnt == initializeSparseKernelParams.size() - 1) {
-                os << p.second << " " << p.first;
-            }
-            else {
-                os << p.second << " " << p.first << ", ";
-            }
-            argCnt++;
-        }
-        os << ")";
-        {
-            CodeStream::Scope b(os);
-            divideKernelStreamInParts(os, initializeSparseKernelBodyStream, 5000);
-        }
-        os << std::endl;
-    }
-
-    // Closing the multiline char* containing all kernels for initializing neurons
-    os << ")\";" << std::endl;
-
-    os << std::endl;
+    // Write out kernel source string literal
+    os << "const char* " << ProgramNames[ProgramInitialize] << "Src = ";
+    divideKernelStreamInParts(os, initializeKernelsStream, 5000);
+    os << ";" << std::endl;
 
     // Function for initializing the initialization kernels
     os << "// Initialize the initialization kernel(s)" << std::endl;
@@ -1463,16 +1413,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         if (idInitStart > 0) {
             // KernelInitialize initialization
             os << KernelNames[KernelInitialize] << " = cl::Kernel(" << ProgramNames[ProgramInitialize] << ", \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
-            {
-                int argCnt = 0;
-                for (const auto& arg : initializeKernelParams) {
-                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << argCnt << ", " << arg.first << "));" << std::endl;
-                    argCnt++;
-                }
-            }
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
         }
 
-        if (hasInitializeSparseKernel && idSparseInitStart > 0)
+        /*if (hasInitializeSparseKernel && idSparseInitStart > 0)
         {
             os << std::endl;
             // KernelInitializeSparse initialization
@@ -1484,41 +1430,41 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                     argCnt++;
                 }
             }
-        }
+        }*/
     }
 
-    os << std::endl;*/
+    os << std::endl;
 
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
 
         // If there are any initialisation work-items
-       /* if (idInitStart > 0) {
+        if (idInitStart > 0) {
             CodeStream::Scope b(os);
-            {
-                //! TO BE IMPLEMENTED - Using hard coded deviceRNGSeed for now
-                os << "unsigned int deviceRNGSeed = 0;" << std::endl;
-                for (const auto& s : model.getLocalSynapseGroups()) {
-                    // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
-                    if (s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-                        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-                    }
-                    // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
-                    else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-                    }
+            //! TO BE IMPLEMENTED - Using hard coded deviceRNGSeed for now
+            os << "unsigned int deviceRNGSeed = 0;" << std::endl;
+            /*for (const auto& s : model.getLocalSynapseGroups()) {
+                // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
+                if (s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
+                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
                 }
-                os << std::endl;
-                genKernelHostArgs(os, KernelInitialize, initializeKernelParams);
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ /*<< ", deviceRNGSeed));" << std::endl;
-                os << std::endl;
-                genKernelDimensions(os, KernelInitialize, idInitStart);
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-                os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-            }
-        }*/
+                // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+                else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
+                }
+            }*/
+            os << std::endl;
+            //os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
+            os << std::endl;
+            genKernelDimensions(os, KernelInitialize, idInitStart);
+            const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() + 
+                                          modelMerged.getMergedSynapseConnectivityInitGroups().size());
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", deviceRNGSeed));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+        }
     }
 
     os << std::endl;
