@@ -106,9 +106,8 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-    :   GroupMerged<NeuronGroupInternal>(index, groups)
-    {}
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
+                                      const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -119,6 +118,9 @@ public:
                   MergedStructData &mergedStructData, const std::string &precision) const;
 
     void genMergedGroupSpikeCountReset(CodeStream &os) const;
+
+private:
+    MergedStructGenerator<NeuronSpikeQueueUpdateGroupMerged> m_Gen;
 };
 
 //----------------------------------------------------------------------------
@@ -173,10 +175,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    NeuronGroupMergedBase(size_t index, bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
-
-    void generate(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend, 
-                  const std::string &precision, const std::string &timePrecision, bool init) const;
+    NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                          bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     template<typename T, typename G, typename C>
     void orderNeuronGroupChildren(const std::vector<T> &archetypeChildren,
@@ -253,16 +253,15 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildParams(MergedStructGenerator<NeuronGroupMergedBase> &gen, 
-                                     const Snippet::Base::StringVec &paramNames, size_t childIndex,
+    void addHeterogeneousChildParams(const Snippet::Base::StringVec &paramNames, size_t childIndex,
                                      const std::string &prefix, 
-                                     H isChildParamHeterogeneousFn, V getValueFn) const
+                                     H isChildParamHeterogeneousFn, V getValueFn)
     {
         // Loop through parameters
         for(size_t p = 0; p < paramNames.size(); p++) {
             // If parameter is heterogeneous
             if((static_cast<const T *>(this)->*isChildParamHeterogeneousFn)(childIndex, p)) {
-                gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
+                m_Gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
                                    [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                    {
                                        return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
@@ -272,87 +271,84 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                                            const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
-                                            const std::string &prefix, H isChildDerivedParamHeterogeneousFn, V getValueFn) const
+    void addHeterogeneousChildDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
+                                            const std::string &prefix, H isChildDerivedParamHeterogeneousFn, V getValueFn)
     {
         // Loop through derived parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameter is heterogeneous
             if((static_cast<const T *>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, p)) {
-                gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
-                                   [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
-                                   {
-                                       return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
-                                   });
+                m_Gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
+                                    [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                                    {
+                                        return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                    });
             }
         }
     }
 
     template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildVarInitParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                                            const Snippet::Base::StringVec &paramNames, size_t childIndex,
+    void addHeterogeneousChildVarInitParams(const Snippet::Base::StringVec &paramNames, size_t childIndex,
                                             size_t varIndex, const std::string &prefix,
-                                            H isChildParamHeterogeneousFn, V getVarInitialiserFn) const
+                                            H isChildParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
         for(size_t p = 0; p < paramNames.size(); p++) {
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
-                gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
-                                   [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
-                                   {
-                                       const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
-                                       return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
-                                   });
+                m_Gen.addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
+                                    [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                                    {
+                                        const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                        return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
+                                    });
             }
         }
     }
 
     template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildVarInitDerivedParams(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                                                   const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
+    void addHeterogeneousChildVarInitDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
                                                    size_t varIndex, const std::string &prefix,
-                                                   H isChildDerivedParamHeterogeneousFn, V getVarInitialiserFn) const
+                                                   H isChildDerivedParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameter is heterogeneous
             if((static_cast<const T *>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, p)) {
-                gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
-                                   [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
-                                   {
-                                       const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
-                                       return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(p));
-                                   });
+                m_Gen.addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
+                                    [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                                    {
+                                        const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                        return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(p));
+                                    });
             }
         }
     }
 
     template<typename S>
-    void addChildEGPs(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                      const std::vector<Snippet::Base::EGP> &egps, size_t childIndex,
+    void addChildEGPs(const std::vector<Snippet::Base::EGP> &egps, size_t childIndex,
                       const std::string &arrayPrefix, const std::string &prefix,
-                      S getEGPSuffixFn) const
+                      S getEGPSuffixFn)
     {
-        using FieldType = std::remove_reference<decltype(gen)>::type::FieldType;
+        using FieldType = std::remove_reference<decltype(m_Gen)>::type::FieldType;
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
             const std::string varPrefix = isPointer ? arrayPrefix : "";
-            gen.addField(e.type, e.name + prefix + std::to_string(childIndex),
-                         [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
-                         {
-                             return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
-                         },
-                         Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+            m_Gen.addField(e.type, e.name + prefix + std::to_string(childIndex),
+                          [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
+                          {
+                              return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
+                          },
+                          Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
     
 
 
-    void addMergedInSynPointerField(MergedStructGenerator<NeuronGroupMergedBase> &gen,
-                                    const std::string &type, const std::string &name, 
-                                    size_t archetypeIndex, const std::string &prefix) const;
+    void addMergedInSynPointerField(const std::string &type, const std::string &name, 
+                                    size_t archetypeIndex, const std::string &prefix);
+
+    MergedStructGenerator<NeuronGroupMergedBase> m_Gen;
 
 private:
     //------------------------------------------------------------------------
@@ -368,7 +364,8 @@ private:
 class GENN_EXPORT NeuronUpdateGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                            const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -402,13 +399,12 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend,
-                       const std::string &fieldPrefixStem, 
+    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
                        const std::vector<SynapseGroupInternal*> &archetypeSyn,
                        const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
-                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const;
+                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const);
 
     //------------------------------------------------------------------------
     // Members
@@ -423,7 +419,8 @@ private:
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+    NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                          const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
     bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
@@ -448,14 +445,13 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(MergedStructGenerator<NeuronGroupMergedBase> &gen, const BackendBase &backend,
-                       const std::string &fieldPrefixStem,
+    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem,
                        const std::vector<SynapseGroupInternal *> &archetypeSyn,
                        const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialisers)(void) const,
                        bool(NeuronInitGroupMerged::*isParamHeterogeneous)(size_t, size_t, size_t) const,
-                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const) const;
+                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const);
 
 
     //------------------------------------------------------------------------
@@ -471,9 +467,8 @@ private:
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, groups)
-    {}
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
 
     //------------------------------------------------------------------------
     // Public API
@@ -482,6 +477,9 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
+
+private:
+    MergedStructGenerator<SynapseDendriticDelayUpdateGroupMerged> m_Gen;
 };
 
 // ----------------------------------------------------------------------------
@@ -490,9 +488,8 @@ public:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, groups)
-    {}
+    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -507,6 +504,9 @@ public:
 
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+
+private:
+    MergedStructGenerator<SynapseConnectivityHostInitGroupMerged> m_Gen;
 };
 
 // ----------------------------------------------------------------------------
@@ -515,9 +515,8 @@ public:
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, groups)
-    {}
+    SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -532,6 +531,9 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
+
+private:
+    MergedStructGenerator<SynapseConnectivityInitGroupMerged> m_Gen;
 };
 
 //----------------------------------------------------------------------------
@@ -599,9 +601,8 @@ protected:
         SparseInit,
     };
 
-    SynapseGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   GroupMerged<SynapseGroupInternal>(index, groups)
-    {}
+    SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                           Role role, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -620,14 +621,15 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
-                           const std::string &type, const std::string &name, const std::string &prefix) const;
-    void addSrcPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
-                            const std::string &type, const std::string &name, const std::string &prefix) const;
-    void addTrgPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
-                            const std::string &type, const std::string &name, const std::string &prefix) const;
-    void addWeightSharingPointerField(MergedStructGenerator<SynapseGroupMergedBase> &gen,
-                                      const std::string &type, const std::string &name, const std::string &prefix) const;
+    void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    MergedStructGenerator<SynapseGroupMergedBase> m_Gen;
 };
 
 //----------------------------------------------------------------------------
@@ -636,8 +638,9 @@ private:
 class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PresynapticUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, groups)
+    PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -669,8 +672,9 @@ protected:
 class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PostsynapticUpdateGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, groups)
+    PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -701,8 +705,9 @@ protected:
 class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDynamicsGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, groups)
+    SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -733,8 +738,9 @@ protected:
 class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDenseInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, groups)
+    SynapseDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::DenseInit, groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -756,8 +762,9 @@ public:
 class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, groups)
+    SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
