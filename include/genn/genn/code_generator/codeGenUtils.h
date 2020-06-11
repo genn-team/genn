@@ -60,24 +60,11 @@ public:
             std::forward_as_tuple(mergedGroupType),
             std::forward_as_tuple(mergedGroupIndex, groupIndex, type, fieldName));
     }
-
-    size_t getMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex) const
-    {
-        return m_MergedGroupSizes.at(mergedGroupType).at(mergedGroupIndex);
-    }
-
-    void addMergedGroupSize(const std::string &mergedGroupType, size_t mergedGroupIndex, size_t sizeBytes)
-    {
-        m_MergedGroupSizes[mergedGroupType].emplace(mergedGroupIndex, sizeBytes);
-    }
-
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     MergedEGPMap m_MergedEGPs;
-
-    std::unordered_map<std::string, std::map<size_t, size_t>> m_MergedGroupSizes;
 };
 
 //--------------------------------------------------------------------------
@@ -137,7 +124,7 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         const size_t numGroups = g.getGroups().size();
 
         // Get size of group in bytes
-        const size_t groupBytes = mergedStructData.getMergedGroupSize(suffix, idx);
+        const size_t groupBytes = g.getStructArraySize(backend);
 
         // Loop through memory spaces
         bool memorySpaceFound = false;

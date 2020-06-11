@@ -121,6 +121,7 @@ void genMergedKernelDataStructures(CodeStream &os, size_t blockSize, size_t &tot
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), blockSize, args...);
 }
+
 //-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
@@ -199,13 +200,22 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+                              HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
+    
+    const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Generate struct definitions
+    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
+
     // Generate data structure for accessing merged groups
     // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launches
     // so subtract constant memory requirements of synapse group start ids from total constant memory
-    const ModelSpecInternal &model = modelMerged.getModel();
     const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
@@ -426,11 +436,20 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
+    // Generate struct definitions
+    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
+    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
+
     // Generate data structure for accessing merged groups
     size_t totalConstMem = m_ChosenDevice.totalConstMem;
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelPresynapticUpdate], totalConstMem,
@@ -795,7 +814,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                      NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
@@ -803,6 +822,15 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "#include <random>" << std::endl;
     os << "#include <cstdint>" << std::endl;
     os << std::endl;
+
+    // Generate struct definitions
+    modelMerged.genMergedNeuronInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once

@@ -166,11 +166,14 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+                              HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Generate preamble
+    preambleHandler(os);
 
     //! KernelPreNeuronReset START
     size_t idPreNeuronReset = 0;
@@ -191,6 +194,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels);
     neuronUpdateKernels << std::endl << std::endl;
     
+    // Generate struct definitions
+    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateKernels, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateKernels, *this);
+
     // Generate merged data structures
     genMergedKernelDataStructures(neuronUpdateKernels, m_KernelWorkGroupSizes[KernelNeuronUpdate],
                                   modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
@@ -444,11 +451,14 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
+    // Generate preamble
+    preambleHandler(os);
+
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     /*size_t idPreSynapseReset = 0;
     std::stringstream preSynapseResetKernelBodyStream;
@@ -1090,15 +1100,17 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                      NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
-    os << std::endl;
     //! TO BE IMPLEMENTED - Generating minimal kernel
     //! TO BE IMPLEMENTED - initializeRNGKernel - if needed
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Generate preamble
+    preambleHandler(os);
 
     // initialization kernel code
     size_t idInitStart = 0;
@@ -1113,6 +1125,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     // Include definitions
     initializeKernels << "typedef " << model.getPrecision() << " scalar;" << std::endl;
     genTypeRange(initializeKernels, model.getTimePrecision(), "TIME");
+
+    // Generate struct definitions
+    modelMerged.genMergedNeuronInitGroupStructs(initializeKernels, *this);
+    modelMerged.genMergedSynapseDenseInitGroupStructs(initializeKernels, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupStructs(initializeKernels, *this);
+    modelMerged.genMergedSynapseSparseInitGroupStructs(initializeKernels, *this);
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once

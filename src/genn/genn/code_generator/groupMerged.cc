@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                     const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, groups), m_Gen(*this, precision)
+:   GroupMerged<NeuronGroupInternal, NeuronSpikeQueueUpdateGroupMerged>(index, precision, groups)
 {
     if(getArchetype().isDelayRequired()) {
         m_Gen.addField("unsigned int", "numDelaySlots",
@@ -206,7 +206,7 @@ bool CodeGenerator::NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                                             bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   CodeGenerator::GroupMerged<NeuronGroupInternal>(index, groups), m_Gen(*this, precision)
+:   CodeGenerator::GroupMerged<NeuronGroupInternal, NeuronGroupMergedBase>(index, precision, groups)
 {
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getMergedInSyn,
@@ -762,7 +762,7 @@ void CodeGenerator::NeuronInitGroupMerged::generateWUVar(const BackendBase &back
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    : GroupMerged<SynapseGroupInternal>(index, groups), m_Gen(*this, precision)
+    : GroupMerged<SynapseGroupInternal, SynapseDendriticDelayUpdateGroupMerged>(index, precision, groups)
 {
     m_Gen.addField("volatile unsigned int*", "denDelayPtr",
                    [&backend](const SynapseGroupInternal &sg, size_t)
@@ -786,7 +786,7 @@ void CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::generate(const Backe
 //------------------------------------------------------------------------
 CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, groups), m_Gen(*this, precision)
+:   GroupMerged<SynapseGroupInternal, SynapseConnectivityHostInitGroupMerged>(index, precision, groups)
 {
     // **TODO** these could be generic
     m_Gen.addField("unsigned int", "numSrcNeurons",
@@ -860,7 +860,7 @@ bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitDe
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, groups), m_Gen(*this, precision)
+:   GroupMerged<SynapseGroupInternal, SynapseConnectivityInitGroupMerged>(index, precision, groups)
 {
     // **TODO** these could be generic
     m_Gen.addField("unsigned int", "numSrcNeurons",
@@ -1069,7 +1069,7 @@ bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                               Role role, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, groups), m_Gen(*this, precision)
+:   GroupMerged<SynapseGroupInternal, SynapseGroupMergedBase>(index, precision, groups)
 {
     const bool updateRole = ((role == Role::PresynapticUpdate)
                              || (role == Role::PostsynapticUpdate)

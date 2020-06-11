@@ -65,10 +65,18 @@ namespace CodeGenerator
 namespace SingleThreadedCPU
 {
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+                              HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Generate struct definitions
+    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
+    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
+
     os << "void updateNeurons(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
@@ -153,11 +161,19 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 }
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
+    // Generate struct definitions
+    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
+    modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
+
     const ModelSpecInternal &model = modelMerged.getModel();
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
@@ -357,11 +373,21 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                      NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Generate struct definitions
+    modelMerged.genMergedNeuronInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
+
+    // Generate preamble
+    preambleHandler(os);
+
     os << "void initialize()";
     {
         CodeStream::Scope b(os);

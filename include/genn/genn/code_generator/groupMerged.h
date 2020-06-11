@@ -29,7 +29,7 @@ class MergedStructData;
 //! Very thin wrapper around a number of groups which have been merged together
 namespace CodeGenerator
 {
-template<typename G>
+template<typename G, typename M>
 class GroupMerged
 {
 public:
@@ -38,8 +38,8 @@ public:
     //------------------------------------------------------------------------
     typedef G GroupInternal;
 
-    GroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_Groups(std::move(groups))
+    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Gen(*static_cast<M*>(this), precision), m_Index(index), m_Groups(std::move(groups))
     {}
 
     //------------------------------------------------------------------------
@@ -52,6 +52,19 @@ public:
 
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
+
+    //! Generate suitable struct to hold this merged group
+    void generateStruct(const BackendBase &backend, CodeStream &os,
+                        const std::string &name, const std::string &prefix = "") const
+    {
+        m_Gen.generateStruct(backend, os, name, prefix);
+
+    }
+
+    size_t getStructArraySize(const BackendBase &backend) const
+    {
+        return m_Gen.getArraySize(backend);
+    }
 
 protected:
     //------------------------------------------------------------------------
@@ -92,6 +105,12 @@ protected:
         }
     }
 
+    //------------------------------------------------------------------------
+    // Protected members
+    //------------------------------------------------------------------------
+    // **YUCK**
+    MergedStructGenerator<G, M> m_Gen;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -103,7 +122,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal, NeuronSpikeQueueUpdateGroupMerged>
 {
 public:
     NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
@@ -118,15 +137,12 @@ public:
                   MergedStructData &mergedStructData, const std::string &precision) const;
 
     void genMergedGroupSpikeCountReset(CodeStream &os) const;
-
-private:
-    MergedStructGenerator<NeuronSpikeQueueUpdateGroupMerged> m_Gen;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal, NeuronGroupMergedBase>
 {
 public:
     //------------------------------------------------------------------------
@@ -348,8 +364,6 @@ protected:
     void addMergedInSynPointerField(const std::string &type, const std::string &name, 
                                     size_t archetypeIndex, const std::string &prefix);
 
-    MergedStructGenerator<NeuronGroupMergedBase> m_Gen;
-
 private:
     //------------------------------------------------------------------------
     // Members
@@ -464,7 +478,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal, SynapseDendriticDelayUpdateGroupMerged>
 {
 public:
     SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
@@ -477,15 +491,12 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
-
-private:
-    MergedStructGenerator<SynapseDendriticDelayUpdateGroupMerged> m_Gen;
 };
 
 // ----------------------------------------------------------------------------
 // SynapseConnectivityHostInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal, SynapseConnectivityHostInitGroupMerged>
 {
 public:
     SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
@@ -504,15 +515,12 @@ public:
 
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
-
-private:
-    MergedStructGenerator<SynapseConnectivityHostInitGroupMerged> m_Gen;
 };
 
 // ----------------------------------------------------------------------------
 // SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal, SynapseConnectivityInitGroupMerged>
 {
 public:
     SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
@@ -531,15 +539,12 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
-
-private:
-    MergedStructGenerator<SynapseConnectivityInitGroupMerged> m_Gen;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal, SynapseGroupMergedBase>
 {
 public:
     //------------------------------------------------------------------------
@@ -625,11 +630,6 @@ private:
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    MergedStructGenerator<SynapseGroupMergedBase> m_Gen;
 };
 
 //----------------------------------------------------------------------------

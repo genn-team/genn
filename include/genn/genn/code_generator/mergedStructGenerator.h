@@ -18,7 +18,7 @@
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-template<typename T>
+template<typename G, typename M>
 class MergedStructGenerator
 {
 public:
@@ -35,9 +35,9 @@ public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<std::string(const typename T::GroupInternal &, size_t)> GetFieldValueFunc;
+    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
  
-    MergedStructGenerator(const T &mergedGroup, const std::string &precision) : m_MergedGroup(mergedGroup), m_LiteralSuffix((precision == "float") ? "f" : "")
+    MergedStructGenerator(const M &mergedGroup, const std::string &precision) : m_MergedGroup(mergedGroup), m_LiteralSuffix((precision == "float") ? "f" : "")
     {
     }
 
@@ -52,7 +52,7 @@ public:
     void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         addField("scalar", name,
-                 [getFieldValue, this](const typename T::GroupInternal &g, size_t i)
+                 [getFieldValue, this](const G &g, size_t i)
                  {
                     return getFieldValue(g, i) + m_LiteralSuffix;
                  },
@@ -62,7 +62,7 @@ public:
     void addPointerField(const std::string &type, const std::string &name, const std::string &prefix)
     {
         assert(!Utils::isTypePointer(type));
-        addField(type + "*", name, [prefix](const typename T::GroupInternal &g, size_t){ return prefix + g.getName(); });
+        addField(type + "*", name, [prefix](const G &g, size_t){ return prefix + g.getName(); });
     }
 
 
@@ -81,14 +81,14 @@ public:
             const bool isPointer = Utils::isTypePointer(e.type);
             const std::string prefix = isPointer ? arrayPrefix : "";
             addField(e.type, e.name + varName,
-                     [e, prefix, varName](const typename T::GroupInternal &g, size_t){ return prefix + e.name + varName + g.getName(); },
+                     [e, prefix, varName](const G &g, size_t){ return prefix + e.name + varName + g.getName(); },
                      isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
 
-    template<typename G, typename H>
+    template<typename P, typename H>
     void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, 
-                                G getParamValues, H isHeterogeneous)
+                                P getParamValues, H isHeterogeneous)
     {
         // Loop through params
         for(size_t p = 0; p < paramNames.size(); p++) {
@@ -96,7 +96,7 @@ public:
             if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
                 addScalarField(paramNames[p],
-                               [p, getParamValues](const typename T::GroupInternal &g, size_t)
+                               [p, getParamValues](const G &g, size_t)
                                {
                                    const auto &values = getParamValues(g);
                                    return Utils::writePreciseString(values.at(p));
@@ -105,9 +105,9 @@ public:
         }
     }
 
-    template<typename G, typename H>
+    template<typename D, typename H>
     void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, 
-                                       G getDerivedParamValues, H isHeterogeneous)
+                                       D getDerivedParamValues, H isHeterogeneous)
     { 
         // Loop through derived params
         for(size_t p = 0; p < derivedParams.size(); p++) {
@@ -115,7 +115,7 @@ public:
             if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
                 addScalarField(derivedParams[p].name,
-                               [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
+                               [p, getDerivedParamValues](const G &g, size_t)
                                {
                                    const auto &values = getDerivedParamValues(g);
                                    return Utils::writePreciseString(values.at(p));
@@ -135,7 +135,7 @@ public:
             for(size_t p = 0; p < varInit.getParams().size(); p++) {
                 if((getMergedGroup().*isHeterogeneous)(v, p)) {
                     addScalarField(varInit.getSnippet()->getParamNames()[p] + vars[v].name,
-                                   [p, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
+                                   [p, v, getVarInitialisers](const G &g, size_t)
                                    {
                                        const auto &values = (g.*getVarInitialisers)()[v].getParams();
                                        return Utils::writePreciseString(values.at(p));
@@ -156,7 +156,7 @@ public:
             for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
                 if((getMergedGroup().*isHeterogeneous)(v, d)) {
                     addScalarField(varInit.getSnippet()->getDerivedParams()[d].name + vars[v].name,
-                                   [d, v, getVarInitialisers](const typename T::GroupInternal &g, size_t)
+                                   [d, v, getVarInitialisers](const G &g, size_t)
                                    {
                                        const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
                                        return Utils::writePreciseString(values.at(d));
@@ -192,6 +192,34 @@ public:
         os << ";" << std::endl;
     }
 
+    size_t getArraySize(const BackendBase &backend) const
+    {
+        // Make a copy of fields and sort so largest come first. This should mean that due
+        // to structure packing rules, significant memory is saved and estimate is more precise
+        auto sortedFields = m_Fields;
+        std::sort(sortedFields.begin(), sortedFields.end(),
+                  [&backend](const Field &a, const Field &b)
+        {
+            return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
+        });
+
+        // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
+        size_t structSize = 0;
+        size_t largestFieldSize = 0;
+        for(const auto &f : sortedFields) {
+            // Add size of field to total
+            const size_t fieldSize = backend.getSize(std::get<0>(f));
+            structSize += fieldSize;
+
+            // Update largest field size
+            largestFieldSize = std::max(fieldSize, largestFieldSize);
+        }
+
+        // Add total size of array of merged structures to merged struct data
+        // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
+        return padSize(structSize, largestFieldSize) * getMergedGroup().getGroups().size();
+    }
+
     void generate(const BackendBase &backend, CodeStream &definitionsInternal, 
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar, 
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -221,27 +249,13 @@ public:
             definitionsInternalFunc << ");" << std::endl;
         }
 
-        // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
-        size_t structSize = 0;
-        size_t largestFieldSize = 0;
+        // Loop through fields again to generate any EGP pushing functions that are require
         for(const auto &f : sortedFields) {
-            // Add size of field to total
-            const size_t fieldSize = backend.getSize(std::get<0>(f));
-            structSize += fieldSize;
-
-            // Update largest field size
-            largestFieldSize = std::max(fieldSize, largestFieldSize);
-
             // If this field is for a pointer EGP, also declare function to push it
             if(std::get<3>(f) == FieldType::PointerEGP) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << mergedGroupIndex << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
             }
         }
-
-        // Add total size of array of merged structures to merged struct data
-        // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
-        const size_t arraySize = padSize(structSize, largestFieldSize) * getMergedGroup().getGroups().size();
-        mergedStructData.addMergedGroupSize(name, mergedGroupIndex, arraySize);
 
         // If merged group is used on host
         if(host) {
@@ -298,7 +312,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    const T &getMergedGroup() const{ return m_MergedGroup; }
+    const M &getMergedGroup() const{ return m_MergedGroup; }
 
 private:
     //------------------------------------------------------------------------
@@ -309,7 +323,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const T &m_MergedGroup;
+    const M &m_MergedGroup;
     const std::string m_LiteralSuffix;
     std::vector<Field> m_Fields;
 };
