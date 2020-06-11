@@ -54,10 +54,9 @@ public:
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
     //! Generate suitable struct to hold this merged group
-    void generateStruct(const BackendBase &backend, CodeStream &os,
-                        const std::string &name, const std::string &prefix = "") const
+    void generateStruct(const BackendBase &backend, CodeStream &os, const std::string &name) const
     {
-        m_Gen.generateStruct(backend, os, name, prefix);
+        m_Gen.generateStruct(backend, os, name);
 
     }
 

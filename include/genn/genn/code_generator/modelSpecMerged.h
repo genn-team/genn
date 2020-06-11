@@ -106,6 +106,7 @@ private:
     void genMergedStructures(CodeStream &os, const BackendBase &backend, 
                              const std::vector<T> &mergedGroups, const std::string &name) const
     {
+        // Loop through all merged groups and generate struct
         for(const auto &g : mergedGroups) {
             g.generateStruct(backend, os, name);
         }

@@ -167,8 +167,7 @@ public:
     }
 
     //! Generate declaration of struct
-    void generateStruct(const BackendBase &backend, CodeStream &os, 
-                        const std::string &name, const std::string &prefix = "") const
+    void generateStruct(const BackendBase &backend, CodeStream &os, const std::string &name, bool ignorePointerPrefix = false) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
@@ -184,7 +183,10 @@ public:
             // Loop through fields and write to structure
             CodeStream::Scope b(os);
             for(const auto &f : sortedFields) {
-                os << prefix << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+                if(!ignorePointerPrefix && ::Utils::isTypePointer(std::get<0>(f))) {
+                    os << backend.getPointerPrefix();
+                }
+                os << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
             }
             os << std::endl;
         }
@@ -260,7 +262,8 @@ public:
         // If merged group is used on host
         if(host) {
             // Generate struct directly into internal definitions
-            generateStruct(backend, definitionsInternal, name);
+            // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
+            generateStruct(backend, definitionsInternal, name, true);
 
             // Declare array of these structs containing individual neuron group pointers etc
             runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
