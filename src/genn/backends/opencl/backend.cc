@@ -172,6 +172,14 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
 
+    os << "//--------------------------------------------------------------------------" << std::endl;
+    os << "// OpenCL program and kernels" << std::endl;
+    os << "//--------------------------------------------------------------------------" << std::endl;
+    os << "cl::Program neuronUpdateProgram;" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
+    os << std::endl;
+
     // Generate preamble
     preambleHandler(os);
 
@@ -401,9 +409,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "const char* neuronUpdateSrc = ";
     divideKernelStreamInParts(os, neuronUpdateKernelsStream, 5000);
     os << ";" << std::endl;
-    os << "cl::Program neuronUpdateProgram;" << std::endl;
-    os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
-    os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
     os << std::endl;
 
     // Function for initializing the KernelNeuronUpdate kernels
@@ -456,6 +461,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
+    os << "//--------------------------------------------------------------------------" << std::endl;
+    os << "// OpenCL program and kernels" << std::endl;
+    os << "//--------------------------------------------------------------------------" << std::endl;
+
     // Generate preamble
     preambleHandler(os);
 
@@ -1109,6 +1118,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
 
+    os << "//--------------------------------------------------------------------------" << std::endl;
+    os << "// OpenCL program and kernels" << std::endl;
+    os << "//--------------------------------------------------------------------------" << std::endl;
+    os << "cl::Program initializeProgram;" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelInitializeSparse] << ";" << std::endl;
+    os << std::endl;
+
     // Generate preamble
     preambleHandler(os);
 
@@ -1426,9 +1443,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "const char* initializeSrc = ";
     divideKernelStreamInParts(os, initializeKernelsStream, 5000);
     os << ";" << std::endl;
-    os << "cl::Program initializeProgram;" << std::endl;
-    os << "cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
-    os << "cl::Kernel " << KernelNames[KernelInitializeSparse] << ";" << std::endl;
     os << std::endl;
 
     // Function for initializing the initialization kernels
