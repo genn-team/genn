@@ -1825,7 +1825,9 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         CodeStream::Scope b(os);
         os << "// Reading the kernel source for execution" << std::endl;
         os << "program = cl::Program(context, kernelSource, true);" << std::endl;
-        os << "program.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "std::string gennPath = std::getenv(\"GENN\");" << std::endl;
+        os << "std::string buildString = \"-cl-std=CL1.2 -I \" + gennPath + \"/include/genn/backends/opencl/clRNG\";" << std::endl;
+        os << "program.build(buildString.c_str());" << std::endl;
     }
     os << std::endl;
     os << "// Get OpenCL error as string" << std::endl;
@@ -2185,7 +2187,10 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<AdditionalIncludeDirectories>..\\clRNG\\include;$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
+    os << "\t\t\t<AdditionalIncludeDirectories>";
+    os << "$(GENN)\\include\\genn\\backends\\opencl\\clRNG;";
+    os << "$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)";
+    os << "</AdditionalIncludeDirectories>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
@@ -2194,8 +2199,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
     os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
     os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
-    os << "\t\t\t<AdditionalLibraryDirectories>..\\clRNG\\lib;$(OPENCL_PATH)\\lib\\x64;$(OPENCL_PATH)\\lib\\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
-    os << "\t\t\t<AdditionalDependencies>clRNG.lib;OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
+    os << "\t\t\t<AdditionalLibraryDirectories>$(OPENCL_PATH)\\lib\\x64;$(OPENCL_PATH)\\lib\\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
+    os << "\t\t\t<AdditionalDependencies>OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
     os << "\t\t</Link>" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -2204,8 +2209,14 @@ void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostrea
     os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportTarget(std::ostream&) const
+void Backend::genMSBuildImportTarget(std::ostream& os) const
 {
+    os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
+    std::vector<std::string> clrngItems = { "clRNG.c", "private.c", "mrg32k3a.c", "mrg31k3p.c", "lfsr113.c", "philox432.c" };
+    for (const auto& clrngItem : clrngItems) {
+        os << "\t\t<ClCompile Include=\"$(GENN)\\src\\genn\\backends\\opencl\\clRNG\\" << clrngItem << "\" />" << std::endl;
+    }
+    os << "\t</ItemGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 std::string Backend::getFloatAtomicAdd(const std::string& ftype, const char* memoryType) const
