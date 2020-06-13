@@ -26,7 +26,7 @@ namespace {
 
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
-    {"gennrand_uniform", 0, "uniform_double($(rng))", "uniform_clrngLfsr113($(rng))"},
+    {"gennrand_uniform", 0, "uniform_double($(rng))", "clrngLfsr113RandomU01(&localStream)"},
     {"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "log_normal_double($(rng), $(0), $(1))", "log_normal_float($(rng), $(0), $(1))"},
@@ -316,7 +316,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 updateNeuronsKernelBody << std::endl;
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
-                //! TO BE IMPLEMENTED - Not using rng at this point - 2020/03/08
                 if (ng.isSimRNGRequired()) {
                     popSubs.addVarSubstitution("rng", "&d_rng" + ng.getName() + "[" + popSubs["id"] + "]");
                     updateNeuronsKernelParams.insert({ "d_rng" + ng.getName(), "__global clrngLfsr113HostStream*" });
@@ -326,6 +325,13 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                 updateNeuronsKernelBody << "if(" << popSubs["id"] << " < " << ng.getNumNeurons() << ")";
                 {
                     CodeStream::Scope b(updateNeuronsKernelBody);
+
+                    if (ng.isSimRNGRequired()) {
+                        updateNeuronsKernelBody << "clrngLfsr113Stream localStream;" << std::endl;
+                        updateNeuronsKernelBody << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &d_rng" << ng.getName() << "[" << popSubs["id"] + "]);" << std::endl;
+                        updateNeuronsKernelBody << std::endl;
+                    }
+
                     simHandler(updateNeuronsKernelBody, ng, popSubs,
                         // Emit true spikes
                         [this](CodeStream& updateNeuronsKernelBody, const NeuronGroupInternal&, Substitutions& subs)
@@ -337,6 +343,11 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
                         {
                             genEmitSpike(updateNeuronsKernelBody, subs, "Evnt");
                         });
+
+                    if (ng.isSimRNGRequired()) {
+                        updateNeuronsKernelBody << std::endl;
+                        updateNeuronsKernelBody << "clrngLfsr113CopyOverStreamsToGlobal(1, &d_rng" << ng.getName() << "[" << popSubs["id"] + "], &localStream);" << std::endl;
+                    }
                 }
 
                 updateNeuronsKernelBody << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
@@ -440,16 +451,6 @@ void Backend::genNeuronUpdate(CodeStream& os, const ModelSpecInternal& model, Ne
         [](const ModelSpec::NeuronGroupValueType& s) { return s.second.isSimRNGRequired(); })) {
         os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
         os << "#include <clRNG/lfsr113.clh>" << std::endl;
-        os << std::endl;
-        os << model.getPrecision() << " uniform_clrngLfsr113(__global const clrngLfsr113HostStream* srcStreams)";
-        {
-            CodeStream::Scope b(os);
-            os << "clrngLfsr113Stream localStream;" << std::endl;
-            os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, srcStreams);" << std::endl;
-            os << model.getPrecision() << " val = clrngLfsr113RandomU01(&localStream);" << std::endl;
-            os << "clrngLfsr113CopyOverStreamsToGlobal(1, srcStreams, &localStream);" << std::endl;
-            os << "return val;" << std::endl;
-        }
         os << std::endl;
     }
 
