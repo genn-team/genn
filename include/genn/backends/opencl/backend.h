@@ -364,15 +364,6 @@ private:
     }
 
     template<typename T>
-    void genMergedStructBufferAllocate(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
-    {
-        // Loop through groups and create buffers
-        for(const auto &ng : groups) {
-            // **TODO** check OpenCL padding rules
-            os << "d_merged" << name << "Group" << ng.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << ng.getStructArraySize(*this) << ", nullptr);" << std::endl;
-        }
-    }
-    template<typename T>
     void genMergedStructBuildKernelDeclaration(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
     {
         // Loop through groups and declare kernel object
@@ -382,13 +373,20 @@ private:
     }
 
     template<typename T>
-    void genMergedStructBuildKernelInit(CodeStream &os, const std::vector<T> &groups, const std::string &name, const std::string &programName) const
+    void genMergedStructBuild(CodeStream &os, const std::vector<T> &groups, const std::string &name, const std::string &programName) const
     {
-        // Loop through groups and create kernel object
+        // Loop through groups 
         for(const auto &g : groups) {
+            // Create kernel object
             const std::string kernelName = "build" + name + std::to_string(g.getIndex()) + "Kernel";
             os << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\");" << std::endl;
+
+            // Create group buffer
+            os << "d_merged" << name << "Group" << g.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << g.getStructArraySize(*this) << ", nullptr);" << std::endl;
+
+            // Set group buffer as first kernel argument
             os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << name << "Group" << g.getIndex() << "));" << std::endl;
+            os << std::endl;
         }
     }
 
