@@ -178,6 +178,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "cl::Program neuronUpdateProgram;" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
+    genMergedStructBuildKernelDeclaration(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+    genMergedStructBuildKernelDeclaration(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
     os << std::endl;
 
     // Generate preamble
@@ -212,6 +214,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                   [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); });
     neuronUpdateKernels << std::endl;
 
+    // Generate kernels used to populate merged structs
+    genMergedStructBuildKernels(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+    genMergedStructBuildKernels(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
+
+    // Declare neuron update kernel
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
     neuronUpdateKernels << ")";
@@ -243,6 +250,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             idPreNeuronReset += n.getGroups().size();
         }
     }
+    neuronUpdateKernels << std::endl;
     //! KernelPreNeuronReset END
     size_t idStart = 0;
 
@@ -402,6 +410,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             }
         );
     }
+    neuronUpdateKernels << std::endl;
     //! KernelNeuronUpdate BODY END
     //! KernelNeuronUpdate END
 
@@ -416,12 +425,14 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "void buildNeuronUpdateProgram()";
     {
         CodeStream::Scope b(os);
-        os << "// Reading the kernel source for execution" << std::endl;
+        os << "// Build program" << std::endl;
         os << "neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, true);" << std::endl;
         os << "neuronUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << std::endl;
 
         // KernelPreNeuronReset initialization
         if(idPreNeuronReset > 0) {
+            os << "// Configure neuron spike queue update kernel" << std::endl;
             os << KernelNames[KernelPreNeuronReset] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelPreNeuronReset] << "\");" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelPreNeuronReset], modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
             os << std::endl;
@@ -429,11 +440,20 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         // KernelNeuronUpdate initialization
         if(idStart > 0) {
+            os << "// Configure neuron update kernel" << std::endl;
             os << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronUpdate] << "\");" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
+            os << std::endl;
         }
 
+        os << "// Configure merged struct building kernels" << std::endl;
+        genMergedStructBuildKernelInit(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate", "neuronUpdateProgram");
+        genMergedStructBuildKernelInit(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate", "neuronUpdateProgram");
+        os << std::endl;
+
         // Generate code to allocate merged struct buffers
+        os << "// Create buffers to hold merged structures" << std::endl;
+        genMergedStructBufferAllocate(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
         genMergedStructBufferAllocate(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
     }
 
@@ -1127,6 +1147,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "cl::Program initializeProgram;" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelInitialize] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelInitializeSparse] << ";" << std::endl;
+    genMergedStructBuildKernelDeclaration(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
+    genMergedStructBuildKernelDeclaration(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
+    genMergedStructBuildKernelDeclaration(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
     os << std::endl;
 
     // Generate preamble
@@ -1168,6 +1191,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                                   [](const SynapseGroupInternal &sg) { return sg.getMaxConnections(); });
     initializeKernels << std::endl;
 
+    // Generate kernels used to populate merged structs
+    genMergedStructBuildKernels(initializeKernels, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
+    genMergedStructBuildKernels(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
+    genMergedStructBuildKernels(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
 
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), "NeuronInit", true);
@@ -1453,16 +1480,18 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << "void buildInitializeProgram()";
     {
         CodeStream::Scope b(os);
-        os << "// Reading the kernel source for execution" << std::endl;
+        os << "// Build program" << std::endl;
         os << "initializeProgram = cl::Program(clContext, initializeSrc, true);" << std::endl;
         os << "initializeProgram.build(\"-cl-std=CL1.2\");" << std::endl;
+        os << std::endl;
 
         if (idInitStart > 0) {
-            // KernelInitialize initialization
+            os << "// Configure initialization kernel" << std::endl;
             os << KernelNames[KernelInitialize] << " = cl::Kernel(initializeProgram, \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
+            os << std::endl;
         }
 
         /*if (hasInitializeSparseKernel && idSparseInitStart > 0)
@@ -1479,7 +1508,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             }
         }*/
 
+        os << "// Configure merged struct building kernels" << std::endl;
+        genMergedStructBuildKernelInit(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit", "initializeProgram");
+        genMergedStructBuildKernelInit(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit", "initializeProgram");
+        genMergedStructBuildKernelInit(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseConnectivityInit", "initializeProgram");
+        os << std::endl;
+
         // Generate code to allocate merged struct buffers
+        os << "// Create buffers to hold merged structures" << std::endl;
         genMergedStructBufferAllocate(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
         genMergedStructBufferAllocate(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
         genMergedStructBufferAllocate(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "NeurSynapseConnectivityInitonUpdate");
@@ -1811,6 +1847,18 @@ void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &, 
 //--------------------------------------------------------------------------
 void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
 {
+    /*CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(0, idx));
+    CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(1, d_mergedNeuronUpdateGroup0));
+    CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(2, spkCnt));
+    CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(3, spk));
+    CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(4, V));
+    CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(5, W));
+    CHECK_OPENCL_ERRORS(buildMergedNeuronUpdateGroup0Kernel.setArg(6, numNeurons));
+
+    const cl::NDRange globalWorkSize(1, 1);
+    const cl::NDRange localWorkSize(1, 1);
+    CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(buildMergedNeuronUpdateGroup0Kernel, cl::NullRange, globalWorkSize, localWorkSize));*/
+
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_merged" << suffix << "Group" << idx;
     os << ", " << "CL_TRUE";
     os << ", " << "0";

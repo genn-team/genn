@@ -53,6 +53,11 @@ public:
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
+    std::vector<typename MergedStructGenerator<G, M>::Field> getSortedFields(const BackendBase &backend) const
+    {
+        return m_Gen.getSortedFields(backend);
+
+    }
     //! Generate suitable struct to hold this merged group
     void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name) const
     {
@@ -62,11 +67,6 @@ public:
     void generateStructFieldArgumentDefinitions(CodeStream &os, const BackendBase &backend) const
     {
         m_Gen.generateStructFieldArgumentDefinitions(os, backend, m_Gen.getSortedFields(backend));
-    }
-
-    void generateStructFieldArguments(CodeStream &os, const BackendBase &backend) const
-    {
-        m_Gen.generateStructFieldArguments(os, backend, m_Gen.getSortedFields(backend));
     }
 
     size_t getStructArraySize(const BackendBase &backend) const

@@ -372,6 +372,59 @@ private:
             os << "d_merged" << name << "Group" << ng.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << ng.getStructArraySize(*this) << ", nullptr);" << std::endl;
         }
     }
+    template<typename T>
+    void genMergedStructBuildKernelDeclaration(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    {
+        // Loop through groups and declare kernel object
+        for(const auto &g : groups) {
+            os << "cl::Kernel build" + name + std::to_string(g.getIndex()) + "Kernel;" << std::endl;
+        }
+    }
+
+    template<typename T>
+    void genMergedStructBuildKernelInit(CodeStream &os, const std::vector<T> &groups, const std::string &name, const std::string &programName) const
+    {
+        // Loop through groups and create kernel object
+        for(const auto &g : groups) {
+            const std::string kernelName = "build" + name + std::to_string(g.getIndex()) + "Kernel";
+            os << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\");" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << name << "Group" << g.getIndex() << "));" << std::endl;
+        }
+    }
+
+    template<typename T>
+    void genMergedStructBuildKernels(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            // Generate kernel to build struct on device
+            os << "__kernel void build" << name << g.getIndex() << "Kernel(";
+            os << "__global struct Merged" << name << g.getIndex() << " *group, unsigned int idx, ";
+
+            // Loop through sorted struct fields
+            const auto sortedFields = g.getSortedFields(*this);
+            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+                const auto &f = sortedFields[fieldIndex];
+                if(::Utils::isTypePointer(std::get<0>(f))) {
+                    os << "__global ";
+                }
+                os << std::get<0>(f) << " " << std::get<1>(f);
+                if(fieldIndex != (sortedFields.size() - 1)) {
+                    os << ", ";
+                }
+            }
+            os << ")";
+            {
+                CodeStream::Scope b(os);
+
+                // Assign all structure fields to values passed through parameters
+                for(const auto &f : sortedFields) {
+                    os << "group[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+                }
+            }
+            os << std::endl;
+        }
+    }
 
     void genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const;
 

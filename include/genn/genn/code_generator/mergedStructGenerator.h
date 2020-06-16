@@ -214,23 +214,6 @@ public:
 
     }
 
-    void generateStructFieldArguments(CodeStream &os, const BackendBase &backend,
-                                      size_t groupIndex, const std::vector<Field> &sortedFields) const
-    {
-        // Get group by index
-        const auto &g = getMergedGroup().getGroups()[groupIndex];
-
-        // Loop through fields
-        for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
-            const auto &f = sortedFields[fieldIndex];
-            const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
-            os << fieldInitVal;
-            if(fieldIndex != (sortedFields.size() - 1)) {
-                os << ", ";
-            }
-        }
-    }
-
     size_t getArraySize(const BackendBase &backend, const std::vector<Field> &sortedFields) const
     {
         // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
@@ -324,6 +307,26 @@ protected:
     const M &getMergedGroup() const{ return m_MergedGroup; }
 
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    void generateStructFieldArguments(CodeStream &os, const BackendBase &backend,
+                                      size_t groupIndex, const std::vector<Field> &sortedFields) const
+    {
+        // Get group by index
+        const auto &g = getMergedGroup().getGroups()[groupIndex];
+
+        // Loop through fields
+        for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+            const auto &f = sortedFields[fieldIndex];
+            const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
+            os << fieldInitVal;
+            if(fieldIndex != (sortedFields.size() - 1)) {
+                os << ", ";
+            }
+        }
+    }
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
