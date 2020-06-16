@@ -108,7 +108,7 @@ private:
     {
         // Loop through all merged groups and generate struct
         for(const auto &g : mergedGroups) {
-            g.generateStruct(backend, os, name);
+            g.generateStruct(os, backend, name);
         }
     }
 

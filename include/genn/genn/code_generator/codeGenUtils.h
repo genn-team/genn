@@ -148,7 +148,9 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         assert(memorySpaceFound);
 
         // Write function to update
-        mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(const Merged" << suffix << "Group" << idx << " *group)";
+        mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(unsigned int idx, ";
+        g.generateStructFieldArgumentDefinitions(mergedGroupFunc, backend);
+        mergedGroupFunc << ")";
         {
             CodeStream::Scope b(mergedGroupFunc);
             backend.genMergedGroupPush(mergedGroupFunc, suffix, idx, numGroups);

@@ -54,15 +54,24 @@ public:
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
     //! Generate suitable struct to hold this merged group
-    void generateStruct(const BackendBase &backend, CodeStream &os, const std::string &name) const
+    void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name) const
     {
-        m_Gen.generateStruct(backend, os, name);
+        m_Gen.generateStruct(os, backend, name, m_Gen.getSortedFields(backend));
+    }
 
+    void generateStructFieldArgumentDefinitions(CodeStream &os, const BackendBase &backend) const
+    {
+        m_Gen.generateStructFieldArgumentDefinitions(os, backend, m_Gen.getSortedFields(backend));
+    }
+
+    void generateStructFieldArguments(CodeStream &os, const BackendBase &backend) const
+    {
+        m_Gen.generateStructFieldArguments(os, backend, m_Gen.getSortedFields(backend));
     }
 
     size_t getStructArraySize(const BackendBase &backend) const
     {
-        return m_Gen.getArraySize(backend);
+        return m_Gen.getArraySize(backend, m_Gen.getSortedFields(backend));
     }
 
 protected:

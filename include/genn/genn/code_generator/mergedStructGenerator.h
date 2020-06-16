@@ -36,6 +36,7 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
+    typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
  
     MergedStructGenerator(const M &mergedGroup, const std::string &precision) : m_MergedGroup(mergedGroup), m_LiteralSuffix((precision == "float") ? "f" : "")
     {
@@ -166,18 +167,23 @@ public:
         }
     }
 
-    //! Generate declaration of struct
-    void generateStruct(const BackendBase &backend, CodeStream &os, const std::string &name, bool ignorePointerPrefix = false) const
+    std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = m_Fields;
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [&backend](const Field &a, const Field &b)
-                  {
-                      return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
-                  });
+        {
+            return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
+        });
+        return sortedFields;
+    }
 
+    //! Generate declaration of struct
+    void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name,
+                        const std::vector<Field> &sortedFields, bool ignorePointerPrefix = false) const
+    {
         os << "struct Merged" << name << "Group" << getMergedGroup().getIndex() << std::endl;
         {
             // Loop through fields and write to structure
@@ -194,17 +200,39 @@ public:
         os << ";" << std::endl;
     }
 
-    size_t getArraySize(const BackendBase &backend) const
+    void generateStructFieldArgumentDefinitions(CodeStream &os, const BackendBase &backend,
+                                                const std::vector<Field> &sortedFields) const
     {
-        // Make a copy of fields and sort so largest come first. This should mean that due
-        // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = m_Fields;
-        std::sort(sortedFields.begin(), sortedFields.end(),
-                  [&backend](const Field &a, const Field &b)
-        {
-            return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
-        });
+        // Get sorted fields
+        for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+            const auto &f = sortedFields[fieldIndex];
+            os << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << std::get<1>(f);
+            if(fieldIndex != (sortedFields.size() - 1)) {
+                os << ", ";
+            }
+        }
 
+    }
+
+    void generateStructFieldArguments(CodeStream &os, const BackendBase &backend,
+                                      size_t groupIndex, const std::vector<Field> &sortedFields) const
+    {
+        // Get group by index
+        const auto &g = getMergedGroup().getGroups()[groupIndex];
+
+        // Loop through fields
+        for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+            const auto &f = sortedFields[fieldIndex];
+            const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
+            os << fieldInitVal;
+            if(fieldIndex != (sortedFields.size() - 1)) {
+                os << ", ";
+            }
+        }
+    }
+
+    size_t getArraySize(const BackendBase &backend, const std::vector<Field> &sortedFields) const
+    {
         // Loop through fields again to generate any EGP pushing functions that are required and to calculate struct size
         size_t structSize = 0;
         size_t largestFieldSize = 0;
@@ -231,23 +259,12 @@ public:
 
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
-        auto sortedFields = m_Fields;
-        std::sort(sortedFields.begin(), sortedFields.end(),
-                  [&backend](const Field &a, const Field &b)
-                  {
-                      return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
-                  });
+        auto sortedFields = getSortedFields(backend);
 
         // If this isn't a host merged structure, generate definition for function to push group
         if(!host) {
             definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(unsigned int idx, ";
-            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
-                const auto &f = sortedFields[fieldIndex];
-                definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << std::get<1>(f);
-                if(fieldIndex != (sortedFields.size() - 1)) {
-                    definitionsInternalFunc << ", ";
-                }
-            }
+            generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend, sortedFields);
             definitionsInternalFunc << ");" << std::endl;
         }
 
@@ -263,7 +280,7 @@ public:
         if(host) {
             // Generate struct directly into internal definitions
             // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
-            generateStruct(backend, definitionsInternal, name, true);
+            generateStruct(definitionsInternal, backend, name, sortedFields, true);
 
             // Declare array of these structs containing individual neuron group pointers etc
             runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
@@ -279,35 +296,24 @@ public:
             // If this is a merged group used on the host, directly set array entry
             if(host) {
                 runnerMergedStructAlloc << "merged" << name << "Group" << mergedGroupIndex << "[" << groupIndex << "] = {";
+                generateStructFieldArguments(runnerMergedStructAlloc, backend, groupIndex, sortedFields);
+                runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
                 runnerMergedStructAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(" << groupIndex << ", ";
+                generateStructFieldArguments(runnerMergedStructAlloc, backend, groupIndex, sortedFields);
+                runnerMergedStructAlloc << ");" << std::endl;
             }
-
+            
             // Loop through fields
-            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
-                const auto &f = sortedFields[fieldIndex];
-                const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
-                runnerMergedStructAlloc << fieldInitVal;
-                if(fieldIndex != (sortedFields.size() - 1)) {
-                    runnerMergedStructAlloc << ", ";
-                }
-
+            for(const auto &f : sortedFields) {
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) != FieldType::Standard) {
-                    mergedStructData.addMergedEGP(fieldInitVal, name, mergedGroupIndex, groupIndex,
+                    mergedStructData.addMergedEGP(std::get<2>(f)(g, groupIndex), name, mergedGroupIndex, groupIndex,
                                                   std::get<0>(f), std::get<1>(f));
                 }
             }
-
-            if(host) {
-                runnerMergedStructAlloc << "};" << std::endl;
-            }
-            else {
-                runnerMergedStructAlloc << ");" << std::endl;
-            }
-
         }
     }
 
@@ -318,11 +324,6 @@ protected:
     const M &getMergedGroup() const{ return m_MergedGroup; }
 
 private:
-    //------------------------------------------------------------------------
-    // Typedefines
-    //------------------------------------------------------------------------
-    typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
