@@ -363,6 +363,16 @@ private:
         }
     }
 
+    template<typename T>
+    void genMergedStructBufferAllocate(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    {
+        // Loop through groups and create buffers
+        for(const auto &ng : groups) {
+            // **TODO** check OpenCL padding rules
+            os << "d_merged" << name << "Group" << ng.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << ng.getStructArraySize(*this) << ", nullptr);" << std::endl;
+        }
+    }
+
     void genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const;
 
     void genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng, bool spikeEvent) const;

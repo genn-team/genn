@@ -432,6 +432,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronUpdate] << "\");" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
         }
+
+        // Generate code to allocate merged struct buffers
+        genMergedStructBufferAllocate(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
     }
 
     os << std::endl;
@@ -1475,6 +1478,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                 }
             }
         }*/
+
+        // Generate code to allocate merged struct buffers
+        genMergedStructBufferAllocate(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
+        genMergedStructBufferAllocate(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
+        genMergedStructBufferAllocate(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "NeurSynapseConnectivityInitonUpdate");
     }
 
     os << std::endl;
