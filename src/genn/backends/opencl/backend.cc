@@ -33,27 +33,6 @@ const std::vector<Substitutions::FunctionTemplate> openclFunctions = {
     {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
 };
 
-//--------------------------------------------------------------------------
-// Timer
-//--------------------------------------------------------------------------
-class Timer {
-public:
-    //! TO BE REVIEWED
-    Timer(CodeStream& codeStream, const std::string& name, bool timingEnabled, bool synchroniseOnStop = false)
-        : m_CodeStream(codeStream), m_Name(name), m_TimingEnabled(timingEnabled), m_SynchroniseOnStop(synchroniseOnStop)
-    {
-
-    }
-private:
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    CodeStream& m_CodeStream;
-    const std::string m_Name;
-    const bool m_TimingEnabled;
-    const bool m_SynchroniseOnStop;
-};
-
 //-----------------------------------------------------------------------
 bool isSparseInitRequired(const SynapseGroupInternal& sg)
 {
@@ -141,6 +120,13 @@ void genMergedKernelDataStructures(CodeStream &os, size_t workgroupSize, Args...
     // Generate group start id arrays
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), workgroupSize, args...);
+}
+//-----------------------------------------------------------------------
+void genReadEventTiming(CodeStream &os, const std::string &name)
+{
+    os << "const cl_ulong tmpStart = " << name << "Event.getProfilingInfo<CL_PROFILING_COMMAND_START>();" << std::endl;
+    os << "const cl_ulong tmpEnd = " << name << "Event.getProfilingInfo<CL_PROFILING_COMMAND_END>();" << std::endl;
+    os << name << "Time += (double)(tmpEnd - tmpStart) / 1.0E9;" << std::endl;
 }
 }
 
@@ -493,7 +479,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << modelMerged.getMergedNeuronUpdateGroups().size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
+            if(model.isTimingEnabled()) {
+                os << ", nullptr, &neuronUpdateEvent";
+            }
+            os << "));" << std::endl;
         }
     }
 }
@@ -1002,7 +992,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
+            if(model.isTimingEnabled()) {
+                os << ", nullptr, &presynapticUpdateEvent";
+            }
+            os << "));" << std::endl;
         }
 
         // Launch postsynaptic update kernel
@@ -1011,7 +1005,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << modelMerged.getMergedPostsynapticUpdateGroups().size() << ", t));" << std::endl;
             os << std::endl;
             genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
+            if(model.isTimingEnabled()) {
+                os << ", nullptr, &postsynapticUpdateEvent";
+            }
+            os << "));" << std::endl;
         }
     }
 }
@@ -1398,13 +1396,22 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 }
             }
             os << std::endl;
-            //os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << initializeKernelParams.size() /*last arg*/ << ", deviceRNGSeed));" << std::endl;
+
             os << std::endl;
             genKernelDimensions(os, KernelInitialize, idInitStart);
             const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() + 
                                           modelMerged.getMergedSynapseConnectivityInitGroups().size());
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", deviceRNGSeed));" << std::endl;
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize";
+            if(model.isTimingEnabled()) {
+                os << ", nullptr, &initEvent";
+            }
+            os << "));" << std::endl;
+
+            if(model.isTimingEnabled()) {
+                os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+                genReadEventTiming(os, "init");
+            }
         }
     }
 
@@ -1424,7 +1431,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             CodeStream::Scope b(os);
             {
                 genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize";
+                if(model.isTimingEnabled()) {
+                    os << ", nullptr, &initSparseEvent";
+                }
+                os << "));" << std::endl;
+
+                if(model.isTimingEnabled()) {
+                    os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+                    genReadEventTiming(os, "initSparse");
+                }
             }
         }
     }
@@ -1581,7 +1597,7 @@ void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged &) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged&) const
+void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const
 {
     // Initializing OpenCL programs
     os << "// Get platforms" << std::endl;
@@ -1595,7 +1611,8 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged&) con
     os << "// Select device and create context and command queue" << std::endl;
     os << "clDevice = platformDevices[" << m_ChosenDeviceIndex << "];" << std::endl;
     os << "clContext = cl::Context(clDevice);" << std::endl;
-    os << "commandQueue = cl::CommandQueue(clContext, clDevice);" << std::endl;
+    os << "commandQueue = cl::CommandQueue(clContext, clDevice, ";
+    os << (modelMerged.getModel().isTimingEnabled() ? "CL_QUEUE_PROFILING_ENABLE" : "0") << ");" << std::endl;
 
     os << "// Build OpenCL programs" << std::endl;
     os << "buildInitializeProgram();" << std::endl;
@@ -1603,9 +1620,13 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged&) con
     os << "buildSynapseUpdateProgram();" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged&) const
+void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const
 {
-    printf("TO BE IMPLEMENTED: ~virtual~ CodeGenerator::OpenCL::Backend::genStepTimeFinalisePreamble\n");
+    // If timing is enabled, synchronise 
+    // **THINK** is it better to wait on events?
+    if(modelMerged.getModel().isTimingEnabled()) {
+        os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definitionsInternal, const std::string& type, const std::string& name, VarLocation loc) const
@@ -1871,7 +1892,7 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsIntern
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free,
-    const std::string& name, size_t count) const
+                                   const std::string& name, size_t count) const
 {
     genVariableDefinition(definitionsInternal, definitionsInternal, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
     genVariableImplementation(runner, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
@@ -1887,9 +1908,19 @@ MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definiti
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free,
-    CodeStream& stepTimeFinalise, const std::string& name, bool updateInStepTime) const
+                       CodeStream& stepTimeFinalise, const std::string& name, bool updateInStepTime) const
 {
-    throw Utils::ToBeImplemented("genTimer");
+    // Define OpenCL event in internal defintions (as they use CUDA-specific types)
+    definitionsInternal << "EXPORT_VAR cl::Event  " << name  << "Event;" << std::endl;
+
+    // Implement  event variables
+    runner << "cl::Event " << name << "Event;" << std::endl;
+
+    if(updateInStepTime) {
+        CodeGenerator::CodeStream::Scope b(stepTimeFinalise);
+        genReadEventTiming(stepTimeFinalise, name);
+    }
+
 }
 //--------------------------------------------------------------------------
 void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
