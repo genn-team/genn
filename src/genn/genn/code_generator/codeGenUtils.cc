@@ -38,7 +38,7 @@ const std::string op= std::string("+-*/(<>= ,;")+std::string("\n")+std::string("
 
 enum MathsFunc
 {
-    MathsFuncDouble,
+    MathsFuncCPP,
     MathsFuncSingle,
     MathsFuncMax,
 };
@@ -103,24 +103,18 @@ const char *mathsFuncs[][MathsFuncMax] = {
 };
 
 //--------------------------------------------------------------------------
-/*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
+/*! \brief This function removes explicit single precision function calls as
+           single-threaded CPU and CUDA kernels both support C++ i.e. overloads 
+           and, while OpenCL kernels aren't in C++, OpenCL doesn't provide explicit
+           single precision maths functions, instead having some weird special case
  */
 //--------------------------------------------------------------------------
-void ensureMathFunctionFtype(std::string &code, const std::string &type)
+void ensureMathFunctionFtype(std::string &code)
 {
-    using namespace CodeGenerator;
-
-    // If type is double, substitute any single precision maths functions for double precision version
-    if (type == "double") {
-        for(const auto &m : mathsFuncs) {
-            regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncDouble]);
-        }
-    }
-    // Otherwise, substitute any double precision maths functions for single precision version
-    else {
-        for(const auto &m : mathsFuncs) {
-            regexFuncSubstitute(code, m[MathsFuncDouble], m[MathsFuncSingle]);
-        }
+    // Replace any outstanding explicit single-precision maths functions  
+    // with C++ versions where overloads should work the same
+    for(const auto &m : mathsFuncs) {
+        CodeGenerator::regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncCPP]);
     }
 }
 
@@ -486,7 +480,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
             code= code+"f";
         }
     }
-    ensureMathFunctionFtype(code, type);
+    ensureMathFunctionFtype(code);
     return code;
 }
 
