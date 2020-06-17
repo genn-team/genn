@@ -555,6 +555,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                   modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics",
                                   [this](const SynapseGroupInternal &sg) { return getNumSynapseDynamicsThreads(sg); });
 
+    // Generate kernels used to populate merged structs
+    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), "SynapseDendriticDelayUpdate");
+    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate");
+    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate");
+    genMergedStructBuildKernels(synapseUpdateKernels, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics");
+
     // Declare neuron spike queue update kernel
     size_t idPreSynapseReset = 0;
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
@@ -1053,8 +1059,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     CodeStream initializeKernels(initializeKernelsStream);
 
     // Include definitions
-    genKernelPreamble(initializeKernels, modelMerged);
-    
+    genKernelPreamble(initializeKernels, modelMerged);  
 
     // Generate struct definitions
     modelMerged.genMergedNeuronInitGroupStructs(initializeKernels, *this);
