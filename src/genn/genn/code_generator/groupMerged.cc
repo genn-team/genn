@@ -1068,8 +1068,8 @@ bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous
 }
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                                              Role role, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal, SynapseGroupMergedBase>(index, precision, groups)
+                                                              Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal, SynapseGroupMergedBase>(index, precision, groups), m_ArchetypeCode(archetypeCode)
 {
     const bool updateRole = ((role == Role::PresynapticUpdate)
                              || (role == Role::PostsynapticUpdate)

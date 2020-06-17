@@ -615,16 +615,13 @@ protected:
     };
 
     SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                           Role role, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
-    //----------------------------------------------------------------------------
-    // Declared virtuals
-    //----------------------------------------------------------------------------
-    virtual std::string getArchetypeCode() const { return ""; }
+                           Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
+    const std::string &getArchetypeCode() const { return m_ArchetypeCode; }
+
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -638,6 +635,11 @@ private:
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::string m_ArchetypeCode;
 };
 
 //----------------------------------------------------------------------------
@@ -648,7 +650,8 @@ class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 public:
     PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
+                               getArchetype().getWUModel()->getSimCode() + getArchetype().getWUModel()->getEventCode() + getArchetype().getWUModel()->getEventThresholdConditionCode(), groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -662,16 +665,6 @@ public:
                                          mergedStructData, precision, timePrecision, 
                                          "PresynapticUpdate", SynapseGroupMergedBase::Role::PresynapticUpdate);
     }
-
-protected:
-    //----------------------------------------------------------------------------
-    // SynapseGroupMergedBase virtuals
-    //----------------------------------------------------------------------------
-    virtual std::string getArchetypeCode() const override
-    {
-        // **NOTE** we concatenate sim code, event code and threshold code so all get tested
-        return getArchetype().getWUModel()->getSimCode() + getArchetype().getWUModel()->getEventCode() + getArchetype().getWUModel()->getEventThresholdConditionCode();
-    }
 };
 
 //----------------------------------------------------------------------------
@@ -682,7 +675,8 @@ class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 public:
     PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                   const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
+                               getArchetype().getWUModel()->getLearnPostCode(), groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -696,15 +690,6 @@ public:
                                          mergedStructData, precision, timePrecision,
                                          "PostsynapticUpdate", SynapseGroupMergedBase::Role::PostsynapticUpdate);
     }
-
-protected:
-    //----------------------------------------------------------------------------
-    // SynapseGroupMergedBase virtuals
-    //----------------------------------------------------------------------------
-    virtual std::string getArchetypeCode() const override
-    {
-        return getArchetype().getWUModel()->getLearnPostCode();
-    }
 };
 
 //----------------------------------------------------------------------------
@@ -715,7 +700,8 @@ class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 public:
     SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
+                               getArchetype().getWUModel()->getSynapseDynamicsCode(), groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -729,15 +715,6 @@ public:
                                          mergedStructData, precision, timePrecision,
                                          "SynapseDynamics", SynapseGroupMergedBase::Role::SynapseDynamics);
     }
-
-protected:
-    //----------------------------------------------------------------------------
-    // SynapseGroupMergedBase virtuals
-    //----------------------------------------------------------------------------
-    virtual std::string getArchetypeCode() const override
-    {
-        return getArchetype().getWUModel()->getSynapseDynamicsCode();
-    }
 };
 
 //----------------------------------------------------------------------------
@@ -748,7 +725,7 @@ class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
 public:
     SynapseDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::DenseInit, groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::DenseInit, "", groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -772,7 +749,7 @@ class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 public:
     SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
