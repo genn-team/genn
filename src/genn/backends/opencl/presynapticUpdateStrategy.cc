@@ -282,10 +282,10 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     }
 
                     if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                        os << "const ulong gid = (shSpk" << eventSuffix << "[j] * group->rowStride) + " << popSubs["id"] << ");" << std::endl;
+                        os << "const ulong gid = (shSpk" << eventSuffix << "[j] * group->rowStride) + " << popSubs["id"] << ";" << std::endl;
                     }
                     else {
-                        os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * group->rowStride) + " << popSubs["id"] << ");" << std::endl;
+                        os << "const unsigned int gid = (shSpk" << eventSuffix << "[j] * group->rowStride) + " << popSubs["id"] << ";" << std::endl;
                     }
                 }
 
