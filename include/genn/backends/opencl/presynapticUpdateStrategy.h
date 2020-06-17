@@ -4,8 +4,8 @@
 #include "code_generator/backendBase.h"
 
 // Forward declarations
-class ModelSpecInternal;
-class SynapseGroupInternal;
+class ModelSpecMerged;
+class PresynapticUpdateGroupMerged;
 
 namespace CodeGenerator
 {
@@ -40,13 +40,13 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg) const = 0;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
+    virtual bool shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const = 0;
 
     //! Are input currents emitted by this presynaptic update accumulated into a shared memory array?
-    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const = 0;
+    virtual bool shouldAccumulateInSharedMemory(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const = 0;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+    virtual void genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                          BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const = 0;
 };
 
@@ -70,13 +70,13 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
+    virtual bool shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a shared memory array?
-    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
+    virtual bool shouldAccumulateInSharedMemory(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+    virtual void genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                          BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const override;
 };
 
@@ -100,13 +100,13 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a register?
-    virtual bool shouldAccumulateInRegister(const SynapseGroupInternal &sg, const Backend &backend) const override;
+    virtual bool shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     //! Are input currents emitted by this presynaptic update accumulated into a shared memory array?
-    virtual bool shouldAccumulateInSharedMemory(const SynapseGroupInternal &sg, const Backend &backend) const override;
+    virtual bool shouldAccumulateInSharedMemory(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     //! Generate presynaptic update code
-    virtual void genCode(CodeStream &os, const ModelSpecInternal &model, const SynapseGroupInternal &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
+    virtual void genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, const Backend &backend, bool trueSpike,
                          BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler) const override;
 };
 }   // namespace PresynapticUpdateStrategy
