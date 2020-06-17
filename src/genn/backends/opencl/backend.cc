@@ -94,12 +94,21 @@ void genMergedGroupKernelParams(CodeStream &os, const std::vector<T> &groups, bo
 }
 //--------------------------------------------------------------------------
 template<typename T>
-void setMergedGroupKernelParams(CodeStream &os, const std::string &kernelName, const std::vector<T> &groups)
+void setMergedGroupKernelParams(CodeStream &os, const std::string &kernelName, const std::vector<T> &groups, size_t &start)
 {
     // Loop through groups and set as kernel arguments
     for(size_t i = 0; i < groups.size(); i++) {
-        os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(" << i << ", d_merged" << T::name << "Group" << i << "));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(" << start + i << ", d_merged" << T::name << "Group" << i << "));" << std::endl;
     }
+
+    start += groups.size();
+}
+//--------------------------------------------------------------------------
+template<typename T>
+void setMergedGroupKernelParams(CodeStream &os, const std::string &kernelName, const std::vector<T> &groups)
+{
+    size_t start = 0;
+    setMergedGroupKernelParams(os, kernelName, groups, start);
 }
 //-----------------------------------------------------------------------
 void genGroupStartIDs(CodeStream &, size_t &, size_t)
@@ -1344,16 +1353,17 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         os << "// Configure merged struct building kernels" << std::endl;
         genMergedStructBuild(os, modelMerged.getMergedNeuronInitGroups(), "initializeProgram");
         genMergedStructBuild(os, modelMerged.getMergedSynapseDenseInitGroups(), "initializeProgram");
-        genMergedStructBuild(os, modelMerged.getMergedSynapseDenseInitGroups(), "initializeProgram");
+        genMergedStructBuild(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "initializeProgram");
         genMergedStructBuild(os, modelMerged.getMergedSynapseSparseInitGroups(), "initializeProgram");
         os << std::endl;
 
         if (idInitStart > 0) {
             os << "// Configure initialization kernel" << std::endl;
             os << KernelNames[KernelInitialize] << " = cl::Kernel(initializeProgram, \"" << KernelNames[KernelInitialize] << "\");" << std::endl;
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronInitGroups());
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseDenseInitGroups());
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups());
+            size_t start = 0;
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedNeuronInitGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseDenseInitGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups(), start);
             os << std::endl;
         }
 
