@@ -184,7 +184,7 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
     LOGI << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                               HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
@@ -202,8 +202,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << std::endl;
 
     // Generate preamble
-    // **HACK** don't use standard preamble
-    //preambleHandler(os);
+    preambleHandler(os);
 
     //! KernelPreNeuronReset START
     size_t idPreNeuronReset = 0;
@@ -491,7 +490,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                                HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
@@ -514,7 +513,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     genMergedStructPreamble(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics");
 
     // Generate preamble
-    //preambleHandler(os);
+    preambleHandler(os);
     
     // Creating the kernel body separately so it can be split into multiple string literals
     std::stringstream synapseUpdateKernelsStream;
@@ -1012,7 +1011,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
@@ -1033,8 +1032,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << std::endl;
 
     // Generate preamble
-    // **HACK**
-    //preambleHandler(os);
+    preambleHandler(os);
 
     // initialization kernel code
     size_t idInitStart = 0;
@@ -1727,17 +1725,6 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &, const std::string &suffix,
-                                           size_t idx, size_t numGroups) const
-{
-    assert(false);
-}
-//--------------------------------------------------------------------------
-void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
-{
-    assert(false);
-}
-//--------------------------------------------------------------------------
 void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx,
                                             const std::string &groupIdx, const std::string &fieldName,
                                             const std::string &egpName) const
@@ -2048,7 +2035,7 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) cons
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
 {
-    return {{"", getDeviceMemoryBytes() }};
+    return {};
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng, bool spikeEvent) const

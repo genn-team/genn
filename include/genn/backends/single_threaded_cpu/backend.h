@@ -42,17 +42,17 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                  HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                   HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
@@ -78,13 +78,6 @@ public:
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-
-    //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
-                                              size_t idx, size_t numGroups) const override;
-    
-    //! Generate code for pushing merged group data to the 'device'
-    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
 
     ///! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -165,6 +158,30 @@ private:
     void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
 
   
+    template<typename T>
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            // Implement merged group
+            os << "static Merged" << name << "Group" << g.getIndex() << " merged" << name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+
+            // Write function to update
+            os << "void pushMerged" << name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            g.generateStructFieldArgumentDefinitions(os, *this);
+            os << ")";
+            {
+                CodeStream::Scope b(os);
+
+                // Loop through sorted fields and set array entry
+                const auto sortedFields = g.getSortedFields(*this);
+                for(const auto &f : sortedFields) {
+                    os << "merged" << name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+                }
+            }
+        }
+    }
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------

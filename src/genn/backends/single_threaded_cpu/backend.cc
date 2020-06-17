@@ -64,7 +64,7 @@ namespace CodeGenerator
 {
 namespace SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                               HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
@@ -73,6 +73,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to set them
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
 
     // Generate preamble
     preambleHandler(os);
@@ -160,7 +164,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                                HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
@@ -170,6 +174,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to set them
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate");
+    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate");
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics");
 
     // Generate preamble
     preambleHandler(os);
@@ -372,7 +381,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
@@ -384,6 +393,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to set them
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit");
 
     // Generate preamble
     preambleHandler(os);
@@ -727,18 +742,6 @@ void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const s
                                       VarLocation, const std::string &, const std::string &) const
 {
     assert(!m_Preferences.automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
-                                           size_t idx, size_t numGroups) const
-{
-    assert(memorySpace.empty());
-    os << "static Merged" << suffix << "Group" << idx << " merged" << suffix << "Group" << idx << "[" << numGroups << "];" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const
-{
-    os << "std::copy_n(group, " << numGroups << ", merged" << suffix << "Group" << idx << ");" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 

@@ -9,6 +9,9 @@
 #include <string>
 #include <unordered_set>
 
+// Standard C includes
+#include <cassert>
+
 // CUDA includes
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -127,17 +130,17 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::Backends:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                  HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                   HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
@@ -164,13 +167,6 @@ public:
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-
-    //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
-                                              size_t idx, size_t numGroups) const override;
-
-    //! Generate code for pushing merged group data to the 'device'
-    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -362,6 +358,58 @@ private:
                 handler(os, gMerge, popSubs);
 
                 idStart += paddedSize;
+            }
+        }
+    }
+
+
+    template<typename T>
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, const std::string &name, MemorySpaces &memorySpaces) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            // Get size of group in bytes
+            const size_t groupBytes = g.getStructArraySize(*this);
+
+            // Loop through memory spaces
+            bool memorySpaceFound = false;
+            for(auto &m : memorySpaces) {
+                // If there is space in this memory space for group
+                if(m.second > groupBytes) {
+                    // Implement merged group array in this memory space
+                    os << m.first << " Merged" << name << "Group" << g.getIndex() << " d_merged" << name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+
+                    // Set flag
+                    memorySpaceFound = true;
+
+                    // Subtract
+                    m.second -= groupBytes;
+
+                    // Stop searching
+                    break;
+                }
+            }
+
+            assert(memorySpaceFound);
+
+            // Write function to update
+            os << "void pushMerged" << name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            g.generateStructFieldArgumentDefinitions(os, *this);
+            os << ")";
+            {
+                CodeStream::Scope b(os);
+
+                // Loop through sorted fields and build struct on the stack
+                os << "Merged" << name << "Group" << g.getIndex() << " group = {";
+                const auto sortedFields = g.getSortedFields(*this);
+                for(const auto &f : sortedFields) {
+                    os << std::get<1>(f) << ", ";
+                }
+                os << "};" << std::endl;
+
+                // Push to device
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << name << "Group" << g.getIndex() << ", &group, ";
+                os << "sizeof(Merged" << name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << name << "Group" << g.getIndex() << ")));" << std::endl;
             }
         }
     }

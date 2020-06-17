@@ -131,18 +131,18 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Synaptic update kernels
-    backend.genSynapseUpdate(os, modelMerged,
+    backend.genSynapseUpdate(os, modelMerged, memorySpaces,
         // Preamble handler
         [&mergedStructData, &memorySpaces, &modelMerged, &backend](CodeStream &os)
         {
-            genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), mergedStructData, "SynapseDendriticDelayUpdate",
-                               backend, memorySpaces);
-            genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), mergedStructData, "PresynapticUpdate",
-                               backend, memorySpaces);
-            genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), mergedStructData, "PostsynapticUpdate",
-                               backend, memorySpaces);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), mergedStructData, "SynapseDynamics",
-                               backend, memorySpaces);
+            genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), 
+                               mergedStructData, "SynapseDendriticDelayUpdate", backend);
+            genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), 
+                               mergedStructData, "PresynapticUpdate", backend);
+            genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), 
+                               mergedStructData, "PostsynapticUpdate", backend);
+            genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), 
+                               mergedStructData, "SynapseDynamics", backend);
         },
         // Presynaptic weight update threshold
         [&backend, &model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)

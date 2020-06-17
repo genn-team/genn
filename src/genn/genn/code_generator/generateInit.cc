@@ -211,18 +211,18 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
 
-    backend.genInit(os, modelMerged,
+    backend.genInit(os, modelMerged, memorySpaces,
         // Preamble handler
         [&mergedStructData, &memorySpaces, &modelMerged, &backend](CodeStream &os)
         {
-            genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), mergedStructData, "NeuronInit",
-                               backend, memorySpaces);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), mergedStructData, "SynapseDenseInit",
-                               backend, memorySpaces);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), mergedStructData, "SynapseConnectivityInit",
-                               backend, memorySpaces);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), mergedStructData, "SynapseSparseInit",
-                               backend, memorySpaces);
+            genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), 
+                               mergedStructData, "NeuronInit", backend);
+            genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), 
+                               mergedStructData, "SynapseDenseInit", backend);
+            genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), 
+                               mergedStructData, "SynapseConnectivityInit", backend);
+            genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), 
+                               mergedStructData, "SynapseSparseInit", backend);
         },
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)

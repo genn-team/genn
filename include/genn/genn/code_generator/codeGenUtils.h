@@ -110,66 +110,10 @@ inline size_t padSize(size_t size, size_t blockSize)
 
 template<typename T>
 void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
-                        const std::string &suffix, const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
+                        const std::string &suffix, const BackendBase &backend)
 {
-    // Loop through merged neuron groups
-    std::stringstream mergedGroupArrayStream;
-    std::stringstream mergedGroupFuncStream;
-    CodeStream mergedGroupArray(mergedGroupArrayStream);
-    CodeStream mergedGroupFunc(mergedGroupFuncStream);
-    TeeStream mergedGroupStreams(mergedGroupArray, mergedGroupFunc);
-    for(const auto &g : groups) {
-        // Declare static array to hold merged neuron groups
-        const size_t idx = g.getIndex();
-        const size_t numGroups = g.getGroups().size();
-
-        // Get size of group in bytes
-        const size_t groupBytes = g.getStructArraySize(backend);
-
-        // Loop through memory spaces
-        bool memorySpaceFound = false;
-        for(auto &m : memorySpaces) {
-            // If there is space in this memory space for group
-            if(m.second > groupBytes) {
-                // Implement merged group array in this memory space
-                backend.genMergedGroupImplementation(mergedGroupArray, m.first, suffix, idx, numGroups);
-
-                // Set flag
-                memorySpaceFound = true;
-
-                // Subtract
-                m.second -= groupBytes;
-
-                // Stop searching
-                break;
-            }
-        }
-
-        assert(memorySpaceFound);
-
-        // Write function to update
-        mergedGroupFunc << "void pushMerged" << suffix << "Group" << idx << "ToDevice(unsigned int idx, ";
-        g.generateStructFieldArgumentDefinitions(mergedGroupFunc, backend);
-        mergedGroupFunc << ")";
-        {
-            CodeStream::Scope b(mergedGroupFunc);
-            backend.genMergedGroupPush(mergedGroupFunc, suffix, idx, numGroups);
-        }
-    }
-
+    
     if(!groups.empty()) {
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// merged group arrays" << std::endl;
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << mergedGroupArrayStream.str();
-        os << std::endl;
-
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// merged group functions" << std::endl;
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << mergedGroupFuncStream.str();
-        os << std::endl;
-
         // Loop through all extra global parameters to build a set of unique filename, group index pairs
         // **YUCK** it would be much nicer if this were part of the original data structure
         // **NOTE** tuple would be nicer but doesn't define std::hash overload
