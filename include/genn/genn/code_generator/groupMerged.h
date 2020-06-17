@@ -651,7 +651,7 @@ public:
     PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
-                               getArchetype().getWUModel()->getSimCode() + getArchetype().getWUModel()->getEventCode() + getArchetype().getWUModel()->getEventThresholdConditionCode(), groups)
+                               groups.front().get().getWUModel()->getSimCode() + groups.front().get().getWUModel()->getEventCode() + groups.front().get().getWUModel()->getEventThresholdConditionCode(), groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -676,7 +676,7 @@ public:
     PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                   const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
-                               getArchetype().getWUModel()->getLearnPostCode(), groups)
+                               groups.front().get().getWUModel()->getLearnPostCode(), groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -701,7 +701,7 @@ public:
     SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
-                               getArchetype().getWUModel()->getSynapseDynamicsCode(), groups)
+                               groups.front().get().getWUModel()->getSynapseDynamicsCode(), groups)
     {}
 
     void generate(const BackendBase &backend, CodeStream &definitionsInternal,
