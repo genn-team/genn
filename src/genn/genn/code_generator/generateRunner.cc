@@ -325,7 +325,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
         CodeStream::Scope b(os);
 
         // Get reference to group
-        os << "const auto &group = mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
+        os << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
 
         const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
 
