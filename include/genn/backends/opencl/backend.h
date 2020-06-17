@@ -265,7 +265,7 @@ public:
     
     std::string getFloatAtomicAdd(const std::string& ftype, const char* memoryType = "global") const;
 
-    size_t getKernelBlockSize(Kernel kernel) const { return m_KernelWorkGroupSizes.at(kernel); }
+    size_t getKernelWorkGroupSize(Kernel kernel) const { return m_KernelWorkGroupSizes.at(kernel); }
 
     //--------------------------------------------------------------------------
     // Static API
