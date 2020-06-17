@@ -110,7 +110,7 @@ inline size_t padSize(size_t size, size_t blockSize)
 
 template<typename T>
 void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
-                        const std::string &suffix, const BackendBase &backend)
+                        const BackendBase &backend)
 {
     
     if(!groups.empty()) {
@@ -119,7 +119,7 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
         // **NOTE** tuple would be nicer but doesn't define std::hash overload
         std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;
         for(const auto &e : mergedStructData.getMergedEGPs()) {
-            const auto groupEGPs = e.second.equal_range(suffix);
+            const auto groupEGPs = e.second.equal_range(T::name);
             std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
                            [](const MergedStructData::MergedEGPMap::value_type::second_type::value_type &g)
                            {
@@ -136,10 +136,10 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
             // If EGP is a pointer
             // **NOTE** this is common to all references!
             if(Utils::isTypePointer(f.second.first)) {
-                os << "void pushMerged" << suffix << f.first << f.second.second << "ToDevice(unsigned int idx, " << f.second.first << " value)";
+                os << "void pushMerged" << T::name << f.first << f.second.second << "ToDevice(unsigned int idx, " << f.second.first << " value)";
                 {
                     CodeStream::Scope b(os);
-                    backend.genMergedExtraGlobalParamPush(os, suffix, f.first, "idx", f.second.second, "value");
+                    backend.genMergedExtraGlobalParamPush(os, T::name, f.first, "idx", f.second.second, "value");
                 }
                 os << std::endl;
             }

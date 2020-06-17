@@ -136,13 +136,13 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
         [&mergedStructData, &memorySpaces, &modelMerged, &backend](CodeStream &os)
         {
             genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), 
-                               mergedStructData, "SynapseDendriticDelayUpdate", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), 
-                               mergedStructData, "PresynapticUpdate", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), 
-                               mergedStructData, "PostsynapticUpdate", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), 
-                               mergedStructData, "SynapseDynamics", backend);
+                               mergedStructData, backend);
         },
         // Presynaptic weight update threshold
         [&backend, &model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)

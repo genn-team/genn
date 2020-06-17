@@ -287,7 +287,7 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, const std::string &mergedGroupPrefix, size_t &idStart,
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
                           GroupHandler<T> handler) const
     {
@@ -315,8 +315,8 @@ private:
                 Substitutions popSubs(&kernelSubs);
 
                 if(gMerge.getGroups().size() == 1) {
-                    os << "const __global struct Merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << " *group";
-                    os << " = &d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
+                    os << "const __global struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                    os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
                 }
                 else {
@@ -328,7 +328,7 @@ private:
                         CodeStream::Scope b(os);
                         os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                        os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                        os << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
                         {
                             CodeStream::Scope b(os);
                             os << "hi = mid;" << std::endl;
@@ -341,11 +341,11 @@ private:
                     }
 
                     // Use this to get reference to merged group structure
-                    os << "__global struct Merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << " *group";
-                    os << " = &d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+                    os << "__global struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                    os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
                     // Use this and starting thread of merged group to calculate local id within neuron group
-                    os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                    os << "const unsigned int lid = id - (d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
 
                 }
                 popSubs.addVarSubstitution("id", "lid");
@@ -357,19 +357,19 @@ private:
     }
 
     template<typename T>
-    void genMergedStructPreamble(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    void genMergedStructPreamble(CodeStream &os, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
             // Declare build kernel
-            const std::string buildKernelName = "build" + name + std::to_string(g.getIndex()) + "Kernel";
+            const std::string buildKernelName = "build" + T::name + std::to_string(g.getIndex()) + "Kernel";
             os << "cl::Kernel " << buildKernelName << ";" << std::endl;
             
             // Declare buffer
-            os << "cl::Buffer d_merged" << name << "Group" << g.getIndex() << ";" << std::endl;
+            os << "cl::Buffer d_merged" << T::name << "Group" << g.getIndex() << ";" << std::endl;
 
             // Write function to update
-            os << "void pushMerged" << name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
             g.generateStructFieldArgumentDefinitions(os, *this);
             os << ")";
             {
@@ -395,31 +395,31 @@ private:
     }
 
     template<typename T>
-    void genMergedStructBuild(CodeStream &os, const std::vector<T> &groups, const std::string &name, const std::string &programName) const
+    void genMergedStructBuild(CodeStream &os, const std::vector<T> &groups, const std::string &programName) const
     {
         // Loop through groups 
         for(const auto &g : groups) {
             // Create kernel object
-            const std::string kernelName = "build" + name + std::to_string(g.getIndex()) + "Kernel";
+            const std::string kernelName = "build" + T::name + std::to_string(g.getIndex()) + "Kernel";
             os << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\");" << std::endl;
 
             // Create group buffer
-            os << "d_merged" << name << "Group" << g.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << g.getStructArraySize(*this) << "}, nullptr);" << std::endl;
+            os << "d_merged" << T::name << "Group" << g.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << g.getStructArraySize(*this) << "}, nullptr);" << std::endl;
 
             // Set group buffer as first kernel argument
-            os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << name << "Group" << g.getIndex() << "));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << T::name << "Group" << g.getIndex() << "));" << std::endl;
             os << std::endl;
         }
     }
 
     template<typename T>
-    void genMergedStructBuildKernels(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    void genMergedStructBuildKernels(CodeStream &os, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
             // Generate kernel to build struct on device
-            os << "__kernel void build" << name << g.getIndex() << "Kernel(";
-            os << "__global struct Merged" << name << "Group" << g.getIndex() << " *group, unsigned int idx, ";
+            os << "__kernel void build" << T::name << g.getIndex() << "Kernel(";
+            os << "__global struct Merged" << T::name << "Group" << g.getIndex() << " *group, unsigned int idx, ";
 
             // Loop through sorted struct fields
             const auto sortedFields = g.getSortedFields(*this);

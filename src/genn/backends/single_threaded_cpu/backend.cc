@@ -75,8 +75,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate");
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "NeuronSpikeQueueUpdate");
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -176,9 +176,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate");
-    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), "PostsynapticUpdate");
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups(), "SynapseDynamics");
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -395,10 +395,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), "NeuronInit");
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), "SynapseDenseInit");
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), "SynapseConnectivityInit");
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), "SynapseSparseInit");
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
 
     // Generate preamble
     preambleHandler(os);

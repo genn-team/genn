@@ -295,7 +295,7 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, const std::string &mergedGroupPrefix, size_t &idStart,
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
                           GroupHandler<T> handler) const
     {
@@ -323,7 +323,7 @@ private:
                 Substitutions popSubs(&kernelSubs);
 
                 if(gMerge.getGroups().size() == 1) {
-                    os << "const auto *group = &d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[0];" << std::endl;
+                    os << "const auto *group = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0];" << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
                 }
                 else {
@@ -335,7 +335,7 @@ private:
                         CodeStream::Scope b(os);
                         os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
 
-                        os << "if(id < d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                        os << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
                         {
                             CodeStream::Scope b(os);
                             os << "hi = mid;" << std::endl;
@@ -348,10 +348,10 @@ private:
                     }
 
                     // Use this to get reference to merged group structure
-                    os << "const auto *group = &d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+                    os << "const auto *group = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
                     // Use this and starting thread of merged group to calculate local id within neuron group
-                    os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                    os << "const unsigned int lid = id - (d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
 
                 }
                 popSubs.addVarSubstitution("id", "lid");
@@ -364,7 +364,7 @@ private:
 
 
     template<typename T>
-    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, const std::string &name, MemorySpaces &memorySpaces) const
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, MemorySpaces &memorySpaces) const
     {
         // Loop through groups
         for(const auto &g : groups) {
@@ -377,7 +377,7 @@ private:
                 // If there is space in this memory space for group
                 if(m.second > groupBytes) {
                     // Implement merged group array in this memory space
-                    os << m.first << " Merged" << name << "Group" << g.getIndex() << " d_merged" << name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+                    os << m.first << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
 
                     // Set flag
                     memorySpaceFound = true;
@@ -393,14 +393,14 @@ private:
             assert(memorySpaceFound);
 
             // Write function to update
-            os << "void pushMerged" << name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
             g.generateStructFieldArgumentDefinitions(os, *this);
             os << ")";
             {
                 CodeStream::Scope b(os);
 
                 // Loop through sorted fields and build struct on the stack
-                os << "Merged" << name << "Group" << g.getIndex() << " group = {";
+                os << "Merged" << T::name << "Group" << g.getIndex() << " group = {";
                 const auto sortedFields = g.getSortedFields(*this);
                 for(const auto &f : sortedFields) {
                     os << std::get<1>(f) << ", ";
@@ -408,8 +408,8 @@ private:
                 os << "};" << std::endl;
 
                 // Push to device
-                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << name << "Group" << g.getIndex() << ", &group, ";
-                os << "sizeof(Merged" << name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << name << "Group" << g.getIndex() << ")));" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaMemcpyToSymbolAsync(d_merged" << T::name << "Group" << g.getIndex() << ", &group, ";
+                os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << ")));" << std::endl;
             }
         }
     }

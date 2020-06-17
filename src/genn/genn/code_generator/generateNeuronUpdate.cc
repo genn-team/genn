@@ -122,9 +122,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
         {
             // Generate functions to push merged neuron group structures
             genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), 
-                               mergedStructData, "NeuronSpikeQueueUpdate", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), 
-                               mergedStructData, "NeuronUpdate", backend);
+                               mergedStructData, backend);
         },
         // Sim handler
         [&backend, &modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs,

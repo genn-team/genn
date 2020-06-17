@@ -145,6 +145,11 @@ public:
                   MergedStructData &mergedStructData, const std::string &precision) const;
 
     void genMergedGroupSpikeCountReset(CodeStream &os) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -415,6 +420,11 @@ public:
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision,
                   const std::string &timePrecision) const;
+    
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 
 private:
     //------------------------------------------------------------------------
@@ -462,6 +472,11 @@ public:
                   MergedStructData &mergedStructData, const std::string &precision,
                   const std::string &timePrecision) const;
 
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+
 private:
     //------------------------------------------------------------------------
     // Private methods
@@ -499,6 +514,11 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 // ----------------------------------------------------------------------------
@@ -523,6 +543,11 @@ public:
 
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 // ----------------------------------------------------------------------------
@@ -547,6 +572,11 @@ public:
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                   CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
                   MergedStructData &mergedStructData, const std::string &precision) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -663,8 +693,13 @@ public:
         SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
                                          definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc, 
                                          mergedStructData, precision, timePrecision, 
-                                         "PresynapticUpdate", SynapseGroupMergedBase::Role::PresynapticUpdate);
+                                         PresynapticUpdateGroupMerged::name, SynapseGroupMergedBase::Role::PresynapticUpdate);
     }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -688,8 +723,13 @@ public:
         SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
                                          definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                                          mergedStructData, precision, timePrecision,
-                                         "PostsynapticUpdate", SynapseGroupMergedBase::Role::PostsynapticUpdate);
+                                         PostsynapticUpdateGroupMerged::name, SynapseGroupMergedBase::Role::PostsynapticUpdate);
     }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -713,8 +753,13 @@ public:
         SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
                                          definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                                          mergedStructData, precision, timePrecision,
-                                         "SynapseDynamics", SynapseGroupMergedBase::Role::SynapseDynamics);
+                                         SynapseDynamicsGroupMerged::name, SynapseGroupMergedBase::Role::SynapseDynamics);
     }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -737,8 +782,13 @@ public:
         SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
                                          definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                                          mergedStructData, precision, timePrecision,
-                                         "SynapseDenseInit", SynapseGroupMergedBase::Role::DenseInit);
+                                         SynapseDenseInitGroupMerged::name, SynapseGroupMergedBase::Role::DenseInit);
     }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
 //----------------------------------------------------------------------------
@@ -761,7 +811,12 @@ public:
         SynapseGroupMergedBase::generate(backend, definitionsInternal, definitionsInternalFunc,
                                          definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
                                          mergedStructData, precision, timePrecision,
-                                         "SynapseSparseInit", SynapseGroupMergedBase::Role::SparseInit);
+                                         SynapseSparseInitGroupMerged::name, SynapseGroupMergedBase::Role::SparseInit);
     }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 }   // namespace CodeGenerator

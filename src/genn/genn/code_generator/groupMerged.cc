@@ -15,6 +15,8 @@
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
+const std::string CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
+//----------------------------------------------------------------------------
 CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                     const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   GroupMerged<NeuronGroupInternal, NeuronSpikeQueueUpdateGroupMerged>(index, precision, groups)
@@ -44,7 +46,7 @@ void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::generate(const BackendBas
 {
     // Generate structure definitions and instantiation
     m_Gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                   mergedStructData, "NeuronSpikeQueueUpdate");
+                   mergedStructData, NeuronSpikeQueueUpdateGroupMerged::name);
 }
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os) const
@@ -498,6 +500,8 @@ void CodeGenerator::NeuronGroupMergedBase::addMergedInSynPointerField(const std:
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronUpdateGroupMerged
 //----------------------------------------------------------------------------
+const std::string CodeGenerator::NeuronUpdateGroupMerged::name = "NeuronUpdate";
+//----------------------------------------------------------------------------
 CodeGenerator::NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                                                 const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   NeuronGroupMergedBase(index, precision, timePrecision, backend, false, groups)
@@ -582,7 +586,7 @@ void CodeGenerator::NeuronUpdateGroupMerged::generate(const BackendBase &backend
 {
     // Generate structure definitions and instantiation
     m_Gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                 mergedStructData, "NeuronUpdate");
+                 mergedStructData, NeuronUpdateGroupMerged::name);
 }
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const std::string &fieldPrefixStem, 
@@ -634,6 +638,8 @@ void CodeGenerator::NeuronUpdateGroupMerged::generateWUVar(const BackendBase &ba
 
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::NeuronInitGroupMerged::name = "NeuronInit";
 //----------------------------------------------------------------------------
 CodeGenerator::NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                             const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
@@ -707,7 +713,7 @@ void CodeGenerator::NeuronInitGroupMerged::generate(const BackendBase &backend, 
 
     // Generate structure definitions and instantiation
     m_Gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                   mergedStructData, "NeuronInit");
+                   mergedStructData, NeuronInitGroupMerged::name);
 }
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
@@ -760,6 +766,8 @@ void CodeGenerator::NeuronInitGroupMerged::generateWUVar(const BackendBase &back
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
+//----------------------------------------------------------------------------
 CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     : GroupMerged<SynapseGroupInternal, SynapseDendriticDelayUpdateGroupMerged>(index, precision, groups)
@@ -778,11 +786,13 @@ void CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::generate(const Backe
 {
     // Generate structure definitions and instantiation
     m_Gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                 mergedStructData, "SynapseDendriticDelayUpdate");
+                 mergedStructData, SynapseDendriticDelayUpdateGroupMerged::name);
 }
 
 // ----------------------------------------------------------------------------
 // CodeGenerator::SynapseConnectivityHostInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseConnectivityHostInitGroupMerged::name = "SynapseConnectivityHostInit";
 //------------------------------------------------------------------------
 CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
@@ -828,7 +838,7 @@ void CodeGenerator::SynapseConnectivityHostInitGroupMerged::generate(const Backe
 {
     // Generate structure definitions and instantiation
     m_Gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                   mergedStructData,  "SynapseConnectivityHostInit", true);
+                   mergedStructData, SynapseConnectivityHostInitGroupMerged::name, true);
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
@@ -857,6 +867,8 @@ bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitDe
 
 // ----------------------------------------------------------------------------
 // CodeGenerator::SynapseConnectivityInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseConnectivityInitGroupMerged::name = "SynapseConnectivityInit";
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
@@ -918,7 +930,7 @@ void CodeGenerator::SynapseConnectivityInitGroupMerged::generate(const BackendBa
 {
     // Generate structure definitions and instantiation
     m_Gen.generate(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar, runnerVarDecl, runnerMergedStructAlloc,
-                   mergedStructData, "SynapseConnectivityInit");
+                   mergedStructData, SynapseConnectivityInitGroupMerged::name);
 }
 
 //----------------------------------------------------------------------------
@@ -1380,3 +1392,28 @@ void CodeGenerator::SynapseGroupMergedBase::addWeightSharingPointerField(const s
                        }
                    });
 }
+
+//----------------------------------------------------------------------------
+// CodeGenerator::PresynapticUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
+
+//----------------------------------------------------------------------------
+// CodeGenerator::PostsynapticUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDynamicsGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseDynamicsGroupMerged::name = "SynapseDynamics";
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDenseInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseDenseInitGroupMerged::name = "SynapseDenseInit";
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseSparseInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseSparseInitGroupMerged::name = "SynapseSparseInit";

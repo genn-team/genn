@@ -216,13 +216,13 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
         [&mergedStructData, &memorySpaces, &modelMerged, &backend](CodeStream &os)
         {
             genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), 
-                               mergedStructData, "NeuronInit", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), 
-                               mergedStructData, "SynapseDenseInit", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), 
-                               mergedStructData, "SynapseConnectivityInit", backend);
+                               mergedStructData, backend);
             genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), 
-                               mergedStructData, "SynapseSparseInit", backend);
+                               mergedStructData, backend);
         },
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)

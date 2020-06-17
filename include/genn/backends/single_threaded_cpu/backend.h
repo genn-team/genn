@@ -159,15 +159,15 @@ private:
 
   
     template<typename T>
-    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, const std::string &name) const
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
             // Implement merged group
-            os << "static Merged" << name << "Group" << g.getIndex() << " merged" << name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+            os << "static Merged" << T::name << "Group" << g.getIndex() << " merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
 
             // Write function to update
-            os << "void pushMerged" << name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
             g.generateStructFieldArgumentDefinitions(os, *this);
             os << ")";
             {
@@ -176,7 +176,7 @@ private:
                 // Loop through sorted fields and set array entry
                 const auto sortedFields = g.getSortedFields(*this);
                 for(const auto &f : sortedFields) {
-                    os << "merged" << name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+                    os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
                 }
             }
         }
