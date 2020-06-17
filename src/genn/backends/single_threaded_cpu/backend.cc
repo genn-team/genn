@@ -171,11 +171,15 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                HostHandler pushEGPHandler) const
 {
     // Generate struct definitions
+    // **YUCK** dendritic delay update structs not actually required
+    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
     modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
+    // **YUCK** dendritic delay update structs not actually required
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
