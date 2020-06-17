@@ -460,6 +460,8 @@ private:
 
     void genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const;
 
+    void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerge) const;
+
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string& type, size_t size);
 

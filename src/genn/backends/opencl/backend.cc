@@ -213,11 +213,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     CodeStream neuronUpdateKernels(neuronUpdateKernelsStream);
 
     // Include definitions
-    neuronUpdateKernels << "typedef " << model.getPrecision() << " scalar;" << std::endl;
-    neuronUpdateKernels << "#define DT " << std::to_string(model.getDT());
-    if(model.getTimePrecision() == "float") {
-        neuronUpdateKernels << "f";
-    }
+    genKernelPreamble(neuronUpdateKernels, modelMerged);
     neuronUpdateKernels << std::endl << std::endl;
 
     // Generate support code
@@ -525,11 +521,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     CodeStream synapseUpdateKernels(synapseUpdateKernelsStream);
     
     // Include definitions
-    synapseUpdateKernels << "typedef " << model.getPrecision() << " scalar;" << std::endl;
-    synapseUpdateKernels << "#define DT " << std::to_string(model.getDT());
-    if(model.getTimePrecision() == "float") {
-        synapseUpdateKernels << "f";
-    }
+    genKernelPreamble(synapseUpdateKernels, modelMerged);
     synapseUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
     synapseUpdateKernels << "// bit tool macros" << std::endl;
     synapseUpdateKernels << "#define B(x,i) ((x) & (0x80000000 >> (i))) //!< Extract the bit at the specified position i from x" << std::endl;
@@ -603,7 +595,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
-        synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
 
@@ -1062,8 +1053,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     CodeStream initializeKernels(initializeKernelsStream);
 
     // Include definitions
-    initializeKernels << "typedef " << model.getPrecision() << " scalar;" << std::endl;
-    genTypeRange(initializeKernels, model.getTimePrecision(), "TIME");
+    genKernelPreamble(initializeKernels, modelMerged);
+    
 
     // Generate struct definitions
     modelMerged.genMergedNeuronInitGroupStructs(initializeKernels, *this);
@@ -1960,8 +1951,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
     os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
     os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;
-    os << "\t\t\t<AdditionalLibraryDirectories>..\\clRNG\\lib;$(OPENCL_PATH)\\lib\\x64;$(OPENCL_PATH)\\lib\\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
-    os << "\t\t\t<AdditionalDependencies>clRNG.lib;OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
+    os << "\t\t\t<AdditionalLibraryDirectories>$(OPENCL_PATH)\\lib\\x64;$(OPENCL_PATH)\\lib\\x86_64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>" << std::endl;
+    os << "\t\t\t<AdditionalDependencies>OpenCL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>" << std::endl;
     os << "\t\t</Link>" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -2149,6 +2140,29 @@ void Backend::genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThrea
     const size_t numOfWorkGroups = ceilDivide(numThreads, m_KernelWorkGroupSizes[kernel]);
     os << "const cl::NDRange globalWorkSize(" << (m_KernelWorkGroupSizes[kernel] * numOfWorkGroups) << ", 1);" << std::endl;
     os << "const cl::NDRange localWorkSize(" << m_KernelWorkGroupSizes[kernel] << ", 1);" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    const ModelSpecInternal &model = modelMerged.getModel();
+    os << "typedef " << model.getPrecision() << " scalar;" << std::endl;
+    os << "#define DT " << std::to_string(model.getDT());
+    if(model.getTimePrecision() == "float") {
+        os << "f";
+    } 
+    os << std::endl;
+    genTypeRange(os, model.getTimePrecision(), "TIME");
+
+    // **YUCK** OpenCL doesn't let you include C99 system header so, instead, 
+    // manually define C99 types in terms of OpenCL types (whose sizes are guaranteed)
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// C99 sized types" << std::endl;
+    os << "typedef uchar uint8_t;" << std::endl;
+    os << "typedef ushort uint16_t;" << std::endl;
+    os << "typedef uint uint32_t;" << std::endl;
+    os << "typedef char int8_t;" << std::endl;
+    os << "typedef short int16_t;" << std::endl;
+    os << "typedef int int32_t;" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string& type, size_t size)
