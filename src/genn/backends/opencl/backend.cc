@@ -442,7 +442,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         os << "if(neuronUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Compile error:\" + neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
+            os << "throw std::runtime_error(\"Neuron update program compile error:\" + neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
         }
         os << std::endl;
         
@@ -759,13 +759,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 {
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->srcNumNeurons;" << std::endl;
+                        os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
                     }
 
                     // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
                     if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
                         os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot() << ";" << std::endl;
-                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * group->trgNumNeurons;" << std::endl;
+                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * group->numTrgNeurons;" << std::endl;
                     }
 
                     if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() && sg.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
@@ -812,7 +812,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                     synSubs.addVarSubstitution("id_pre", "ipre");
                                 }
                                 else {
-                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * group->trgNumNeurons) + shSpk[j];" << std::endl;
+                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * group->numTrgNeurons) + shSpk[j];" << std::endl;
                                     synSubs.addVarSubstitution("id_pre", synSubs["id"]);
                                 }
 
@@ -931,7 +931,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         os << "if(synapseUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Compile error:\" + synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
+            os << "throw std::runtime_error(\"Synapse update program compile error:\" + synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
         }
         os << std::endl;
 
@@ -1105,7 +1105,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             [sgDenseInitHandler](CodeStream& os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing postsynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->trgNumNeurons)";
+                os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
                 {
                     CodeStream::Scope b(os);
 
@@ -1124,9 +1124,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             [sgSparseConnectHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
             {
                 os << "// only do this for existing presynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->srcNumNeurons)";
+                os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
                 {
                     CodeStream::Scope b(os);
+                    popSubs.addVarSubstitution("id_pre", popSubs["id"]);
+                    popSubs.addVarSubstitution("id_post_begin", "0");
+                    popSubs.addVarSubstitution("id_thread", "0");
+                    popSubs.addVarSubstitution("num_threads", "1");
+                    popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
                     //! TO BE IMPLEMENTED - ::Utils::isRNGRequired
 
@@ -1141,10 +1146,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                         // Calculate indices of bits at start and end of row
                         os << "// Calculate indices" << std::endl;
                         if ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            os << "const ulong rowStartGID = " << popSubs["id"] << " * group->trgNumNeurons;" << std::endl;
+                            os << "const ulong rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
                         }
                         else {
-                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->trgNumNeurons;" << std::endl;
+                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
                         }
 
                         // Build function template to set correct bit in bitmask
@@ -1167,7 +1172,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                         assert(false);
                     }
 
-                    popSubs.addVarSubstitution("id_pre", popSubs["id"]);
                     sgSparseConnectHandler(os, sg, popSubs);
                 }
             });
@@ -1333,7 +1337,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         os << "if(initializeProgram.build(\"-cl-std=CL1.2\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Compile error:\" + initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
+            os << "throw std::runtime_error(\"Initialize program compile error:\" + initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
         }
         os << std::endl;
 
