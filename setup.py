@@ -16,6 +16,12 @@ cuda_path = os.environ.get("CUDA_PATH")
 # Is CUDA installed?
 cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 
+# Get OpenCL path from environment variable
+opencl_path = os.environ.get("OPENCL_PATH")
+
+# Is OpenCL installed
+opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
+
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 windows = system() == "Windows"
@@ -85,6 +91,24 @@ if cuda_installed:
                       "library_dirs": [cuda_library_dir],
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if mac_os_x else []}))
 
+# If OpenCL was found, add backend configuration
+if opencl_installed:
+    # Get OpenCL library directory
+    if mac_os_x:
+        raise NotImplementedError("Mac not currently supported")
+    elif windows:
+        opencl_library_dir = os.path.join(opencl_path, "lib", "x64")
+    else:
+        opencl_library_dir = os.path.join(opencl_path, "lib64")
+    
+    # Add backend
+    # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
+    backends.append(("opencl", "OpenCL",
+                     {"libraries": ["OpenCL"],
+                      "include_dirs": [os.path.join(opencl_path, "include")],
+                      "library_dirs": [opencl_library_dir],
+                      "extra_link_args": ["-Wl,-rpath," + opencl_library_dir] if mac_os_x else []}))
+                      
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
 
