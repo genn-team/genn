@@ -404,7 +404,7 @@ private:
             os << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\");" << std::endl;
 
             // Create group buffer
-            os << "d_merged" << T::name << "Group" << g.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << g.getStructArraySize(*this) << "}, nullptr);" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(d_merged" << T::name << "Group" << g.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << g.getStructArraySize(*this) << "}, nullptr, &error));" << std::endl;
 
             // Set group buffer as first kernel argument
             os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << T::name << "Group" << g.getIndex() << "));" << std::endl;
