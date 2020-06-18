@@ -42,7 +42,7 @@ bool isSparseInitRequired(const SynapseGroupInternal& sg)
 //--------------------------------------------------------------------------
 void genAtomicAddFloat(CodeStream &os, const std::string &memoryType)
 {
-    os << "void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
+    os << "inline void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
     {
         CodeStream::Scope b(os);
         os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
@@ -1480,8 +1480,14 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
     os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": opencl error \" + std::to_string(error) + \": \" + clGetErrorString(error));\\" << std::endl;
     os << "    }\\" << std::endl;
     os << "}" << std::endl;
-
     os << std::endl;
+    os << "#define CHECK_OPENCL_ERRORS_POINTER(call) {\\" << std::endl;
+    os << "    cl_int error;\\" << std::endl;
+    os << "    call;\\" << std::endl;
+    os << "    if (error != CL_SUCCESS) {\\" << std::endl;
+    os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": opencl error \" + std::to_string(error) + \": \" + clGetErrorString(error));\\" << std::endl;
+    os << "    }\\" << std::endl;
+    os <<"}" << std::endl;
 
     // Declaration of OpenCL functions
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -1665,14 +1671,7 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
 
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
-        os << "d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof(" << type << "), ";
-        if(loc & VarLocation::HOST) {
-            os << name << ");" << std::endl;
-        }
-        else {
-            os << "nullptr);" << std::endl;
-        }
-        
+        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof(" << type << "), nullptr, &error));";
         allocation += MemAlloc::device(count * getSize(type));
     }
 
