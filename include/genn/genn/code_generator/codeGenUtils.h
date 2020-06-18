@@ -70,17 +70,17 @@ private:
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
-void substitute(std::string &s, const std::string &trg, const std::string &rep);
+GENN_EXPORT void substitute(std::string &s, const std::string &trg, const std::string &rep);
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting variable  names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
-bool regexVarSubstitute(std::string &s, const std::string &trg, const std::string &rep);
+GENN_EXPORT bool regexVarSubstitute(std::string &s, const std::string &trg, const std::string &rep);
 
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting function names in the neuron code strings or other templates using regular expressions
 //--------------------------------------------------------------------------
-bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::string &rep);
+GENN_EXPORT bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::string &rep);
 
 //--------------------------------------------------------------------------
 /*! \brief This function substitutes function calls in the form:
@@ -93,8 +93,8 @@ bool regexFuncSubstitute(std::string &s, const std::string &trg, const std::stri
  *
  */
 //--------------------------------------------------------------------------
-void functionSubstitute(std::string &code, const std::string &funcName,
-                        unsigned int numParams, const std::string &replaceFuncTemplate);
+GENN_EXPORT void functionSubstitute(std::string &code, const std::string &funcName,
+                                    unsigned int numParams, const std::string &replaceFuncTemplate);
 
 //! Divide two integers, rounding up i.e. effectively taking ceil
 inline size_t ceilDivide(size_t numerator, size_t denominator)
@@ -148,22 +148,22 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
 }
 
 
-void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend);
+GENN_EXPORT void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend);
 
-void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix);
+GENN_EXPORT void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix);
 
 //--------------------------------------------------------------------------
 /*! \brief This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).
  */
 //--------------------------------------------------------------------------
-std::string ensureFtype(const std::string &oldcode, const std::string &type);
+GENN_EXPORT std::string ensureFtype(const std::string &oldcode, const std::string &type);
 
 
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */
 //--------------------------------------------------------------------------
-void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
+GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
 
 //-------------------------------------------------------------------------
 /*!
