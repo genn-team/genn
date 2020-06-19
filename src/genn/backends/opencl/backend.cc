@@ -26,11 +26,11 @@ namespace
 {
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<Substitutions::FunctionTemplate> openclFunctions = {
-    {"gennrand_uniform", 0, "clrngLfsr113RandomU01(&localStream)", "clrngLfsr113RandomU01(&localStream)"},
-    {"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
-    {"gennrand_log_normal", 2, "log_normal_double($(rng), $(0), $(1))", "log_normal_float($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
+    {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))", "clrngLfsr113RandomU01($(rng))"},
+    {"gennrand_normal", 0, "normalDist($(rng))", "normalDist($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDist($(rng))", "exponentialDist($(rng))"},
+    {"gennrand_log_normal", 2, "logNormalDist($(rng), $(0), $(1))", "logNormalDist($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDist($(rng), $(0))", "gammaDist($(rng), $(0))"}
 };
 
 //-----------------------------------------------------------------------
@@ -213,14 +213,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     std::stringstream neuronUpdateKernelsStream;
     CodeStream neuronUpdateKernels(neuronUpdateKernelsStream);
 
-    // Include clRNG headers in kernel if any groups require them
-    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &ng) { return ng.getArchetype().isSimRNGRequired(); }))
-    {
-        neuronUpdateKernels << "#define CLRNG_SINGLE_PRECISION" << std::endl;
-        neuronUpdateKernels << "#include <clRNG/lfsr113.clh>" << std::endl;
-    }
-
     // Include definitions
     genKernelPreamble(neuronUpdateKernels, modelMerged);
     neuronUpdateKernels << std::endl << std::endl;
@@ -338,21 +330,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
                 os << std::endl;
 
-
-                // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
-                if (ng.getArchetype().isSimRNGRequired()) {
-                    popSubs.addVarSubstitution("rng", "&group->rng[" + popSubs["id"] + "]");
-                }
-
                 // Call handler to generate generic neuron code
                 os << "if(" << popSubs["id"] << " < group->numNeurons)";
                 {
                     CodeStream::Scope b(os);
 
-                    // Copy global RNG stream to local
+                    // Copy global RNG stream to local and use pointer to this for rng
                     if (ng.getArchetype().isSimRNGRequired()) {
                         os << "clrngLfsr113Stream localStream;" << std::endl;
                         os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &group->rng[" << popSubs["id"] + "]);" << std::endl;
+                        popSubs.addVarSubstitution("rng", "&localStream");
                     }
                     
                     simHandler(os, ng, popSubs,
@@ -1073,15 +1060,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // Creating the kernel body separately so it can be split into multiple string literals
     std::stringstream initializeKernelsStream;
     CodeStream initializeKernels(initializeKernelsStream);
-
-    // Include clRNG headers in kernel if any groups require them
-    // **TEMPORARY** RNGs not seeded on device in OpenCL
-    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                    [](const NeuronUpdateGroupMerged &ng) { return ng.getArchetype().isSimRNGRequired(); }))
-    {
-        initializeKernels << "#define CLRNG_SINGLE_PRECISION" << std::endl;
-        initializeKernels << "#include <clRNG/lfsr113.clh>" << std::endl;
-    }
 
     // Include definitions
     genKernelPreamble(initializeKernels, modelMerged);  
@@ -2224,12 +2202,14 @@ void Backend::genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThrea
 void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
-    os << "typedef " << model.getPrecision() << " scalar;" << std::endl;
-    os << "#define DT " << std::to_string(model.getDT());
-    if(model.getTimePrecision() == "float") {
-        os << "f";
-    } 
-    os << std::endl;
+    const std::string precision = model.getPrecision();
+
+    // Include clRNG headers in kernel
+    os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
+    os << "#include <clRNG/lfsr113.clh>" << std::endl;
+
+    os << "typedef " << precision << " scalar;" << std::endl;
+    os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
     // **YUCK** OpenCL doesn't let you include C99 system header so, instead, 
@@ -2242,6 +2222,98 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "typedef char int8_t;" << std::endl;
     os << "typedef short int16_t;" << std::endl;
     os << "typedef int int32_t;" << std::endl;
+    os << std::endl;
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Non-uniform generators" << std::endl;
+    os << "inline " << precision << " exponentialDist(clrngLfsr113Stream *rng)";
+    {
+        CodeStream::Scope b(os);
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "const " << precision << " u = clrngLfsr113RandomU01(rng);" << std::endl;
+            os << "if (u != " << model.scalarExpr(0.0) << ")";
+            {
+                CodeStream::Scope b(os);
+                os << "return -log(u);" << std::endl;
+            }
+        }
+    }
+    os << std::endl;
+
+    // Box-Muller algorithm based on https://www.johndcook.com/SimpleRNG.cpp
+    os << "inline " << precision << " normalDist(clrngLfsr113Stream *rng)";
+    {
+        CodeStream::Scope b(os);
+        const std::string pi = (model.getPrecision() == "float") ? "M_PI_F" : "M_PI";
+        os << "const " << precision << " u1 = clrngLfsr113RandomU01(rng);" << std::endl;
+        os << "const " << precision << " u2 = clrngLfsr113RandomU01(rng);" << std::endl;
+        os << "const " << precision << " r = sqrt(" << model.scalarExpr(-2.0) << " * log(u1));" << std::endl;
+        os << "const " << precision << " theta = " << model.scalarExpr(2.0) << " * " << pi << " * u2;" << std::endl;
+        os << "return r * sin(theta);" << std::endl;
+    }
+    os << std::endl;
+
+    os << "inline " << precision << " logNormalDist(clrngLfsr113Stream *rng, " << precision << " mean," << precision << " stddev)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "return exp(mean + (stddev * normalDist(rng)));" << std::endl;
+    }
+    os << std::endl;
+
+    // Generate gamma-distributed variates using Marsaglia and Tsang's method
+    // G. Marsaglia and W. Tsang. A simple method for generating gamma variables. ACM Transactions on Mathematical Software, 26(3):363-372, 2000.
+    os << "inline " << precision << " gammaDistInternal(clrngLfsr113Stream *rng, " << precision << " c, " << precision << " d)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "" << precision << " x, v, u;" << std::endl;
+        os << "while (true)";
+        {
+            CodeStream::Scope b(os);
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "x = normalDist(rng);" << std::endl;
+                os << "v = " << model.scalarExpr(1.0) << " + c*x;" << std::endl;
+            }
+            os << "while (v <= " << model.scalarExpr(0.0) << ");" << std::endl;
+            os << std::endl;
+            os << "v = v*v*v;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "u = clrngLfsr113RandomU01(rng);" << std::endl;
+            }
+            os << "while (u == " << model.scalarExpr(1.0) << ");" << std::endl;
+            os << std::endl;
+            os << "if (u < " << model.scalarExpr(1.0) << " - " << model.scalarExpr(0.0331) << "*x*x*x*x) break;" << std::endl;
+            os << "if (log(u) < " << model.scalarExpr(0.5) << "*x*x + d*(" << model.scalarExpr(1.0) << " - v + log(v))) break;" << std::endl;
+        }
+        os << std::endl;
+        os << "return d*v;" << std::endl;
+    }
+    os << std::endl;
+
+    os << "inline " << precision << " gammaDistFloat(clrngLfsr113Stream *rng, " << precision << " a)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if (a > 1)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const " << precision << " u = clrngLfsr113RandomU01 (rng);" << std::endl;
+            os << "const " << precision << " d = (" << model.scalarExpr(1.0) << " + a) - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
+            os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+            os << "return gammaDistInternal(rng, c, d) * pow(u, " << model.scalarExpr(1.0) << " / a);" << std::endl;
+        }
+        os << "else" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
+            os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+            os << "return gammaDistInternal(rng, c, d);" << std::endl;
+        }
+    }
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string& type, size_t size)
