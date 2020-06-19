@@ -1,0 +1,162 @@
+
+ /*
+ ***********************************************************************
+ Copyright (c) 2015 Advanced Micro Devices, Inc. 
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without 
+ modification, are permitted provided that the following conditions 
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright 
+ notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above copyright 
+ notice, this list of conditions and the following disclaimer in the 
+ documentation and/or other materials provided with the distribution.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ ***********************************************************************
+ */
+
+/*! @file Mrg32k3a.clh
+*  @brief Specific device interface for the Mrg32k3a generator
+*
+*  The functions defined in this file are not documented here.  Refer to the
+*  documentation of Mrg32k3a.h.
+*/
+
+#pragma once
+#ifndef MRG32K3A_CLH
+#define MRG32K3A_CLH
+
+#include <clRNG/clRNG.clh>
+
+
+/********************************************************************************
+ * Functions and types declarations                                             *
+ ********************************************************************************/
+
+typedef struct {
+	/*! @brief Seed for the first MRG component
+	*/
+	cl_ulong g1[3];
+	/*! @brief Seed for the second MRG component
+	*/
+	cl_ulong g2[3];
+} clrngMrg32k3aStreamState;
+
+struct clrngMrg32k3aStream_ {
+	clrngMrg32k3aStreamState current;
+#if __OPENCL_C_VERSION__ >= 200
+	// use generic address space
+	const clrngMrg32k3aStreamState* initial;
+#else
+	// force global address space
+	__global const clrngMrg32k3aStreamState* initial;
+#endif
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+	clrngMrg32k3aStreamState substream;
+#endif
+};
+typedef struct clrngMrg32k3aStream_ clrngMrg32k3aStream;
+
+struct clrngMrg32k3aHostStream_ {
+	clrngMrg32k3aStreamState current;
+	clrngMrg32k3aStreamState initial;
+	clrngMrg32k3aStreamState substream;
+};
+typedef struct clrngMrg32k3aHostStream_ clrngMrg32k3aHostStream;
+
+clrngStatus clrngMrg32k3aCopyOverStreamsFromGlobal(size_t count, clrngMrg32k3aStream* destStreams, __global const clrngMrg32k3aHostStream* srcStreams);
+clrngStatus clrngMrg32k3aCopyOverStreamsToGlobal(size_t count, __global clrngMrg32k3aHostStream* destStreams, const clrngMrg32k3aStream* srcStreams);
+clrngStatus clrngMrg32k3aCopyOverStreams(size_t count, clrngMrg32k3aStream* destStreams, const clrngMrg32k3aStream* srcStreams);
+
+#define clrngMrg32k3aRandomU01          _CLRNG_TAG_FPTYPE(clrngMrg32k3aRandomU01)
+#define clrngMrg32k3aRandomInteger      _CLRNG_TAG_FPTYPE(clrngMrg32k3aRandomInteger)
+#define clrngMrg32k3aRandomU01Array     _CLRNG_TAG_FPTYPE(clrngMrg32k3aRandomU01Array)
+#define clrngMrg32k3aRandomIntegerArray _CLRNG_TAG_FPTYPE(clrngMrg32k3aRandomIntegerArray)
+
+_CLRNG_FPTYPE clrngMrg32k3aRandomU01(clrngMrg32k3aStream* stream);
+clrngStatus clrngMrg32k3aRandomU01Array(clrngMrg32k3aStream* stream, size_t count, _CLRNG_FPTYPE* buffer);
+
+cl_int clrngMrg32k3aRandomInteger(clrngMrg32k3aStream* stream, cl_int i, cl_int j);
+clrngStatus clrngMrg32k3aRandomIntegerArray(clrngMrg32k3aStream* stream, cl_int i, cl_int j, size_t count, cl_int* buffer);
+
+clrngStatus clrngMrg32k3aRewindStreams(size_t count, clrngMrg32k3aStream* streams);
+
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+clrngStatus clrngMrg32k3aRewindSubstreams(size_t count, clrngMrg32k3aStream* streams);
+clrngStatus clrngMrg32k3aForwardToNextSubstreams(size_t count, clrngMrg32k3aStream* streams);
+clrngStatus clrngMrg32k3aMakeOverSubstreams(clrngMrg32k3aStream* stream, size_t count, clrngMrg32k3aStream* substreams);
+#endif
+
+
+
+/********************************************************************************
+ * Implementation                                                               *
+ ********************************************************************************/
+
+clrngStatus clrngMrg32k3aCopyOverStreamsFromGlobal(size_t count, clrngMrg32k3aStream* destStreams, __global const clrngMrg32k3aHostStream* srcStreams)
+{
+	//Check params
+	if (!destStreams)
+		return clrngSetErrorString(CLRNG_INVALID_VALUE);
+	if (!srcStreams)
+		return clrngSetErrorString(CLRNG_INVALID_VALUE);
+
+	for (size_t i = 0; i < count; i++) {
+		destStreams[i].current = srcStreams[i].current;
+		destStreams[i].initial = &srcStreams[i].initial;
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+		destStreams[i].substream = srcStreams[i].substream;
+#endif
+	}
+
+	return CLRNG_SUCCESS;
+}
+
+clrngStatus clrngMrg32k3aCopyOverStreamsToGlobal(size_t count, __global clrngMrg32k3aHostStream* destStreams, const clrngMrg32k3aStream* srcStreams)
+{
+    //Check params
+    if (!destStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+    if (!srcStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+
+    for (size_t i = 0; i < count; i++) {
+	destStreams[i].current   = srcStreams[i].current;
+	destStreams[i].initial   = *srcStreams[i].initial;
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+	destStreams[i].substream = srcStreams[i].substream;
+#endif
+    }
+
+    return CLRNG_SUCCESS;
+}
+
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+#define MODULAR_NUMBER_TYPE cl_ulong
+#define MODULAR_FIXED_SIZE 3
+#include "./private/device/modular.c.h"
+#endif
+
+// code that is common to host and device
+#include <clRNG/private/device/mrg32k3a.c.h>
+
+#endif
+
+/*
+vim: ft=c sw=4
+*/

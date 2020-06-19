@@ -249,7 +249,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     }
 
     if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired()) {
-        m_Gen.addPointerField("curandState", "rng", backend.getArrayPrefix() + "rng");
+        m_Gen.addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getArrayPrefix() + "rng");
     }
 
     // Loop through variables

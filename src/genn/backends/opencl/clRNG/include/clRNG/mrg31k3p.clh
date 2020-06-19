@@ -1,0 +1,161 @@
+
+ /*
+ ***********************************************************************
+ Copyright (c) 2015 Advanced Micro Devices, Inc. 
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without 
+ modification, are permitted provided that the following conditions 
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright 
+ notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above copyright 
+ notice, this list of conditions and the following disclaimer in the 
+ documentation and/or other materials provided with the distribution.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ ***********************************************************************
+ */
+
+/*! @file mrg31k3p.clh
+ *  @brief Specific device interface for the MRG31k3p generator
+ *
+ *  The functions defined in this file are not documented here.  Refer to the
+ *  documentation of mrg31k3p.h.
+ */
+
+#pragma once
+#ifndef MRG31K3P_CLH
+#define MRG31K3P_CLH
+
+#include <clRNG/clRNG.clh>
+
+
+/********************************************************************************
+ * Functions and types declarations                                             *
+ ********************************************************************************/
+
+typedef struct {
+    /*! @brief Seed for the first MRG component
+     */
+    cl_uint g1[3];
+    /*! @brief Seed for the second MRG component
+     */
+    cl_uint g2[3];
+} clrngMrg31k3pStreamState;
+
+struct clrngMrg31k3pStream_ {
+    clrngMrg31k3pStreamState current;
+#if __OPENCL_C_VERSION__ >= 200
+    // use generic address space
+    const clrngMrg31k3pStreamState* initial;
+#else
+    // force global address space
+    __global const clrngMrg31k3pStreamState* initial;
+#endif
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+    clrngMrg31k3pStreamState substream;
+#endif
+};
+typedef struct clrngMrg31k3pStream_ clrngMrg31k3pStream;
+
+struct clrngMrg31k3pHostStream_ {
+    clrngMrg31k3pStreamState current;
+    clrngMrg31k3pStreamState initial;
+    clrngMrg31k3pStreamState substream;
+};
+typedef struct clrngMrg31k3pHostStream_ clrngMrg31k3pHostStream;
+
+clrngStatus clrngMrg31k3pCopyOverStreamsFromGlobal(size_t count, clrngMrg31k3pStream* destStreams, __global const clrngMrg31k3pHostStream* srcStreams);
+clrngStatus clrngMrg31k3pCopyOverStreamsToGlobal(size_t count, __global clrngMrg31k3pHostStream* destStreams, const clrngMrg31k3pStream* srcStreams);
+clrngStatus clrngMrg31k3pCopyOverStreams(size_t count, clrngMrg31k3pStream* destStreams, const clrngMrg31k3pStream* srcStreams);
+
+#define clrngMrg31k3pRandomU01          _CLRNG_TAG_FPTYPE(clrngMrg31k3pRandomU01)
+#define clrngMrg31k3pRandomInteger      _CLRNG_TAG_FPTYPE(clrngMrg31k3pRandomInteger)
+#define clrngMrg31k3pRandomU01Array     _CLRNG_TAG_FPTYPE(clrngMrg31k3pRandomU01Array)
+#define clrngMrg31k3pRandomIntegerArray _CLRNG_TAG_FPTYPE(clrngMrg31k3pRandomIntegerArray)
+
+_CLRNG_FPTYPE clrngMrg31k3pRandomU01(clrngMrg31k3pStream* stream);
+clrngStatus clrngMrg31k3pRandomU01Array(clrngMrg31k3pStream* stream, size_t count, _CLRNG_FPTYPE* buffer);
+cl_int clrngMrg31k3pRandomInteger(clrngMrg31k3pStream* stream, cl_int i, cl_int j);
+clrngStatus clrngMrg31k3pRandomIntegerArray(clrngMrg31k3pStream* stream, cl_int i, cl_int j, size_t count, cl_int* buffer);
+
+clrngStatus clrngMrg31k3pRewindStreams(size_t count, clrngMrg31k3pStream* streams);
+
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+clrngStatus clrngMrg31k3pRewindSubstreams(size_t count, clrngMrg31k3pStream* streams);
+clrngStatus clrngMrg31k3pForwardToNextSubstreams(size_t count, clrngMrg31k3pStream* streams);
+clrngStatus clrngMrg31k3pMakeOverSubstreams(clrngMrg31k3pStream* stream, size_t count, clrngMrg31k3pStream* substreams);
+#endif
+
+
+
+/********************************************************************************
+ * Implementation                                                               *
+ ********************************************************************************/
+
+clrngStatus clrngMrg31k3pCopyOverStreamsFromGlobal(size_t count, clrngMrg31k3pStream* destStreams, __global const clrngMrg31k3pHostStream* srcStreams)
+{
+    //Check params
+    if (!destStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+    if (!srcStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+
+    for (size_t i = 0; i < count; i++) {
+	destStreams[i].current   = srcStreams[i].current;
+	destStreams[i].initial   = &srcStreams[i].initial;
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+	destStreams[i].substream = srcStreams[i].substream;
+#endif
+    }
+
+    return CLRNG_SUCCESS;
+}
+
+clrngStatus clrngMrg31k3pCopyOverStreamsToGlobal(size_t count, __global clrngMrg31k3pHostStream* destStreams, const clrngMrg31k3pStream* srcStreams)
+{
+    //Check params
+    if (!destStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+    if (!srcStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+
+    for (size_t i = 0; i < count; i++) {
+	destStreams[i].current   = srcStreams[i].current;
+	destStreams[i].initial   = *srcStreams[i].initial;
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+	destStreams[i].substream = srcStreams[i].substream;
+#endif
+    }
+
+    return CLRNG_SUCCESS;
+}
+
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+#define MODULAR_NUMBER_TYPE cl_uint
+#define MODULAR_FIXED_SIZE 3
+#include "./private/device/modular.c.h"
+#endif
+
+// code that is common to host and device
+#include <clRNG/private/device/mrg31k3p.c.h>
+
+#endif
+
+/*
+    vim: ft=c sw=4
+*/

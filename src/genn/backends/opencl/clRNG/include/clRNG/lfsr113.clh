@@ -1,0 +1,153 @@
+
+ /*
+ ***********************************************************************
+ Copyright (c) 2015 Advanced Micro Devices, Inc. 
+ All rights reserved.
+ 
+ Redistribution and use in source and binary forms, with or without 
+ modification, are permitted provided that the following conditions 
+ are met:
+ 
+ 1. Redistributions of source code must retain the above copyright 
+ notice, this list of conditions and the following disclaimer.
+ 
+ 2. Redistributions in binary form must reproduce the above copyright 
+ notice, this list of conditions and the following disclaimer in the 
+ documentation and/or other materials provided with the distribution.
+ 
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT 
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR 
+ A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT 
+ HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+ LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+ THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+ (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ 
+ ***********************************************************************
+ */
+
+/*! @file lfsr113.clh
+*  @brief Specific device interface for the lfsr113 generator
+*
+*  The functions defined in this file are not documented here.  Refer to the
+*  documentation of lfsr113.h.
+*/
+
+#pragma once
+#ifndef LFSR113_CLH
+#define LFSR113_CLH
+
+#include <clRNG/clRNG.clh>
+
+
+/********************************************************************************
+ * Functions and types declarations                                             *
+ ********************************************************************************/
+
+typedef struct {
+	/*! @brief Seed for the lfsr113 generator
+	*/
+	cl_uint g[4];
+
+} clrngLfsr113StreamState;
+
+struct clrngLfsr113Stream_ {
+	clrngLfsr113StreamState current;
+#if __OPENCL_C_VERSION__ >= 200
+	// use generic address space
+	const clrngLfsr113StreamState* initial;
+#else
+	// force global address space
+	__global const clrngLfsr113StreamState* initial;
+#endif
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+	clrngLfsr113StreamState substream;
+#endif
+};
+typedef struct clrngLfsr113Stream_ clrngLfsr113Stream;
+
+struct clrngLfsr113HostStream_ {
+	clrngLfsr113StreamState current;
+	clrngLfsr113StreamState initial;
+	clrngLfsr113StreamState substream;
+};
+typedef struct clrngLfsr113HostStream_ clrngLfsr113HostStream;
+
+clrngStatus clrngLfsr113CopyOverStreamsFromGlobal(size_t count, clrngLfsr113Stream* destStreams, __global const clrngLfsr113HostStream* srcStreams);
+clrngStatus clrngLfsr113CopyOverStreamsToGlobal(size_t count, __global clrngLfsr113HostStream* destStreams, const clrngLfsr113Stream* srcStreams);
+clrngStatus clrngLfsr113CopyOverStreams(size_t count, clrngLfsr113Stream* destStreams, const clrngLfsr113Stream* srcStreams);
+
+#define clrngLfsr113RandomU01          _CLRNG_TAG_FPTYPE(clrngLfsr113RandomU01)
+#define clrngLfsr113RandomInteger      _CLRNG_TAG_FPTYPE(clrngLfsr113RandomInteger)
+#define clrngLfsr113RandomU01Array     _CLRNG_TAG_FPTYPE(clrngLfsr113RandomU01Array)
+#define clrngLfsr113RandomIntegerArray _CLRNG_TAG_FPTYPE(clrngLfsr113RandomIntegerArray)
+
+_CLRNG_FPTYPE clrngLfsr113RandomU01(clrngLfsr113Stream* stream);
+clrngStatus clrngLfsr113RandomU01Array(clrngLfsr113Stream* stream, size_t count, _CLRNG_FPTYPE* buffer);
+cl_int clrngLfsr113RandomInteger(clrngLfsr113Stream* stream, cl_int i, cl_int j);
+clrngStatus clrngLfsr113RandomIntegerArray(clrngLfsr113Stream* stream, cl_int i, cl_int j, size_t count, cl_int* buffer);
+
+clrngStatus clrngLfsr113RewindStreams(size_t count, clrngLfsr113Stream* streams);
+
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+clrngStatus clrngLfsr113RewindSubstreams(size_t count, clrngLfsr113Stream* streams);
+clrngStatus clrngLfsr113ForwardToNextSubstreams(size_t count, clrngLfsr113Stream* streams);
+clrngStatus clrngLfsr113MakeOverSubstreams(clrngLfsr113Stream* stream, size_t count, clrngLfsr113Stream* substreams);
+#endif
+
+
+
+/********************************************************************************
+ * Implementation                                                               *
+ ********************************************************************************/
+
+clrngStatus clrngLfsr113CopyOverStreamsFromGlobal(size_t count, clrngLfsr113Stream* destStreams, __global const clrngLfsr113HostStream* srcStreams)
+{
+	//Check params
+	if (!destStreams)
+		return clrngSetErrorString(CLRNG_INVALID_VALUE);
+	if (!srcStreams)
+		return clrngSetErrorString(CLRNG_INVALID_VALUE);
+
+	for (size_t i = 0; i < count; i++) {
+		destStreams[i].current = srcStreams[i].current;
+		destStreams[i].initial = &srcStreams[i].initial;
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+		destStreams[i].substream = srcStreams[i].substream;
+#endif
+	}
+
+	return CLRNG_SUCCESS;
+}
+
+clrngStatus clrngLfsr113CopyOverStreamsToGlobal(size_t count, __global clrngLfsr113HostStream* destStreams, const clrngLfsr113Stream* srcStreams)
+{
+    //Check params
+    if (!destStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+    if (!srcStreams)
+	return clrngSetErrorString(CLRNG_INVALID_VALUE);
+
+    for (size_t i = 0; i < count; i++) {
+	destStreams[i].current   = srcStreams[i].current;
+	destStreams[i].initial   = *srcStreams[i].initial;
+#ifdef CLRNG_ENABLE_SUBSTREAMS
+	destStreams[i].substream = srcStreams[i].substream;
+#endif
+    }
+
+    return CLRNG_SUCCESS;
+}
+
+// code that is common to host and device
+#include <clRNG/private/device/lfsr113.c.h>
+
+#endif
+
+/*
+vim: ft=c sw=4
+*/

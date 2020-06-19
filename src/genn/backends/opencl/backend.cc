@@ -26,7 +26,7 @@ namespace
 {
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<Substitutions::FunctionTemplate> openclFunctions = {
-    {"gennrand_uniform", 0, "uniform_double($(rng))", "uniform_clrngLfsr113($(rng))"},
+    {"gennrand_uniform", 0, "clrngLfsr113RandomU01(&localStream)", "clrngLfsr113RandomU01(&localStream)"},
     {"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "log_normal_double($(rng), $(0), $(1))", "log_normal_float($(rng), $(0), $(1))"},
@@ -213,6 +213,14 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     std::stringstream neuronUpdateKernelsStream;
     CodeStream neuronUpdateKernels(neuronUpdateKernelsStream);
 
+    // Include clRNG headers in kernel if any groups require them
+    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
+                   [](const NeuronUpdateGroupMerged &ng) { return ng.getArchetype().isSimRNGRequired(); }))
+    {
+        neuronUpdateKernels << "#define CLRNG_SINGLE_PRECISION" << std::endl;
+        neuronUpdateKernels << "#include <clRNG/lfsr113.clh>" << std::endl;
+    }
+
     // Include definitions
     genKernelPreamble(neuronUpdateKernels, modelMerged);
     neuronUpdateKernels << std::endl << std::endl;
@@ -332,7 +340,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
 
                 // If this neuron group requires a simulation RNG, substitute in this neuron group's RNG
-                //! TO BE IMPLEMENTED - Not using rng at this point - 2020/03/08
                 if (ng.getArchetype().isSimRNGRequired()) {
                     popSubs.addVarSubstitution("rng", "&group->rng[" + popSubs["id"] + "]");
                 }
@@ -341,6 +348,13 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "if(" << popSubs["id"] << " < group->numNeurons)";
                 {
                     CodeStream::Scope b(os);
+
+                    // Copy global RNG stream to local
+                    if (ng.getArchetype().isSimRNGRequired()) {
+                        os << "clrngLfsr113Stream localStream;" << std::endl;
+                        os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &group->rng[" << popSubs["id"] + "]);" << std::endl;
+                    }
+                    
                     simHandler(os, ng, popSubs,
                         // Emit true spikes
                         [this](CodeStream& neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &, Substitutions& subs)
@@ -352,6 +366,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         {
                             genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt");
                         });
+
+                    // Copy local stream back to local
+                    if (ng.getArchetype().isSimRNGRequired()) {
+                        os << std::endl;
+                        os << "clrngLfsr113CopyOverStreamsToGlobal(1, &group->rng[" << popSubs["id"] + "], &localStream);" << std::endl;
+                    }
                 }
 
                 os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
@@ -1054,6 +1074,15 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     std::stringstream initializeKernelsStream;
     CodeStream initializeKernels(initializeKernelsStream);
 
+    // Include clRNG headers in kernel if any groups require them
+    // **TEMPORARY** RNGs not seeded on device in OpenCL
+    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
+                    [](const NeuronUpdateGroupMerged &ng) { return ng.getArchetype().isSimRNGRequired(); }))
+    {
+        initializeKernels << "#define CLRNG_SINGLE_PRECISION" << std::endl;
+        initializeKernels << "#include <clRNG/lfsr113.clh>" << std::endl;
+    }
+
     // Include definitions
     genKernelPreamble(initializeKernels, modelMerged);  
 
@@ -1348,7 +1377,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-        os << "if(initializeProgram.build(\"-cl-std=CL1.2\") != CL_SUCCESS)";
+        os << "if(initializeProgram.build(\"-cl-std=CL1.2 -I clRNG/include\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
             os << "throw std::runtime_error(\"Initialize program compile error:\" + initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
@@ -1476,8 +1505,12 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
 #endif
     os << "// OpenCL includes" << std::endl;
     os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
+    os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
+
     os << "#include <CL/cl.hpp>" << std::endl;
-    //os << "#include \"clRNG/lfsr113.h\"" << std::endl;
+    os << "#include <clRNG/lfsr113.h>" << std::endl;
+    os << std::endl;
+
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking OpenCL calls" << std::endl;
@@ -1907,8 +1940,12 @@ MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definiti
     // genVariableAllocation
     auto allocation = MemAlloc::zero();
 
-    allocations << name << " = clrngLfsr113CreateStreams(NULL, " << count << ", &" << name << "Count, NULL);" << std::endl;
-    allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, " << count << ", " << name << "), &error);" << std::endl;
+    {
+        CodeStream::Scope b(allocations);
+        allocations << "size_t deviceBytes = " << count << ";" << std::endl;
+        allocations << name << " = clrngLfsr113CreateStreams(nullptr, " << count << ", &deviceBytes, nullptr);" << std::endl;
+        allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
+    }
 
     return allocation;
 }
@@ -1973,9 +2010,12 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<AdditionalIncludeDirectories>..\\clRNG\\include;$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<AdditionalIncludeDirectories>";
+    os << "..\\clRNG\\include;";
+    os << "$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)";
+    os << "</AdditionalIncludeDirectories>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
@@ -1994,8 +2034,14 @@ void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostrea
     os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportTarget(std::ostream&) const
+void Backend::genMSBuildImportTarget(std::ostream& os) const
 {
+    os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
+    std::vector<std::string> clrngItems = { "clRNG.c", "private.c", "mrg32k3a.c", "mrg31k3p.c", "lfsr113.c", "philox432.c" };
+    for (const auto& clrngItem : clrngItems) {
+        os << "\t\t<ClCompile Include=\"..\\clRNG\\" << clrngItem << "\" />" << std::endl;
+    }
+    os << "\t</ItemGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
 std::string Backend::getFloatAtomicAdd(const std::string& ftype, const char* memoryType) const

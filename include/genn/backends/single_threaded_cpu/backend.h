@@ -87,6 +87,9 @@ public:
     //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
     virtual std::string getMergedGroupFieldHostType(const std::string &type) const override;
 
+    //! When generating merged structures what type to use for simulation RNGs
+    virtual std::string getMergedGroupSimRNGType() const override;
+
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const override;

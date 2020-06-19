@@ -760,6 +760,11 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     return type;
 }
 //--------------------------------------------------------------------------
+std::string Backend::getMergedGroupSimRNGType() const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
 void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
