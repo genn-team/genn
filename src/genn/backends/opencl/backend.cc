@@ -40,25 +40,6 @@ bool isSparseInitRequired(const SynapseGroupInternal& sg)
         && (sg.isWUVarInitRequired() || !sg.getWUModel()->getLearnPostCode().empty() || !sg.getWUModel()->getSynapseDynamicsCode().empty()));
 }
 //--------------------------------------------------------------------------
-void genAtomicAddFloat(CodeStream &os, const std::string &memoryType)
-{
-    os << "inline void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
-    {
-        CodeStream::Scope b(os);
-        os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
-        os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
-        os << "do";
-        {
-            CodeStream::Scope b(os);
-            os << "prevVal.floatVal = *source;" << std::endl;
-            os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
-        }
-        os << "while (atomic_cmpxchg((volatile __" << memoryType << " unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
-    }
-
-    os << std::endl;
-}
-//--------------------------------------------------------------------------
 template<typename T>
 void genMergedGroupKernelParams(CodeStream &os, const std::vector<T> &groups, bool includeFinalComma = false)
 {
@@ -2183,6 +2164,34 @@ void Backend::genCurrentSpikePull(CodeStream& os, const NeuronGroupInternal& ng,
             os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
         }
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) const
+{
+    os << "inline void atomic_add_f_" << memoryType << "(volatile __" << memoryType << " float *source, const float operand)";
+    {
+        CodeStream::Scope b(os);
+
+        // If device is NVIDIA, insert PTX code for fire-and-forget floating point atomic add
+        // https://github.com/openai/blocksparse/blob/master/src/ew_op_gpu.h#L648-L652
+        if(m_ChosenDevice.getInfo<CL_DEVICE_VENDOR_ID>() == 0x10DE) {
+            os << "asm volatile(\"red." << memoryType << ".add.f32[%0], %1;\" :: \"l\"(source), \"f\"(operand));" << std::endl;
+        }
+        // Otherwise use atomic_cmpxchg-based solution
+        else {
+            os << "union { unsigned int intVal; float floatVal; } newVal;" << std::endl;
+            os << "union { unsigned int intVal; float floatVal; } prevVal;" << std::endl;
+            os << "do";
+            {
+                CodeStream::Scope b(os);
+                os << "prevVal.floatVal = *source;" << std::endl;
+                os << "newVal.floatVal = prevVal.floatVal + operand;" << std::endl;
+            }
+            os << "while (atomic_cmpxchg((volatile __" << memoryType << " unsigned int *)source, prevVal.intVal, newVal.intVal) != prevVal.intVal);" << std::endl;
+        }
+    }
+
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const

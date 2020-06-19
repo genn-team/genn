@@ -449,6 +449,8 @@ private:
         }
     }
 
+    void genAtomicAddFloat(CodeStream &os, const std::string &memoryType) const;
+
     void genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const;
 
     void genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng, bool spikeEvent) const;
