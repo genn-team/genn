@@ -177,6 +177,13 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
     
     // Show device name
     LOGI << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
+
+    // Check that pointer sizes match
+    // **TOOD** this could be implemented
+    const cl_int deviceAddressBytes = m_ChosenDevice.getInfo<CL_DEVICE_ADDRESS_BITS>() / 8;
+    if(deviceAddressBytes != sizeof(void*)) {
+        throw std::runtime_error("OpenCL backend does not currently support devices with pointer sizes that differ from host (" + std::to_string(deviceAddressBytes) + " vs " + std::to_string(sizeof(void *)) + ")");
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
