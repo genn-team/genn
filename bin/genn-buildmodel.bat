@@ -68,6 +68,8 @@ if defined -d (
             set "BACKEND_PROJECT=opencl_backend"
             set "MACROS=%MACROS% /p:Configuration=Debug_OpenCL"
             set GENERATOR=.\generator_Debug_OpenCL.exe
+            rem :: copy clRNG to generated code
+            xcopy "%GENN_PATH%..\src\genn\backends\opencl\clRNG" "clRNG" /S /Q /I /Y > nul
         ) else (
             set "BACKEND_PROJECT=cuda_backend"
             set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
@@ -85,6 +87,8 @@ if defined -d (
             set "BACKEND_PROJECT=opencl_backend"
             set "MACROS=%MACROS% /p:Configuration=Release_OpenCL"
             set GENERATOR=.\generator_Release_OpenCL.exe
+            rem :: copy clRNG to generated code
+            xcopy "%GENN_PATH%..\src\genn\backends\opencl\clRNG" "clRNG" /S /Q /I /Y > nul
         ) else (
             set "BACKEND_PROJECT=cuda_backend"
             set "MACROS=%MACROS% /p:Configuration=Release_CUDA"

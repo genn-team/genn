@@ -26,7 +26,7 @@ namespace {
 
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<CodeGenerator::FunctionTemplate> openclFunctions = {
-    {"gennrand_uniform", 0, "uniform_double($(rng))", "clrngLfsr113RandomU01(&localStream)"},
+    {"gennrand_uniform", 0, "clrngLfsr113RandomU01(&localStream)", "clrngLfsr113RandomU01(&localStream)"},
     {"gennrand_normal", 0, "normal_double($(rng))", "normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "log_normal_double($(rng), $(0), $(1))", "log_normal_float($(rng), $(0), $(1))"},
@@ -1211,7 +1211,6 @@ void Backend::genInit(CodeStream& os, const ModelSpecInternal& model,
     SynapseGroupHandler sgSparseInitHandler) const
 {
     os << std::endl;
-    //! TO BE IMPLEMENTED - Generating minimal kernel
     //! TO BE IMPLEMENTED - initializeRNGKernel - if needed
 
     // Build map of extra global parameters for init kernel
@@ -1825,9 +1824,7 @@ void Backend::genRunnerPreamble(CodeStream& os) const
         CodeStream::Scope b(os);
         os << "// Reading the kernel source for execution" << std::endl;
         os << "program = cl::Program(context, kernelSource, true);" << std::endl;
-        os << "std::string gennPath = std::getenv(\"GENN\");" << std::endl;
-        os << "std::string buildString = \"-cl-std=CL1.2 -I \" + gennPath + \"/include/genn/backends/opencl/clRNG\";" << std::endl;
-        os << "program.build(buildString.c_str());" << std::endl;
+        os << "program.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
     }
     os << std::endl;
     os << "// Get OpenCL error as string" << std::endl;
@@ -2185,10 +2182,10 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<AdditionalIncludeDirectories>";
-    os << "$(GENN)\\include\\genn\\backends\\opencl\\clRNG;";
+    os << "..\\clRNG\\include;";
     os << "$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)";
     os << "</AdditionalIncludeDirectories>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
@@ -2214,7 +2211,7 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
     os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
     std::vector<std::string> clrngItems = { "clRNG.c", "private.c", "mrg32k3a.c", "mrg31k3p.c", "lfsr113.c", "philox432.c" };
     for (const auto& clrngItem : clrngItems) {
-        os << "\t\t<ClCompile Include=\"$(GENN)\\src\\genn\\backends\\opencl\\clRNG\\" << clrngItem << "\" />" << std::endl;
+        os << "\t\t<ClCompile Include=\"..\\clRNG\\" << clrngItem << "\" />" << std::endl;
     }
     os << "\t</ItemGroup>" << std::endl;
 }

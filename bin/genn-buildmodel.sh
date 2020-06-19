@@ -31,7 +31,8 @@ while [[ -n "${!OPTIND}" ]]; do
     while getopts "cldmvs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
-        l) GENERATOR_MAKEFILE="MakefileOpenCL";;
+        l) GENERATOR_MAKEFILE="MakefileOpenCL"
+           cp -Tr "$BASEDIR/../src/genn/backends/opencl/clRNG" "clRNG";;
         d) DEBUG=1;;
         m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
