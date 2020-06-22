@@ -1077,10 +1077,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedStructBuildKernels(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups());
 
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), true);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), true);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), true);
-    initializeKernels << "unsigned int deviceRNGSeed";  // **TODO** check type
+    const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
+    const bool anyConnectivityInitGroups = !modelMerged.getMergedSynapseConnectivityInitGroups().empty();
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), anyDenseInitGroups || anyConnectivityInitGroups);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), false);
     initializeKernels << ")";
     {
         CodeStream::Scope b(initializeKernels);
@@ -1406,15 +1407,15 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
-            //! TO BE IMPLEMENTED - Using hard coded deviceRNGSeed for now
-            os << "unsigned int deviceRNGSeed = 0;" << std::endl;
+
+            // Loop through all synapse groups
             for (const auto& s : model.getSynapseGroups()) {
-                // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask
+                // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
                 if (s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
                     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
                 }
-                // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, insert a call to cudaMemset to zero column lengths
+                // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
                 else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
                     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
                 }
@@ -1425,7 +1426,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             genKernelDimensions(os, KernelInitialize, idInitStart);
             const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() + 
                                           modelMerged.getMergedSynapseConnectivityInitGroups().size());
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", deviceRNGSeed));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &initEvent";
@@ -1543,6 +1543,9 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged &) const
 {
+    os << "#include <random>" << std::endl;
+    os << std::endl;
+        
     // Generating OpenCL variables for the runner
     os << "// OpenCL variables" << std::endl;
     os << "cl::Context clContext;" << std::endl;
@@ -1653,6 +1656,64 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged &mode
     os << "buildInitializeProgram();" << std::endl;
     os << "buildNeuronUpdateProgram();" << std::endl;
     os << "buildSynapseUpdateProgram();" << std::endl;
+
+    // If any neuron groups require a simulation RNG
+    const ModelSpecInternal &model = modelMerged.getModel();
+    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
+                   [](const ModelSpec::NeuronGroupValueType &n) { return n.second.isSimRNGRequired(); }))
+    {
+        os << "// Seed LFSR113 RNG" << std::endl;
+        os << "clrngLfsr113StreamCreator *lfsrStreamCreator = clrngLfsr113CopyStreamCreator(nullptr, nullptr);" << std::endl;
+        {
+            // If no seed is specified, use system randomness to configure base state
+            const long minSeedValues[4] = {2, 8, 16, 128};
+            CodeStream::Scope b(os);
+            os << "clrngLfsr113StreamState lfsrBaseState;" << std::endl;
+            if(model.getSeed() == 0) {
+                os << "std::random_device seedSource;" << std::endl;
+                for(size_t i = 0; i < 4; i++) {
+                    os << "do{ lfsrBaseState.g[" << i << "] = seedSource(); } while(lfsrBaseState.g[" << i << "] < " << minSeedValues[i] << ");" << std::endl;
+                }
+            }
+            // Otherwise
+            else {
+                const long IA = 16807l;
+                const long IM = 2147483647l;
+                const long IQ = 127773l;
+                const long IR = 2836l;
+
+                // Initially 'smear' seed out across 4 words of state
+                // using procedure from http ://web.mst.edu/~vojtat/class_5403/lfsr113/lfsr113.cpp
+                long idum = std::max(1l, (long)model.getSeed());
+                uint32_t g[4];
+                for(size_t i = 0; i < 4; i++) {
+                    const long k = idum / IQ;
+                    idum = IA * (idum - k * IQ) - IR * k;
+                    if(idum < 0) {
+                        idum += IM;
+                    }
+                    g[i] = (idum < minSeedValues[i]) ? (idum + minSeedValues[i]) : idum;
+                }         
+                // Perform single round of LFSR113 to improve seed
+                uint32_t b = ((g[0] << 6) ^ g[0]) >> 13;
+                g[0] = ((g[0] & 4294967294U) << 18) ^ b;
+                b = ((g[1] << 2) ^ g[1]) >> 27;
+                g[1] = ((g[1] & 4294967288U) << 2) ^ b;
+                b = ((g[2] << 13) ^ g[2]) >> 21;
+                g[2] = ((g[2] & 4294967280U) << 7) ^ b;
+                b = ((g[3] << 3) ^ g[3]) >> 12;
+                g[3] = ((g[3] & 4294967168U) << 13) ^ b;
+                
+                // Write out state
+                for(size_t i = 0; i < 4; i++) {
+                    os << "lfsrBaseState.g[" << i << "] = " << g[i] << "u;" << std::endl;
+                }
+            }
+
+            // Configure stream creator
+            os << "clrngLfsr113SetBaseCreatorState(lfsrStreamCreator, &lfsrBaseState);" << std::endl;
+        }
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const
@@ -1938,7 +1999,7 @@ MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definiti
     {
         CodeStream::Scope b(allocations);
         allocations << "size_t deviceBytes;" << std::endl;
-        allocations << name << " = clrngLfsr113CreateStreams(nullptr, " << count << ", &deviceBytes, nullptr);" << std::endl;
+        allocations << name << " = clrngLfsr113CreateStreams(lfsrStreamCreator, " << count << ", &deviceBytes, nullptr);" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
     }
 
@@ -2096,10 +2157,9 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) cons
     // **NOTE** this takes postsynaptic model initialisation into account
     const ModelSpecInternal &model = modelMerged.getModel();
     if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const ModelSpec::NeuronGroupValueType &n)
-    {
-        return n.second.isInitRNGRequired();
-    }))
+                   [](const ModelSpec::NeuronGroupValueType &n){
+                       return n.second.isInitRNGRequired();
+                   }))
     {
         return true;
     }
@@ -2107,9 +2167,9 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) cons
     // If any synapse groups require an RNG for weight update model initialisation or procedural connectivity, return true
     if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
                    [](const ModelSpec::SynapseGroupValueType &s)
-    {
-        return (s.second.isWUInitRNGRequired() || s.second.isProceduralConnectivityRNGRequired());
-    }))
+                   {
+                       return (s.second.isWUInitRNGRequired() || s.second.isProceduralConnectivityRNGRequired());
+                   }))
     {
         return true;
     }
