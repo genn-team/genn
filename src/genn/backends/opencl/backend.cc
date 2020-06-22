@@ -2433,7 +2433,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         }
         os << std::endl;
 
-        os << "inline " << precision << " gammaDistFloat" << r << "(clrng" << r << "Stream *rng, " << precision << " a)" << std::endl;
+        os << "inline " << precision << " gammaDist" << r << "(clrng" << r << "Stream *rng, " << precision << " a)" << std::endl;
         {
             CodeStream::Scope b(os);
             os << "if (a > 1)" << std::endl;
