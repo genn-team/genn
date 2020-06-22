@@ -107,7 +107,7 @@ void clrngPhilox432GenerateDeck(clrngPhilox432StreamState *currentState)
 */
 static cl_uint clrngPhilox432NextState(clrngPhilox432StreamState *currentState) {
 
-	if ((currentState->deckIndex == 0))
+	if (currentState->deckIndex == 0)
 	{
 		clrngPhilox432GenerateDeck(currentState);
 	
