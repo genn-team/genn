@@ -131,6 +131,10 @@ public:
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override { return false; }
+
+    //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
+    virtual bool isPopulationRNGInitialisedOnDevice() const override { return false; }
+
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 

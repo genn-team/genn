@@ -248,7 +248,8 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
         m_Gen.addPointerField(timePrecision, "sT", backend.getArrayPrefix() + "sT");
     }
 
-    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired()) {
+    // If this backend initialises population RNGs on device and this group requires on for simulation
+    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() && backend.isPopulationRNGInitialisedOnDevice()) {
         m_Gen.addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getArrayPrefix() + "rng");
     }
 

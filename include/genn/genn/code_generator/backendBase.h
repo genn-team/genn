@@ -329,6 +329,9 @@ public:
     //! Different backends use different RNGs for different things. Does this one require population RNGs?
     virtual bool isPopulationRNGRequired() const = 0;
 
+    //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
+    virtual bool isPopulationRNGInitialisedOnDevice() const = 0;
+
     //! Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure?
     virtual bool isSynRemapRequired() const = 0;
 
