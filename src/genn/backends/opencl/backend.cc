@@ -116,6 +116,19 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
     os << "const cl_ulong tmpEnd = " << name << "Event.getProfilingInfo<CL_PROFILING_COMMAND_END>();" << std::endl;
     os << name << "Time += (double)(tmpEnd - tmpStart) / 1.0E9;" << std::endl;
 }
+//-----------------------------------------------------------------------
+void genPhiloxSkipAhead(CodeStream &os) 
+{
+    // Make local copy of host stream
+    os << "clrngPhilox432Stream localStream;" << std::endl;
+    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+
+    // Convert id into steps, add these to steps, zero deck index and regenerate deck
+    os << "const clrngPhilox432Counter steps = {{0, id}, {0, 0}};" << std::endl;
+    os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
+    os << "localStream.current.deckIndex = 0;" << std::endl;
+    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
+}
 }
 
 //--------------------------------------------------------------------------
@@ -436,10 +449,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-        os << "if(neuronUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\") != CL_SUCCESS)";
+        os << "const cl_int buildResult = neuronUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
+        os << "if(buildResult != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Neuron update program compile error:\" + neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
+            os << "throw std::runtime_error(\"Neuron update program compile error\");" << std::endl;
         }
         os << std::endl;
         
@@ -929,10 +944,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-        os << "if(synapseUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\") != CL_SUCCESS)";
+        os << "const cl_int buildResult = synapseUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
+        os << "if(buildResult != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Synapse update program compile error:\" + synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
+            os << "throw std::runtime_error(\"Synapse update program compile error\");" << std::endl;
         }
         os << std::endl;
 
@@ -1084,7 +1101,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups || globalRNGRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), globalRNGRequired);
     if(globalRNGRequired) {
-        initializeKernels << "__global clrngPhilox432Stream *d_rng";
+        initializeKernels << "__global clrngPhilox432HostStream *d_rng";
     }
     initializeKernels << ")";
     {
@@ -1107,8 +1124,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
                     // Add substitution for RNG
                     if (ng.getArchetype().isInitRNGRequired()) {
-                        os << "clrngPhilox432Stream localStream;" << std::endl;
-                        os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+                        genPhiloxSkipAhead(os);
                         popSubs.addVarSubstitution("rng", "&localStream");
                     }
 
@@ -1130,9 +1146,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
                     // Add substitution for RNG
                     if (sg.getArchetype().isWUInitRNGRequired()) {
-                        os << "clrngPhilox432Stream localStream;" << std::endl;
-                        os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
-                        
+                        genPhiloxSkipAhead(os);
                         popSubs.addVarSubstitution("rng", "&localStream");
                     }
 
@@ -1160,8 +1174,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
                     // Add substitution for RNG
                     if (::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                        os << "clrngPhilox432Stream localStream;" << std::endl;
-                        os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+                        genPhiloxSkipAhead(os);
                         popSubs.addVarSubstitution("rng", "&localStream");
                     }
 
@@ -1213,7 +1226,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), globalRNGRequired);
     if(globalRNGRequired) {
-        initializeKernels << "__global clrngPhilox432Stream *d_rng";
+        initializeKernels << "__global clrngPhilox432HostStream *d_rng";
     }
     initializeKernels << ")";
     {
@@ -1241,9 +1254,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             {
                 // Add substitution for RNG
                 if (sg.getArchetype().isWUInitRNGRequired()) {
-                    os << "clrngPhilox432Stream localStream;" << std::endl;
-                    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
-                    
+                    genPhiloxSkipAhead(os);
                     popSubs.addVarSubstitution("rng", "&localStream");
                 }
 
@@ -1373,10 +1384,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-        os << "if(initializeProgram.build(\"-cl-std=CL1.2 -I clRNG/include\") != CL_SUCCESS)";
+        os << "const cl_int buildResult = initializeProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
+        os << "if(buildResult != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
-            os << "throw std::runtime_error(\"Initialize program compile error:\" + initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice));" << std::endl;
+            os << "throw std::runtime_error(\"Initialize program compile error\");" << std::endl;
         }
         os << std::endl;
 
@@ -1489,6 +1502,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 void Backend::genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged&) const
 {
     os << "// Standard C++ includes" << std::endl;
+    os << "#include <iostream>" << std::endl;
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
