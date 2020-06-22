@@ -38,7 +38,7 @@
 #ifndef PRIVATE_PHILOX432_CH
 #define PRIVATE_PHILOX432_CH
 
-#include "Random123/philox.h" 
+#include "../Random123/philox.h" 
 
 #define Philox432_NORM_cl_double    1.0 / 0x100000000L   // 1.0 /2^32 
 #define Philox432_NORM_cl_float     2.32830644e-010; 

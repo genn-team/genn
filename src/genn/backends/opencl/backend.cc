@@ -1100,7 +1100,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 {
                     CodeStream::Scope b(os);
 
-                    //! TO BE IMPLEMENTED - isSimRNGRequired - isInitRNGRequired
+                    // Add substitution for RNG
+                    if (ng.getArchetype().isInitRNGRequired()) {
+                        os << "clrngPhilox432Stream localStream;" << std::endl;
+                        os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+                        popSubs.addVarSubstitution("rng", "&localStream");
+                    }
 
                     localNGHandler(os, ng, popSubs);
                 }
@@ -1118,7 +1123,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 {
                     CodeStream::Scope b(os);
 
-                    //! TO BE IMPLEMENTED - isWUInitRNGRequired
+                    // Add substitution for RNG
+                    if (sg.getArchetype().isWUInitRNGRequired()) {
+                        os << "clrngPhilox432Stream localStream;" << std::endl;
+                        os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+                        
+                        popSubs.addVarSubstitution("rng", "&localStream");
+                    }
 
                     popSubs.addVarSubstitution("id_post", popSubs["id"]);
                     sgDenseInitHandler(os, sg, popSubs);
@@ -1142,7 +1153,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                     popSubs.addVarSubstitution("num_threads", "1");
                     popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
-                    //! TO BE IMPLEMENTED - ::Utils::isRNGRequired
+                    // Add substitution for RNG
+                    if (::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                        os << "clrngPhilox432Stream localStream;" << std::endl;
+                        os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+                        popSubs.addVarSubstitution("rng", "&localStream");
+                    }
 
                     // If the synapse group has bitmask connectivity
                     if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1215,7 +1231,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             [this](const SynapseGroupInternal &sg) { return padSize(sg.getMaxConnections(), m_KernelWorkGroupSizes[KernelInitializeSparse]); },
             [this, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseSparseInitGroupMerged  &sg, Substitutions& popSubs)
             {
-                //! TO BE IMPLEMENTED - isWUInitRNGRequired
+                // Add substitution for RNG
+                if (sg.getArchetype().isWUInitRNGRequired()) {
+                    os << "clrngPhilox432Stream localStream;" << std::endl;
+                    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+                    
+                    popSubs.addVarSubstitution("rng", "&localStream");
+                }
 
                 os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
 
@@ -1891,10 +1913,19 @@ void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& 
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &) const
+MemAlloc Backend::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
 {
-    throw Utils::ToBeImplemented("genGlobalDeviceRNG");
-    return MemAlloc::zero();
+    genVariableDefinition(definitionsInternal, definitionsInternal, "clrngPhilox432Stream*", "rng", VarLocation::HOST_DEVICE);
+    genVariableImplementation(runner, "clrngPhilox432Stream*", "rng", VarLocation::HOST_DEVICE);
+    genVariableFree(free, "rng", VarLocation::DEVICE);
+
+    {
+        CodeStream::Scope b(allocations);
+        allocations << "size_t deviceBytes;" << std::endl;
+        allocations << "rng = clrngLfsr113CreateStreams(nullptr, 1, &deviceBytes, nullptr);" << std::endl;
+        allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
+    }
+    return MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free,
@@ -1904,17 +1935,14 @@ MemAlloc Backend::genPopulationRNG(CodeStream& definitions, CodeStream& definiti
     genVariableImplementation(runner, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
     genVariableFree(free, name, VarLocation::HOST_DEVICE);
 
-    // genVariableAllocation
-    auto allocation = MemAlloc::zero();
-
     {
         CodeStream::Scope b(allocations);
-        allocations << "size_t deviceBytes = " << count << ";" << std::endl;
+        allocations << "size_t deviceBytes;" << std::endl;
         allocations << name << " = clrngLfsr113CreateStreams(nullptr, " << count << ", &deviceBytes, nullptr);" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
     }
 
-    return allocation;
+    return MemAlloc::hostDevice(count * getSize("clrngLfsr113Stream"));
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream& definitionsInternal, CodeStream& runner, CodeStream& allocations, CodeStream& free,
@@ -2316,7 +2344,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         }
         os << std::endl;
 
-        os << "inline " << precision << " gammaDistFloat" << r << "(clrngL" << r << "Stream *rng, " << precision << " a)" << std::endl;
+        os << "inline " << precision << " gammaDistFloat" << r << "(clrng" << r << "Stream *rng, " << precision << " a)" << std::endl;
         {
             CodeStream::Scope b(os);
             os << "if (a > 1)" << std::endl;

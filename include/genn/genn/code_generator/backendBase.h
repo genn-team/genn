@@ -102,6 +102,7 @@ public:
     //--------------------------------------------------------------------------
     static MemAlloc zero(){ return MemAlloc(0, 0, 0); }
     static MemAlloc host(size_t hostBytes){ return MemAlloc(hostBytes, 0, 0); }
+    static MemAlloc hostDevice(size_t bytes) { return MemAlloc(bytes, bytes, 0); }
     static MemAlloc device(size_t deviceBytes){ return MemAlloc(0, deviceBytes, 0); }
     static MemAlloc zeroCopy(size_t zeroCopyBytes){ return MemAlloc(0, 0, zeroCopyBytes); }
 
