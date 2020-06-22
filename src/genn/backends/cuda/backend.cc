@@ -24,14 +24,21 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<Substitutions::FunctionTemplate> cudaFunctions = {
-    {"gennrand_uniform", 0, "curand_uniform_double($(rng))", "curand_uniform($(rng))"},
-    {"gennrand_normal", 0, "curand_normal_double($(rng))", "curand_normal($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))", "exponentialDistFloat($(rng))"},
-    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))", "curand_log_normal_float($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))", "gammaDistFloat($(rng), $(0))"}
+const std::vector<Substitutions::FunctionTemplate> cudaSinglePrecisionFunctions = {
+    {"gennrand_uniform", 0, "curand_uniform($(rng))"},
+    {"gennrand_normal", 0, "curand_normal($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistFloat($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_float($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistFloat($(rng), $(0))"}
 };
-
+//--------------------------------------------------------------------------
+const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions = {
+    {"gennrand_uniform", 0, "curand_uniform_double($(rng))"},
+    {"gennrand_normal", 0, "curand_normal_double($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistDouble($(rng))"},
+    {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))"}
+};
 //--------------------------------------------------------------------------
 // Timer
 //--------------------------------------------------------------------------
@@ -148,6 +155,11 @@ size_t getGroupStartIDSize(const std::vector<T> &mergedGroups)
                            {
                                return acc + (sizeof(unsigned int) * ng.getGroups().size());
                            });
+}
+//-----------------------------------------------------------------------
+const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const std::string &precision)
+{
+    return (precision == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions;
 }
 }   // Anonymous namespace
 
@@ -268,7 +280,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelNeuronUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-        Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
         kernelSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
@@ -513,7 +525,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(os);
 
-            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -611,7 +623,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(os);
 
-            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPostsynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -714,7 +726,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelSynapseDynamicsUpdate] << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
             kernelSubs.addVarSubstitution("t", "t");
 
             // Parallelise over synapse groups whose weight update models have code for synapse dynamics
@@ -879,7 +891,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // initialization kernel code
     size_t idInitStart = 0;
     {
-        Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
         // common variables for all cases
         CodeStream::Scope b(os);
@@ -1022,7 +1034,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             CodeStream::Scope b(os);
 
             // common variables for all cases
-            Substitutions kernelSubs(cudaFunctions, model.getPrecision());
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelInitializeSparse] << " * blockIdx.x + threadIdx.x;" << std::endl;
 

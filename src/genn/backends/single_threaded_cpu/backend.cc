@@ -16,12 +16,20 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-const std::vector<Substitutions::FunctionTemplate> cpuFunctions = {
-    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))", "standardUniformDistribution($(rng))"},
-    {"gennrand_normal", 0, "standardNormalDistribution($(rng))", "standardNormalDistribution($(rng))"},
-    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))", "standardExponentialDistribution($(rng))"},
-    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))", "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
-    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))", "std::gamma_distribution<float>($(0), 1.0f)($(rng))"}
+const std::vector<Substitutions::FunctionTemplate> cpuSinglePrecisionFunctions = {
+    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))"},
+    {"gennrand_normal", 0, "standardNormalDistribution($(rng))"},
+    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
+    {"gennrand_log_normal", 2, "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
+    {"gennrand_gamma", 1, "std::gamma_distribution<float>($(0), 1.0f)($(rng))"}
+};
+//--------------------------------------------------------------------------
+const std::vector<Substitutions::FunctionTemplate> cpuDoublePrecisionFunctions = {
+    {"gennrand_uniform", 0, "standardUniformDistribution($(rng))"},
+    {"gennrand_normal", 0, "standardNormalDistribution($(rng))"},
+    {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
+    {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))"},
+    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))"}
 };
 
 //--------------------------------------------------------------------------
@@ -55,6 +63,12 @@ private:
     const std::string m_Name;
     const bool m_TimingEnabled;
 };
+
+//-----------------------------------------------------------------------
+const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const std::string &precision)
+{
+    return (precision == "double") ? cpuDoublePrecisionFunctions : cpuSinglePrecisionFunctions;
+}
 }
 
 //--------------------------------------------------------------------------
@@ -85,7 +99,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
 
-        Substitutions funcSubs(cpuFunctions, model.getPrecision());
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
         funcSubs.addVarSubstitution("t", "t");
 
         // Push any required EGPs
@@ -191,7 +205,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(cpuFunctions, model.getPrecision());
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
         funcSubs.addVarSubstitution("t", "t");
 
         // Push any required EGPs
@@ -410,7 +424,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     os << "void initialize()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(cpuFunctions, model.getPrecision());
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
 
         // Push any required EGPs
         initPushEGPHandler(os);
@@ -527,7 +541,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
-        Substitutions funcSubs(cpuFunctions, model.getPrecision());
+        Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
 
         // Push any required EGPs
         initSparsePushEGPHandler(os);

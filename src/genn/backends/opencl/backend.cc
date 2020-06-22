@@ -25,14 +25,21 @@ using namespace CodeGenerator;
 namespace 
 {
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
-const std::vector<Substitutions::FunctionTemplate> openclFunctions = {
-    {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))", "clrngLfsr113RandomU01($(rng))"},
-    {"gennrand_normal", 0, "normalDist($(rng))", "normalDist($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDist($(rng))", "exponentialDist($(rng))"},
-    {"gennrand_log_normal", 2, "logNormalDist($(rng), $(0), $(1))", "logNormalDist($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDist($(rng), $(0))", "gammaDist($(rng), $(0))"}
+const std::vector<Substitutions::FunctionTemplate> openclLFSRFunctions = {
+    {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))"},
+    {"gennrand_normal", 0, "normalDist($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDist($(rng))"},
+    {"gennrand_log_normal", 2, "logNormalDist($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDist($(rng), $(0))"}
 };
-
+//-----------------------------------------------------------------------
+const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
+    {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))"},
+    {"gennrand_normal", 0, "normalDist($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDist($(rng))"},
+    {"gennrand_log_normal", 2, "logNormalDist($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDist($(rng), $(0))"}
+};
 //-----------------------------------------------------------------------
 bool isSparseInitRequired(const SynapseGroupInternal& sg)
 {
@@ -260,7 +267,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         neuronUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
 
-        Substitutions kernelSubs(openclFunctions, model.getPrecision());
+        Substitutions kernelSubs(openclLFSRFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
         // If any neuron groups emit spike events
@@ -594,7 +601,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(synapseUpdateKernels);
 
-            Substitutions kernelSubs(openclFunctions, model.getPrecision());
+            Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
 
             synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
@@ -731,7 +738,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
-            Substitutions kernelSubs(openclFunctions, model.getPrecision());
+            Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
 
             synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
@@ -1036,7 +1043,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     size_t idInitStart = 0;
 
     //! KernelInitialize BODY START
-    Substitutions kernelSubs(openclFunctions, model.getPrecision());
+    Substitutions kernelSubs(openclPhilloxFunctions);
 
     // Creating the kernel body separately so it can be split into multiple string literals
     std::stringstream initializeKernelsStream;
@@ -1189,7 +1196,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(initializeKernels);
 
         // Common variables for all cases
-        Substitutions kernelSubs(openclFunctions, model.getPrecision());
+        Substitutions kernelSubs(openclPhilloxFunctions);
 
         initializeKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
         initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;

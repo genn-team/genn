@@ -29,7 +29,7 @@ public:
         // **HACK** while GCC and CLang automatically generate this fine/don't require it, VS2013 seems to need it
         FunctionTemplate operator = (const FunctionTemplate &o)
         {
-            return FunctionTemplate{o.genericName, o.numArguments, o.doublePrecisionTemplate, o.singlePrecisionTemplate};
+            return FunctionTemplate{o.genericName, o.numArguments, o.funcTemplate};
         }
 
         //! Generic name used to refer to function in user code
@@ -39,10 +39,7 @@ public:
         const unsigned int numArguments;
 
         //! The function template (for use with ::functionSubstitute) used when model uses double precision
-        const std::string doublePrecisionTemplate;
-
-        //! The function template (for use with ::functionSubstitute) used when model uses single precision
-        const std::string singlePrecisionTemplate;
+        const std::string funcTemplate;
     };
 
     Substitutions(const Substitutions *parent = nullptr) : m_Parent(parent)
@@ -50,12 +47,11 @@ public:
         assert(m_Parent != this);
     }
 
-    Substitutions(const std::vector<FunctionTemplate> &functions, const std::string &ftype) : m_Parent(nullptr)
+    Substitutions(const std::vector<FunctionTemplate> &functions) : m_Parent(nullptr)
     {
         // Loop through functions and add as substitutions
         for(const auto &f: functions) {
-            const std::string &funcTemplate = (ftype == "double") ? f.doublePrecisionTemplate : f.singlePrecisionTemplate;
-            addFuncSubstitution(f.genericName, f.numArguments, funcTemplate);
+            addFuncSubstitution(f.genericName, f.numArguments, f.funcTemplate);
         }
     }
 
