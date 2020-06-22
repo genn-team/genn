@@ -27,18 +27,18 @@ namespace
 //! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<Substitutions::FunctionTemplate> openclLFSRFunctions = {
     {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))"},
-    {"gennrand_normal", 0, "normalDist($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDist($(rng))"},
-    {"gennrand_log_normal", 2, "logNormalDist($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDist($(rng), $(0))"}
+    {"gennrand_normal", 0, "normalDistLfsr113($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistLfsr113($(rng))"},
+    {"gennrand_log_normal", 2, "logNormalDistLfsr113($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistLfsr113($(rng), $(0))"}
 };
 //-----------------------------------------------------------------------
 const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
-    {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))"},
-    {"gennrand_normal", 0, "normalDist($(rng))"},
-    {"gennrand_exponential", 0, "exponentialDist($(rng))"},
-    {"gennrand_log_normal", 2, "logNormalDist($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDist($(rng), $(0))"}
+    {"gennrand_uniform", 0, "clrngPhilox432RandomU01($(rng))"},
+    {"gennrand_normal", 0, "normalDistPhilox432($(rng))"},
+    {"gennrand_exponential", 0, "exponentialDistPhilox432($(rng))"},
+    {"gennrand_log_normal", 2, "logNormalDistPhilox432($(rng), $(0), $(1))"},
+    {"gennrand_gamma", 1, "gammaDistPhilox432($(rng), $(0))"}
 };
 //-----------------------------------------------------------------------
 bool isSparseInitRequired(const SynapseGroupInternal& sg)
@@ -1475,6 +1475,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
 
     os << "#include <CL/cl.hpp>" << std::endl;
     os << "#include <clRNG/lfsr113.h>" << std::endl;
+    os << "#include <clRNG/philox432.h>" << std::endl;
     os << std::endl;
 
     os << std::endl;
@@ -2223,6 +2224,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     // Include clRNG headers in kernel
     os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
     os << "#include <clRNG/lfsr113.clh>" << std::endl;
+    os << "#include <clRNG/philox432.clh>" << std::endl;
 
     os << "typedef " << precision << " scalar;" << std::endl;
     os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
@@ -2239,97 +2241,102 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "typedef short int16_t;" << std::endl;
     os << "typedef int int32_t;" << std::endl;
     os << std::endl;
+    
+    // Generate non-uniform generators for each supported RNG type
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Non-uniform generators" << std::endl;
-    os << "inline " << precision << " exponentialDist(clrngLfsr113Stream *rng)";
-    {
-        CodeStream::Scope b(os);
-        os << "while (true)";
+    const std::array<std::string, 2> rngs{"Lfsr113", "Philox432"};
+    for(const std::string &r : rngs) {
+        os << "inline " << precision << " exponentialDist" << r << "(clrng" << r << "Stream *rng)";
         {
             CodeStream::Scope b(os);
-            os << "const " << precision << " u = clrngLfsr113RandomU01(rng);" << std::endl;
-            os << "if (u != " << model.scalarExpr(0.0) << ")";
+            os << "while (true)";
             {
                 CodeStream::Scope b(os);
-                os << "return -log(u);" << std::endl;
+                os << "const " << precision << " u = clrng" << r << "RandomU01(rng);" << std::endl;
+                os << "if (u != " << model.scalarExpr(0.0) << ")";
+                {
+                    CodeStream::Scope b(os);
+                    os << "return -log(u);" << std::endl;
+                }
             }
-        }
-    }
-    os << std::endl;
-
-    // Box-Muller algorithm based on https://www.johndcook.com/SimpleRNG.cpp
-    os << "inline " << precision << " normalDist(clrngLfsr113Stream *rng)";
-    {
-        CodeStream::Scope b(os);
-        const std::string pi = (model.getPrecision() == "float") ? "M_PI_F" : "M_PI";
-        os << "const " << precision << " u1 = clrngLfsr113RandomU01(rng);" << std::endl;
-        os << "const " << precision << " u2 = clrngLfsr113RandomU01(rng);" << std::endl;
-        os << "const " << precision << " r = sqrt(" << model.scalarExpr(-2.0) << " * log(u1));" << std::endl;
-        os << "const " << precision << " theta = " << model.scalarExpr(2.0) << " * " << pi << " * u2;" << std::endl;
-        os << "return r * sin(theta);" << std::endl;
-    }
-    os << std::endl;
-
-    os << "inline " << precision << " logNormalDist(clrngLfsr113Stream *rng, " << precision << " mean," << precision << " stddev)" << std::endl;
-    {
-        CodeStream::Scope b(os);
-        os << "return exp(mean + (stddev * normalDist(rng)));" << std::endl;
-    }
-    os << std::endl;
-
-    // Generate gamma-distributed variates using Marsaglia and Tsang's method
-    // G. Marsaglia and W. Tsang. A simple method for generating gamma variables. ACM Transactions on Mathematical Software, 26(3):363-372, 2000.
-    os << "inline " << precision << " gammaDistInternal(clrngLfsr113Stream *rng, " << precision << " c, " << precision << " d)" << std::endl;
-    {
-        CodeStream::Scope b(os);
-        os << "" << precision << " x, v, u;" << std::endl;
-        os << "while (true)";
-        {
-            CodeStream::Scope b(os);
-            os << "do";
-            {
-                CodeStream::Scope b(os);
-                os << "x = normalDist(rng);" << std::endl;
-                os << "v = " << model.scalarExpr(1.0) << " + c*x;" << std::endl;
-            }
-            os << "while (v <= " << model.scalarExpr(0.0) << ");" << std::endl;
-            os << std::endl;
-            os << "v = v*v*v;" << std::endl;
-            os << "do";
-            {
-                CodeStream::Scope b(os);
-                os << "u = clrngLfsr113RandomU01(rng);" << std::endl;
-            }
-            os << "while (u == " << model.scalarExpr(1.0) << ");" << std::endl;
-            os << std::endl;
-            os << "if (u < " << model.scalarExpr(1.0) << " - " << model.scalarExpr(0.0331) << "*x*x*x*x) break;" << std::endl;
-            os << "if (log(u) < " << model.scalarExpr(0.5) << "*x*x + d*(" << model.scalarExpr(1.0) << " - v + log(v))) break;" << std::endl;
         }
         os << std::endl;
-        os << "return d*v;" << std::endl;
-    }
-    os << std::endl;
 
-    os << "inline " << precision << " gammaDistFloat(clrngLfsr113Stream *rng, " << precision << " a)" << std::endl;
-    {
-        CodeStream::Scope b(os);
-        os << "if (a > 1)" << std::endl;
+        // Box-Muller algorithm based on https://www.johndcook.com/SimpleRNG.cpp
+        os << "inline " << precision << " normalDist" << r << "(clrng" << r << "Stream *rng)";
         {
             CodeStream::Scope b(os);
-            os << "const " << precision << " u = clrngLfsr113RandomU01 (rng);" << std::endl;
-            os << "const " << precision << " d = (" << model.scalarExpr(1.0) << " + a) - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-            os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
-            os << "return gammaDistInternal(rng, c, d) * pow(u, " << model.scalarExpr(1.0) << " / a);" << std::endl;
+            const std::string pi = (model.getPrecision() == "float") ? "M_PI_F" : "M_PI";
+            os << "const " << precision << " u1 = clrng" << r << "RandomU01(rng);" << std::endl;
+            os << "const " << precision << " u2 = clrng" << r << "RandomU01(rng);" << std::endl;
+            os << "const " << precision << " r = sqrt(" << model.scalarExpr(-2.0) << " * log(u1));" << std::endl;
+            os << "const " << precision << " theta = " << model.scalarExpr(2.0) << " * " << pi << " * u2;" << std::endl;
+            os << "return r * sin(theta);" << std::endl;
         }
-        os << "else" << std::endl;
+        os << std::endl;
+
+        os << "inline " << precision << " logNormalDist" << r << "(clrng" << r << "Stream *rng, " << precision << " mean," << precision << " stddev)" << std::endl;
         {
             CodeStream::Scope b(os);
-            os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
-            os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
-            os << "return gammaDistInternal(rng, c, d);" << std::endl;
+            os << "return exp(mean + (stddev * normalDist" << r << "(rng)));" << std::endl;
         }
+        os << std::endl;
+
+        // Generate gamma-distributed variates using Marsaglia and Tsang's method
+        // G. Marsaglia and W. Tsang. A simple method for generating gamma variables. ACM Transactions on Mathematical Software, 26(3):363-372, 2000.
+        os << "inline " << precision << " gammaDistInternal" << r << "(clrng" << r << "Stream *rng, " << precision << " c, " << precision << " d)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "" << precision << " x, v, u;" << std::endl;
+            os << "while (true)";
+            {
+                CodeStream::Scope b(os);
+                os << "do";
+                {
+                    CodeStream::Scope b(os);
+                    os << "x = normalDist" << r << "(rng);" << std::endl;
+                    os << "v = " << model.scalarExpr(1.0) << " + c*x;" << std::endl;
+                }
+                os << "while (v <= " << model.scalarExpr(0.0) << ");" << std::endl;
+                os << std::endl;
+                os << "v = v*v*v;" << std::endl;
+                os << "do";
+                {
+                    CodeStream::Scope b(os);
+                    os << "u = clrng" << r << "RandomU01(rng);" << std::endl;
+                }
+                os << "while (u == " << model.scalarExpr(1.0) << ");" << std::endl;
+                os << std::endl;
+                os << "if (u < " << model.scalarExpr(1.0) << " - " << model.scalarExpr(0.0331) << "*x*x*x*x) break;" << std::endl;
+                os << "if (log(u) < " << model.scalarExpr(0.5) << "*x*x + d*(" << model.scalarExpr(1.0) << " - v + log(v))) break;" << std::endl;
+            }
+            os << std::endl;
+            os << "return d*v;" << std::endl;
+        }
+        os << std::endl;
+
+        os << "inline " << precision << " gammaDistFloat" << r << "(clrngL" << r << "Stream *rng, " << precision << " a)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "if (a > 1)" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "const " << precision << " u = clrng" << r << "RandomU01 (rng);" << std::endl;
+                os << "const " << precision << " d = (" << model.scalarExpr(1.0) << " + a) - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "return gammaDistInternal" << r << "(rng, c, d) * pow(u, " << model.scalarExpr(1.0) << " / a);" << std::endl;
+            }
+            os << "else" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
+                os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
+                os << "return gammaDistInternal" << r << "(rng, c, d);" << std::endl;
+            }
+        }
+        os << std::endl;
     }
-    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string& type, size_t size)
