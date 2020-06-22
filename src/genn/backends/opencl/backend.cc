@@ -1077,11 +1077,15 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedStructBuildKernels(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups());
 
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
+    bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
     const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
     const bool anyConnectivityInitGroups = !modelMerged.getMergedSynapseConnectivityInitGroups().empty();
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), anyDenseInitGroups || anyConnectivityInitGroups);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), false);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), anyDenseInitGroups || anyConnectivityInitGroups || globalRNGRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups || globalRNGRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), globalRNGRequired);
+    if(globalRNGRequired) {
+        initializeKernels << "__global clrngPhilox432Stream *d_rng";
+    }
     initializeKernels << ")";
     {
         CodeStream::Scope b(initializeKernels);
@@ -1207,7 +1211,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // Generate sparse initialisation kernel
     size_t idSparseInitStart = 0;
     initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups());
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), globalRNGRequired);
+    if(globalRNGRequired) {
+        initializeKernels << "__global clrngPhilox432Stream *d_rng";
+    }
     initializeKernels << ")";
     {
         CodeStream::Scope b(initializeKernels);
@@ -1426,6 +1433,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             genKernelDimensions(os, KernelInitialize, idInitStart);
             const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() + 
                                           modelMerged.getMergedSynapseConnectivityInitGroups().size());
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", d_rng));" << std::endl;
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &initEvent";
@@ -1455,6 +1463,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             CodeStream::Scope b(os);
             {
                 genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
+                if(globalRNGRequired) {
+                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << modelMerged.getMergedSynapseSparseInitGroups().size() << ", d_rng));" << std::endl;
+                }
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize";
                 if(model.isTimingEnabled()) {
                     os << ", nullptr, &initSparseEvent";
@@ -1978,13 +1989,13 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream &definitions, CodeStream &defini
 {
     genVariableDefinition(definitionsInternal, definitionsInternal, "clrngPhilox432Stream*", "rng", VarLocation::HOST_DEVICE);
     genVariableImplementation(runner, "clrngPhilox432Stream*", "rng", VarLocation::HOST_DEVICE);
-    genVariableFree(free, "rng", VarLocation::DEVICE);
+    genVariableFree(free, "rng", VarLocation::HOST_DEVICE);
 
     {
         CodeStream::Scope b(allocations);
         allocations << "size_t deviceBytes;" << std::endl;
-        allocations << "rng = clrngLfsr113CreateStreams(nullptr, 1, &deviceBytes, nullptr);" << std::endl;
-        allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
+        allocations << "rng = clrngPhilox432CreateStreams(nullptr, 1, &deviceBytes, nullptr);" << std::endl;
+        allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
     }
     return MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
 }
@@ -2309,6 +2320,20 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     const ModelSpecInternal &model = modelMerged.getModel();
     const std::string precision = model.getPrecision();
 
+    // **YUCK** OpenCL doesn't let you include C99 system header so, instead, 
+    // manually define C99 types in terms of OpenCL types (whose sizes are guaranteed)
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// C99 sized types" << std::endl;
+    os << "typedef uchar uint8_t;" << std::endl;
+    os << "typedef ushort uint16_t;" << std::endl;
+    os << "typedef uint uint32_t;" << std::endl;
+    os << "typedef ulong uint64_t;" << std::endl;
+    os << "typedef char int8_t;" << std::endl;
+    os << "typedef short int16_t;" << std::endl;
+    os << "typedef int int32_t;" << std::endl;
+    os << "typedef long int64_t;" << std::endl;
+    os << std::endl;
+
     // Include clRNG headers in kernel
     os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
     os << "#include <clRNG/lfsr113.clh>" << std::endl;
@@ -2318,17 +2343,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
-    // **YUCK** OpenCL doesn't let you include C99 system header so, instead, 
-    // manually define C99 types in terms of OpenCL types (whose sizes are guaranteed)
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// C99 sized types" << std::endl;
-    os << "typedef uchar uint8_t;" << std::endl;
-    os << "typedef ushort uint16_t;" << std::endl;
-    os << "typedef uint uint32_t;" << std::endl;
-    os << "typedef char int8_t;" << std::endl;
-    os << "typedef short int16_t;" << std::endl;
-    os << "typedef int int32_t;" << std::endl;
-    os << std::endl;
+   
     
     // Generate non-uniform generators for each supported RNG type
     os << "// ------------------------------------------------------------------------" << std::endl;
