@@ -71,7 +71,7 @@ fi
 export CUDA_PATH=${CUDA_PATH-/usr/local/cuda} 
 
 # Count cores using approach lifted from https://stackoverflow.com/questions/6481005/how-to-obtain-the-number-of-cpus-cores-in-linux-from-the-command-line
-if [[ $(uname) = "Darwin" ]]; then
+if [[ $(uname) == "Darwin" ]]; then
     CORE_COUNT=$(sysctl -n hw.physicalcpu_max)
 else
     CORE_COUNT=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
@@ -80,7 +80,8 @@ fi
 # generate model code
 BASEDIR=$(dirname "$0")
 
-if [[ $(GENERATOR_MAKEFILE) = "MakefileOpenCL" ]]; then
+# if we're using OpenCL, copy clRNG into destination
+if [[ "$GENERATOR_MAKEFILE" = "MakefileOpenCL" ]]; then
     cp -rf $BASEDIR/../src/genn/backends/opencl/clRNG .
 fi
 
