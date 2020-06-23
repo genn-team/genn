@@ -1427,12 +1427,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             for (const auto& s : model.getSynapseGroups()) {
                 // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
                 if (s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    const size_t gpSize = ((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)s.second.getTrgNeuronGroup()->getNumNeurons()) / 32 + 1;
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
+                    const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
+                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<uint32_t>(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
                 }
                 // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
                 else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
+                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
                 }
             }
             os << std::endl;
@@ -2122,7 +2122,7 @@ void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostrea
 void Backend::genMSBuildImportTarget(std::ostream& os) const
 {
     os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
-    std::vector<std::string> clrngItems = { "clRNG.c", "private.c", "mrg32k3a.c", "mrg31k3p.c", "lfsr113.c", "philox432.c" };
+    const std::array<std::string, 4> clrngItems = { "clRNG.c", "private.c", "lfsr113.c", "philox432.c" };
     for (const auto& clrngItem : clrngItems) {
         os << "\t\t<ClCompile Include=\"..\\clRNG\\" << clrngItem << "\" />" << std::endl;
     }
