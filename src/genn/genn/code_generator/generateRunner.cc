@@ -67,6 +67,24 @@ void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpik
     os << std::endl << std::endl;
 }
 //--------------------------------------------------------------------------
+void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl, const std::string &type, const std::string &name)
+{
+    definitionsVar << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+    runnerVarDecl << type << " " << name << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+MemAlloc genHostDeviceScalar(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsInternalVar, 
+                         CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree,
+                         const std::string &type, const std::string &name)
+{
+    // Generate a host scalar
+    genHostScalar(definitionsVar, runnerVarDecl, type, name);
+
+    // Generate a single-element array on device
+    return backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                            type, name, VarLocation::DEVICE, 1);
+}
+//--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
 {
     // A variable can be pushed and pulled if it is located on both host and device
@@ -507,18 +525,13 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Generate variables to store total elapsed time
     // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
-    definitionsVar << "EXPORT_VAR double neuronUpdateTime;" << std::endl;
-    definitionsVar << "EXPORT_VAR double initTime;" << std::endl;
-    definitionsVar << "EXPORT_VAR double presynapticUpdateTime;" << std::endl;
-    definitionsVar << "EXPORT_VAR double postsynapticUpdateTime;" << std::endl;
-    definitionsVar << "EXPORT_VAR double synapseDynamicsTime;" << std::endl;
-    definitionsVar << "EXPORT_VAR double initSparseTime;" << std::endl;
-    runnerVarDecl << "double neuronUpdateTime;" << std::endl;
-    runnerVarDecl << "double initTime;" << std::endl;
-    runnerVarDecl << "double presynapticUpdateTime;" << std::endl;
-    runnerVarDecl << "double postsynapticUpdateTime;" << std::endl;
-    runnerVarDecl << "double synapseDynamicsTime;" << std::endl;
-    runnerVarDecl << "double initSparseTime;" << std::endl;
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "initTime");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "initSparseTime");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "neuronUpdateTime");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "presynapticUpdateTime");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "postsynapticUpdateTime");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "synapseDynamicsTime");
+
     
     // If timing is actually enabled
     if(model.isTimingEnabled()) {
@@ -726,8 +739,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
-            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "spkQuePtr" + n.first, VarLocation::HOST_DEVICE, 1);
+            mem += genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                       "unsigned int", "spkQuePtr" + n.first);
         }
 
         // If neuron group needs to record its spike times
@@ -871,9 +884,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             if (sg->isDendriticDelayRequired()) {
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                         model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayLocation(),
-                                        sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
-                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), VarLocation::HOST_DEVICE, 1);
+                                        (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons());
+                mem += genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                           "unsigned int", "denDelayPtr" + sg->getPSModelTargetName());
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
