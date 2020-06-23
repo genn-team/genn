@@ -325,7 +325,7 @@ private:
                 Substitutions popSubs(&kernelSubs);
 
                 if(gMerge.getGroups().size() == 1) {
-                    os << "const __global struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                    os << "__global struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                     os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
                 }

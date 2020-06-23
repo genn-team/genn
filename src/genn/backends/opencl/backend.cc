@@ -602,7 +602,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     CodeStream::Scope b(synapseUpdateKernels);
 
                     // Use this to get reference to merged group structure
-                    synapseUpdateKernels << "MergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idPreSynapseReset << "]; " << std::endl;
+                    synapseUpdateKernels << "__global struct MergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idPreSynapseReset << "]; " << std::endl;
 
                     synapseUpdateKernels << "*group->denDelayPtr = (*group->denDelayPtr + 1) % " << n.getArchetype().getMaxDendriticDelayTimesteps() << ";" << std::endl;
                 }
