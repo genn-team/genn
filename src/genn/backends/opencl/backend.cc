@@ -1883,11 +1883,11 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
 
     if (!(loc & VarLocation::ZERO_COPY)) {
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << hostPointer;
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << devicePointer;
         os << ", " << "CL_TRUE";
         os << ", " << "0";
         os << ", " << countVarName << " * sizeof(" << underlyingType << ")";
-        os << ", " << devicePointer << "));" << std::endl;
+        os << ", " << hostPointer << "));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
