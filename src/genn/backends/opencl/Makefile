@@ -7,7 +7,7 @@ ifndef OPENCL_PATH
 endif
 
 # Add backend and OpenCL include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/opencl -I"$(OPENCL_PATH)/include"
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/opencl -I"$(OPENCL_PATH)/include" -Wno-ignored-attributes
 
 # Add prefix to object directory and library name
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_opencl_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)
