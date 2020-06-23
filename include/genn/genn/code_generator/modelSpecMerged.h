@@ -45,7 +45,8 @@ public:
     // Typedefines
     //--------------------------------------------------------------------------
     //! Map of original extra global param names to their locations within merged structures
-    typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
+    typedef std::unordered_multimap<std::string, MergedEGP> MergedEGPDestinations;
+    typedef std::map<std::string, MergedEGPDestinations> MergedEGPMap;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -119,7 +120,11 @@ public:
 
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
-    const MergedEGPMap &getMergedEGPs() const { return m_MergedEGPs; }
+    //! Get the map of destinations within the merged data structures for a particular variable
+    const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name, const BackendBase &backend) const
+    {
+        return m_MergedEGPs.at(backend.getArrayPrefix() + name);
+    }
 
     //! Generate calls to update all target merged groups
     //! **DEPRECATE** 'scalar' EGPs are innefficient and can now be replaced by 'mutable parameters' which can be explicitely set in merged structures
@@ -130,7 +135,7 @@ public:
     {
 
         if(!groups.empty()) {
-            // Loop through all extra global parameters to build a set of unique filename, group index pairs
+            // Loop through all extra global parameters to build a set of unique fieldname, group index pairs
             // **YUCK** it would be much nicer if this were part of the original data structure
             // **NOTE** tuple would be nicer but doesn't define std::hash overload
             std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;

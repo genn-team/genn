@@ -255,7 +255,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
 
             // Get destinations in merged structures, this EGP 
             // needs to be copied to and call push function
-            const auto &mergedDestinations = modelMerged.getMergedEGPs().at(backend.getArrayPrefix() + name);
+            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name, backend);
             for(const auto &v : mergedDestinations) {
                 extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
                 extraGlobalParam << v.second.groupIndex << ", " << backend.getArrayPrefix() << name << ");" << std::endl;
