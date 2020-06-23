@@ -1520,7 +1520,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
     os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
     os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
 
+#ifdef __APPLE__
+    os << "#include <OpenCL/cl.hpp>" << std::endl;
+#else
     os << "#include <CL/cl.hpp>" << std::endl;
+#endif
     os << "#include <clRNG/lfsr113.h>" << std::endl;
     os << "#include <clRNG/philox432.h>" << std::endl;
     os << std::endl;

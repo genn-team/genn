@@ -12,7 +12,11 @@
 
 // OpenCL includes
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#include <CL/cl.hpp>
+#ifdef __APPLE__
+    #include <OpenCL/cl.hpp>
+#else
+    #include <CL/cl.hpp>
+#endif
 
 // GeNN includes
 #include "backendExport.h"
