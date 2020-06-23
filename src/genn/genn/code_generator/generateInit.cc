@@ -203,7 +203,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedStructData, BackendBase::MemorySpaces &memorySpaces,
+void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
                                  const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
@@ -213,16 +213,12 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
 
     backend.genInit(os, modelMerged, memorySpaces,
         // Preamble handler
-        [&mergedStructData, &memorySpaces, &modelMerged, &backend](CodeStream &os)
+        [&modelMerged, &backend](CodeStream &os)
         {
-            genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), 
-                               mergedStructData, backend);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), 
-                               mergedStructData, backend);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), 
-                               mergedStructData, backend);
-            genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), 
-                               mergedStructData, backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
         },
         // Local neuron group initialisation
         [&backend, &model](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
@@ -399,15 +395,15 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
         },
         // Initialise push EGP handler
-        [&backend, &mergedStructData, &modelMerged, &model](CodeStream &os)
+        [&backend, &modelMerged](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedStructData, "NeuronInit", backend);
-            genScalarEGPPush(os, mergedStructData, "SynapseDenseInit", backend);
-            genScalarEGPPush(os, mergedStructData, "SynapseConnectivityInit", backend);
+            modelMerged.genScalarEGPPush(os, "NeuronInit", backend);
+            modelMerged.genScalarEGPPush(os, "SynapseDenseInit", backend);
+            modelMerged.genScalarEGPPush(os, "SynapseConnectivityInit", backend);
         },
         // Initialise sparse push EGP handler
-        [&backend, &mergedStructData](CodeStream &os)
+        [&backend, &modelMerged](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedStructData, "SynapseSparseInit", backend);
+            modelMerged.genScalarEGPPush(os, "SynapseSparseInit", backend);
         });
 }

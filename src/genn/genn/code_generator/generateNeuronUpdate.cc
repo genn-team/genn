@@ -108,7 +108,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData &mergedStructData, BackendBase::MemorySpaces &memorySpaces,
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
@@ -118,13 +118,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
     // Neuron update kernel
     backend.genNeuronUpdate(os, modelMerged, memorySpaces,
         // Preamble handler
-        [&mergedStructData, &memorySpaces, &modelMerged, &backend](CodeStream &os)
+        [&modelMerged, &backend](CodeStream &os)
         {
             // Generate functions to push merged neuron group structures
-            genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), 
-                               mergedStructData, backend);
-            genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), 
-                               mergedStructData, backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
         },
         // Sim handler
         [&backend, &modelMerged](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs,
@@ -497,8 +495,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, const MergedStructData 
                                 &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
         },
         // Push EGP handler
-        [&backend, &mergedStructData](CodeStream &os)
+        [&backend, &modelMerged](CodeStream &os)
         {
-            genScalarEGPPush(os, mergedStructData, "NeuronUpdate", backend);
+            modelMerged.genScalarEGPPush(os, "NeuronUpdate", backend);
         });
 }

@@ -20,53 +20,10 @@
 #include "teeStream.h"
 
 //--------------------------------------------------------------------------
-// CodeGenerator::FunctionTemplate
+// CodeGenerator
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-//--------------------------------------------------------------------------
-// CodeGenerator::MergedStructData
-//--------------------------------------------------------------------------
-//! Class for storing data generated when writing merged
-//! structures in runner and required in later code generation
-class MergedStructData
-{
-public:
-    //! Immutable structure for tracking where an extra global variable ends up after merging
-    struct MergedEGP
-    {
-        MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f)
-        :   mergedGroupIndex(m), groupIndex(g), type(t), fieldName(f){}
-
-        const size_t mergedGroupIndex;
-        const size_t groupIndex;
-        const std::string type;
-        const std::string fieldName;
-    };
-
-    //! Map of original extra global param names to their locations within merged structures
-    typedef std::map<std::string, std::unordered_multimap<std::string, MergedEGP>> MergedEGPMap;
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    const MergedEGPMap &getMergedEGPs() const{ return m_MergedEGPs; }
-
-    void addMergedEGP(const std::string &variableName, const std::string &mergedGroupType,
-                      size_t mergedGroupIndex, size_t groupIndex, const std::string &type, const std::string &fieldName)
-    {
-        m_MergedEGPs[variableName].emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(mergedGroupType),
-            std::forward_as_tuple(mergedGroupIndex, groupIndex, type, fieldName));
-    }
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    MergedEGPMap m_MergedEGPs;
-};
-
 //--------------------------------------------------------------------------
 //! \brief Tool for substituting strings in the neuron code strings or other templates
 //--------------------------------------------------------------------------
@@ -107,48 +64,6 @@ inline size_t padSize(size_t size, size_t blockSize)
 {
     return ceilDivide(size, blockSize) * blockSize;
 }
-
-template<typename T>
-void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
-                        const BackendBase &backend)
-{
-    
-    if(!groups.empty()) {
-        // Loop through all extra global parameters to build a set of unique filename, group index pairs
-        // **YUCK** it would be much nicer if this were part of the original data structure
-        // **NOTE** tuple would be nicer but doesn't define std::hash overload
-        std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;
-        for(const auto &e : mergedStructData.getMergedEGPs()) {
-            const auto groupEGPs = e.second.equal_range(T::name);
-            std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
-                           [](const MergedStructData::MergedEGPMap::value_type::second_type::value_type &g)
-                           {
-                               return std::make_pair(g.second.mergedGroupIndex, 
-                                                     std::make_pair(g.second.type, g.second.fieldName));
-                           });
-        }
-
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// merged extra global parameter functions" << std::endl;
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        // Loop through resultant fields and generate push function for pointer extra global parameters
-        for(auto f : mergedGroupFields) {
-            // If EGP is a pointer
-            // **NOTE** this is common to all references!
-            if(Utils::isTypePointer(f.second.first)) {
-                os << "void pushMerged" << T::name << f.first << f.second.second << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.second.first) << " value)";
-                {
-                    CodeStream::Scope b(os);
-                    backend.genMergedExtraGlobalParamPush(os, T::name, f.first, "idx", f.second.second, "value");
-                }
-                os << std::endl;
-            }
-        }
-    }
-}
-
-
-GENN_EXPORT void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend);
 
 GENN_EXPORT void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix);
 

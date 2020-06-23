@@ -10,75 +10,6 @@
 using namespace CodeGenerator;
 
 //----------------------------------------------------------------------------
-// Anonymous namespace
-//----------------------------------------------------------------------------
-namespace
-{
-template<typename Group, typename MergedGroup, typename M>
-void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend, 
-                        std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                        std::vector<MergedGroup> &mergedGroups, M canMerge)
-{
-    // Loop through un-merged  groups
-    std::vector<std::vector<std::reference_wrapper<const Group>>> protoMergedGroups;
-    while(!unmergedGroups.empty()) {
-        // Remove last group from vector
-        const Group &group = unmergedGroups.back().get();
-        unmergedGroups.pop_back();
-
-        // Loop through existing proto-merged groups
-        bool existingMergedGroupFound = false;
-        for(auto &p : protoMergedGroups) {
-            assert(!p.empty());
-
-            // If our group can be merged with this proto-merged group
-            if(canMerge(p.front().get(), group)) {
-                // Add group to vector
-                p.emplace_back(group);
-
-                // Set flag and stop searching
-                existingMergedGroupFound = true;
-                break;
-            }
-        }
-
-        // If no existing merged groups were found, 
-        // create a new proto-merged group containing just this group
-        if(!existingMergedGroupFound) {
-            protoMergedGroups.emplace_back();
-            protoMergedGroups.back().emplace_back(group);
-        }
-    }
-
-    // Reserve final merged groups vector
-    mergedGroups.reserve(protoMergedGroups.size());
-
-    // Build, moving vectors of groups into data structure to avoid copying
-    for(size_t i = 0; i < protoMergedGroups.size(); i++) {
-        mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
-                                  std::move(protoMergedGroups[i]));
-    }
-}
-//----------------------------------------------------------------------------
-template<typename Group, typename MergedGroup, typename F, typename M>
-void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
-                        const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                        F filter, M canMerge)
-{
-    // Build temporary vector of references to groups that pass filter
-    std::vector<std::reference_wrapper<const Group>> unmergedGroups;
-    for(const auto &g : groups) {
-        if(filter(g.second)) {
-            unmergedGroups.emplace_back(std::cref(g.second));
-        }
-    }
-
-    // Merge filtered vector
-    createMergedGroups(model, backend, unmergedGroups, mergedGroups, canMerge);
-}
-}   // Anonymous namespace
-
-//----------------------------------------------------------------------------
 // CodeGenerator::ModelSpecMerged
 //----------------------------------------------------------------------------
 CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
@@ -196,5 +127,23 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
     // Loop through merged synapse dynamics groups and add support code
     for(const auto &sg : m_MergedSynapseDynamicsGroups) {
         m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
+    }
+}
+//----------------------------------------------------------------------------
+void CodeGenerator::ModelSpecMerged::genScalarEGPPush(CodeStream &os, const std::string &suffix, const BackendBase &backend) const
+{
+    // Loop through all merged EGPs
+    for(const auto &e : m_MergedEGPs) {
+        // Loop through all destination structures with this suffix
+        const auto groupEGPs = e.second.equal_range(suffix);
+        for(auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
+            // If EGP is scalar, generate code to copy
+            if(!Utils::isTypePointer(g->second.type)) {
+                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex,
+                                                      std::to_string(g->second.groupIndex),
+                                                      g->second.fieldName, e.first);
+            }
+
+        }
     }
 }

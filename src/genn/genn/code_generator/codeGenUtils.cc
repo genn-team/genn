@@ -340,24 +340,6 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 
-void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend)
-{
-    // Loop through all merged EGPs
-    for(const auto &e : mergedStructData.getMergedEGPs()) {
-        // Loop through range with correct suffix
-        const auto groupEGPs = e.second.equal_range(suffix);
-        for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-            // If EGP is scalar, generate code to copy
-            if(!Utils::isTypePointer(g->second.type)) {
-                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, 
-                                                      std::to_string(g->second.groupIndex), 
-                                                      g->second.fieldName, e.first);
-            }
-
-        }
-    }
-}
-
 void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
     os << "#define " << prefix << "_MIN ";

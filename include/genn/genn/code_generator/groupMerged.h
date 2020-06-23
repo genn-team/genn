@@ -20,7 +20,6 @@
 namespace CodeGenerator
 {
 class CodeStream;
-class MergedStructData;
 }
 
 //----------------------------------------------------------------------------
@@ -67,6 +66,9 @@ public:
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
+    //! Get group fields
+    const std::vector<Field> &getFields() const{ return m_Fields; }
+
     //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
@@ -75,9 +77,9 @@ public:
         auto sortedFields = m_Fields;
         std::sort(sortedFields.begin(), sortedFields.end(),
                   [&backend](const Field &a, const Field &b)
-        {
-            return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
-        });
+                  {
+                      return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
+                  });
         return sortedFields;
 
     }
@@ -191,6 +193,7 @@ protected:
 
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
+        // Add field to data structure
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
@@ -313,7 +316,7 @@ protected:
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
                             CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                             CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                            MergedStructData &mergedStructData, const std::string &name, bool host = false) const
+                            const std::string &name, bool host = false) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
@@ -367,15 +370,6 @@ protected:
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
-
-            // Loop through fields
-            for(const auto &f : sortedFields) {
-                // If field is an EGP, add record to merged EGPS
-                if(std::get<3>(f) == FieldType::PointerEGP || std::get<3>(f) == FieldType::ScalarEGP) {
-                    mergedStructData.addMergedEGP(std::get<2>(f)(g, groupIndex), name, getIndex(), groupIndex,
-                                                  std::get<0>(f), std::get<1>(f));
-                }
-            }
         }
     }
 
@@ -423,11 +417,10 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                   CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                  MergedStructData &mergedStructData) const
+                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     void genMergedGroupSpikeCountReset(CodeStream &os) const;
@@ -702,11 +695,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
     
     //----------------------------------------------------------------------------
@@ -756,11 +748,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -803,11 +794,10 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -830,11 +820,10 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name, true);
+                           runnerVarDecl, runnerMergedStructAlloc, name, true);
     }
 
     //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
@@ -869,11 +858,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -984,11 +972,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1011,11 +998,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1038,11 +1024,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1064,11 +1049,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1090,11 +1074,10 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                        MergedStructData &mergedStructData) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedStructData, name);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
