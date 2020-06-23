@@ -12,10 +12,13 @@
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
+// GeNN code generator includes
+#include "code_generator/backendBase.h"
+#include "code_generator/codeGenUtils.h"
+
 // Forward declarations
 namespace CodeGenerator
 {
-class BackendBase;
 class CodeStream;
 class MergedStructData;
 }
@@ -336,13 +339,13 @@ protected:
             // If this is a merged group used on the host, directly set array entry
             if(host) {
                 runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
-                generateStructFieldArguments(runnerMergedStructAlloc, backend, groupIndex, sortedFields);
+                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
                 runnerMergedStructAlloc << "pushMerged" << name << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
-                generateStructFieldArguments(runnerMergedStructAlloc, backend, groupIndex, sortedFields);
+                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
 
@@ -361,8 +364,8 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void generateStructFieldArguments(CodeStream &os, const BackendBase &backend,
-                                      size_t groupIndex, const std::vector<Field> &sortedFields) const
+    void generateStructFieldArguments(CodeStream &os, size_t groupIndex, 
+                                      const std::vector<Field> &sortedFields) const
     {
         // Get group by index
         const auto &g = getGroups()[groupIndex];

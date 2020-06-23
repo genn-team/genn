@@ -28,13 +28,11 @@ BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++11"
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cldmvs:o:i:h" option; do
+    while getopts "cldvs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
-        l) GENERATOR_MAKEFILE="MakefileOpenCL"
-           cp -Tr "$BASEDIR/../src/genn/backends/opencl/clRNG" "clRNG";;
+        l) GENERATOR_MAKEFILE="MakefileOpenCL";;
         d) DEBUG=1;;
-        m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
         h) genn_help; exit;;
         s) CXX_STANDARD="$OPTARG";;
@@ -63,11 +61,6 @@ if [[ -n "$DEBUG" ]]; then
     GENERATOR="$GENERATOR"_debug
 fi
 
-if [[ -n "$MPI_ENABLE" ]]; then
-    MACROS="$MACROS MPI_ENABLE=1";
-    GENERATOR="$GENERATOR"_mpi
-fi
-
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
     GENERATOR="$GENERATOR"_coverage
@@ -86,20 +79,17 @@ fi
 
 # generate model code
 BASEDIR=$(dirname "$0")
-make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
-if [[ -n "$MPI_ENABLE" ]]; then
-    cp "$GENERATOR" "$GENERATOR"_"$OMPI_COMM_WORLD_RANK"
+if [[ $(GENERATOR_MAKEFILE) = "MakefileOpenCL" ]]; then
+    cp -rf $BASEDIR/../src/genn/backends/opencl/clRNG .
 fi
+
+make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$DEBUG" ]]; then
     gdb -tui --args "$GENERATOR" "$OUT_PATH"
 else
-    if [[ -n "$MPI_ENABLE" ]]; then
-        "$GENERATOR"_"$OMPI_COMM_WORLD_RANK" "$OUT_PATH"
-    else
-        "$GENERATOR" "$OUT_PATH"
-    fi
+    "$GENERATOR" "$OUT_PATH"
 fi
 
 echo "model build complete"

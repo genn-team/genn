@@ -2,19 +2,20 @@
 BACKEND_NAME		:=opencl
 BACKEND_NAMESPACE 	:=OpenCL
 
-# Check OpenCL is present
-ifndef OPENCL_PATH
-    $(error Environment variable OPENCL_PATH must be defined)
-endif
-
 # Include common makefile
 include MakefileCommon
 
 # Add include and link flags for OpenCL
-CXXFLAGS		+= -I"$(OPENCL_PATH)/include"
 ifeq ($(DARWIN),DARWIN)
-    LDFLAGS		+=-rpath $(OPENCL_PATH)/lib64 -L"$(OPENCL_PATH)/lib64" -lOpenCL
+    CXXFLAGS += -framework OpenCL
+    #LDFLAGS		+=-rpath $(OPENCL_PATH)/lib64 -L"$(OPENCL_PATH)/lib64" -lOpenCL
 else
+    # Check OpenCL is present
+    ifndef OPENCL_PATH
+        $(error Environment variable OPENCL_PATH must be defined)
+    endif
+    
+    CXXFLAGS		+= -I"$(OPENCL_PATH)/include"
     ifeq ($(OS_SIZE),32)
         LDFLAGS		+=-L"$(OPENCL_PATH)/lib" -lOpenCL
     else
