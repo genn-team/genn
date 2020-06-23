@@ -330,7 +330,8 @@ protected:
         for(const auto &f : sortedFields) {
             // If this field is for a pointer EGP, also declare function to push it
             if(std::get<3>(f) == FieldType::PointerEGP) {
-                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
+                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
+                definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
             
             // Raise error if this field is a host field but this isn't a host structure

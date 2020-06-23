@@ -136,7 +136,7 @@ void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const Merg
             // If EGP is a pointer
             // **NOTE** this is common to all references!
             if(Utils::isTypePointer(f.second.first)) {
-                os << "void pushMerged" << T::name << f.first << f.second.second << "ToDevice(unsigned int idx, " << f.second.first << " value)";
+                os << "void pushMerged" << T::name << f.first << f.second.second << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.second.first) << " value)";
                 {
                     CodeStream::Scope b(os);
                     backend.genMergedExtraGlobalParamPush(os, T::name, f.first, "idx", f.second.second, "value");
