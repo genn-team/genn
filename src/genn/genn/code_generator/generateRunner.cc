@@ -309,13 +309,10 @@ MemAlloc genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
     if(seed == 0) {
         runnerVarAlloc << "uint32_t seedData[std::mt19937::state_size];" << std::endl;
         runnerVarAlloc << "std::random_device seedSource;" << std::endl;
+        runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
         {
             CodeStream::Scope b(runnerVarAlloc);
-            runnerVarAlloc << "for(int i = 0; i < std::mt19937::state_size; i++)";
-            {
-                CodeStream::Scope b(runnerVarAlloc);
-                runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
-            }
+            runnerVarAlloc << "seedData[i] = seedSource();" << std::endl;
         }
         runnerVarAlloc << "std::seed_seq seeds(std::begin(seedData), std::end(seedData));" << std::endl;
     }
