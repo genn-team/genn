@@ -230,7 +230,9 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
-    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() && backend.isPopulationRNGInitialisedOnDevice()) {
+    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() 
+       && (!init || backend.isPopulationRNGInitialisedOnDevice())) 
+    {
         addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getArrayPrefix() + "rng");
     }
 
@@ -1033,7 +1035,7 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     if(role == Role::PresynapticUpdate || role == Role::SynapseDynamics) {
         if(getArchetype().isDendriticDelayRequired()) {
             addPSPointerField(precision, "denDelay", backend.getArrayPrefix() + "denDelay");
-            addPSPointerField("unsigned int", "denDelayPtrInSyn", backend.getArrayPrefix() + "denDelayPtr");
+            addPSPointerField("unsigned int", "denDelayPtr", backend.getArrayPrefix() + "denDelayPtr");
         }
         else {
             addPSPointerField(precision, "inSyn", backend.getArrayPrefix() + "inSyn");
