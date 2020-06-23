@@ -179,6 +179,10 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
     if(deviceAddressBytes != sizeof(void*)) {
         throw std::runtime_error("OpenCL backend does not currently support devices with pointer sizes that differ from host (" + std::to_string(deviceAddressBytes) + " vs " + std::to_string(sizeof(void *)) + ")");
     }
+
+    // Add OpenCL-specific types
+    addType("clrngLfsr113Stream", 16);
+    addType("clrngPhilox432Stream", 36);
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
