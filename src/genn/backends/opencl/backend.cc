@@ -1450,9 +1450,12 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
             os << std::endl;
             genKernelDimensions(os, KernelInitialize, idInitStart);
-            const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() + 
-                                          modelMerged.getMergedSynapseConnectivityInitGroups().size());
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", d_rng));" << std::endl;
+            if(globalRNGRequired) {
+                const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() +
+                                              modelMerged.getMergedSynapseConnectivityInitGroups().size());
+
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", d_rng));" << std::endl;
+            }
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitialize] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &initEvent";
