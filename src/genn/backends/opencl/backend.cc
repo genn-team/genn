@@ -1898,12 +1898,12 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
                                             const std::string &groupIdx, const std::string &fieldName,
                                             const std::string &egpName) const
 {
-    const std::string structName = "Merged" + suffix + "Group" + std::to_string(mergedGroupIdx);
-    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(dd_merged" << suffix << "Group" << mergedGroupIdx;
-    os << ", " << "CL_FALSE";
-    os << ", " << "(sizeof(" << structName << ") * (" << groupIdx << ")) + offsetof(" << structName << ", " << fieldName << ")";
-    os << ", " << "sizeof(" << egpName << ")";
-    os << ", &egpName));" << std::endl;
+    const std::string kernelName = "setMerged" + suffix + std::to_string(mergedGroupIdx) + fieldName + "Kernel";
+    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(1, idx));" << std::endl;
+    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(2, value));" << std::endl;
+    os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
+    os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
+    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
 }
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
