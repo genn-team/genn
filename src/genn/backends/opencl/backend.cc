@@ -1906,6 +1906,9 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
 std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
 {
     // If type is a pointer, on the host it is represented by an OpenCL buffer
+    if(::Utils::isTypePointerToPointer(type)) {
+        return "cl::Buffer*";
+    }
     if(::Utils::isTypePointer(type)) {
         return "cl::Buffer";
     }
