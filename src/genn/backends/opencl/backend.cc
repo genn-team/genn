@@ -2054,11 +2054,11 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream& os) const
 {
-    os << "OBJECTS += clRNG.o private.o mrg32k3a.o mrg31k3p.o lfsr113.o philox432.o" << std::endl;
+    os << "OBJECTS += ../clRNG/clRNG.o ../clRNG/private.o ../clRNG/lfsr113.o ../clRNG/philox432.o" << std::endl;
     os << "LIBS := " << "-lOpenCL" << std::endl;
     os << "LINKFLAGS := " << "-shared" << std::endl;
     os << "CCFLAGS := " << "-c -fPIC -MMD -MP -I$(OPENCL_PATH)/include -I\"../clRNG/include\"" << std::endl;
-    os << "CXXFLAGS += " << "-std=c++11 $(CCFLAGS)" << std::endl;
+    os << "CXXFLAGS += " << "-std=c++11 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream& os) const
@@ -2071,7 +2071,7 @@ void Backend::genMakefileCompileRule(std::ostream& os) const
     os << "%.o: %.cc" << std::endl;
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
     os << std::endl;
-    os << "%.o: ../clRNG/%.c" << std::endl;
+    os << "../clRNG/%.o: ../clRNG/%.c" << std::endl;
     os << "\t@$(CC) $(CCFLAGS) -o $@ $<" << std::endl;
     os << std::endl;
 }
