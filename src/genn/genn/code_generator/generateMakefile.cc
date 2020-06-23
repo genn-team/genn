@@ -39,15 +39,6 @@ void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backen
     os << "all: librunner.so" << std::endl;
     os << std::endl;
 
-    // Add rule to build shared library from objects
-    os << "librunner.so: $(OBJECTS)" << std::endl;
-    backend.genMakefileLinkRule(os);
-    // On Mac OS X add final step to recipe to make librunner relative to rpath
-#ifdef __APPLE__
-    os << "\t@install_name_tool -id \"@rpath/$@\" $@" << std::endl;
-#endif
-    os << std::endl;
-
     // Include depencies
     os << "-include $(DEPS)" << std::endl;
     os << std::endl;
@@ -58,6 +49,15 @@ void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backen
 
     // Add dummy rule to handle missing .d files on first build
     os << "%.d: ;" << std::endl;
+    os << std::endl;
+
+    // Add rule to build shared library from objects
+    os << "librunner.so: $(OBJECTS)" << std::endl;
+    backend.genMakefileLinkRule(os);
+    // On Mac OS X add final step to recipe to make librunner relative to rpath
+#ifdef __APPLE__
+    os << "\t@install_name_tool -id \"@rpath/$@\" $@" << std::endl;
+#endif
     os << std::endl;
 
     // Add clean rule
