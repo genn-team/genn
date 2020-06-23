@@ -39,6 +39,7 @@ public:
     enum class FieldType
     {
         Standard,
+        Host,
         ScalarEGP,
         PointerEGP,
     };
@@ -83,7 +84,7 @@ public:
 
     //! Generate declaration of struct to hold this merged group
     void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name,
-                        bool ignorePointerPrefix = false) const
+                        bool host = false) const
     {
         os << "struct Merged" << name << "Group" << getIndex() << std::endl;
         {
@@ -91,10 +92,24 @@ public:
             CodeStream::Scope b(os);
             const auto sortedFields = getSortedFields(backend);
             for(const auto &f : sortedFields) {
-                if(!ignorePointerPrefix && ::Utils::isTypePointer(std::get<0>(f))) {
-                    os << backend.getPointerPrefix();
+                // If field is a pointer and not marked as being a host field 
+                // (in which case the backend should leave its type alone!)
+                const std::string &type = std::get<0>(f);
+                if(::Utils::isTypePointer(type) && std::get<3>(f) != FieldType::Host) {
+                    // If we are generating a host structure, allow the backend to override the type
+                    if(host) {
+                        os << backend.getMergedGroupFieldHostType(type);
+                    }
+                    // Otherwise, allow the backend to add a prefix 
+                    else {
+                        os << backend.getPointerPrefix() << type;
+                    }
                 }
-                os << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+                // Otherwise, leave the type alone
+                else {
+                    os << type;
+                }
+                os << " " << std::get<1>(f) << ";" << std::endl;
             }
             os << std::endl;
         }
@@ -317,6 +332,9 @@ protected:
             if(std::get<3>(f) == FieldType::PointerEGP) {
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, " << std::get<0>(f) << " value);" << std::endl;
             }
+            
+            // Raise error if this field is a host field but this isn't a host structure
+            assert(std::get<3>(f) != FieldType::Host || host);
         }
 
         // If merged group is used on host
@@ -352,7 +370,7 @@ protected:
             // Loop through fields
             for(const auto &f : sortedFields) {
                 // If field is an EGP, add record to merged EGPS
-                if(std::get<3>(f) != FieldType::Standard) {
+                if(std::get<3>(f) == FieldType::PointerEGP || std::get<3>(f) == FieldType::ScalarEGP) {
                     mergedStructData.addMergedEGP(std::get<2>(f)(g, groupIndex), name, getIndex(), groupIndex,
                                                   std::get<0>(f), std::get<1>(f));
                 }

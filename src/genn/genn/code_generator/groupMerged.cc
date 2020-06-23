@@ -770,7 +770,8 @@ CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostIn
     const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
     for(const auto &e : egps) {
         addField(e.type + "*", e.name,
-                 [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); });
+                 [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
+                 FieldType::Host);
 
         addField(e.type + "*", backend.getArrayPrefix() + e.name,
                  [e, &backend](const SynapseGroupInternal &g, size_t)
