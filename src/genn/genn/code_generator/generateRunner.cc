@@ -216,12 +216,12 @@ MemAlloc genVariable(const BackendBase &backend, CodeStream &definitionsVar, Cod
 }
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const BackendBase &backend, CodeStream &definitionsVar,
-                         CodeStream &definitionsFunc, CodeStream &runner,
+                         CodeStream &definitionsFunc, CodeStream &definitionsInternalVar, CodeStream &runner,
                          CodeStream &extraGlobalParam, const MergedStructData &mergedStructData,
                          const std::string &type, const std::string &name, bool apiRequired, VarLocation loc)
 {
     // Generate variables
-    backend.genExtraGlobalParamDefinition(definitionsVar, type, name, loc);
+    backend.genExtraGlobalParamDefinition(definitionsVar, definitionsInternalVar, type, name, loc);
     backend.genExtraGlobalParamImplementation(runner, type, name, loc);
 
     // If type is a pointer and API is required
@@ -283,8 +283,8 @@ void genExtraGlobalParam(const BackendBase &backend, CodeStream &definitionsVar,
 MemAlloc genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
                           CodeStream &runnerVarAlloc, unsigned int seed)
 {
-    definitionsVar << "EXPORT_VAR " << "std::mt19937 rng;" << std::endl;
-    runnerVarDecl << "std::mt19937 rng;" << std::endl;
+    definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
+    runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
 
     // If no seed is specified, use system randomness to generate seed sequence
     CodeStream::Scope b(runnerVarAlloc);
@@ -308,7 +308,7 @@ MemAlloc genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
     }
 
     // Seed RNG from seed sequence
-    runnerVarAlloc << "rng.seed(seeds);" << std::endl;
+    runnerVarAlloc << "hostRNG.seed(seeds);" << std::endl;
 
     // Add size of Mersenne Twister to memory tracker
     return MemAlloc::host(sizeof(std::mt19937));
@@ -334,7 +334,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
 
         // Create substitutions
         Substitutions subs;
-        subs.addVarSubstitution("rng", "rng");
+        subs.addVarSubstitution("rng", "hostRNG");
         subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
         subs.addVarSubstitution("num_post", "group->numTrgNeurons");
         subs.addVarSubstitution("num_threads", std::to_string(numThreads));
@@ -505,15 +505,21 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << "// timers" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
 
-    // Generate scalars to store total elapsed time
+    // Generate variables to store total elapsed time
     // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
-    backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "double", "neuronUpdateTime", VarLocation::HOST);
-    backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "double", "initTime", VarLocation::HOST);
-    backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "double", "presynapticUpdateTime", VarLocation::HOST);
-    backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "double", "postsynapticUpdateTime", VarLocation::HOST);
-    backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "double", "synapseDynamicsTime", VarLocation::HOST);
-    backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "double", "initSparseTime", VarLocation::HOST);
-
+    definitionsVar << "EXPORT_VAR double neuronUpdateTime;" << std::endl;
+    definitionsVar << "EXPORT_VAR double initTime;" << std::endl;
+    definitionsVar << "EXPORT_VAR double presynapticUpdateTime;" << std::endl;
+    definitionsVar << "EXPORT_VAR double postsynapticUpdateTime;" << std::endl;
+    definitionsVar << "EXPORT_VAR double synapseDynamicsTime;" << std::endl;
+    definitionsVar << "EXPORT_VAR double initSparseTime;" << std::endl;
+    runnerVarDecl << "double neuronUpdateTime;" << std::endl;
+    runnerVarDecl << "double initTime;" << std::endl;
+    runnerVarDecl << "double presynapticUpdateTime;" << std::endl;
+    runnerVarDecl << "double postsynapticUpdateTime;" << std::endl;
+    runnerVarDecl << "double synapseDynamicsTime;" << std::endl;
+    runnerVarDecl << "double initSparseTime;" << std::endl;
+    
     // If timing is actually enabled
     if(model.isTimingEnabled()) {
         // Create neuron timer
@@ -720,7 +726,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
-            backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "unsigned int", "spkQuePtr" + n.first, VarLocation::HOST_DEVICE);
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    "unsigned int", "spkQuePtr" + n.first, VarLocation::HOST_DEVICE, 1);
         }
 
         // If neuron group needs to record its spike times
@@ -783,8 +790,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             // Loop through EGPs required to initialize neuron variable
             const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
             for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    mergedStructData, extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + n.first,
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                    runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                    extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + n.first,
                                     true, VarLocation::HOST_DEVICE);
             }
         }
@@ -798,8 +806,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         const auto extraGlobalParams = neuronModel->getExtraGlobalParams();
         for(size_t i = 0; i < extraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedStructData, extraGlobalParams[i].type, extraGlobalParams[i].name + n.first,
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                extraGlobalParams[i].type, extraGlobalParams[i].name + n.first,
                                 true, n.second.getExtraGlobalParamLocation(i));
         }
 
@@ -821,8 +830,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 // Loop through EGPs required to initialize current source variable
                 const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
                 for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                    genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                        mergedStructData, extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + cs->getName(),
+                    genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                        runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + vars[i].name + cs->getName(),
                                         true, VarLocation::HOST_DEVICE);
                 }
             }
@@ -836,8 +846,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
             const auto csExtraGlobalParams = csModel->getExtraGlobalParams();
             for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    mergedStructData, csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(),
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                    runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                    csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + cs->getName(),
                                     true, cs->getExtraGlobalParamLocation(i));
             }
         }
@@ -861,7 +872,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                         model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayLocation(),
                                         sg->getMaxDendriticDelayTimesteps() * sg->getTrgNeuronGroup()->getNumNeurons());
-                backend.genScalar(definitionsVar, definitionsInternalVar, runnerVarDecl, "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), VarLocation::HOST_DEVICE);
+                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), VarLocation::HOST_DEVICE, 1);
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
@@ -874,8 +886,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                     // Loop through EGPs required to initialize PSM variable
                     const auto extraGlobalParams = sg->getPSVarInitialisers()[v].getSnippet()->getExtraGlobalParams();
                     for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                        genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                            mergedStructData, extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getPSModelTargetName(),
+                        genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                            runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                            extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getPSModelTargetName(),
                                             true, VarLocation::HOST_DEVICE);
                     }
                 }
@@ -981,8 +994,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 // Loop through EGPs required to initialize WUM variable
                 const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
                 for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                    genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                        mergedStructData, extraGlobalParams[e].type, extraGlobalParams[e].name + wuVars[i].name + s.second.getName(),
+                    genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                        runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuVars[i].name + s.second.getName(),
                                         true, VarLocation::HOST_DEVICE);
                 }
             }
@@ -1003,8 +1017,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             // Loop through EGPs required to initialize WUM variable
             const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
             for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    mergedStructData, extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + s.second.getName(),
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                    runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                    extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + s.second.getName(),
                                     true, VarLocation::HOST_DEVICE);
             }
         }
@@ -1024,8 +1039,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             // Loop through EGPs required to initialize WUM variable
             const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
             for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    mergedStructData, extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + s.second.getName(),
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                    runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                    extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + s.second.getName(),
                                     true, VarLocation::HOST_DEVICE);
             }
         }
@@ -1036,11 +1052,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             // Add code to push and pull inSyn
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
                                 backend.isAutomaticCopyEnabled(), "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
-                [&]()
-                {
-                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.second.getName(), s.second.getInSynLocation(),
-                                                true, s.second.getTrgNeuronGroup()->getNumNeurons());
-                });
+                                [&]()
+                                {
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.second.getName(), s.second.getInSynLocation(),
+                                                                true, s.second.getTrgNeuronGroup()->getNumNeurons());
+                                });
 
             // If this synapse group has individual postsynaptic model variables
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
@@ -1049,11 +1065,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
                     genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
                                         backend.isAutomaticCopyEnabled(), psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                        [&]()
-                        {
-                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
-                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
-                        });
+                                        [&]()
+                                        {
+                                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
+                                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons());
+                                        });
                 }
             }
         }
@@ -1067,15 +1083,17 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedStructData, psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.second.getName(),
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                psmExtraGlobalParams[i].type, psmExtraGlobalParams[i].name + s.second.getName(),
                                 true, s.second.getPSExtraGlobalParamLocation(i));
         }
 
         const auto wuExtraGlobalParams = wu->getExtraGlobalParams();
         for(size_t i = 0; i < wuExtraGlobalParams.size(); i++) {
-            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                mergedStructData, wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.second.getName(),
+            genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                wuExtraGlobalParams[i].type, wuExtraGlobalParams[i].name + s.second.getName(),
                                 true, s.second.getWUExtraGlobalParamLocation(i));
         }
 
@@ -1083,8 +1101,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         if(!s.second.isWeightSharingSlave()) {
             const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
             for(size_t i = 0; i < sparseConnExtraGlobalParams.size(); i++) {
-                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    mergedStructData, sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
+                genExtraGlobalParam(backend, definitionsVar, definitionsFunc, definitionsInternalVar, 
+                                    runnerVarDecl, runnerExtraGlobalParamFunc, mergedStructData, 
+                                    sparseConnExtraGlobalParams[i].type, sparseConnExtraGlobalParams[i].name + s.second.getName(),
                                     s.second.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(),
                                     s.second.getSparseConnectivityExtraGlobalParamLocation(i));
             }

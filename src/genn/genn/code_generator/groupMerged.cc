@@ -24,11 +24,7 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
         addField("unsigned int", "numDelaySlots",
                  [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumDelaySlots()); });
 
-        addField("volatile unsigned int*", "spkQuePtr",
-                 [&backend](const NeuronGroupInternal &ng, size_t)
-                 {
-                     return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + ng.getName() + ")";
-                 });
+        addPointerField("unsigned int", "spkQuePtr", backend.getArrayPrefix() + "spkQuePtr");
     } 
 
     addPointerField("unsigned int", "spkCnt", backend.getArrayPrefix() + "glbSpkCnt");
@@ -226,11 +222,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     }
 
     if(getArchetype().isDelayRequired()) {
-        addField("volatile unsigned int*", "spkQuePtr",
-                 [&backend](const NeuronGroupInternal &ng, size_t)
-                 {
-                     return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + ng.getName() + ")";
-                 });
+        addPointerField("unsigned int", "spkQuePtr", backend.getArrayPrefix() + "spkQuePtr");
     }
 
     if(getArchetype().isSpikeTimeRequired()) {
@@ -298,13 +290,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
         // Add pointer to dendritic delay buffer if required
         if(sg->isDendriticDelayRequired()) {
             addMergedInSynPointerField(precision, "denDelayInSyn", i, backend.getArrayPrefix() + "denDelay");
-
-            addField("volatile unsigned int*", "denDelayPtrInSyn" + std::to_string(i),
-                     [&backend, i, this](const NeuronGroupInternal &, size_t groupIndex)
-                     {
-                         const std::string &targetName = m_SortedMergedInSyns.at(groupIndex).at(i).first->getPSModelTargetName();
-                         return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + targetName + ")";
-                     });
+            addMergedInSynPointerField("unsigned int", "denDelayPtrInSyn", i, backend.getArrayPrefix() + "denDelayPtr");
         }
 
         // Loop through variables
@@ -741,10 +727,10 @@ CodeGenerator::SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpda
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     : GroupMerged<SynapseGroupInternal>(index, precision, groups)
 {
-    addField("volatile unsigned int*", "denDelayPtr",
-             [&backend](const SynapseGroupInternal &sg, size_t)
+    addField("unsigned int*", "denDelayPtr", 
+             [&backend](const SynapseGroupInternal &sg, size_t) 
              {
-                 return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
+                 return backend.getArrayPrefix() + "denDelayPtr" + sg.getPSModelTargetName(); 
              });
 }
 
@@ -1047,11 +1033,7 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     if(role == Role::PresynapticUpdate || role == Role::SynapseDynamics) {
         if(getArchetype().isDendriticDelayRequired()) {
             addPSPointerField(precision, "denDelay", backend.getArrayPrefix() + "denDelay");
-            addField("volatile unsigned int*", "denDelayPtr",
-                     [&backend](const SynapseGroupInternal &sg, size_t)
-                     {
-                         return "getSymbolAddress(" + backend.getScalarPrefix() + "denDelayPtr" + sg.getPSModelTargetName() + ")";
-                     });
+            addPSPointerField("unsigned int", "denDelayPtrInSyn", backend.getArrayPrefix() + "denDelayPtr");
         }
         else {
             addPSPointerField(precision, "inSyn", backend.getArrayPrefix() + "inSyn");
@@ -1078,20 +1060,12 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     if(updateRole) {
         // If presynaptic population has delay buffers
         if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            addField("volatile unsigned int*", "srcSpkQuePtr",
-                     [&backend](const SynapseGroupInternal &sg, size_t)
-                     {
-                         return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + sg.getSrcNeuronGroup()->getName() + ")";
-                     });
+            addSrcPointerField("unsigned int", "srcSpkQuePtr", backend.getArrayPrefix() + "spkQuePtr");
         }
 
         // If postsynaptic population has delay buffers
         if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-            addField("volatile unsigned int*", "trgSpkQuePtr",
-                     [&backend](const SynapseGroupInternal &sg, size_t)
-                     {
-                         return "getSymbolAddress(" + backend.getScalarPrefix() + "spkQuePtr" + sg.getTrgNeuronGroup()->getName() + ")";
-                     });
+            addTrgPointerField("unsigned int", "trgSpkQuePtr", backend.getArrayPrefix() + "spkQuePtr");
         }
 
         // Add heterogeneous presynaptic neuron model parameters

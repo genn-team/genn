@@ -691,12 +691,6 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "std::exponential_distribution<" << model.getPrecision() << "> standardExponentialDistribution(" << model.scalarExpr(1.0) << ");" << std::endl;
         os << std::endl;
     }
-    os << "template<class T>" << std::endl;
-    os << "T *getSymbolAddress(T &devSymbol)";
-    {
-        CodeStream::Scope b(os);
-        os << "return &devSymbol;" << std::endl;
-    }
     os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -730,7 +724,8 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     os << "delete[] " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
+                                            const std::string &type, const std::string &name, VarLocation) const
 {
     definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
 }

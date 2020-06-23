@@ -152,8 +152,15 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
 :   BackendBase(scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), 
     m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
 {
-    assert(!m_Preferences.automaticCopy);
+    // Throw exceptions if unsupported preferences are selected
+    if(m_Preferences.automaticCopy) {
+        throw std::runtime_error("OpenCL backend does not currently support automatic copy mode.");
+    }
 
+    if(m_Preferences.enableBitmaskOptimisations) {
+        throw std::runtime_error("OpenCL backend does not currently support bitmask optimizations.");
+    }
+    
     // Get platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -592,7 +599,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     synapseUpdateKernels << "if(id >= " << idPreSynapseReset << " && id < " << idPreSynapseReset + n.getGroups().size() << ")";
                 }
                 {
-                    CodeStream::Scope b(os);
+                    CodeStream::Scope b(synapseUpdateKernels);
 
                     // Use this to get reference to merged group structure
                     synapseUpdateKernels << "MergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idPreSynapseReset << "]; " << std::endl;
@@ -601,7 +608,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 }
                 idPreSynapseReset += n.getGroups().size();
             }
-            os << std::endl;
+            synapseUpdateKernels << std::endl;
         }
     }
 
@@ -1502,6 +1509,7 @@ void Backend::genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged&) con
 {
     os << "// Standard C++ includes" << std::endl;
     os << "#include <iostream>" << std::endl;
+    os << "#include <random>" << std::endl;
     os << "#include <string>" << std::endl;
     os << "#include <stdexcept>" << std::endl;
     os << std::endl;
@@ -1571,9 +1579,6 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged &) const
 {
-    os << "#include <random>" << std::endl;
-    os << std::endl;
-        
     // Generating OpenCL variables for the runner
     os << "// OpenCL variables" << std::endl;
     os << "cl::Context clContext;" << std::endl;
@@ -1803,13 +1808,14 @@ void Backend::genVariableFree(CodeStream& os, const std::string& name, VarLocati
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, CodeStream &definitionsInternal, 
+                                            const std::string& type, const std::string& name, VarLocation loc) const
 {
     if (loc & VarLocation::HOST) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+        definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1819,7 +1825,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream& os, const std::strin
         os << type << " " << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        os << type << " d_" << name << ";" << std::endl;
+        os << "cl::Buffer d_" << name << ";" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1839,33 +1845,49 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 
     // If variable is present on device at all
     if(loc & VarLocation::DEVICE) {
-        os << devicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << countVarName << " * sizeof(" << underlyingType << "), ";
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << devicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
     }
-
-    /*if (loc & VarLocation::HOST) {
-        os << name << " = (" << underlyingType << "*)calloc(count, sizeof(" << underlyingType << "));" << std::endl;
-    }
-
-    // If variable is present on device at all
-    if (loc & VarLocation::DEVICE) {
-        os << getVarPrefix() << name << " = (" << underlyingType << "*)calloc(count, sizeof(" << underlyingType << "));" << std::endl;
-    }*/
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
+    assert(!m_Preferences.automaticCopy);
+
+    // Get underlying type
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+
+    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+    const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+
     if (!(loc & VarLocation::ZERO_COPY)) {
-        throw Utils::ToBeImplemented("genExtraGlobalParamPush");
-        //! TO BE REVIEWED - No need to push
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << devicePointer;
+        os << ", " << "CL_TRUE";
+        os << ", " << "0";
+        os << ", " << countVarName << " * sizeof(" << underlyingType << ")";
+        os << ", " << hostPointer << "));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
+    assert(!m_Preferences.automaticCopy);
+
+    // Get underlying type
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
+
+    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+    const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+
     if (!(loc & VarLocation::ZERO_COPY)) {
-        throw Utils::ToBeImplemented("genExtraGlobalParamPull");
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << hostPointer;
+        os << ", " << "CL_TRUE";
+        os << ", " << "0";
+        os << ", " << countVarName << " * sizeof(" << underlyingType << ")";
+        os << ", " << devicePointer << "));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------

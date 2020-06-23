@@ -1493,15 +1493,6 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
     os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
-    os << "template<class T>" << std::endl;
-    os << "T *getSymbolAddress(T &devSymbol)";
-    {
-        CodeStream::Scope b(os);
-        os << "void *devPtr;" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaGetSymbolAddress(&devPtr, devSymbol));" << std::endl;
-        os << "return reinterpret_cast<T*>(devPtr);" << std::endl;
-    }
-    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -1657,7 +1648,8 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
+                                            const std::string &type, const std::string &name, VarLocation loc) const
 {
     if(m_Preferences.automaticCopy) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;

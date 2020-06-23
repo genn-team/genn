@@ -158,7 +158,7 @@ public:
     virtual MemAlloc genVariableAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const override;
     virtual void genVariableFree(CodeStream& os, const std::string& name, VarLocation loc) const override;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream& definitions, const std::string& type, const std::string& name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamDefinition(CodeStream& definitions, CodeStream &definitionsInternal, const std::string& type, const std::string& name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const override;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name,
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
@@ -228,7 +228,6 @@ public:
     virtual void genMSBuildImportTarget(std::ostream& os) const override;
 
     virtual std::string getArrayPrefix() const override { return m_Preferences.automaticCopy ? "" : "d_"; }
-    virtual std::string getScalarPrefix() const override { return "d_"; }
     virtual std::string getPointerPrefix() const override { return "__global "; };
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?

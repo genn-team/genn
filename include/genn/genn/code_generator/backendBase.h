@@ -223,7 +223,7 @@ public:
     virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
@@ -315,8 +315,6 @@ public:
     //! This function returns this prefix so it can be used in otherwise platform-independent code.
     virtual std::string getArrayPrefix() const{ return ""; }
 
-    virtual std::string getScalarPrefix() const{ return ""; }
-
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
 
@@ -382,13 +380,6 @@ public:
         genVariableImplementation(runner, type + "*", name, loc);
         genVariableFree(free, name, loc);
         return genVariableAllocation(allocations, type, name, loc, count);
-    }
-
-    //! Helper function to generate matching definition and declaration code for a scalar variable
-    void genScalar(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const std::string &type, const std::string &name, VarLocation loc) const
-    {
-        genVariableDefinition(definitions, definitionsInternal, type, name, loc);
-        genVariableImplementation(runner, type, name, loc);
     }
 
     //! Get the size of the type
