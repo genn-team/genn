@@ -21,6 +21,7 @@ protected:
         Init();
 
         initializeSparse();
+        copyStateFromDevice();
     }
 
     virtual void TearDown()
