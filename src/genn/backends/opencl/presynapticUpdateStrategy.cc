@@ -208,10 +208,10 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg) const
 //----------------------------------------------------------------------------
 bool PostSpan::shouldAccumulateInRegister(const PresynapticUpdateGroupMerged &sg, const Backend &) const
 {
-    // We should accumulate each postsynaptic neuron's input in a register if matrix is dense or bitfield
-    // (where each thread represents an individual neuron)
-    return ((sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::DENSE)
-            || (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK));
+    // If no dendritic delays are required and data structure is dense, we can accumulate output directly into register
+    const auto matrixType = sg.getArchetype().getMatrixType();
+    return (!sg.getArchetype().isDendriticDelayRequired()
+            && ((matrixType & SynapseMatrixConnectivity::DENSE) || (matrixType & SynapseMatrixConnectivity::BITMASK)));
 }
 //----------------------------------------------------------------------------
 bool PostSpan::shouldAccumulateInSharedMemory(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const
