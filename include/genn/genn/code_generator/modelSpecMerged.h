@@ -27,18 +27,57 @@ public:
     ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend);
 
     //--------------------------------------------------------------------------
+    // CodeGenerator::ModelSpecMerged::EGPField
+    //--------------------------------------------------------------------------
+    //! Immutable structure for tracking fields of merged group structure containing EGPs
+    struct EGPField
+    {
+        EGPField(size_t m, const std::string &t, const std::string &f)
+        :   mergedGroupIndex(m), type(t), fieldName(f) {}
+
+        const size_t mergedGroupIndex;
+        const std::string type;
+        const std::string fieldName;
+
+        //! Less than operator (used for std::set::insert), 
+        //! lexicographically compares all three struct members
+        bool operator < (const EGPField &other) const
+        {
+            if(other.mergedGroupIndex < mergedGroupIndex) {
+                return false;
+            }
+            else if(mergedGroupIndex < other.mergedGroupIndex) {
+                return true;
+            }
+
+            if(other.type < type) {
+                return false;
+            }
+            else if(type < other.type) {
+                return true;
+            }
+
+            if(other.fieldName < fieldName) {
+                return false;
+            }
+            else if(fieldName < other.fieldName) {
+                return true;
+            }
+
+            return false;
+        }
+    };
+    
+    //--------------------------------------------------------------------------
     // CodeGenerator::ModelSpecMerged::MergedEGP
     //--------------------------------------------------------------------------
     //! Immutable structure for tracking where an extra global variable ends up after merging
-    struct MergedEGP
+    struct MergedEGP : public EGPField
     {
         MergedEGP(size_t m, size_t g, const std::string &t, const std::string &f)
-            : mergedGroupIndex(m), groupIndex(g), type(t), fieldName(f) {}
+        :   EGPField(m, t, f), groupIndex(g) {}
 
-        const size_t mergedGroupIndex;
         const size_t groupIndex;
-        const std::string type;
-        const std::string fieldName;
     };
 
     //--------------------------------------------------------------------------
@@ -120,35 +159,46 @@ public:
 
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
-    //! Get the map of destinations within the merged data structures for a particular variable
+    //! Get the map of destinations within the merged data structures for a particular extra global parameter
     const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name, const BackendBase &backend) const
     {
         return m_MergedEGPs.at(backend.getArrayPrefix() + name);
     }
 
     //! Generate calls to update all target merged groups
-    //! **DEPRECATE** 'scalar' EGPs are innefficient and can now be replaced by 'mutable parameters' which can be explicitely set in merged structures
+    //! **DEPRECATE** 'scalar' EGPs are innefficient and should be replaced by 'mutable parameters' which can be explicitely set in merged structures
     void genScalarEGPPush(CodeStream &os, const std::string &suffix, const BackendBase &backend) const;
+
+    // Get set of unique fields referenced in a merged group
+    template<typename T>
+    std::set<EGPField> getMergedGroupFields() const
+    {
+        // Loop through all EGPs
+        std::set<EGPField> mergedGroupFields;
+        for(const auto &e : m_MergedEGPs) {
+            // Get all destinations in this type of group
+            const auto groupEGPs = e.second.equal_range(T::name);
+
+            // Copy them all into set
+            std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
+                           [](const MergedEGPMap::value_type::second_type::value_type &g)
+                           {
+                               return EGPField{g.second.mergedGroupIndex, g.second.type, g.second.fieldName};
+                           });
+        }
+
+        // Return set
+        return mergedGroupFields;
+    }
 
     template<typename T>
     void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const BackendBase &backend) const
     {
 
         if(!groups.empty()) {
-            // Loop through all extra global parameters to build a set of unique fieldname, group index pairs
-            // **YUCK** it would be much nicer if this were part of the original data structure
-            // **NOTE** tuple would be nicer but doesn't define std::hash overload
-            std::set<std::pair<size_t, std::pair<std::string, std::string>>> mergedGroupFields;
-            for(const auto &e : m_MergedEGPs) {
-                const auto groupEGPs = e.second.equal_range(T::name);
-                std::transform(groupEGPs.first, groupEGPs.second, std::inserter(mergedGroupFields, mergedGroupFields.end()),
-                               [](const MergedEGPMap::value_type::second_type::value_type &g)
-                               {
-                                   return std::make_pair(g.second.mergedGroupIndex,
-                                                         std::make_pair(g.second.type, g.second.fieldName));
-                               });
-            }
-
+            // Get set of unique fields referenced in a merged group
+            const auto mergedGroupFields = getMergedGroupFields<T>();
+            
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// merged extra global parameter functions" << std::endl;
             os << "// ------------------------------------------------------------------------" << std::endl;
@@ -156,11 +206,11 @@ public:
             for(auto f : mergedGroupFields) {
                 // If EGP is a pointer
                 // **NOTE** this is common to all references!
-                if(Utils::isTypePointer(f.second.first)) {
-                    os << "void pushMerged" << T::name << f.first << f.second.second << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.second.first) << " value)";
+                if(Utils::isTypePointer(f.type)) {
+                    os << "void pushMerged" << T::name << f.mergedGroupIndex << f.fieldName << "ToDevice(unsigned int idx, " << backend.getMergedGroupFieldHostType(f.type) << " value)";
                     {
                         CodeStream::Scope b(os);
-                        backend.genMergedExtraGlobalParamPush(os, T::name, f.first, "idx", f.second.second, "value");
+                        backend.genMergedExtraGlobalParamPush(os, T::name, f.mergedGroupIndex, "idx", f.fieldName, "value");
                     }
                     os << std::endl;
                 }
