@@ -70,11 +70,6 @@ for(node in jenkins.model.Jenkins.instance.nodes) {
     }
 }
 
-// Add master if it has any idle executors
-if(jenkins.model.Jenkins.instance.toComputer().countIdle() > 0) {
-    availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split() as Set
-}
-
 // Loop through the desired builds
 def builderNodes = []
 for(b in desiredBuilds) {
@@ -158,11 +153,17 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 runTestArguments += " -d";
                             }
                             
-                            // If node is a CPU_ONLY node add -c option 
-                            if("cpu_only" in nodeLabel) {
+                            // If node isn't a CPU_ONLY node 
+                            if(!nodeLabel.contains("cpu_only")) {
+                                // Add -c option for CUDA 
                                 runTestArguments += " -c";
+                                
+                                // If node has OpenCL, add -l option
+                                if(nodeLabel.contains("opencl")) {
+                                    runTestArguments += " -l";
+                                }
                             }
-
+                            
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
@@ -260,6 +261,10 @@ for(b = 0; b < builderNodes.size(); b++) {
                             // If this isn't a CPU_ONLY node, also build CUDA backend
                             if(!nodeLabel.contains("cpu_only")) {
                                 msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
+                            }
+                            // If this node has OpenCL, also build OpenCL backend
+                            if(nodeLabel.contains("opencl")) {
+                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> \"${uniqueMsg}\" 2>&1";
                             }
                             
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
