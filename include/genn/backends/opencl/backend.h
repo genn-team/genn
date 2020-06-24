@@ -24,6 +24,7 @@
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 #include "code_generator/codeStream.h"
+#include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
 // OpenCL backend includes

@@ -1492,6 +1492,9 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
     os << "#pragma warning(disable: 4297)" << std::endl;
+#else
+    // Prevent unused parameter warning
+    (void)os;
 #endif
 }
 //--------------------------------------------------------------------------

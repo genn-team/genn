@@ -356,8 +356,6 @@ protected:
 
         // Loop through groups
         for(size_t groupIndex = 0; groupIndex < getGroups().size(); groupIndex++) {
-            const auto &g = getGroups()[groupIndex];
-
             // If this is a merged group used on the host, directly set array entry
             if(host) {
                 runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
