@@ -367,7 +367,7 @@ private:
     }
 
     template<typename T>
-    void genMergedStructPreamble(CodeStream &os, const std::vector<T> &groups) const
+    void genMergedStructPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
@@ -402,16 +402,29 @@ private:
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << buildKernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             }
         }
+
+        if(!groups.empty()) {
+            // Get set of unique fields referenced in a merged group
+            const auto mergedGroupFields = modelMerged.getMergedGroupFields<T>();
+
+            // Loop through resultant fields and generate push function for pointer extra global parameters
+            for(auto f : mergedGroupFields) {
+                // If EGP is a pointer, declare set kernel
+                if(::Utils::isTypePointer(f.type)) {
+                    os << "cl::Kernel setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel;" << std::endl;
+                }
+            }
+        }
     }
 
     template<typename T>
-    void genMergedStructBuild(CodeStream &os, const std::vector<T> &groups, const std::string &programName) const
+    void genMergedStructBuild(CodeStream &os, const ModelSpecMerged &modelMerged, const std::vector<T> &groups, const std::string &programName) const
     {
         // Loop through groups 
         for(const auto &g : groups) {
             // Create kernel object
             const std::string kernelName = "build" + T::name + std::to_string(g.getIndex()) + "Kernel";
-            os << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\");" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\", &error));" << std::endl;
 
             // Create group buffer
             os << "CHECK_OPENCL_ERRORS_POINTER(d_merged" << T::name << "Group" << g.getIndex() << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << g.getStructArraySize(*this) << "}, nullptr, &error));" << std::endl;
@@ -420,10 +433,29 @@ private:
             os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << T::name << "Group" << g.getIndex() << "));" << std::endl;
             os << std::endl;
         }
+
+        if(!groups.empty()) {
+            // Get set of unique fields referenced in a merged group
+            const auto mergedGroupFields = modelMerged.getMergedGroupFields<T>();
+
+            // Loop through resultant fields and generate push function for pointer extra global parameters
+            for(auto f : mergedGroupFields) {
+                // If EGP is a pointer
+                if(::Utils::isTypePointer(f.type)) {
+                    // Create kernel object
+                    const std::string kernelName = "setMerged" + T::name + std::to_string(f.mergedGroupIndex) + f.fieldName + "Kernel";
+                    os << "CHECK_OPENCL_ERRORS_POINTER(" << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\", &error));" << std::endl;
+
+                    // Set group buffer as first kernel argument
+                    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << T::name << "Group" << f.mergedGroupIndex << "));" << std::endl;
+                    os << std::endl;
+                }
+            }
+        }
     }
 
     template<typename T>
-    void genMergedStructBuildKernels(CodeStream &os, const std::vector<T> &groups) const
+    void genMergedStructBuildKernels(CodeStream &os, const ModelSpecMerged &modelMerged, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
@@ -453,6 +485,26 @@ private:
                 }
             }
             os << std::endl;
+        }
+
+        if(!groups.empty()) {
+            // Get set of unique fields referenced in a merged group
+            const auto mergedGroupFields = modelMerged.getMergedGroupFields<T>();
+
+            // Loop through resultant fields and generate push function for pointer extra global parameters
+            for(auto f : mergedGroupFields) {
+                // If EGP is a pointer, declare set kernel
+                if(::Utils::isTypePointer(f.type)) {
+                    os << "__kernel void setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel(";
+                    os << "__global struct Merged" << T::name << "Group" << f.mergedGroupIndex << " *group, unsigned int idx, ";
+                    os << "__global " << f.type << " " << f.fieldName << ")";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "group[idx]." << f.fieldName << " = " << f.fieldName << ";" << std::endl;
+                    }
+                    os << std::endl;
+                }
+            }
         }
     }
 
