@@ -408,12 +408,9 @@ private:
             // Get set of unique fields referenced in a merged group
             const auto mergedGroupFields = modelMerged.getMergedGroupFields<T>();
 
-            // Loop through resultant fields and generate push function for pointer extra global parameters
+            // Loop through resultant fields and declare kernel for setting EGP
             for(auto f : mergedGroupFields) {
-                // If EGP is a pointer, declare set kernel
-                if(::Utils::isTypePointer(f.type)) {
-                    os << "cl::Kernel setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel;" << std::endl;
-                }
+                os << "cl::Kernel setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel;" << std::endl;
             }
         }
     }
@@ -439,18 +436,15 @@ private:
             // Get set of unique fields referenced in a merged group
             const auto mergedGroupFields = modelMerged.getMergedGroupFields<T>();
 
-            // Loop through resultant fields and generate push function for pointer extra global parameters
+            // Loop through resultant fields
             for(auto f : mergedGroupFields) {
-                // If EGP is a pointer
-                if(::Utils::isTypePointer(f.type)) {
-                    // Create kernel object
-                    const std::string kernelName = "setMerged" + T::name + std::to_string(f.mergedGroupIndex) + f.fieldName + "Kernel";
-                    os << "CHECK_OPENCL_ERRORS_POINTER(" << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\", &error));" << std::endl;
+                // Create kernel object
+                const std::string kernelName = "setMerged" + T::name + std::to_string(f.mergedGroupIndex) + f.fieldName + "Kernel";
+                os << "CHECK_OPENCL_ERRORS_POINTER(" << kernelName << " = cl::Kernel(" << programName << ", \"" << kernelName << "\", &error));" << std::endl;
 
-                    // Set group buffer as first kernel argument
-                    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << T::name << "Group" << f.mergedGroupIndex << "));" << std::endl;
-                    os << std::endl;
-                }
+                // Set group buffer as first kernel argument
+                os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(0, d_merged" << T::name << "Group" << f.mergedGroupIndex << "));" << std::endl;
+                os << std::endl;
             }
         }
     }
@@ -494,17 +488,18 @@ private:
 
             // Loop through resultant fields and generate push function for pointer extra global parameters
             for(auto f : mergedGroupFields) {
-                // If EGP is a pointer, declare set kernel
+                
+                os << "__kernel void setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel(";
+                os << "__global struct Merged" << T::name << "Group" << f.mergedGroupIndex << " *group, unsigned int idx, ";
                 if(::Utils::isTypePointer(f.type)) {
-                    os << "__kernel void setMerged" << T::name << f.mergedGroupIndex << f.fieldName << "Kernel(";
-                    os << "__global struct Merged" << T::name << "Group" << f.mergedGroupIndex << " *group, unsigned int idx, ";
-                    os << "__global " << f.type << " " << f.fieldName << ")";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "group[idx]." << f.fieldName << " = " << f.fieldName << ";" << std::endl;
-                    }
-                    os << std::endl;
+                    os << "__global ";
                 }
+                os << f.type << " " << f.fieldName << ")";
+                {
+                    CodeStream::Scope b(os);
+                    os << "group[idx]." << f.fieldName << " = " << f.fieldName << ";" << std::endl;
+                }
+                os << std::endl;
             }
         }
     }
@@ -527,6 +522,9 @@ private:
     bool isDeviceType(const std::string& type) const;
 
     void divideKernelStreamInParts(CodeStream& os, const std::stringstream& kernelCode, size_t partLength) const;
+
+    //! Get arguments to pass to cl::Program::build
+    std::string getBuildProgramFlags() const;
 
     //--------------------------------------------------------------------------
     // Private static methods

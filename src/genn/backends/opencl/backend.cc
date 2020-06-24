@@ -454,7 +454,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-        os << "const cl_int buildResult = neuronUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "const cl_int buildResult = neuronUpdateProgram.build(\"" << getBuildProgramFlags() << "\");" << std::endl;
         os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
         os << "if(buildResult != CL_SUCCESS)";
         {
@@ -490,6 +490,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "void updateNeurons(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
+
+        // Push any required EGPS
+        pushEGPHandler(os);
+
         if (idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
@@ -936,7 +940,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-        os << "const cl_int buildResult = synapseUpdateProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "const cl_int buildResult = synapseUpdateProgram.build(\"" << getBuildProgramFlags() << "\");" << std::endl;
         os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
         os << "if(buildResult != CL_SUCCESS)";
         {
@@ -986,6 +990,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "void updateSynapses(" << modelMerged.getModel().getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
+
+        // Push any required EGPs
+        pushEGPHandler(os);
 
         // Launch pre-synapse reset kernel if required
         if (idPreSynapseReset > 0) {
@@ -1314,7 +1321,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                                 os << "if(" << popSubs["id"] << " == 0 && (r == numBlocks - 1))";
                                 {
                                     CodeStream::Scope b(os);
-                                    os << "group->remap[0] = shRowStart[numRowsInBlock];" << std::endl;
+                                    os << "group->synRemap[0] = shRowStart[numRowsInBlock];" << std::endl;
                                 }
 
                             }
@@ -1361,7 +1368,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                                 // If synapse dynamics are required, copy idx into syn remap structure
                                 if (!sg.getArchetype().getWUModel()->getSynapseDynamicsCode().empty()) {
                                     CodeStream::Scope b(os);
-                                    os << "remap->[shRowStart[i] + " + popSubs["id"] + " + 1] = idx;" << std::endl;
+                                    os << "group->synRemap[shRowStart[i] + " + popSubs["id"] + " + 1] = idx;" << std::endl;
                                 }
                             }
 
@@ -1387,7 +1394,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-        os << "const cl_int buildResult = initializeProgram.build(\"-cl-std=CL1.2 -I clRNG/include\");" << std::endl;
+        os << "const cl_int buildResult = initializeProgram.build(\"" << getBuildProgramFlags() << "\");" << std::endl;
         os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
         os << "if(buildResult != CL_SUCCESS)";
         {
@@ -1427,25 +1434,26 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     {
         CodeStream::Scope b(os);
 
+        // Loop through all synapse groups
+        for(const auto &s : model.getSynapseGroups()) {
+            // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
+            if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<uint32_t>(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
+            }
+            // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
+            else if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
+            }
+        }
+        os << std::endl;
+
+        // Push any required EGPs
+        initPushEGPHandler(os);
+
         // If there are any initialisation work-items
         if (idInitStart > 0) {
             CodeStream::Scope b(os);
-
-            // Loop through all synapse groups
-            for (const auto& s : model.getSynapseGroups()) {
-                // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
-                if (s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<uint32_t>(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
-                }
-                // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
-                else if ((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
-                }
-            }
-            os << std::endl;
-
-            os << std::endl;
             genKernelDimensions(os, KernelInitialize, idInitStart);
             if(globalRNGRequired) {
                 const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedSynapseDenseInitGroups().size() +
@@ -1473,6 +1481,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     os << "void initializeSparse()";
     {
         CodeStream::Scope b(os);
+
+        // Push any required EGPs
+        initSparsePushEGPHandler(os);
+
         // Copy all uninitialised state variables to device
         os << "copyStateToDevice(true);" << std::endl;
         os << "copyConnectivityToDevice(true);" << std::endl;
@@ -1480,21 +1492,19 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         // If there are any sparse initialisation work-items
         if (idSparseInitStart > 0) {
             CodeStream::Scope b(os);
-            {
-                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
-                if(globalRNGRequired) {
-                    os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << modelMerged.getMergedSynapseSparseInitGroups().size() << ", d_rng));" << std::endl;
-                }
-                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize";
-                if(model.isTimingEnabled()) {
-                    os << ", nullptr, &initSparseEvent";
-                }
-                os << "));" << std::endl;
+            genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
+            if(globalRNGRequired) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << modelMerged.getMergedSynapseSparseInitGroups().size() << ", d_rng));" << std::endl;
+            }
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelInitializeSparse] << ", cl::NullRange, globalWorkSize, localWorkSize";
+            if(model.isTimingEnabled()) {
+                os << ", nullptr, &initSparseEvent";
+            }
+            os << "));" << std::endl;
 
-                if(model.isTimingEnabled()) {
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-                    genReadEventTiming(os, "initSparse");
-                }
+            if(model.isTimingEnabled()) {
+                os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+                genReadEventTiming(os, "initSparse");
             }
         }
     }
@@ -1895,9 +1905,10 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
                                             const std::string &groupIdx, const std::string &fieldName,
                                             const std::string &egpName) const
 {
+    CodeStream::Scope b(os);
     const std::string kernelName = "setMerged" + suffix + std::to_string(mergedGroupIdx) + fieldName + "Kernel";
-    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(1, idx));" << std::endl;
-    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(2, value));" << std::endl;
+    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(1, " << groupIdx << "));" << std::endl;
+    os << "CHECK_OPENCL_ERRORS(" << kernelName << ".setArg(2, " << egpName << "));" << std::endl;
     os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
     os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
@@ -2511,6 +2522,15 @@ void Backend::divideKernelStreamInParts(CodeStream& os, const std::stringstream&
     for(size_t i = 0; i < parts; i++) {
         os << "R\"(" << kernelStr.substr(i * partLength, partLength) << ")\"" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+std::string Backend::getBuildProgramFlags() const
+{
+    std::string flags = "-cl-std=CL1.2 -I clRNG/include";
+    if(m_Preferences.optimizeCode) {
+        flags += " -cl-fast-relaxed-math";
+    }
+    return flags;
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal& sg)
