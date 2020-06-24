@@ -2337,7 +2337,8 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
         // If device is NVIDIA, insert PTX code for fire-and-forget floating point atomic add
         // https://github.com/openai/blocksparse/blob/master/src/ew_op_gpu.h#L648-L652
         if(m_ChosenDevice.getInfo<CL_DEVICE_VENDOR_ID>() == 0x10DE) {
-            os << "asm volatile(\"red." << memoryType << ".add.f32[%0], %1;\" :: \"l\"(source), \"f\"(operand));" << std::endl;
+            const std::string space = (memoryType == "global") ? "global" : "shared";
+            os << "asm volatile(\"red." << space << ".add.f32[%0], %1;\" :: \"l\"(source), \"f\"(operand));" << std::endl;
         }
         // Otherwise use atomic_cmpxchg-based solution
         else {
