@@ -21,8 +21,9 @@
 # Ignore xml test output
 **/*.xml
 
-# Ignore output folders from code generation
+# Ignore output folders from code generation and clRNG
 **/*_CODE
+**/clRNG
 
 # Ignore generator executables
 **/generator*
