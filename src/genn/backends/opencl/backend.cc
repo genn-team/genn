@@ -454,11 +454,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-        os << "const cl_int buildResult = neuronUpdateProgram.build(\"" << getBuildProgramFlags() << "\");" << std::endl;
-        os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
-        os << "if(buildResult != CL_SUCCESS)";
+        os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags() << "\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
+            os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
             os << "throw std::runtime_error(\"Neuron update program compile error\");" << std::endl;
         }
         os << std::endl;
@@ -940,11 +939,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-        os << "const cl_int buildResult = synapseUpdateProgram.build(\"" << getBuildProgramFlags() << "\");" << std::endl;
-        os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
-        os << "if(buildResult != CL_SUCCESS)";
+        os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags() << "\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
+            os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
             os << "throw std::runtime_error(\"Synapse update program compile error\");" << std::endl;
         }
         os << std::endl;
@@ -1394,11 +1392,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-        os << "const cl_int buildResult = initializeProgram.build(\"" << getBuildProgramFlags() << "\");" << std::endl;
-        os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice) << std::endl;" << std::endl;
-        os << "if(buildResult != CL_SUCCESS)";
+        os << "if(initializeProgram.build(\"" << getBuildProgramFlags() << "\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
+            os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
             os << "throw std::runtime_error(\"Initialize program compile error\");" << std::endl;
         }
         os << std::endl;
@@ -2074,7 +2071,7 @@ void Backend::genTimer(CodeStream&, CodeStream &definitionsInternal, CodeStream 
                        CodeStream &stepTimeFinalise, const std::string& name, bool updateInStepTime) const
 {
     // Define OpenCL event in internal defintions (as they use CUDA-specific types)
-    definitionsInternal << "EXPORT_VAR cl::Event  " << name  << "Event;" << std::endl;
+    definitionsInternal << "EXPORT_VAR cl::Event " << name  << "Event;" << std::endl;
 
     // Implement  event variables
     runner << "cl::Event " << name << "Event;" << std::endl;
