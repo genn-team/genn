@@ -58,7 +58,7 @@ for f in features/*/ ; do
     # Loop through backends to test
     for b in $BACKENDS; do
         # If skip file exists for this backend, skip
-        if [ -f "skip_$BACKEND" ]; then
+        if [ -f "skip_$b" ]; then
             echo "Skipping..."
         # Otherwise
         else
