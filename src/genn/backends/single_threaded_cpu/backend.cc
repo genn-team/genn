@@ -153,7 +153,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                     // If this neuron group requires a simulation RNG, substitute in global RNG
                     if(n.getArchetype().isSimRNGRequired()) {
-                        popSubs.addVarSubstitution("rng", "rng");
+                        popSubs.addVarSubstitution("rng", "hostRNG");
                     }
 
                     simHandler(os, n, popSubs,
@@ -433,7 +433,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
         // If model requires a host RNG, add RNG to substitutions
         if(isGlobalHostRNGRequired(modelMerged)) {
-            funcSubs.addVarSubstitution("rng", "rng");
+            funcSubs.addVarSubstitution("rng", "hostRNG");
         }
 
         os << "// ------------------------------------------------------------------------" << std::endl;
@@ -550,7 +550,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
         // If model requires RNG, add it to substitutions
         if(isGlobalHostRNGRequired(modelMerged)) {
-            funcSubs.addVarSubstitution("rng", "rng");
+            funcSubs.addVarSubstitution("rng", "hostRNG");
         }
 
         os << "// ------------------------------------------------------------------------" << std::endl;
