@@ -125,7 +125,10 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
 
-    virtual std::string getArrayPrefix() const override{ return ""; }
+    virtual std::string getVarPrefix() const override{ return ""; }
+
+    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
+    virtual bool isDeviceScalarRequired() const override { return false; }
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;

@@ -313,10 +313,13 @@ public:
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
     //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getArrayPrefix() const{ return ""; }
+    virtual std::string getVarPrefix() const{ return ""; }
 
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
+
+    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
+    virtual bool isDeviceScalarRequired() const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
@@ -384,6 +387,12 @@ public:
 
     //! Get the size of the type
     size_t getSize(const std::string &type) const;
+
+    //! Get the prefix for accessing the address of 'scalar' variables
+    std::string getScalarAddressPrefix() const
+    {
+        return isDeviceScalarRequired() ? getVarPrefix() : ("&" + getVarPrefix());
+    }
 
 protected:
     //--------------------------------------------------------------------------

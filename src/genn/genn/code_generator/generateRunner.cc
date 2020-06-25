@@ -81,8 +81,13 @@ MemAlloc genHostDeviceScalar(const BackendBase &backend, CodeStream &definitions
     genHostScalar(definitionsVar, runnerVarDecl, type, name);
 
     // Generate a single-element array on device
-    return backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                            type, name, VarLocation::DEVICE, 1);
+    if(backend.isDeviceScalarRequired()) {
+        return backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                type, name, VarLocation::DEVICE, 1);
+    }
+    else {
+        return MemAlloc::zero();
+    }
 }
 //--------------------------------------------------------------------------
 bool canPushPullVar(VarLocation loc)
@@ -258,7 +263,7 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name, backend);
             for(const auto &v : mergedDestinations) {
                 extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                extraGlobalParam << v.second.groupIndex << ", " << backend.getArrayPrefix() << name << ");" << std::endl;
+                extraGlobalParam << v.second.groupIndex << ", " << backend.getVarPrefix() << name << ");" << std::endl;
             }
         }
 

@@ -228,8 +228,11 @@ public:
     virtual void genMSBuildCompileModule(const std::string& moduleName, std::ostream& os) const override;
     virtual void genMSBuildImportTarget(std::ostream& os) const override;
 
-    virtual std::string getArrayPrefix() const override { return m_Preferences.automaticCopy ? "" : "d_"; }
+    virtual std::string getVarPrefix() const override { return m_Preferences.automaticCopy ? "" : "d_"; }
     virtual std::string getPointerPrefix() const override { return "__global "; };
+
+    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
+    virtual bool isDeviceScalarRequired() const override { return true; }
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
