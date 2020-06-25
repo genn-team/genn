@@ -632,6 +632,18 @@ class SynapseGroup(Group):
                 raise Exception("only manually initialised connectivity "
                                 "can currently by accessed")
 
+            if self.connectivity_initialiser is not None:
+                # download the connectivity details from device
+                self.pull_connectivity_from_device()
+
+                # the ind array still has some non-valid data so we remove them
+                # with the row_lengths data
+                ind = [self.ind[start_idx + j]
+                        for i, start_idx in enumerate(xrange(0, len(self.ind), self.max_row_length))
+                            for j in range(self.row_lengths[i])]
+
+                return np.asarray(ind, dtype='uint32')
+
             # Return cached indices
             return self.ind
         else:
@@ -747,19 +759,19 @@ class SynapseGroup(Group):
         self._model.push_connectivity_to_device(self.name)
 
     def load(self):
-        # If synapse population has non-dense connectivity 
+        # If synapse population has non-dense connectivity
         # which requires initialising manually
-        if not self.is_dense and self.is_connectivity_init_required:
-            # If data is available
-            if self.connections_set:
-                if self.is_ragged:
-                    # Get pointers to ragged data structure members
-                    ind = self._assign_ext_ptr_array("ind",
-                                                     self.weight_update_var_size,
-                                                     "unsigned int")
-                    row_length = self._assign_ext_ptr_array("rowLength",
-                                                            self.src.size,
-                                                            "unsigned int")
+        if not self.is_dense and self.weight_sharing_master is None:
+            if self.is_ragged:
+                # Get pointers to ragged data structure members
+                ind = self._assign_ext_ptr_array("ind",
+                                                 self.weight_update_var_size,
+                                                 "unsigned int")
+                row_length = self._assign_ext_ptr_array("rowLength",
+                                                        self.src.size,
+                                                        "unsigned int")
+                # If data is available
+                if self.connections_set:
 
                     # Copy in row length
                     row_length[:] = self.row_lengths
@@ -774,11 +786,15 @@ class SynapseGroup(Group):
                         # Copy row from non-padded indices into correct location
                         ind[i:i + r] = self.ind[syn:syn + r]
                         syn += r
+                elif self.connectivity_initialiser is not None:
+                    self.ind = ind
+                    self.row_lengths = row_length
                 else:
-                    raise Exception("Matrix format not supported")
+                    raise Exception("For sparse projections, the connections"
+                                    "must be set before loading a model")
+
             else:
-                raise Exception("For sparse projections, the connections"
-                                "must be set before loading a model")
+                raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables
         for var_name, var_data in iteritems(self.vars):
