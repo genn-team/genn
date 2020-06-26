@@ -271,13 +271,13 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
 
         // Add heterogeneous neuron model parameters
         addHeterogeneousParams<NeuronGroupMergedBase>(
-            getArchetype().getNeuronModel()->getParamNames(),
+            getArchetype().getNeuronModel()->getParamNames(), "",
             [](const NeuronGroupInternal &ng) { return ng.getParams(); },
             &NeuronGroupMergedBase::isParamHeterogeneous);
 
         // Add heterogeneous neuron model derived parameters
         addHeterogeneousDerivedParams<NeuronGroupMergedBase>(
-            getArchetype().getNeuronModel()->getDerivedParams(),
+            getArchetype().getNeuronModel()->getDerivedParams(), "",
             [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); },
             &NeuronGroupMergedBase::isDerivedParamHeterogeneous);
     }
@@ -755,29 +755,31 @@ CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostIn
 
     // Add heterogeneous connectivity initialiser model parameters
     addHeterogeneousParams<SynapseConnectivityHostInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(),
+        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
         &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
 
 
     // Add heterogeneous connectivity initialiser derived parameters
     addHeterogeneousDerivedParams<SynapseConnectivityHostInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(),
+        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
         &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
-    // Add EGP pointers to struct for both host and device EGPs
+    // Add EGP pointers to struct for both host and device EGPs if they are seperate
     const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
     for(const auto &e : egps) {
         addField(e.type + "*", e.name,
                  [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
                  FieldType::Host);
 
-        addField(e.type + "*", backend.getVarPrefix() + e.name,
-                 [e, &backend](const SynapseGroupInternal &g, size_t)
-                 {
-                     return "&" + backend.getVarPrefix() + e.name + g.getName();
-                 });
+        if(!backend.getVarPrefix().empty()) {
+            addField(e.type + "*", backend.getVarPrefix() + e.name,
+                     [e, &backend](const SynapseGroupInternal &g, size_t)
+                     {
+                         return "&" + backend.getVarPrefix() + e.name + g.getName();
+                     });
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -824,14 +826,14 @@ CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupM
 
     // Add heterogeneous connectivity initialiser model parameters
     addHeterogeneousParams<SynapseConnectivityInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(),
+        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
         &SynapseConnectivityInitGroupMerged::isConnectivityInitParamHeterogeneous);
 
 
     // Add heterogeneous connectivity initialiser derived parameters
     addHeterogeneousDerivedParams<SynapseConnectivityInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(),
+        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
         &SynapseConnectivityInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
@@ -982,7 +984,7 @@ bool CodeGenerator::SynapseGroupMergedBase::isConnectivityInitDerivedParamHetero
 bool CodeGenerator::SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous(size_t paramIndex) const
 {
     const auto *neuronModel = getArchetype().getSrcNeuronGroup()->getNeuronModel();
-    const std::string paramName = neuronModel->getParamNames().at(paramIndex);
+    const std::string paramName = neuronModel->getParamNames().at(paramIndex) + "_pre";
     return isParamValueHeterogeneous({getArchetypeCode()}, paramName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getParams(); });
 }
@@ -990,7 +992,7 @@ bool CodeGenerator::SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous(size_t
 bool CodeGenerator::SynapseGroupMergedBase::isSrcNeuronDerivedParamHeterogeneous(size_t paramIndex) const
 {
     const auto *neuronModel = getArchetype().getSrcNeuronGroup()->getNeuronModel();
-    const std::string derivedParamName = neuronModel->getDerivedParams().at(paramIndex).name;
+    const std::string derivedParamName = neuronModel->getDerivedParams().at(paramIndex).name + "_pre";
     return isParamValueHeterogeneous({getArchetypeCode()}, derivedParamName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); });
 }
@@ -998,7 +1000,7 @@ bool CodeGenerator::SynapseGroupMergedBase::isSrcNeuronDerivedParamHeterogeneous
 bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronParamHeterogeneous(size_t paramIndex) const
 {
     const auto *neuronModel = getArchetype().getTrgNeuronGroup()->getNeuronModel();
-    const std::string paramName = neuronModel->getParamNames().at(paramIndex);
+    const std::string paramName = neuronModel->getParamNames().at(paramIndex) + "_post";
     return isParamValueHeterogeneous({getArchetypeCode()}, paramName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getParams(); });
 }
@@ -1006,7 +1008,7 @@ bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronParamHeterogeneous(size_t
 bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous(size_t paramIndex) const
 {
     const auto *neuronModel = getArchetype().getTrgNeuronGroup()->getNeuronModel();
-    const std::string derivedParamName = neuronModel->getDerivedParams().at(paramIndex).name;
+    const std::string derivedParamName = neuronModel->getDerivedParams().at(paramIndex).name + "_post";
     return isParamValueHeterogeneous({getArchetypeCode()}, derivedParamName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); });
 }
@@ -1073,25 +1075,25 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
 
         // Add heterogeneous presynaptic neuron model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
-            getArchetype().getSrcNeuronGroup()->getNeuronModel()->getParamNames(),
+            getArchetype().getSrcNeuronGroup()->getNeuronModel()->getParamNames(), "Pre",
             [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getParams(); },
             &SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous);
 
         // Add heterogeneous presynaptic neuron model derived parameters
         addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            getArchetype().getSrcNeuronGroup()->getNeuronModel()->getDerivedParams(),
+            getArchetype().getSrcNeuronGroup()->getNeuronModel()->getDerivedParams(), "Pre",
             [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); },
             &SynapseGroupMergedBase::isSrcNeuronDerivedParamHeterogeneous);
 
         // Add heterogeneous postsynaptic neuron model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
-            getArchetype().getTrgNeuronGroup()->getNeuronModel()->getParamNames(),
+            getArchetype().getTrgNeuronGroup()->getNeuronModel()->getParamNames(), "Post",
             [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getParams(); },
             &SynapseGroupMergedBase::isTrgNeuronParamHeterogeneous);
 
         // Add heterogeneous postsynaptic neuron model derived parameters
         addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            getArchetype().getTrgNeuronGroup()->getNeuronModel()->getDerivedParams(),
+            getArchetype().getTrgNeuronGroup()->getNeuronModel()->getDerivedParams(), "Post",
             [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); },
             &SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous);
 
@@ -1150,13 +1152,13 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
 
         // Add heterogeneous weight update model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
-            wum->getParamNames(),
+            wum->getParamNames(), "",
             [](const SynapseGroupInternal &sg) { return sg.getWUParams(); },
             &SynapseGroupMergedBase::isWUParamHeterogeneous);
 
         // Add heterogeneous weight update model derived parameters
         addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            wum->getDerivedParams(),
+            wum->getDerivedParams(), "",
             [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); },
             &SynapseGroupMergedBase::isWUDerivedParamHeterogeneous);
 
@@ -1171,14 +1173,14 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
             // Add heterogeneous connectivity initialiser model parameters
             addHeterogeneousParams<SynapseGroupMergedBase>(
-                getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(),
+                getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
                 [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
                 &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
 
 
             // Add heterogeneous connectivity initialiser derived parameters
             addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-                getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(),
+                getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
                 [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
                 &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
         }
