@@ -24,10 +24,37 @@
 #include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+void copyFile(const filesystem::path &file, const filesystem::path &sharePath, const filesystem::path &outputPath)
+{
+    // Get full path to input and output files
+    const auto inputFile = sharePath / file;
+    const auto outputFile = outputPath / file;
+
+    // Assert that input file exists
+    assert(inputFile.exists());
+
+    // Create output directory if required
+    filesystem::create_directory_recursive(outputFile.parent_path());
+
+    // Copy file
+    // **THINK** we could check modification etc but it doesn't seem worthwhile
+    LOGD_CODE_GEN << "Copying '" << inputFile << "' to '" << outputFile << "'" << std::endl;
+    std::ifstream inputFileStream(inputFile.str(), std::ios::binary);
+    std::ofstream outputFileStream(outputFile.str(), std::ios::binary);
+    assert(outputFileStream.good());
+}
+}
+
+//--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                                                        const filesystem::path &outputPath, bool standaloneModules)
+                                                                                        const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                                                        bool standaloneModules)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -61,6 +88,13 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
     generateInit(init, memorySpaces, modelMerged, backend);
     generateSupportCode(supportCode, modelMerged);
+
+    // Get list of files to copy into generated code
+    const auto backendSharePath = sharePath / "backends";
+    const auto filesToCopy = backend.getFilesToCopy(modelMerged);
+    for(const auto &f : filesToCopy) {
+        copyFile(f, backendSharePath, outputPath);
+    }
 
     // Create basic list of modules
     std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};

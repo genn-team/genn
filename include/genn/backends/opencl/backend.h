@@ -228,6 +228,10 @@ public:
     virtual void genMSBuildCompileModule(const std::string& moduleName, std::ostream& os) const override;
     virtual void genMSBuildImportTarget(std::ostream& os) const override;
 
+    //! Get list of files to copy into generated code
+    /*! Paths should be relative to share/genn/backends/ */
+    virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged &modelMerged) const override;
+
     virtual std::string getVarPrefix() const override { return m_Preferences.automaticCopy ? "" : "d_"; }
     virtual std::string getPointerPrefix() const override { return "__global "; };
 
@@ -516,7 +520,7 @@ private:
 
     void genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const;
 
-    void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerge) const;
+    void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string& type, size_t size);
@@ -527,7 +531,7 @@ private:
     void divideKernelStreamInParts(CodeStream& os, const std::stringstream& kernelCode, size_t partLength) const;
 
     //! Get arguments to pass to cl::Program::build
-    std::string getBuildProgramFlags() const;
+    std::string getBuildProgramFlags(const ModelSpecMerged &modelMerged) const;
 
     //--------------------------------------------------------------------------
     // Private static methods

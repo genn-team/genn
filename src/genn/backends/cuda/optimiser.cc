@@ -140,7 +140,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
                                            CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
-                                           const filesystem::path &outputPath)
+                                           const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -191,7 +191,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
 
         // Generate code
-        const auto moduleNames = generateAll(model, backend, outputPath, true).first;
+        const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
 
         // Set context
         // **NOTE** CUDA calls in code generation seem to lose driver context
@@ -362,7 +362,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 }
 //--------------------------------------------------------------------------
 int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                        const CodeGenerator::CUDA::Preferences &preferences, const filesystem::path &outputPath)
+                        const CodeGenerator::CUDA::Preferences &preferences,
+                        const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
     using namespace CodeGenerator;
     using namespace CUDA;
@@ -386,7 +387,8 @@ int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::Ker
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, outputPath);
+        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences,
+                                               sharePath, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -486,9 +488,9 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath,
-                      plog::Severity backendLevel, plog::IAppender *backendAppender,
-                      const Preferences &preferences)
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sharePath,
+                      const filesystem::path &outputPath, plog::Severity backendLevel,
+                      plog::IAppender *backendAppender, const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {
@@ -507,7 +509,8 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
         // Choose optimal device
         KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
+        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences,
+                                                 sharePath, outputPath);
 
         // Create backend
         return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
@@ -526,7 +529,8 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
+            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences,
+                              sharePath, outputPath);
 
             // Create backend
             return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
