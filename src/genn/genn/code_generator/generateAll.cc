@@ -46,6 +46,7 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
     std::ifstream inputFileStream(inputFile.str(), std::ios::binary);
     std::ofstream outputFileStream(outputFile.str(), std::ios::binary);
     assert(outputFileStream.good());
+    outputFileStream << inputFileStream.rdbuf();
 }
 }
 
