@@ -26,7 +26,7 @@ class SimTest : public SimulationTest
 {
 };
 
-TEST_F(SimTest, Vars)
+TEST_F(SimTest, ConnectInit)
 {
     // Pull connectivity back to host
     pullFixedNumberTotalConnectivityFromDevice();
