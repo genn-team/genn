@@ -631,13 +631,14 @@ class SynapseGroup(Group):
             if self.ind is None or self.row_lengths is None:
                 raise Exception("only manually initialised connectivity "
                                 "can currently by accessed")
-
+            # if connectivity was generated on device we need to update the
+            # pointers and prune data
             if self.connectivity_initialiser is not None:
                 # download the connectivity details from device
                 self.pull_connectivity_from_device()
 
                 # the ind array still has some non-valid data so we remove them
-                # with the row_lengths data
+                # with the row_lengths
                 ind = [self.ind[start_idx + j]
                         for i, start_idx in enumerate(xrange(0, len(self.ind), self.max_row_length))
                             for j in range(self.row_lengths[i])]
@@ -786,6 +787,8 @@ class SynapseGroup(Group):
                         # Copy row from non-padded indices into correct location
                         ind[i:i + r] = self.ind[syn:syn + r]
                         syn += r
+                # if we can initialize connectivity on device, we add the
+                # member pointers
                 elif self.connectivity_initialiser is not None:
                     self.ind = ind
                     self.row_lengths = row_length
