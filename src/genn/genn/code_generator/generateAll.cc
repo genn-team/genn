@@ -92,8 +92,9 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Get list of files to copy into generated code
     const auto backendSharePath = sharePath / "backends";
     const auto filesToCopy = backend.getFilesToCopy(modelMerged);
+    const auto absOutputPath = outputPath.make_absolute();
     for(const auto &f : filesToCopy) {
-        copyFile(f, backendSharePath, outputPath);
+        copyFile(f, backendSharePath, absOutputPath);
     }
 
     // Create basic list of modules
