@@ -454,7 +454,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-        os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags() << "\") != CL_SUCCESS)";
+        os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
             os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -939,7 +939,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-        os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags() << "\") != CL_SUCCESS)";
+        os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
             os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -1392,7 +1392,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
         os << "// Build program" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-        os << "if(initializeProgram.build(\"" << getBuildProgramFlags() << "\") != CL_SUCCESS)";
+        os << "if(initializeProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
         {
             CodeStream::Scope b(os);
             os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -2091,10 +2091,10 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream& os) const
 {
-    os << "OBJECTS += ../clRNG/clRNG.o ../clRNG/private.o ../clRNG/lfsr113.o ../clRNG/philox432.o" << std::endl;
+    os << "OBJECTS += opencl/clRNG/clRNG.o opencl/clRNG/private.o opencl/clRNG/lfsr113.o opencl/clRNG/philox432.o" << std::endl;
     os << "LIBS := " << "-lOpenCL" << std::endl;
     os << "LINKFLAGS := " << "-shared" << std::endl;
-    os << "CCFLAGS := " << "-c -fPIC -MMD -MP -I$(OPENCL_PATH)/include -I\"../clRNG/include\"" << std::endl;
+    os << "CCFLAGS := " << "-c -fPIC -MMD -MP -I$(OPENCL_PATH)/include -Iopencl/clRNG/include" << std::endl;
     os << "CXXFLAGS += " << "-std=c++11 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -2108,7 +2108,7 @@ void Backend::genMakefileCompileRule(std::ostream& os) const
     os << "%.o: %.cc" << std::endl;
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
     os << std::endl;
-    os << "../clRNG/%.o: ../clRNG/%.c" << std::endl;
+    os << "opencl/clRNG/%.o: opencl/clRNG/%.c" << std::endl;
     os << "\t@$(CC) $(CCFLAGS) -o $@ $<" << std::endl;
     os << std::endl;
 }
@@ -2134,10 +2134,7 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<AdditionalIncludeDirectories>";
-    os << "..\\clRNG\\include;";
-    os << "$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)";
-    os << "</AdditionalIncludeDirectories>" << std::endl;
+    os << "\t\t\t<AdditionalIncludeDirectories>opencl\\clRNG\\include;$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
@@ -2161,9 +2158,47 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
     os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
     const std::array<std::string, 4> clrngItems = { "clRNG.c", "private.c", "lfsr113.c", "philox432.c" };
     for (const auto& clrngItem : clrngItems) {
-        os << "\t\t<ClCompile Include=\"..\\clRNG\\" << clrngItem << "\" />" << std::endl;
+        os << "\t\t<ClCompile Include=\"opencl\\clRNG\\" << clrngItem << "\" />" << std::endl;
     }
     os << "\t</ItemGroup>" << std::endl;
+}
+//--------------------------------------------------------------------------
+std::vector<filesystem::path> Backend::getFilesToCopy(const ModelSpecMerged &) const
+{
+    const auto clRNG = filesystem::path("opencl") / "clRNG";
+    const auto clRNGInclude = clRNG / "include" / "clRNG";
+    const auto clRNGIncludePrivate = clRNGInclude / "private";
+    const auto clRNGIncludePrivateRandom123 = clRNGIncludePrivate / "Random123";
+    return {clRNG / "lfsr113.c",
+            clRNG / "clRNG.c",
+            clRNG / "private.h",
+            clRNG / "philox432.c",
+            clRNG / "modularHost.c.h",
+            clRNG / "private.c",
+
+            clRNGInclude / "lfsr113.h",
+            clRNGInclude / "clRNG.h",
+            clRNGInclude / "clRNG.clh",
+            clRNGInclude / "lfsr113.clh",
+            clRNGInclude / "philox432.h",
+            clRNGInclude / "philox432.clh",
+
+            clRNGIncludePrivate / "philox432.c.h",
+            clRNGIncludePrivate / "modular.c.h",
+            clRNGIncludePrivate / "lfsr113.c.h",
+            clRNGIncludePrivate / "device" / "philox432.c.h",
+            clRNGIncludePrivate / "device" / "modular.c.h",
+            clRNGIncludePrivate / "device" / "lfsr113.c.h",
+
+            clRNGIncludePrivateRandom123 / "array.h",
+            clRNGIncludePrivateRandom123 / "philox.h",
+            clRNGIncludePrivateRandom123 / "features" / "clangfeatures.h",
+            clRNGIncludePrivateRandom123 / "features" / "compilerfeatures.h",
+            clRNGIncludePrivateRandom123 / "features" / "gccfeatures.h",
+            clRNGIncludePrivateRandom123 / "features" / "msvcfeatures.h",
+            clRNGIncludePrivateRandom123 / "features" / "open64features.h",
+            clRNGIncludePrivateRandom123 / "features" / "openclfeatures.h",
+            clRNGIncludePrivateRandom123 / "features" / "sse.h"};
 }
 //--------------------------------------------------------------------------
 std::string Backend::getFloatAtomicAdd(const std::string& ftype, const char* memoryType) const
@@ -2522,9 +2557,9 @@ void Backend::divideKernelStreamInParts(CodeStream& os, const std::stringstream&
     }
 }
 //--------------------------------------------------------------------------
-std::string Backend::getBuildProgramFlags() const
+std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) const
 {
-    std::string flags = "-cl-std=CL1.2 -I clRNG/include";
+    std::string flags = "-cl-std=CL1.2 -I " + modelMerged.getModel().getName() + "_CODE/opencl/clRNG/include";
     if(m_Preferences.optimizeCode) {
         flags += " -cl-fast-relaxed-math";
     }

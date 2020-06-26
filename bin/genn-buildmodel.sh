@@ -80,17 +80,12 @@ fi
 # generate model code
 BASEDIR=$(dirname "$0")
 
-# if we're using OpenCL, copy clRNG into destination
-if [[ "$GENERATOR_MAKEFILE" = "MakefileOpenCL" ]]; then
-    cp -rf $BASEDIR/../src/genn/backends/opencl/clRNG .
-fi
-
 make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args "$GENERATOR" "$OUT_PATH"
+    gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH"
 else
-    "$GENERATOR" "$OUT_PATH"
+    "$GENERATOR" "$BASEDIR/../" "$OUT_PATH"
 fi
 
 echo "model build complete"

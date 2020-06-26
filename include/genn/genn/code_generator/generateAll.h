@@ -24,5 +24,6 @@ namespace filesystem
 namespace CodeGenerator
 {
 GENN_EXPORT std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
-                                                                      const filesystem::path &outputPath, bool standaloneModules=false);
+                                                                      const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                                      bool standaloneModules=false);
 }

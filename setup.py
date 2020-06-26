@@ -4,10 +4,11 @@ import os
 import sys
 
 from copy import deepcopy
+from glob import glob
 from platform import system
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
-
+from shutil import copytree, rmtree
 from generate_swig_interfaces import generateConfigs
 
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
@@ -29,12 +30,15 @@ windows = system() == "Windows"
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
 
-genn_wrapper_path = os.path.join(genn_path, "pygenn", "genn_wrapper")
+pygenn_path = os.path.join(genn_path, "pygenn")
+genn_wrapper_path = os.path.join(pygenn_path, "genn_wrapper")
 genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
 genn_wrapper_swig = os.path.join(genn_wrapper_path, "swig")
 genn_wrapper_generated = os.path.join(genn_wrapper_path, "generated")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
+genn_share = os.path.join(genn_path, "share", "genn")
+pygenn_share = os.path.join(pygenn_path, "share")
 
 swig_opts = ["-c++", "-relativeimport", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
              "-I" + genn_wrapper_generated, "-I" + genn_wrapper_swig]
@@ -107,10 +111,18 @@ if opencl_installed:
                      {"libraries": ["OpenCL"],
                       "include_dirs": [os.path.join(opencl_path, "include")],
                       "library_dirs": [opencl_library_dir],
-                      "extra_link_args": ["-Wl,-rpath," + opencl_library_dir] if mac_os_x else []}))
-                      
+                      "extra_link_args": ["-Wl,-rpath," + opencl_library_dir] if mac_os_x else [],
+                      "extra_compile_args": [] if windows else ["-Wno-ignored-attributes"]}))
+
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
+
+# Copy GeNN 'share' tree into pygenn and add all files to pacakge
+# **THINK** this could be done on a per-backend basis
+rmtree(pygenn_share)
+copytree(genn_share, pygenn_share)
+package_data.extend([f for f in glob(os.path.join(pygenn_share, "**"), recursive=True) 
+                     if os.path.isfile(f)])
 
 # Create list of extension modules required to wrap utilities and various libGeNN namespaces
 ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),

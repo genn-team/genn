@@ -7,6 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
+// Filesystem includes
+#include "path.h"
+
 // PLOG includes
 #include <plog/Severity.h>
 
@@ -310,6 +313,10 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const = 0;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
+
+    //! Get list of files to copy into generated code
+    /*! Paths should be relative to share/genn/backends/ */
+    virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
     //! This function returns this prefix so it can be used in otherwise platform-independent code.

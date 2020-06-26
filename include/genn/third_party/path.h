@@ -305,7 +305,7 @@ public:
     bool operator==(const path &p) const { return p.m_path == m_path; }
     bool operator!=(const path &p) const { return p.m_path != m_path; }
 
-protected:
+private:
     static std::vector<std::string> tokenize(const std::string &string, const std::string &delim) {
         std::string::size_type lastPos = 0, pos = string.find_first_of(delim, lastPos);
         std::vector<std::string> tokens;
@@ -322,18 +322,44 @@ protected:
         return tokens;
     }
 
-protected:
+    friend void create_directory_recursive(const path& p);
+
     path_type m_type;
     std::vector<std::string> m_path;
     bool m_absolute;
 };
 
-inline bool create_directory(const path& p) {
+inline bool create_directory(const path &p)
+{
 #if defined(_WIN32)
     return CreateDirectoryW(p.wstr().c_str(), NULL) != 0;
 #else
     return mkdir(p.str().c_str(), S_IRUSR | S_IWUSR | S_IXUSR) == 0;
 #endif
+}
+
+inline void create_directory_recursive(const path &p)
+{
+    // Check path is absolute
+    if(!p.is_absolute()) {
+        throw std::runtime_error("create_directory_recursive: can only be used on absolute paths");
+    }
+
+    // Make copy of path
+    path pathCopy = p;
+
+    // Make another copy of path COMPONENTS
+    std::vector<std::string> pathComponents = pathCopy.m_path;
+
+    // Loop through path components
+    for(auto c = pathComponents.cbegin(); c !=  pathComponents.cend(); c++) {
+        // Clear existing path components and replace with subset up to c
+        pathCopy.m_path.clear();
+        std::copy(pathComponents.cbegin(), c + 1, std::back_inserter(pathCopy.m_path));
+
+        // Create directory
+        create_directory(pathCopy);
+    }
 }
 
 }   // namespace filesystem
