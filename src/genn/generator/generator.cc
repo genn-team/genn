@@ -36,7 +36,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
     try
     {
         if (argc != 3) {
-            std::cerr << "usage: generator <genn dir> <target dir>";
+            std::cerr << "usage: generator <genn dir> <target dir>" << std::endl;
             return EXIT_FAILURE;
         }
 
