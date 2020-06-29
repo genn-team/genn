@@ -61,12 +61,14 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(ModelSpec &model)
 {
-#ifdef OPENCL_DEVICE
-    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
-    GENN_PREFERENCES.manualDeviceID = OPENCL_DEVICE;
-#endif
-#ifdef OPENCL_PLATFORM
-    GENN_PREFERENCES.manualPlatformID = OPENCL_PLATFORM;
+#ifdef CL_HPP_TARGET_OPENCL_VERSION
+    if(std::getenv("OPENCL_DEVICE") != nullptr) {
+        GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+        GENN_PREFERENCES.manualDeviceID = std::atoi(std::getenv("OPENCL_DEVICE"));
+    }
+    if(std::getenv("OPENCL_PLATFORM") != nullptr) {
+        GENN_PREFERENCES.manualPlatformID = std::atoi(std::getenv("OPENCL_PLATFORM"));
+    }
 #endif
     model.setSeed(2345678);
     model.setDT(0.1);
