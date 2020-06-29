@@ -2,15 +2,6 @@ CXXFLAGS +=-std=c++11 -Wall -Wpedantic -Wextra -I $(GTEST_DIR) -isystem $(GTEST_
 
 .PHONY: all clean generated_code
 
-ifdef OPENCL_DEVICE
-    CXXFLAGS += -DOPENCL_DEVICE=$(OPENCL_DEVICE)
-endif
-
-ifdef OPENCL_PLATFORM
-    CXXFLAGS += -DOPENCL_PLATFORM=$(OPENCL_PLATFORM)
-endif
-
-
 all: test
 
 test: test.cc generated_code
