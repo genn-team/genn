@@ -180,12 +180,10 @@ Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferen
     // Show device name
     LOGI_BACKEND << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
 
-    // Check that pointer sizes match
-    // **TOOD** this could be implemented
+    // Set pointer size
     const cl_int deviceAddressBytes = m_ChosenDevice.getInfo<CL_DEVICE_ADDRESS_BITS>() / 8;
-    if(deviceAddressBytes != sizeof(void*)) {
-        throw std::runtime_error("OpenCL backend does not currently support devices with pointer sizes that differ from host (" + std::to_string(deviceAddressBytes) + " vs " + std::to_string(sizeof(void *)) + ")");
-    }
+    setPointerBytes(deviceAddressBytes);
+    LOGI_BACKEND << "Device uses " << deviceAddressBytes * 8 << " bit pointers";
 
     // Add OpenCL-specific types
     addType("clrngLfsr113Stream", 16);

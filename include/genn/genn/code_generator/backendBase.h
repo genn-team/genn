@@ -410,12 +410,19 @@ protected:
         m_TypeBytes.emplace(type, size);
     }
 
+    void setPointerBytes(size_t pointerBytes) 
+    {
+        m_PointerBytes = pointerBytes;
+    }
+
 private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
+    //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
+    size_t m_PointerBytes;
+
     // Size of supported types in bytes - used for estimating memory usage
     std::unordered_map<std::string, size_t> m_TypeBytes;
-
 };
 }   // namespace CodeGenerator
