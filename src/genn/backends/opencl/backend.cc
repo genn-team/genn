@@ -1870,8 +1870,8 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 
     if (!(loc & VarLocation::ZERO_COPY)) {
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << devicePointer;
-        os << ", " << "CL_TRUE";
-        os << ", " << "0";
+        os << ", CL_TRUE";
+        os << ", 0";
         os << ", " << countVarName << " * sizeof(" << underlyingType << ")";
         os << ", " << hostPointer << "));" << std::endl;
     }
@@ -1969,8 +1969,8 @@ void Backend::genVariablePush(CodeStream& os, const std::string& type, const std
         }
 
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << name;
-        os << ", " << "CL_TRUE";
-        os << ", " << "0";
+        os << ", CL_TRUE";
+        os << ", 0";
         os << ", " << count << " * sizeof(" << type << ")";
         os << ", " << name << "));" << std::endl;
 
@@ -2310,27 +2310,27 @@ void Backend::genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng,
 
         if (delayRequired) {
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikeCntPrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
+            os << ", CL_TRUE";
+            os << ", spkQuePtr" << ng.getName() << " * sizeof(unsigned int)";
             os << ", sizeof(unsigned int)";
-            os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
+            os << ", &" << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "]));" << std::endl;
 
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikePrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
-            os << ", " << ng.getNumNeurons() << " * sizeof(unsigned int)";
-            os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            os << ", CL_TRUE";
+            os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int)";
+            os << ", &" << spikePrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
         }
         else {
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikeCntPrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
+            os << ", CL_TRUE";
+            os << ", 0";
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikePrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
+            os << ", CL_TRUE";
+            os << ", 0";
             os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
             os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
         }
@@ -2350,27 +2350,27 @@ void Backend::genCurrentSpikePull(CodeStream& os, const NeuronGroupInternal& ng,
 
         if (delayRequired) {
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikeCntPrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
+            os << ", CL_TRUE";
+            os << ", spkQuePtr" << ng.getName() << " * sizeof(unsigned int)";
             os << ", sizeof(unsigned int)";
-            os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
+            os << ", &" << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "]));" << std::endl;
 
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
-            os << ", " << ng.getNumNeurons() << " * sizeof(unsigned int)";
-            os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            os << ", CL_TRUE";
+            os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
+            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int)";
+            os << ", &" << spikePrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
         }
         else {
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikeCntPrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
+            os << ", CL_TRUE";
+            os << ", 0";
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
-            os << ", " << "CL_TRUE";
-            os << ", " << "0";
+            os << ", CL_TRUE";
+            os << ", 0";
             os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
             os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
         }
