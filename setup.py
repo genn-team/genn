@@ -112,7 +112,7 @@ if opencl_installed:
                       "include_dirs": [os.path.join(opencl_path, "include")],
                       "library_dirs": [opencl_library_dir],
                       "extra_link_args": ["-Wl,-rpath," + opencl_library_dir] if mac_os_x else [],
-                      "extra_compile_args": [] if windows else ["-Wno-ignored-attributes"]}))
+                      "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
 
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
