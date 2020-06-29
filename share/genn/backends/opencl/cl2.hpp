@@ -1865,6 +1865,7 @@ protected:
             }
         }
 #else // CL_HPP_MINIMUM_OPENCL_VERSION < 120
+        (void)device;
         retVal = true;
 #endif // CL_HPP_MINIMUM_OPENCL_VERSION < 120
 #endif // CL_HPP_TARGET_OPENCL_VERSION >= 120
