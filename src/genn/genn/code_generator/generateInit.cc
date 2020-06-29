@@ -26,7 +26,7 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
     if(initRequired) {
         // Generate variable initialisation code
         backend.genPopVariableInit(os, popSubs,
-            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &)
+            [&ng, spikeEvent] (CodeStream &os, Substitutions &)
             {
                 // Get variable name
                 const char *spikeCntName = spikeEvent ? "spkCntEvnt" : "spkCnt";
@@ -61,7 +61,7 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
     if(initRequired) {
         // Generate variable initialisation code
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-            [&backend, &ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
+            [&ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
             {
                 // Get variable name
                 const char *spikeName = spikeEvent ? "spkEvnt" : "spk";
@@ -177,8 +177,7 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
 
             // Generate target-specific code to initialise variable
             backend.genSynapseVariableRowInit(os, sg, popSubs,
-                [&backend, &vars, &varInit, &sg, &ftype, k]
-                (CodeStream &os, Substitutions &varSubs)
+                [&vars, &varInit, &sg, &ftype, k](CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addVarSubstitution("value", "group->" + vars[k].name + "[" + varSubs["id_syn"] +  "]");
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),

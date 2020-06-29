@@ -480,10 +480,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                       return getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences);
                                   });
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelPostsynapticUpdate], totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
-                                  [this](const SynapseGroupInternal &sg){ return getNumPostsynapticUpdateThreads(sg); });
+                                  [](const SynapseGroupInternal &sg){ return getNumPostsynapticUpdateThreads(sg); });
 
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelSynapseDynamicsUpdate], totalConstMem, modelMerged.getMergedSynapseDynamicsGroups(),
-                                  [this](const SynapseGroupInternal &sg){ return getNumSynapseDynamicsThreads(sg); });
+                                  [](const SynapseGroupInternal &sg){ return getNumSynapseDynamicsThreads(sg); });
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
