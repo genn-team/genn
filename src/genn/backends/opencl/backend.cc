@@ -111,14 +111,14 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
     os << name << "Time += (double)(tmpEnd - tmpStart) / 1.0E9;" << std::endl;
 }
 //-----------------------------------------------------------------------
-void genPhiloxSkipAhead(CodeStream &os) 
+void genPhiloxSkipAhead(CodeStream &os, const std::string &offset = "") 
 {
     // Make local copy of host stream
     os << "clrngPhilox432Stream localStream;" << std::endl;
     os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
 
     // Convert id into steps, add these to steps, zero deck index and regenerate deck
-    os << "const clrngPhilox432Counter steps = {{0, id}, {0, 0}};" << std::endl;
+    os << "const clrngPhilox432Counter steps = {{0, id" << offset << "}, {0, 0}};" << std::endl;
     os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
     os << "localStream.current.deckIndex = 0;" << std::endl;
     os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
@@ -1261,14 +1261,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 initializeKernels << "__local unsigned int shRowStart[" << m_KernelWorkGroupSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
             }
 
-            // Initialise weight update variables for synapse groups with dense connectivity
+            // Initialise weight update variables for synapse groups with sparse connectivity
             genParallelGroup<SynapseSparseInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedSynapseSparseInitGroups(), idSparseInitStart,
                 [this](const SynapseGroupInternal &sg) { return padSize(sg.getMaxConnections(), m_KernelWorkGroupSizes[KernelInitializeSparse]); },
-                [this, sgSparseInitHandler](CodeStream &os, const SynapseSparseInitGroupMerged  &sg, Substitutions& popSubs)
+                [this, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseSparseInitGroupMerged  &sg, Substitutions& popSubs)
                 {
                     // Add substitution for RNG
                     if (sg.getArchetype().isWUInitRNGRequired()) {
-                        genPhiloxSkipAhead(os);
+                        genPhiloxSkipAhead(os, " + " + std::to_string(numStaticInitThreads));
                         popSubs.addVarSubstitution("rng", "&localStream");
                     }
 
