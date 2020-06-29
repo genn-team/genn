@@ -145,15 +145,14 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 runTestArguments += " -d";
                             }
                             
-                            // If node isn't a CPU_ONLY node 
-                            if(!nodeLabel.contains("cpu_only")) {
-                                // Add -c option for CUDA 
+                            // If node has suitable CUDA, add -c option
+                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
                                 runTestArguments += " -c";
-                                
-                                // If node has OpenCL, add -l option
-                                if(nodeLabel.contains("opencl")) {
-                                    runTestArguments += " -l";
-                                }
+                            }
+                            
+                            // If node has OpenCL, add -l option
+                            if(nodeLabel.contains("opencl")) {
+                                runTestArguments += " -l";
                             }
                             
                             // Run tests
@@ -250,8 +249,8 @@ for(b = 0; b < builderNodes.size(); b++) {
                             msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${uniqueMsg}" 2>&1
                             """;
                             
-                            // If this isn't a CPU_ONLY node, also build CUDA backend
-                            if(!nodeLabel.contains("cpu_only")) {
+                            // If node has suitable CUDA, also build CUDA backend
+                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
                                 msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
                             }
                             // If this node has OpenCL, also build OpenCL backend
