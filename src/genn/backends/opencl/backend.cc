@@ -1531,14 +1531,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
     os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
     os << "// OpenCL includes" << std::endl;
-    os << "#define CL_USE_DEPRECATED_OPENCL_1_2_APIS" << std::endl;
-    os << "#define CLRNG_SINGLE_PRECISION" << std::endl;
-
-#ifdef __APPLE__
-    os << "#include <OpenCL/cl.hpp>" << std::endl;
-#else
-    os << "#include <CL/cl.hpp>" << std::endl;
-#endif
+    os << "#include \"opencl/cl2.hpp\"" << std::endl;
     os << "#include <clRNG/lfsr113.h>" << std::endl;
     os << "#include <clRNG/philox432.h>" << std::endl;
     os << std::endl;
@@ -2095,7 +2088,7 @@ void Backend::genMakefilePreamble(std::ostream& os) const
     os << "LIBS := " << "-lOpenCL" << std::endl;
     os << "LINKFLAGS := " << "-shared" << std::endl;
     os << "CCFLAGS := " << "-c -fPIC -MMD -MP -I$(OPENCL_PATH)/include -Iopencl/clRNG/include" << std::endl;
-    os << "CXXFLAGS += " << "-std=c++11 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
+    os << "CXXFLAGS += " << "-std=c++11 -DCLRNG_SINGLE_PRECISION -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream& os) const
@@ -2132,8 +2125,8 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t\t<Optimization Condition=\"'$(Configuration)'=='Debug'\">Disabled</Optimization>" << std::endl;
     os << "\t\t\t<FunctionLevelLinking Condition=\"'$(Configuration)'=='Release'\">true</FunctionLevelLinking>" << std::endl;
     os << "\t\t\t<IntrinsicFunctions Condition=\"'$(Configuration)'=='Release'\">true</IntrinsicFunctions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;CLRNG_SINGLE_PRECISION;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
+    os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">_CRT_SECURE_NO_WARNINGS;WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;CLRNG_SINGLE_PRECISION;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<AdditionalIncludeDirectories>opencl\\clRNG\\include;$(OPENCL_PATH)\\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
@@ -2165,11 +2158,14 @@ void Backend::genMSBuildImportTarget(std::ostream& os) const
 //--------------------------------------------------------------------------
 std::vector<filesystem::path> Backend::getFilesToCopy(const ModelSpecMerged &) const
 {
-    const auto clRNG = filesystem::path("opencl") / "clRNG";
+    const auto opencl = filesystem::path("opencl");
+    const auto clRNG = opencl / "clRNG";
     const auto clRNGInclude = clRNG / "include" / "clRNG";
     const auto clRNGIncludePrivate = clRNGInclude / "private";
     const auto clRNGIncludePrivateRandom123 = clRNGIncludePrivate / "Random123";
-    return {clRNG / "lfsr113.c",
+    return {opencl / "cl2.hpp",
+            
+            clRNG / "lfsr113.c",
             clRNG / "clRNG.c",
             clRNG / "private.h",
             clRNG / "philox432.c",

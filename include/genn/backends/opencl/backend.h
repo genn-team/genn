@@ -11,12 +11,7 @@
 #include <regex>
 
 // OpenCL includes
-#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
-#ifdef __APPLE__
-    #include <OpenCL/cl.hpp>
-#else
-    #include <CL/cl.hpp>
-#endif
+#include "../../../../share/genn/backends/opencl/cl2.hpp"
 
 // GeNN includes
 #include "backendExport.h"

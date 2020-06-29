@@ -2,7 +2,9 @@
 
 // Standard C++ includes
 #include <iostream>
-#include <CL/cl.hpp>
+
+// OpenCL includes
+#include "../../../../share/genn/backends/opencl/cl2.hpp"
 
 // PLOG includes
 #include <plog/Log.h>
