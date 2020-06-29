@@ -119,7 +119,7 @@ generateConfigs(genn_path, backends)
 
 # Copy GeNN 'share' tree into pygenn and add all files to pacakge
 # **THINK** this could be done on a per-backend basis
-rmtree(pygenn_share)
+rmtree(pygenn_share, ignore_errors=True)
 copytree(genn_share, pygenn_share)
 package_data.extend([f for f in glob(os.path.join(pygenn_share, "**"), recursive=True) 
                      if os.path.isfile(f)])
