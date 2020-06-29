@@ -78,6 +78,13 @@ IMPLEMENT_MODEL(Continuous);
 
 void modelDefinition(ModelSpec &model)
 {
+#ifdef OPENCL_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = OPENCL_DEVICE;
+#endif
+#ifdef OPENCL_PLATFORM
+    GENN_PREFERENCES.manualPlatformID = OPENCL_PLATFORM;
+#endif
     model.setDT(1.0);
     model.setName("decode_matrix_conn_gen_cont_individualg_ragged");
 

@@ -103,6 +103,13 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(ModelSpec &model)
 {
+#ifdef OPENCL_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = OPENCL_DEVICE;
+#endif
+#ifdef OPENCL_PLATFORM
+    GENN_PREFERENCES.manualPlatformID = OPENCL_PLATFORM;
+#endif
     model.setDT(0.1);
     model.setName("var_init_egp");
     

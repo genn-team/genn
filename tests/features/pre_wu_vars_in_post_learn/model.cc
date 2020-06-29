@@ -56,6 +56,13 @@ IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(ModelSpec &model)
 {
+#ifdef OPENCL_DEVICE
+    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+    GENN_PREFERENCES.manualDeviceID = OPENCL_DEVICE;
+#endif
+#ifdef OPENCL_PLATFORM
+    GENN_PREFERENCES.manualPlatformID = OPENCL_PLATFORM;
+#endif
     model.setDT(1.0);
     model.setName("pre_wu_vars_in_post_learn");
 
