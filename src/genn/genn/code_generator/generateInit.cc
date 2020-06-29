@@ -103,7 +103,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&backend, &vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
+                [&vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     // Substitute in parameters and derived parameters for initialising variables
@@ -235,7 +235,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             if(ng.getArchetype().isSpikeTimeRequired()) {
                 // Generate variable initialisation code
                 backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                    [&backend, &ng] (CodeStream &os, Substitutions &varSubs)
+                    [&ng] (CodeStream &os, Substitutions &varSubs)
                     {
                         // Is delay required
                         if(ng.getArchetype().isDelayRequired()) {
@@ -268,7 +268,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 // If this synapse group's input variable should be initialised on device
                 // Generate target-specific code to initialise variable
                 backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                    [&backend, &model, sg, i] (CodeStream &os, Substitutions &varSubs)
+                    [&model, i] (CodeStream &os, Substitutions &varSubs)
                     {
                         os << "group->inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                     });
@@ -276,7 +276,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 // If dendritic delays are required
                 if(sg->isDendriticDelayRequired()) {
                     backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                        [&backend, &model, sg, i](CodeStream &os, Substitutions &varSubs)
+                        [&model, sg, i](CodeStream &os, Substitutions &varSubs)
                         {
                             os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
                             {
