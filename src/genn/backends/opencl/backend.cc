@@ -1787,25 +1787,27 @@ MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type,
 {
     auto allocation = MemAlloc::zero();
 
-    if (loc & VarLocation::HOST) {
-        os << name << " = new " << type << "[" << count << "];" << std::endl;
-        allocation += MemAlloc::host(count * getSize(type));
-    }
-
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+        if(loc & VarLocation::HOST) {
+            os << " | CL_MEM_ALLOC_HOST_PTR";
+        }
+        os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
         allocation += MemAlloc::device(count * getSize(type));
+    }
+
+    if(loc & VarLocation::HOST) {
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(d_" << name;
+        os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
+        allocation += MemAlloc::host(count * getSize(type));
     }
 
     return allocation;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream& os, const std::string& name, VarLocation loc) const
+void Backend::genVariableFree(CodeStream&, const std::string&, VarLocation) const
 {
-    if (loc & VarLocation::HOST) {
-        os << "delete[] " << name << ";" << std::endl;
-    }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, CodeStream &definitionsInternal, 
@@ -1839,13 +1841,18 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
 
-    if(loc & VarLocation::HOST) {
-        os << hostPointer << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
-    }
-
     // If variable is present on device at all
     if(loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << devicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << devicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+        if(loc & VarLocation::HOST) {
+            os << " | CL_MEM_ALLOC_HOST_PTR";
+        }
+        os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+    }
+
+    if(loc & VarLocation::HOST) {
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << devicePointer;
+        os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
