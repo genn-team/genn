@@ -2085,10 +2085,20 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 void Backend::genMakefilePreamble(std::ostream& os) const
 {
     os << "OBJECTS += opencl/clRNG/clRNG.o opencl/clRNG/private.o opencl/clRNG/lfsr113.o opencl/clRNG/philox432.o" << std::endl;
-    os << "LIBS := " << "-lOpenCL" << std::endl;
-    os << "LINKFLAGS := " << "-shared" << std::endl;
-    os << "CCFLAGS := " << "-c -fPIC -MMD -MP -I$(OPENCL_PATH)/include -Iopencl/clRNG/include" << std::endl;
-    os << "CXXFLAGS += " << "-std=c++11 -DCLRNG_SINGLE_PRECISION -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
+    //os << "LIBS := -lOpenCL" << std::endl;
+    os << "LINKFLAGS := -shared";
+#ifdef __APPLE__
+    os << " -framework OpenCL";
+#else
+    os << " -LOpenCL";
+#endif
+    os << std::endl;
+    os << "CCFLAGS := -c -fPIC -MMD -MP";
+#ifndef __APPLE__
+    os << " -I$(OPENCL_PATH)/include";
+#endif
+    os << " -Iopencl/clRNG/include" << std::endl;
+    os << "CXXFLAGS += -std=c++11 -DCLRNG_SINGLE_PRECISION -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream& os) const
@@ -2149,7 +2159,7 @@ void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostrea
 void Backend::genMSBuildImportTarget(std::ostream& os) const
 {
     os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
-    const std::array<std::string, 4> clrngItems = { "clRNG.c", "private.c", "lfsr113.c", "philox432.c" };
+    const std::array<std::string, 4> clrngItems{{ "clRNG.c", "private.c", "lfsr113.c", "philox432.c" }};
     for (const auto& clrngItem : clrngItems) {
         os << "\t\t<ClCompile Include=\"opencl\\clRNG\\" << clrngItem << "\" />" << std::endl;
     }
@@ -2435,7 +2445,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     // Generate non-uniform generators for each supported RNG type
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Non-uniform generators" << std::endl;
-    const std::array<std::string, 2> rngs{"Lfsr113", "Philox432"};
+    const std::array<std::string, 2> rngs{{"Lfsr113", "Philox432"}};
     for(const std::string &r : rngs) {
         os << "inline " << precision << " exponentialDist" << r << "(clrng" << r << "Stream *rng)";
         {

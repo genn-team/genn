@@ -544,8 +544,6 @@ private:
     const unsigned int m_ChosenDeviceIndex;
     cl::Device m_ChosenDevice;
 
-    int m_RuntimeVersion;
-
     //! Types that are only supported on device i.e. should never be exposed to user code
     std::unordered_set<std::string> m_DeviceTypes;
 

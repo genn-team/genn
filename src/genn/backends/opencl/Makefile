@@ -2,12 +2,18 @@
 include ../../MakefileCommon
 
 # Check that OpenCL path is set
-ifndef OPENCL_PATH
-    $(error Environment variable OPENCL_PATH must be defined - this is a required post-installation action when installing OpenCL)
+# **NOTE** on MacOS X we can just use framework
+ifneq ($(DARWIN),DARWIN)
+    ifndef OPENCL_PATH
+        $(error Environment variable OPENCL_PATH must be defined - this is a required post-installation action when installing OpenCL)
+    endif
 endif
 
 # Add backend and OpenCL include directories to compiler flags
-CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/opencl -I"$(OPENCL_PATH)/include" -Wno-ignored-attributes -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120
+CXXFLAGS		+=-I$(GENN_DIR)/include/genn/backends/opencl -Wno-ignored-attributes -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120
+ifneq ($(DARWIN),DARWIN)
+    CXXFLAGS		+=-I$(OPENCL_PATH)/include
+endif
 
 # Add prefix to object directory and library name
 BACKEND			:=$(LIBRARY_DIRECTORY)/libgenn_opencl_backend$(GENN_PREFIX).$(LIBRARY_EXTENSION)
