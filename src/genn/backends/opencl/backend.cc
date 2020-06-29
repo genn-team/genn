@@ -450,20 +450,24 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "void buildNeuronUpdateProgram()";
     {
         CodeStream::Scope b(os);
-        os << "// Build program" << std::endl;
-        os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-        os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
-        {
-            CodeStream::Scope b(os);
-            os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
-            os << "throw std::runtime_error(\"Neuron update program compile error\");" << std::endl;
+
+        // If there are any kernels (some implementations complain)
+        if(idPreNeuronReset > 0 || idStart > 0) {
+            os << "// Build program" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
+            os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            {
+                CodeStream::Scope b(os);
+                os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
+                os << "throw std::runtime_error(\"Neuron update program compile error\");" << std::endl;
+            }
+            os << std::endl;
+
+            os << "// Configure merged struct buffers and kernels" << std::endl;
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "neuronUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronUpdateGroups(), "neuronUpdateProgram");
+            os << std::endl;
         }
-        os << std::endl;
-        
-        os << "// Configure merged struct buffers and kernels" << std::endl;
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "neuronUpdateProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronUpdateGroups(), "neuronUpdateProgram");
-        os << std::endl;
 
         // KernelPreNeuronReset initialization
         if(idPreNeuronReset > 0) {
@@ -935,22 +939,26 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "void buildSynapseUpdateProgram()";
     {
         CodeStream::Scope b(os);
-        os << "// Build program" << std::endl;
-        os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-        os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
-        {
-            CodeStream::Scope b(os);
-            os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
-            os << "throw std::runtime_error(\"Synapse update program compile error\");" << std::endl;
-        }
-        os << std::endl;
 
-        os << "// Configure merged struct buffers and kernels" << std::endl;
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), "synapseUpdateProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedPresynapticUpdateGroups(), "synapseUpdateProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedPostsynapticUpdateGroups(), "synapseUpdateProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDynamicsGroups(), "synapseUpdateProgram");
-        os << std::endl;
+        // If there are any kernels (some implementations complain)
+        if(idPreSynapseReset > 0 || idPresynapticStart > 0 || idPostsynapticStart > 0 || idSynapseDynamicsStart > 0) {
+            os << "// Build program" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
+            os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            {
+                CodeStream::Scope b(os);
+                os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
+                os << "throw std::runtime_error(\"Synapse update program compile error\");" << std::endl;
+            }
+            os << std::endl;
+
+            os << "// Configure merged struct buffers and kernels" << std::endl;
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), "synapseUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedPresynapticUpdateGroups(), "synapseUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedPostsynapticUpdateGroups(), "synapseUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDynamicsGroups(), "synapseUpdateProgram");
+            os << std::endl;
+        }
 
         if(idPreSynapseReset > 0) {
             os << "// Configure dendritic delay update kernel" << std::endl;
@@ -1388,22 +1396,26 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     os << "void buildInitializeProgram()";
     {
         CodeStream::Scope b(os);
-        os << "// Build program" << std::endl;
-        os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-        os << "if(initializeProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
-        {
-            CodeStream::Scope b(os);
-            os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
-            os << "throw std::runtime_error(\"Initialize program compile error\");" << std::endl;
-        }
-        os << std::endl;
 
-        os << "// Configure merged struct building kernels" << std::endl;
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronInitGroups(), "initializeProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDenseInitGroups(), "initializeProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups(), "initializeProgram");
-        genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseSparseInitGroups(), "initializeProgram");
-        os << std::endl;
+        // If there are any kernels (some implementations complain)
+        if(idInitStart > 0 || idSparseInitStart > 0) {
+            os << "// Build program" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
+            os << "if(initializeProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            {
+                CodeStream::Scope b(os);
+                os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
+                os << "throw std::runtime_error(\"Initialize program compile error\");" << std::endl;
+            }
+            os << std::endl;
+
+            os << "// Configure merged struct building kernels" << std::endl;
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDenseInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseSparseInitGroups(), "initializeProgram");
+            os << std::endl;
+        }
 
         if (idInitStart > 0) {
             os << "// Configure initialization kernel" << std::endl;
