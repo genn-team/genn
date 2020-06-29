@@ -39,7 +39,7 @@
 #define PRIVATE_LFSR113_CH
 
 #define Lfsr113_NORM_cl_double 1.0 / 0x100000001L   // 2^32 + 1    // 2.328306436538696e-10
-#define Lfsr113_NORM_cl_float  2.3283063e-10
+#define Lfsr113_NORM_cl_float  2.3283063e-10f
 
 
 clrngStatus clrngLfsr113CopyOverStreams(size_t count, clrngLfsr113Stream* destStreams, const clrngLfsr113Stream* srcStreams)

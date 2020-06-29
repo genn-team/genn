@@ -41,7 +41,7 @@
 #include "../Random123/philox.h" 
 
 #define Philox432_NORM_cl_double    1.0 / 0x100000000L   // 1.0 /2^32 
-#define Philox432_NORM_cl_float     2.32830644e-010; 
+#define Philox432_NORM_cl_float     2.32830644e-010f; 
 
 clrngPhilox432Counter clrngPhilox432Add(clrngPhilox432Counter a, clrngPhilox432Counter b)
 {
