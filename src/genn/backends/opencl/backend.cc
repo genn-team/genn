@@ -2085,12 +2085,9 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 void Backend::genMakefilePreamble(std::ostream& os) const
 {
     os << "OBJECTS += opencl/clRNG/clRNG.o opencl/clRNG/private.o opencl/clRNG/lfsr113.o opencl/clRNG/philox432.o" << std::endl;
-    //os << "LIBS := -lOpenCL" << std::endl;
     os << "LINKFLAGS := -shared";
 #ifdef __APPLE__
     os << " -framework OpenCL";
-#else
-    os << " -LOpenCL";
 #endif
     os << std::endl;
     os << "CCFLAGS := -c -fPIC -MMD -MP";
@@ -2103,7 +2100,11 @@ void Backend::genMakefilePreamble(std::ostream& os) const
 //--------------------------------------------------------------------------
 void Backend::genMakefileLinkRule(std::ostream& os) const
 {
-    os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS) $(LIBS)" << std::endl;
+    os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)";
+#ifndef __APPLE__
+    os << " -lOpenCL";
+#endif
+    os << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefileCompileRule(std::ostream& os) const
