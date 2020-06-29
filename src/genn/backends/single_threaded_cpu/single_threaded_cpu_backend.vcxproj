@@ -61,6 +61,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\..\include\genn\genn;..\..\..\..\include\genn\third_party;..\..\..\..\include\genn\backends\single_threaded_cpu</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">NOMINMAX;BUILDING_BACKEND_DLL;LINKING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
     </ClCompile>
