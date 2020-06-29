@@ -26,3 +26,4 @@
 /build/
 /pygenn.egg-info/
 .vscode/
+/pygenn/share/
