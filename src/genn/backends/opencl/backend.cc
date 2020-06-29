@@ -1991,21 +1991,16 @@ void Backend::genVariablePull(CodeStream& os, const std::string& type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& ng, const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
 {
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
-        //! TO BE IMPLEMENTED - Current push not applicable for OpenCL
-        /*
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << getVarPrefix() << name << ng.getName();
-        os << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]";
-        os << ", " << "CL_TRUE";
-        os << ", " << "0";
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << name << ng.getName();
+        os << ", CL_TRUE";
+        os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(" << type << ")";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
         os << ", &" << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
-        */
-        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
     }
     // Otherwise, generate standard push
     else {
@@ -2013,21 +2008,16 @@ void Backend::genCurrentVariablePush(CodeStream& os, const NeuronGroupInternal& 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream& os, const NeuronGroupInternal& ng, const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
 {
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
-        //! TO BE IMPLEMENTED - Current pull not applicable for OpenCL
-        /*
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << getVarPrefix() << name << ng.getName();
-        os << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]";
-        os << ", " << "CL_TRUE";
-        os << ", " << "0";
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << name << ng.getName();
+        os << ", CL_TRUE";
+        os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(" << type << ")";
         os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
         os << ", &" << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
-        */
-        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons());
     }
     // Otherwise, generate standard push
     else {
