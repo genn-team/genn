@@ -650,6 +650,9 @@ class SynapseGroup(Group):
                 return self.ind
 
             else:
+                if self._ind is None or self._row_lengths is None:
+                    raise Exception("problem accessing on-device initialised connectivity ")
+
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
@@ -780,6 +783,7 @@ class SynapseGroup(Group):
                 row_length = self._assign_ext_ptr_array("rowLength",
                                                         self.src.size,
                                                         "unsigned int")
+                # add pointers to the object
                 self._ind = ind
                 self._row_lengths = row_length
                 self._max_row_length = self._assign_ext_ptr_single("maxRowLength",
@@ -800,8 +804,6 @@ class SynapseGroup(Group):
                         # Copy row from non-padded indices into correct location
                         ind[i:i + r] = self.ind[syn:syn + r]
                         syn += r
-                # if we can initialize connectivity on device, we add the
-                # member pointers
                 elif self.connectivity_initialiser is None:
                     raise Exception("For sparse projections, the connections"
                                     "must be set before loading a model")
