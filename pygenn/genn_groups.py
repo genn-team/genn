@@ -493,14 +493,8 @@ class SynapseGroup(Group):
             if self.is_dense:
                 return np.copy(var_view)
             elif self.is_ragged:
-                #if connectivity was initialized on host, get standard variables
-                if self.connectivity_initialiser is None:
-                    max_rl = self.max_row_length
-                    row_ls = self.row_lengths
-                # otherwise get the on-device array views
-                else:
-                    max_rl = self._max_row_length
-                    row_ls = self._row_lengths
+                max_rl = self.max_row_length
+                row_ls = self.row_lengths if self.connectivity_initialiser is None else self._row_lengths
 
                 # Create range containing the index where each row starts in ind
                 row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
@@ -611,22 +605,15 @@ class SynapseGroup(Group):
             raise Exception("when weight sharing is used, get_sparse_pre_inds"
                             "can only be used on the 'master' population")
         elif self.is_ragged:
-            if self.connectivity_initialiser is None:
-                if self.ind is None or self.row_lengths is None:
-                    raise Exception("problem accessing manually initialised connectivity ")
 
-                # Expand row lengths into full array
-                # of presynaptic indices and return
-                return np.hstack([np.repeat(i, l)
-                                  for i, l in enumerate(self.row_lengths)])
-            # loop through on-device array views instead
-            else:
-                if self._ind is None or self._row_lengths is None:
-                    raise Exception("problem accessing on-device initialised connectivity ")
-                # Expand row lengths into full array
-                # of presynaptic indices and return
-                return np.hstack([np.repeat(i, l)
-                                  for i, l in enumerate(self._row_lengths)])
+            rl = self.row_lengths if self.connectivity_initialiser is None else self._row_lengths
+
+            if rl is None:
+                raise Exception("problem accessing connectivity ")
+
+            # Expand row lengths into full array
+            # of presynaptic indices and return
+            return np.hstack([np.repeat(i, l) for i, l in enumerate(rl)])
 
         else:
             raise Exception("get_sparse_pre_inds only supports"
@@ -656,7 +643,7 @@ class SynapseGroup(Group):
                 # the _ind array view still has some non-valid data so we remove them
                 # with the row_lengths
                 return np.hstack([
-                    self._ind[i * self._max_row_length: (i * self._max_row_length) + r]
+                    self._ind[i * self.max_row_length: (i * self.max_row_length) + r]
                         for i, r in enumerate(self._row_lengths)])
 
         else:
@@ -786,8 +773,7 @@ class SynapseGroup(Group):
                 # add pointers to the object
                 self._ind = ind
                 self._row_lengths = row_length
-                self._max_row_length = self._assign_ext_ptr_single("maxRowLength",
-                                                                   "unsigned int")[0]
+
                 # If data is available
                 if self.connections_set:
 
