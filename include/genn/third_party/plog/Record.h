@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdarg>
 #include <plog/Severity.h>
 #include <plog/Util.h>
 
@@ -46,6 +47,14 @@ namespace plog
         inline void operator<<(util::nostringstream& stream, const std::wstring& data)
         {
             plog::detail::operator<<(stream, data.c_str());
+        }
+#endif
+
+#ifdef __cplusplus_cli
+        inline void operator<<(util::nostringstream& stream, System::String^ data)
+        {
+            cli::pin_ptr<const System::Char> ptr = PtrToStringChars(data);
+            plog::detail::operator<<(stream, static_cast<const wchar_t*>(ptr));
         }
 #endif
 
@@ -102,15 +111,15 @@ namespace plog
     class Record
     {
     public:
-        Record(Severity severity, const char* func, size_t line, const char* file, const void* object)
-            : m_severity(severity), m_tid(util::gettid()), m_object(object), m_line(line), m_func(func), m_file(file)
+        Record(Severity severity, const char* func, size_t line, const char* file, const void* object, int instanceId)
+            : m_severity(severity), m_tid(util::gettid()), m_object(object), m_line(line), m_func(func), m_file(file), m_instanceId(instanceId)
         {
             util::ftime(&m_time);
         }
 
-        Record& ref() 
-        { 
-            return *this; 
+        Record& ref()
+        {
+            return *this;
         }
 
         //////////////////////////////////////////////////////////////////////////
@@ -157,14 +166,6 @@ namespace plog
         }
 #endif
 
-#ifdef __cplusplus_cli
-        Record& operator<<(System::String^ data)
-        {
-            cli::pin_ptr<const System::Char> ptr = PtrToStringChars(data);
-            return *this << static_cast<const wchar_t*>(ptr);
-        }
-#endif
-
         template<typename T>
         Record& operator<<(const T& data)
         {
@@ -173,6 +174,46 @@ namespace plog
             m_message << data;
             return *this;
         }
+
+#ifndef __cplusplus_cli
+        Record& printf(const char* format, ...)
+        {
+            using namespace util;
+
+            char* str = NULL;
+            va_list ap;
+
+            va_start(ap, format);
+            int len = vasprintf(&str, format, ap);
+            static_cast<void>(len);
+            va_end(ap);
+
+            *this << str;
+            free(str);
+
+            return *this;
+        }
+
+#ifdef _WIN32
+        Record& printf(const wchar_t* format, ...)
+        {
+            using namespace util;
+
+            wchar_t* str = NULL;
+            va_list ap;
+
+            va_start(ap, format);
+            int len = vaswprintf(&str, format, ap);
+            static_cast<void>(len);
+            va_end(ap);
+
+            *this << str;
+            free(str);
+
+            return *this;
+        }
+#endif
+#endif //__cplusplus_cli
 
         //////////////////////////////////////////////////////////////////////////
         // Getters
@@ -223,6 +264,11 @@ namespace plog
         {
         }
 
+        virtual int getInstanceId() const
+        {
+            return m_instanceId;
+        }
+
     private:
         util::Time              m_time;
         const Severity          m_severity;
@@ -232,6 +278,7 @@ namespace plog
         util::nostringstream    m_message;
         const char* const       m_func;
         const char* const       m_file;
+        const int               m_instanceId;
         mutable std::string     m_funcStr;
         mutable util::nstring   m_messageStr;
     };
