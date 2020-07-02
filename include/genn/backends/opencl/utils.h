@@ -96,9 +96,6 @@ const char *clGetErrorString(cl_int error)
         GEN_CL_ERROR_CASE(CL_INVALID_LINKER_OPTIONS);
         GEN_CL_ERROR_CASE(CL_INVALID_DEVICE_PARTITION_COUNT);
 
-        // extension errors
-        GEN_CL_ERROR_CASE(CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR);
-        GEN_CL_ERROR_CASE(CL_PLATFORM_NOT_FOUND_KHR);
         default:    return "Unknown OpenCL error";
     }   
 #undef GEN_CL_ERROR_CASE
