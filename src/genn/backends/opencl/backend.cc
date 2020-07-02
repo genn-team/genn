@@ -1524,7 +1524,26 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
-    // If any synapse groups require procedural weights or connectivity raise error
+    // If any neuron groups require support code, raise error
+    if(std::any_of(modelMerged.getModel().getNeuronGroups().cbegin(), modelMerged.getModel().getNeuronGroups().cbegin(),
+                   [](const ModelSpec::NeuronGroupValueType &ng){ return !ng.second.getNeuronModel()->getSupportCode().empty(); }))
+    {
+        throw std::runtime_error("OpenCL backend does not currently support models which use support code.");
+    }
+
+     // If any synapse groups require support code, raise error
+    if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cbegin(),
+                   [](const ModelSpec::SynapseGroupValueType &sg)
+                   {
+                       const auto *wum = sg.second.getWUModel();
+                       const auto *psm = sg.second.getPSModel();
+                       return (!wum->getSimSupportCode().empty() || !wum->getLearnPostSupportCode().empty()
+                               || !wum->getSynapseDynamicsSuppportCode().empty() || !psm->getSupportCode().empty());
+                   }))
+    {
+        throw std::runtime_error("OpenCL backend does not currently support models which use support code.");
+    }
+    // If any synapse groups require procedural weights or connectivity, raise error
     if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cbegin(), 
                    [](const ModelSpec::SynapseGroupValueType &sg) 
                    { 
@@ -1534,6 +1553,7 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
     {
         throw std::runtime_error("OpenCL backend does not currently support procedural weights or connectivity.");
     }
+
 
     os << "// Standard C++ includes" << std::endl;
     os << "#include <iostream>" << std::endl;
