@@ -42,18 +42,6 @@ double gammaCDF4(double x)
 //----------------------------------------------------------------------------
 class SimTest : public SimulationTest
 {
-public:
-    //----------------------------------------------------------------------------
-    // SimulationTest virtuals
-    //----------------------------------------------------------------------------
-    virtual void Init()
-    {
-        // Build sparse connectors
-        rowLengthSparse[0] = 10000;
-        for(unsigned int i = 0; i < 10000; i++) {
-            indSparse[i] = i;
-        }
-    }
 };
 
 template<typename F>
@@ -82,10 +70,12 @@ TEST_F(SimTest, Vars)
     pullSparseStateFromDevice();
 
     // Test host-generated vars
-    PROB_TEST(, Pop, 10000)
-    PROB_TEST(, CurrSource, 10000)
-    PROB_TEST(p, Dense, 10000)
-    PROB_TEST(, Dense, 10000)
-    PROB_TEST(, Sparse, 10000)
+    PROB_TEST(, Pop, 20000)
+    PROB_TEST(, CurrSource, 20000)
+    PROB_TEST(p, Dense, 20000)
+    PROB_TEST(, Dense, 20000)
+    PROB_TEST(, Sparse, 20000)
+    PROB_TEST(pre_, Sparse, 20000)
+    PROB_TEST(post_, Sparse, 20000)
 }
 

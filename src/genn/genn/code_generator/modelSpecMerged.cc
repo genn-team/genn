@@ -158,7 +158,10 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 
     LOGD_CODE_GEN << "Merging synapse groups which require host code to initialise their synaptic connectivity:";
     createMergedGroups(model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
-                       [](const SynapseGroupInternal &sg) { return !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(); },
+                       [](const SynapseGroupInternal &sg)
+                       { 
+                           return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 
+                       },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b)
                        { 
                            return a.canConnectivityHostInitBeMerged(b); 

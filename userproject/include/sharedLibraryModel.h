@@ -100,24 +100,48 @@ public:
         }
     }
 
-    void allocateExtraGlobalParam(const std::string &popName, const std::string &varName, unsigned int count)
+    void allocateExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check allocate exists
-        const auto funcs = getEGPFunctions(varName + popName);
+        const auto funcs = getEGPFunctions(egpName + popName);
         if(std::get<0>(funcs) == nullptr) {
-            throw std::runtime_error("You cannot allocate EGP '" + varName + "' in population '" + popName + "'");
+            throw std::runtime_error("You cannot allocate EGP '" + egpName + "' in population '" + popName + "'");
+        }
+
+        // Call allocate
+        std::get<0>(funcs)(count);
+    }
+    
+    void allocateExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
+    {
+        // Get EGP functions and check allocate exists
+        const auto funcs = getEGPFunctions(egpName + varName + popName);
+        if(std::get<0>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot allocate EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call allocate
         std::get<0>(funcs)(count);
     }
 
-    void freeExtraGlobalParam(const std::string &popName, const std::string &varName)
+    void freeExtraGlobalParam(const std::string &popName, const std::string &egpName)
     {
         // Get EGP functions and check free exists
-        const auto funcs = getEGPFunctions(varName + popName);
+        const auto funcs = getEGPFunctions(egpName + popName);
         if(std::get<1>(funcs) == nullptr) {
-            throw std::runtime_error("You cannot free EGP '" + varName + "' in population '" + popName + "'");
+            throw std::runtime_error("You cannot free EGP '" + egpName + "' in population '" + popName + "'");
+        }
+
+        // Call free
+        std::get<1>(funcs)();
+    }
+    
+    void freeExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName)
+    {
+        // Get EGP functions and check free exists
+        const auto funcs = getEGPFunctions(egpName + varName + popName);
+        if(std::get<1>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot free EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call free
@@ -184,12 +208,24 @@ public:
         pushPull.second();
     }
 
-    void pullExtraGlobalParam(const std::string &popName, const std::string &varName, unsigned int count)
+    void pullExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check pull exists
-        const auto funcs = getEGPFunctions(varName + popName);
+        const auto funcs = getEGPFunctions(egpName + popName);
         if(std::get<3>(funcs) == nullptr) {
-            throw std::runtime_error("You cannot pull EGP '" + varName + "' from population '" + popName + "'");
+            throw std::runtime_error("You cannot pull EGP '" + egpName + "' from population '" + popName + "'");
+        }
+
+        // Call pull
+        std::get<3>(funcs)(count);
+    }
+    
+    void pullExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
+    {
+        // Get EGP functions and check pull exists
+        const auto funcs = getEGPFunctions(egpName + varName + popName);
+        if(std::get<3>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot pull EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call pull
@@ -256,12 +292,24 @@ public:
         pushPull.first(uninitialisedOnly);
     }
 
-    void pushExtraGlobalParam(const std::string &popName, const std::string &varName, unsigned int count)
+    void pushExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check push exists
-        const auto funcs = getEGPFunctions(varName + popName);
+        const auto funcs = getEGPFunctions(egpName + popName);
         if(std::get<2>(funcs) == nullptr) {
-            throw std::runtime_error("You cannot push EGP '" + varName + "' to population '" + popName + "'");
+            throw std::runtime_error("You cannot push EGP '" + egpName + "' to population '" + popName + "'");
+        }
+
+        // Call push
+        std::get<2>(funcs)(count);
+    }
+    
+    void pushExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
+    {
+        // Get EGP functions and check push exists
+        const auto funcs = getEGPFunctions(egpName + varName + popName);
+        if(std::get<2>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot push EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call push

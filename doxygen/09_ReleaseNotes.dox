@@ -1,4 +1,26 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.3.0 (PyGeNN 0.4.0)
+====
+This release adds a number of significant new features to GeNN as well as making small improvements to PyGeNN.
+It also includes a number of bug fixes that have been identified since the 4.2.1 release.
+
+User Side Changes
+----
+1. Previously GeNN performed poorly with large numbers of populations. This version includes a new code generator which effectively solves this problem (see \cite Knight2020).
+2. ``InitSparseConnectivitySnippet::Base`` row build state and ``NeuronModels::Base`` additional input variables could previously only be initialised with a numeric value. Now they can be initialised with a code string supporting substitutions etc.
+3. Added GeNN implementation of cortical microcircuit model \cite Potjans2012 to userprojects (discussed further in \cite Knight2018). Also demonstrates how to dynamically load GeNN models rather than linking against them.
+4. Previously one pushed states and spikes to and from device in PyGeNN using methods like ``pygenn.genn_model.GeNNModel.push_current_spikes_to_device`` which was somewhat cumbersome. These have now been wrapped in methods like ``pygenn.genn_groups.NeuronGroup.push_current_spikes_to_device`` which is somewhat nicer.
+5. The ``CodeGenerator::generateAll`` function now returns memory estimates which are, in turn, returned from ``pygenn.genn_model.GeNNModel.build``.
+6. To better support batching of inputs into multiple instances of the same model, added ``ModelSpec::addSlaveSynapsePopulation`` to add synapse populations which share per-synapse state with a 'master' synapse group.
+7. Added extra global parameters to variable initialisation snippets - can be used for lookup table style functionality.
+8. Added support for host initialisation of sparse connectivity initialisation snippet extra global parameters. This allows host-based initialisation to be encapsulated within an ``InitSparseConnectivitySnippet::Base`` class.
+
+Bug fixes:
+----
+1. Fixed issues preventing spike recorder classes from compiling with GCC 4.9, thanks to Christoph Ostrau for this one!
+2. The initialisers for pre and postsynaptic weight update model variables were not searched for references to an RNG when determining whether a neuron group requires an initialisation RNG.
+3. Fixed issue with PyGeNN and custom var init snippets that led to segfaults.
+
 Release Notes for GeNN v4.2.1 (PyGeNN 0.3.1)
 ====
 This release fixes several small issues including several relating to Brian2GeNN compatibility.

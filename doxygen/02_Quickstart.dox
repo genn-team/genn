@@ -14,20 +14,20 @@
 //----------------------------------------------------------------------------
 /*! \page Quickstart Quickstart 
 
-GeNN is based on the idea of code generation for the involved GPU or
-CPU simulation code for neuronal network models but leaves a lot of
-freedom how to use the generated code in the final
-application. To facilitate the use of GeNN on the background of this
+GeNN is based on the idea of code generation for the code that simulates neuronal network models, 
+either on GPU or CPU. At the same time, it leaves a lot of freedom to users, 
+how to use the generated code in their final applications. 
+To facilitate the use of GeNN on the background of this
 philosophy, it comes with a number of complete examples containing both
 the model description code that is used by GeNN for code generation
-and the "user side code" to run the generated model and safe the
-results. Some of the example models such as the \ref ex_mbody use an `generate_run` executable which automates the building and simulation of the model. 
-Using these executables, running these complete examples should be achievable in a few minutes. 
+and the "user side code" to run the generated model as well as save the
+results. Some of the example models, such as the \ref ex_mbody, uses a `generate_run` executable which automates the building and simulation of the model. 
+Using these executables, running the complete examples should be achievable in a few minutes. 
 The necessary steps are described below.
 
 \section example Running an Example Model
 \subsection unix_quick Unix
-In order to build the `generate_run` executable as well as any additional tools required for the model, open a
+In order to build the `generate_run` executable as well as other additional tools required for the model, open a
 shell and navigate to the `userproject/MBody1_project` directory.
 Then type
 \code
@@ -60,11 +60,11 @@ generate_run --cpu-only test1
 \endcode
 
 \subsection quick_visualising Visualising results
-These steps will build and simulate a model of the locust olfactory system with default parameters of 100 projection neurons, 
+These steps build and simulate a model of the locust olfactory system with default parameters of 100 projection neurons, 
 1000 Kenyon cells, 20 lateral horn interneurons and 100 output neurons in the mushroom body lobes.
 \note If the model isn't build in CPU_ONLY mode it will be simulated on an automatically chosen GPU.
 
-The generate_run tool generates input patterns and writes them to file, compiles and runs the model using these files as inputs and finally output the
+The generate_run executable generates input patterns and writes them to a file, compiles and runs the model using these files as inputs and finally output the
 resulting spiking activity. For more information of the options passed to this command see the \ref ex_mbody section.
 The results of the simulation can be plotted with
 \code

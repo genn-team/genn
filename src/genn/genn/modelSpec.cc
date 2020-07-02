@@ -255,3 +255,16 @@ NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
         throw std::runtime_error("neuron group " + name + " not found, aborting ...");
     }
 }
+
+SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &name)
+{
+    // If a matching local synapse group is found, return it
+    auto synapseGroup = m_LocalSynapseGroups.find(name);
+    if(synapseGroup != m_LocalSynapseGroups.cend()) {
+        return &synapseGroup->second;
+    }
+    // Otherwise, error
+    else {
+        throw std::runtime_error("synapse group " + name + " not found, aborting ...");
+    }
+}

@@ -678,7 +678,19 @@ def generateConfigs(gennPath, backends):
                 'ModelSpec::addSynapsePopulation<WeightUpdateModels::{0}, PostsynapticModels::{1}>'.format(
                     wu_model, ps_model),
                 'add_synapse_population_{}_{}'.format(wu_model, ps_model))
-
+        
+        # Loop through all postsynaptic models
+        for ps_model in mgs[1].models:
+        #SynapseGroup *addSlaveSynapsePopulation(const std::string &name, const std::string &weightSharingMasterName, unsigned int delaySteps, const std::string &src, const std::string &trg,
+                                            #const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
+            # Ignore the overload of the functions which automatically get instance from class name
+            pygennSmg.addSwigIgnore("ModelSpec::addSlaveSynapsePopulation<PostsynapticModels::{0}>(std::string const &, std::string const &,unsigned int,std::string const &,std::string const &,PostsynapticModels::{0}::ParamValues const &,PostsynapticModels::{0}::VarValues const &)".format(ps_model))
+            
+            # Add template expansion
+            pygennSmg.addSwigTemplate(
+                'ModelSpec::addSlaveSynapsePopulation<PostsynapticModels::{0}>'.format(ps_model),
+                'add_slave_synapse_population_{}'.format(ps_model))
+        
         for cs_model in mgs[3].models:
             # Ignore the overload of the function which automatically gets instance from class name
             pygennSmg.addSwigIgnore("ModelSpec::addCurrentSource<CurrentSourceModels::{0}>(std::string const &,std::string const &,CurrentSourceModels::{0}::ParamValues const &,CurrentSourceModels::{0}::VarValues const &)".format(cs_model))

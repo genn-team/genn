@@ -6,8 +6,9 @@
 #include <iostream>
 
 // GeNN includes
-#include "neuronGroupInternal.h"
 #include "gennUtils.h"
+#include "neuronGroupInternal.h"
+#include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -42,7 +43,12 @@ std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInit
 // ------------------------------------------------------------------------
 void SynapseGroup::setWUVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
+    if(isWeightSharingSlave()) {
+        throw std::runtime_error("setWUVarLocation: Synapse group is a weight sharing slave. Weight update var location can only be set on the master.");
+    }
+    else {
+        m_WUVarLocation[getWUModel()->getVarIndex(varName)] = loc;
+    }
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setWUPreVarLocation(const std::string &varName, VarLocation loc)
@@ -80,38 +86,63 @@ void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, V
 //----------------------------------------------------------------------------
 void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
-    const size_t extraGlobalParamIndex = m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+    if(isWeightSharingSlave()) {
+        throw std::runtime_error("setSparseConnectivityExtraGlobalParamLocation: Synapse group is a weight sharing slave. Sparse connectivity EGP location can only be set on the master.");
     }
-    m_ConnectivityExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    else {
+        const size_t extraGlobalParamIndex = m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
+        if(!Utils::isTypePointer(m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
+            throw std::runtime_error("Only extra global parameters with a pointer type have a location");
+        }
+        m_ConnectivityExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    }
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setSparseConnectivityLocation(VarLocation loc)
+{ 
+    if(isWeightSharingSlave()) {
+        throw std::runtime_error("setSparseConnectivityLocation: Synapse group is a weight sharing slave. Sparse connectivity location can only be set on the master.");
+    }
+    else {
+        m_SparseConnectivityLocation = loc;
+    }
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
-            throw std::runtime_error("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
-        }
-        
-        m_MaxConnections = maxConnections;
+    if(isWeightSharingSlave()) {
+        throw std::runtime_error("setMaxConnections: Synapse group is a weight sharing slave. Max connections can only be set on the master.");
     }
     else {
-        throw std::runtime_error("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+        if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
+                throw std::runtime_error("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
+            }
+
+            m_MaxConnections = maxConnections;
+        }
+        else {
+            throw std::runtime_error("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+        }
     }
 }
 //----------------------------------------------------------------------------
 void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
-            throw std::runtime_error("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
-        }
-
-        m_MaxSourceConnections = maxConnections;
+    if(isWeightSharingSlave()) {
+        throw std::runtime_error("setMaxSourceConnections: Synapse group is a weight sharing slave. Max source connections can only be set on the master.");
     }
     else {
-        throw std::runtime_error("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+        if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
+                throw std::runtime_error("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
+            }
+
+            m_MaxSourceConnections = maxConnections;
+        }
+        else {
+            throw std::runtime_error("setMaxSourceConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -150,12 +181,36 @@ void SynapseGroup::setBackPropDelaySteps(unsigned int timesteps)
 //----------------------------------------------------------------------------
 void SynapseGroup::setNarrowSparseIndEnabled(bool enabled)
 {
-    if (getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        m_NarrowSparseIndEnabled = enabled;
+    if(isWeightSharingSlave()) {
+        throw std::runtime_error("setNarrowSparseIndEnabled: Synapse group is a weight sharing slave. Sparse index type can only be set on the master.");
     }
     else {
-        throw std::runtime_error("setNarrowSparseIndEnabled: This function can only be used on synapse groups with sparse connectivity.");
+        if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            m_NarrowSparseIndEnabled = enabled;
+        }
+        else {
+            throw std::runtime_error("setNarrowSparseIndEnabled: This function can only be used on synapse groups with sparse connectivity.");
+        }
     }
+}
+//----------------------------------------------------------------------------
+unsigned int SynapseGroup::getMaxConnections() const
+{ 
+    // **NOTE** these get retrived from weight sharing master 
+    // as they can be set AFTER creation of synapse group
+    return isWeightSharingSlave() ? getWeightSharingMaster()->getMaxConnections() : m_MaxConnections; 
+}
+//----------------------------------------------------------------------------
+unsigned int SynapseGroup::getMaxSourceConnections() const
+{ 
+    // **NOTE** these get retrived from weight sharing master 
+    // as they can be set AFTER creation of synapse group
+    return isWeightSharingSlave() ? getWeightSharingMaster()->getMaxSourceConnections() : m_MaxSourceConnections;
+}
+//----------------------------------------------------------------------------
+VarLocation SynapseGroup::getSparseConnectivityLocation() const
+{ 
+    return isWeightSharingSlave() ? getWeightSharingMaster()->getSparseConnectivityLocation() : m_SparseConnectivityLocation;
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isTrueSpikeRequired() const
@@ -213,7 +268,26 @@ bool SynapseGroup::isZeroCopyEnabled() const
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
 {
-    return m_WUVarLocation[getWUModel()->getVarIndex(var)];
+    // **NOTE** these get retrived from weight sharing master 
+    // as they can be set AFTER creation of synapse group
+    if(isWeightSharingSlave()) {
+        return getWeightSharingMaster()->getWUVarLocation(var);
+    }
+    else {
+        return m_WUVarLocation[getWUModel()->getVarIndex(var)];
+    }
+}
+//----------------------------------------------------------------------------
+VarLocation SynapseGroup::getWUVarLocation(size_t index) const
+{ 
+    // **NOTE** these get retrived from weight sharing master 
+    // as they can be set AFTER creation of synapse group
+    if(isWeightSharingSlave()) {
+        return getWeightSharingMaster()->getWUVarLocation(index);
+    }
+    else {
+        return m_WUVarLocation.at(index);
+    }
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
@@ -243,7 +317,26 @@ VarLocation SynapseGroup::getPSExtraGlobalParamLocation(const std::string &param
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const
 {
-    return m_ConnectivityExtraGlobalParamLocation[m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
+    // **NOTE** these get retrived from weight sharing master 
+    // as they can be set AFTER creation of synapse group
+    if(isWeightSharingSlave()) {
+        return getWeightSharingMaster()->getSparseConnectivityExtraGlobalParamLocation(paramName);
+    }
+    else {
+        return m_ConnectivityExtraGlobalParamLocation[m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
+    }
+}
+//----------------------------------------------------------------------------
+VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(size_t index) const
+{ 
+    // **NOTE** these get retrived from weight sharing master 
+    // as they can be set AFTER creation of synapse group
+    if(isWeightSharingSlave()) {
+        return getWeightSharingMaster()->getSparseConnectivityExtraGlobalParamLocation(index);
+    }
+    else {
+        return m_ConnectivityExtraGlobalParamLocation.at(index);
+    }
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isDendriticDelayRequired() const
@@ -285,6 +378,16 @@ bool SynapseGroup::isWUInitRNGRequired() const
             && Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isWUPreInitRNGRequired() const
+{
+    return Utils::isRNGRequired(m_WUPreVarInitialisers);
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::isWUPostInitRNGRequired() const
+{
+    return Utils::isRNGRequired(m_WUPostVarInitialisers);
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isHostInitRNGRequired() const
 {
     return (m_ConnectivityInitialiser.getSnippet()->getHostInitCode().find("$(rng)") != std::string::npos);
@@ -292,9 +395,9 @@ bool SynapseGroup::isHostInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
-    // If this synapse group has per-synapse state variables,
-    // return true if any of them have initialisation code
-    if (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+    // If this synapse group has per-synapse state variables and isn't a 
+    // weight sharing slave, return true if any of them have initialisation code
+    if (!isWeightSharingSlave() && (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
                            [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
     }
@@ -305,20 +408,21 @@ bool SynapseGroup::isWUVarInitRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isSparseConnectivityInitRequired() const
 {
-    // Return true if the matrix type is sparse or bitmask and there is code to initialise sparse connectivity
+    // Return true if the matrix type is sparse or bitmask, there is code to  
+    // initialise sparse connectivity and synapse group isn't a weight sharing slave,
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
-            && !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty());
+            && !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty() && !isWeightSharingSlave());
 }
 //----------------------------------------------------------------------------
-SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType, unsigned int delaySteps,
+SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                            const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
-                           NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
+                           NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
-        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup),
+        m_MaxDendriticDelayTimesteps(1), m_MatrixType(matrixType),  m_SrcNeuronGroup(srcNeuronGroup), m_TrgNeuronGroup(trgNeuronGroup), m_WeightSharingMaster(weightSharingMaster),
         m_EventThresholdReTestRequired(false), m_NarrowSparseIndEnabled(defaultNarrowSparseIndEnabled),
         m_InSynLocation(defaultVarLocation),  m_DendriticDelayLocation(defaultVarLocation),
         m_WUModel(wu), m_WUParams(wuParams), m_WUVarInitialisers(wuVarInitialisers), m_WUPreVarInitialisers(wuPreVarInitialisers), m_WUPostVarInitialisers(wuPostVarInitialisers),
@@ -345,6 +449,12 @@ SynapseGroup::SynapseGroup(const std::string name, SynapseMatrixType matrixType,
         // **THINK** this would actually be pretty trivial to implement
         if (!m_WUModel->getSynapseDynamicsCode().empty()) {
             throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with continuous synapse dynamics");
+        }
+    }
+    // Otherwise, if WEIGHTS are procedural e.g. in the case of DENSE_PROCEDURALG, give error if RNG is required for weights
+    else if(m_MatrixType & SynapseMatrixWeight::PROCEDURAL) {
+        if(::Utils::isRNGRequired(m_WUVarInitialisers)) {
+            throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
         }
     }
 

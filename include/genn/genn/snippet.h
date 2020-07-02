@@ -35,6 +35,7 @@ public:                                                 \
 
 #define SET_PARAM_NAMES(...) virtual StringVec getParamNames() const override{ return __VA_ARGS__; }
 #define SET_DERIVED_PARAMS(...) virtual DerivedParamVec getDerivedParams() const override{ return __VA_ARGS__; }
+#define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // Snippet::ValueBase
@@ -183,6 +184,18 @@ public:
     //! Calculate their value from a vector of model parameter values
     virtual DerivedParamVec getDerivedParams() const{ return {}; }
 
+    //! Gets names and types (as strings) of additional
+    //! per-population parameters for the snippet
+    virtual EGPVec getExtraGlobalParams() const { return {}; }
+    
+    //------------------------------------------------------------------------
+    // Public methods
+    //------------------------------------------------------------------------
+    //! Find the index of a named extra global parameter
+    size_t getExtraGlobalParamIndex(const std::string &paramName) const
+    {
+        return getNamedVecIndex(paramName, getExtraGlobalParams());
+    }
 
 protected:
     //------------------------------------------------------------------------
@@ -191,7 +204,9 @@ protected:
     bool canBeMerged(const Base *other) const
     {
         // Return true if parameters names and derived parameter names match
-        return ((getParamNames() == other->getParamNames()) && (getDerivedParams() == other->getDerivedParams()));
+        return ((getParamNames() == other->getParamNames()) 
+                && (getDerivedParams() == other->getDerivedParams())
+                && (getExtraGlobalParams() == other->getExtraGlobalParams()));
     }
 
     //------------------------------------------------------------------------

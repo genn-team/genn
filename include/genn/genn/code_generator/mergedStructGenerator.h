@@ -65,26 +65,29 @@ public:
         addField(type + "*", name, [prefix](const typename T::GroupInternal &g, size_t){ return prefix + g.getName(); });
     }
 
-    void addVars(const std::vector<Models::Base::Var> &vars, const std::string &prefix)
+
+    void addVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
     {
+        // Loop through variables
         for(const auto &v : vars) {
-            addPointerField(v.type, v.name, prefix + v.name);
+            addPointerField(v.type, v.name, arrayPrefix + v.name);
+
         }
     }
 
-    void addEGPs(const std::vector<Snippet::Base::EGP> &egps, const std::string &arrayPrefix)
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
             const std::string prefix = isPointer ? arrayPrefix : "";
-            addField(e.type, e.name,
-                     [e, prefix](const typename T::GroupInternal &g, size_t){ return prefix + e.name + g.getName(); },
+            addField(e.type, e.name + varName,
+                     [e, prefix, varName](const typename T::GroupInternal &g, size_t){ return prefix + e.name + varName + g.getName(); },
                      isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
 
     template<typename G, typename H>
-    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, 
+    void addHeterogeneousParams(const Snippet::Base::StringVec &paramNames, const std::string &suffix,
                                 G getParamValues, H isHeterogeneous)
     {
         // Loop through params
@@ -92,7 +95,7 @@ public:
             // If parameters is heterogeneous
             if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
-                addScalarField(paramNames[p],
+                addScalarField(paramNames[p] + suffix,
                                [p, getParamValues](const typename T::GroupInternal &g, size_t)
                                {
                                    const auto &values = getParamValues(g);
@@ -103,7 +106,7 @@ public:
     }
 
     template<typename G, typename H>
-    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, 
+    void addHeterogeneousDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, const std::string &suffix,
                                        G getDerivedParamValues, H isHeterogeneous)
     { 
         // Loop through derived params
@@ -111,7 +114,7 @@ public:
             // If parameters isn't homogeneous
             if((getMergedGroup().*isHeterogeneous)(p)) {
                 // Add field
-                addScalarField(derivedParams[p].name,
+                addScalarField(derivedParams[p].name + suffix,
                                [p, getDerivedParamValues](const typename T::GroupInternal &g, size_t)
                                {
                                    const auto &values = getDerivedParamValues(g);

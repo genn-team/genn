@@ -113,6 +113,8 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                     [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
                                                     "", "group.", vars[k].name + fieldSuffix);
+                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                   "", "group.", vars[k].name + fieldSuffix);
 
                     // If variable requires a queue
                     if (isVarQueueRequired(k)) {
@@ -185,6 +187,8 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                     varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
                                                       "", "group.", vars[k].name);
+                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                   "", "group.", vars[k].name);
 
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
@@ -295,9 +299,10 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
 
             // Loop through incoming synaptic populations with postsynaptic update code
-            const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
-            for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
-                const auto *sg = inSynWithPostCode[i];
+            // **NOTE** number of delay slots is based on the target neuron (for simplicity) but whether delay is required is based on the synapse group
+            const auto inSynWithPostVars = ng.getArchetype().getInSynWithPostVars();
+            for(size_t i = 0; i < inSynWithPostVars.size(); i++) {
+                const auto *sg = inSynWithPostVars.at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(),
                                      "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),
@@ -308,10 +313,10 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
             }
 
             // Loop through outgoing synaptic populations with presynaptic update code
-            const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
-            for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
-                const auto *sg = outSynWithPreCode[i];
-                // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
+            // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
+            const auto outSynWithPostVars = ng.getArchetype().getOutSynWithPreVars();
+            for(size_t i = 0; i < outSynWithPostVars.size(); i++) {
+                const auto *sg = outSynWithPostVars.at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(),
                                      "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),

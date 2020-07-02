@@ -4,6 +4,7 @@ and defines class Variable
 """
 from collections import namedtuple
 from numbers import Number
+from weakref import proxy
 import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
@@ -33,7 +34,7 @@ genn_types = {
     "uint8_t":          GeNNType(np.uint8, slm.assign_external_pointer_array_uc, slm.assign_external_pointer_single_uc),
     "int8_t":           GeNNType(np.int8, slm.assign_external_pointer_array_sc, slm.assign_external_pointer_single_sc)}
 
-def prepare_model(model, param_space, var_space, pre_var_space=None,
+def prepare_model(model, group, param_space, var_space, pre_var_space=None,
                   post_var_space=None, model_family=None):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
@@ -43,6 +44,7 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
                         ``pygenn.genn_wrapper.NeuronModels.Custom`` or
                         ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` or
                         ``pygenn.genn_wrapper.CurrentSourceModels.Custom``
+    group           --  group model will belong to
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
     pre_var_space   --  optional dict with (weight update) model
@@ -70,7 +72,7 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
     if set(iterkeys(var_space)) != set(var_names):
         raise ValueError("Invalid variable initializers for {0}".format(
             model_family.__name__))
-    var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name])
+    var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
                 for vnt in m_instance.get_vars()}
 
 
@@ -80,7 +82,7 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
             raise ValueError("Invalid presynaptic variable initializers "
                              "for {0}".format(model_family.__name__))
         pre_var_dict = {
-            vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name])
+            vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], group)
             for vnt in m_instance.get_pre_vars()}
 
         post_var_names = [vnt.name for vnt in m_instance.get_post_vars()]
@@ -88,7 +90,7 @@ def prepare_model(model, param_space, var_space, pre_var_space=None,
             raise ValueError("Invalid postsynaptic variable initializers "
                             "for {0}".format(model_family.__name__))
         post_var_dict = {
-            vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name])
+            vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], group)
             for vnt in m_instance.get_post_vars()}
         return (m_instance, m_type, param_names, params, var_names, var_dict,
                 pre_var_names, pre_var_dict, post_var_names, post_var_dict)
@@ -232,22 +234,35 @@ class Variable(object):
 
     """Class holding information about GeNN variables"""
 
-    def __init__(self, variable_name, variable_type, values=None):
+    def __init__(self, variable_name, variable_type, values, group):
         """Init Variable
 
         Args:
-        variable_name   --  string name of the variable
-        variable_type   --  string type of the variable
-
-        Keyword args:
+        variable_name   -- string name of the variable
+        variable_type   -- string type of the variable
         values          --  iterable, single value or VarInit instance
+        group           -- group variable belongs to
         """
         self.name = variable_name
         self.type = variable_type
+        self.group = proxy(group)
+        self.extra_global_params = {}
         self.view = None
         self.needs_allocation = False
         self.set_values(values)
 
+    def set_extra_global_init_param(self, param_name, param_values):
+        # Check that this variable is initialised with 
+        if not isinstance(self.init_val, VarInit):
+            raise ValueError("Extra global initialisation parameters can only "
+                             "be set on variables configured using variable "
+                             "initialization snippets")
+        
+        # Set extra global init params
+        self.group._set_extra_global_param(param_name, param_values, 
+                                           self.init_val.get_snippet(),
+                                           self.extra_global_params)
+    
     def set_values(self, values):
         """Set Variable's values
 

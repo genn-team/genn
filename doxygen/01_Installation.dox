@@ -10,13 +10,13 @@ Point your browser to \a https://github.com/genn-team/genn/releases
 and download a release from the list by clicking the relevant source
 code button. Note that GeNN is only distributed in the form of source
 code due to its code generation design. Binary distributions would not
-make sense in this framework and are not provided. 
+make sense in this framework and hence are not provided. 
 After downloading continue to install GeNN as described in the \ref installing section below.
 
 \section GitSnapshot Obtaining a Git snapshot
 
 If it is not yet installed on your system, download and install Git
-(\a http://git-scm.com/). Then clone the GeNN repository from Github
+(\a http://git-scm.com/).Then clone the GeNN repository from Github
 \code
 git clone https://github.com/genn-team/genn.git
 \endcode
@@ -29,14 +29,14 @@ source version upon which the next release will be based. There are other
 branches in the repository that are used for specific development 
 purposes and are opened and closed without warning.
 
-As an alternative to using git you can also download the full content of
-GeNN sources clicking on the "Download ZIP" button on the bottom right
+An alternative to using git is to download the full content of
+GeNN sources by clicking on the "Download ZIP" button on the bottom right
 of the GeNN Github page (\a https://github.com/genn-team/genn).
 
 \section installing Installing GeNN
 
 Installing GeNN comprises a few simple steps to create the GeNN
-development environment. 
+development environment:
 \note
 While GeNN models are normally simulated using CUDA on NVIDIA GPUs, if you want to use GeNN on a machine without an NVIDIA GPU, you can skip steps v and vi and use GeNN in "CPU_ONLY" mode.
 
@@ -49,7 +49,7 @@ repository.
       \code
       export PATH=$PATH:$HOME/GeNN/bin
       \endcode
-       to your login script (e.g. `.profile` or `.bashrc`. If you are using
+       to your login script (e.g. `.profile` or `.bashrc`). If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and environment
      variables are best set using `SETX` in a Windows cmd window.
@@ -65,22 +65,19 @@ repository.
      For Windows, download Microsoft Visual Studio Community Edition from
      \a https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx.
      When installing Visual Studio, one should select the 'Desktop 
-    development with C++' configuration' and the 'Windows 8.1 SDK' and 'Windows 
+    development with C++' configuration and the 'Windows 8.1 SDK' and 'Windows 
     Universal CRT' individual components.
      Mac users should download and set up Xcode from
      \a https://developer.apple.com/xcode/index.html
-     Linux users should install the GNU compiler collection gcc and g++
+     , Linux users should install the GNU compiler collection gcc and g++
      from their Linux distribution repository, or alternatively from
      \a https://gcc.gnu.org/index.html
-     Be sure to pick CUDA and C++ compiler versions which are compatible
-     with each other. The latest C++ compiler is not necessarily
-     compatible with the latest CUDA toolkit.
-
+     
 (v) If your machine has a GPU and you haven't installed CUDA already, 
     obtain a fresh installation of the NVIDIA CUDA toolkit from
     \a https://developer.nvidia.com/cuda-downloads
     Again, be sure to pick CUDA and C++ compiler versions which are compatible
-    with each other. The latest C++ compiler is not necessarily
+    with each other. The latest C++ compiler need not necessarily be
     compatible with the latest CUDA toolkit.
 
 (vi) Set the `CUDA_PATH` variable if it is not already set by the
@@ -91,14 +88,14 @@ repository.
     in your login script (or, if CUDA is installed in a non-standard
     location, the appropriate path to the main CUDA directory). 
     For most people, this will be done by the CUDA install script and
-    the default value of /usr/local/cuda is fine. In Windows, CUDA_PATH
-    is normally already set after installing the CUDA toolkit. If not,
+    the default value of /usr/local/cuda is fine. In Windows, usually CUDA_PATH
+    is already set after installing the CUDA toolkit. If not,
     set this variable with:
     \code
     setx CUDA_PATH C:\path\to\cuda
     \endcode
 
-This normally completes the installation. Windows useres must close
+This normally completes the installation. Windows users must close
 and reopen their command window to ensure variables set using `SETX`
 are initialised.
 
@@ -106,9 +103,9 @@ If you are using GeNN in Windows, the Visual Studio development
 environment must be set up within every instance of the CMD.EXE command
 window used. One can open an instance of CMD.EXE with the development
 environment already set up by navigating to Start - All Programs - 
-Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may wish to
+Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may also wish to
 create a shortcut for this tool on the desktop, for convenience.
-
+     
 
 -----
 \link Installation Top\endlink | \link Quickstart Next\endlink
