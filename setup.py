@@ -4,7 +4,6 @@ import os
 import sys
 
 from copy import deepcopy
-from glob import glob
 from platform import system
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
@@ -121,8 +120,11 @@ generateConfigs(genn_path, backends)
 # **THINK** this could be done on a per-backend basis
 rmtree(pygenn_share, ignore_errors=True)
 copytree(genn_share, pygenn_share)
-package_data.extend([f for f in glob(os.path.join(pygenn_share, "**"), recursive=True) 
-                     if os.path.isfile(f)])
+for root, _, filenames in os.walk(pygenn_share):
+    for f in filenames:
+        f_path = os.path.join(root, f)
+        if os.path.isfile(f_path):
+            package_data.append(f_path)
 
 # Create list of extension modules required to wrap utilities and various libGeNN namespaces
 ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),
