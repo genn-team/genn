@@ -147,8 +147,8 @@ std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrate
     new PresynapticUpdateStrategy::PostSpan,
 };
 //--------------------------------------------------------------------------
-Backend::Backend(const KernelWorkGroupSize& kernelWorkGroupSizes, const Preferences& preferences,
-                 const std::string& scalarType, unsigned int platformIndex, unsigned int deviceIndex)
+Backend::Backend(const KernelWorkGroupSize &kernelWorkGroupSizes, const Preferences &preferences,
+                 const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
 :   BackendBase(scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), 
     m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
 {
@@ -348,12 +348,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     
                     simHandler(os, ng, popSubs,
                         // Emit true spikes
-                        [this](CodeStream& neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &, Substitutions& subs)
+                        [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged&, Substitutions &subs)
                         {
                             genEmitSpike(neuronUpdateKernelsBody, subs, "");
                         },
                         // Emit spike-like events
-                        [this](CodeStream& neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &, Substitutions& subs)
+                        [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged&, Substitutions &subs)
                         {
                             genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt");
                         });
@@ -1522,8 +1522,19 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged&) const
+void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
+    // If any synapse groups require procedural weights or connectivity raise error
+    if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cbegin(), 
+                   [](const ModelSpec::SynapseGroupValueType &sg) 
+                   { 
+                       return ((sg.second.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
+                               || (sg.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL));
+                   }))
+    {
+        throw std::runtime_error("OpenCL backend does not currently support procedural weights or connectivity.");
+    }
+
     os << "// Standard C++ includes" << std::endl;
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -1535,7 +1546,7 @@ void Backend::genDefinitionsPreamble(CodeStream& os, const ModelSpecMerged&) con
     os << "#include <cassert>" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerged &) const
+void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged&) const
 {
 #ifdef _WIN32
     os << "#pragma warning(disable: 4297)" << std::endl;
@@ -1587,7 +1598,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream& os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged &) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
 {
     // Generating OpenCL variables for the runner
     os << "// OpenCL variables" << std::endl;
@@ -1678,7 +1689,7 @@ void Backend::genRunnerPreamble(CodeStream& os, const ModelSpecMerged &) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // Initializing OpenCL programs
     os << "// Get platforms" << std::endl;
@@ -1759,7 +1770,7 @@ void Backend::genAllocateMemPreamble(CodeStream& os, const ModelSpecMerged &mode
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged &modelMerged) const
+void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // If timing is enabled, synchronise 
     // **THINK** is it better to wait on events?
@@ -1768,7 +1779,7 @@ void Backend::genStepTimeFinalisePreamble(CodeStream& os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definitionsInternal, const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
 {
     const bool deviceType = isDeviceType(type);
 
@@ -1783,7 +1794,7 @@ void Backend::genVariableDefinition(CodeStream& definitions, CodeStream& definit
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
@@ -1793,7 +1804,7 @@ void Backend::genVariableImplementation(CodeStream& os, const std::string& type,
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genVariableAllocation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
+MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
     auto allocation = MemAlloc::zero();
 
@@ -1820,8 +1831,8 @@ void Backend::genVariableFree(CodeStream&, const std::string&, VarLocation) cons
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, CodeStream &definitionsInternal, 
-                                            const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
+                                            const std::string &type, const std::string &name, VarLocation loc) const
 {
     if (loc & VarLocation::HOST) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
@@ -1831,7 +1842,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream& definitions, CodeStream 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamImplementation(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc) const
+void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
@@ -1936,7 +1947,7 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPopVariableInit(CodeStream& os, const Substitutions& kernelSubs, Handler handler) const
+void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
     Substitutions varSubs(&kernelSubs);
 
@@ -1970,7 +1981,7 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, bool autoInitialized, size_t count) const
+void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
 {
     if (!(loc & VarLocation::ZERO_COPY)) {
         // Only copy if uninitialisedOnly isn't set
@@ -1990,7 +2001,7 @@ void Backend::genVariablePush(CodeStream& os, const std::string& type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream& os, const std::string& type, const std::string& name, VarLocation loc, size_t count) const
+void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
 {
     if (!(loc & VarLocation::ZERO_COPY)) {
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << name;
@@ -2051,7 +2062,7 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInterna
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                   const std::string& name, size_t count) const
+                                   const std::string &name, size_t count) const
 {
     genVariableDefinition(definitionsInternal, definitionsInternal, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
     genVariableImplementation(runner, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
@@ -2068,7 +2079,7 @@ MemAlloc Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal,
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream&, CodeStream&,
-                       CodeStream &stepTimeFinalise, const std::string& name, bool updateInStepTime) const
+                       CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const
 {
     // Define OpenCL event in internal defintions (as they use CUDA-specific types)
     definitionsInternal << "EXPORT_VAR cl::Event " << name  << "Event;" << std::endl;
@@ -2089,7 +2100,7 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
     os << "return 0;" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefilePreamble(std::ostream& os) const
+void Backend::genMakefilePreamble(std::ostream &os) const
 {
     os << "OBJECTS += opencl/clRNG/clRNG.o opencl/clRNG/private.o opencl/clRNG/lfsr113.o opencl/clRNG/philox432.o" << std::endl;
     os << "LINKFLAGS := -shared";
@@ -2105,7 +2116,7 @@ void Backend::genMakefilePreamble(std::ostream& os) const
     os << "CXXFLAGS += -std=c++11 -DCLRNG_SINGLE_PRECISION -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120 -Wno-ignored-attributes $(CCFLAGS)" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefileLinkRule(std::ostream& os) const
+void Backend::genMakefileLinkRule(std::ostream &os) const
 {
     os << "\t@$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)";
 #ifndef __APPLE__
@@ -2114,7 +2125,7 @@ void Backend::genMakefileLinkRule(std::ostream& os) const
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMakefileCompileRule(std::ostream& os) const
+void Backend::genMakefileCompileRule(std::ostream &os) const
 {
     os << "%.o: %.cc" << std::endl;
     os << "\t@$(CXX) $(CXXFLAGS) -o $@ $<" << std::endl;
@@ -2128,13 +2139,13 @@ void Backend::genMSBuildConfigProperties(std::ostream&) const
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportProps(std::ostream& os) const
+void Backend::genMSBuildImportProps(std::ostream &os) const
 {
     os << "\t<ImportGroup Label=\"ExtensionSettings\">" << std::endl;
     os << "\t</ImportGroup>" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildItemDefinitions(std::ostream& os) const
+void Backend::genMSBuildItemDefinitions(std::ostream &os) const
 {
     // Add item definition for host compilation
     os << "\t\t<ClCompile>" << std::endl;
@@ -2159,12 +2170,12 @@ void Backend::genMSBuildItemDefinitions(std::ostream& os) const
     os << "\t\t</Link>" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildCompileModule(const std::string& moduleName, std::ostream& os) const
+void Backend::genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const
 {
     os << "\t\t<ClCompile Include=\"" << moduleName << ".cc\" />" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genMSBuildImportTarget(std::ostream& os) const
+void Backend::genMSBuildImportTarget(std::ostream &os) const
 {
     os << "\t<ItemGroup Label=\"clRNG\">" << std::endl;
     const std::array<std::string, 4> clrngItems{{ "clRNG.c", "private.c", "lfsr113.c", "philox432.c" }};
@@ -2215,7 +2226,7 @@ std::vector<filesystem::path> Backend::getFilesToCopy(const ModelSpecMerged &) c
             clRNGIncludePrivateRandom123 / "features" / "sse.h"};
 }
 //--------------------------------------------------------------------------
-std::string Backend::getFloatAtomicAdd(const std::string& ftype, const char* memoryType) const
+std::string Backend::getFloatAtomicAdd(const std::string &ftype, const char* memoryType) const
 {
     if (ftype == "float" || ftype == "double") {
         return "atomic_add_f_" + std::string(memoryType);
@@ -2297,7 +2308,7 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     return {};
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng, bool spikeEvent) const
+void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
@@ -2337,7 +2348,7 @@ void Backend::genCurrentSpikePush(CodeStream& os, const NeuronGroupInternal& ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePull(CodeStream& os, const NeuronGroupInternal& ng, bool spikeEvent) const
+void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
 {
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
@@ -2406,13 +2417,13 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream& os, const Substitutions& subs, const std::string& suffix) const
+void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream& os, Kernel kernel, size_t numThreads) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
 {
     // Calculate global and local work size
     const size_t numOfWorkGroups = ceilDivide(numThreads, m_KernelWorkGroupSizes[kernel]);
@@ -2547,13 +2558,13 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     }
 }
 //--------------------------------------------------------------------------
-void Backend::addDeviceType(const std::string& type, size_t size)
+void Backend::addDeviceType(const std::string &type, size_t size)
 {
     addType(type, size);
     m_DeviceTypes.emplace(type);
 }
 //--------------------------------------------------------------------------
-bool Backend::isDeviceType(const std::string& type) const
+bool Backend::isDeviceType(const std::string &type) const
 {
     // Get underlying type
     const std::string underlyingType = ::Utils::isTypePointer(type) ? ::Utils::getUnderlyingType(type) : type;
@@ -2562,7 +2573,7 @@ bool Backend::isDeviceType(const std::string& type) const
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
 }
 //--------------------------------------------------------------------------
-void Backend::divideKernelStreamInParts(CodeStream& os, const std::stringstream& kernelCode, size_t partLength) const
+void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const
 {
     const std::string kernelStr = kernelCode.str();
     const size_t parts = ceilDivide(kernelStr.length(), partLength);
@@ -2580,7 +2591,7 @@ std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) co
     return flags;
 }
 //--------------------------------------------------------------------------
-const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal& sg)
+const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
 {
     // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
     // **NOTE** this is done backwards so that user-registered strategies get first priority
