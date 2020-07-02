@@ -127,7 +127,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\spineml\generator;..\..\..\include\spineml\common;..\..\..\include\genn\backends\opencl;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(BuildModelInclude);$(OPENCL_PATH)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;WIN32_LEAN_AND_MEAN;NOMINMAX;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -179,7 +179,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\spineml\generator;..\..\..\include\spineml\common;..\..\..\include\genn\backends\opencl;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(BuildModelInclude);$(OPENCL_PATH)\include</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;WIN32_LEAN_AND_MEAN;NOMINMAX;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
