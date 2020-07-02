@@ -577,14 +577,14 @@ int main(int argc, char *argv[])
         // Create default preferences
         CodeGenerator::BACKEND_NAMESPACE::Preferences preferences;
 
-        const auto sharePath = (filesystem::path(argv[0]) / ".." / "share" / "genn").make_absolute();
+        const auto sharePath = (filesystem::path(argv[0]).parent_path() / ".." / "share" / "genn").make_absolute();
 
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(
             model, sharePath, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
 
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath).first;
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, codePath).first;
 
 #ifdef _WIN32
         // Create MSBuild project to compile and link all generated modules
