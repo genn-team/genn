@@ -2604,7 +2604,8 @@ void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream 
 //--------------------------------------------------------------------------
 std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) const
 {
-    std::string flags = "-cl-std=CL1.2 -I " + modelMerged.getModel().getName() + "_CODE/opencl/clRNG/include";
+    // **YUCK** add two include paths so model can be build from parent directory or code directory
+    std::string flags = "-cl-std=CL1.2 -I " + modelMerged.getModel().getName() + "_CODE/opencl/clRNG/include -I opencl/clRNG/include";
     if(m_Preferences.optimizeCode) {
         flags += " -cl-fast-relaxed-math";
     }
