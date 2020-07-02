@@ -577,9 +577,11 @@ int main(int argc, char *argv[])
         // Create default preferences
         CodeGenerator::BACKEND_NAMESPACE::Preferences preferences;
 
+        const auto sharePath = (filesystem::path(argv[0]) / ".." / "share" / "genn").make_absolute();
+
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(
-            model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
+            model, sharePath, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
 
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, codePath).first;
