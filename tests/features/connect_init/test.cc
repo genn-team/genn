@@ -37,6 +37,6 @@ TEST_F(SimTest, ConnectInit)
     EXPECT_TRUE(std::all_of(&rowLengthFixedNumberPost[0], &rowLengthFixedNumberPost[100],
                             [](unsigned int rowLength) { return rowLength == 10; }));
 
-    // **TODO** we could also build a histogram of postsynaptic neurons and check that they are approximately uniformly distributes
+    // **TODO** we could also build a histogram of postsynaptic neurons and check that they are approximately uniformly distributed
 }
 
