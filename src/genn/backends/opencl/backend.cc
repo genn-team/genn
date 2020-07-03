@@ -1814,6 +1814,7 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
             throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
         }
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+        definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
@@ -1824,6 +1825,7 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
+        os << "cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
@@ -1836,16 +1838,13 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
 
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-        if(loc & VarLocation::HOST) {
-            os << " | CL_MEM_ALLOC_HOST_PTR";
-        }
-        os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
         allocation += MemAlloc::device(count * getSize(type));
     }
 
     if(loc & VarLocation::HOST) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(d_" << name;
+        os << "CHECK_OPENCL_ERRORS_POINTER(h_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(h_" << name;
         os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
         allocation += MemAlloc::host(count * getSize(type));
     }
@@ -1853,8 +1852,11 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
     return allocation;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream&, const std::string&, VarLocation) const
+void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
+    if(loc & VarLocation::HOST) {
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(h_" << name << ", " << name << "));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
@@ -2074,9 +2076,13 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
 {
-    genVariableDefinition(definitionsInternal, definitionsInternal, "clrngPhilox432Stream*", "rng", VarLocation::HOST_DEVICE);
-    genVariableImplementation(runner, "clrngPhilox432Stream*", "rng", VarLocation::HOST_DEVICE);
-    genVariableFree(free, "rng", VarLocation::HOST_DEVICE);
+    definitionsInternal << "EXPORT_VAR clrngPhilox432Stream* rng;" << std::endl;
+    definitionsInternal << "EXPORT_VAR cl::Buffer d_rng;" << std::endl;
+    
+    runner << "clrngPhilox432Stream* rng;" << std::endl;
+    runner << "cl::Buffer d_rng;" << std::endl;
+
+    free << "clrngPhilox432DestroyStreams(rng);" << std::endl;
 
     {
         CodeStream::Scope b(allocations);
@@ -2090,9 +2096,13 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInterna
 MemAlloc Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                    const std::string &name, size_t count) const
 {
-    genVariableDefinition(definitionsInternal, definitionsInternal, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
-    genVariableImplementation(runner, "clrngLfsr113Stream*", name, VarLocation::HOST_DEVICE);
-    genVariableFree(free, name, VarLocation::HOST_DEVICE);
+    definitionsInternal << "EXPORT_VAR clrngLfsr113Stream* " << name << ";" << std::endl;
+    definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
+
+    runner << "clrngLfsr113Stream* " << name << ";" << std::endl;
+    runner << "cl::Buffer d_" << name << ";" << std::endl;
+
+    free << "clrngLfsr113DestroyStreams(" << name << ");" << std::endl;
 
     {
         CodeStream::Scope b(allocations);
