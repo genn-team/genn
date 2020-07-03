@@ -528,6 +528,12 @@ private:
     //! Get arguments to pass to cl::Program::build
     std::string getBuildProgramFlags(const ModelSpecMerged &modelMerged) const;
 
+    //! Tests whether chosen device is AMD    
+    bool isChosenDeviceAMD() const;
+
+    //! Tests whether chosen device is NVIDIA
+    bool isChosenDeviceNVIDIA() const;
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------

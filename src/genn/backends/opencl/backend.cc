@@ -179,7 +179,13 @@ Backend::Backend(const KernelWorkGroupSize &kernelWorkGroupSizes, const Preferen
     
     // Show device name
     LOGI_BACKEND << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
-
+    
+    if(isChosenDeviceAMD()) {
+        LOGI_BACKEND << "Detected as an AMD device" << std::endl;
+    }
+    else if(isChosenDeviceNVIDIA()) {
+        LOGI_BACKEND << "Detected as an NVIDIA device" << std::endl;
+    }
     // Set pointer size
     const cl_int deviceAddressBytes = m_ChosenDevice.getInfo<CL_DEVICE_ADDRESS_BITS>() / 8;
     setPointerBytes(deviceAddressBytes);
@@ -2416,7 +2422,7 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
 
         // If device is NVIDIA, insert PTX code for fire-and-forget floating point atomic add
         // https://github.com/openai/blocksparse/blob/master/src/ew_op_gpu.h#L648-L652
-        if(m_ChosenDevice.getInfo<CL_DEVICE_VENDOR_ID>() == 0x10DE) {
+        if(isChosenDeviceNVIDIA()) {
             const std::string space = (memoryType == "global") ? "global" : "shared";
             os << "asm volatile(\"red." << space << ".add.f32[%0], %1;\" :: \"l\"(source), \"f\"(operand));" << std::endl;
         }
@@ -2610,6 +2616,21 @@ std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) co
         flags += " -cl-fast-relaxed-math";
     }
     return flags;
+}
+//--------------------------------------------------------------------------
+bool Backend::isChosenDeviceAMD() const
+{
+    // **YUCK** this is a horrible test but vendor IDs are not consistent 
+    const std::string device = m_ChosenDevice.getInfo<CL_DEVICE_VENDOR>();
+    return (device.find("AMD") != std::string::npos);
+}
+//--------------------------------------------------------------------------
+bool Backend::isChosenDeviceNVIDIA() const
+{
+    // **YUCK** this is a horrible test but vendor IDs are not consistant 
+    // and I have seen "NVIDIA" and "NVIDIA corporation"
+    const std::string device = m_ChosenDevice.getInfo<CL_DEVICE_VENDOR>();
+    return (device.find("NVIDIA") != std::string::npos);
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
