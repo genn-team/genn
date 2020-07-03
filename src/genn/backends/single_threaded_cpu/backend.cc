@@ -685,10 +685,12 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
                                             VarLocation, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
-    // **NOTE** could use std::remove_pointer but it seems unnecessarily elaborate
-    const std::string underlyingType = Utils::getUnderlyingType(type);
+    const std::string underlyingType = ::Utils::getUnderlyingType(type);
+    const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-    os << prefix << name << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
+    const std::string pointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+
+    os << pointer << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, 
