@@ -2621,8 +2621,10 @@ std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) co
 bool Backend::isChosenDeviceAMD() const
 {
     // **YUCK** this is a horrible test but vendor IDs are not consistent 
+    // and I have seen "AMD" and "Advanced Micro Devices, Inc."
     const std::string device = m_ChosenDevice.getInfo<CL_DEVICE_VENDOR>();
-    return (device.find("AMD") != std::string::npos);
+    return ((device.find("AMD") != std::string::npos)
+            || (device.find("Advanced Micro Devices") != std::string::npos));
 }
 //--------------------------------------------------------------------------
 bool Backend::isChosenDeviceNVIDIA() const
