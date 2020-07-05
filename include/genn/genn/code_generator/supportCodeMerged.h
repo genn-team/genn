@@ -58,7 +58,8 @@ public:
                 }
             }
             else {
-                os << ensureFtype(getNamespaceFunction(s.first, s.second), ftype) << std::endl;
+                std::regex r("\\w+\\(.*\\).*\\{.*\\}"); // function definition
+                os << ensureFtype(std::regex_replace(s.first, r, s.second + "_$&"), ftype) << std::endl;
             }
             os << std::endl;
         }

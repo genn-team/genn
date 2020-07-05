@@ -233,7 +233,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                     sg, baseSubs, modelMerged.getModel());
             }
             else {
-                applySynapseSubstitutions(os, getNamespaceFunction(wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode())), "learnPostCode",
+                applySynapseSubstitutions(os, getNamespaceFunction(wum->getLearnPostSupportCode(), wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode())), "learnPostCode",
                     sg, baseSubs, modelMerged.getModel());
             }
         },
@@ -251,7 +251,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             }
             else {
                 applySynapseSubstitutions(os,
-                    getNamespaceFunction(wum->getSynapseDynamicsCode(),modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode())),
+                    getNamespaceFunction(wum->getSynapseDynamicsSuppportCode(), wum->getSynapseDynamicsCode(), modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode())),
                     "synapseDynamics",
                     sg, baseSubs, modelMerged.getModel());
             }

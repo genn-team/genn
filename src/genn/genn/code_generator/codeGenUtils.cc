@@ -491,13 +491,15 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
 /*! \brief
  */
  //--------------------------------------------------------------------------
-std::string getNamespaceFunction(const std::string code, std::string namespaceName) {
-    std::regex r("\\w+\\(.*\\)"); // function
+std::string getNamespaceFunction(std::string supportCode, const std::string code, std::string namespaceName) {
+    std::regex r("\\w+(?=\\(.*\\))"); // function call
     std::smatch matched;
     std::regex_search(code.begin(), code.end(), matched, r);
     std::string newCode = code;
     for (const auto& f : matched) {
-        newCode = std::regex_replace(newCode, r, namespaceName + "_$&");
+        if (supportCode.find(f.str()) != std::string::npos) {
+            newCode = std::regex_replace(newCode, std::regex(f.str()), namespaceName + "_$&");
+        }
     }
     return newCode;
 }
