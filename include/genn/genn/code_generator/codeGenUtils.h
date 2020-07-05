@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <regex>
 
 // GeNN includes
 #include "gennExport.h"
@@ -79,6 +80,12 @@ GENN_EXPORT std::string ensureFtype(const std::string &oldcode, const std::strin
  */
 //--------------------------------------------------------------------------
 GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
+
+//--------------------------------------------------------------------------
+/*! \brief 
+ */
+ //--------------------------------------------------------------------------
+GENN_EXPORT std::string getNamespaceFunction(const std::string code, std::string namespaceName);
 
 //-------------------------------------------------------------------------
 /*!

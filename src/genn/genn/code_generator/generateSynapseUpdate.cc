@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <string>
+#include <regex>
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -218,26 +219,40 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             }
         },
         // Postsynaptic learning code
-        [&modelMerged](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
-            if (!wum->getLearnPostSupportCode().empty()) {
+            if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
                 os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
-                                      sg, baseSubs, modelMerged.getModel());
+            if (backend.supportsNamespace()) {
+                applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
+                    sg, baseSubs, modelMerged.getModel());
+            }
+            else {
+                applySynapseSubstitutions(os, getNamespaceFunction(wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode())), "learnPostCode",
+                    sg, baseSubs, modelMerged.getModel());
+            }
         },
         // Synapse dynamics
-        [&modelMerged](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
-            if (!wum->getSynapseDynamicsSuppportCode().empty()) {
+            if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
                 os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
-                                      sg, baseSubs, modelMerged.getModel());
+            if (backend.supportsNamespace()) {
+                applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
+                    sg, baseSubs, modelMerged.getModel());
+            }
+            else {
+                applySynapseSubstitutions(os,
+                    getNamespaceFunction(wum->getSynapseDynamicsCode(),modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode())),
+                    "synapseDynamics",
+                    sg, baseSubs, modelMerged.getModel());
+            }
         },
         // Push EGP handler
         [&backend, &modelMerged](CodeStream &os)

@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <unordered_map>
+#include <regex>
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -44,15 +45,20 @@ public:
     }
 
     //! Generate support code
-    void gen(CodeStream &os, const std::string &ftype) const
+    void gen(CodeStream &os, const std::string &ftype, const bool supportsNamespace = true) const
     {
         // Loop through support code
         for(const auto &s : m_SupportCode) {
-            // Write namespace containing support code with fixed up floating point type
-            os << "namespace " << s.second;
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(s.first, ftype) << std::endl;
+            if (supportsNamespace) {
+                // Write namespace containing support code with fixed up floating point type
+                os << "namespace " << s.second;
+                {
+                    CodeStream::Scope b(os);
+                    os << ensureFtype(s.first, ftype) << std::endl;
+                }
+            }
+            else {
+                os << ensureFtype(getNamespaceFunction(s.first, s.second), ftype) << std::endl;
             }
             os << std::endl;
         }

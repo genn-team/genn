@@ -228,7 +228,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << std::endl << std::endl;
 
     // Generate support code
-    modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels);
+    modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels, false);
     neuronUpdateKernels << std::endl << std::endl;
     
     // Generate struct definitions
@@ -563,9 +563,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     genAtomicAddFloat(synapseUpdateKernels, "global");
 
     // Generate support code
-    modelMerged.genPresynapticUpdateSupportCode(synapseUpdateKernels);
-    modelMerged.genPostsynapticUpdateSupportCode(synapseUpdateKernels);
-    modelMerged.genSynapseDynamicsSupportCode(synapseUpdateKernels);
+    modelMerged.genPresynapticUpdateSupportCode(synapseUpdateKernels, false);
+    modelMerged.genPostsynapticUpdateSupportCode(synapseUpdateKernels, false);
+    modelMerged.genSynapseDynamicsSupportCode(synapseUpdateKernels, false);
     synapseUpdateKernels << std::endl;
 
     // Generate struct definitions

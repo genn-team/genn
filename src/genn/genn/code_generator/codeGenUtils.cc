@@ -486,4 +486,19 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
         throw std::runtime_error("The "+vars+"undefined in code "+codeName+".");
     }
 }
+
+//--------------------------------------------------------------------------
+/*! \brief
+ */
+ //--------------------------------------------------------------------------
+std::string getNamespaceFunction(const std::string code, std::string namespaceName) {
+    std::regex r("\\w+\\(.*\\)"); // function
+    std::smatch matched;
+    std::regex_search(code.begin(), code.end(), matched, r);
+    std::string newCode = code;
+    for (const auto& f : matched) {
+        newCode = std::regex_replace(newCode, r, namespaceName + "_$&");
+    }
+    return newCode;
+}
 }   // namespace CodeGenerator
