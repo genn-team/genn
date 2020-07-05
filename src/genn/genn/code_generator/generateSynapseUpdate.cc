@@ -125,7 +125,9 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                                           const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
-    os << "#include \"supportCode.h\"" << std::endl;
+    if (backend.supportsNamespace()) {
+        os << "#include \"supportCode.h\"" << std::endl;
+    }
     os << std::endl;
 
     // Generate functions to push merged synapse group structures

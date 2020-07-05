@@ -112,7 +112,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
-    os << "#include \"supportCode.h\"" << std::endl;
+    if (backend.supportsNamespace()) {
+        os << "#include \"supportCode.h\"" << std::endl;
+    }
     os << std::endl;
 
     // Neuron update kernel
@@ -248,7 +250,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 inSynSubs.applyCheckUnreplaced(pdCode, "decayCode : merged " + std::to_string(i));
                 pdCode = ensureFtype(pdCode, model.getPrecision());
 
-                if (!psm->getSupportCode().empty()) {
+                if (!psm->getSupportCode().empty() && backend.supportsNamespace()) {
                     os << "using namespace " << modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()) <<  ";" << std::endl;
                 }
 
@@ -311,7 +313,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
             }
 
-            if (!nm->getSupportCode().empty()) {
+            if (!nm->getSupportCode().empty() && backend.supportsNamespace()) {
                 os << "using namespace " << modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()) <<  ";" << std::endl;
             }
 
@@ -322,6 +324,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                 neuronSubs.applyCheckUnreplaced(thCode, "thresholdConditionCode : merged" + std::to_string(ng.getIndex()));
                 thCode= ensureFtype(thCode, model.getPrecision());
+
+                if (!backend.supportsNamespace()) {
+                    thCode = getNamespaceFunction(thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
+                }
 
                 if (nm->isAutoRefractoryRequired()) {
                     os << "const bool oldSpike= (" << thCode << ");" << std::endl;
@@ -339,7 +345,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             neuronSubs.applyCheckUnreplaced(sCode, "simCode : merged" + std::to_string(ng.getIndex()));
             sCode = ensureFtype(sCode, model.getPrecision());
 
-            os << sCode << std::endl;
+            if (backend.supportsNamespace()) {
+                os << sCode << std::endl;
+            } else {
+                os << getNamespaceFunction(sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode())) << std::endl;
+            }
 
             // look for spike type events first.
             if (ng.getArchetype().isSpikeEventRequired()) {

@@ -2494,6 +2494,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "typedef " << precision << " scalar;" << std::endl;
     os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
+    os << "#define SUPPORT_CODE_FUNC" << std::endl;
 
    
     
