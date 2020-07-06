@@ -14,7 +14,8 @@
     <ProjectGuid>{63424AC3-404B-4F72-8E94-0342524A966B}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
-    <ClCompile Include="pugixml/pugixml.cpp" />
+    <ClCompile Include="pugixml\pugixml.cc" />
+    <ClCompile Include="spineMLLogging.cc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -50,7 +51,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../../include/spineml/common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../include/spineml/common;../../../include/genn/third_party;../../../include/genn/genn/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -63,7 +64,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>../../../include/spineml/common</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../../../include/spineml/common;../../../include/genn/third_party;../../../include/genn/genn/</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
