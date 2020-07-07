@@ -278,7 +278,7 @@ public:
 
     SET_HOST_INIT_CODE(
         "// Allocate pre-calculated row length array\n"
-    	"$(allocatepreCalcRowLength, $(num_pre) * $(num_threads));\n"
+        "$(allocatepreCalcRowLength, $(num_pre) * $(num_threads));\n"
         "// Calculate row lengths\n"
         "const size_t numPostPerThread = ($(num_post) + $(num_threads) - 1) / $(num_threads);\n"
         "const size_t leftOverNeurons = $(num_post) % numPostPerThread;\n"

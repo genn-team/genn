@@ -493,13 +493,14 @@ class SynapseGroup(Group):
             if self.is_dense:
                 return np.copy(var_view)
             elif self.is_ragged:
+                max_rl = self.max_row_length
+                row_ls = self.row_lengths if self.connectivity_initialiser is None else self._row_lengths
+
                 # Create range containing the index where each row starts in ind
-                row_start_idx = xrange(0, self.weight_update_var_size,
-                                       self.max_row_length)
+                row_start_idx = xrange(0, self.weight_update_var_size, max_rl)
 
                 # Build list of subviews representing each row
-                rows = [var_view[i:i + r]
-                        for i, r in zip(row_start_idx, self.row_lengths)]
+                rows = [var_view[i:i + r] for i, r in zip(row_start_idx, row_ls)]
 
                 # Stack all rows together into single array
                 return np.hstack(rows)
@@ -604,15 +605,15 @@ class SynapseGroup(Group):
             raise Exception("when weight sharing is used, get_sparse_pre_inds"
                             "can only be used on the 'master' population")
         elif self.is_ragged:
-            if self.ind is None or self.row_lengths is None:
-                raise Exception("only manually initialised connectivity "
-                                "can currently by accessed")
+
+            rl = self.row_lengths if self.connectivity_initialiser is None else self._row_lengths
+
+            if rl is None:
+                raise Exception("problem accessing connectivity ")
 
             # Expand row lengths into full array
             # of presynaptic indices and return
-            return np.hstack([np.repeat(i, l)
-                              for i, l in enumerate(self.row_lengths)])
-
+            return np.hstack([np.repeat(i, l) for i, l in enumerate(rl)])
 
         else:
             raise Exception("get_sparse_pre_inds only supports"
@@ -628,12 +629,23 @@ class SynapseGroup(Group):
             raise Exception("when weight sharing is used, get_sparse_post_inds"
                             "can only be used on the 'master' population")
         elif self.is_ragged:
-            if self.ind is None or self.row_lengths is None:
-                raise Exception("only manually initialised connectivity "
-                                "can currently by accessed")
+            if self.connectivity_initialiser is None:
 
-            # Return cached indices
-            return self.ind
+                if self.ind is None or self.row_lengths is None:
+                    raise Exception("problem accessing manually initialised connectivity ")
+                # Return cached indices
+                return self.ind
+
+            else:
+                if self._ind is None or self._row_lengths is None:
+                    raise Exception("problem accessing on-device initialised connectivity ")
+
+                # the _ind array view still has some non-valid data so we remove them
+                # with the row_lengths
+                return np.hstack([
+                    self._ind[i * self.max_row_length: (i * self.max_row_length) + r]
+                        for i, r in enumerate(self._row_lengths)])
+
         else:
             raise Exception("get_sparse_post_inds only supports"
                             "ragged format sparse connectivity")
@@ -747,19 +759,23 @@ class SynapseGroup(Group):
         self._model.push_connectivity_to_device(self.name)
 
     def load(self):
-        # If synapse population has non-dense connectivity 
+        # If synapse population has non-dense connectivity
         # which requires initialising manually
-        if not self.is_dense and self.is_connectivity_init_required:
-            # If data is available
-            if self.connections_set:
-                if self.is_ragged:
-                    # Get pointers to ragged data structure members
-                    ind = self._assign_ext_ptr_array("ind",
-                                                     self.weight_update_var_size,
-                                                     "unsigned int")
-                    row_length = self._assign_ext_ptr_array("rowLength",
-                                                            self.src.size,
-                                                            "unsigned int")
+        if not self.is_dense and self.weight_sharing_master is None:
+            if self.is_ragged:
+                # Get pointers to ragged data structure members
+                ind = self._assign_ext_ptr_array("ind",
+                                                 self.weight_update_var_size,
+                                                 "unsigned int")
+                row_length = self._assign_ext_ptr_array("rowLength",
+                                                        self.src.size,
+                                                        "unsigned int")
+                # add pointers to the object
+                self._ind = ind
+                self._row_lengths = row_length
+
+                # If data is available
+                if self.connections_set:
 
                     # Copy in row length
                     row_length[:] = self.row_lengths
@@ -774,11 +790,12 @@ class SynapseGroup(Group):
                         # Copy row from non-padded indices into correct location
                         ind[i:i + r] = self.ind[syn:syn + r]
                         syn += r
-                else:
-                    raise Exception("Matrix format not supported")
+                elif self.connectivity_initialiser is None:
+                    raise Exception("For sparse projections, the connections"
+                                    "must be set before loading a model")
+
             else:
-                raise Exception("For sparse projections, the connections"
-                                "must be set before loading a model")
+                raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables
         for var_name, var_data in iteritems(self.vars):
