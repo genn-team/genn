@@ -763,6 +763,7 @@ class SynapseGroup(Group):
         # which requires initialising manually
         if not self.is_dense and self.weight_sharing_master is None:
             if self.is_ragged:
+                # If connectivity is located on host
                 conn_loc = self.pop.get_sparse_connectivity_location()
                 if (conn_loc & VarLocation_HOST) != 0:
                     # Get pointers to ragged data structure members
@@ -794,6 +795,12 @@ class SynapseGroup(Group):
                     elif self.connectivity_initialiser is None:
                         raise Exception("For sparse projections, the connections"
                                         "must be set before loading a model")
+                # Otherwise, if connectivity isn't located on host, 
+                # give error if user tries to manually configure it
+                elif self.connections_set:
+                    raise Exception("If sparse connectivity is only located "
+                                    "on device, it cannot be set with "
+                                    "set_sparse_connections")
 
             else:
                 raise Exception("Matrix format not supported")
