@@ -359,7 +359,7 @@ class NeuronGroup(Group):
 
         # Load neuron extra global params
         self._load_egp()
-    
+
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
@@ -763,36 +763,37 @@ class SynapseGroup(Group):
         # which requires initialising manually
         if not self.is_dense and self.weight_sharing_master is None:
             if self.is_ragged:
-                # Get pointers to ragged data structure members
-                ind = self._assign_ext_ptr_array("ind",
-                                                 self.weight_update_var_size,
-                                                 "unsigned int")
-                row_length = self._assign_ext_ptr_array("rowLength",
-                                                        self.src.size,
-                                                        "unsigned int")
-                # add pointers to the object
-                self._ind = ind
-                self._row_lengths = row_length
+                conn_loc = self.pop.get_sparse_connectivity_location()
+                if (conn_loc & VarLocation_HOST) != 0:
+                    # Get pointers to ragged data structure members
+                    ind = self._assign_ext_ptr_array("ind",
+                                                     self.weight_update_var_size,
+                                                     "unsigned int")
+                    row_length = self._assign_ext_ptr_array("rowLength",
+                                                            self.src.size,
+                                                            "unsigned int")
+                    # add pointers to the object
+                    self._ind = ind
+                    self._row_lengths = row_length
 
-                # If data is available
-                if self.connections_set:
+                    # If data is available
+                    if self.connections_set:
+                        # Copy in row length
+                        row_length[:] = self.row_lengths
 
-                    # Copy in row length
-                    row_length[:] = self.row_lengths
+                        # Create (x)range containing the index where each row starts in ind
+                        row_start_idx = xrange(0, self.weight_update_var_size,
+                                               self.max_row_length)
 
-                    # Create (x)range containing the index where each row starts in ind
-                    row_start_idx = xrange(0, self.weight_update_var_size,
-                                           self.max_row_length)
-
-                    # Loop through ragged matrix rows
-                    syn = 0
-                    for i, r in zip(row_start_idx, self.row_lengths):
-                        # Copy row from non-padded indices into correct location
-                        ind[i:i + r] = self.ind[syn:syn + r]
-                        syn += r
-                elif self.connectivity_initialiser is None:
-                    raise Exception("For sparse projections, the connections"
-                                    "must be set before loading a model")
+                        # Loop through ragged matrix rows
+                        syn = 0
+                        for i, r in zip(row_start_idx, self.row_lengths):
+                            # Copy row from non-padded indices into correct location
+                            ind[i:i + r] = self.ind[syn:syn + r]
+                            syn += r
+                    elif self.connectivity_initialiser is None:
+                        raise Exception("For sparse projections, the connections"
+                                        "must be set before loading a model")
 
             else:
                 raise Exception("Matrix format not supported")
