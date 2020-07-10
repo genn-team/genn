@@ -245,6 +245,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedStructBuildKernels(neuronUpdateKernels, modelMerged, modelMerged.getMergedNeuronUpdateGroups());
 
     // Declare neuron spike queue update kernel
+    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
     neuronUpdateKernels << ")";
@@ -281,6 +282,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     size_t idStart = 0;
 
     //! KernelNeuronUpdate BODY START
+    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(), true);
     neuronUpdateKernels << model.getTimePrecision() << " t)";
@@ -592,6 +594,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // Declare neuron spike queue update kernel
     size_t idPreSynapseReset = 0;
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPreSynapseReset] << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
         synapseUpdateKernels << ")";
@@ -626,6 +629,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
@@ -764,6 +768,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
     if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPostsynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPostsynapticUpdateGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
@@ -866,6 +871,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     size_t idSynapseDynamicsStart = 0;
     if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDynamicsGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
@@ -1112,6 +1118,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseSparseInitGroups());
 
+    initializeKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelInitialize] << ", 1, 1)))" << std::endl;
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
     bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
     const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
@@ -1243,6 +1250,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // Generate sparse initialisation kernel
     size_t idSparseInitStart = 0;
     if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
+        initializeKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelInitializeSparse] << ", 1, 1)))" << std::endl;
         initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
         genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), globalRNGRequired);
         if(globalRNGRequired) {
