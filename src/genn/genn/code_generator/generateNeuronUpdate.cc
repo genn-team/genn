@@ -326,7 +326,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 thCode= ensureFtype(thCode, model.getPrecision());
 
                 if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-                    thCode = getNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
+                    thCode = substituteNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
                 }
 
                 if (nm->isAutoRefractoryRequired()) {
@@ -346,7 +346,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             sCode = ensureFtype(sCode, model.getPrecision());
 
             if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-                os << getNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode())) << std::endl;
+                os << substituteNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode())) << std::endl;
             } else {
                 os << sCode << std::endl;
             }

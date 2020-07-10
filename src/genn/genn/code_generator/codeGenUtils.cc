@@ -491,7 +491,7 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
 /*! \brief
  */
  //--------------------------------------------------------------------------
-std::string getNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
+std::string substituteNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
     std::regex r("\\w+(?=\\(.*\\))"); // function call
     std::smatch matched;
     std::regex_search(code.begin(), code.end(), matched, r);
@@ -507,6 +507,7 @@ std::string getNamespaceFunction(const std::string supportCode, const std::strin
         for (const auto& funcInSupportCode : matchedInSupportCode) {
             if (funcInSupportCode.str() == funcInCode.str()) {
                 newCode = std::regex_replace(newCode, std::regex(funcInCode.str()), namespaceName + "_$&");
+                break;
             }
         }
     }

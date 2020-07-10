@@ -85,7 +85,7 @@ GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::st
 /*! \brief 
  */
  //--------------------------------------------------------------------------
-GENN_EXPORT std::string getNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
+GENN_EXPORT std::string substituteNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
 
 //-------------------------------------------------------------------------
 /*!
