@@ -1808,7 +1808,7 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
 {
     // If timing is enabled, synchronise 
     // **THINK** is it better to wait on events?
-    if(modelMerged.getModel().isTimingEnabled()) {
+    if(modelMerged.getModel().isTimingEnabled() || modelMerged.getModel().zeroCopyInUse()) {
         os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
     }
 }
@@ -1822,7 +1822,10 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
             throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
         }
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-        definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
+        
+        if(!(loc & VarLocation::ZERO_COPY)) {
+            definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
+        }
     }
     if (loc & VarLocation::DEVICE) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
@@ -1833,7 +1836,10 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
-        os << "cl::Buffer h_" << name << ";" << std::endl;
+        
+        if(!(loc & VarLocation::ZERO_COPY)) {
+            os << "cl::Buffer h_" << name << ";" << std::endl;
+        }
     }
     if (loc & VarLocation::DEVICE) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
@@ -1846,15 +1852,25 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
 
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+        if(loc & VarLocation::ZERO_COPY) {
+            os << " | CL_MEM_ALLOC_HOST_PTR";
+        }
+        os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
         allocation += MemAlloc::device(count * getSize(type));
     }
 
     if(loc & VarLocation::HOST) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(h_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(h_" << name;
-        os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
-        allocation += MemAlloc::host(count * getSize(type));
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(d_" << name;
+            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
+        }
+        else {
+            os << "CHECK_OPENCL_ERRORS_POINTER(h_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(h_" << name;
+            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
+            allocation += MemAlloc::host(count * getSize(type));
+        }
     }
 
     return allocation;
@@ -1862,7 +1878,10 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
 {
-    if(loc & VarLocation::HOST) {
+    if(loc & VarLocation::ZERO_COPY) {
+        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(d_" << name << ", " << name << "));" << std::endl;
+    }
+    else if(loc & VarLocation::HOST) {
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(h_" << name << ", " << name << "));" << std::endl;
     }
 }
