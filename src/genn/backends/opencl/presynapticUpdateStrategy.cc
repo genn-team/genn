@@ -89,10 +89,6 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
     {
         CodeStream::Scope b(os);
 
-        if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-        }
-
         if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = group->srcSpk" << eventSuffix;
             os << "[(preReadDelaySlot * group->numSrcNeurons) + spike];" << std::endl;
@@ -124,6 +120,10 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
             wumThreshHandler(threshOs, sg, threshSubs);
 
             std::string code = threshOsStream.str();
+
+            if (!wu->getSimSupportCode().empty()) {
+                code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+            }
 
             os << code;
 
@@ -289,9 +289,6 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     }
                 }
 
-                if (!wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-                }
                 if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";
                     if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -306,8 +303,11 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
 
                     // Generate weight update threshold condition
                     wumThreshHandler(threshOs, sg, threshSubs);
-
                     std::string code = threshOsStream.str();
+
+                    if (!wu->getSimSupportCode().empty()) {
+                        code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+                    }
 
                     os << code;
 
@@ -356,7 +356,18 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     }
                 }
 
-                wumSimHandler(os, sg, synSubs);
+                std::stringstream wumSimOsStream;
+                CodeStream wumSimOs(wumSimOsStream);
+
+                wumSimHandler(wumSimOs, sg, synSubs);
+                std::string code = wumSimOsStream.str();
+
+                // Substituting uses of support code with no namespace functions (if any)
+                if (!wu->getSimSupportCode().empty()) {
+                    code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+                }
+
+                os << code;
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(140); // end if (id < npost)

@@ -229,6 +229,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     // Generate support code
     modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels, false);
+    modelMerged.genPresynapticUpdateSupportCode(neuronUpdateKernels, false);
     neuronUpdateKernels << std::endl << std::endl;
     
     // Generate struct definitions
@@ -787,7 +788,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
             genParallelGroup<PostsynapticUpdateGroupMerged>(synapseUpdateKernels, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idPostsynapticStart,
                 [this](const SynapseGroupInternal &sg) { return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPostsynapticUpdate]); },
-                [postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
+                [postLearnHandler, &modelMerged, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
                 {
                     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
                     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {

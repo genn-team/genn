@@ -260,7 +260,7 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
-    virtual bool supportsNamespace() const override { return false; };
+    virtual bool supportsNamespace() const override { return true; };
 
     //--------------------------------------------------------------------------
     // Public API

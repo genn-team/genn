@@ -377,8 +377,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     os << CodeStream::OB(31);
 
                     // Use presynaptic update namespace if required
-                    if (!spkEventCond.supportCode.empty()) {
-                        os << " using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode) << ";" << std::endl;
+                    if (!spkEventCond.supportCode.empty() && backend.supportsNamespace()) {
+                        os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode) << ";" << std::endl;
+                    }
+
+                    // Substitutde with namespace functions
+                    if (!spkEventCond.supportCode.empty() && !backend.supportsNamespace()) {
+                        eCode = substituteNamespaceFunction(spkEventCond.supportCode, eCode, modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode));
                     }
 
                     // Combine this event threshold test with
