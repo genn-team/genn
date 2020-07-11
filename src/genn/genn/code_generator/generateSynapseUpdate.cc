@@ -249,7 +249,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
 
             if (!wum->getSynapseDynamicsSuppportCode().empty() && !backend.supportsNamespace()) {
                 std::string synapseDynamicsSupportCode = wum->getSynapseDynamicsSuppportCode();
-                std::string substitutedCode = substituteNamespaceFunction(synapseDynamicsSupportCode, wum->getSynapseDynamicsCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(synapseDynamicsSupportCode));
+                std::string substitutedCode = substituteNamespaceFunction(synapseDynamicsSupportCode, wum->getSynapseDynamicsCode(), modelMerged.getSynapseDynamicsSupportCodeNamespace(synapseDynamicsSupportCode));
                 applySynapseSubstitutions(os, substitutedCode, "synapseDynamics",
                     sg, baseSubs, modelMerged.getModel());
             }

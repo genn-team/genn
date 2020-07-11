@@ -167,7 +167,17 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
                 }
             }
 
-            wumSimHandler(os, sg, synSubs);
+            std::stringstream wumSimOsStream;
+            CodeStream wumSimOs(wumSimOsStream);
+
+            wumSimHandler(wumSimOs, sg, synSubs);
+            std::string code = wumSimOsStream.str();
+
+            if (!wu->getSimSupportCode().empty()) {
+                code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+            }
+
+            os << code;
         }
 
         if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {

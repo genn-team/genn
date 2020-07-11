@@ -254,6 +254,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     os << "using namespace " << modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()) <<  ";" << std::endl;
                 }
 
+                if (!psm->getSupportCode().empty() && !backend.supportsNamespace()) {
+                    psCode = substituteNamespaceFunction(psm->getSupportCode(), psCode, modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()));
+                    pdCode = substituteNamespaceFunction(psm->getSupportCode(), pdCode, modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()));
+                }
+
                 os << psCode << std::endl;
                 os << pdCode << std::endl;
 
@@ -346,10 +351,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             sCode = ensureFtype(sCode, model.getPrecision());
 
             if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-                os << substituteNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode())) << std::endl;
-            } else {
-                os << sCode << std::endl;
+                sCode = substituteNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
             }
+
+            os << sCode << std::endl;
 
             // look for spike type events first.
             if (ng.getArchetype().isSpikeEventRequired()) {
@@ -381,7 +386,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                         os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode) << ";" << std::endl;
                     }
 
-                    // Substitutde with namespace functions
+                    // Substitute with namespace functions
                     if (!spkEventCond.supportCode.empty() && !backend.supportsNamespace()) {
                         eCode = substituteNamespaceFunction(spkEventCond.supportCode, eCode, modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode));
                     }
