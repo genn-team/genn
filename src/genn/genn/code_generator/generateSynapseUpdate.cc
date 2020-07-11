@@ -228,12 +228,14 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                 os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
             }
 
-            if (backend.supportsNamespace()) {
-                applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
+            if (!wum->getLearnPostSupportCode().empty() && !backend.supportsNamespace()) {
+                std::string learnPostSupportCode = wum->getLearnPostSupportCode();
+                std::string substitutedCode = substituteNamespaceFunction(learnPostSupportCode, wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(learnPostSupportCode));
+                applySynapseSubstitutions(os, substitutedCode, "learnPostCode",
                     sg, baseSubs, modelMerged.getModel());
             }
             else {
-                applySynapseSubstitutions(os, substituteNamespaceFunction(wum->getLearnPostSupportCode(), wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode())), "learnPostCode",
+                applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
                     sg, baseSubs, modelMerged.getModel());
             }
         },
@@ -245,14 +247,14 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                 os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
             }
 
-            if (backend.supportsNamespace()) {
-                applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
+            if (!wum->getSynapseDynamicsSuppportCode().empty() && !backend.supportsNamespace()) {
+                std::string synapseDynamicsSupportCode = wum->getSynapseDynamicsSuppportCode();
+                std::string substitutedCode = substituteNamespaceFunction(synapseDynamicsSupportCode, wum->getSynapseDynamicsCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(synapseDynamicsSupportCode));
+                applySynapseSubstitutions(os, substitutedCode, "synapseDynamics",
                     sg, baseSubs, modelMerged.getModel());
             }
             else {
-                applySynapseSubstitutions(os,
-                    substituteNamespaceFunction(wum->getSynapseDynamicsSuppportCode(), wum->getSynapseDynamicsCode(), modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode())),
-                    "synapseDynamics",
+                applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
                     sg, baseSubs, modelMerged.getModel());
             }
         },
