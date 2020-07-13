@@ -504,6 +504,9 @@ protected:
     //! Are any variables in any populations in this model using zero-copy memory?
     bool zeroCopyInUse() const;
 
+    //! Is recording enabled on any population in this model?
+    bool isRecordingInUse() const;
+
     //! Get std::map containing local named NeuronGroup objects in model
     const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
 
