@@ -15,11 +15,12 @@ from . import genn_wrapper
 from . import model_preprocessor
 from .model_preprocessor import ExtraGlobalVariable, Variable, genn_types
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
-                          SynapseMatrixConnectivity_BITMASK,
-                          SynapseMatrixConnectivity_DENSE,
-                          SynapseMatrixWeight_INDIVIDUAL,
-                          SynapseMatrixWeight_INDIVIDUAL_PSM,
-                          VarLocation_HOST)
+                           SynapseMatrixConnectivity_BITMASK,
+                           SynapseMatrixConnectivity_DENSE,
+                           SynapseMatrixWeight_INDIVIDUAL,
+                           SynapseMatrixWeight_INDIVIDUAL_PSM,
+                           VarLocation_HOST,
+                           SynapseMatrixConnectivity_PROCEDURAL)
 
 
 class Group(object):
@@ -530,6 +531,16 @@ class SynapseGroup(Group):
                             "can only be set on the 'master' population")
 
     @property
+    def has_procedural_connectivity(self):
+        """Tests whether synaptic connectivity is procedural"""
+        return (self.matrix_type & SynapseMatrixConnectivity_PROCEDURAL) != 0
+
+    @property
+    def has_procedural_weights(self):
+        """Tests whether synaptic weights are procedural"""
+        return (self.matrix_type & SynapseMatrixWeight_PROCEDURAL) != 0
+
+    @property
     def is_ragged(self):
         """Tests whether synaptic connectivity uses Ragged format"""
         return (self.matrix_type & SynapseMatrixConnectivity_SPARSE) != 0
@@ -761,7 +772,7 @@ class SynapseGroup(Group):
     def load(self):
         # If synapse population has non-dense connectivity
         # which requires initialising manually
-        if not self.is_dense and self.weight_sharing_master is None:
+        if not self.is_dense and not self.has_procedural_connectivity and self.weight_sharing_master is None:
             if self.is_ragged:
                 # If connectivity is located on host
                 conn_loc = self.pop.get_sparse_connectivity_location()
