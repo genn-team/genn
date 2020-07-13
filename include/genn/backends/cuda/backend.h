@@ -423,7 +423,7 @@ private:
         }
     }
 
-    void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
+    void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
 
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;

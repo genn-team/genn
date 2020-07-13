@@ -313,6 +313,30 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             }
             os << std::endl;
         }
+
+        // If any neuron groups record spikes
+        if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
+                       [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeRecordingEnabled(); }))
+        {
+            os << "__shared__ uint32_t shSpkRecord[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
+            os << "if (threadIdx.x < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ");";
+            {
+                CodeStream::Scope b(os);
+                os << "shSpkRecord[threadIdx.x] = 0;" << std::endl;
+            }
+        }
+
+        // If any neuron groups record spike-like events
+        if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
+                       [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRecordingEnabled(); }))
+        {
+            os << "__shared__ uint32_t shSpkEvntRecord[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
+            os << "if (threadIdx.x < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ");";
+            {
+                CodeStream::Scope b(os);
+                os << "shSpkEvntRecord[threadIdx.x] = 0;" << std::endl;
+            }
+        }
             
         os << "__syncthreads();" << std::endl;
 
@@ -342,14 +366,14 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     CodeStream::Scope b(os);
                     simHandler(os, ng, popSubs,
                         // Emit true spikes
-                        [this](CodeStream &os, const NeuronUpdateGroupMerged &, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                         {
-                            genEmitSpike(os, subs, "");
+                            genEmitSpike(os, subs, "", ng.getArchetype().isSpikeRecordingEnabled());
                         },
                         // Emit spike-like events
-                        [this](CodeStream &os, const NeuronUpdateGroupMerged &, Substitutions &subs)
+                        [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                         {
-                            genEmitSpike(os, subs, "Evnt");
+                            genEmitSpike(os, subs, "Evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
                         });
                 }
 
@@ -420,6 +444,22 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         if (ng.getArchetype().isSpikeTimeRequired()) {
                             os << "group->sT[" << queueOffset << "n] = t;" << std::endl;
                         }
+                    }
+                }
+
+                // If we are recording spikes
+                if(ng.getArchetype().isSpikeRecordingEnabled()) {
+                    os << "if(threadIdx.x < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
+                    {
+                        CodeStream::Scope b(os);
+                    }
+                }
+
+                // If we are recording spike-like events
+                if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
+                    os << "if(threadIdx.x < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
+                    {
+                        CodeStream::Scope b(os);
                     }
                 }
             }
@@ -2178,10 +2218,15 @@ void Backend::addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base *stra
     s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
+void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
+
+    // If recording is enabled, set bit in recording word
+    if(recordingEnabled) {
+        os << "atomicOr(&shSpk" << suffix << "Record[" << subs["id"] << " / 32], 1 << (" << subs["id"] << " % 32));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
