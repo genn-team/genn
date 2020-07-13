@@ -51,7 +51,7 @@ bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others
 // ------------------------------------------------------------------------
 void NeuronGroup::setVarLocation(const std::string &varName, VarLocation loc)
 {
-    m_VarLocation[getNeuronModel()->getVarIndex(varName)] = loc;
+    m_VarLocation.at(getNeuronModel()->getVarIndex(varName)) = loc;
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
@@ -60,17 +60,27 @@ void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarL
     if(!Utils::isTypePointer(getNeuronModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
         throw std::runtime_error("Only extra global parameters with a pointer type have a location");
     }
-    m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
+    m_ExtraGlobalParamLocation.at(extraGlobalParamIndex) = loc;
+}
+//----------------------------------------------------------------------------
+void NeuronGroup::setVarRecordingEnabled(const std::string &varName, bool enabled)
+{
+    m_VarRecordingEnabled.at(getNeuronModel()->getVarIndex(varName)) = enabled;
 }
 //----------------------------------------------------------------------------
 VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
 {
-    return m_VarLocation[getNeuronModel()->getVarIndex(varName)];
+    return m_VarLocation.at(getNeuronModel()->getVarIndex(varName));
 }
 //----------------------------------------------------------------------------
 VarLocation NeuronGroup::getExtraGlobalParamLocation(const std::string &paramName) const
 {
-    return m_ExtraGlobalParamLocation[getNeuronModel()->getExtraGlobalParamIndex(paramName)];
+    return m_ExtraGlobalParamLocation.at(getNeuronModel()->getExtraGlobalParamIndex(paramName));
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isVarRecordingEnabled(const std::string &varName) const
+{
+    return m_VarRecordingEnabled.at(getNeuronModel()->getVarIndex(varName));
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
@@ -194,6 +204,23 @@ bool NeuronGroup::isInitRNGRequired() const
     // **NOTE** these are included here as they are initialised in neuron initialisation threads
     return std::any_of(getInSyn().cbegin(), getInSyn().cend(),
                        [](const SynapseGroupInternal *sg){ return sg->isPSInitRNGRequired(); });
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isRecordingEnabled() const
+{
+    // Return true if spike recording is enabled
+    if(m_SpikeRecordingEnabled) {
+        return true;
+    }
+
+    // Return true if spike event recording is enabled
+    if(m_SpikeEventRecordingEnabled) {
+        return true;
+    }
+
+    // Return true if any variables should be recorded
+    return std::any_of(m_VarRecordingEnabled.cbegin(), m_VarRecordingEnabled.cend(),
+                       [](bool v) { return v; });
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
