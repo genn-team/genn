@@ -113,19 +113,8 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
             Substitutions threshSubs(&popSubs);
             threshSubs.addVarSubstitution("id_pre", "preInd");
 
-            std::stringstream threshOsStream;
-            CodeStream threshOs(threshOsStream);
-
             // Generate weight update threshold condition
-            wumThreshHandler(threshOs, sg, threshSubs);
-
-            std::string code = threshOsStream.str();
-
-            if (!wu->getSimSupportCode().empty()) {
-                code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
-            }
-
-            os << code;
+            wumThreshHandler(os, sg, threshSubs);
 
             // end code substitutions ----
             os << ")";
@@ -167,17 +156,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
                 }
             }
 
-            std::stringstream wumSimOsStream;
-            CodeStream wumSimOs(wumSimOsStream);
-
-            wumSimHandler(wumSimOs, sg, synSubs);
-            std::string code = wumSimOsStream.str();
-
-            if (!wu->getSimSupportCode().empty()) {
-                code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
-            }
-
-            os << code;
+            wumSimHandler(os, sg, synSubs);
         }
 
         if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
@@ -308,18 +287,8 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     Substitutions threshSubs(&popSubs);
                     threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
 
-                    std::stringstream threshOsStream;
-                    CodeStream threshOs(threshOsStream);
-
                     // Generate weight update threshold condition
-                    wumThreshHandler(threshOs, sg, threshSubs);
-                    std::string code = threshOsStream.str();
-
-                    if (!wu->getSimSupportCode().empty()) {
-                        code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
-                    }
-
-                    os << code;
+                    wumThreshHandler(os, sg, threshSubs);
 
                     // end code substitutions ----
                     os << ")";
@@ -366,18 +335,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     }
                 }
 
-                std::stringstream wumSimOsStream;
-                CodeStream wumSimOs(wumSimOsStream);
-
-                wumSimHandler(wumSimOs, sg, synSubs);
-                std::string code = wumSimOsStream.str();
-
-                // Substituting uses of support code with no namespace functions (if any)
-                if (!wu->getSimSupportCode().empty()) {
-                    code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
-                }
-
-                os << code;
+                wumSimHandler(os, sg, synSubs);
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(140); // end if (id < npost)
