@@ -534,6 +534,11 @@ private:
     //! Tests whether chosen device is NVIDIA
     bool isChosenDeviceNVIDIA() const;
 
+    //! Tests whether chosen platform is NVIDIA
+    /*! This is primarily for Mac OS machines which have NVIDA devices on an Apple platform which,
+        it would seem, doesn't support some functions e.g. inline PTAX */
+    bool isChosenPlatformNVIDIA() const;
+
     //--------------------------------------------------------------------------
     // Private static methods
     //--------------------------------------------------------------------------
@@ -549,6 +554,7 @@ private:
     const unsigned int m_ChosenPlatformIndex;
     const unsigned int m_ChosenDeviceIndex;
     cl::Device m_ChosenDevice;
+    cl::Platform m_ChosenPlatform;
 
     //! Types that are only supported on device i.e. should never be exposed to user code
     std::unordered_set<std::string> m_DeviceTypes;

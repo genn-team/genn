@@ -165,18 +165,17 @@ Backend::Backend(const KernelWorkGroupSize &kernelWorkGroupSizes, const Preferen
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
     assert(m_ChosenPlatformIndex < platforms.size());
+    m_ChosenPlatform = platforms[m_ChosenPlatformIndex];
 
     // Show platform name
-    LOGI_BACKEND << "Using OpenCL platform:" << platforms[m_ChosenPlatformIndex].getInfo<CL_PLATFORM_NAME>();
+    LOGI_BACKEND << "Using OpenCL platform:" << m_ChosenPlatform.getInfo<CL_PLATFORM_NAME>();
 
     // Get platform devices
     std::vector<cl::Device> platformDevices;
-    platforms[m_ChosenPlatformIndex].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);
+    m_ChosenPlatform.getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);
     assert(m_ChosenDeviceIndex < platformDevices.size());
-
-    // Select device
     m_ChosenDevice = platformDevices[m_ChosenDeviceIndex];
-    
+
     // Show device name
     LOGI_BACKEND << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
     
@@ -2457,9 +2456,9 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
     {
         CodeStream::Scope b(os);
 
-        // If device is NVIDIA, insert PTX code for fire-and-forget floating point atomic add
+        // If device is NVIDIA running an NVIDIA platofmr, insert PTX code for fire-and-forget floating point atomic add
         // https://github.com/openai/blocksparse/blob/master/src/ew_op_gpu.h#L648-L652
-        if(isChosenDeviceNVIDIA()) {
+        if(isChosenDeviceNVIDIA() && isChosenPlatformNVIDIA()) {
             const std::string space = (memoryType == "global") ? "global" : "shared";
             os << "asm volatile(\"red." << space << ".add.f32[%0], %1;\" :: \"l\"(source), \"f\"(operand));" << std::endl;
         }
@@ -2670,6 +2669,12 @@ bool Backend::isChosenDeviceNVIDIA() const
     // and I have seen "NVIDIA" and "NVIDIA corporation"
     const std::string device = m_ChosenDevice.getInfo<CL_DEVICE_VENDOR>();
     return (device.find("NVIDIA") != std::string::npos);
+}
+//--------------------------------------------------------------------------
+bool Backend::isChosenPlatformNVIDIA() const
+{
+    const std::string platform = m_ChosenPlatform.getInfo<CL_PLATFORM_NAME>();
+    return (platform.find("NVIDIA") != std::string::npos);
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
