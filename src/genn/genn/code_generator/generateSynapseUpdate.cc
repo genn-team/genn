@@ -157,7 +157,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
         },
         // Presynaptic weight update threshold
-        [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             Substitutions synapseSubs(&baseSubs);
 
@@ -176,10 +176,17 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                                               [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
                                               [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
             
+            const auto* wum = sg.getArchetype().getWUModel();
+
             // Get event threshold condition code
-            std::string code = sg.getArchetype().getWUModel()->getEventThresholdConditionCode();
+            std::string code = wum->getEventThresholdConditionCode();
             synapseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
-            code = ensureFtype(code, model.getPrecision());
+            code = ensureFtype(code, modelMerged.getModel().getPrecision());
+
+            if (!backend.supportsNamespace() && !wum->getSimSupportCode().empty()) {
+                code = disambiguateNamespaceFunction(wum->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wum->getSimSupportCode()));
+            }
+
             os << code;
         },
         // Presynaptic spike
@@ -242,7 +249,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             }
 
             applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
-                sg, baseSubs, modelMerged, backend.supportsNamespace());
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Synapse dynamics
         [&modelMerged, &backend](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
@@ -253,7 +260,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             }
 
             applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
-                sg, baseSubs, modelMerged, backend.supportsNamespace());
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Push EGP handler
         [&backend, &modelMerged](CodeStream &os)

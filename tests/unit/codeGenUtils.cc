@@ -63,7 +63,7 @@ TEST(EnsureMathFunctionFtype, rintf) {
 TEST(EnsureMathFunctionFtype, supportCodeFunc) {
     const std::string supportCode = "SUPPORT_CODE_FUNC scalar supportCodeFunc(scalar x){ return x; }";
     const std::string code = "supportCodeFunc(x);";
-    const std::string substitutedCode = substituteNamespaceFunction(supportCode, code, "TestNamespace");
+    const std::string substitutedCode = disambiguateNamespaceFunction(supportCode, code, "TestNamespace");
     ASSERT_EQ(substitutedCode, "TestNamespace_supportCodeFunc(x);");
 }
 
