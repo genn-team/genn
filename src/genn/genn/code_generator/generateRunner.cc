@@ -1246,6 +1246,14 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
                     backend.genExtraGlobalParamAllocation(runner, "uint32*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+
+                    // Get destinations in merged structures, this EGP 
+                    // needs to be copied to and call push function
+                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpk" + n.first, backend);
+                    for(const auto &v : mergedDestinations) {
+                        runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                        runner << v.second.groupIndex << ", " << backend.getVarPrefix() << "recordSpk" + n.first << ");" << std::endl;
+                    }
                 }
 
                 // Allocate spike event array if required
@@ -1253,6 +1261,14 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
                     backend.genExtraGlobalParamAllocation(runner, "uint32*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+
+                    // Get destinations in merged structures, this EGP 
+                    // needs to be copied to and call push function
+                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpk" + n.first, backend);
+                    for(const auto &v : mergedDestinations) {
+                        runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                        runner << v.second.groupIndex << ", " << backend.getVarPrefix() << "recordSpkEvent" + n.first << ");" << std::endl;
+                    }
                 }
             }
         }

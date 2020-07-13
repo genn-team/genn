@@ -280,6 +280,28 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
             getArchetype().getNeuronModel()->getDerivedParams(), "",
             [](const NeuronGroupInternal &ng) { return ng.getDerivedParams(); },
             &NeuronGroupMergedBase::isDerivedParamHeterogeneous);
+
+        if(getArchetype().isSpikeRecordingEnabled()) {
+            // Add field for spike recording
+            // **YUCK** this mechanism needs to be renamed from PointerEGP to RuntimeAlloc
+            addField("uint32_t*", "recordSpk",
+                     [&backend](const NeuronGroupInternal &ng, size_t) 
+                     { 
+                         return backend.getVarPrefix() + "recordSpk" + ng.getName(); 
+                     },
+                     FieldType::PointerEGP);
+        }
+
+        if(getArchetype().isSpikeEventRecordingEnabled()) {
+            // Add field for spike event recording
+            // **YUCK** this mechanism needs to be renamed from PointerEGP to RuntimeAlloc
+            addField("uint32_t*", "recordSpkEvent",
+                     [&backend](const NeuronGroupInternal &ng, size_t)
+                     {
+                         return backend.getVarPrefix() + "recordSpkEvent" + ng.getName(); 
+                     },
+                     FieldType::PointerEGP);
+        }
     }
 
     // Loop through merged synaptic inputs in archetypical neuron group
