@@ -255,8 +255,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
 
                 if (!psm->getSupportCode().empty() && !backend.supportsNamespace()) {
-                    psCode = substituteNamespaceFunction(psm->getSupportCode(), psCode, modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()));
-                    pdCode = substituteNamespaceFunction(psm->getSupportCode(), pdCode, modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()));
+                    psCode = disambiguateNamespaceFunction(psm->getSupportCode(), psCode, modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()));
+                    pdCode = disambiguateNamespaceFunction(psm->getSupportCode(), pdCode, modelMerged.getPostsynapticDynamicsSupportCodeNamespace(psm->getSupportCode()));
                 }
 
                 os << psCode << std::endl;
@@ -331,7 +331,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 thCode= ensureFtype(thCode, model.getPrecision());
 
                 if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-                    thCode = substituteNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
+                    thCode = disambiguateNamespaceFunction(nm->getSupportCode(), thCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
                 }
 
                 if (nm->isAutoRefractoryRequired()) {
@@ -351,7 +351,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             sCode = ensureFtype(sCode, model.getPrecision());
 
             if (!nm->getSupportCode().empty() && !backend.supportsNamespace()) {
-                sCode = substituteNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
+                sCode = disambiguateNamespaceFunction(nm->getSupportCode(), sCode, modelMerged.getNeuronUpdateSupportCodeNamespace(nm->getSupportCode()));
             }
 
             os << sCode << std::endl;
@@ -388,7 +388,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                     // Substitute with namespace functions
                     if (!spkEventCond.supportCode.empty() && !backend.supportsNamespace()) {
-                        eCode = substituteNamespaceFunction(spkEventCond.supportCode, eCode, modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode));
+                        eCode = disambiguateNamespaceFunction(spkEventCond.supportCode, eCode, modelMerged.getPresynapticUpdateSupportCodeNamespace(spkEventCond.supportCode));
                     }
 
                     // Combine this event threshold test with

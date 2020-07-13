@@ -2,7 +2,6 @@
 
 // Standard C++ includes
 #include <string>
-#include <regex>
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
@@ -230,7 +229,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
 
             if (!wum->getLearnPostSupportCode().empty() && !backend.supportsNamespace()) {
                 std::string learnPostSupportCode = wum->getLearnPostSupportCode();
-                std::string substitutedCode = substituteNamespaceFunction(learnPostSupportCode, wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(learnPostSupportCode));
+                std::string substitutedCode = disambiguateNamespaceFunction(learnPostSupportCode, wum->getLearnPostCode(), modelMerged.getPostsynapticUpdateSupportCodeNamespace(learnPostSupportCode));
                 applySynapseSubstitutions(os, substitutedCode, "learnPostCode",
                     sg, baseSubs, modelMerged.getModel());
             }
@@ -249,7 +248,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
 
             if (!wum->getSynapseDynamicsSuppportCode().empty() && !backend.supportsNamespace()) {
                 std::string synapseDynamicsSupportCode = wum->getSynapseDynamicsSuppportCode();
-                std::string substitutedCode = substituteNamespaceFunction(synapseDynamicsSupportCode, wum->getSynapseDynamicsCode(), modelMerged.getSynapseDynamicsSupportCodeNamespace(synapseDynamicsSupportCode));
+                std::string substitutedCode = disambiguateNamespaceFunction(synapseDynamicsSupportCode, wum->getSynapseDynamicsCode(), modelMerged.getSynapseDynamicsSupportCodeNamespace(synapseDynamicsSupportCode));
                 applySynapseSubstitutions(os, substitutedCode, "synapseDynamics",
                     sg, baseSubs, modelMerged.getModel());
             }

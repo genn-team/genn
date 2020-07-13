@@ -122,7 +122,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
             std::string code = threshOsStream.str();
 
             if (!wu->getSimSupportCode().empty()) {
-                code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+                code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
             }
 
             os << code;
@@ -174,7 +174,7 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
             std::string code = wumSimOsStream.str();
 
             if (!wu->getSimSupportCode().empty()) {
-                code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+                code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
             }
 
             os << code;
@@ -316,7 +316,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     std::string code = threshOsStream.str();
 
                     if (!wu->getSimSupportCode().empty()) {
-                        code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+                        code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
                     }
 
                     os << code;
@@ -374,7 +374,7 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
 
                 // Substituting uses of support code with no namespace functions (if any)
                 if (!wu->getSimSupportCode().empty()) {
-                    code = substituteNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+                    code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
                 }
 
                 os << code;

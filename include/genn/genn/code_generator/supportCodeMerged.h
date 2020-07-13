@@ -58,7 +58,7 @@ public:
                 }
             }
             else {
-                // Regex for function definition
+                // Regex for function definition - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments) followed by braces on the same or new line
                 std::regex r("\\w+(?=\\(.*\\)\\s*\\{)");
                 os << ensureFtype(std::regex_replace(s.first, r, s.second + "_$&"), ftype) << std::endl;
             }

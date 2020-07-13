@@ -85,7 +85,7 @@ GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::st
 /*! \brief This function substitutes function names in a code with namespace as prefix of the function name for backends that do not support namespaces by checking that the function indeed exists in the support code and returns the substituted code.
  */
  //--------------------------------------------------------------------------
-GENN_EXPORT std::string substituteNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
+GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
 
 //-------------------------------------------------------------------------
 /*!

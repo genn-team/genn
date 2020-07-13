@@ -491,15 +491,15 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
 /*! \brief This function substitutes function names in a code with namespace as prefix of the function name for backends that do not support namespaces by checking that the function indeed exists in the support code and returns the substituted code.
  */
  //--------------------------------------------------------------------------
-std::string substituteNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
-    // Regex for function call
-    std::regex funcCallRegex("\\w+(?=\\(.*\\))");
+std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
+    // Regex for function call - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments)
+    std::regex funcCallRegex(R"(\w+(?=\(.*\)))");
     std::smatch matchedInCode;
     std::regex_search(code.begin(), code.end(), matchedInCode, funcCallRegex);
     std::string newCode = code;
 
-    // Regex for function definition
-    std::regex supportCodeRegex("\\w+(?=\\(.*\\)\\s*\\{)");
+    // Regex for function definition - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments) followed by braces on the same or new line
+    std::regex supportCodeRegex(R"(\w+(?=\(.*\)\s*\{))");
     std::smatch matchedInSupportCode;
     std::regex_search(supportCode.begin(), supportCode.end(), matchedInSupportCode, supportCodeRegex);
 

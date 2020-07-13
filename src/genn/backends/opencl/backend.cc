@@ -1892,6 +1892,7 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
     const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string hostDevicePointer = pointerToPointer ? ("*" + prefix + "h_" + name) : (prefix + "h_" + name);
 
     // If variable is present on device at all
     if(loc & VarLocation::DEVICE) {
@@ -1903,7 +1904,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     }
 
     if(loc & VarLocation::HOST) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << devicePointer;
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << hostDevicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << hostDevicePointer;
         os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
     }
 }
