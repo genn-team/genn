@@ -129,7 +129,7 @@ for filename, namespace, kwargs in backends:
                                  **backend_extension_kwargs))
 
 setup(name = "pygenn",
-      version = "0.4.0",
+      version = "0.4.1",
       packages = find_packages(),
       package_data={"pygenn": package_data},
 
