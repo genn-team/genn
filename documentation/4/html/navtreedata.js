@@ -56,6 +56,7 @@ var NAVTREE =
       [ "Debugging suggestions", "d0/da6/UserGuide.html#Debugging", null ]
     ] ],
     [ "Credits", "dd/d51/Credits.html", null ],
+    [ "Preprocessor symbols for porting Random123 to different platforms.", "dc/dcb/porting.html", null ],
     [ "Bibliography", "d0/de3/citelist.html", null ],
     [ "Namespaces", null, [
       [ "Namespace List", "namespaces.html", "namespaces" ],
@@ -84,28 +85,32 @@ var NAVTREE =
     [ "Files", null, [
       [ "File List", "files.html", "files" ],
       [ "File Members", "globals.html", [
-        [ "All", "globals.html", null ],
+        [ "All", "globals.html", "globals_dup" ],
         [ "Functions", "globals_func.html", null ],
+        [ "Variables", "globals_vars.html", null ],
         [ "Typedefs", "globals_type.html", null ],
         [ "Enumerations", "globals_enum.html", null ],
         [ "Enumerator", "globals_eval.html", null ],
-        [ "Macros", "globals_defs.html", null ]
+        [ "Macros", "globals_defs.html", "globals_defs" ]
       ] ]
-    ] ]
+    ] ],
+    [ "Examples", "examples.html", "examples" ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#a788a8a4c49c71a1ca8ecea63043c1c7b",
-"d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html",
-"d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a8903b59bf2af200967126ea4daae8592",
-"d7/dac/generateInit_8cc.html",
-"da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#a86200bb64b2dc0bae13735fa8a311cc5",
-"dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#ad07f41074e0cdfbe35e08d0ef5bd46bc",
-"dd/d5d/structSnippet_1_1Base_1_1EGP.html#af7b55cdff8fe940576cccd5b26d56a6e",
-"df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html#a09f23b5d2ea479285f07e519a18ce9fb"
+"d2/d05/classWeightUpdateModels_1_1Base.html#a8c4939c38b32ae603cd237f0e8d76b8a",
+"d3/d1a/clRNG_8c.html#a206fb062df8822c20a48900c38a2fb89",
+"d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html#a85388131ce7f7812530073be3d1ef62e",
+"d6/d4e/compilerfeatures_8h_source.html",
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aaa328c3db9cbd581ed47d7aa0a2c33b6",
+"da/dfd/classModelSpec.html#a1f9d972f4f93c65dd254a27992980600",
+"db/db9/classSpineMLSimulator_1_1NetworkClient.html",
+"dc/dfa/classSynapseGroup.html#a9fbbc52ee9d6e1d3671f22f023b7fde3",
+"de/db7/genn__model_8py.html#a0378993ab51a2871fc274bddf7b55bcd",
+"namespacemembers.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

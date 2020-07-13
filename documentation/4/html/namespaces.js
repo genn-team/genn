@@ -12,6 +12,7 @@ var namespaces =
     [ "PostsynapticModels", "db/dcb/namespacePostsynapticModels.html", null ],
     [ "pugi", "d3/d68/namespacepugi.html", null ],
     [ "pygenn", "da/d6d/namespacepygenn.html", "da/d6d/namespacepygenn" ],
+    [ "r123", "d0/d7d/namespacer123.html", null ],
     [ "Snippet", "df/daa/namespaceSnippet.html", null ],
     [ "SpineMLSimulator", "d5/dc1/namespaceSpineMLSimulator.html", "d5/dc1/namespaceSpineMLSimulator" ],
     [ "Utils", "d4/d3d/namespaceUtils.html", null ],

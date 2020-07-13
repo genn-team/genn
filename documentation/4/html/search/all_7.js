@@ -6,6 +6,7 @@ var searchData=
   ['enablebitmaskoptimisations',['enableBitmaskOptimisations',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8',1,'CodeGenerator::PreferencesBase']]],
   ['end',['end',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a06269039e7798cafe00f637e5df88410',1,'pygenn::genn_model::GeNNModel']]],
   ['ensureftype',['ensureFtype',['../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee',1,'CodeGenerator']]],
+  ['errorstring',['errorString',['../d3/d1a/clRNG_8c.html#adf709b84aa9a04e6ec7725ae355988d9',1,'errorString():&#160;private.c'],['../d7/d07/private_8c.html#adf709b84aa9a04e6ec7725ae355988d9',1,'errorString():&#160;private.c']]],
   ['event',['Event',['../d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html',1,'SpineMLSimulator::LogOutput::Event'],['../d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html#aae78d34fa79fe7005ccd5951f652ac5f',1,'SpineMLSimulator::LogOutput::Event::Event()']]],
   ['events',['Events',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a9dd377f02bbae3d25c227bd306841823a87f9f735a1d36793ceaecd4e47124b63',1,'SpineMLSimulator::NetworkClient']]],
   ['eventthresholdcode',['eventThresholdCode',['../d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html#a2ef99f9c032dc31943da3fb5fd218a1d',1,'NeuronGroup::SpikeEventThreshold']]],

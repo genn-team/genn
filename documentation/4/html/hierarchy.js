@@ -5,6 +5,22 @@ var hierarchy =
       [ "CodeGenerator::CUDA::Backend", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html", null ],
       [ "CodeGenerator::SingleThreadedCPU::Backend", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html", null ]
     ] ],
+    [ "SpineMLSimulator::Input::Base", "d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html", [
+      [ "SpineMLSimulator::Input::Analogue", "d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html", null ],
+      [ "SpineMLSimulator::Input::SpikeBase", "d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html", [
+        [ "SpineMLSimulator::Input::InterSpikeIntervalBase", "dd/dfb/classSpineMLSimulator_1_1Input_1_1InterSpikeIntervalBase.html", [
+          [ "SpineMLSimulator::Input::PoissonSpikeRate", "db/d06/classSpineMLSimulator_1_1Input_1_1PoissonSpikeRate.html", null ],
+          [ "SpineMLSimulator::Input::RegularSpikeRate", "d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html", null ]
+        ] ],
+        [ "SpineMLSimulator::Input::SpikeTime", "da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html", null ]
+      ] ]
+    ] ],
+    [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::Base", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html", [
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", null ],
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html", null ],
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", null ],
+      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html", null ]
+    ] ],
     [ "SpineMLSimulator::InputValue::Base", "d1/d5e/classSpineMLSimulator_1_1InputValue_1_1Base.html", [
       [ "SpineMLSimulator::InputValue::ConstantArray", "dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html", null ],
       [ "SpineMLSimulator::InputValue::External", "df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html", [
@@ -88,23 +104,15 @@ var hierarchy =
         ] ]
       ] ]
     ] ],
-    [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::Base", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html", [
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html", null ]
-    ] ],
-    [ "SpineMLSimulator::Input::Base", "d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html", [
-      [ "SpineMLSimulator::Input::Analogue", "d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html", null ],
-      [ "SpineMLSimulator::Input::SpikeBase", "d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html", [
-        [ "SpineMLSimulator::Input::InterSpikeIntervalBase", "dd/dfb/classSpineMLSimulator_1_1Input_1_1InterSpikeIntervalBase.html", [
-          [ "SpineMLSimulator::Input::PoissonSpikeRate", "db/d06/classSpineMLSimulator_1_1Input_1_1PoissonSpikeRate.html", null ],
-          [ "SpineMLSimulator::Input::RegularSpikeRate", "d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html", null ]
-        ] ],
-        [ "SpineMLSimulator::Input::SpikeTime", "da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html", null ]
-      ] ]
-    ] ],
     [ "CodeGenerator::CodeStream::CB", "d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html", null ],
+    [ "clrngLfsr113Stream_", "d3/db7/structclrngLfsr113Stream__.html", null ],
+    [ "clrngLfsr113StreamCreator_", "d3/d52/structclrngLfsr113StreamCreator__.html", null ],
+    [ "clrngLfsr113StreamState", "de/d8a/structclrngLfsr113StreamState.html", null ],
+    [ "clrngPhilox432Counter_", "d8/df3/structclrngPhilox432Counter__.html", null ],
+    [ "clrngPhilox432SB_", "d4/d95/structclrngPhilox432SB__.html", null ],
+    [ "clrngPhilox432Stream_", "db/dca/structclrngPhilox432Stream__.html", null ],
+    [ "clrngPhilox432StreamCreator_", "d0/d7f/structclrngPhilox432StreamCreator__.html", null ],
+    [ "clrngPhilox432StreamState", "d6/d5a/structclrngPhilox432StreamState.html", null ],
     [ "CurrentSource", "d1/d48/classCurrentSource.html", [
       [ "CurrentSourceInternal", "d6/de6/classCurrentSourceInternal.html", null ]
     ] ],

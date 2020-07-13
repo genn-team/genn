@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.0</span>
+   &#160;<span id="projectnumber">4.3.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -207,7 +207,7 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Rulkov Map neuron. </p>
 <p>The <a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html" title="Rulkov Map neuron. ">RulkovMap</a> type is a map based neuron model based on <a class="el" href="../../d0/de3/citelist.html#CITEREF_Rulkov2002">[8]</a> but in the 1-dimensional map form used in <a class="el" href="../../d0/de3/citelist.html#CITEREF_nowotny2005self">[5]</a> : </p><p class="formulaDsp">
-<img class="formulaDsp" alt="\begin{eqnarray*} V(t+\Delta t) &amp;=&amp; \left\{ \begin{array}{ll} V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) &amp; V(t) \leq 0 \\ V_{\rm spike} \big(\alpha+y\big) &amp; V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \&amp; \; V(t-\Delta t) \leq 0 \\ -V_{\rm spike} &amp; {\rm otherwise} \end{array} \right. \end{eqnarray*}" src="../../form_6.png"/>
+<img class="formulaDsp" alt="\begin{eqnarray*} V(t+\Delta t) &amp;=&amp; \left\{ \begin{array}{ll} V_{\rm spike} \Big(\frac{\alpha V_{\rm spike}}{V_{\rm spike}-V(t) \beta I_{\rm syn}} + y \Big) &amp; V(t) \leq 0 \\ V_{\rm spike} \big(\alpha+y\big) &amp; V(t) \leq V_{\rm spike} \big(\alpha + y\big) \; \&amp; \; V(t-\Delta t) \leq 0 \\ -V_{\rm spike} &amp; {\rm otherwise} \end{array} \right. \end{eqnarray*}" src="../../form_15.png"/>
 </p>
  <dl class="section note"><dt>Note</dt><dd>The <code><a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html" title="Rulkov Map neuron. ">RulkovMap</a></code> type only works as intended for the single time step size of <code>DT</code>= 0.5.</dd></dl>
 <p>The <code><a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html" title="Rulkov Map neuron. ">RulkovMap</a></code> type has 2 variables:</p><ul>
@@ -216,9 +216,9 @@ Additional Inherited Members</h2></td></tr>
 </ul>
 <p>and it has 4 parameters:</p><ul>
 <li><code>Vspike</code> - determines the amplitude of spikes, typically -60mV</li>
-<li><code>alpha</code> - determines the shape of the iteration function, typically <img class="formulaInl" alt="$\alpha $" src="../../form_7.png"/>= 3</li>
+<li><code>alpha</code> - determines the shape of the iteration function, typically <img class="formulaInl" alt="$\alpha $" src="../../form_16.png"/>= 3</li>
 <li><code>y</code> - "shift / excitation" parameter, also determines the iteration function,originally, y= -2.468</li>
-<li><code>beta</code> - roughly speaking equivalent to the input resistance, i.e. it regulates the scale of the input into the neuron, typically <img class="formulaInl" alt="$\beta$" src="../../form_8.png"/>= 2.64 <img class="formulaInl" alt="${\rm M}\Omega$" src="../../form_9.png"/>.</li>
+<li><code>beta</code> - roughly speaking equivalent to the input resistance, i.e. it regulates the scale of the input into the neuron, typically <img class="formulaInl" alt="$\beta$" src="../../form_17.png"/>= 2.64 <img class="formulaInl" alt="${\rm M}\Omega$" src="../../form_18.png"/>.</li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>The initial values array for the <code><a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html" title="Rulkov Map neuron. ">RulkovMap</a></code> type needs two entries for <code>V</code> and <code>Vpre</code> and the parameter array needs four entries for <code>Vspike</code>, <code>alpha</code>, <code>y</code> and <code>beta</code>, <em>in that order</em>. </dd></dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
@@ -459,7 +459,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dac/namespaceNeuronModels.html">NeuronModels</a></li><li class="navelem"><a class="el" href="../../db/d23/classNeuronModels_1_1RulkovMap.html">RulkovMap</a></li>
-    <li class="footer">Generated on Fri May 29 2020 17:24:26 for GeNN by
+    <li class="footer">Generated on Mon Jul 13 2020 12:01:54 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

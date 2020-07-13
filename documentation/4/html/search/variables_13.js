@@ -1,5 +1,7 @@
 var searchData=
 [
-  ['w_5fupdate',['w_update',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7cb6fa144610d947d3226a7baa610043',1,'pygenn::genn_groups::SynapseGroup']]],
-  ['weight_5fsharing_5fmaster',['weight_sharing_master',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a91acb21bdd15c4c44ee10f6afa614cf6',1,'pygenn::genn_groups::SynapseGroup']]]
+  ['use_5fbackend',['use_backend',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab652ad87ca9dcdef1991307bf907be53',1,'pygenn::genn_model::GeNNModel']]],
+  ['usercxxflagsgnu',['userCxxFlagsGNU',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a86fb454bb8ca003d22eedff8c8c7f4e2',1,'CodeGenerator::PreferencesBase']]],
+  ['usernvccflags',['userNvccFlags',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa370bc1e7c48d0928ace7bf4baaa7e73',1,'CodeGenerator::CUDA::Preferences']]],
+  ['usernvccflagsgnu',['userNvccFlagsGNU',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#acad9c31842a33378f83f524093f6011c',1,'CodeGenerator::PreferencesBase']]]
 ];

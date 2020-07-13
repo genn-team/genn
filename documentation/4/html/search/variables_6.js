@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['g',['g',['../de/d8a/structclrngLfsr113StreamState.html#a08a458c6d193df9117606e79c94c7191',1,'clrngLfsr113StreamState']]],
   ['generateemptystatepushpull',['generateEmptyStatePushPull',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a547e3468c515d1400aa2dde51450dd07',1,'CodeGenerator::PreferencesBase']]],
   ['generateextraglobalparampull',['generateExtraGlobalParamPull',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a84bb4b46d6fc46b1df26b0042318d577',1,'CodeGenerator::PreferencesBase']]],
   ['generatelineinfo',['generateLineInfo',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522',1,'CodeGenerator::CUDA::Preferences']]],

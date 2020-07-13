@@ -4,6 +4,7 @@ var files =
     [ "analogueRecorder.h", "de/d8b/analogueRecorder_8h.html", [
       [ "AnalogueRecorder", "dc/d01/classAnalogueRecorder.html", "dc/d01/classAnalogueRecorder" ]
     ] ],
+    [ "array.h", "db/d63/array_8h.html", "db/d63/array_8h" ],
     [ "cuda/backend.cc", "d2/d57/cuda_2backend_8cc.html", null ],
     [ "single_threaded_cpu/backend.cc", "df/de1/single__threaded__cpu_2backend_8cc.html", null ],
     [ "cuda/backend.h", "d4/d0e/cuda_2backend_8h.html", "d4/d0e/cuda_2backend_8h" ],
@@ -20,10 +21,14 @@ var files =
     [ "backendExport.h", "d5/d83/backendExport_8h.html", "d5/d83/backendExport_8h" ],
     [ "binomial.cc", "d6/d24/binomial_8cc.html", "d6/d24/binomial_8cc" ],
     [ "binomial.h", "d4/d59/binomial_8h.html", "d4/d59/binomial_8h" ],
+    [ "clangfeatures.h", "d0/de5/clangfeatures_8h.html", "d0/de5/clangfeatures_8h" ],
+    [ "clRNG.c", "d3/d1a/clRNG_8c.html", "d3/d1a/clRNG_8c" ],
+    [ "clRNG.h", "d0/dc6/clRNG_8h.html", "d0/dc6/clRNG_8h" ],
     [ "codeGenUtils.cc", "d4/dba/codeGenUtils_8cc.html", "d4/dba/codeGenUtils_8cc" ],
     [ "codeGenUtils.h", "de/d99/codeGenUtils_8h.html", "de/d99/codeGenUtils_8h" ],
     [ "codeStream.cc", "db/dfd/codeStream_8cc.html", "db/dfd/codeStream_8cc" ],
     [ "codeStream.h", "d0/dbb/codeStream_8h.html", "d0/dbb/codeStream_8h" ],
+    [ "compilerfeatures.h", "d6/d4e/compilerfeatures_8h.html", null ],
     [ "connectors.cc", "d7/de6/connectors_8cc.html", null ],
     [ "connectors.h", "db/da3/connectors_8h.html", "db/da3/connectors_8h" ],
     [ "currentSource.cc", "d7/d8c/currentSource_8cc.html", null ],
@@ -35,6 +40,7 @@ var files =
     ] ],
     [ "currentSourceModels.cc", "d4/d8a/currentSourceModels_8cc.html", "d4/d8a/currentSourceModels_8cc" ],
     [ "currentSourceModels.h", "da/d49/currentSourceModels_8h.html", "da/d49/currentSourceModels_8h" ],
+    [ "gccfeatures.h", "da/dff/gccfeatures_8h.html", "da/dff/gccfeatures_8h" ],
     [ "generateAll.cc", "df/d57/generateAll_8cc.html", null ],
     [ "generateAll.h", "da/da4/generateAll_8h.html", "da/da4/generateAll_8h" ],
     [ "generateInit.cc", "d7/dac/generateInit_8cc.html", null ],
@@ -92,6 +98,10 @@ var files =
     ] ],
     [ "inputValue.cc", "d5/d56/inputValue_8cc.html", null ],
     [ "inputValue.h", "d7/d6f/inputValue_8h.html", "d7/d6f/inputValue_8h" ],
+    [ "lfsr113.c", "df/dcc/lfsr113_8c.html", "df/dcc/lfsr113_8c" ],
+    [ "device/lfsr113.c.h", "dd/d32/device_2lfsr113_8c_8h.html", "dd/d32/device_2lfsr113_8c_8h" ],
+    [ "lfsr113.c.h", "d0/d7f/lfsr113_8c_8h.html", "d0/d7f/lfsr113_8c_8h" ],
+    [ "lfsr113.h", "d7/d63/lfsr113_8h.html", "d7/d63/lfsr113_8h" ],
     [ "logging.cc", "d8/d11/logging_8cc.html", null ],
     [ "logging.h", "d5/d77/logging_8h.html", "d5/d77/logging_8h" ],
     [ "logOutput.cc", "d1/d06/logOutput_8cc.html", null ],
@@ -120,6 +130,10 @@ var files =
     [ "modelSpecMerged.h", "df/dac/modelSpecMerged_8h.html", [
       [ "ModelSpecMerged", "de/d52/classCodeGenerator_1_1ModelSpecMerged.html", "de/d52/classCodeGenerator_1_1ModelSpecMerged" ]
     ] ],
+    [ "device/modular.c.h", "d0/d1a/device_2modular_8c_8h.html", "d0/d1a/device_2modular_8c_8h" ],
+    [ "modular.c.h", "d8/dcd/modular_8c_8h.html", "d8/dcd/modular_8c_8h" ],
+    [ "modularHost.c.h", "df/d40/modularHost_8c_8h.html", "df/d40/modularHost_8c_8h" ],
+    [ "msvcfeatures.h", "d3/d5e/msvcfeatures_8h.html", "d3/d5e/msvcfeatures_8h" ],
     [ "networkClient.cc", "d5/d0a/networkClient_8cc.html", null ],
     [ "networkClient.h", "da/d24/networkClient_8h.html", [
       [ "NetworkClient", "db/db9/classSpineMLSimulator_1_1NetworkClient.html", "db/db9/classSpineMLSimulator_1_1NetworkClient" ]
@@ -135,10 +149,17 @@ var files =
     [ "neuronModels.cc", "dc/dbc/neuronModels_8cc.html", "dc/dbc/neuronModels_8cc" ],
     [ "neuronModels.h", "d3/dc0/neuronModels_8h.html", "d3/dc0/neuronModels_8h" ],
     [ "normalDistribution.h", "df/d38/normalDistribution_8h.html", "df/d38/normalDistribution_8h" ],
+    [ "open64features.h", "d7/d01/open64features_8h.html", "d7/d01/open64features_8h" ],
+    [ "openclfeatures.h", "d2/dfd/openclfeatures_8h.html", "d2/dfd/openclfeatures_8h" ],
     [ "cuda/optimiser.cc", "d7/dff/cuda_2optimiser_8cc.html", "d7/dff/cuda_2optimiser_8cc" ],
     [ "single_threaded_cpu/optimiser.cc", "dd/da2/single__threaded__cpu_2optimiser_8cc.html", "dd/da2/single__threaded__cpu_2optimiser_8cc" ],
     [ "cuda/optimiser.h", "d5/d50/cuda_2optimiser_8h.html", "d5/d50/cuda_2optimiser_8h" ],
     [ "single_threaded_cpu/optimiser.h", "d5/d68/single__threaded__cpu_2optimiser_8h.html", "d5/d68/single__threaded__cpu_2optimiser_8h" ],
+    [ "philox.h", "d1/d4c/philox_8h.html", "d1/d4c/philox_8h" ],
+    [ "philox432.c", "d5/d38/philox432_8c.html", "d5/d38/philox432_8c" ],
+    [ "device/philox432.c.h", "d3/dbc/device_2philox432_8c_8h.html", "d3/dbc/device_2philox432_8c_8h" ],
+    [ "philox432.c.h", "d8/d57/philox432_8c_8h.html", "d8/d57/philox432_8c_8h" ],
+    [ "philox432.h", "df/d0d/philox432_8h.html", "df/d0d/philox432_8h" ],
     [ "postsynapticModels.cc", "d4/daf/postsynapticModels_8cc.html", "d4/daf/postsynapticModels_8cc" ],
     [ "postsynapticModels.h", "d8/d47/postsynapticModels_8h.html", "d8/d47/postsynapticModels_8h" ],
     [ "presynapticUpdateStrategy.cc", "de/d87/presynapticUpdateStrategy_8cc.html", null ],
@@ -149,6 +170,8 @@ var files =
       [ "PostSpanBitmask", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask" ],
       [ "PreSpanProcedural", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural" ]
     ] ],
+    [ "private.c", "d7/d07/private_8c.html", "d7/d07/private_8c" ],
+    [ "private.h", "d3/d2e/private_8h.html", "d3/d2e/private_8h" ],
     [ "sharedLibraryModel.h", "d0/d42/sharedLibraryModel_8h.html", [
       [ "SharedLibraryModel", "d9/d7e/classSharedLibraryModel.html", "d9/d7e/classSharedLibraryModel" ]
     ] ],
@@ -162,6 +185,7 @@ var files =
       [ "SpikeWriterTextCached", "d9/d5d/classSpikeWriterTextCached.html", "d9/d5d/classSpikeWriterTextCached" ],
       [ "SpikeRecorder", "dd/d9b/classSpikeRecorder.html", "dd/d9b/classSpikeRecorder" ]
     ] ],
+    [ "sse.h", "da/d49/sse_8h.html", "da/d49/sse_8h" ],
     [ "stateVar.h", "d4/dc9/stateVar_8h.html", [
       [ "StateVar", "dc/db2/classSpineMLSimulator_1_1StateVar.html", "dc/db2/classSpineMLSimulator_1_1StateVar" ]
     ] ],

@@ -1,6 +1,21 @@
 var searchData=
 [
-  ['declare_5fmodel',['DECLARE_MODEL',['../d4/d13/models_8h.html#ae0c817e85c196f39cf62d608883cda13',1,'models.h']]],
-  ['declare_5fsnippet',['DECLARE_SNIPPET',['../de/d6c/snippet_8h.html#ac5727a6720d28f034afadde948ed6e9a',1,'snippet.h']]],
-  ['declare_5fweight_5fupdate_5fmodel',['DECLARE_WEIGHT_UPDATE_MODEL',['../dc/dab/weightUpdateModels_8h.html#a611a9113f742a9d07d3def4298a0ea68',1,'weightUpdateModels.h']]]
+  ['case_5ferr',['CASE_ERR',['../d3/d1a/clRNG_8c.html#a206fb062df8822c20a48900c38a2fb89',1,'CASE_ERR():&#160;clRNG.c'],['../d7/d07/private_8c.html#a206fb062df8822c20a48900c38a2fb89',1,'CASE_ERR():&#160;private.c']]],
+  ['case_5ferr_5f',['CASE_ERR_',['../d3/d1a/clRNG_8c.html#a563a3b7476f6be20e10b006309d2efbb',1,'CASE_ERR_():&#160;clRNG.c'],['../d7/d07/private_8c.html#a563a3b7476f6be20e10b006309d2efbb',1,'CASE_ERR_():&#160;private.c']]],
+  ['check_5fcu_5ferrors',['CHECK_CU_ERRORS',['../d5/d60/utils_8h.html#ac1cf82f980a76bb9ef43b7027cb2348b',1,'utils.h']]],
+  ['check_5fcuda_5ferrors',['CHECK_CUDA_ERRORS',['../d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47',1,'utils.h']]],
+  ['clrng_5fh',['CLRNG_H',['../d0/dc6/clRNG_8h.html#a98f2a754dfc776f3974f0b48d722474d',1,'clRNG.h']]],
+  ['clrngapi',['CLRNGAPI',['../d0/dc6/clRNG_8h.html#a576508b3cc5d435f662f7d9bf3d935a9',1,'clRNG.h']]],
+  ['clrnglfsr113devicerandomu01array',['clrngLfsr113DeviceRandomU01Array',['../d7/d63/lfsr113_8h.html#a7694a1e21efcbaf1849cfd060a37f6f7',1,'lfsr113.h']]],
+  ['clrnglfsr113randominteger',['clrngLfsr113RandomInteger',['../d7/d63/lfsr113_8h.html#ab3e8ba2b48f6de870fbfb238dc308b8c',1,'lfsr113.h']]],
+  ['clrnglfsr113randomintegerarray',['clrngLfsr113RandomIntegerArray',['../d7/d63/lfsr113_8h.html#a70e5130c27ba71bfb74217f451fc37a3',1,'lfsr113.h']]],
+  ['clrnglfsr113randomu01',['clrngLfsr113RandomU01',['../d7/d63/lfsr113_8h.html#a97c4374b58e0fbfdee0af1e3fad93945',1,'lfsr113.h']]],
+  ['clrnglfsr113randomu01array',['clrngLfsr113RandomU01Array',['../d7/d63/lfsr113_8h.html#ae18f26f17850973d4db8d817d582b66a',1,'lfsr113.h']]],
+  ['clrngphilox432devicerandomu01array',['clrngPhilox432DeviceRandomU01Array',['../df/d0d/philox432_8h.html#a025049fbf97020d6dcccbdb3ffb25430',1,'philox432.h']]],
+  ['clrngphilox432randominteger',['clrngPhilox432RandomInteger',['../df/d0d/philox432_8h.html#a8f53706514b501acd8f1b88208a974da',1,'philox432.h']]],
+  ['clrngphilox432randomintegerarray',['clrngPhilox432RandomIntegerArray',['../df/d0d/philox432_8h.html#af176f746fa3b32d5f032fe00e24a5069',1,'philox432.h']]],
+  ['clrngphilox432randomu01',['clrngPhilox432RandomU01',['../df/d0d/philox432_8h.html#a8aac17031e80752760a52006b403c22d',1,'philox432.h']]],
+  ['clrngphilox432randomu01array',['clrngPhilox432RandomU01Array',['../df/d0d/philox432_8h.html#ad60b64e3ec290cb47ea123a5c09bde9b',1,'philox432.h']]],
+  ['cxxmethods',['CXXMETHODS',['../db/d63/array_8h.html#abba9a0ad7fa9666a8bccedbf1d67dbae',1,'array.h']]],
+  ['cxxoverloads',['CXXOVERLOADS',['../db/d63/array_8h.html#a9ed49992d8eeeeab6cf348d8b50dce18',1,'array.h']]]
 ];

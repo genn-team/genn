@@ -1,8 +1,7 @@
 var searchData=
 [
-  ['name',['name',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a2c166d9ace64b65eca3d4d0d91e0bf0d',1,'pygenn.genn_groups.Group.name()'],['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a60a8b44bbabea501cf6bd4a70e8999fb',1,'pygenn.model_preprocessor.Variable.name()'],['../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#ae430888ed2c89d03a737951c8ed51486',1,'pygenn.model_preprocessor.ExtraGlobalVariable.name()'],['../d5/d42/structModels_1_1Base_1_1Var.html#a333472c1ad027594ee870b1994f884b1',1,'Models::Base::Var::name()'],['../dd/d5d/structSnippet_1_1Base_1_1EGP.html#a0a07b4231c9c9da4a77bb4fe42563e10',1,'Snippet::Base::EGP::name()'],['../d7/dda/structSnippet_1_1Base_1_1ParamVal.html#a0954a683164fb21a724a051513a91a44',1,'Snippet::Base::ParamVal::name()'],['../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html#a896416e06e3eded953331be4780abcc3',1,'Snippet::Base::DerivedParam::name()']]],
-  ['needs_5fallocation',['needs_allocation',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#ae07f5351586f4c3475c6d58a940ad99e',1,'pygenn::model_preprocessor::Variable']]],
-  ['neuron',['neuron',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#ad69938b27e2ae30629c960edd5e1bafa',1,'pygenn::genn_groups::NeuronGroup']]],
-  ['neuron_5fpopulations',['neuron_populations',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a64509d979db91e40ebb1c92e0e246e94',1,'pygenn::genn_model::GeNNModel']]],
-  ['numarguments',['numArguments',['../d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html#a56cd00bbd6872717c8ef33147b253874',1,'CodeGenerator::Substitutions::FunctionTemplate']]]
+  ['l',['L',['../d8/df3/structclrngPhilox432Counter__.html#a5fc10da8b0a375e6d38accfbe5f2e43a',1,'clrngPhilox432Counter_']]],
+  ['level',['Level',['../d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB.html#adc50a112eb3588a5526a80810c83a14b',1,'CodeGenerator::CodeStream::OB::Level()'],['../d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html#a34c7eaa2f7502df3ddc7a138ee2e4d1b',1,'CodeGenerator::CodeStream::CB::Level()']]],
+  ['loglevel',['logLevel',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a901bd4125e2fff733bee452613175063',1,'CodeGenerator::PreferencesBase']]],
+  ['lsb',['lsb',['../d4/d95/structclrngPhilox432SB__.html#a686a4e4cea8b70d09e1130c9db644a6d',1,'clrngPhilox432SB_']]]
 ];

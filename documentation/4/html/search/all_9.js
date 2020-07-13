@@ -1,7 +1,9 @@
 var searchData=
 [
+  ['g',['g',['../de/d8a/structclrngLfsr113StreamState.html#a08a458c6d193df9117606e79c94c7191',1,'clrngLfsr113StreamState']]],
   ['gamma',['Gamma',['../d0/d54/classInitVarSnippet_1_1Gamma.html',1,'InitVarSnippet']]],
   ['gaussiannoise',['GaussianNoise',['../d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html',1,'CurrentSourceModels']]],
+  ['gccfeatures_2eh',['gccfeatures.h',['../da/dff/gccfeatures_8h.html',1,'']]],
   ['gen',['gen',['../d1/db8/classCodeGenerator_1_1SupportCodeMerged.html#ab91a22ac2bfa02dd652fe32bbb29c7cc',1,'CodeGenerator::SupportCodeMerged']]],
   ['genallocatemempreamble',['genAllocateMemPreamble',['../d3/d15/classCodeGenerator_1_1BackendBase.html#ad19d1407b465ff369eabba8b3be32f45',1,'CodeGenerator::BackendBase::genAllocateMemPreamble()'],['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a136217d93d2f194135f9cc874ff18f78',1,'CodeGenerator::CUDA::Backend::genAllocateMemPreamble()'],['../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ad3ad2bd19cf29ebce50143446add8f13',1,'CodeGenerator::SingleThreadedCPU::Backend::genAllocateMemPreamble()']]],
   ['genarray',['genArray',['../d3/d15/classCodeGenerator_1_1BackendBase.html#ae617cf7a7410262a4a0f6b996fda5898',1,'CodeGenerator::BackendBase']]],
@@ -305,6 +307,7 @@ var searchData=
   ['getzerocopybytes',['getZeroCopyBytes',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#abc2602688ece395a2798a1f72eb9b810',1,'CodeGenerator::MemAlloc']]],
   ['getzerocopymbytes',['getZeroCopyMBytes',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a2faa6b6734e92998dd62a7465de56c70',1,'CodeGenerator::MemAlloc']]],
   ['global',['GLOBAL',['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334',1,'synapseMatrixType.h']]],
+  ['gnu_5fcxx11',['GNU_CXX11',['../da/dff/gccfeatures_8h.html#a8fb0b51a6ba94cfded32be08db59eef5',1,'gccfeatures.h']]],
   ['group',['Group',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html',1,'pygenn.genn_groups.Group'],['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a18fb691ce09b8b8e3e99fd50682894ec',1,'pygenn.model_preprocessor.Variable.group()']]],
   ['grouphandler',['GroupHandler',['../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2',1,'CodeGenerator::BackendBase']]],
   ['groupindex',['groupIndex',['../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#a1f113d87e4cbc15ae958bb101b255437',1,'CodeGenerator::MergedStructData::MergedEGP']]],
