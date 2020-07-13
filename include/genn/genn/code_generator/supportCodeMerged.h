@@ -2,7 +2,6 @@
 
 // Standard C++ includes
 #include <unordered_map>
-#include <regex>
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"

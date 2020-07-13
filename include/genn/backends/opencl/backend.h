@@ -8,7 +8,6 @@
 #include <numeric>
 #include <string>
 #include <unordered_set>
-#include <regex>
 
 // OpenCL includes
 #include "../../../../share/genn/backends/opencl/cl2.hpp"
