@@ -669,7 +669,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         genSpikeMacros(definitionsVar, n.second, true);
 
         // True spike variables
-        const size_t numNeuronDelaySlots = n.second.getNumNeurons() * n.second.getNumDelaySlots();
+        const size_t numNeuronDelaySlots = (size_t)n.second.getNumNeurons() * (size_t)n.second.getNumDelaySlots();
         const size_t numSpikeCounts = n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1;
         const size_t numSpikes = n.second.isTrueSpikeRequired() ? numNeuronDelaySlots : n.second.getNumNeurons();
         mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -700,7 +700,14 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         // Current true spike getter functions
         genSpikeGetters(definitionsFunc, runnerGetterFunc, n.second, true);
 
-        // If neuron ngroup eeds to emit spike-like events
+        // If spike recording is enabled, define and declare variables and add free
+        if(n.second.isSpikeRecordingEnabled()) {
+            backend.genVariableDefinition(definitionsVar, definitionsInternalVar, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE);
+            backend.genVariableImplementation(runnerVarDecl, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE);
+            backend.genVariableFree(runnerVarFree, "recordSpk" + n.first, VarLocation::HOST_DEVICE);
+        }
+
+        // If neuron group needs to emit spike-like events
         if (n.second.isSpikeEventRequired()) {
             // Write convenience macros to access spike-like events
             genSpikeMacros(definitionsVar, n.second, false);
@@ -735,6 +742,13 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
             // Current true spike getter functions
             genSpikeGetters(definitionsFunc, runnerGetterFunc, n.second, false);
+
+            // If spike recording is enabled, define and declare variables and add free
+            if(n.second.isSpikeEventRecordingEnabled()) {
+                backend.genVariableDefinition(definitionsVar, definitionsInternalVar, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
+                backend.genVariableImplementation(runnerVarDecl, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
+                backend.genVariableFree(runnerVarFree, "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE);
+            }
         }
 
         // If neuron group has axonal delays
@@ -1214,6 +1228,36 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         runner << std::endl;
     }
 
+    // If model uses recording
+    if(model.isRecordingInUse()) {
+        runner << "void allocateRecordingBuffer(unsigned int timesteps)";
+        {
+            CodeStream::Scope b(runner);
+
+            // Loop through neuron groups
+            for(const auto &n : model.getNeuronGroups()) {
+                // Calculate number of words required for spike/spike event buffers
+                if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
+                    runner << "const unsigned int numWords = " << ceilDivide(n.second.getNumNeurons(), 32) << " * timesteps;" << std::endl;
+                }
+
+                // Allocate spike array if required
+                // **YUCK** maybe this should be renamed genDynamicAllocation
+                if(n.second.isSpikeRecordingEnabled()) {
+                    CodeStream::Scope b(runner);
+                    backend.genExtraGlobalParamAllocation(runner, "uint32*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                }
+
+                // Allocate spike event array if required
+                // **YUCK** maybe this should be renamed genDynamicAllocation
+                if(n.second.isSpikeEventRecordingEnabled()) {
+                    CodeStream::Scope b(runner);
+                    backend.genExtraGlobalParamAllocation(runner, "uint32*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                }
+            }
+        }
+    }
+
     // ---------------------------------------------------------------------
     // Function for setting the device and the host's global variables.
     // Also estimates memory usage on device ...
@@ -1310,6 +1354,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
         definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
         definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
+    }
+    if(model.isRecordingInUse()) {
+        definitions << "EXPORT_FUNC void allocateRecordingBuffer(unsigned int timesteps);" << std::endl;
     }
     definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
