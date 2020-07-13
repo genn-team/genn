@@ -59,7 +59,6 @@ TEST(EnsureMathFunctionFtype, rintf) {
     ASSERT_EQ(substitutedCode, "$(value) = (uint8_t)rint(normal / DT);");
 }
 
-
 // Check that namespace substitution in support code works
 TEST(EnsureMathFunctionFtype, supportCodeFunc) {
     const std::string supportCode = "SUPPORT_CODE_FUNC scalar supportCodeFunc(scalar x){ return x; }";

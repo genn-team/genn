@@ -58,7 +58,8 @@ public:
                 }
             }
             else {
-                std::regex r("\\w+\\(.*\\).*\\{.*\\}"); // function definition
+                // Regex for function definition
+                std::regex r("\\w+(?=\\(.*\\)\\s*\\{)");
                 os << ensureFtype(std::regex_replace(s.first, r, s.second + "_$&"), ftype) << std::endl;
             }
             os << std::endl;

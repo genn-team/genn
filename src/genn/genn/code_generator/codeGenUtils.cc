@@ -492,18 +492,20 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
  */
  //--------------------------------------------------------------------------
 std::string substituteNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
-    std::regex r("\\w+(?=\\(.*\\))"); // function call
-    std::smatch matched;
-    std::regex_search(code.begin(), code.end(), matched, r);
+    // Regex for function call
+    std::regex funcCallRegex("\\w+(?=\\(.*\\))");
+    std::smatch matchedInCode;
+    std::regex_search(code.begin(), code.end(), matchedInCode, funcCallRegex);
     std::string newCode = code;
 
-    std::regex supportCodeRegex("\\w+(?=\\(.*\\)\\s*\\{)"); // function definition
+    // Regex for function definition
+    std::regex supportCodeRegex("\\w+(?=\\(.*\\)\\s*\\{)");
     std::smatch matchedInSupportCode;
     std::regex_search(supportCode.begin(), supportCode.end(), matchedInSupportCode, supportCodeRegex);
 
     // Iterating each function in code
-    for (const auto& funcInCode : matched) {
-        // Iterating over every function in support code to check if that function is indeed defined in support code (not called)
+    for (const auto& funcInCode : matchedInCode) {
+        // Iterating over every function in support code to check if that function is indeed defined in support code (and not called - like fmod())
         for (const auto& funcInSupportCode : matchedInSupportCode) {
             if (funcInSupportCode.str() == funcInCode.str()) {
                 newCode = std::regex_replace(newCode, std::regex(funcInCode.str()), namespaceName + "_$&");
