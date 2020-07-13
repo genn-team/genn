@@ -111,9 +111,6 @@ public:
     //! Enables and disable spike event recording for this population
     void setSpikeEventRecordingEnabled(bool enabled) { m_SpikeEventRecordingEnabled = enabled; }
 
-    //! Enable and disable variable recording for this population
-    void setVarRecordingEnabled(const std::string &varName, bool enabled);
-
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -165,12 +162,6 @@ public:
     //! Is spike event recording enabled for this population?
     bool isSpikeEventRecordingEnabled() const { return m_SpikeEventRecordingEnabled; }
 
-    //! Is variable recorded on this population?
-    bool isVarRecordingEnabled(const std::string &varName) const;
-
-    //! Is variable recorded on this population?
-    bool isVarRecordingEnabled(size_t index) const { return m_VarRecordingEnabled.at(index); }
-
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
@@ -188,7 +179,7 @@ protected:
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
         m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false), m_VarRecordingEnabled(varInitialisers.size(), false)
+        m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
     {
     }
 
@@ -305,7 +296,4 @@ private:
 
     //! Is spike event recording enabled?
     bool m_SpikeEventRecordingEnabled;
-
-    //! Which variables should be recorded?
-    std::vector<bool> m_VarRecordingEnabled;
 };

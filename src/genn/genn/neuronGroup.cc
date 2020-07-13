@@ -63,11 +63,6 @@ void NeuronGroup::setExtraGlobalParamLocation(const std::string &paramName, VarL
     m_ExtraGlobalParamLocation.at(extraGlobalParamIndex) = loc;
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::setVarRecordingEnabled(const std::string &varName, bool enabled)
-{
-    m_VarRecordingEnabled.at(getNeuronModel()->getVarIndex(varName)) = enabled;
-}
-//----------------------------------------------------------------------------
 VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation.at(getNeuronModel()->getVarIndex(varName));
@@ -76,11 +71,6 @@ VarLocation NeuronGroup::getVarLocation(const std::string &varName) const
 VarLocation NeuronGroup::getExtraGlobalParamLocation(const std::string &paramName) const
 {
     return m_ExtraGlobalParamLocation.at(getNeuronModel()->getExtraGlobalParamIndex(paramName));
-}
-//----------------------------------------------------------------------------
-bool NeuronGroup::isVarRecordingEnabled(const std::string &varName) const
-{
-    return m_VarRecordingEnabled.at(getNeuronModel()->getVarIndex(varName));
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeTimeRequired() const
@@ -217,10 +207,9 @@ bool NeuronGroup::isRecordingEnabled() const
     if(m_SpikeEventRecordingEnabled) {
         return true;
     }
-
-    // Return true if any variables should be recorded
-    return std::any_of(m_VarRecordingEnabled.cbegin(), m_VarRecordingEnabled.cend(),
-                       [](bool v) { return v; });
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
@@ -384,8 +373,7 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
        && (isSpikeRecordingEnabled() == other.isSpikeRecordingEnabled())
        && (isSpikeEventRecordingEnabled() == other.isSpikeEventRecordingEnabled())
        && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired)
-       && (m_VarRecordingEnabled == other.m_VarRecordingEnabled))
+       && (m_VarQueueRequired == other.m_VarQueueRequired))
     {
 
         // Check if, by reshuffling, all current sources are compatible
