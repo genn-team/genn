@@ -1865,6 +1865,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
 {
     if (loc & VarLocation::HOST) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+        definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
@@ -1875,6 +1876,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
+        os << "cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
