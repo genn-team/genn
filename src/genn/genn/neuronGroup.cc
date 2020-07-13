@@ -381,8 +381,11 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
        && (isSpikeTimeRequired() == other.isSpikeTimeRequired())
        && (getSpikeEventCondition() == other.getSpikeEventCondition())
        && (isSpikeEventRequired() == other.isSpikeEventRequired())
+       && (isSpikeRecordingEnabled() == other.isSpikeRecordingEnabled())
+       && (isSpikeEventRecordingEnabled() == other.isSpikeEventRecordingEnabled())
        && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired))
+       && (m_VarQueueRequired == other.m_VarQueueRequired)
+       && (m_VarRecordingEnabled == other.m_VarRecordingEnabled))
     {
 
         // Check if, by reshuffling, all current sources are compatible
