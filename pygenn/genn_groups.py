@@ -772,7 +772,7 @@ class SynapseGroup(Group):
     def load(self):
         # If synapse population has non-dense connectivity
         # which requires initialising manually
-        if not self.is_dense and not self.has_procedural_connectivity and self.weight_sharing_master is None:
+        if not self.is_dense and self.weight_sharing_master is None:
             if self.is_ragged:
                 # If connectivity is located on host
                 conn_loc = self.pop.get_sparse_connectivity_location()
@@ -812,8 +812,7 @@ class SynapseGroup(Group):
                     raise Exception("If sparse connectivity is only located "
                                     "on device, it cannot be set with "
                                     "set_sparse_connections")
-
-            else:
+            elif self.connections_set:
                 raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables
