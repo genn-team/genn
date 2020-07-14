@@ -374,18 +374,20 @@ class NeuronGroup(Group):
 
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
-        self.spikes = self._assign_ext_ptr_array("glbSpk", 
-                                                 self.size * self.delay_slots,
-                                                 "unsigned int")
-        self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
-                                                      self.delay_slots, 
-                                                      "unsigned int")
-        
+        # If spike data is present on the host
+        if (self.pop.get_spike_location() & VarLocation_HOST) != 0:
+            self.spikes = self._assign_ext_ptr_array("glbSpk", 
+                                                    self.size * self.delay_slots,
+                                                    "unsigned int")
+            self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
+                                                        self.delay_slots, 
+                                                        "unsigned int")
+
         # If spike recording is enabled
         if self.spike_recording_enabled:
             # Calculate spike recording words
             recording_words = self._spike_recording_words * num_recording_timesteps
-            
+
             # Assign pointer to recording data
             self._spike_recording_data = self._assign_ext_ptr_array("recordSpk",
                                                                     recording_words,
