@@ -484,7 +484,7 @@ class GeNNModel(object):
         self._built = True
         return mem_alloc
 
-    def load(self, path_to_model="./"):
+    def load(self, path_to_model="./", num_recording_timesteps=None):
         """import the model as shared library and initialize it"""
         if self._loaded:
             raise Exception("GeNN model already loaded")
@@ -493,6 +493,16 @@ class GeNNModel(object):
         self._slm.open(self._path_to_model, self.model_name)
 
         self._slm.allocate_mem()
+
+        # If model uses recording system
+        if self._model.is_recording_in_use():
+            # Raise exception if recording timesteps is not set
+            if recording_timesteps is None:
+                raise Exception("Cannot use recording system without passing "
+                                "number of recording timesteps to GeNNModel.load")
+            
+            # Allocate recording buffers
+            self._slm.allocate_recording_buffers(num_recording_timesteps)
 
         # Loop through synapse populations and load any 
         # extra global parameters required for initialization
@@ -513,7 +523,7 @@ class GeNNModel(object):
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.load()
+            pop_data.load(num_recording_timesteps)
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
@@ -643,6 +653,17 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_extra_global_param(pop_name, egp_name, size)
+
+    def pull_recording_buffers_from_device(self):
+        """Pull recording buffers from device"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling recording buffers")
+        
+        if not self._model.is_recording_in_use():
+            raise Exception("Cannot pull recording buffer if recording system is not in use")
+            
+        # Pull recording buffers from device
+        self._slm.pull_recording_buffers_from_device()
 
     def end(self):
         """Free memory"""
