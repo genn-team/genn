@@ -1317,6 +1317,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 }
             }
         }
+        runner << std::endl;
     }
 
     // ---------------------------------------------------------------------
