@@ -178,6 +178,6 @@ setup(name = "pygenn",
       ext_modules=ext_modules,
 
       # Requirements
-      install_requires=["numpy>=1.10.0,!=1.16.*", "six", "deprecated", "psutil"],
+      install_requires=["numpy>=1.17", "six", "deprecated", "psutil"],
       zip_safe=False,  # Partly for performance reasons
 )
