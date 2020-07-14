@@ -275,11 +275,12 @@ class NeuronGroup(Group):
         data_bytes = self._spike_recording_data.view(dtype=np.uint8)
         
         # Reshape view so there's a row per timestep and a column per byte
-        data_bytes = np.reshape(data_bytes, (-1, self.recording_words * 4))
+        data_bytes = np.reshape(data_bytes, (-1, self._spike_recording_words * 4))
         
-        print(data_bytes.shape)
+        print(data_bytes.shape, self._spike_recording_words)
         
         # Unpack data (results in one byte per bit)
+        # **THINK** is there a way to avoid this step?
         data_unpack = data_unpack = np.unpackbits(data_bytes, axis=1, 
                                                   count=self.size,
                                                   bitorder="little")

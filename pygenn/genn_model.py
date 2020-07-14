@@ -497,7 +497,7 @@ class GeNNModel(object):
         # If model uses recording system
         if self._model.is_recording_in_use():
             # Raise exception if recording timesteps is not set
-            if recording_timesteps is None:
+            if num_recording_timesteps is None:
                 raise Exception("Cannot use recording system without passing "
                                 "number of recording timesteps to GeNNModel.load")
             
