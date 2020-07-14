@@ -89,10 +89,6 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
     {
         CodeStream::Scope b(os);
 
-        if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-        }
-
         if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             os << "const unsigned int preInd = group->srcSpk" << eventSuffix;
             os << "[(preReadDelaySlot * group->numSrcNeurons) + spike];" << std::endl;
@@ -117,15 +113,8 @@ void PreSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const 
             Substitutions threshSubs(&popSubs);
             threshSubs.addVarSubstitution("id_pre", "preInd");
 
-            std::stringstream threshOsStream;
-            CodeStream threshOs(threshOsStream);
-
             // Generate weight update threshold condition
-            wumThreshHandler(threshOs, sg, threshSubs);
-
-            std::string code = threshOsStream.str();
-
-            os << code;
+            wumThreshHandler(os, sg, threshSubs);
 
             // end code substitutions ----
             os << ")";
@@ -289,9 +278,6 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     }
                 }
 
-                if (!wu->getSimSupportCode().empty()) {
-                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
-                }
                 if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
                     os << "if(";
                     if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -301,15 +287,8 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
                     Substitutions threshSubs(&popSubs);
                     threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
 
-                    std::stringstream threshOsStream;
-                    CodeStream threshOs(threshOsStream);
-
                     // Generate weight update threshold condition
-                    wumThreshHandler(threshOs, sg, threshSubs);
-
-                    std::string code = threshOsStream.str();
-
-                    os << code;
+                    wumThreshHandler(os, sg, threshSubs);
 
                     // end code substitutions ----
                     os << ")";

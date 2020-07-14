@@ -363,6 +363,8 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
+    virtual bool supportsNamespace() const = 0;
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

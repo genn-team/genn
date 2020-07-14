@@ -18,8 +18,9 @@ namespace
 {
 void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext,
                                const CodeGenerator::SynapseGroupMergedBase &sg, const CodeGenerator::Substitutions &baseSubs,
-                               const ModelSpecInternal &model)
+                               const CodeGenerator::ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
 {
+    const ModelSpecInternal &model = modelMerged.getModel();
     const auto *wu = sg.getArchetype().getWUModel();
 
     CodeGenerator::Substitutions synapseSubs(&baseSubs);
@@ -110,6 +111,19 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
                                       [&sg](size_t paramIndex) { return sg.isTrgNeuronParamHeterogeneous(paramIndex); },
                                       [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); });
 
+    // If the backend does not support namespaces then we substitute all support code functions with namepsace as prefix
+    if (!backendSupportsNamespace) {
+        if (!wu->getSimSupportCode().empty()) {
+            code = CodeGenerator::disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+        }
+        if (!wu->getLearnPostSupportCode().empty()) {
+            code = CodeGenerator::disambiguateNamespaceFunction(wu->getLearnPostSupportCode(), code, modelMerged.getPostsynapticUpdateSupportCodeNamespace(wu->getLearnPostSupportCode()));
+        }
+        if (!wu->getSynapseDynamicsSuppportCode().empty()) {
+            code = CodeGenerator::disambiguateNamespaceFunction(wu->getSynapseDynamicsSuppportCode(), code, modelMerged.getSynapseDynamicsSupportCodeNamespace(wu->getSynapseDynamicsSuppportCode()));
+        }
+    }
+
     synapseSubs.apply(code);
     //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
     code = CodeGenerator::ensureFtype(code, model.getPrecision());
@@ -124,7 +138,9 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                                           const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
-    os << "#include \"supportCode.h\"" << std::endl;
+    if (backend.supportsNamespace()) {
+        os << "#include \"supportCode.h\"" << std::endl;
+    }
     os << std::endl;
 
     // Generate functions to push merged synapse group structures
@@ -141,7 +157,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
         },
         // Presynaptic weight update threshold
-        [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             Substitutions synapseSubs(&baseSubs);
 
@@ -160,23 +176,30 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                                               [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
                                               [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
             
+            const auto* wum = sg.getArchetype().getWUModel();
+
             // Get event threshold condition code
-            std::string code = sg.getArchetype().getWUModel()->getEventThresholdConditionCode();
+            std::string code = wum->getEventThresholdConditionCode();
             synapseSubs.applyCheckUnreplaced(code, "eventThresholdConditionCode");
-            code = ensureFtype(code, model.getPrecision());
+            code = ensureFtype(code, modelMerged.getModel().getPrecision());
+
+            if (!backend.supportsNamespace() && !wum->getSimSupportCode().empty()) {
+                code = disambiguateNamespaceFunction(wum->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wum->getSimSupportCode()));
+            }
+
             os << code;
         },
         // Presynaptic spike
-        [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getSimCode(), "simCode",
-                                      sg, baseSubs, model);
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Presynaptic spike-like event
-        [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getEventCode(), "eventCode",
-                                      sg, baseSubs, model);
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Procedural connectivity
         [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
@@ -218,26 +241,26 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             }
         },
         // Postsynaptic learning code
-        [&modelMerged](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
-            if (!wum->getLearnPostSupportCode().empty()) {
+            if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
                 os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
             }
 
             applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
-                                      sg, baseSubs, modelMerged.getModel());
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Synapse dynamics
-        [&modelMerged](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
+        [&modelMerged, &backend](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
         {
             const auto *wum = sg.getArchetype().getWUModel();
-            if (!wum->getSynapseDynamicsSuppportCode().empty()) {
+            if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
                 os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
             }
 
             applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
-                                      sg, baseSubs, modelMerged.getModel());
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
         // Push EGP handler
         [&backend, &modelMerged](CodeStream &os)

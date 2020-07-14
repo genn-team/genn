@@ -6,6 +6,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <regex>
 
 // GeNN includes
 #include "gennExport.h"
@@ -79,6 +80,12 @@ GENN_EXPORT std::string ensureFtype(const std::string &oldcode, const std::strin
  */
 //--------------------------------------------------------------------------
 GENN_EXPORT void checkUnreplacedVariables(const std::string &code, const std::string &codeName);
+
+//--------------------------------------------------------------------------
+/*! \brief This function substitutes function names in a code with namespace as prefix of the function name for backends that do not support namespaces by checking that the function indeed exists in the support code and returns the substituted code.
+ */
+ //--------------------------------------------------------------------------
+GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName);
 
 //-------------------------------------------------------------------------
 /*!

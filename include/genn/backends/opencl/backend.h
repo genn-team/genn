@@ -8,7 +8,6 @@
 #include <numeric>
 #include <string>
 #include <unordered_set>
-#include <regex>
 
 // OpenCL includes
 #include "../../../../share/genn/backends/opencl/cl2.hpp"
@@ -263,6 +262,8 @@ public:
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
+
+    virtual bool supportsNamespace() const override { return false; };
 
     //--------------------------------------------------------------------------
     // Public API

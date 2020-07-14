@@ -227,7 +227,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << std::endl << std::endl;
 
     // Generate support code
-    modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels);
+    modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels, false);
+    modelMerged.genPresynapticUpdateSupportCode(neuronUpdateKernels, false);
     neuronUpdateKernels << std::endl << std::endl;
     
     // Generate struct definitions
@@ -564,9 +565,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     genAtomicAddFloat(synapseUpdateKernels, "global");
 
     // Generate support code
-    modelMerged.genPresynapticUpdateSupportCode(synapseUpdateKernels);
-    modelMerged.genPostsynapticUpdateSupportCode(synapseUpdateKernels);
-    modelMerged.genSynapseDynamicsSupportCode(synapseUpdateKernels);
+    modelMerged.genPresynapticUpdateSupportCode(synapseUpdateKernels, false);
+    modelMerged.genPostsynapticUpdateSupportCode(synapseUpdateKernels, false);
+    modelMerged.genSynapseDynamicsSupportCode(synapseUpdateKernels, false);
     synapseUpdateKernels << std::endl;
 
     // Generate struct definitions
@@ -1890,6 +1891,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
 {
     if (loc & VarLocation::HOST) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+        definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
@@ -1900,6 +1902,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
+        os << "cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
@@ -2519,6 +2522,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
     os << "typedef " << precision << " scalar;" << std::endl;
     os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
+    os << "#define SUPPORT_CODE_FUNC" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
    
