@@ -5,8 +5,13 @@
 #include <fstream>
 #include <iterator>
 #include <list>
+#include <string>
 #include <tuple>
 #include <vector>
+
+// Standard C includes
+#include <cassert>
+#include <cstdint>
 
 //----------------------------------------------------------------------------
 // SpikeWriterText
@@ -175,3 +180,22 @@ private:
     GetCurrentSpikeCountFunc m_GetCurrentSpikeCount;
     unsigned int m_Sum;
 };
+
+inline void writeBinarySpikeRecording(const std::string &filename, const uint32_t *spkRecord,
+                                      unsigned int popSize, unsigned int numTimesteps)
+{
+    // Calculate recording size
+    const unsigned int numWords = ((popSize + 31) / 32) * numTimesteps;
+    
+    // Write spikes to binary file
+    std::ofstream spikes(filename, std::ofstream::binary);
+    spikes.write(reinterpret_cast<const char*>(spkRecord), sizeof(uint32_t) * numWords);
+}
+
+inline void writeTextSpikeRecording(const std::string &filename, const uint32_t *spkRecord,
+                                    unsigned int popSize, unsigned int numTimesteps,
+                                    const std::string &delimiter = " ", bool header = false)
+                             
+{
+    assert(false);
+}
