@@ -275,7 +275,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << std::endl;
 
     size_t idStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "("  << model.getTimePrecision() << " t)" << std::endl;
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << m_KernelBlockSizes[KernelNeuronUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -447,26 +451,35 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     }
                 }
 
-                // If we are recording spikes
-                if(ng.getArchetype().isSpikeRecordingEnabled()) {
+                // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
+                if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
                     os << "if(threadIdx.x < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
                     {
                         CodeStream::Scope b(os);
-                    }
-                }
 
-                // If we are recording spike-like events
-                if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                    os << "if(threadIdx.x < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
-                    {
-                        CodeStream::Scope b(os);
+                        // Calculate number of words which will be used to record this population's spikes
+                        os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+
+                        // If we are recording spikes, copy word to correct location in global memory
+                        if(ng.getArchetype().isSpikeRecordingEnabled()) {
+                            os << "group->recordSpk[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkRecord[threadIdx.x];" << std::endl;
+                        }
+
+                        // If we are recording spike-like events, copy word to correct location in global memory
+                        if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
+                            os << "group->recordSpk[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkRecord[threadIdx.x];" << std::endl;
+                        }
                     }
                 }
             }
         );
     }
 
-    os << "void updateNeurons(" << model.getTimePrecision() << ")";
+    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")";
     {
         CodeStream::Scope b(os);
 
@@ -485,7 +498,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
-            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
+            if(model.isRecordingInUse()) {
+                os << ", recordingTimestep";
+            }
+            os << ");" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
@@ -2225,7 +2242,7 @@ void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std:
 
     // If recording is enabled, set bit in recording word
     if(recordingEnabled) {
-        os << "atomicOr(&shSpk" << suffix << "Record[" << subs["id"] << " / 32], 1 << (" << subs["id"] << " % 32));" << std::endl;
+        os << "atomicOr(&shSpk" << suffix << "Record[threadIdx.x / 32], 1 << (threadIdx.x % 32));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
