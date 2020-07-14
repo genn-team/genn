@@ -505,6 +505,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     runnerVarDecl << "unsigned long long iT;" << std::endl;
     runnerVarDecl << model.getTimePrecision() << " t;" << std::endl;
 
+    if(model.isRecordingInUse()) {
+        runnerVarDecl << "unsigned long long numRecordingTimesteps = 0;" << std::endl;
+    }
     // If backend requires a global device RNG to simulate (or initialize) this model
     if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
         mem += backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
@@ -1230,22 +1233,27 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // If model uses recording
     if(model.isRecordingInUse()) {
-        runner << "void allocateRecordingBuffer(unsigned int timesteps)";
+        runner << "void allocateRecordingBuffers(unsigned int timesteps)";
         {
             CodeStream::Scope b(runner);
 
+            // Cache number of recording timesteps in global variable
+            runner << "numRecordingTimesteps = timesteps;" << std::endl;
+
             // Loop through neuron groups
             for(const auto &n : model.getNeuronGroups()) {
+                CodeStream::Scope b(runner);
+
                 // Calculate number of words required for spike/spike event buffers
                 if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
                     runner << "const unsigned int numWords = " << ceilDivide(n.second.getNumNeurons(), 32) << " * timesteps;" << std::endl;
                 }
 
                 // Allocate spike array if required
-                // **YUCK** maybe this should be renamed genDynamicAllocation
+                // **YUCK** maybe this should be renamed genDynamicArray
                 if(n.second.isSpikeRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
@@ -1257,10 +1265,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 }
 
                 // Allocate spike event array if required
-                // **YUCK** maybe this should be renamed genDynamicAllocation
+                // **YUCK** maybe this should be renamed genDynamicArray
                 if(n.second.isSpikeEventRecordingEnabled()) {
                     CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
@@ -1269,6 +1277,43 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                         runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
                         runner << v.second.groupIndex << ", " << backend.getVarPrefix() << "recordSpkEvent" + n.first << ");" << std::endl;
                     }
+                }
+            }
+        }
+        runner << std::endl;
+
+        runner << "void pullRecordingBuffersFromDevice()";
+        {
+            CodeStream::Scope b(runner);
+            
+            // Check recording buffer has been allocated
+            runner << "if(numRecordingTimesteps == 0)";
+            {
+                CodeStream::Scope b(runner);
+                runner << "throw std::runtime_error(\"Recording buffer not allocated - cannot pull from device\");" << std::endl;
+            }
+
+            // Loop through neuron groups
+            // **THINK** could use asynchronous copies and sync on last one
+            for(const auto &n : model.getNeuronGroups()) {
+                CodeStream::Scope b(runner);
+
+                // Calculate number of words required for spike/spike event buffers
+                if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
+                    runner << "const unsigned int numWords = " << ceilDivide(n.second.getNumNeurons(), 32) << " * numRecordingTimesteps;" << std::endl;
+                }
+
+                // Pull spike array if required
+                // **YUCK** maybe this should be renamed pullDynamicArray
+                if(n.second.isSpikeRecordingEnabled()) {
+                    CodeStream::Scope b(runner);
+                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                }
+                // AllocaPullte spike event array if required
+                // **YUCK** maybe this should be renamed pullDynamicArray
+                if(n.second.isSpikeEventRecordingEnabled()) {
+                    CodeStream::Scope b(runner);
+                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
                 }
             }
         }
@@ -1334,7 +1379,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         }
 
         // Update neuronal state
-        runner << "updateNeurons(t);" << std::endl;
+        runner << "updateNeurons(t";
+        if(model.isRecordingInUse()) {
+            runner << ", (unsigned int)(iT % numRecordingTimesteps)";
+        }
+        runner << "); " << std::endl;
 
         // Generate code to advance host side dendritic delay buffers
         for(const auto &n : model.getNeuronGroups()) {
@@ -1372,7 +1421,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
     }
     if(model.isRecordingInUse()) {
-        definitions << "EXPORT_FUNC void allocateRecordingBuffer(unsigned int timesteps);" << std::endl;
+        definitions << "EXPORT_FUNC void allocateRecordingBuffers(unsigned int timesteps);" << std::endl;
+        definitions << "EXPORT_FUNC void pullRecordingBuffersFromDevice();" << std::endl;
     }
     definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
@@ -1380,7 +1430,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
     definitions << std::endl;
     definitions << "// Functions generated by backend" << std::endl;
-    definitions << "EXPORT_FUNC void updateNeurons(" << model.getTimePrecision() << " t);" << std::endl;
+    definitions << "EXPORT_FUNC void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        definitions << ", unsigned int recordingTimestep";
+    }
+    definitions << "); " << std::endl;
     definitions << "EXPORT_FUNC void updateSynapses(" << model.getTimePrecision() << " t);" << std::endl;
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
