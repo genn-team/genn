@@ -1,4 +1,16 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.3.1 (PyGeNN 0.4.1)
+====
+This release fixes several small issues found in the 4.3.0 release.
+
+Bug fixes:
+----
+1. Fixed reference-counting bugs in PyGeNN that prevented multiple models from being instantiated.
+2. Fixed PyGeNN interface for downloading connectivity from GPU.
+3. Fixed host initialisation of sparse connectivity initialisation snippet extra global parameters using the CPU backend.
+4. Upgraded <a href="https://github.com/SergiusTheBest/plog">third-party logging library</a> to fix issues compiling SpineML generator with Visual Studio 2019.
+5. Fixed bug in new code generator that didn't disambiguate between pre or postsynaptic neuron parameters and synapse parameters with the same name.
+
 Release Notes for GeNN v4.3.0 (PyGeNN 0.4.0)
 ====
 This release adds a number of significant new features to GeNN as well as making small improvements to PyGeNN.
