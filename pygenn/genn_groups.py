@@ -276,17 +276,20 @@ class NeuronGroup(Group):
         
         # Reshape view so there's a row per timestep and a column per byte
         data_bytes = np.reshape(data_bytes, (-1, self._spike_recording_words * 4))
-        
-        print(data_bytes.shape, self._spike_recording_words)
-        
+
         # Unpack data (results in one byte per bit)
         # **THINK** is there a way to avoid this step?
         data_unpack = data_unpack = np.unpackbits(data_bytes, axis=1, 
                                                   count=self.size,
                                                   bitorder="little")
 
-        # Return indices where there are spikes
-        return np.where(data_unpack == 1)
+        # Calculate indices where there are spikes
+        spikes = np.where(data_unpack == 1)
+
+        # Convert spike times to ms
+        spike_times = spikes[0] * self._model.dT
+
+        return spike_times, spikes[1]
 
     @property
     def delay_slots(self):
