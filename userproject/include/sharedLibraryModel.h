@@ -32,8 +32,9 @@ class SharedLibraryModel
 {
 public:
     SharedLibraryModel()
-    :   m_Library(nullptr), m_AllocateMem(nullptr), m_FreeMem(nullptr),
-        m_Initialize(nullptr), m_InitializeSparse(nullptr), m_StepTime(nullptr)
+    :   m_Library(nullptr), m_AllocateMem(nullptr), m_AllocateRecordingBuffers(nullptr),
+        m_FreeMem(nullptr), m_Initialize(nullptr), m_InitializeSparse(nullptr), 
+        m_StepTime(nullptr), m_PullRecordingBuffersFromDevice(nullptr)
     {
     }
 
@@ -77,6 +78,7 @@ public:
         // If it fails throw
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
+            m_AllocateRecordingBuffers = (EGPFunction)getSymbol("allocateRecordingBuffers", true);
             m_FreeMem = (VoidFunction)getSymbol("freeMem");
             m_GetFreeDeviceMemBytes = (GetFreeMemFunction)getSymbol("getFreeDeviceMemBytes");
 
@@ -84,7 +86,8 @@ public:
             m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
 
             m_StepTime = (VoidFunction)getSymbol("stepTime");
-
+            m_PullRecordingBuffersFromDevice = (VoidFunction)getSymbol("pullRecordingBuffersFromDevice", true);
+            
             m_T = (scalar*)getSymbol("t");
             m_Timestep = (unsigned long long*)getSymbol("iT");
 
@@ -346,6 +349,14 @@ public:
         m_AllocateMem();
     }
 
+    void allocateRecordingBuffers(unsigned int timesteps)
+    {
+        if(m_AllocateRecordingBuffers == nullptr) {
+            throw std::runtime_error("Cannot allocate recording buffers - model may not have recording enabled");
+        }
+        m_AllocateRecordingBuffers(timesteps);
+    }
+
     void freeMem()
     {
         m_FreeMem();
@@ -369,6 +380,14 @@ public:
     void stepTime()
     {
         m_StepTime();
+    }
+    
+    void pullRecordingBuffersFromDevice()
+    {
+        if(m_PullRecordingBuffersFromDevice == nullptr) {
+            throw std::runtime_error("Cannot pull recording buffers from device - model may not have recording enabled");
+        }
+        m_PullRecordingBuffersFromDevice();
     }
 
     scalar getTime() const
@@ -496,11 +515,13 @@ private:
 #endif
 
     VoidFunction m_AllocateMem;
+    EGPFunction m_AllocateRecordingBuffers;
     VoidFunction m_FreeMem;
     GetFreeMemFunction m_GetFreeDeviceMemBytes;
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
+    PullFunction m_PullRecordingBuffersFromDevice;
 
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
