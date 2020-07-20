@@ -13,6 +13,9 @@
 #include <cassert>
 #include <cstdint>
 
+#ifdef _WIN32
+#include <intrin.h>
+#endif
 //----------------------------------------------------------------------------
 // SpikeWriterText
 //----------------------------------------------------------------------------
@@ -192,10 +195,56 @@ inline void writeBinarySpikeRecording(const std::string &filename, const uint32_
     spikes.write(reinterpret_cast<const char*>(spkRecord), sizeof(uint32_t) * numWords);
 }
 
+
+inline int _clz(unsigned int value)
+{
+#ifdef _WIN32
+    unsigned long leadingZero = 0;
+    if(_BitScanReverse(&leadingZero, value)) {
+        return 31 - leadingZero;
+    }
+    else {
+        return 32;
+    }
+#else
+    return __builtin_clz(value);
+#endif
+}
+
 inline void writeTextSpikeRecording(const std::string &filename, const uint32_t *spkRecord,
                                     unsigned int popSize, unsigned int numTimesteps,
                                     const std::string &delimiter = " ", bool header = false)
                              
 {
-    assert(false);
+    //assert(false);
+    // Calculate number of words per-timestep
+    const unsigned int timestepWords = (popSize + 31) / 32;
+    
+    // Create stream and set precision
+    std::ofstream stream(filename);
+    stream.precision(16);
+    
+    // Write header if required
+    if(header) {
+        stream << "Time [ms], Neuron ID" << std::endl;
+    }
+    
+    for(unsigned int t = 0; t < numTimesteps; t++) {
+        const double time = t * 1.0;
+        unsigned int spikeIdx = t * 32;
+        for(unsigned int w = 0; w < timestepWords; w++) {
+            uint32_t spikeWord = spkRecord[(t * timestepWords) + w];
+            
+            while(spikeWord != 0) {
+                const int numLZ = _clz(spikeWord);
+                
+                spikeWord = (numLZ == 31) ? 0 : (spikeWord << (numLZ + 1));
+                
+                spikeIdx += numLZ;
+                
+                stream << time << delimiter << spikeIdx << std::endl;
+            }
+
+        }
+    }
 }
