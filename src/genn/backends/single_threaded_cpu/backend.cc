@@ -544,7 +544,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                         else {
                             os << "const int64_t colStartGID = j;" << std::endl;
                             popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "setB(group->gp[(colStartGID + ($(0) * group->rowStride)) / 32], ((colStartGID + ($(0) * group->rowStride)) & 31)");
+                                                        "setB(group->gp[(colStartGID + ($(0) * group->rowStride)) / 32], ((colStartGID + ($(0) * group->rowStride)) & 31))");
                         }
                         sgSparseColConnectHandler(os, s, popSubs);
                     }
