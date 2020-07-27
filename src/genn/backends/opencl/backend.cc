@@ -1059,8 +1059,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                      SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
-                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1185,62 +1185,118 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         initializeKernels << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseConnectivityInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idInitStart,
             [this](const SynapseGroupInternal& sg) { return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), getKernelWorkGroupSize(KernelInitialize)); },
-            [sgSparseConnectHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
+            [sgSparseRowConnectHandler, sgSparseColConnectHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
             {
-                os << "// only do this for existing presynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
-                {
-                    CodeStream::Scope b(os);
-                    popSubs.addVarSubstitution("id_pre", popSubs["id"]);
-                    popSubs.addVarSubstitution("id_post_begin", "0");
-                    popSubs.addVarSubstitution("id_thread", "0");
-                    popSubs.addVarSubstitution("num_threads", "1");
-                    popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+                // If there is row-building code in this snippet
+                const auto *snippet = sg.getArchetype().getConnectivityInitialiser().getSnippet();
+                if(!snippet->getRowBuildCode().empty()) {
+                    os << "// only do this for existing presynaptic neurons" << std::endl;
+                    os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
+                    {
+                        CodeStream::Scope b(os);
+                        popSubs.addVarSubstitution("id_pre", popSubs["id"]);
+                        popSubs.addVarSubstitution("id_post_begin", "0");
+                        popSubs.addVarSubstitution("id_thread", "0");
+                        popSubs.addVarSubstitution("num_threads", "1");
+                        popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
-                    // Add substitution for RNG
-                    if (::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                        genPhiloxSkipAhead(os);
-                        popSubs.addVarSubstitution("rng", "&localStream");
-                    }
-
-                    // If the synapse group has bitmask connectivity
-                    if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                        // Get maximum number of synapses anywhere in merged group
-                        size_t maxSynapses = 0;
-                        for(const auto &s : sg.getGroups()) {
-                            maxSynapses = std::max(maxSynapses, (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getSrcNeuronGroup()->getNumNeurons());
+                        // Add substitution for RNG
+                        if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                            genPhiloxSkipAhead(os);
+                            popSubs.addVarSubstitution("rng", "&localStream");
                         }
 
-                        // Calculate indices of bits at start and end of row
-                        os << "// Calculate indices" << std::endl;
-                        if ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                            os << "const ulong rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
+                        // If the synapse group has bitmask connectivity
+                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                            // Get maximum number of synapses anywhere in merged group
+                            size_t maxSynapses = 0;
+                            for(const auto &s : sg.getGroups()) {
+                                maxSynapses = std::max(maxSynapses, (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getSrcNeuronGroup()->getNumNeurons());
+                            }
+
+                            // Calculate indices of bits at start and end of row
+                            os << "// Calculate indices" << std::endl;
+                            if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                                os << "const ulong rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
+                            }
+                            else {
+                                os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
+                            }
+
+                            // Build function template to set correct bit in bitmask
+                            popSubs.addFuncSubstitution("addSynapse", 1,
+                                                        "atomic_or(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
+                        }
+                        // Otherwise, if synapse group has ragged connectivity
+                        else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                            const std::string rowLength = "group->rowLength[" + popSubs["id"] + "]";
+                            const std::string ind = "group->ind";
+
+                            // Zero row length
+                            os << rowLength << " = 0;" << std::endl;
+
+                            // Build function template to increment row length and insert synapse into ind array
+                            popSubs.addFuncSubstitution("addSynapse", 1,
+                                                        "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
                         }
                         else {
-                            os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
+                            throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
                         }
 
-                        // Build function template to set correct bit in bitmask
-                        popSubs.addFuncSubstitution("addSynapse", 1,
-                            "atomic_or(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
+                        sgSparseRowConnectHandler(os, sg, popSubs);
                     }
-                    // Otherwise, if synapse group has ragged connectivity
-                    else if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        const std::string rowLength = "group->rowLength[" + popSubs["id"] + "]";
-                        const std::string ind = "group->ind";
+                }
+                // Otherwise, if there is column building code
+                else if(!snippet->getColBuildCode().empty()) {
+                    os << "// only do this for existing postsynaptic neurons" << std::endl;
+                    os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
+                    {
+                        CodeStream::Scope b(os);
+                        popSubs.addVarSubstitution("id_pre_begin", "0");
+                        popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                        popSubs.addVarSubstitution("id_thread", "0");
+                        popSubs.addVarSubstitution("num_threads", "1");
+                        popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
 
-                        // Zero row length
-                        os << rowLength << " = 0;" << std::endl;
+                        // Add substitution for RNG
+                        if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getColBuildCode())) {
+                            genPhiloxSkipAhead(os);
+                            popSubs.addVarSubstitution("rng", "&localStream");
+                        }
 
-                        // Build function template to increment row length and insert synapse into ind array
-                        popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
+                        // If the synapse group has bitmask connectivity
+                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                            // Calculate the maximum number of synapses in any groups
+                            size_t maxSynapses = 0;
+                            for(const auto &s : sg.getGroups()) {
+                                maxSynapses = std::max(maxSynapses, (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getSrcNeuronGroup()->getNumNeurons());
+                            }
+
+                            // Calculate indices of bits at start and end of row
+                            os << "// Calculate indices" << std::endl;
+                            if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                                os << "const uint64_t colStartGID = " << popSubs["id"] << ";" << std::endl;
+                            }
+                            else {
+                                os << "const unsigned int colStartGID = " << popSubs["id"] << ";" << std::endl;
+                            }
+
+                            // Build function template to set correct bit in bitmask
+                            popSubs.addFuncSubstitution("addSynapse", 1,
+                                                        "atomic_or(&group->gp[(colStartGID + ($(0) * group->rowStride)) / 32], 0x80000000 >> ((colStartGID + ($(0) * group->rowStride)) & 31))");
+                        }
+                        // Otherwise, if synapse group has ragged connectivity
+                        else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                            // Build function template to atomically increment correct row length and insert synapse into ind array
+                            popSubs.addFuncSubstitution("addSynapse", 1,
+                                                        "group->ind[(($(0)) * group->rowStride) + atomic_add(&group->rowLength[$(0)], 1)] = " + popSubs["id_post"]);
+                        }
+                        else {
+                            throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
+                        }
+                        sgSparseColConnectHandler(os, sg, popSubs);
+
                     }
-                    else {
-                        assert(false);
-                    }
-
-                    sgSparseConnectHandler(os, sg, popSubs);
                 }
             });
     }
