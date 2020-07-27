@@ -279,6 +279,7 @@ public:
     static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
+    static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
 
     //! Register a new presynaptic update strategy
     /*! This function should be called with strategies in ascending order of preference */

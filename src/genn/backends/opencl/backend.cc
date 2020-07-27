@@ -1104,7 +1104,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedKernelDataStructures(initializeKernels, m_KernelWorkGroupSizes[KernelInitialize],
                                   modelMerged.getMergedNeuronInitGroups(), [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); },
                                   modelMerged.getMergedSynapseDenseInitGroups(), [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getNumNeurons(); },
-                                  modelMerged.getMergedSynapseConnectivityInitGroups(), [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getNumNeurons(); });
+                                  modelMerged.getMergedSynapseConnectivityInitGroups(), [](const SynapseGroupInternal &sg) { return getNumConnectivityInitThreads(sg); });
 
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
     genMergedKernelDataStructures(initializeKernels, m_KernelWorkGroupSizes[KernelInitializeSparse],
@@ -1184,7 +1184,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
         initializeKernels << "// Synapse groups with sparse connectivity" << std::endl;
         genParallelGroup<SynapseConnectivityInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idInitStart,
-            [this](const SynapseGroupInternal& sg) { return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), getKernelWorkGroupSize(KernelInitialize)); },
+            [this](const SynapseGroupInternal& sg) { return padSize(getNumConnectivityInitThreads(sg), getKernelWorkGroupSize(KernelInitialize)); },
             [sgSparseRowConnectHandler, sgSparseColConnectHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
             {
                 // If there is row-building code in this snippet
@@ -2376,6 +2376,22 @@ size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
     }
     else {
         return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t Backend::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
+{
+    // If there's row building code, return number of source neurons i.e. rows
+    if(!sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
+        return sg.getSrcNeuronGroup()->getNumNeurons();
+    }
+    // Otherwise, if there's column building code, return number of target neurons i.e. columns
+    else if(!sg.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+    // Otherwise, give an error
+    else {
+        throw std::runtime_error("Cannot calculate number of connectivity init threads without connectivity building code");
     }
 }
 //--------------------------------------------------------------------------
