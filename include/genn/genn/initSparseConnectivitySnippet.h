@@ -357,14 +357,14 @@ class FixedNumberPreWithReplacement : public Base
 public:
     DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement, 1);
 
-    SET_ROW_BUILD_CODE(
+    SET_COL_BUILD_CODE(
         "if(c == 0) {\n"
         "   $(endCol);\n"
         "}\n"
-        "const unsigned int idPre = (unsigned int)ceil($(gennrand_uniform) * $(num_pre)) - 1;"
+        "const unsigned int idPre = (unsigned int)ceil($(gennrand_uniform) * $(num_pre)) - 1;\n"
         "$(addSynapse, idPre + $(id_pre_begin));\n"
         "c--;\n");
-    SET_ROW_BUILD_STATE_VARS({{"c", "unsigned int", "$(colLength)"}});
+    SET_COL_BUILD_STATE_VARS({{"c", "unsigned int", "$(colLength)"}});
 
     SET_PARAM_NAMES({"colLength"});
 
