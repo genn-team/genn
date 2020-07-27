@@ -1052,7 +1052,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
                             // Build function template to set correct bit in bitmask
                             popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "atomicOr(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
+                                                        "atomicOr(&group->gp[(rowStartGID + ($(0))) / 32], 0x80000000 >> ((rowStartGID + ($(0))) & 31))");
                         }
                         // Otherwise, if synapse group has ragged connectivity
                         else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1120,7 +1120,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                         else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             // Build function template to atomically increment correct row length and insert synapse into ind array
                             popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "{const unsigned int idx = atomicAdd(&group->rowLength[$(0)], 1); group->ind[($(0) * group->rowStride) + idx] = " + popSubs["id_post"]  + "}");
+                                                        "{const unsigned int idx = atomicAdd(&group->rowLength[$(0)], 1); group->ind[(($(0)) * group->rowStride) + idx] = " + popSubs["id_post"]  + ";}");
                         }
                         else {
                             assert(false);
