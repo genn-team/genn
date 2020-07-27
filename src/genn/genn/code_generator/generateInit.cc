@@ -11,16 +11,16 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                       const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronInitGroupMerged &ng, bool spikeEvent)
+void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
+                       const NeuronInitGroupMerged &ng, bool spikeEvent)
 {
-    using namespace CodeGenerator;
-
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
@@ -51,11 +51,9 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
 
 }
 //--------------------------------------------------------------------------
-void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                   const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronInitGroupMerged &ng, bool spikeEvent)
+void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
+                   const NeuronInitGroupMerged &ng, bool spikeEvent)
 {
-    using namespace CodeGenerator;
-
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
@@ -86,13 +84,11 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
 }
 //------------------------------------------------------------------------
 template<typename I, typename Q, typename P, typename D>
-void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
+void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
                           size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
                           I getVarInitialiser, Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
-    using namespace CodeGenerator;
-
     const std::string count = "group->" + countMember;
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
@@ -149,7 +145,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 }
 //------------------------------------------------------------------------
 template<typename I, typename P, typename D>
-void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
+void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
                           const size_t groupIndex, const std::string &ftype, 
                           I getVarInitialiser, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
@@ -162,11 +158,9 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
-void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const CodeGenerator::SynapseGroupMergedBase &sg, const std::string &ftype)
+void genInitWUVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
+                      const SynapseGroupMergedBase &sg, const std::string &ftype)
 {
-    using namespace CodeGenerator;
-
     const auto vars = sg.getArchetype().getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
@@ -195,6 +189,48 @@ void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Backen
                     os << code << std::endl;
                 });
         }
+    }
+}
+//------------------------------------------------------------------------
+// Generate either row or column connectivity init code
+void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const SynapseConnectivityInitGroupMerged &sg,
+                         const std::string &ftype, bool rowNotColumns)
+{
+    const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+    const auto *snippet = connectInit.getSnippet();
+
+    // Add substitutions
+    popSubs.addFuncSubstitution(rowNotColumns ? "endRow" : "endCol", 0, "break");
+    popSubs.addParamValueSubstitution(snippet->getParamNames(), connectInit.getParams(),
+                                      [&sg](size_t i) { return sg.isConnectivityInitParamHeterogeneous(i);  },
+                                      "", "group->");
+    popSubs.addVarValueSubstitution(snippet->getDerivedParams(), connectInit.getDerivedParams(),
+                                    [&sg](size_t i) { return sg.isConnectivityInitDerivedParamHeterogeneous(i);  },
+                                    "", "group->");
+    popSubs.addVarNameSubstitution(snippet->getExtraGlobalParams(), "", "group->");
+
+    // Initialise state variables and loop on generated code to initialise sparse connectivity
+    os << "// Build sparse connectivity" << std::endl;
+    const auto stateVars = rowNotColumns ? snippet->getRowBuildStateVars() : snippet->getColBuildStateVars();
+    for(const auto &a : stateVars) {
+        // Apply substitutions to value
+        std::string value = a.value;
+        popSubs.applyCheckUnreplaced(value, "initSparseConnectivity state var : merged" + std::to_string(sg.getIndex()));
+
+        os << a.type << " " << a.name << " = " << value << ";" << std::endl;
+    }
+    os << "while(true)";
+    {
+        CodeStream::Scope b(os);
+
+        // Apply substitutions to row build code
+        std::string code = rowNotColumns ? snippet->getRowBuildCode() : snippet->getColBuildCode();
+        popSubs.addVarNameSubstitution(stateVars);
+        popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + std::to_string(sg.getIndex()));
+        code = ensureFtype(code, ftype);
+
+        // Write out code
+        os << code << std::endl;
     }
 }
 }   // Anonymous namespace
@@ -350,43 +386,15 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
             }
         },
-        // Sparse synaptic matrix connectivity initialisation
+        // Sparse synaptic matrix row connectivity initialisation
         [&model](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
         {
-            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
-
-            // Add substitutions
-            popSubs.addFuncSubstitution("endRow", 0, "break");
-            popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                              [&sg](size_t i) { return sg.isConnectivityInitParamHeterogeneous(i);  },
-                                              "", "group->");
-            popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                            [&sg](size_t i) { return sg.isConnectivityInitDerivedParamHeterogeneous(i);  },
-                                            "", "group->");
-            popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
-
-            // Initialise row building state variables and loop on generated code to initialise sparse connectivity
-            os << "// Build sparse connectivity" << std::endl;
-            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                // Apply substitutions to value
-                std::string value = a.value;
-                popSubs.applyCheckUnreplaced(value, "initSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
-
-                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
-            }
-            os << "while(true)";
-            {
-                CodeStream::Scope b(os);
-
-                // Apply substitutions to row build code
-                std::string code = connectInit.getSnippet()->getRowBuildCode();
-                popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
-                popSubs.applyCheckUnreplaced(code, "initSparseConnectivity : merged" + std::to_string(sg.getIndex()));
-                code = ensureFtype(code, model.getPrecision());
-
-                // Write out code
-                os << code << std::endl;
-            }
+            genInitConnectivity(os, popSubs, sg, model.getPrecision(), true);
+        },
+        // Sparse synaptic matrix column connectivity initialisation
+        [&model](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
+        {
+            genInitConnectivity(os, popSubs, sg, model.getPrecision(), false);
         },
         // Sparse synaptic matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)

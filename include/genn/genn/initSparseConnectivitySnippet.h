@@ -18,6 +18,9 @@
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const override{ return CODE; }
 #define SET_ROW_BUILD_STATE_VARS(...) virtual ParamValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }
 
+#define SET_COL_BUILD_CODE(CODE) virtual std::string getColBuildCode() const override{ return CODE; }
+#define SET_COL_BUILD_STATE_VARS(...) virtual ParamValVec getColBuildStateVars() const override{ return __VA_ARGS__; }
+
 #define SET_HOST_INIT_CODE(CODE) virtual std::string getHostInitCode() const override{ return CODE; }
 
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
@@ -45,6 +48,9 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getRowBuildCode() const{ return ""; }
     virtual ParamValVec getRowBuildStateVars() const{ return {}; }
+
+    virtual std::string getColBuildCode() const { return ""; }
+    virtual ParamValVec getColBuildStateVars() const { return {}; }
 
     virtual std::string getHostInitCode() const{ return ""; }
 

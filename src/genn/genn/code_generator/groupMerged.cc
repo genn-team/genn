@@ -875,17 +875,17 @@ CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupM
 //----------------------------------------------------------------------------
 bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
 {
-    const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const std::string paramName = connectivityInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({connectivityInitSnippet->getRowBuildCode()}, paramName, paramIndex,
+    const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const std::string paramName = snippet->getParamNames().at(paramIndex);
+    return isParamValueHeterogeneous({snippet->getRowBuildCode(), snippet->getColBuildCode()}, paramName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
 {
-    const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const std::string derivedParamName = connectivityInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({connectivityInitSnippet->getRowBuildCode()}, derivedParamName, paramIndex,
+    const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const std::string derivedParamName = snippet->getDerivedParams().at(paramIndex).name;
+    return isParamValueHeterogeneous({snippet->getRowBuildCode(), snippet->getColBuildCode()}, derivedParamName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 

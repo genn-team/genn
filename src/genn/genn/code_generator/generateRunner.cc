@@ -934,7 +934,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     for(const auto &s : model.getSynapseGroups()) {
         // If this synapse group isn't a weight sharing slave i.e. it's connectivity isn't initialized on the master
         if(!s.second.isWeightSharingSlave()) {
-            const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
+            const auto *snippet = s.second.getConnectivityInitialiser().getSnippet();
+            const bool autoInitialized = !snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty();
 
             if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
