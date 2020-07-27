@@ -939,9 +939,18 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
             if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                   runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
-                                   s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
+                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                        "uint32_t", "gp" + s.second.getName(), s.second.getSparseConnectivityLocation(), gpSize);
+
+                // Generate push and pull functions for bitmask
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                    backend.isAutomaticCopyEnabled(), s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+                                    [&]()
+                                    {
+                                        // Row lengths
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
+                                                                    s.second.getSparseConnectivityLocation(), autoInitialized, gpSize);
+                                    });
             }
             else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 const VarLocation varLoc = s.second.getSparseConnectivityLocation();
