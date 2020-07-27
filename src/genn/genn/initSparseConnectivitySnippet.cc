@@ -7,6 +7,7 @@ IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedProbability);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPostWithReplacement);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement);
+IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement);
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base

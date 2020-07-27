@@ -345,4 +345,45 @@ public:
             return binomialInverseCDF(quantile, (unsigned int)pars[0], (double)numPre / ((double)numPre * (double)numPost));
         });
 };
+
+
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::FixedNumberPreWithReplacement
+//----------------------------------------------------------------------------
+//! Initialises connectivity with a fixed number of random synapses per column.
+/*! No need for ordering here so fine to sample directly from uniform distribution */
+class FixedNumberPreWithReplacement : public Base
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement, 1);
+
+    SET_ROW_BUILD_CODE(
+        "if(c == 0) {\n"
+        "   $(endCol);\n"
+        "}\n"
+        "const unsigned int idPre = (unsigned int)ceil($(gennrand_uniform) * $(num_pre)) - 1;"
+        "$(addSynapse, idPre + $(id_pre_begin));\n"
+        "c--;\n");
+    SET_ROW_BUILD_STATE_VARS({{"c", "unsigned int", "$(colLength)"}});
+
+    SET_PARAM_NAMES({"colLength"});
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPre times
+            const double quantile = pow(0.9999, 1.0 / (double)numPre);
+
+            // In each column the number of connections that end up in a row are distributed
+            // binomially with n=numConnections and p=1.0 / numPre. As there are numPost columns the total number
+            // of connections that end up in each row are distributed binomially with n=numConnections * numPost and p=1.0 / numPre
+            return binomialInverseCDF(quantile, (unsigned int)pars[0] * numPost, 1.0 / (double)numPre);
+        });
+
+    SET_CALC_MAX_COL_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[0];
+        });
+};
 }   // namespace InitVarSnippet
