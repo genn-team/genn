@@ -1065,7 +1065,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                                                         "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
                         }
                         else {
-                            assert(false);
+                            throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
                         }
 
                         // If this connectivity requires an RNG for initialisation,
@@ -1120,10 +1120,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                         else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             // Build function template to atomically increment correct row length and insert synapse into ind array
                             popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "{const unsigned int idx = atomicAdd(&group->rowLength[$(0)], 1); group->ind[(($(0)) * group->rowStride) + idx] = " + popSubs["id_post"]  + ";}");
+                                                        "group->ind[(($(0)) * group->rowStride) + atomicAdd(&group->rowLength[$(0)], 1)] = " + popSubs["id_post"]);
                         }
                         else {
-                            assert(false);
+                            throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
                         }
 
                         // If this connectivity requires an RNG for initialisation,
