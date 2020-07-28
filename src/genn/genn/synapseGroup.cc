@@ -564,6 +564,15 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
        && (getTrgNeuronGroup()->getNumDelaySlots() == other.getTrgNeuronGroup()->getNumDelaySlots())
        && (getMatrixType() == other.getMatrixType()))
     {
+        // If weights are procedural and any of the variable's initialisers can't be merged, return false
+        if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+            for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
+                if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
+                    return false;
+                }
+            }
+        }
+
         // If connectivity is either non-procedural or connectivity initialisers can be merged
         if(!(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
            || getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser()))
