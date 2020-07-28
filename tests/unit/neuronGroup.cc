@@ -59,6 +59,47 @@ public:
 };
 IMPLEMENT_MODEL(AlphaCurr);
 
+class LIFAdditional : public NeuronModels::Base
+{
+public:
+    DECLARE_MODEL(LIFAdditional, 7, 2);
+
+    SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", "$(Ioffset)"}});
+    SET_SIM_CODE(
+        "if ($(RefracTime) <= 0.0) {\n"
+        "  scalar alpha = ($(Isyn2) * $(Rmembrane)) + $(Vrest);\n"
+        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "}\n"
+        "else {\n"
+        "  $(RefracTime) -= DT;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+
+    SET_RESET_CODE(
+        "$(V) = $(Vreset);\n"
+        "$(RefracTime) = $(TauRefrac);\n");
+
+    SET_PARAM_NAMES({
+        "C",          // Membrane capacitance
+        "TauM",       // Membrane time constant [ms]
+        "Vrest",      // Resting membrane potential [mV]
+        "Vreset",     // Reset voltage [mV]
+        "Vthresh",    // Spiking threshold [mV]
+        "Ioffset",    // Offset current
+        "TauRefrac"});
+
+    SET_DERIVED_PARAMS({
+        {"ExpTC", [](const std::vector<double> &pars, double dt) { return std::exp(-dt / pars[1]); }},
+        {"Rmembrane", [](const std::vector<double> &pars, double) { return  pars[1] / pars[0]; }}});
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+IMPLEMENT_MODEL(LIFAdditional);
+
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
@@ -167,6 +208,46 @@ TEST(NeuronGroup, CompareNeuronModels)
     ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous(0, 1));
     ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous(1, 0));
 }
+
+TEST(NeuronGroup, CompareHeterogeneousParamVarState)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    LIFAdditional::ParamValues paramValsA(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::ParamValues paramValsB(0.25, 10.0, 0.0, 0.0, 20.0, 1.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+    auto *ng0 = model.addNeuronPopulation<LIFAdditional>("Neurons0", 10, paramValsA, varVals);
+    auto *ng1 = model.addNeuronPopulation<LIFAdditional>("Neurons1", 10, paramValsB, varVals);
+
+    model.finalize();
+
+    // Check that all groups can be merged
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
+    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
+    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 1);
+
+    // Check that only 'Ioffset' parameter is heterogeneous in neuron update group
+    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(1));
+    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(2));
+    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(3));
+    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(4));
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(5));
+    ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(6));
+}
+
 
 TEST(NeuronGroup, CompareCurrentSources)
 {
