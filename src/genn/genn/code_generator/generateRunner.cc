@@ -436,9 +436,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // write DT macro
     const ModelSpecInternal &model = modelMerged.getModel();
     if (model.getTimePrecision() == "float") {
-        definitions << "#define DT " << std::to_string(model.getDT()) << "f" << std::endl;
+        definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << "f" << std::endl;
     } else {
-        definitions << "#define DT " << std::to_string(model.getDT()) << std::endl;
+        definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << std::endl;
     }
 
     // Typedefine scalar type

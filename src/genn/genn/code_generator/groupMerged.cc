@@ -876,16 +876,40 @@ CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupM
 bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
 {
     const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const auto rowBuildStateVars = snippet->getRowBuildStateVars();
+    const auto colBuildStateVars = snippet->getColBuildStateVars();
+
+    // Build list of code strings containing row and column build code
+    std::vector<std::string> codeStrings{snippet->getRowBuildCode(), snippet->getColBuildCode()};
+
+    // Add any row build state variable values
+    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+    std::transform(colBuildStateVars.cbegin(), colBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
     const std::string paramName = snippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({snippet->getRowBuildCode(), snippet->getColBuildCode()}, paramName, paramIndex,
+    return isParamValueHeterogeneous(codeStrings, paramName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
 {
     const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const auto rowBuildStateVars = snippet->getRowBuildStateVars();
+    const auto colBuildStateVars = snippet->getColBuildStateVars();
+
+    // Build list of code strings containing row and column build code
+    std::vector<std::string> codeStrings{snippet->getRowBuildCode(), snippet->getColBuildCode()};
+
+    // Add any row build state variable values
+    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+    std::transform(colBuildStateVars.cbegin(), colBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
     const std::string derivedParamName = snippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({snippet->getRowBuildCode(), snippet->getColBuildCode()}, derivedParamName, paramIndex,
+    return isParamValueHeterogeneous(codeStrings, derivedParamName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 
@@ -990,16 +1014,30 @@ bool CodeGenerator::SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous
 bool CodeGenerator::SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
 {
     const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const auto rowBuildStateVars = connectivityInitSnippet->getRowBuildStateVars();
+
+    // Build list of code strings containing row build code and any row build state variable values
+    std::vector<std::string> codeStrings{connectivityInitSnippet->getRowBuildCode()};
+    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
     const std::string paramName = connectivityInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous({connectivityInitSnippet->getRowBuildCode()}, paramName, paramIndex,
+    return isParamValueHeterogeneous(codeStrings, paramName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
 {
     const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const auto rowBuildStateVars = connectivityInitSnippet->getRowBuildStateVars();
+
+    // Build list of code strings containing row build code and any row build state variable values
+    std::vector<std::string> codeStrings{connectivityInitSnippet->getRowBuildCode()};
+    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
     const std::string derivedParamName = connectivityInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous({connectivityInitSnippet->getRowBuildCode()}, derivedParamName, paramIndex,
+    return isParamValueHeterogeneous(codeStrings, derivedParamName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
