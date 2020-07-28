@@ -430,6 +430,55 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
 }
 
+TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+
+    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues fixedNumberPostParamsA(4);
+    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues fixedNumberPostParamsB(8);
+    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                                                                                                           "Neurons0", "Neurons1",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumberPostParamsA));
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                                                                                                           "Neurons0", "Neurons1",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumberPostParamsB));
+    // Finalize model
+    model.finalize();
+
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    ASSERT_TRUE(sg1Internal->canWUBeMerged(*sg0));
+    ASSERT_TRUE(sg1Internal->canWUInitBeMerged(*sg0));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedPostsynapticUpdateGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDynamicsGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
+
+    // Check that fixed number post connectivity row length parameters are heterogeneous
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitParamHeterogeneous(0));
+}
+
 TEST(SynapseGroup, InvalidMatrixTypes)
 {
     ModelSpecInternal model;
