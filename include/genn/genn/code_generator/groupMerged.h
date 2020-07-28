@@ -74,7 +74,7 @@ protected:
 
     //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
-    bool isParamValueHeterogeneous(std::initializer_list<std::string> codeStrings, const std::string &paramName,
+    bool isParamValueHeterogeneous(const std::vector<std::string> &codeStrings, const std::string &paramName,
                                    size_t index, P getParamValuesFn) const
     {
         // If none of the code strings reference the parameter, return false
@@ -226,7 +226,7 @@ protected:
 
 
     template<typename T, typename G>
-    bool isChildParamValueHeterogeneous(std::initializer_list<std::string> codeStrings,
+    bool isChildParamValueHeterogeneous(const std::vector<std::string> &codeStrings,
                                         const std::string &paramName, size_t childIndex, size_t paramIndex,
                                         const std::vector<std::vector<T>> &sortedGroupChildren, G getParamValuesFn) const
     {
