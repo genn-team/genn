@@ -151,9 +151,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                             }
                             
                             // If node has OpenCL, add -l option
-                            if(nodeLabel.contains("opencl")) {
-                                runTestArguments += " -l";
-                            }
+                            //if(nodeLabel.contains("opencl")) {
+                            //    runTestArguments += " -l";
+                            //}
                             
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
