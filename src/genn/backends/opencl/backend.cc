@@ -24,7 +24,6 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace 
 {
-//! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<Substitutions::FunctionTemplate> openclLFSRFunctions = {
     {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))"},
     {"gennrand_normal", 0, "normalDistLfsr113($(rng))"},
@@ -463,7 +462,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(idPreNeuronReset > 0 || idStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-            os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            genBuildProgramFlagsString(os);
+            os << "if(neuronUpdateProgram.build(buildProgramFlags.c_str()) != CL_SUCCESS)";
             {
                 CodeStream::Scope b(os);
                 os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -956,7 +956,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         if(idPreSynapseReset > 0 || idPresynapticStart > 0 || idPostsynapticStart > 0 || idSynapseDynamicsStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-            os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            genBuildProgramFlagsString(os);
+            os << "if(synapseUpdateProgram.build(buildProgramFlags.c_str()) != CL_SUCCESS)";
             {
                 CodeStream::Scope b(os);
                 os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -1415,7 +1416,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         if(idInitStart > 0 || idSparseInitStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-            os << "if(initializeProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            genBuildProgramFlagsString(os);
+            os << "if(initializeProgram.build(buildProgramFlags.c_str()) != CL_SUCCESS)";
             {
                 CodeStream::Scope b(os);
                 os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -1614,26 +1616,32 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "// OpenCL functions declaration" << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "const char* clGetErrorString(cl_int error);" << std::endl;
+    os << "std::string getCodeDirectory();" << std::endl;
 
     os << std::endl;
 
     // Declaration of OpenCL variables
     os << "// OpenCL variables" << std::endl;
-    os << "EXPORT_VAR cl::Context clContext;" << std::endl;
-    os << "EXPORT_VAR cl::Device clDevice;" << std::endl;
-    os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
+    os << "extern cl::Context clContext;" << std::endl;
+    os << "extern cl::Device clDevice;" << std::endl;
+    os << "extern cl::CommandQueue commandQueue;" << std::endl;
     os << std::endl;
 
     os << "// OpenCL program initialization functions" << std::endl;
-    os << "EXPORT_FUNC void buildInitializeProgram();" << std::endl;
-    os << "EXPORT_FUNC void buildNeuronUpdateProgram();" << std::endl;
-    os << "EXPORT_FUNC void buildSynapseUpdateProgram();" << std::endl;
+    os << "void buildInitializeProgram();" << std::endl;
+    os << "void buildNeuronUpdateProgram();" << std::endl;
+    os << "void buildSynapseUpdateProgram();" << std::endl;
     
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
+#ifdef _WIN32
+    os << "#include <windows.h>" << std::endl;
+#endif
+    os << std::endl;
+
     // Generating OpenCL variables for the runner
     os << "// OpenCL variables" << std::endl;
     os << "cl::Context clContext;" << std::endl;
@@ -1719,6 +1727,40 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
             #undef GEN_CL_ERROR_CASE
             #undef STRINGIFY
         }
+    }
+    os << std::endl;
+
+    os << "// Get OpenCL error as string" << std::endl;
+    os << "std::string getCodeDirectory()";
+    {
+        CodeStream::Scope b(os);
+#ifdef _WIN32
+        os << "HMODULE hm = NULL;" << std::endl;
+        os << "if(GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT," << std::endl;
+        os << "                     (LPCSTR)&getCodeDirectory, &hm) == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"GetModuleHandle failed with error:\" + std::to_string(GetLastError()));" << std::endl;
+        }
+        os << "char libraryPathRaw[MAX_PATH];" << std::endl;
+        os << "if(GetModuleFileName(hm, libraryPathRaw, MAX_PATH) == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"GetModuleFileName failed with error:\" + std::to_string(GetLastError()));" << std::endl;
+        }
+
+        // Convert library path to std::string
+        os << "std::string libraryPath(libraryPathRaw);" << std::endl;
+
+        // Replace backslashes with slashes
+        os << "std::replace(libraryPath.begin(), libraryPath.end(), '\\\\', '/');" << std::endl;
+
+        // Remove library filename from end of library path
+        os << "libraryPath = libraryPath.substr(0, libraryPath.find_last_of('/'));" << std::endl;
+
+        // Return code directory
+        os << "return libraryPath + \"/" << modelMerged.getModel().getName() << "_CODE\";" << std::endl;
+#endif
     }
     os << std::endl;
 }
@@ -2525,8 +2567,6 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "#define SUPPORT_CODE_FUNC" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
-   
-    
     // Generate non-uniform generators for each supported RNG type
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Non-uniform generators" << std::endl;
@@ -2624,6 +2664,15 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genBuildProgramFlagsString(CodeStream &os) const
+{
+    os << "const std::string buildProgramFlags = \"-cl-std=CL1.2 -I \" + getCodeDirectory() + \"/opencl/clRNG/include";
+    if(m_Preferences.optimizeCode) {
+        os << " -cl-fast-relaxed-math";
+    }
+    os << "\";" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::addDeviceType(const std::string &type, size_t size)
 {
     addType(type, size);
@@ -2646,16 +2695,6 @@ void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream 
     for(size_t i = 0; i < parts; i++) {
         os << "R\"(" << kernelStr.substr(i * partLength, partLength) << ")\"" << std::endl;
     }
-}
-//--------------------------------------------------------------------------
-std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) const
-{
-    // **YUCK** add two include paths so model can be build from parent directory or code directory
-    std::string flags = "-cl-std=CL1.2 -I " + modelMerged.getModel().getName() + "_CODE/opencl/clRNG/include -I opencl/clRNG/include";
-    if(m_Preferences.optimizeCode) {
-        flags += " -cl-fast-relaxed-math";
-    }
-    return flags;
 }
 //--------------------------------------------------------------------------
 bool Backend::isChosenDeviceAMD() const

@@ -518,6 +518,9 @@ private:
 
     void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const;
 
+    //! Build a string called "buildProgramFlags" containing flags to pass to cl::Program::build
+    void genBuildProgramFlagsString(CodeStream &os) const;
+
     //! Adds a type - both to backend base's list of sized types but also to device types set
     void addDeviceType(const std::string &type, size_t size);
 
@@ -525,9 +528,6 @@ private:
     bool isDeviceType(const std::string &type) const;
 
     void divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const;
-
-    //! Get arguments to pass to cl::Program::build
-    std::string getBuildProgramFlags(const ModelSpecMerged &modelMerged) const;
 
     //! Tests whether chosen device is AMD    
     bool isChosenDeviceAMD() const;
