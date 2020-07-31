@@ -1638,9 +1638,13 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 {
 #ifdef _WIN32
     os << "#include <windows.h>" << std::endl;
-#elif defined(__linux__)
+#else
     os << "#include <dlfcn.h>" << std::endl;
+#ifdef __APPLE__
+    os << "#include <sys/syslimits.h>" << std::endl;
+#else
     os << "#include <linux/limits.h>" << std::endl;
+#endif
 #endif
     os << std::endl;
 
@@ -1765,7 +1769,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
         // Return code directory
         os << "return libraryPath + \"/" << modelMerged.getModel().getName() << "_CODE\";" << std::endl;
-#elif defined(__linux__)
+#else
         // Suppress unused parameters
         (void)(modelMerged);
 
