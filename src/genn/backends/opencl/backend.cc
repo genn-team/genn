@@ -1617,7 +1617,6 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "const char* clGetErrorString(cl_int error);" << std::endl;
     os << "std::string getAbsoluteCodePath();" << std::endl;
-
     os << std::endl;
 
     // Declaration of OpenCL variables
@@ -1639,6 +1638,9 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 {
 #ifdef _WIN32
     os << "#include <windows.h>" << std::endl;
+#elif defined(__linux__)
+    os << "#include <dlfcn.h>" << std::endl;
+    os << "#include <linux/limits.h>" << std::endl;
 #endif
     os << std::endl;
 
@@ -1735,6 +1737,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     {
         CodeStream::Scope b(os);
 #ifdef _WIN32
+        // Find the module i.e. dll within which this function appears
         os << "HMODULE hm = NULL;" << std::endl;
         os << "if(GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT," << std::endl;
         os << "                     (LPCSTR)&getAbsoluteCodePath, &hm) == 0)";
@@ -1742,6 +1745,8 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
             CodeStream::Scope b(os);
             os << "throw std::runtime_error(\"GetModuleHandle failed with error:\" + std::to_string(GetLastError()));" << std::endl;
         }
+
+        // Get the path to this module
         os << "char libraryPathRaw[MAX_PATH];" << std::endl;
         os << "if(GetModuleFileName(hm, libraryPathRaw, MAX_PATH) == 0)";
         {
@@ -1760,6 +1765,29 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
         // Return code directory
         os << "return libraryPath + \"/" << modelMerged.getModel().getName() << "_CODE\";" << std::endl;
+#elif defined(__linux__)
+        // Suppress unused parameters
+        (void)(modelMerged);
+
+        // Get info about dynamic library this function is in
+        os << "Dl_info dlInfo;" << std::endl;
+        os << "if(dladdr((void*)&getAbsoluteCodePath, &dlInfo) == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"dladdr failed with error:\" + std::string(dlerror()));" << std::endl;
+        }
+
+        os << "char libraryPathRaw[PATH_MAX];" << std::endl;
+        os << "if(realpath(dlInfo.dli_fname, libraryPathRaw) == nullptr)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"realpath failed with error:\" + std::to_string(errno));" << std::endl;
+        }
+        // Convert library path to std::string
+        os << "std::string libraryPath(libraryPathRaw);" << std::endl;
+
+        // Remove library filename from end of library path and return
+        os << "return libraryPath.substr(0, libraryPath.find_last_of('/'));" << std::endl;
 #endif
     }
     os << std::endl;
