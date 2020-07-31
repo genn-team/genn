@@ -235,7 +235,6 @@ void PostSpan::genCode(CodeStream &os, const ModelSpecMerged &modelMerged, const
 
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << workGroupSize << " - 1) / " << workGroupSize << ";" << std::endl;
 
-    const auto *wu = sg.getArchetype().getWUModel();
     os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
         CodeStream::Scope b(os);
