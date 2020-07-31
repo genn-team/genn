@@ -15,14 +15,11 @@
 // Include windows.h for get
 #ifdef _WIN32
 #include <windows.h>
-#else
+#endif
 
 // Include suitable header to find PATH_MAX in
 #ifdef __APPLE__
-#include <sys/syslimits.h>
-#else
-#include <linux/limits.h>
-#endif
+#include <mach-o/dyld.h>
 #endif
 
 // Filesystem includes
@@ -598,8 +595,20 @@ int main(int argc, char *argv[])
         }
 
         // Bin directory is therefore the parent path of executable
-        const auto binPath = filesystem::path(executablePathRaw).parent_path();
-        
+        const filesystem::path binPath(executablePathRaw).parent_path();
+#elif defined(__APPLE__)
+        // Get executable path
+        char executablePathRaw[PATH_MAX]
+        uint32_t size = PATH_MAX;
+        if(_NSGetExecutablePath(executablePathRaw, &size) != 0) {
+            throw std::runtime_error("_NSGetExecutablePath failed");
+        }
+
+        // Make path absolute and get its parent
+        const filesystem::path binPath = filesystem::path(executablePathRaw).make_absolute().parent_path();
+#else
+        // Resolve /proc/self/exe and get its parent
+        const filesystem::path binPath = filesystem::path("/proc/self/exe").make_absolute().parent_path();
 #endif
         // Build share path
         const auto sharePath = (binPath / ".." / "share" / "genn").make_absolute();
