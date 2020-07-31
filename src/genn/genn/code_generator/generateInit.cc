@@ -250,6 +250,15 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                     });
             }
 
+            // If neuron group requires delays, zero spike queue pointer
+            if(ng.getArchetype().isDelayRequired()) {
+                backend.genPopVariableInit(os, popSubs,
+                    [](CodeStream &os, Substitutions &)
+                    {
+                        os << "*group->spkQuePtr = 0;" << std::endl;
+                    });
+            }
+
             // Initialise neuron variables
             genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "", "numNeurons",
                                  ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
@@ -283,6 +292,13 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                 const std::string denDelayIndex = "(d * group->numNeurons) + " + varSubs["id"];
                                 os << "group->denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
                             }
+                        });
+
+                    // Zero dendritic delay pointer
+                    backend.genPopVariableInit(os, popSubs,
+                        [i](CodeStream &os, Substitutions &)
+                        {
+                            os << "*group->denDelayPtrInSyn" << i << " = 0;" << std::endl;
                         });
                 }
 

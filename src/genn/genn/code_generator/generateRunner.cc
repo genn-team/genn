@@ -67,18 +67,18 @@ void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpik
     os << std::endl << std::endl;
 }
 //--------------------------------------------------------------------------
-void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl, const std::string &type, const std::string &name)
+void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl, const std::string &type, const std::string &name, const std::string &value)
 {
     definitionsVar << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-    runnerVarDecl << type << " " << name << ";" << std::endl;
+    runnerVarDecl << type << " " << name << " = " << value << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 MemAlloc genHostDeviceScalar(const BackendBase &backend, CodeStream &definitionsVar, CodeStream &definitionsInternalVar, 
                          CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree,
-                         const std::string &type, const std::string &name)
+                         const std::string &type, const std::string &name, const std::string &hostValue)
 {
     // Generate a host scalar
-    genHostScalar(definitionsVar, runnerVarDecl, type, name);
+    genHostScalar(definitionsVar, runnerVarDecl, type, name, hostValue);
 
     // Generate a single-element array on device
     if(backend.isDeviceScalarRequired()) {
@@ -525,12 +525,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Generate variables to store total elapsed time
     // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "initTime");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "initSparseTime");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "neuronUpdateTime");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "presynapticUpdateTime");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "postsynapticUpdateTime");
-    genHostScalar(definitionsVar, runnerVarDecl, "double", "synapseDynamicsTime");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "initTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "initSparseTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "neuronUpdateTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "presynapticUpdateTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "postsynapticUpdateTime", "0.0");
+    genHostScalar(definitionsVar, runnerVarDecl, "double", "synapseDynamicsTime", "0.0");
 
     
     // If timing is actually enabled
@@ -740,7 +740,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         // If neuron group has axonal delays
         if (n.second.isDelayRequired()) {
             mem += genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                       "unsigned int", "spkQuePtr" + n.first);
+                                       "unsigned int", "spkQuePtr" + n.first, "0");
         }
 
         // If neuron group needs to record its spike times
@@ -886,7 +886,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                         model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayLocation(),
                                         (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons());
                 mem += genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                           "unsigned int", "denDelayPtr" + sg->getPSModelTargetName());
+                                           "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), "0");
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
