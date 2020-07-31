@@ -1616,7 +1616,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "// OpenCL functions declaration" << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "const char* clGetErrorString(cl_int error);" << std::endl;
-    os << "std::string getCodeDirectory();" << std::endl;
+    os << "std::string getAbsoluteCodePath();" << std::endl;
 
     os << std::endl;
 
@@ -1731,13 +1731,13 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << std::endl;
 
     os << "// Get OpenCL error as string" << std::endl;
-    os << "std::string getCodeDirectory()";
+    os << "std::string getAbsoluteCodePath()";
     {
         CodeStream::Scope b(os);
 #ifdef _WIN32
         os << "HMODULE hm = NULL;" << std::endl;
         os << "if(GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT," << std::endl;
-        os << "                     (LPCSTR)&getCodeDirectory, &hm) == 0)";
+        os << "                     (LPCSTR)&getAbsoluteCodePath, &hm) == 0)";
         {
             CodeStream::Scope b(os);
             os << "throw std::runtime_error(\"GetModuleHandle failed with error:\" + std::to_string(GetLastError()));" << std::endl;
@@ -2666,7 +2666,7 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 //--------------------------------------------------------------------------
 void Backend::genBuildProgramFlagsString(CodeStream &os) const
 {
-    os << "const std::string buildProgramFlags = \"-cl-std=CL1.2 -I \" + getCodeDirectory() + \"/opencl/clRNG/include";
+    os << "const std::string buildProgramFlags = \"-cl-std=CL1.2 -I \" + getAbsoluteCodePath() + \"/opencl/clRNG/include";
     if(m_Preferences.optimizeCode) {
         os << " -cl-fast-relaxed-math";
     }
