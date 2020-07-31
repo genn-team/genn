@@ -598,7 +598,7 @@ int main(int argc, char *argv[])
         const filesystem::path binPath(executablePathRaw).parent_path();
 #elif defined(__APPLE__)
         // Get executable path
-        char executablePathRaw[PATH_MAX]
+        char executablePathRaw[PATH_MAX];
         uint32_t size = PATH_MAX;
         if(_NSGetExecutablePath(executablePathRaw, &size) != 0) {
             throw std::runtime_error("_NSGetExecutablePath failed");
