@@ -368,13 +368,8 @@ void CodeGenerator::generateInit(CodeStream &os, const MergedStructData &mergedS
 
             // Initialise row building state variables and loop on generated code to initialise sparse connectivity
             os << "// Build sparse connectivity" << std::endl;
-            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                // Apply substitutions to value
-                std::string value = a.value;
-                popSubs.applyCheckUnreplaced(value, "initSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
-
-                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
-            }
+            genParamValVecInit(os, popSubs, connectInit.getSnippet()->getRowBuildStateVars(),
+                               "initSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
             os << "while(true)";
             {
                 CodeStream::Scope b(os);

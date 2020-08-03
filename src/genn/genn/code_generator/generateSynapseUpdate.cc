@@ -194,13 +194,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, const MergedStructData
             baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group.");
 
             // Initialise row building state variables for procedural connectivity
-            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
-                // Apply substitutions to value
-                std::string value = a.value;
-                baseSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
-
-                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
-            }
+            genParamValVecInit(os, baseSubs, connectInit.getSnippet()->getRowBuildStateVars(),
+                               "proceduralSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
 
             // Loop through synapses in row
             os << "while(true)";

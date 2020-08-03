@@ -121,6 +121,9 @@ inline size_t padSize(size_t size, size_t blockSize)
     return ceilDivide(size, blockSize) * blockSize;
 }
 
+void genParamValVecInit(CodeStream &os, const CodeGenerator::Substitutions &subs, const Snippet::Base::ParamValVec &paramValVec, 
+                        const std::string &errorContext, bool constant = false);
+
 template<typename T>
 void genMergedGroupPush(CodeStream &os, const std::vector<T> &groups, const MergedStructData &mergedStructData,
                         const std::string &suffix, const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
