@@ -1,4 +1,14 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.3.2 (PyGeNN 0.4.2)
+====
+This release fixes several small issues found in the 4.3.1 release.
+
+Bug fixes:
+----
+1. Fixed bug when simulating models with very small timesteps.
+2. Fixed bug in code generator where synapse groups with procedural variables could be incorrectly merged.
+3. Fixed bug in code generator where references to parameters in sparse connectivity initialisation snippet row build state variables were not found.
+
 Release Notes for GeNN v4.3.1 (PyGeNN 0.4.1)
 ====
 This release fixes several small issues found in the 4.3.0 release.
