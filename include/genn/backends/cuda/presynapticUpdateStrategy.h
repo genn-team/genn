@@ -41,8 +41,8 @@ public:
     //! Is this presynaptic update strategy compatible with a given synapse group?
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const = 0;
 
-    //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const = 0;
+    //! How many bytes of shared memory per thread does this strategy require
+    virtual size_t getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const = 0;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const = 0;
@@ -78,7 +78,7 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
@@ -114,7 +114,7 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
@@ -158,7 +158,7 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
@@ -194,7 +194,7 @@ public:
     virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getNumSharedMemoryBytesPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;

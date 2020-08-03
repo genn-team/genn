@@ -347,17 +347,24 @@ void functionSubstitute(std::string &code, const std::string &funcName,
 }
 
 void genParamValVecInit(CodeStream &os, const CodeGenerator::Substitutions &subs, const Snippet::Base::ParamValVec &paramValVec,
-                        const std::string &errorContext, bool constant)
+                        const std::string &errorContext, bool constant, bool definition, 
+                        const std::string &prefix, const std::string &suffix)
 {
     for(const auto &a : paramValVec) {
         // Apply substitutions to value
         std::string value = a.value;
         subs.applyCheckUnreplaced(value, errorContext);
 
-        if(constant) {
-            os << "const ";
+        // If this is a definition write type
+        if(definition) {
+            if(constant) {
+                os << "const ";
+            }
+            os << a.type << " ";
         }
-        os << a.type << " " << a.name << " = " << value << ";" << std::endl;
+
+        // Write var = value
+        os << prefix << a.name << suffix << " = " << value << ";" << std::endl;
     }
 }
 

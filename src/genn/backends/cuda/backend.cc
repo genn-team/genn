@@ -492,21 +492,20 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
             os << "const unsigned int id = " << m_KernelBlockSizes[KernelPresynapticUpdate] << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-            // We need shLg if any synapse groups accumulate into shared memory
-            // Determine the maximum shared memory outputs 
-            size_t maxSharedMemPerThread = 0;
+            // Get the maximum number of bytes of shared memory required
+            size_t maxSharedMemBytesPerThread = 0;
             for (const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
-                maxSharedMemPerThread = std::max(maxSharedMemPerThread,
-                                                 getPresynapticUpdateStrategy(s.getArchetype())->getSharedMemoryPerThread(s, *this));
+                maxSharedMemBytesPerThread = std::max(maxSharedMemBytesPerThread,
+                                                      getPresynapticUpdateStrategy(s.getArchetype())->getNumSharedMemoryBytesPerThread(s, *this));
             }
 
             // If any shared memory is required, declare array
-            if(maxSharedMemPerThread > 0) {
-                os << "__shared__ " << model.getPrecision() << " shLg[" << maxSharedMemPerThread * m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
+            if(maxSharedMemBytesPerThread > 0) {
+                os << "__shared__ uint8_t shBlockMem[" << maxSharedMemBytesPerThread * m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
             }
 
             // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
+            /*if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
                            [&model](const PresynapticUpdateGroupMerged &s)
                            {
                                return (s.getArchetype().getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
@@ -529,7 +528,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                            [](const PresynapticUpdateGroupMerged &s){ return (s.getArchetype().isSpikeEventRequired()); }))
             {
                 os << "__shared__ unsigned int shSpkEvnt[" << m_KernelBlockSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
+            }*/
 
             // Parallelise over presynaptic update groups
             genParallelGroup<PresynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", idPresynapticStart,

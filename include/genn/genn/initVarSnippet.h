@@ -7,6 +7,9 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_CODE(CODE) virtual std::string getCode() const override{ return CODE; }
+#define SET_GROUP_PARAMS(...) virtual ParamValVec getGroupParams() const override{ return __VA_ARGS__; }
+#define SET_PRE_PARAMS(...) virtual ParamValVec getPreParams() const override{ return __VA_ARGS__; }
+#define SET_POST_PARAMS(...) virtual ParamValVec getPostParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
 // InitVarSnippet::Base
@@ -21,6 +24,15 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getCode() const{ return ""; }
+    
+    //! Gets variables which can be initialised once for all synapses in group i.e. outside any loops
+    virtual ParamValVec getGroupParams() const { return {}; }
+
+    //! Gets variables which can be initialised once for each presynaptic neuron
+    virtual ParamValVec getPreParams() const { return {}; }
+
+    //! Gets variables which can be initialised once for each postsynaptic neuron
+    virtual ParamValVec getPostParams() const { return {}; }
 
     //----------------------------------------------------------------------------
     // Public API
