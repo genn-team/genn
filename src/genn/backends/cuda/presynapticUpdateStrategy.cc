@@ -424,7 +424,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
 
                     // Add substitutions for parameters to group
                     groupSubs.addVarNameSubstitution(varInit.getSnippet()->getPreParams(), "", 
-                                                     "sh" + vars[k].name, "[threadIdx.x]");
+                                                     "sh" + vars[k].name, "[j]");
                 }
             }
         }
