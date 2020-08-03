@@ -1152,6 +1152,9 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
                                          derived_params=None,
                                          var_init_code=None, 
                                          extra_global_params=None,
+                                         group_params=None,
+                                         pre_params=None,
+                                         post_params=None,
                                          custom_body=None):
     """This helper function creates a custom InitVarSnippet class.
     See also:
@@ -1188,7 +1191,22 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
         body["get_extra_global_params"] = \
             lambda self: EGPVector([EGP(egp[0], egp[1])
                                     for egp in extra_global_params])
-
+    
+    if group_params is not None:
+        body["get_group_params"] = \
+            lambda self: ParamValVector([ParamVal(p[0], p[1], p[2])
+                                         for p in group_params])
+    
+    if pre_params is not None:
+        body["get_pre_params"] = \
+            lambda self: ParamValVector([ParamVal(p[0], p[1], p[2])
+                                         for p in pre_params])
+    
+    if post_params is not None:
+        body["get_post_params"] = \
+            lambda self: ParamValVector([ParamVal(p[0], p[1], p[2])
+                                         for p in post_params])
+                                         
     if custom_body is not None:
         body.update(custom_body)
 
