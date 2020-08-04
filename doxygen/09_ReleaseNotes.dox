@@ -8,6 +8,8 @@ Bug fixes:
 1. Fixed bug when simulating models with very small timesteps.
 2. Fixed bug in code generator where synapse groups with procedural variables could be incorrectly merged.
 3. Fixed bug in code generator where references to parameters in sparse connectivity initialisation snippet row build state variables were not found.
+4. Fixed issue with PyGeNN and custom sparse connectivity init snippets that led to segfaults.
+5. Fixed bug that prevented PyGeNN being used with procedural connectivity.
 
 Release Notes for GeNN v4.3.1 (PyGeNN 0.4.1)
 ====
