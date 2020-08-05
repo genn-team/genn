@@ -211,8 +211,8 @@ public:
 
         // Add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
-        const size_t arraySize = padSize(structSize, largestFieldSize) * getMergedGroup().getGroups().size();
-        mergedStructData.addMergedGroupSize(name, mergedGroupIndex, arraySize);
+        const size_t paddedStructSize = padSize(structSize, largestFieldSize);
+        mergedStructData.addMergedGroupSize(name, mergedGroupIndex, paddedStructSize * getMergedGroup().getGroups().size());
 
         // Declare array of these structs containing individual neuron group pointers etc
         runnerVarDecl << "Merged" << name << "Group" << mergedGroupIndex << " merged" << name << "Group" << mergedGroupIndex << "[" << getMergedGroup().getGroups().size() << "];" << std::endl;
@@ -245,6 +245,12 @@ public:
             // Then generate call to function to copy local array to device
             runnerMergedStructAlloc << "pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(merged" << name << "Group" << mergedGroupIndex << ");" << std::endl;
 
+            // Add code to check size of structure
+            runnerMergedStructAlloc << "if(sizeof(Merged" << name << "Group" << mergedGroupIndex << ") > " << paddedStructSize << ")";
+            {
+                CodeStream::Scope b(runnerMergedStructAlloc);
+                runnerMergedStructAlloc << "printf(\"WARNING: Merged" << name << "Group" << mergedGroupIndex << " struct is larger than calculated\\n\");" << std::endl;
+            }
             // Finally add declaration to function to definitions internal
             definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << mergedGroupIndex << "ToDevice(const Merged" << name << "Group" << mergedGroupIndex << " *group);" << std::endl;
         }
