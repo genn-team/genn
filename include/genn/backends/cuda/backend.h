@@ -364,6 +364,8 @@ private:
         }
     }
 
+    //! Get the safe amount of constant cache we can use
+    size_t getChosenDeviceSafeConstMemBytes() const;
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
