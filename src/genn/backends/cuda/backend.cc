@@ -209,7 +209,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
-    size_t totalConstMem = (m_ChosenDevice.totalConstMem > synapseGroupStartIDSize) ? (m_ChosenDevice.totalConstMem - synapseGroupStartIDSize) : 0;
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelNeuronUpdate], totalConstMem,
                                   modelMerged.getMergedNeuronUpdateGroups(), "NeuronUpdate",
                                   [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
@@ -432,7 +432,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                HostHandler pushEGPHandler) const
 {
     // Generate data structure for accessing merged groups
-    size_t totalConstMem = m_ChosenDevice.totalConstMem;
+    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
     genMergedKernelDataStructures(os, m_KernelBlockSizes[KernelPresynapticUpdate], totalConstMem,
                                   modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate",
                                   [this](const SynapseGroupInternal &sg)
@@ -2026,7 +2026,7 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
                                      getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
 
     // Return available constant memory and to
-    return {{"__device__ __constant__", (groupStartIDSize > m_ChosenDevice.totalConstMem) ? 0 : (m_ChosenDevice.totalConstMem - groupStartIDSize)},
+    return {{"__device__ __constant__", (groupStartIDSize > getChosenDeviceSafeConstMemBytes()) ? 0 : (getChosenDeviceSafeConstMemBytes() - groupStartIDSize)},
             {"__device__", m_ChosenDevice.totalGlobalMem}};
 }
 //--------------------------------------------------------------------------
