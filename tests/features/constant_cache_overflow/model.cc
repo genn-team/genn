@@ -27,6 +27,8 @@ IMPLEMENT_MODEL(Neuron);
 
 void modelDefinition(ModelSpec &model)
 {
+    GENN_PREFERENCES.generateEmptyStatePushPull = false;
+
     model.setDT(0.1);
     model.setName("constant_cache_overflow");
     model.setDefaultVarLocation(VarLocation::DEVICE);
