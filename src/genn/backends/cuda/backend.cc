@@ -2141,13 +2141,6 @@ void Backend::addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base *stra
     s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
-size_t Backend::getChosenDeviceSafeConstMemBytes() const
-{
-    // Each of the four modules which includes CUDA headers (neuronUpdate, synapseUpdate, init and runner)
-    // Takes 72 bytes of constant memory for a lookup table used by cuRAND.
-    return m_ChosenDevice.totalConstMem - (72 * 4);
-}
-//--------------------------------------------------------------------------
 void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
     os << "const unsigned int spk" << suffix << "Idx = atomicAdd((unsigned int *) &shSpk" << suffix << "Count, 1);" << std::endl;
