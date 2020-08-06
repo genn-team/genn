@@ -21,7 +21,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <UseDebugLibraries  Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
+    <UseDebugLibraries Condition="'$(Configuration)'=='Debug'">true</UseDebugLibraries>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <WholeProgramOptimization Condition="'$(Configuration)'=='Release'">true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
@@ -55,6 +55,7 @@
       <OptimizeReferences Condition="'$(Configuration)'=='Release'">true</OptimizeReferences>
       <AdditionalDependencies Condition="'$(Configuration)'=='Release'">runner_Release.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalDependencies Condition="'$(Configuration)'=='Debug'">runner_Debug.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <StackReserveSize>4194304</StackReserveSize>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
