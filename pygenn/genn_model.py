@@ -87,8 +87,9 @@ class GeNNModel(object):
     This class helps to define, build and run a GeNN model from python
     """
 
-    def __init__(self, precision=None, model_name="GeNNModel",
-                 backend=None, genn_log_level=genn_wrapper.warning,
+    def __init__(self, precision="float", model_name="GeNNModel",
+                 backend=None, time_precision=None,
+                 genn_log_level=genn_wrapper.warning,
                  code_gen_log_level=genn_wrapper.warning,
                  backend_log_level=genn_wrapper.warning,
                  **preference_kwargs):
@@ -99,21 +100,34 @@ class GeNNModel(object):
         model_name      --  string name of the model. Defaults to "GeNNModel".
         backend         --  string specifying name of backend module to use
                             Defaults to None to pick 'best' backend for your system
+        time_precision  --  string time precision as string ("float", "double"
+                            or "long double"). defaults to float.
         """
-        precision = "float" if precision is not None else precision
         self._scalar = precision
         if precision == "float":
             genn_float_type = "GENN_FLOAT"
-            self._slm = slm.SharedLibraryModelNumpy_f()
             self._np_type = np.float32
         elif precision == "double":
             genn_float_type = "GENN_DOUBLE"
-            self._slm = slm.SharedLibraryModelNumpy_d()
             self._np_type = np.float64
         else:
             raise ValueError(
                 "Supported precisions are float and double, "
                 "but '{1}' was given".format(precision))
+
+        # **NOTE** all SLM uses precision for is time variable
+        time_precision = precision if time_precision is None else time_precision
+        if time_precision == "float":
+            self._slm = slm.SharedLibraryModelNumpy_f()
+            genn_time_type = "TimePrecision_FLOAT"
+        elif time_precision == "double":
+            print("DOUBLE!")
+            self._slm = slm.SharedLibraryModelNumpy_d()
+            genn_time_type = "TimePrecision_DOUBLE"
+        else:
+            raise ValueError(
+                "Supported time precisions are float and double, "
+                "but '{1}' was given".format(time_precision))
 
         # Initialise GeNN logging
         genn_wrapper.init_logging(genn_log_level, code_gen_log_level)
@@ -125,7 +139,7 @@ class GeNNModel(object):
         self.backend_log_level=backend_log_level
         self._model = genn_wrapper.ModelSpecInternal()
         self._model.set_precision(getattr(genn_wrapper, genn_float_type))
-
+        self._model.set_time_precision(getattr(genn_wrapper, genn_time_type))
         self.default_var_location = genn_wrapper.VarLocation_HOST_DEVICE
         self.model_name = model_name
         self.neuron_populations = {}
