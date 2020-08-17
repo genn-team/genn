@@ -56,7 +56,7 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg, const CUDA::
 //----------------------------------------------------------------------------
 void genSmallSharedMemoryPopPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &)
 {
-    os << "__shared__ " << modelMerged.getModel().getPrecision() << " *shLg = (" << modelMerged.getModel().getPrecision() << "*)&shBlockMem[0];" << std::endl;
+    os << modelMerged.getModel().getPrecision() << " *shLg = (" << modelMerged.getModel().getPrecision() << "*)&shBlockMem[0];" << std::endl;
 
     os << "if(threadIdx.x < group.numTrgNeurons)";
     {
@@ -794,8 +794,8 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const cudaDev
 void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &,
                                   const Substitutions &, const Backend &backend, size_t) const
 {
-    os << "__shared__ " << modelMerged.getModel().getPrecision() << " *shLg = (" << modelMerged.getModel().getPrecision() << "*)&shBlockMem[0];" << std::endl;
-    os << "__shared__ unsigned int *shSpk = (unsigned int*)&shBlockMem[" << (backend.getKernelBlockSize(KernelPresynapticUpdate) * backend.getSize("unsigned int")) << "];" << std::endl;
+    os << modelMerged.getModel().getPrecision() << " *shLg = (" << modelMerged.getModel().getPrecision() << "*)&shBlockMem[0];" << std::endl;
+    os << "unsigned int *shSpk = (unsigned int*)&shBlockMem[" << (backend.getKernelBlockSize(KernelPresynapticUpdate) * backend.getSize("unsigned int")) << "];" << std::endl;
 
     // Loop through bits written by this thread
     for (size_t i = 0; i < 32; i++) {
