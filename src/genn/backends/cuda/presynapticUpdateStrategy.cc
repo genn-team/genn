@@ -577,18 +577,16 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())
             || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && ::Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
         {
-            // Only start using streams after those that may have been used for initialisation
-            const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(modelMerged);
-
             // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
             os << "curandStatePhilox4_32_10_t connectRNG = d_rng;" << std::endl;
             os << "skipahead_sequence((unsigned long long)(";
             if(numThreadsPerSpike > 1) {
-                os << "(preInd * " << numThreadsPerSpike << ") + thread + " << rngStreamOffset;
+                os << "(preInd * " << numThreadsPerSpike << ") + thread";
             }
             else {
-                os << "preInd + " << rngStreamOffset;
+                os << "preInd";
             }
+            os << " + " << connSubs["group_start_id"] << " + " << backend.getNumInitialisationRNGStreams(modelMerged);
             os << "), &connectRNG);" << std::endl;
 
             // Add substitution for connection generation code
