@@ -39,7 +39,7 @@ Example:
             Vs[i,:] = v_view
 """
 # python imports
-from collections import OrderedDict
+from collections import namedtuple, OrderedDict
 from importlib import import_module
 from os import path
 from platform import system
@@ -81,6 +81,7 @@ for b in ["CUDA", "SingleThreadedCPU"]:
     else:
         backend_modules[b] = m
 
+GeNNType = namedtuple("GeNNType", ["np_dtype", "assign_ext_ptr_array", "assign_ext_ptr_single"])
 
 class GeNNModel(object):
     """GeNNModel class
@@ -103,32 +104,32 @@ class GeNNModel(object):
         time_precision  --  string time precision as string ("float", "double"
                             or "long double"). defaults to float.
         """
-        self._scalar = precision
-        if precision == "float":
-            genn_float_type = "GENN_FLOAT"
-            self._np_type = np.float32
-        elif precision == "double":
-            genn_float_type = "GENN_DOUBLE"
-            self._np_type = np.float64
-        else:
-            raise ValueError(
-                "Supported precisions are float and double, "
-                "but '{1}' was given".format(precision))
-
-        # **NOTE** all SLM uses precision for is time variable
+        # Based on time precision, create correct type 
+        # of SLM class and determine GeNN time type 
+        # **NOTE** all SLM uses its template parameter for is time variable
         time_precision = precision if time_precision is None else time_precision
         if time_precision == "float":
             self._slm = slm.SharedLibraryModelNumpy_f()
             genn_time_type = "TimePrecision_FLOAT"
         elif time_precision == "double":
-            print("DOUBLE!")
             self._slm = slm.SharedLibraryModelNumpy_d()
             genn_time_type = "TimePrecision_DOUBLE"
         else:
             raise ValueError(
                 "Supported time precisions are float and double, "
                 "but '{1}' was given".format(time_precision))
-
+        
+        # Store precision in class and determine GeNN scalar type
+        self._scalar = precision
+        if precision == "float":
+            genn_scalar_type = "GENN_FLOAT"
+        elif precision == "double":
+            genn_scalar_type = "GENN_DOUBLE"
+        else:
+            raise ValueError(
+                "Supported precisions are float and double, "
+                "but '{1}' was given".format(precision))
+                
         # Initialise GeNN logging
         genn_wrapper.init_logging(genn_log_level, code_gen_log_level)
 
@@ -138,7 +139,7 @@ class GeNNModel(object):
         self._preferences = preference_kwargs
         self.backend_log_level=backend_log_level
         self._model = genn_wrapper.ModelSpecInternal()
-        self._model.set_precision(getattr(genn_wrapper, genn_float_type))
+        self._model.set_precision(getattr(genn_wrapper, genn_scalar_type))
         self._model.set_time_precision(getattr(genn_wrapper, genn_time_type))
         self.default_var_location = genn_wrapper.VarLocation_HOST_DEVICE
         self.model_name = model_name
@@ -146,6 +147,31 @@ class GeNNModel(object):
         self.synapse_populations = {}
         self.current_sources = {}
         self.dT = 0.1
+        
+        # Build dictionary containing conversions between GeNN C++ types and numpy types
+        self.genn_types = {
+            "float":            GeNNType(np.float32, self._slm.assign_external_pointer_array_f, self._slm.assign_external_pointer_single_f),
+            "double":           GeNNType(np.float64, self._slm.assign_external_pointer_array_d, self._slm.assign_external_pointer_single_d),
+            "int":              GeNNType(np.int32, self._slm.assign_external_pointer_array_i, self._slm.assign_external_pointer_single_i),
+            "unsigned int":     GeNNType(np.uint32, self._slm.assign_external_pointer_array_ui, self._slm.assign_external_pointer_single_ui),
+            "short":            GeNNType(np.int16, self._slm.assign_external_pointer_array_s, self._slm.assign_external_pointer_single_s),
+            "unsigned short":   GeNNType(np.uint16, self._slm.assign_external_pointer_array_us, self._slm.assign_external_pointer_single_us),
+            "char":             GeNNType(np.int8, self._slm.assign_external_pointer_array_sc, self._slm.assign_external_pointer_single_sc),
+            "unsigned char":    GeNNType(np.uint8, self._slm.assign_external_pointer_array_uc, self._slm.assign_external_pointer_single_uc),
+            "uint64_t":         GeNNType(np.uint64, None, None),
+            "int64_t":          GeNNType(np.int64, None, None),
+            "uint32_t":         GeNNType(np.uint32, self._slm.assign_external_pointer_array_ui, self._slm.assign_external_pointer_single_ui),
+            "int32_t":          GeNNType(np.int32, self._slm.assign_external_pointer_array_i, self._slm.assign_external_pointer_single_i),
+            "uint16_t":         GeNNType(np.uint16, self._slm.assign_external_pointer_array_us, self._slm.assign_external_pointer_single_us),
+            "int16_t":          GeNNType(np.int16, self._slm.assign_external_pointer_array_s, self._slm.assign_external_pointer_single_s),
+            "uint8_t":          GeNNType(np.uint8, self._slm.assign_external_pointer_array_uc, self._slm.assign_external_pointer_single_uc),
+            "int8_t":           GeNNType(np.int8, self._slm.assign_external_pointer_array_sc, self._slm.assign_external_pointer_single_sc)}
+        
+        # Add "scalar" type to genn_types - pointing at float or double as appropriate
+        if precision == "float":
+            self.genn_types["scalar"] = self.genn_types["float"]
+        else:
+            self.genn_types["scalar"] = self.genn_types["double"]
 
         # For backward compatibility, if selected GPU is set, remove it from
         # preferences dictionary and add in underlying GeNN preferences
