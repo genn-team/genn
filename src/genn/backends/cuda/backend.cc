@@ -534,7 +534,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             // Parallelise over presynaptic update groups
             genParallelGroup<PresynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), "PresynapticUpdate", idPresynapticStart,
                 [this](const SynapseGroupInternal &sg){ return padSize(getNumPresynapticUpdateThreads(sg, m_ChosenDevice, m_Preferences), m_KernelBlockSizes[KernelPresynapticUpdate]); },
-                [&idPresynapticStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this]
+                [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this]
                 (CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &popSubs)
                 {
                     // Get presynaptic update strategy to use for this synapse group
@@ -553,26 +553,26 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     }
 
                     // Generate preamble
-                    presynapticUpdateStrategy->genPreamble(os, modelMerged, sg, popSubs, *this, idPresynapticStart);
+                    presynapticUpdateStrategy->genPreamble(os, modelMerged, sg, popSubs, *this);
                   
                     // If spike events should be processed
                     if (sg.getArchetype().isSpikeEventRequired()) {
                         CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, false, idPresynapticStart,
+                        presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, false,
                                                              wumThreshHandler, wumEventHandler, wumProceduralConnectHandler);
                     }
 
                     // If true spikes should be processed
                     if (sg.getArchetype().isTrueSpikeRequired()) {
                         CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, true, idPresynapticStart,
+                        presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, true,
                                                              wumThreshHandler, wumSimHandler, wumProceduralConnectHandler);
                     }
 
                     os << std::endl;
 
                     // Generate pre-amble
-                    presynapticUpdateStrategy->genPostamble(os, modelMerged, sg, popSubs, *this, idPresynapticStart);
+                    presynapticUpdateStrategy->genPostamble(os, modelMerged, sg, popSubs, *this);
                 }
             );
         }
