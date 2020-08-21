@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <array>
 #include <unordered_set>
 
 // GeNN includes
@@ -45,7 +46,7 @@ class GENN_EXPORT BackendSIMT : public BackendBase
 public:
     BackendSIMT(const KernelBlockSize &kernelBlockSizes, const PreferencesBase &preferences, 
                 const std::string &scalarType)
-    :   BackendBase(scalarType), m_KernelBlockSizes(kernelBlockSizes), m_Preferences(preferences)
+    :   BackendBase(scalarType, preferences), m_KernelBlockSizes(kernelBlockSizes)
     {}
 
     //------------------------------------------------------------------------
@@ -55,6 +56,33 @@ public:
     virtual std::string getSharedPrefix() const = 0;
     virtual void genSharedMemBarrier(CodeStream &os) const = 0;
     virtual std::string getFloatAtomicAdd(const std::string &ftype, const char *memoryType = "global") const = 0;
+
+    //------------------------------------------------------------------------
+    // BackendBase virtuals
+    //------------------------------------------------------------------------
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
+
+    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
+    //! This function returns this prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
+
+    virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
+                                 const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
+                                           const Substitutions &kernelSubs, Handler handler) const final;
+
+
+    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
+    virtual bool isDeviceScalarRequired() const final { return true; }
+
+    virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const final;
+    virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
+    virtual bool isPopulationRNGRequired() const final { return true; }
+
+    virtual bool isSynRemapRequired() const final { return true; }
+    virtual bool isPostsynapticRemapRequired() const final { return true; }
 
     //------------------------------------------------------------------------
     // Public API
@@ -76,30 +104,41 @@ public:
     /*! This function should be called with strategies in ascending order of preference */
     static void addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Base *strategy);
 
+    //--------------------------------------------------------------------------
+    // Constants
+    //--------------------------------------------------------------------------
+    static const char *KernelNames[KernelMax];
 protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const;
 
-    void genPreSynapseResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPreSynapseResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                     PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                     PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
     void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                      PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const;
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                  PostsynapticUpdateGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
+                                  SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 
-    void genNeuronInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                   NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                                   SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, size_t &idStart) const;
+    void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                             NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
+                             SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, size_t &idStart) const;
    
-    void genSynapseInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                          SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
-                                          size_t numInitializeThreads, size_t &idStart) const;
+    void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                   SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
+                                   size_t numInitializeThreads, size_t &idStart) const;
+
+    //! Adds a type - both to backend base's list of sized types but also to device types set
+    void addDeviceType(const std::string &type, size_t size);
+
+    //! Is type a a device only type?
+    bool isDeviceType(const std::string &type) const;
+
 private:
     //--------------------------------------------------------------------------
     // Type definitions
@@ -182,16 +221,10 @@ private:
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const;
 
-    //! Adds a type - both to backend base's list of sized types but also to device types set
-    void addDeviceType(const std::string &type, size_t size);
-
-    //! Is type a a device only type?
-    bool isDeviceType(const std::string &type) const;
-
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
     {
-        return getPresynapticUpdateStrategy(sg, m_Preferences);
+        return getPresynapticUpdateStrategy(sg, getPreferences());
     }
 
     //--------------------------------------------------------------------------
@@ -205,7 +238,6 @@ private:
     // Members
     //--------------------------------------------------------------------------
     const KernelBlockSize m_KernelBlockSizes;
-    const PreferencesBase m_Preferences;
 
     //! Types that are only supported on device i.e. should never be exposed to user code
     std::unordered_set<std::string> m_DeviceTypes;

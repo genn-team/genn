@@ -1,5 +1,9 @@
 #include "code_generator/backendSIMT.h"
 
+// Standard C++ includes
+#include <algorithm>
+#include <numeric>
+
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"
 
@@ -32,6 +36,90 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
+const char *BackendSIMT::KernelNames[KernelMax] = {
+    "updateNeuronsKernel",
+    "updatePresynapticKernel",
+    "updatePostsynapticKernel",
+    "updateSynapseDynamicsKernel",
+    "initializeKernel",
+    "initializeSparseKernel",
+    "preNeuronResetKernel",
+    "preSynapseResetKernel"};
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
+{
+    return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
+{
+    Substitutions varSubs(&kernelSubs);
+
+    // If this is first thread in group
+    os << "if(" << varSubs["id"] << " == 0)";
+    {
+        CodeStream::Scope b(os);
+        handler(os, varSubs);
+    }
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genVariableInit(CodeStream &os, const std::string &, const std::string &countVarName,
+                                  const Substitutions &kernelSubs, Handler handler) const
+{
+    // Variable should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution(countVarName));
+
+    Substitutions varSubs(&kernelSubs);
+    handler(os, varSubs);
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &,
+                                            const Substitutions &kernelSubs, Handler handler) const
+{
+    // Pre and postsynaptic ID should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution("id_pre"));
+    assert(kernelSubs.hasVarSubstitution("id_post"));
+
+    Substitutions varSubs(&kernelSubs);
+    varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + " + kernelSubs["id"]);
+    handler(os, varSubs);
+}
+//--------------------------------------------------------------------------
+bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
+{
+    // Host RNG is required if any synapse groups require a host initialization RNG
+    const ModelSpecInternal &model = modelMerged.getModel();
+    return std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
+                       [](const ModelSpec::SynapseGroupValueType &s)
+                       {
+                           return (s.second.isHostInitRNGRequired());
+                       });
+}
+//--------------------------------------------------------------------------
+bool BackendSIMT::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
+{
+    // If any neuron groups require  RNG for initialisation, return true
+    // **NOTE** this takes postsynaptic model initialisation into account
+    const ModelSpecInternal &model = modelMerged.getModel();
+    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
+                   [](const ModelSpec::NeuronGroupValueType &n){ return n.second.isInitRNGRequired(); }))
+    {
+        return true;
+    }
+
+    // If any synapse groups require an RNG for weight update model initialisation or procedural connectivity, return true
+    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
+                   [](const ModelSpec::SynapseGroupValueType &s)
+                   {
+                       return (s.second.isWUInitRNGRequired() || s.second.isProceduralConnectivityRNGRequired());
+                   }))
+    {
+        return true;
+    }
+
+    return false;
+}
+//--------------------------------------------------------------------------
 size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelMerged) const
 {
     // Calculate total number of threads used for neuron initialisation group
@@ -96,7 +184,7 @@ void BackendSIMT::addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Ba
     s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // Loop through local neuron groups
     idStart = 0;
@@ -279,7 +367,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPreSynapseResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // Loop through merged synapse groups
     idStart = 0;
@@ -354,7 +442,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
     idStart = 0;
     genParallelGroup<PresynapticUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), idStart,
-        [this](const SynapseGroupInternal &sg) { return padSize(getNumPresynapticUpdateThreads(sg, m_Preferences), getKernelBlockSize(KernelPresynapticUpdate)); },
+        [this](const SynapseGroupInternal &sg) { return padSize(getNumPresynapticUpdateThreads(sg, getPreferences()), getKernelBlockSize(KernelPresynapticUpdate)); },
         [&idStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
         {
             // Get presynaptic update strategy to use for this synapse group
@@ -491,7 +579,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                           PostsynapticUpdateGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const
+                                           SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const
 {
     // Parallelise over synapse groups whose weight update models have code for synapse dynamics
     idStart = 0;
@@ -550,9 +638,9 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                                 NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                                                 SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, size_t &idStart) const
+void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                      NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
+                                      SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, size_t &idStart) const
 {
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Local neuron groups" << std::endl;
@@ -683,9 +771,9 @@ void BackendSIMT::genNeuronInitializeKernel(CodeStream &os, const Substitutions 
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                                   SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
-                                                   size_t numInitializeThreads, size_t &idStart) const
+void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                            SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
+                                            size_t numInitializeThreads, size_t &idStart) const
 {
     // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
     // **TODO** check actually required
@@ -822,12 +910,6 @@ void BackendSIMT::genSynapseInitializeSparseKernel(CodeStream &os, const Substit
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
-{
-    os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
-    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
 void BackendSIMT::addDeviceType(const std::string &type, size_t size)
 {
     addType(type, size);
@@ -841,6 +923,12 @@ bool BackendSIMT::isDeviceType(const std::string &type) const
 
     // Return true if it is in device types set
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
+{
+    os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
+    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

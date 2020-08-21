@@ -157,7 +157,7 @@ public:
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
 
-    BackendBase(const std::string &scalarType);
+    BackendBase(const std::string &scalarType, const PreferencesBase &preferences);
     virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
@@ -346,15 +346,6 @@ public:
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
 
-    //! Is automatic copy mode enabled in the preferences?
-    virtual bool isAutomaticCopyEnabled() const = 0;
-
-    //! Should GeNN generate empty state push and pull functions?
-    virtual bool shouldGenerateEmptyStatePushPull() const = 0;
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    virtual bool shouldGenerateExtraGlobalParamPull() const = 0;
-
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
@@ -403,6 +394,11 @@ public:
         return isDeviceScalarRequired() ? getVarPrefix() : ("&" + getVarPrefix());
     }
 
+    const PreferencesBase &getPreferences() const { return m_Preferences; }
+
+    template<typename T>
+    const T &getPreferences() const { return static_cast<const T &>(m_Preferences); }
+
 protected:
     //--------------------------------------------------------------------------
     // Protected API
@@ -424,7 +420,10 @@ private:
     //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
     size_t m_PointerBytes;
 
-    // Size of supported types in bytes - used for estimating memory usage
+    //! Size of supported types in bytes - used for estimating memory usage
     std::unordered_map<std::string, size_t> m_TypeBytes;
+
+    //! Preferences
+    const PreferencesBase &m_Preferences;
 };
 }   // namespace CodeGenerator
