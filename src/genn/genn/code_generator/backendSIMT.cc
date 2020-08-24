@@ -278,9 +278,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy global RNG stream to local and use pointer to this for rng
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    os << "clrngLfsr113Stream localStream;" << std::endl;
-                    os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &group->rng[" << popSubs["id"] + "]);" << std::endl;
-                    popSubs.addVarSubstitution("rng", "&localStream");
+                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["id"] + "]");
                 }
 
                 simHandler(os, ng, popSubs,
@@ -297,8 +295,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy local stream back to local
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    os << std::endl;
-                    os << "clrngLfsr113CopyOverStreamsToGlobal(1, &group->rng[" << popSubs["id"] + "], &localStream);" << std::endl;
+                    genPopulationRNGPostamble(os, "group->rng[" + popSubs["id"] + "]");
                 }
             }
 
@@ -658,20 +655,18 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
             {
                 CodeStream::Scope b(os);
-                // If this neuron is going to require a simulation RNG, initialise one using GLOBAL thread id for sequence
-                if(ng.getArchetype().isSimRNGRequired()) {
-                    os << "curand_init(deviceRNGSeed, id, 0, &group->rng[" << popSubs["id"] << "]);" << std::endl;
+
+                // If population RNGs are initialised on device and this neuron is going to require one, 
+                // Initialise RNG using GLOBAL thread id for sequence
+                if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
+                    genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
                 }
 
                 // If this neuron requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
                 if(ng.getArchetype().isInitRNGRequired()) {
-                    os << "curandStatePhilox4_32_10_t initRNG = d_rng;" << std::endl;
-                    os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
-
-                    // Add substitution for RNG
-                    popSubs.addVarSubstitution("rng", "&initRNG");
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
                 }
 
                 neuronInitHandler(os, ng, popSubs);
@@ -681,29 +676,26 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Synapse groups with dense connectivity" << std::endl;
-    genParallelGroup<SynapseDenseInitGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), idStart,
-                                                  [this](const SynapseGroupInternal &sg) { return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-                                                  [synapseDenseInitHandler](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
-    {
-        os << "// only do this for existing postsynaptic neurons" << std::endl;
-        os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
+    genParallelGroup<SynapseDenseInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), idStart,
+        [this](const SynapseGroupInternal &sg) { return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+        [this, synapseDenseInitHandler](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
-            CodeStream::Scope b(os);
-            // If this post synapse requires an RNG for initialisation,
-            // make copy of global phillox RNG and skip ahead by thread id
-            // **NOTE** not LOCAL id
-            if(sg.getArchetype().isWUInitRNGRequired()) {
-                os << "curandStatePhilox4_32_10_t initRNG = d_rng;" << std::endl;
-                os << "skipahead_sequence((unsigned long long)id, &initRNG);" << std::endl;
+            os << "// only do this for existing postsynaptic neurons" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
+            {
+                CodeStream::Scope b(os);
+                // If this post synapse requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(sg.getArchetype().isWUInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
 
-                // Add substitution for RNG
-                popSubs.addVarSubstitution("rng", "&initRNG");
+                popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                synapseDenseInitHandler(os, sg, popSubs);
             }
-
-            popSubs.addVarSubstitution("id_post", popSubs["id"]);
-            synapseDenseInitHandler(os, sg, popSubs);
-        }
-    });
+        });
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
@@ -762,11 +754,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
             if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                os << "curandStatePhilox4_32_10_t connectivityRNG = d_rng;" << std::endl;
-                os << "skipahead_sequence((unsigned long long)id, &connectivityRNG);" << std::endl;
-
-                // Add substitution for RNG
-                popSubs.addVarSubstitution("rng", "&connectivityRNG");
+                genGlobalRNGSkipAhead(os, popSubs, "id");
             }
 
             synapseConnectivityInitHandler(os, sg, popSubs);
@@ -797,11 +785,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
             // make copy of global phillox RNG and skip ahead by thread id
             // **NOTE** not LOCAL id
             if(sg.getArchetype().isWUInitRNGRequired()) {
-                os << "curandStatePhilox4_32_10_t initRNG = d_rng;" << std::endl;
-                os << "skipahead_sequence((unsigned long long)" << numInitializeThreads << " + id, &initRNG);" << std::endl;
-
-                // Add substitution for RNG
-                popSubs.addVarSubstitution("rng", "&initRNG");
+                genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
             }
 
             // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
@@ -931,7 +915,7 @@ bool BackendSIMT::isDeviceType(const std::string &type) const
 //--------------------------------------------------------------------------
 void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
-    os << "const unsigned int spk" << suffix << "Idx = " << getAtomic("unsigned int") << "(&shSpk" << suffix << "Count, 1);" << std::endl;
+    os << "const unsigned int spk" << suffix << "Idx = " << getAtomic("unsigned int", AtomicOperation::ADD, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
 }
 //--------------------------------------------------------------------------

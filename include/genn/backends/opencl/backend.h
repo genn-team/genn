@@ -95,6 +95,41 @@ public:
             const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex);
 
     //--------------------------------------------------------------------------
+    // CodeGenerator::BackendSIMT virtuals
+    //--------------------------------------------------------------------------
+    //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
+    virtual bool areSharedMemAtomicsSlow() const override;
+
+    //! Get the prefix to use for shared memory variables
+    virtual std::string getSharedPrefix() const override { return "__local "; }
+
+    //! Get the ID of the current thread within the threadblock
+    virtual std::string getThreadID() const override { return "get_local_id(0)"; }
+
+    //! Get the ID of the current thread block
+    virtual std::string getBlockID() const override { return "get_group_id(0)"; }
+
+    //! Get name of atomic operation
+    virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD,
+                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const override;
+
+    //! Generate a shared memory barrier
+    virtual void genSharedMemBarrier(CodeStream &os) const override;
+
+    //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const override;
+
+    //! Generate a preamble to add substitution name for population RNG
+    virtual void genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name = "rng") const override;
+
+    //! If required, generate a postamble for population RNG
+    /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
+    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const override;
+
+    //! Generate code to skip ahead local copy of global RNG
+    virtual void genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name = "rng") const override;
+
+    //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase:: virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,

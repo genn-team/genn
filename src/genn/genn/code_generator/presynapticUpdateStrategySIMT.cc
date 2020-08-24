@@ -206,7 +206,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
             else {
                 // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
                 if(isSmallSharedMemoryPop(sg, backend)) {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&shLg[ipost], $(0))");
+                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision(), BackendSIMT::AtomicOperation::ADD, BackendSIMT::AtomicMemSpace::SHARED) + "(&shLg[ipost], $(0))");
                 }
                 // Otherwise, substitute global memory array for $(inSyn)
                 else {
@@ -574,16 +574,14 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             // Only start using streams after those that may have been used for initialisation
             const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(modelMerged);
 
-            // Get global RNG and skip ahead to subsequence unique to this subrow of this presynaptic neuron
-            os << "curandStatePhilox4_32_10_t connectRNG = d_rng;" << std::endl;
-            os << "skipahead_sequence((unsigned long long)(";
             if(numThreadsPerSpike > 1) {
-                os << "(preInd * " << numThreadsPerSpike << ") + thread + " << rngStreamOffset;
+                backend.genGlobalRNGSkipAhead(os, connSubs, 
+                                              "(preInd * " + std::to_string(numThreadsPerSpike) + ") + thread + " + std::to_string(rngStreamOffset));
             }
             else {
-                os << "preInd + " << rngStreamOffset;
+                backend.genGlobalRNGSkipAhead(os, connSubs,
+                                              "preInd + " + std::to_string(rngStreamOffset));
             }
-            os << "), &connectRNG);" << std::endl;
 
             // Add substitution for connection generation code
             connSubs.addVarSubstitution("rng", "&connectRNG");

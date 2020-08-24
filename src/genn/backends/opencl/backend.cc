@@ -109,19 +109,6 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
     os << "const cl_ulong tmpEnd = " << name << "Event.getProfilingInfo<CL_PROFILING_COMMAND_END>();" << std::endl;
     os << name << "Time += (double)(tmpEnd - tmpStart) / 1.0E9;" << std::endl;
 }
-//-----------------------------------------------------------------------
-void genPhiloxSkipAhead(CodeStream &os, const std::string &offset = "") 
-{
-    // Make local copy of host stream
-    os << "clrngPhilox432Stream localStream;" << std::endl;
-    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
-
-    // Convert id into steps, add these to steps, zero deck index and regenerate deck
-    os << "const clrngPhilox432Counter steps = {{0, id" << offset << "}, {0, 0}};" << std::endl;
-    os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
-    os << "localStream.current.deckIndex = 0;" << std::endl;
-    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
-}
 }
 
 //--------------------------------------------------------------------------
@@ -141,10 +128,6 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
         throw std::runtime_error("OpenCL backend does not currently support automatic copy mode.");
     }
 
-    if(preferences.enableBitmaskOptimisations) {
-        throw std::runtime_error("OpenCL backend does not currently support bitmask optimizations.");
-    }
-    
     // Get platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -177,6 +160,75 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     // Add OpenCL-specific types
     addType("clrngLfsr113Stream", 16);
     addType("clrngPhilox432Stream", 36);
+}
+//--------------------------------------------------------------------------
+bool Backend::areSharedMemAtomicsSlow() const
+{
+    // If device doesn't have REAL shared memory, then atomics will definitely be slow!
+    // **TODO** realistically, none of the shared memory optimizations we perform should be done on these devices
+    return (m_ChosenDevice.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() != CL_LOCAL);
+}
+//--------------------------------------------------------------------------
+std::string Backend::getAtomic(const std::string &type, AtomicOperation op, AtomicMemSpace memSpace) const
+{
+    // If operation is an atomic add
+    if(op == AtomicOperation::ADD) {
+        if(type == "float" || type == "double") {
+            if(memSpace == AtomicMemSpace::GLOBAL) {
+                return "atomic_add_f_global";
+            }
+            else {
+                assert(memSpace == AtomicMemSpace::SHARED);
+                return "atomic_add_f_local";
+            }
+        }
+        else {
+            return "atomic_add";
+        }
+    }
+    // Otherwise, it's an atomic or
+    else {
+        assert(op == AtomicOperation::OR);
+        assert(type == "unsigned int" || type == "int");
+        return "atomic_or";
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genSharedMemBarrier(CodeStream &os) const
+{
+    os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+{
+    os << "clrngLfsr113Stream localStream;" << std::endl;
+    os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &" << globalRNG << ");" << std::endl;
+    subs.addVarSubstitution(name, "&localStream");
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const
+{
+    os << "clrngLfsr113CopyOverStreamsToGlobal(1, &" << globalRNG << ", &localStream);" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+{
+    // Make local copy of host stream
+    os << "clrngPhilox432Stream localStream;" << std::endl;
+    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+
+    // Convert id into steps, add these to steps, zero deck index and regenerate deck
+    os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
+    os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
+    os << "localStream.current.deckIndex = 0;" << std::endl;
+    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
+
+    subs.addVarSubstitution("rng", "&localStream");
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
@@ -1622,16 +1674,6 @@ std::vector<filesystem::path> Backend::getFilesToCopy(const ModelSpecMerged &) c
             clRNGIncludePrivateRandom123 / "features" / "open64features.h",
             clRNGIncludePrivateRandom123 / "features" / "openclfeatures.h",
             clRNGIncludePrivateRandom123 / "features" / "sse.h"};
-}
-//--------------------------------------------------------------------------
-std::string Backend::getFloatAtomicAdd(const std::string &ftype, const char* memoryType) const
-{
-    if (ftype == "float" || ftype == "double") {
-        return "atomic_add_f_" + std::string(memoryType);
-    }
-    else {
-        return "atomic_add";
-    }
 }
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const

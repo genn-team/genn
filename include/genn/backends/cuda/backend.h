@@ -122,6 +122,19 @@ public:
     //! Generate a shared memory barrier
     virtual void genSharedMemBarrier(CodeStream &os) const override;
 
+    //! For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence
+    virtual void genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const override;
+
+    //! Generate a preamble to add substitution name for population RNG
+    virtual void genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name = "rng") const override;
+
+    //! If required, generate a postamble for population RNG
+    /*! For example, in OpenCL, this is used to write local RNG state back to global memory*/
+    virtual void genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const override;
+
+    //! Generate code to skip ahead local copy of global RNG
+    virtual void genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name = "rng") const override;
+
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------

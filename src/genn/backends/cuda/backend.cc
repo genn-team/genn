@@ -227,6 +227,30 @@ void Backend::genSharedMemBarrier(CodeStream &os) const
     os << "__syncthreads();" << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
+{
+    os << "curand_init(" << seed << ", " << sequence << ", 0, &" << globalRNG << ");" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGPreamble(CodeStream &, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+{
+    subs.addVarSubstitution(name, "&" + globalRNG);
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGPostamble(CodeStream&, const std::string&) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+{
+    // Skipahead RNG
+    os << "curandStatePhilox4_32_10_t localRNG = d_rng;" << std::endl;
+    os << "skipahead_sequence((unsigned long long)" << sequence << ", &localRNG);" << std::endl;
+
+    // Add substitution for RNG
+    subs.addVarSubstitution("rng", "&localRNG");
+}
+//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                               HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
