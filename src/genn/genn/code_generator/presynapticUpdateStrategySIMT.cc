@@ -145,7 +145,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
     {
         CodeStream::Scope b(os);
 
-        if(!wu->getSimSupportCode().empty()) {
+        if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
             os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
         }
 
@@ -343,7 +343,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     }
                 }
 
-                if(!wu->getSimSupportCode().empty()) {
+                if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
                     os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
                 }
                 if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
@@ -545,7 +545,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         Substitutions synSubs(&popSubs);
         synSubs.addVarSubstitution("id_pre", "preInd");
 
-        if(!wu->getSimSupportCode().empty()) {
+        if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
             os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
         }
 
@@ -745,7 +745,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
             {
                 CodeStream::Scope b(os);
 
-                if(!wu->getSimSupportCode().empty()) {
+                if(backend.supportsNamespace() && !wu->getSimSupportCode().empty()) {
                     os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
                 }
                 if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
