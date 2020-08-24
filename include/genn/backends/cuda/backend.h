@@ -115,6 +115,9 @@ public:
     //! Get the ID of the current thread block
     virtual std::string getBlockID() const override { return "blockIdx.x"; }
 
+    //! Get the name of the count-leading-zeros function
+    virtual std::string getCLZ() const override { return "__clz"; }
+
     //! Get name of atomic operation
     virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD,
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const override;

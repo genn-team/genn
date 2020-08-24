@@ -757,7 +757,6 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                     // Generate weight update threshold condition
                     wumThreshHandler(os, sg, threshSubs);
 
-                    // end code substitutions ----
                     os << ")";
                     os << CodeStream::OB(130);
                 }
@@ -772,7 +771,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                     CodeStream::Scope b(os);
 
                     // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
-                    os << "const int numLZ = __clz(connectivityWord);" << std::endl;
+                    os << "const int numLZ = " << backend.getCLZ() << "(connectivityWord);" << std::endl;
 
                     // Shift off zeros and the one just discovered
                     // **NOTE** if numLZ == 31, undefined behaviour results in C++, BUT in CUDA this PRESUMABLY emits

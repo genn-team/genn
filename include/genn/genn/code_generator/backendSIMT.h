@@ -84,6 +84,9 @@ public:
     //! Get the ID of the current thread block
     virtual std::string getBlockID() const = 0;
 
+    //! Get the name of the count-leading-zeros function
+    virtual std::string getCLZ() const = 0;
+
     //! Get name of atomic operation
     virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const = 0;
