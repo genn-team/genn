@@ -67,7 +67,7 @@ void genSmallSharedMemoryPopPostamble(CodeGenerator::CodeStream &os, const Model
         CodeGenerator::CodeStream::Scope b(os);
         const std::string inSyn = "group->inSyn[" + backend.getThreadID() + "]";
         if(sg.getArchetype().isPSModelMerged()) {
-            os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", shLg[" << backend.getThreadID() << ");" << std::endl;
+            os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", shLg[" << backend.getThreadID() << "]);" << std::endl;
         }
         else {
             os << inSyn << " += shLg[" << backend.getThreadID() << "];" << std::endl;
