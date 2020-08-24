@@ -109,7 +109,7 @@ class Group(object):
 
         assert param_type is not None
         egp_dict[param_name] = ExtraGlobalVariable(param_name, param_type,
-                                                   param_values, self)
+                                                   self, param_values)
 
     def _assign_ext_ptr_array(self, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
