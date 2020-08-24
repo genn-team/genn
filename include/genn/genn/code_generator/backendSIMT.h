@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <array>
+#include <numeric>
 #include <unordered_set>
 
 // GeNN includes

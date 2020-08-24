@@ -2,7 +2,6 @@
 
 // Standard C++ includes
 #include <algorithm>
-#include <numeric>
 
 // GeNN code generator includes
 #include "code_generator/modelSpecMerged.h"

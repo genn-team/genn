@@ -87,7 +87,7 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const cudaDeviceProp &deviceProps, const CUDA::Preferences &preferences, const ModelSpecInternal &model,
+void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInternal &model,
                     std::vector<size_t> (&groupSizes)[KernelMax])
 {
     // Loop through neuron groups
@@ -146,7 +146,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(deviceProps, preferences, model, groupSizes);
+    calcGroupSizes(preferences, model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;

@@ -199,7 +199,7 @@ void Backend::genSharedMemBarrier(CodeStream &os) const
     os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNGInit(CodeStream &os, const std::string &globalRNG, const std::string &seed, const std::string &sequence) const
+void Backend::genPopulationRNGInit(CodeStream&, const std::string&, const std::string&, const std::string&) const
 {
     assert(false);
 }
@@ -228,7 +228,7 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "localStream.current.deckIndex = 0;" << std::endl;
     os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
 
-    subs.addVarSubstitution("rng", "&localStream");
+    subs.addVarSubstitution(name, "&localStream");
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
@@ -303,7 +303,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(neuronUpdateKernels);
-        neuronUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
 
         Substitutions kernelSubs(openclLFSRFunctions);
@@ -483,6 +482,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
+            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
             genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, wumThreshHandler, 
@@ -501,7 +501,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(synapseUpdateKernels);
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
-            synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
         }
@@ -518,7 +517,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
 
-            synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             genSynapseDynamicsKernel(synapseUpdateKernels, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
         }
@@ -717,8 +715,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     initializeKernels << ")";
     {
         CodeStream::Scope b(initializeKernels);
-
-        initializeKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
         initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
         genInitializeKernel(initializeKernels, kernelSubs, modelMerged, localNGHandler, 
                             sgDenseInitHandler, sgSparseConnectHandler, idInitStart);
@@ -737,13 +733,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         initializeKernels << ")";
         {
             CodeStream::Scope b(initializeKernels);
-
-            // Common variables for all cases
-            Substitutions kernelSubs(openclPhilloxFunctions);
-
-            initializeKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
             initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
             genInitializeSparseKernel(initializeKernels, kernelSubs, modelMerged, 
                                       sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
             os << std::endl;

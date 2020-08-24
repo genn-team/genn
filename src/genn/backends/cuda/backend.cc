@@ -248,7 +248,7 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "skipahead_sequence((unsigned long long)" << sequence << ", &localRNG);" << std::endl;
 
     // Add substitution for RNG
-    subs.addVarSubstitution("rng", "&localRNG");
+    subs.addVarSubstitution(name, "&localRNG");
 }
 //--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
