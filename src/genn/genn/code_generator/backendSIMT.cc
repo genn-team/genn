@@ -527,15 +527,15 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                 CodeStream::Scope b(os);
                 os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + 1 : " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
 
-                os << "if (threadIdx.x < numSpikesInBlock)";
+                os << "if (" << getThreadID() << " < numSpikesInBlock)";
                 {
                     CodeStream::Scope b(os);
                     const std::string offsetTrueSpkPost = (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-                    os << "const unsigned int spk = group->trgSpk[" << offsetTrueSpkPost << "(r * " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + threadIdx.x];" << std::endl;
-                    os << "shSpk[threadIdx.x] = spk;" << std::endl;
+                    os << "const unsigned int spk = group->trgSpk[" << offsetTrueSpkPost << "(r * " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + " << getThreadID() << "];" << std::endl;
+                    os << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << "shColLength[threadIdx.x] = group->colLength[spk];" << std::endl;
+                        os << "shColLength[" << getThreadID() << "] = group->colLength[spk];" << std::endl;
                     }
                 }
 
@@ -805,10 +805,10 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
 
                 // Use threads to copy block of sparse structure into shared memory
                 genSharedMemBarrier(os);
-                os << "if (threadIdx.x < numRowsInBlock)";
+                os << "if (" << getThreadID() << " < numRowsInBlock)";
                 {
                     CodeStream::Scope b(os);
-                    os << "shRowLength[threadIdx.x] = group->rowLength[(r * " << blockSize << ") + threadIdx.x];" << std::endl;
+                    os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
                 }
 
                 // If this synapse group has synapse dynamics
@@ -816,7 +816,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
                     genSharedMemBarrier(os);
 
                     // Use first thread to generate cumulative sum
-                    os << "if (threadIdx.x == 0)";
+                    os << "if(" << getThreadID() << " == 0)";
                     {
                         CodeStream::Scope b(os);
 
