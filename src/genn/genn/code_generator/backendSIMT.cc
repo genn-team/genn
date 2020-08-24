@@ -21,13 +21,13 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
     return std::accumulate(
         groups.cbegin(), groups.cend(), size_t{0},
         [getNumThreads](size_t acc, const T &n)
-    {
-        return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
-                               [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
         {
-            return acc + getNumThreads(g.get());
+            return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
+                                   [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+            {
+                return acc + getNumThreads(g.get());
+            });
         });
-    });
 }
 }
 
@@ -45,6 +45,13 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "initializeSparseKernel",
     "preNeuronResetKernel",
     "preSynapseResetKernel"};
+//--------------------------------------------------------------------------
+std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
+    new PresynapticUpdateStrategySIMT::PreSpan,
+    new PresynapticUpdateStrategySIMT::PostSpan,
+    new PresynapticUpdateStrategySIMT::PreSpanProcedural,
+    new PresynapticUpdateStrategySIMT::PostSpanBitmask,
+};
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
@@ -218,11 +225,11 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
                    [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
     {
-        os << "volatile" << getSharedPrefix() << " unsigned int shSpkEvnt[" << getKernelBlockSize(KernelNeuronUpdate) << "];" << std::endl;
-        os << "volatile" << getSharedPrefix() << " unsigned int shPosSpkEvnt;" << std::endl;
-        os << "volatile" << getSharedPrefix() << " unsigned int shSpkEvntCount;" << std::endl;
+        os << getSharedPrefix() << "unsigned int shSpkEvnt[" << getKernelBlockSize(KernelNeuronUpdate) << "];" << std::endl;
+        os << getSharedPrefix() << "unsigned int shPosSpkEvnt;" << std::endl;
+        os << getSharedPrefix() << "unsigned int shSpkEvntCount;" << std::endl;
         os << std::endl;
-        os << "if (localId == 1)";
+        os << "if (" << getThreadID() << " == 1)";
         {
             CodeStream::Scope b(os);
             os << "shSpkEvntCount = 0;" << std::endl;
@@ -234,10 +241,10 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
                    [](const NeuronUpdateGroupMerged &n) { return !n.getArchetype().getNeuronModel()->getThresholdConditionCode().empty(); }))
     {
-        os << "volatile" << getSharedPrefix() << " unsigned int shSpk[" << getKernelBlockSize(KernelNeuronUpdate) << "];" << std::endl;
-        os << "volatile" << getSharedPrefix() << " unsigned int shPosSpk;" << std::endl;
-        os << "volatile" << getSharedPrefix() << " unsigned int shSpkCount;" << std::endl;
-        os << "if (localId == 0)";
+        os << getSharedPrefix() << "unsigned int shSpk[" << getKernelBlockSize(KernelNeuronUpdate) << "];" << std::endl;
+        os << getSharedPrefix() << "unsigned int shPosSpk;" << std::endl;
+        os << getSharedPrefix() << "unsigned int shSpkCount;" << std::endl;
+        os << "if (" << getThreadID() << " == 0)";
         {
             CodeStream::Scope b(os);
             os << "shSpkCount = 0;" << std::endl;
@@ -298,13 +305,13 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
             genSharedMemBarrier(os);
 
             if(ng.getArchetype().isSpikeEventRequired()) {
-                os << "if (localId == 1)";
+                os << "if (" << getThreadID() << " == 1)";
                 {
                     CodeStream::Scope b(os);
                     os << "if (shSpkEvntCount > 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "shPosSpkEvnt = atomic_add(&group->spkCntEvnt";
+                        os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&group->spkCntEvnt";
                         if(ng.getArchetype().isDelayRequired()) {
                             os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
                         }
@@ -312,18 +319,18 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                             os << "[0], shSpkEvntCount);" << std::endl;
                         }
                     }
-                } // end if (localId == 0)
+                } 
                 genSharedMemBarrier(os);
             }
 
             if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                os << "if (localId == 0)";
+                os << "if(" << getThreadID() << " == 0)";
                 {
                     CodeStream::Scope b(os);
                     os << "if (shSpkCount > 0)";
                     {
                         CodeStream::Scope b(os);
-                        os << "shPosSpk = atomic_add(&group->spkCnt";
+                        os << "shPosSpk = " << getAtomic("unsigned int") << "(&group->spkCnt";
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
                             os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
                         }
@@ -331,34 +338,34 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                             os << "[0], shSpkCount);" << std::endl;
                         }
                     }
-                } // end if (localId == 1)
+                } 
                 genSharedMemBarrier(os);
             }
 
             const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
             if(ng.getArchetype().isSpikeEventRequired()) {
-                os << "if (localId < shSpkEvntCount)";
+                os << "if(" << getThreadID() << " < shSpkEvntCount)";
                 {
                     CodeStream::Scope b(os);
-                    os << "group->spkEvnt[" << queueOffset << "shPosSpkEvnt + localId] = shSpkEvnt[localId];" << std::endl;
+                    os << "group->spkEvnt[" << queueOffset << "shPosSpkEvnt + " << getThreadID() << "] = shSpkEvnt[" << getThreadID() << "];" << std::endl;
                 }
             }
 
             if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
                 const std::string queueOffsetTrueSpk = ng.getArchetype().isTrueSpikeRequired() ? queueOffset : "";
 
-                os << "if (localId < shSpkCount)";
+                os << "if(" << getThreadID() << " < shSpkCount)";
                 {
                     CodeStream::Scope b(os);
 
-                    os << "const unsigned int n = shSpk[localId];" << std::endl;
+                    os << "const unsigned int n = shSpk[" << getThreadID() << "];" << std::endl;
 
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     Substitutions wuSubs(&popSubs);
                     wuSubs.addVarSubstitution("id", "n", true);
                     wuVarUpdateHandler(os, ng, wuSubs);
 
-                    os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + localId] = n;" << std::endl;
+                    os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + " << getThreadID() << "] = n;" << std::endl;
                     if(ng.getArchetype().isSpikeTimeRequired()) {
                         os << "group->sT[" << queueOffset << "n] = t;" << std::endl;
                     }
@@ -396,11 +403,8 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
                                              PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                              PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const
 {
-    os << "const unsigned int localId = get_local_id(0);" << std::endl;
-    os << "const unsigned int id = get_global_id(0);" << std::endl;
-
     // We need shLg if any synapse groups accumulate into shared memory
-            // Determine the maximum shared memory outputs 
+    // Determine the maximum shared memory outputs 
     size_t maxSharedMemPerThread = 0;
     for(const auto &s : modelMerged.getMergedPresynapticUpdateGroups()) {
         maxSharedMemPerThread = std::max(maxSharedMemPerThread,
@@ -626,11 +630,11 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.getArchetype().isDendriticDelayRequired()) {
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(modelMerged.getModel().getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + synSubs["id_post"] + "], $(0))");
                 }
                 // Otherwise
                 else {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSyn", 1, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + synSubs["id_post"] + "], $(0))");
                 }
 
                 synapseDynamicsHandler(os, sg, synSubs);
@@ -738,7 +742,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
 
                 // Build function template to set correct bit in bitmask
                 popSubs.addFuncSubstitution("addSynapse", 1,
-                                            "atomicOr(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
+                                            getAtomic("unsigned int", AtomicOperation::OR) + "(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
             }
             // Otherwise, if synapse group has ragged connectivity
             else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -887,7 +891,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
 
                             // Atomically increment length of column of connectivity associated with this target
                             // **NOTE** this returns previous length i.e. where to insert new entry
-                            os << "const unsigned int colLocation = atomicAdd(&group->colLength[postIndex], 1);" << std::endl;
+                            os << "const unsigned int colLocation = " << getAtomic("unsigned int") << "(&group->colLength[postIndex], 1);" << std::endl;
 
                             // From this calculate index into column-major matrix
                             os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
@@ -927,7 +931,7 @@ bool BackendSIMT::isDeviceType(const std::string &type) const
 //--------------------------------------------------------------------------
 void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
 {
-    os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
+    os << "const unsigned int spk" << suffix << "Idx = " << getAtomic("unsigned int") << "(&shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
 }
 //--------------------------------------------------------------------------

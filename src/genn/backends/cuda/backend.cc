@@ -195,6 +195,38 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     addDeviceType("half", 2);
 }
 //--------------------------------------------------------------------------
+bool Backend::areSharedMemAtomicsSlow() const
+{
+    // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
+    // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
+    return (getChosenCUDADevice().major < 5);
+}
+//--------------------------------------------------------------------------
+std::string Backend::getAtomic(const std::string &type, AtomicOperation op, AtomicMemSpace) const
+{
+    // If operation is an atomic add
+    if(op == AtomicOperation::ADD) {
+        if(((getChosenCUDADevice().major < 2) && (type == "float"))
+           || (((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)) && (type == "double")))
+        {
+            return "atomicAddSW";
+        }
+
+        return "atomicAdd";
+    }
+    // Otherwise, it's an atomic or
+    else {
+        assert(op == AtomicOperation::OR);
+        assert(type == "unsigned int" || type == "int");
+        return "atomicOr";
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genSharedMemBarrier(CodeStream &os) const
+{
+    os << "__syncthreads();" << std::endl;
+}
+//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                               HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
@@ -1349,19 +1381,6 @@ std::string Backend::getNVCCFlags() const
     nvccFlags +=" -I\"$(MPI_PATH)/include\"";
 #endif
     return nvccFlags;
-}
-//--------------------------------------------------------------------------
-std::string Backend::getFloatAtomicAdd(const std::string &ftype) const
-{
-    int version;
-    cudaRuntimeGetVersion(&version);
-    if (((getChosenCUDADevice().major < 2) && (ftype == "float"))
-        || (((getChosenCUDADevice().major < 6) || (version < 8000)) && (ftype == "double"))) {
-        return "atomicAddSW";
-    }
-    else {
-        return "atomicAdd";
-    }
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const

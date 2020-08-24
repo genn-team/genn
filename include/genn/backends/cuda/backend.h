@@ -101,7 +101,29 @@ public:
             const std::string &scalarType, int device);
 
     //--------------------------------------------------------------------------
-    // CodeGenerator::Backends:: virtuals
+    // CodeGenerator::BackendSIMT virtuals
+    //--------------------------------------------------------------------------
+    //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
+    virtual bool areSharedMemAtomicsSlow() const override;
+
+    //! Get the prefix to use for shared memory variables
+    virtual std::string getSharedPrefix() const override{ return "__shared__ "; }
+
+    //! Get the ID of the current thread within the threadblock
+    virtual std::string getThreadID() const override { return "threadIdx.x"; }
+
+    //! Get the ID of the current thread block
+    virtual std::string getBlockID() const override { return "blockIdx.x"; }
+
+    //! Get name of atomic operation
+    virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD,
+                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const override;
+
+    //! Generate a shared memory barrier
+    virtual void genSharedMemBarrier(CodeStream &os) const override;
+
+    //--------------------------------------------------------------------------
+    // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                  HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
@@ -212,8 +234,6 @@ public:
     int getChosenDeviceID() const{ return m_ChosenDeviceID; }
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
-
-    std::string getFloatAtomicAdd(const std::string &ftype) const;
 
 private:
     //--------------------------------------------------------------------------

@@ -41,6 +41,8 @@ using KernelBlockSize = std::array<size_t, KernelMax>;
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendSIMT
 //--------------------------------------------------------------------------
+//! Base class for Single Instruction Multiple Thread style backends
+/*! CUDA terminology is used throughout i.e. thread blocks and shared memory */
 class GENN_EXPORT BackendSIMT : public BackendBase
 {
 public:
@@ -50,12 +52,43 @@ public:
     {}
 
     //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    //! What atomic operation is required
+    enum class AtomicOperation
+    {
+        ADD,
+        OR,
+    };
+
+    //! What memory space atomic operation is required
+    enum class AtomicMemSpace
+    {
+        GLOBAL,
+        SHARED,
+    };
+
+    //------------------------------------------------------------------------
     // Declared virtuals
     //------------------------------------------------------------------------
+    //! On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided
     virtual bool areSharedMemAtomicsSlow() const = 0;
+
+    //! Get the prefix to use for shared memory variables
     virtual std::string getSharedPrefix() const = 0;
+
+    //! Get the ID of the current thread within the threadblock
+    virtual std::string getThreadID() const = 0;
+
+    //! Get the ID of the current thread block
+    virtual std::string getBlockID() const = 0;
+
+    //! Get name of atomic operation
+    virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD, 
+                                  AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const = 0;
+    
+    //! Generate a shared memory barrier
     virtual void genSharedMemBarrier(CodeStream &os) const = 0;
-    virtual std::string getFloatAtomicAdd(const std::string &ftype, const char *memoryType = "global") const = 0;
 
     //------------------------------------------------------------------------
     // BackendBase virtuals
