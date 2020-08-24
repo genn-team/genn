@@ -621,7 +621,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         else {
             // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
             if(isSmallSharedMemoryPop(sg, backend)) {
-                presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&shLg[$(id_post)], $(0))");
+                presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision(), BackendSIMT::AtomicOperation::ADD, BackendSIMT::AtomicMemSpace::SHARED) + "(&shLg[$(id_post)], $(0))");
             }
             // Otherwise, substitute global memory array for $(inSyn)
             else {
