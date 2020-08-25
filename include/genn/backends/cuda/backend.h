@@ -333,6 +333,9 @@ private:
                 if(gMerge.getGroups().size() == 1) {
                     os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[0];" << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+                    // Use the starting thread ID of the whole merged group as group_start_id
+                    popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
                 }
                 else {
                     // Perform bisect operation to get index of merged struct
@@ -358,8 +361,12 @@ private:
                     // Use this to get reference to merged group structure
                     os << "const auto &group = d_merged" << mergedGroupPrefix << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
-                    // Use this and starting thread of merged group to calculate local id within neuron group
-                    os << "const unsigned int lid = id - (d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                    // Get group start thread ID and use as group_start_id
+                    os << "const unsigned int groupStartID = d_merged" << mergedGroupPrefix << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                    popSubs.addVarSubstitution("group_start_id", "groupStartID");
+
+                    // Use this to calculate local id within group
+                    os << "const unsigned int lid = id - groupStartID;" << std::endl;
 
                 }
                 popSubs.addVarSubstitution("id", "lid");
