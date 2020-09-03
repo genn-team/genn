@@ -1,5 +1,8 @@
 var NAVTREEINDEX9 =
 {
+"de/db0/synapseGroup_8h.html":[17,0,119],
+"de/db0/synapseGroup_8h_source.html":[17,0,119],
+"de/db7/genn__model_8py.html":[17,0,46],
 "de/db7/genn__model_8py.html#a0378993ab51a2871fc274bddf7b55bcd":[17,0,46,12],
 "de/db7/genn__model_8py.html#a091ea4fe261201327c877528287f9611":[17,0,46,6],
 "de/db7/genn__model_8py.html#a0ae588c769b098f97bc66450ab28011c":[17,0,46,13],
@@ -100,8 +103,8 @@ var NAVTREEINDEX9 =
 "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#aaf6969f0f388155f2efedca6015c0b70":[16,0,10,1,4],
 "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#aef7011a4e9e3975ee432e2f901ccf4a9":[16,0,10,1,5],
 "df/da9/generateSupportCode_8cc.html":[17,0,41],
-"df/daa/namespaceSnippet.html":[16,0,8],
 "df/daa/namespaceSnippet.html":[15,0,13],
+"df/daa/namespaceSnippet.html":[16,0,8],
 "df/dac/modelSpecMerged_8h.html":[17,0,78],
 "df/dac/modelSpecMerged_8h_source.html":[17,0,78],
 "df/dc2/classSpineMLSimulator_1_1LogOutput_1_1AnalogueFile.html":[16,0,9,2,2],
@@ -146,10 +149,10 @@ var NAVTREEINDEX9 =
 "df/dfd/classCodeGenerator_1_1GroupMerged.html":[16,0,0,4],
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#a26f1cfd1cea50675f49e6163bff47ee1":[16,0,0,4,3],
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#a37df4b84d064002b92f5478cfc71e18d":[16,0,0,4,2],
+"df/dfd/classCodeGenerator_1_1GroupMerged.html#a6c4acb65e6fc248a9a3302ee0785f189":[16,0,0,4,6],
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#a8b12d7ab1f2e3314ea59060dd8db0275":[16,0,0,4,1],
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#ab3301e1ebcc1341522444549d8bc863b":[16,0,0,4,4],
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#ab81dc8060e3208107a635b805ea75798":[16,0,0,4,5],
-"df/dfd/classCodeGenerator_1_1GroupMerged.html#ac0a355f3b44e3ee852e44ae88434e7e5":[16,0,0,4,6],
 "df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b":[16,0,0,4,0],
 "examples.html":[18],
 "files.html":[17,0],
@@ -163,8 +166,8 @@ var NAVTREEINDEX9 =
 "functions_e.html":[16,3,0,5],
 "functions_enum.html":[16,3,4],
 "functions_f.html":[16,3,0,6],
-"functions_func.html":[16,3,1,0],
 "functions_func.html":[16,3,1],
+"functions_func.html":[16,3,1,0],
 "functions_func_0x7e.html":[16,3,1,22],
 "functions_func_a.html":[16,3,1,1],
 "functions_func_b.html":[16,3,1,2],
@@ -246,8 +249,5 @@ var NAVTREEINDEX9 =
 "globals_type.html":[17,1,3],
 "globals_u.html":[17,1,0,17],
 "globals_v.html":[17,1,0,18],
-"globals_vars.html":[17,1,2],
-"hierarchy.html":[16,2],
-"index.html":[],
-"index.html":[0]
+"globals_vars.html":[17,1,2]
 };

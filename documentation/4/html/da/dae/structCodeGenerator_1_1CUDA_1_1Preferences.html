@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.1</span>
+   &#160;<span id="projectnumber">4.3.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -143,6 +143,9 @@ Public Attributes</h2></td></tr>
 <tr class="memitem:a24e6c8b33837783988259baa53fd4dda"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a834e8ff4a9b37453a04e5bfa2743423b">KernelBlockSize</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda">manualBlockSizes</a></td></tr>
 <tr class="memdesc:a24e6c8b33837783988259baa53fd4dda"><td class="mdescLeft">&#160;</td><td class="mdescRight">If block size select method is set to <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a" title="Use device specified by user. ">BlockSizeSelect::MANUAL</a>, block size to use for each kernel.  <a href="#a24e6c8b33837783988259baa53fd4dda">More...</a><br /></td></tr>
 <tr class="separator:a24e6c8b33837783988259baa53fd4dda"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a4fec7ae3b7712a4d60d1cd3ff31c34c1">constantCacheOverhead</a> = 72 * 4</td></tr>
+<tr class="memdesc:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">How much constant cache is already used and therefore can't be used by GeNN?  <a href="#a4fec7ae3b7712a4d60d1cd3ff31c34c1">More...</a><br /></td></tr>
+<tr class="separator:a4fec7ae3b7712a4d60d1cd3ff31c34c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa370bc1e7c48d0928ace7bf4baaa7e73"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa370bc1e7c48d0928ace7bf4baaa7e73">userNvccFlags</a> = &quot;&quot;</td></tr>
 <tr class="memdesc:aa370bc1e7c48d0928ace7bf4baaa7e73"><td class="mdescLeft">&#160;</td><td class="mdescRight">NVCC compiler options for all GPU code.  <a href="#aa370bc1e7c48d0928ace7bf4baaa7e73">More...</a><br /></td></tr>
 <tr class="separator:aa370bc1e7c48d0928ace7bf4baaa7e73"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -216,6 +219,23 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>How to select <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> blocksize. </p>
+
+</div>
+</div>
+<a id="a4fec7ae3b7712a4d60d1cd3ff31c34c1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4fec7ae3b7712a4d60d1cd3ff31c34c1">&#9670;&nbsp;</a></span>constantCacheOverhead</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t CodeGenerator::CUDA::Preferences::constantCacheOverhead = 72 * 4</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>How much constant cache is already used and therefore can't be used by GeNN? </p>
+<p>Each of the four modules which includes <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> headers(neuronUpdate, synapseUpdate, init and runner) Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires additional constant cache, increase this </p>
 
 </div>
 </div>
@@ -339,7 +359,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a></li><li class="navelem"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html">Preferences</a></li>
-    <li class="footer">Generated on Mon Jul 13 2020 12:01:42 for GeNN by
+    <li class="footer">Generated on Thu Sep 3 2020 18:55:36 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

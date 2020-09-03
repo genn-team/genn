@@ -8,7 +8,7 @@ var classCodeGenerator_1_1NeuronGroupMergedBase =
     [ "addHeterogeneousChildVarInitParams", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a0e3e964b322d581e0359b34985f5072f", null ],
     [ "addMergedInSynPointerField", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#ab91f58e8aef1e4074cc33e53482ee2a9", null ],
     [ "generate", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#afdaaf6b261c0367d645ce27e887e86fe", null ],
-    [ "isChildParamValueHeterogeneous", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a90707a3c48e89267c909283ee3d30e27", null ],
+    [ "isChildParamValueHeterogeneous", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a499720bb29ce36557ba61f835772021d", null ],
     [ "isCurrentSourceDerivedParamHeterogeneous", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a26d2062ab0c9cab2d9a65de3e9809950", null ],
     [ "isCurrentSourceParamHeterogeneous", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#af723bfe2652b906243273a23b9977576", null ],
     [ "isCurrentSourceVarInitDerivedParamHeterogeneous", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aaa328c3db9cbd581ed47d7aa0a2c33b6", null ],

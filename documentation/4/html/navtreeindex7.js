@@ -1,5 +1,8 @@
 var NAVTREEINDEX7 =
 {
+"db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html#a244f67720b960375c1e1e08fad8ea8a6":[16,0,4,3,0],
+"db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html#ac786815e6fb3da4aa592a31b884d4421":[16,0,4,3,1],
+"db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html#afd8ea93a253ce545aedcff4d5f34533b":[16,0,4,3,2],
 "db/db9/classSpineMLSimulator_1_1NetworkClient.html":[16,0,9,4],
 "db/db9/classSpineMLSimulator_1_1NetworkClient.html#a6111895b6da82c76e96e465568ec62ed":[16,0,9,4,5],
 "db/db9/classSpineMLSimulator_1_1NetworkClient.html#a6384ce62cb57960f3fd9b80e3e358e82":[16,0,9,4,7],
@@ -170,8 +173,8 @@ var NAVTREEINDEX7 =
 "dc/de1/modelSpec_8h.html#a82512da3fc2cd603ff00f8f5b7f2f1ce":[17,0,75,7],
 "dc/de1/modelSpec_8h.html#a957acf630622e4f9fd4ddd773e962a92":[17,0,75,2],
 "dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[17,0,75,3,0],
-"dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[17,0,75,3,1],
 "dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[17,0,75,3],
+"dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08":[17,0,75,3,1],
 "dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08ae401c6285be90f3a255c38f422b1a60c":[17,0,75,3,2],
 "dc/de1/modelSpec_8h.html#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2":[17,0,75,5],
 "dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0":[17,0,75,6],
@@ -246,8 +249,5 @@ var NAVTREEINDEX7 =
 "dc/dfa/classSynapseGroup.html#a871ba5677d4b088443eb43d3c3036114":[16,0,31,80],
 "dc/dfa/classSynapseGroup.html#a90b0bda40690467d37ce993f12236e39":[16,0,31,86],
 "dc/dfa/classSynapseGroup.html#a91d96a0c0135910329c2922fdd82169c":[16,0,31,20],
-"dc/dfa/classSynapseGroup.html#a93b12c08d634f1a2300f1b91ef34ea24":[16,0,31,83],
-"dc/dfa/classSynapseGroup.html#a96d91075d474de8c87b63988715c920d":[16,0,31,42],
-"dc/dfa/classSynapseGroup.html#a97cfec638d856e6e07628bc19490690c":[16,0,31,89],
-"dc/dfa/classSynapseGroup.html#a9a9287f2623d68be8ced4c11c42b4528":[16,0,31,87]
+"dc/dfa/classSynapseGroup.html#a93b12c08d634f1a2300f1b91ef34ea24":[16,0,31,83]
 };

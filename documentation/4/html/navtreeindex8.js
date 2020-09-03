@@ -1,5 +1,8 @@
 var NAVTREEINDEX8 =
 {
+"dc/dfa/classSynapseGroup.html#a96d91075d474de8c87b63988715c920d":[16,0,31,42],
+"dc/dfa/classSynapseGroup.html#a97cfec638d856e6e07628bc19490690c":[16,0,31,89],
+"dc/dfa/classSynapseGroup.html#a9a9287f2623d68be8ced4c11c42b4528":[16,0,31,87],
 "dc/dfa/classSynapseGroup.html#a9fbbc52ee9d6e1d3671f22f023b7fde3":[16,0,31,52],
 "dc/dfa/classSynapseGroup.html#aa02124fcc921b0e05785d277f0c9f415":[16,0,31,19],
 "dc/dfa/classSynapseGroup.html#aa46e2837b0e10c6973ef8b0e2b57e362":[16,0,31,23],
@@ -35,8 +38,8 @@ var NAVTREEINDEX8 =
 "dc/dfa/classSynapseGroup.html#aff546833d043184f30272a3f38d0865f":[16,0,31,46],
 "dc/dfa/classSynapseGroup.html#aff9ca57ce84ca974596b02752172601a":[16,0,31,50],
 "dc/dfa/classSynapseGroup.html#affc58ea4ce0833992eb99cb2debf9459":[16,0,31,69],
-"dd/d20/namespaceModels.html":[16,0,4],
 "dd/d20/namespaceModels.html":[15,0,6],
+"dd/d20/namespaceModels.html":[16,0,4],
 "dd/d32/device_2lfsr113_8c_8h.html":[17,0,61],
 "dd/d32/device_2lfsr113_8c_8h.html#a1f6ca93cfcb83bd915da08144e81066f":[17,0,61,6],
 "dd/d32/device_2lfsr113_8c_8h.html#a227f7e377103fc62bad37a86cf92059f":[17,0,61,2],
@@ -246,8 +249,5 @@ var NAVTREEINDEX8 =
 "de/da9/classPostsynapticModels_1_1DeltaCurr.html#a4ed0d483fa452dd7405aced6dddf3a12":[16,0,6,1,4],
 "de/da9/classPostsynapticModels_1_1DeltaCurr.html#ac79a926831d8a70e524f3a1c57672bd9":[16,0,6,1,0],
 "de/da9/classPostsynapticModels_1_1DeltaCurr.html#ad44a55e6f4aa03b4a6e1986bddf39601":[16,0,6,1,3],
-"de/da9/classPostsynapticModels_1_1DeltaCurr.html#ae64a7f09da43d6d3d08f964df89626a0":[16,0,6,1,1],
-"de/db0/synapseGroup_8h.html":[17,0,119],
-"de/db0/synapseGroup_8h_source.html":[17,0,119],
-"de/db7/genn__model_8py.html":[17,0,46]
+"de/da9/classPostsynapticModels_1_1DeltaCurr.html#ae64a7f09da43d6d3d08f964df89626a0":[16,0,6,1,1]
 };

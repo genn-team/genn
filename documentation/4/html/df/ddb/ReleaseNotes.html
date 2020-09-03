@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.1</span>
+   &#160;<span id="projectnumber">4.3.2</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -97,7 +97,18 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.3.1 (PyGeNN 0.4.1) </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.3.2 (PyGeNN 0.4.2) </h1>
+<p>This release fixes several small issues found in the 4.3.1 release.</p>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed bug when simulating models with very small timesteps.</li>
+<li>Fixed bug in code generator where synapse groups with procedural variables could be incorrectly merged.</li>
+<li>Fixed bug in code generator where references to parameters in sparse connectivity initialisation snippet row build state variables were not found.</li>
+<li>Fixed issue with PyGeNN and custom sparse connectivity init snippets that led to segfaults.</li>
+<li>Fixed bug that prevented PyGeNN being used with procedural connectivity.</li>
+<li>In models with a large number of populations, the CUDA constant cache could overflow. This has been fixed and, if your application has additional constant cache requirements, these can be added to <code>GENN_PREFERENCES.constantCacheOverhead</code>.</li>
+</ol>
+<h1>Release Notes for GeNN v4.3.1 (PyGeNN 0.4.1) </h1>
 <p>This release fixes several small issues found in the 4.3.0 release.</p>
 <h2>Bug fixes: </h2>
 <ol type="1">
@@ -450,7 +461,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Jul 13 2020 12:01:31 for GeNN by
+    <li class="footer">Generated on Thu Sep 3 2020 18:55:17 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

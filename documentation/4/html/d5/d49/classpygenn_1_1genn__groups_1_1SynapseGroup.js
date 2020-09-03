@@ -8,6 +8,8 @@ var classpygenn_1_1genn__groups_1_1SynapseGroup =
     [ "get_var_values", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af4d5e6078a2f7e231a869909731d90ab", null ],
     [ "has_individual_postsynaptic_vars", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a4fe45637de528f76c288adb09a4c3b03", null ],
     [ "has_individual_synapse_vars", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a0433608d422386e67a34c0d846097844", null ],
+    [ "has_procedural_connectivity", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7b2a06fffa26b9ad51fe9de41c1e3550", null ],
+    [ "has_procedural_weights", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad07bd66807e3f6ab59dbe9b014060ca1", null ],
     [ "is_bitmask", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8bca5a6e84b636d485391f5a17555fbb", null ],
     [ "is_connectivity_init_required", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a50c4e431ff060ee5156ee78113c75908", null ],
     [ "is_dense", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac4de8bf08ebcf36115712b639dee0b3f", null ],

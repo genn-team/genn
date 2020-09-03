@@ -1,5 +1,7 @@
 var NAVTREEINDEX4 =
 {
+"d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#af4eb927f939b6416b193848660287f48":[16,0,0,0,1,60],
+"d6/d4e/compilerfeatures_8h.html":[17,0,19],
 "d6/d4e/compilerfeatures_8h_source.html":[17,0,19],
 "d6/d5a/structclrngPhilox432StreamState.html":[16,0,19],
 "d6/d5a/structclrngPhilox432StreamState.html#a29f47449cdaab02bfeec469ab19c3ee4":[16,0,19,0],
@@ -242,12 +244,10 @@ var NAVTREEINDEX4 =
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a2ee27d1bb194c10659b9814bb9bc75a8":[16,0,0,9,14],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a3c716f86e52433f4e3456f16b4e919d3":[16,0,0,9,16],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a466707bf5b56e4b66899f086818b576b":[16,0,0,9,12],
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a499720bb29ce36557ba61f835772021d":[16,0,0,9,8],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a5d93c222fc77f875c272724a7d039ffe":[16,0,0,9,21],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a661d32a979e85d7cb116c1a82a2c599a":[16,0,0,9,2],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a72a1908777dbd553dd6afd172bb18cf5":[16,0,0,9,1],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a7e4d3abf757c1a61e9547e05df1762b4":[16,0,0,9,23],
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a90707a3c48e89267c909283ee3d30e27":[16,0,0,9,8],
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a931205cee9f3f4fedb1f645563d12521":[16,0,0,9,22],
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9ab15b615590abd00a4b181289553e32":[16,0,0,9,17],
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9c298d56317ad90d5b23a9bcbbec4e17":[16,0,0,9,15]
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a931205cee9f3f4fedb1f645563d12521":[16,0,0,9,22]
 };

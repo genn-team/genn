@@ -1,5 +1,7 @@
 var NAVTREEINDEX5 =
 {
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9ab15b615590abd00a4b181289553e32":[16,0,0,9,17],
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9c298d56317ad90d5b23a9bcbbec4e17":[16,0,0,9,15],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aaa328c3db9cbd581ed47d7aa0a2c33b6":[16,0,0,9,11],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#ab91f58e8aef1e4074cc33e53482ee2a9":[16,0,0,9,6],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#acab3c0028d187c66d458430022d4a56f":[16,0,0,9,20],
@@ -221,14 +223,15 @@ var NAVTREEINDEX5 =
 "da/dac/namespaceNeuronModels.html":[16,0,5],
 "da/dac/namespaceNeuronModels.html":[15,0,7],
 "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html":[16,0,0,0,2],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a05b34883f91558799021fc9b400f0938":[16,0,0,0,2,6],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda":[16,0,0,0,2,4],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522":[16,0,0,0,2,3],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d":[16,0,0,0,2,5],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a05b34883f91558799021fc9b400f0938":[16,0,0,0,2,7],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda":[16,0,0,0,2,5],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522":[16,0,0,0,2,4],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d":[16,0,0,0,2,6],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a4fec7ae3b7712a4d60d1cd3ff31c34c1":[16,0,0,0,2,2],
 "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a81d2f28e0431fcbb375e6c0c547a879d":[16,0,0,0,2,0],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa370bc1e7c48d0928ace7bf4baaa7e73":[16,0,0,0,2,8],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e":[16,0,0,0,2,2],
-"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad8e937d78148dcd94e8174b3fba45e86":[16,0,0,0,2,7],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa370bc1e7c48d0928ace7bf4baaa7e73":[16,0,0,0,2,9],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e":[16,0,0,0,2,3],
+"da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad8e937d78148dcd94e8174b3fba45e86":[16,0,0,0,2,8],
 "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad9ddce1e46c8707bf1c30116f9a799be":[16,0,0,0,2,1],
 "da/db7/currentSource_8h.html":[17,0,23],
 "da/db7/currentSource_8h_source.html":[17,0,23],
@@ -246,8 +249,5 @@ var NAVTREEINDEX5 =
 "da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#ac53fe67e14bdbd968a8544297a67201a":[16,0,2,2,1],
 "da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#ad2689ac6fa54fc27788211df703f7cc4":[16,0,2,2,4],
 "da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#adf8132e22b41f3db4e020a154ecb10aa":[16,0,2,2,2],
-"da/dfd/classModelSpec.html":[16,0,23],
-"da/dfd/classModelSpec.html#a0bde9e959e2d306b6af799e5b9fb9eaa":[16,0,23,12],
-"da/dfd/classModelSpec.html#a15622cc92f6c37e56aee253e02ad923e":[16,0,23,21],
-"da/dfd/classModelSpec.html#a1c6bc48d22a8f7b3fb70b46a4ca87646":[16,0,23,38]
+"da/dfd/classModelSpec.html":[16,0,23]
 };

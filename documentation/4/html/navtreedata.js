@@ -104,13 +104,13 @@ var NAVTREEINDEX =
 "d2/d05/classWeightUpdateModels_1_1Base.html#a8c4939c38b32ae603cd237f0e8d76b8a",
 "d3/d1a/clRNG_8c.html#a206fb062df8822c20a48900c38a2fb89",
 "d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html#a85388131ce7f7812530073be3d1ef62e",
-"d6/d4e/compilerfeatures_8h_source.html",
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aaa328c3db9cbd581ed47d7aa0a2c33b6",
-"da/dfd/classModelSpec.html#a1f9d972f4f93c65dd254a27992980600",
-"db/db9/classSpineMLSimulator_1_1NetworkClient.html",
-"dc/dfa/classSynapseGroup.html#a9fbbc52ee9d6e1d3671f22f023b7fde3",
-"de/db7/genn__model_8py.html#a0378993ab51a2871fc274bddf7b55bcd",
-"namespacemembers.html"
+"d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#af4eb927f939b6416b193848660287f48",
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9ab15b615590abd00a4b181289553e32",
+"da/dfd/classModelSpec.html#a0bde9e959e2d306b6af799e5b9fb9eaa",
+"db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html#a244f67720b960375c1e1e08fad8ea8a6",
+"dc/dfa/classSynapseGroup.html#a96d91075d474de8c87b63988715c920d",
+"de/db0/synapseGroup_8h.html",
+"hierarchy.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
