@@ -30,6 +30,9 @@
 // CUDA backend includes
 #include "utils.h"
 
+using namespace CodeGenerator;
+using namespace CUDA;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -84,12 +87,9 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
     }
 }
 //--------------------------------------------------------------------------
-void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA::Preferences &preferences, const ModelSpecInternal &model,
-                    std::vector<size_t> (&groupSizes)[CodeGenerator::CUDA::KernelMax])
+void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInternal &model,
+                    std::vector<size_t> (&groupSizes)[KernelMax])
 {
-    using namespace CodeGenerator;
-    using namespace CUDA;
-
     // Loop through neuron groups
     for(const auto &n : model.getNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
@@ -103,8 +103,7 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
         if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
-            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, deviceProps,
-                                                                                                  preferences));
+            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, preferences));
         }
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
@@ -139,18 +138,15 @@ void calcGroupSizes(const cudaDeviceProp &deviceProps, const CodeGenerator::CUDA
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
-                                           CodeGenerator::CUDA::KernelBlockSize &blockSize, const CodeGenerator::CUDA::Preferences &preferences,
+                                           KernelBlockSize &blockSize, const Preferences &preferences,
                                            const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
-    using namespace CodeGenerator;
-    using namespace CUDA;
-
     // Select device
     cudaSetDevice(deviceID);
 
     // Calculate model group sizes
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(deviceProps, preferences, model, groupSizes);
+    calcGroupSizes(preferences, model, groupSizes);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
@@ -361,13 +357,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const ModelSpecInternal &model, CodeGenerator::CUDA::KernelBlockSize &blockSize,
-                        const CodeGenerator::CUDA::Preferences &preferences,
+int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSize,
+                        const Preferences &preferences,
                         const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
-    using namespace CodeGenerator;
-    using namespace CUDA;
-    
     // Get number of devices
     int deviceCount;
     CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
