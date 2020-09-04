@@ -386,6 +386,9 @@ def generateCustomModelDeclImpls(swigPath):
             mg.addCppInclude( '"' + model + 'Custom.h"' )
 
 def generateBackend(swigPath, folder, namespace):
+    # **YUCK** is this backend derived from BackendSIMT? 
+    simt_backend = (namespace != "SingleThreadedCPU")
+
     # Create SWIG module
     with SwigModuleGenerator(namespace + "Backend", os.path.join(swigPath, namespace + "Backend.i")) as mg:
         mg.addAutoGenWarning()
@@ -411,6 +414,11 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigIgnore("BackendBase")
         mg.addSwigIgnore("MemAlloc")
         mg.addSwigInclude('"code_generator/backendBase.h"')
+
+        # If this backend is derived from BackendSWIG, parse the BackendSIMT header
+        if simt_backend:
+            mg.addSwigIgnore("BackendSIMT")
+            mg.addSwigInclude('"code_generator/backendSIMT.h"')
 
         # Parse backend, ignore Backend itself to get PreferencesBase definition
         mg.addSwigIgnore("Backend")
