@@ -238,8 +238,8 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
             // Get word
             uint32_t spikeWord = spkRecord[(t * timestepWords) + w];
             
-            // Calculate neuron id of first bit of this word
-            unsigned int neuronID = w * 32;
+            // Calculate neuron id of highest bit of this word
+            unsigned int neuronID = (w * 32) + 31;
             
             // While bits remain
             while(spikeWord != 0) {
@@ -250,8 +250,8 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
                 // Otherwise shift past the spike we have found
                 spikeWord = (numLZ == 31) ? 0 : (spikeWord << (numLZ + 1));
                 
-                // Add number of leading zeros to neuron ID
-                neuronID += numLZ;
+                // Subtract number of leading zeros from neuron ID
+                neuronID -= numLZ;
                 
                 // Write out CSV line
                 stream << time << delimiter << neuronID << std::endl;
