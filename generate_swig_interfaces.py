@@ -220,7 +220,7 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
         {
             return new CustomValues::VarValues( vals );
         }'''
-        
+
     if weightUpdateModel:
         varValuesTypedef += '''
         typedef CustomValues::VarValues PreVarValues;
@@ -235,7 +235,7 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
         {
             return new CustomValues::VarValues( vals );
         }'''
-    
+
     return Template('''
 namespace ${NAMESPACE}
 {
@@ -392,11 +392,12 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigModuleHeadline()
         mg.addSwigEnableUnderCaseConvert()
         mg.addSwigInclude('<exception.i>')
-        
+
         with SwigAsIsScope(mg):
             mg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
             mg.addCppInclude('"optimiser.h"')
             mg.addCppInclude('"path.h"')
+            mg.write("using namespace CodeGenerator;\n")
             mg.write("using namespace CodeGenerator::" + namespace + ";\n")
 
         # Include genn and backend export headers so BACKEND_EXPORT and GENN_EXPORT macros can be correctly parsed
@@ -405,7 +406,7 @@ def generateBackend(swigPath, folder, namespace):
 
         # Add plog severity header so logging severities can be passed to backend
         mg.addSwigInclude('<plog/Severity.h>')
-        
+
         # Parse backend base, ignore BackendBase itself and MemAlloc to get PreferencesBase definition
         mg.addSwigIgnore("BackendBase")
         mg.addSwigIgnore("MemAlloc")
@@ -420,7 +421,7 @@ def generateBackend(swigPath, folder, namespace):
 
         # Include SWIG exception handling library
         mg.addSwigInclude('<exception.i>')
-        
+
         mg.write('''
         %exception create_backend{
             try 
@@ -433,7 +434,7 @@ def generateBackend(swigPath, folder, namespace):
             }
         }
         ''')
-        
+
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
             mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &sharePath, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
@@ -450,7 +451,7 @@ def generateBackend(swigPath, folder, namespace):
 def generateConfigs(gennPath, backends):
     swigPath = os.path.join(gennPath, 'pygenn', 'genn_wrapper', 'generated')
     includePath = os.path.join(gennPath, 'include', 'genn', 'genn')
-    
+
     # Create output path if it doesn't exist
     if not os.path.exists(swigPath):
         os.makedirs(swigPath)
@@ -459,7 +460,7 @@ def generateConfigs(gennPath, backends):
     generateStlContainersInterface(swigPath)
     generateCustomModelDeclImpls(swigPath)
     generateSharedLibraryModelInterface(swigPath)
-    
+
     # Generate SWIG interfaces for all supported backends
     for (f, n, _) in backends:
         generateBackend(swigPath, f, n)
@@ -507,21 +508,21 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"code_generator/generateMSBuild.h"' )
             pygennSmg.addCppInclude( '"path.h"' )
         pygennSmg.addSwigImport( '"StlContainers.i"' )
-        
+
         # Enable C++ camelCase to python underscore_case conversion
         pygennSmg.addSwigEnableUnderCaseConvert()
-        
+
         # Include genn export header so GENN_EXPORT macros can be correctly parsed
         pygennSmg.addSwigInclude( '"gennExport.h"' )
 
         # Add plog severity header so logging severities can be passed to backend
         pygennSmg.addSwigInclude('<plog/Severity.h>')
-        
+
         # Add backend base header but ignore everything apart from MemAlloc
         pygennSmg.addSwigIgnore("BackendBase")
         pygennSmg.addSwigIgnore("PreferencesBase")
         pygennSmg.addSwigInclude('"code_generator/backendBase.h"')
-        
+
         # define and wrap three functions which replace main in generateALL.cc
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
@@ -568,10 +569,10 @@ def generateConfigs(gennPath, backends):
                 if not is_snippet:
                     mg.addCppInclude( '"initVarSnippetCustom.h"' )
                     mg.addCppInclude( '"customVarValues.h"' )
-            
+
             # Include genn export header so GENN_EXPORT macros can be correctly parsed
             mg.addSwigInclude( '"gennExport.h"' )
-            
+
             if is_snippet:
                 mg.addSwigImport( '"Snippet.i"' )
                 mg.addSwigTemplate('Snippet::Init<' + mg.name + '::Base>', 'InitBase')
@@ -643,7 +644,7 @@ def generateConfigs(gennPath, backends):
         # wrap modelSpec.h
         pygennSmg.addSwigIgnore( 'init_connectivity()' )
         pygennSmg.addSwigIgnore( 'init_var()' )
-        
+
         pygennSmg.addSwigInclude( '"modelSpec.h"' )
         pygennSmg.addSwigInclude( '"modelSpecInternal.h"' )
 
@@ -678,19 +679,19 @@ def generateConfigs(gennPath, backends):
                 'ModelSpec::addSynapsePopulation<WeightUpdateModels::{0}, PostsynapticModels::{1}>'.format(
                     wu_model, ps_model),
                 'add_synapse_population_{}_{}'.format(wu_model, ps_model))
-        
+
         # Loop through all postsynaptic models
         for ps_model in mgs[1].models:
         #SynapseGroup *addSlaveSynapsePopulation(const std::string &name, const std::string &weightSharingMasterName, unsigned int delaySteps, const std::string &src, const std::string &trg,
                                             #const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers)
             # Ignore the overload of the functions which automatically get instance from class name
             pygennSmg.addSwigIgnore("ModelSpec::addSlaveSynapsePopulation<PostsynapticModels::{0}>(std::string const &, std::string const &,unsigned int,std::string const &,std::string const &,PostsynapticModels::{0}::ParamValues const &,PostsynapticModels::{0}::VarValues const &)".format(ps_model))
-            
+
             # Add template expansion
             pygennSmg.addSwigTemplate(
                 'ModelSpec::addSlaveSynapsePopulation<PostsynapticModels::{0}>'.format(ps_model),
                 'add_slave_synapse_population_{}'.format(ps_model))
-        
+
         for cs_model in mgs[3].models:
             # Ignore the overload of the function which automatically gets instance from class name
             pygennSmg.addSwigIgnore("ModelSpec::addCurrentSource<CurrentSourceModels::{0}>(std::string const &,std::string const &,CurrentSourceModels::{0}::ParamValues const &,CurrentSourceModels::{0}::VarValues const &)".format(cs_model))
@@ -714,7 +715,7 @@ if __name__ == '__main__':
 
     gennPath = parser.parse_args().genn_path
     includePath = os.path.join( gennPath, 'include', 'genn' )
-    
+
     # check that all required files can be found
     if not os.path.isfile( os.path.join( includePath, NEURONMODELS + '.h' ) ):
         print( 'Error: The {0} file is missing'.format( os.path.join( INDIR, NEURONMODELS + '.h' ) ) )
