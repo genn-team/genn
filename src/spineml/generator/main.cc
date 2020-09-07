@@ -12,6 +12,16 @@
 #include <cmath>
 #include <cstdlib>
 
+// Include windows.h for get
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
+// Include suitable header to find PATH_MAX in
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 // Filesystem includes
 #include "path.h"
 
@@ -577,7 +587,33 @@ int main(int argc, char *argv[])
         // Create default preferences
         CodeGenerator::BACKEND_NAMESPACE::Preferences preferences;
 
-        const auto sharePath = (filesystem::path(argv[0]).parent_path() / ".." / "share" / "genn").make_absolute();
+#ifdef _WIN32
+        // Find path of current executable
+        char executablePathRaw[MAX_PATH];
+        if(GetModuleFileName(nullptr, executablePathRaw, MAX_PATH) == 0) {
+            throw std::runtime_error("GetModuleFileName failed with error:" + std::to_string(GetLastError()));
+        }
+
+        // Bin directory is therefore the parent path of executable
+        const filesystem::path binPath(executablePathRaw).parent_path();
+#elif defined(__APPLE__)
+        // Get executable path
+        char executablePathRaw[PATH_MAX];
+        uint32_t size = PATH_MAX;
+        if(_NSGetExecutablePath(executablePathRaw, &size) != 0) {
+            throw std::runtime_error("_NSGetExecutablePath failed");
+        }
+
+        // Make path absolute and get its parent
+        const filesystem::path binPath = filesystem::path(executablePathRaw).make_absolute().parent_path();
+#else
+        // Resolve /proc/self/exe and get its parent
+        const filesystem::path binPath = filesystem::path("/proc/self/exe").make_absolute().parent_path();
+#endif
+        // Build share path
+        const auto sharePath = (binPath / ".." / "share" / "genn").make_absolute();
+        LOGD_SPINEML << "GeNN bin path:" << binPath;
+        LOGD_SPINEML << "GeNN share path:" << sharePath;
 
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(

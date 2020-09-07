@@ -139,15 +139,15 @@ public:
     void genMergedSynapseConnectivityHostInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityHostInitGroups); }
 
 
-    void genNeuronUpdateGroupSupportCode(CodeStream &os) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision()); }
+    void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
 
-    void genPostsynapticDynamicsSupportCode(CodeStream &os) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision()); }
+    void genPostsynapticDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
 
-    void genPresynapticUpdateSupportCode(CodeStream &os) const{ m_PresynapticUpdateSupportCode.gen(os, getModel().getPrecision()); }
+    void genPresynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PresynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
 
-    void genPostsynapticUpdateSupportCode(CodeStream &os) const{ m_PostsynapticUpdateSupportCode.gen(os, getModel().getPrecision()); }
+    void genPostsynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
 
-    void genSynapseDynamicsSupportCode(CodeStream &os) const{ m_SynapseDynamicsSupportCode.gen(os, getModel().getPrecision()); }
+    void genSynapseDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_SynapseDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
 
     const std::string &getNeuronUpdateSupportCodeNamespace(const std::string &code) const{ return m_NeuronUpdateSupportCode.getSupportCodeNamespace(code); }
 

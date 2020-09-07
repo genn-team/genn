@@ -35,7 +35,7 @@ class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     Backend(const std::string &scalarType, const Preferences &preferences)
-    :   BackendBase(scalarType), m_Preferences(preferences)
+    :   BackendBase(scalarType, preferences)
     {
     }
 
@@ -140,15 +140,6 @@ public:
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
-    //! Is automatic copy mode enabled in the preferences?
-    virtual bool isAutomaticCopyEnabled() const override { return m_Preferences.automaticCopy; }
-
-    //! Should GeNN generate empty state push and pull functions?
-    virtual bool shouldGenerateEmptyStatePushPull() const override { return m_Preferences.generateEmptyStatePushPull; }
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    virtual bool shouldGenerateExtraGlobalParamPull() const override { return m_Preferences.generateExtraGlobalParamPull; }
-
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return 0; }
 
@@ -156,6 +147,8 @@ public:
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
+
+    virtual bool supportsNamespace() const override { return true; };
 
 private:
     //--------------------------------------------------------------------------
@@ -190,11 +183,6 @@ private:
             }
         }
     }
-
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    const Preferences m_Preferences;
 };
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

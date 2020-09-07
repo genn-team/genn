@@ -4,27 +4,20 @@
 #include "code_generator/backendBase.h"
 
 // Forward declarations
-struct cudaDeviceProp;
 class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
+class BackendSIMT;
 class ModelSpecMerged;
-namespace CUDA
-{
-class Backend;
-struct Preferences;
-}
 }
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::Base
+// CodeGenerator::PresynapticUpdateStrategySIMT::Base
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-namespace CUDA
-{
-namespace PresynapticUpdateStrategy
+namespace PresynapticUpdateStrategySIMT
 {
 class Base
 {
@@ -39,23 +32,23 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const = 0;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const = 0;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const = 0;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const = 0;
+                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const = 0;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const = 0;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const = 0;
+                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -75,23 +68,23 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -111,23 +104,23 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 
 private:
     //--------------------------------------------------------------------------
@@ -155,23 +148,23 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -191,24 +184,23 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
 
     //! Is this presynaptic update strategy compatible with a given synapse group?
-    virtual bool isCompatible(const SynapseGroupInternal &sg, const cudaDeviceProp &deviceProps, const Preferences &preferences) const override;
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
 
     //! How many neurons does each thread accumulate the outputs of into shared memory
-    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const Backend &backend) const override;
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const Backend &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const Backend &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
 };
-}   // namespace PresynapticUpdateStrategy
-}   // namespace CUDA
+}   // namespace PresynapticUpdateStrategySIMT
 }   // namespace CodeGenerator

@@ -44,15 +44,22 @@ public:
     }
 
     //! Generate support code
-    void gen(CodeStream &os, const std::string &ftype) const
+    void gen(CodeStream &os, const std::string &ftype, const bool supportsNamespace = true) const
     {
         // Loop through support code
         for(const auto &s : m_SupportCode) {
-            // Write namespace containing support code with fixed up floating point type
-            os << "namespace " << s.second;
-            {
-                CodeStream::Scope b(os);
-                os << ensureFtype(s.first, ftype) << std::endl;
+            if (supportsNamespace) {
+                // Write namespace containing support code with fixed up floating point type
+                os << "namespace " << s.second;
+                {
+                    CodeStream::Scope b(os);
+                    os << ensureFtype(s.first, ftype) << std::endl;
+                }
+            }
+            else {
+                // Regex for function definition - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments) followed by braces on the same or new line
+                std::regex r("\\w+(?=\\(.*\\)\\s*\\{)");
+                os << ensureFtype(std::regex_replace(s.first, r, s.second + "_$&"), ftype) << std::endl;
             }
             os << std::endl;
         }

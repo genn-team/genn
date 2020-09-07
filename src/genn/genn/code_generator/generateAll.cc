@@ -63,7 +63,6 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Open output file streams for generated code files
     std::ofstream definitionsStream((outputPath / "definitions.h").str());
     std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
-    std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
     std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
     std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
     std::ofstream initStream((outputPath / "init.cc").str());
@@ -72,7 +71,6 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Wrap output file streams in CodeStreams for formatting
     CodeStream definitions(definitionsStream);
     CodeStream definitionsInternal(definitionsInternalStream);
-    CodeStream supportCode(supportCodeStream);
     CodeStream neuronUpdate(neuronUpdateStream);
     CodeStream synapseUpdate(synapseUpdateStream);
     CodeStream init(initStream);
@@ -88,7 +86,13 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     generateSynapseUpdate(synapseUpdate, memorySpaces, modelMerged, backend);
     generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
     generateInit(init, memorySpaces, modelMerged, backend);
-    generateSupportCode(supportCode, modelMerged);
+
+    // Generate support code module if the backend supports namespaces
+    if (backend.supportsNamespace()) {
+        std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
+        CodeStream supportCode(supportCodeStream);
+        generateSupportCode(supportCode, modelMerged);
+    }
 
     // Get list of files to copy into generated code
     const auto backendSharePath = sharePath / "backends";

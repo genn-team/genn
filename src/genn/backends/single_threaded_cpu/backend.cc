@@ -632,7 +632,7 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
     if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxConnections();
     }
-    else if(m_Preferences.enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+    else if(getPreferences().enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
         return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), 32);
     }
     else {
@@ -765,13 +765,13 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, 
                                       VarLocation, const std::string &, const std::string &) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, 
                                       VarLocation, const std::string &, const std::string &) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -839,42 +839,42 @@ void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMerged
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
 MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
@@ -908,18 +908,13 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 #ifdef __APPLE__
     cxxFlags += " -Wno-return-type-c-linkage";
 #endif
-    cxxFlags += " " + m_Preferences.userCxxFlagsGNU;
-    if (m_Preferences.optimizeCode) {
+    cxxFlags += " " + getPreferences().userCxxFlagsGNU;
+    if (getPreferences().optimizeCode) {
         cxxFlags += " -O3 -ffast-math";
     }
-    if (m_Preferences.debugCode) {
+    if (getPreferences().debugCode) {
         cxxFlags += " -O0 -g";
     }
-
-#ifdef MPI_ENABLE
-    // If MPI is enabled, add MPI include path
-    cxxFlags +=" -I\"$(MPI_PATH)/include\"";
-#endif
 
     // Write variables to preamble
     os << "CXXFLAGS := " << cxxFlags << std::endl;
@@ -959,7 +954,7 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<ExceptionHandling>SyncCThrow</ExceptionHandling>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
-    os << "\t\t\t<FloatingPointModel>" << (m_Preferences.optimizeCode ? "Fast" : "Precise") << "</FloatingPointModel>" << std::endl;
+    os << "\t\t\t<FloatingPointModel>" << (getPreferences().optimizeCode ? "Fast" : "Precise") << "</FloatingPointModel>" << std::endl;
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
@@ -1084,7 +1079,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
             throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
         }
-        else if(m_Preferences.enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+        else if(getPreferences().enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
             // Determine the number of words in each row
             os << "const unsigned int rowWords = ((group->numTrgNeurons + 32 - 1) / 32);" << std::endl;
             os << "for(unsigned int w = 0; w < rowWords; w++)";

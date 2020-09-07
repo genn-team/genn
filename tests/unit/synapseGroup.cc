@@ -68,6 +68,28 @@ public:
 };
 IMPLEMENT_MODEL(Continuous);
 
+class PostRepeatVal : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(PostRepeatVal, 0);
+
+    SET_CODE("$(value) = $(values)[$(id_post) % 10];");
+
+    SET_EXTRA_GLOBAL_PARAMS({{"values", "scalar*"}});
+};
+IMPLEMENT_SNIPPET(PostRepeatVal);
+
+class PreRepeatVal : public InitVarSnippet::Base
+{
+public:
+    DECLARE_SNIPPET(PreRepeatVal, 0);
+
+    SET_CODE("$(value) = $(values)[$(id_re) % 10];");
+
+    SET_EXTRA_GLOBAL_PARAMS({{"values", "scalar*"}});
+};
+IMPLEMENT_SNIPPET(PreRepeatVal);
+
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
@@ -275,6 +297,52 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 1));
+}
+
+TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+
+    WeightUpdateModels::StaticPulse::VarValues staticPulseVarValsA(initVar<PostRepeatVal>());
+    WeightUpdateModels::StaticPulse::VarValues staticPulseVarValsB(initVar<PreRepeatVal>());
+    auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
+                                                                                                           "Neurons0", "Neurons1",
+                                                                                                           {}, staticPulseVarValsA,
+                                                                                                           {}, {});
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses1", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
+                                                                                                           "Neurons0", "Neurons1",
+                                                                                                           {}, staticPulseVarValsA,
+                                                                                                           {}, {});
+    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses2", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
+                                                                                                           "Neurons0", "Neurons1",
+                                                                                                           {}, staticPulseVarValsB,
+                                                                                                           {}, {});
+    // Finalize model
+    model.finalize();
+
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
+    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
+    ASSERT_TRUE(!sg0Internal->canWUBeMerged(*sg2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentVars)

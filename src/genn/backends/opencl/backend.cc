@@ -24,7 +24,6 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace 
 {
-//! TO BE IMPLEMENTED - Use OpenCL functions - clRNG
 const std::vector<Substitutions::FunctionTemplate> openclLFSRFunctions = {
     {"gennrand_uniform", 0, "clrngLfsr113RandomU01($(rng))"},
     {"gennrand_normal", 0, "normalDistLfsr113($(rng))"},
@@ -110,19 +109,6 @@ void genReadEventTiming(CodeStream &os, const std::string &name)
     os << "const cl_ulong tmpEnd = " << name << "Event.getProfilingInfo<CL_PROFILING_COMMAND_END>();" << std::endl;
     os << name << "Time += (double)(tmpEnd - tmpStart) / 1.0E9;" << std::endl;
 }
-//-----------------------------------------------------------------------
-void genPhiloxSkipAhead(CodeStream &os, const std::string &offset = "") 
-{
-    // Make local copy of host stream
-    os << "clrngPhilox432Stream localStream;" << std::endl;
-    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
-
-    // Convert id into steps, add these to steps, zero deck index and regenerate deck
-    os << "const clrngPhilox432Counter steps = {{0, id" << offset << "}, {0, 0}};" << std::endl;
-    os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
-    os << "localStream.current.deckIndex = 0;" << std::endl;
-    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
-}
 }
 
 //--------------------------------------------------------------------------
@@ -132,35 +118,16 @@ namespace CodeGenerator
 {
 namespace OpenCL
 {
-const char* Backend::KernelNames[KernelMax] = {
-    "updateNeuronsKernel",
-    "updatePresynapticKernel",
-    "updatePostsynapticKernel",
-    "updateSynapseDynamicsKernel",
-    "initializeKernel",
-    "initializeSparseKernel",
-    "preNeuronResetKernel",
-    "preSynapseResetKernel" };
 //--------------------------------------------------------------------------
-std::vector<PresynapticUpdateStrategy::Base*> Backend::s_PresynapticUpdateStrategies = {
-    new PresynapticUpdateStrategy::PreSpan,
-    new PresynapticUpdateStrategy::PostSpan,
-};
-//--------------------------------------------------------------------------
-Backend::Backend(const KernelWorkGroupSize &kernelWorkGroupSizes, const Preferences &preferences,
+Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
                  const std::string &scalarType, unsigned int platformIndex, unsigned int deviceIndex)
-:   BackendBase(scalarType), m_KernelWorkGroupSizes(kernelWorkGroupSizes), m_Preferences(preferences), 
-    m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
+:   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenPlatformIndex(platformIndex), m_ChosenDeviceIndex(deviceIndex)
 {
     // Throw exceptions if unsupported preferences are selected
-    if(m_Preferences.automaticCopy) {
+    if(preferences.automaticCopy) {
         throw std::runtime_error("OpenCL backend does not currently support automatic copy mode.");
     }
 
-    if(m_Preferences.enableBitmaskOptimisations) {
-        throw std::runtime_error("OpenCL backend does not currently support bitmask optimizations.");
-    }
-    
     // Get platforms
     std::vector<cl::Platform> platforms;
     cl::Platform::get(&platforms);
@@ -195,6 +162,75 @@ Backend::Backend(const KernelWorkGroupSize &kernelWorkGroupSizes, const Preferen
     addType("clrngPhilox432Stream", 36);
 }
 //--------------------------------------------------------------------------
+bool Backend::areSharedMemAtomicsSlow() const
+{
+    // If device doesn't have REAL shared memory, then atomics will definitely be slow!
+    // **TODO** realistically, none of the shared memory optimizations we perform should be done on these devices
+    return (m_ChosenDevice.getInfo<CL_DEVICE_LOCAL_MEM_TYPE>() != CL_LOCAL);
+}
+//--------------------------------------------------------------------------
+std::string Backend::getAtomic(const std::string &type, AtomicOperation op, AtomicMemSpace memSpace) const
+{
+    // If operation is an atomic add
+    if(op == AtomicOperation::ADD) {
+        if(type == "float" || type == "double") {
+            if(memSpace == AtomicMemSpace::GLOBAL) {
+                return "atomic_add_f_global";
+            }
+            else {
+                assert(memSpace == AtomicMemSpace::SHARED);
+                return "atomic_add_f_local";
+            }
+        }
+        else {
+            return "atomic_add";
+        }
+    }
+    // Otherwise, it's an atomic or
+    else {
+        assert(op == AtomicOperation::OR);
+        assert(type == "unsigned int" || type == "int");
+        return "atomic_or";
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genSharedMemBarrier(CodeStream &os) const
+{
+    os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGInit(CodeStream&, const std::string&, const std::string&, const std::string&) const
+{
+    assert(false);
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGPreamble(CodeStream &os, Substitutions &subs, const std::string &globalRNG, const std::string &name) const
+{
+    os << "clrngLfsr113Stream localStream;" << std::endl;
+    os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &" << globalRNG << ");" << std::endl;
+    subs.addVarSubstitution(name, "&localStream");
+}
+//--------------------------------------------------------------------------
+void Backend::genPopulationRNGPostamble(CodeStream &os, const std::string &globalRNG) const
+{
+    os << "clrngLfsr113CopyOverStreamsToGlobal(1, &" << globalRNG << ", &localStream);" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const std::string &sequence, const std::string &name) const
+{
+    // Make local copy of host stream
+    os << "clrngPhilox432Stream localStream;" << std::endl;
+    os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
+
+    // Convert id into steps, add these to steps, zero deck index and regenerate deck
+    os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
+    os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
+    os << "localStream.current.deckIndex = 0;" << std::endl;
+    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
+
+    subs.addVarSubstitution(name, "&localStream");
+}
+//--------------------------------------------------------------------------
 void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                               HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
@@ -227,7 +263,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << std::endl << std::endl;
 
     // Generate support code
-    modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels);
+    modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels, false);
+    modelMerged.genPresynapticUpdateSupportCode(neuronUpdateKernels, false);
     neuronUpdateKernels << std::endl << std::endl;
     
     // Generate struct definitions
@@ -235,7 +272,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateKernels, *this);
 
     // Generate merged data structures
-    genMergedKernelDataStructures(neuronUpdateKernels, m_KernelWorkGroupSizes[KernelNeuronUpdate],
+    genMergedKernelDataStructures(neuronUpdateKernels, getKernelBlockSize(KernelNeuronUpdate),
                                   modelMerged.getMergedNeuronUpdateGroups(), [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); });
     neuronUpdateKernels << std::endl;
 
@@ -244,7 +281,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedStructBuildKernels(neuronUpdateKernels, modelMerged, modelMerged.getMergedNeuronUpdateGroups());
 
     // Declare neuron spike queue update kernel
-    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPreNeuronReset] << ", 1, 1)))" << std::endl;
+    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPreNeuronReset) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
     neuronUpdateKernels << ")";
@@ -253,196 +290,27 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
 
-        // Loop through local neuron groups
-        for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
-            neuronUpdateKernels << "// merged" << n.getIndex() << std::endl;
-            if(idPreNeuronReset == 0) {
-                neuronUpdateKernels << "if(id < " << n.getGroups().size() << ")";
-            }
-            else {
-                neuronUpdateKernels << "if(id >= " << idPreNeuronReset << " && id < " << idPreNeuronReset + n.getGroups().size() << ")";
-            }
-            {
-                CodeStream::Scope b(neuronUpdateKernels);
-
-                // Use this to get reference to merged group structure
-                neuronUpdateKernels << "__global struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idPreNeuronReset << "]; " << std::endl;
-
-                if(n.getArchetype().isDelayRequired()) { // with delay
-                    neuronUpdateKernels << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
-                }
-                n.genMergedGroupSpikeCountReset(neuronUpdateKernels);
-            }
-            idPreNeuronReset += n.getGroups().size();
-        }
+        genPreNeuronResetKernel(neuronUpdateKernels, modelMerged, idPreNeuronReset);
     }
     neuronUpdateKernels << std::endl;
     //! KernelPreNeuronReset END
     size_t idStart = 0;
 
     //! KernelNeuronUpdate BODY START
-    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << ", 1, 1)))" << std::endl;
+    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronUpdate) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(), true);
     neuronUpdateKernels << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(neuronUpdateKernels);
-        neuronUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
 
         Substitutions kernelSubs(openclLFSRFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
-        // If any neuron groups emit spike events
-        if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                       [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
-        {
-            neuronUpdateKernels << "volatile __local unsigned int shSpkEvnt[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
-            neuronUpdateKernels << "volatile __local unsigned int shPosSpkEvnt;" << std::endl;
-            neuronUpdateKernels << "volatile __local unsigned int shSpkEvntCount;" << std::endl;
-            neuronUpdateKernels << std::endl;
-            neuronUpdateKernels << "if (localId == 1)";
-            {
-                CodeStream::Scope b(neuronUpdateKernels);
-                neuronUpdateKernels << "shSpkEvntCount = 0;" << std::endl;
-            }
-            neuronUpdateKernels << std::endl;
-        }
-
-        // If any neuron groups emit true spikes
-        if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
-                       [](const NeuronUpdateGroupMerged &n) { return !n.getArchetype().getNeuronModel()->getThresholdConditionCode().empty(); }))
-        {
-            neuronUpdateKernels << "volatile __local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelNeuronUpdate] << "];" << std::endl;
-            neuronUpdateKernels << "volatile __local unsigned int shPosSpk;" << std::endl;
-            neuronUpdateKernels << "volatile __local unsigned int shSpkCount;" << std::endl;
-            neuronUpdateKernels << "if (localId == 0)";
-            {
-                CodeStream::Scope b(neuronUpdateKernels);
-                neuronUpdateKernels << "shSpkCount = 0;" << std::endl;
-            }
-            neuronUpdateKernels << std::endl;
-        }
-
-        neuronUpdateKernels << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-        // Parallelise over neuron groups
-        genParallelGroup<NeuronUpdateGroupMerged>(neuronUpdateKernels, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
-            [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelWorkGroupSize(KernelNeuronUpdate)); },
-            [simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
-            {
-                // If axonal delays are required
-                if(ng.getArchetype().isDelayRequired()) {
-                    // We should READ from delay slot before spkQuePtr
-                    os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset() << ";" << std::endl;
-
-                    // And we should WRITE to delay slot pointed to be spkQuePtr
-                    os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset() << ";" << std::endl;
-                }
-                os << std::endl;
-
-                // Call handler to generate generic neuron code
-                os << "if(" << popSubs["id"] << " < group->numNeurons)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // Copy global RNG stream to local and use pointer to this for rng
-                    if (ng.getArchetype().isSimRNGRequired()) {
-                        os << "clrngLfsr113Stream localStream;" << std::endl;
-                        os << "clrngLfsr113CopyOverStreamsFromGlobal(1, &localStream, &group->rng[" << popSubs["id"] + "]);" << std::endl;
-                        popSubs.addVarSubstitution("rng", "&localStream");
-                    }
-                    
-                    simHandler(os, ng, popSubs,
-                        // Emit true spikes
-                        [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged&, Substitutions &subs)
-                        {
-                            genEmitSpike(neuronUpdateKernelsBody, subs, "");
-                        },
-                        // Emit spike-like events
-                        [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged&, Substitutions &subs)
-                        {
-                            genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt");
-                        });
-
-                    // Copy local stream back to local
-                    if (ng.getArchetype().isSimRNGRequired()) {
-                        os << std::endl;
-                        os << "clrngLfsr113CopyOverStreamsToGlobal(1, &group->rng[" << popSubs["id"] + "], &localStream);" << std::endl;
-                    }
-                }
-
-                os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-                if (ng.getArchetype().isSpikeEventRequired()) {
-                    os << "if (localId == 1)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "if (shSpkEvntCount > 0)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "shPosSpkEvnt = atomic_add(&group->spkCntEvnt";
-                            if (ng.getArchetype().isDelayRequired()) {
-                                os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
-                            }
-                            else {
-                                os << "[0], shSpkEvntCount);" << std::endl;
-                            }
-                        }
-                    } // end if (localId == 0)
-                    os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-                }
-
-                if (!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                    os << "if (localId == 0)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "if (shSpkCount > 0)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "shPosSpk = atomic_add(&group->spkCnt";
-                            if (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                                os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
-                            }
-                            else {
-                                os << "[0], shSpkCount);" << std::endl;
-                            }
-                        }
-                    } // end if (localId == 1)
-                    os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-                }
-
-                const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
-                if (ng.getArchetype().isSpikeEventRequired()) {
-                    os << "if (localId < shSpkEvntCount)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "group->spkEvnt[" << queueOffset << "shPosSpkEvnt + localId] = shSpkEvnt[localId];" << std::endl;
-                    }
-                }
-
-                if (!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                    const std::string queueOffsetTrueSpk = ng.getArchetype().isTrueSpikeRequired() ? queueOffset : "";
-
-                    os << "if (localId < shSpkCount)";
-                    {
-                        CodeStream::Scope b(os);
-
-                        os << "const unsigned int n = shSpk[localId];" << std::endl;
-
-                        // Create new substition stack and explicitly replace id with 'n' and perform WU var update
-                        Substitutions wuSubs(&popSubs);
-                        wuSubs.addVarSubstitution("id", "n", true);
-                        wuVarUpdateHandler(os, ng, wuSubs);
-
-                        os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + localId] = n;" << std::endl;
-                        if (ng.getArchetype().isSpikeTimeRequired()) {
-                            os << "group->sT[" << queueOffset << "n] = t;" << std::endl;
-                        }
-                    }
-                }
-            }
-        );
+        genNeuronUpdateKernel(neuronUpdateKernels, kernelSubs, modelMerged, 
+                              simHandler, wuVarUpdateHandler, idStart);
+        
     }
     neuronUpdateKernels << std::endl;
 
@@ -462,7 +330,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(idPreNeuronReset > 0 || idStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
-            os << "if(neuronUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            genBuildProgramFlagsString(os);
+            os << "if(neuronUpdateProgram.build(buildProgramFlags.c_str()) != CL_SUCCESS)";
             {
                 CodeStream::Scope b(os);
                 os << "std::cerr << neuronUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -564,9 +433,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     genAtomicAddFloat(synapseUpdateKernels, "global");
 
     // Generate support code
-    modelMerged.genPresynapticUpdateSupportCode(synapseUpdateKernels);
-    modelMerged.genPostsynapticUpdateSupportCode(synapseUpdateKernels);
-    modelMerged.genSynapseDynamicsSupportCode(synapseUpdateKernels);
+    modelMerged.genPresynapticUpdateSupportCode(synapseUpdateKernels, false);
+    modelMerged.genPostsynapticUpdateSupportCode(synapseUpdateKernels, false);
+    modelMerged.genSynapseDynamicsSupportCode(synapseUpdateKernels, false);
     synapseUpdateKernels << std::endl;
 
     // Generate struct definitions
@@ -577,11 +446,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     synapseUpdateKernels << std::endl;
 
     // Generate data structure for accessing merged groups
-    genMergedKernelDataStructures(synapseUpdateKernels, m_KernelWorkGroupSizes[KernelPresynapticUpdate],
-                                  modelMerged.getMergedPresynapticUpdateGroups(), [](const SynapseGroupInternal &sg){ return getNumPresynapticUpdateThreads(sg); });
-    genMergedKernelDataStructures(synapseUpdateKernels, m_KernelWorkGroupSizes[KernelPostsynapticUpdate],
+    genMergedKernelDataStructures(synapseUpdateKernels, getKernelBlockSize(KernelPresynapticUpdate),
+                                  modelMerged.getMergedPresynapticUpdateGroups(), [this](const SynapseGroupInternal &sg){ return getNumPresynapticUpdateThreads(sg, getPreferences()); });
+    genMergedKernelDataStructures(synapseUpdateKernels, getKernelBlockSize(KernelPostsynapticUpdate),
                                   modelMerged.getMergedPostsynapticUpdateGroups(), [](const SynapseGroupInternal &sg) { return getNumPostsynapticUpdateThreads(sg); });
-    genMergedKernelDataStructures(synapseUpdateKernels, m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate],
+    genMergedKernelDataStructures(synapseUpdateKernels, getKernelBlockSize(KernelSynapseDynamicsUpdate),
                                   modelMerged.getMergedSynapseDynamicsGroups(), [](const SynapseGroupInternal &sg) { return getNumSynapseDynamicsThreads(sg); });
 
     // Generate kernels used to populate merged structs
@@ -593,181 +462,38 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     // Declare neuron spike queue update kernel
     size_t idPreSynapseReset = 0;
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
-        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPreSynapseReset] << ", 1, 1)))" << std::endl;
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPreSynapseReset) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
         synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
-
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
-            // Loop through merged synapse groups
-            for(const auto &n : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
-                synapseUpdateKernels << "// merged" << n.getIndex() << std::endl;
-                if(idPreSynapseReset == 0) {
-                    synapseUpdateKernels << "if(id < " << n.getGroups().size() << ")";
-                }
-                else {
-                    synapseUpdateKernels << "if(id >= " << idPreSynapseReset << " && id < " << idPreSynapseReset + n.getGroups().size() << ")";
-                }
-                {
-                    CodeStream::Scope b(synapseUpdateKernels);
-
-                    // Use this to get reference to merged group structure
-                    synapseUpdateKernels << "__global struct MergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << " *group = &d_mergedSynapseDendriticDelayUpdateGroup" << n.getIndex() << "[id - " << idPreSynapseReset << "]; " << std::endl;
-
-                    synapseUpdateKernels << "*group->denDelayPtr = (*group->denDelayPtr + 1) % " << n.getArchetype().getMaxDendriticDelayTimesteps() << ";" << std::endl;
-                }
-                idPreSynapseReset += n.getGroups().size();
-            }
-            synapseUpdateKernels << std::endl;
+            genPreSynapseResetKernel(synapseUpdateKernels, modelMerged, idPreSynapseReset);
         }
     }
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
-        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << ", 1, 1)))" << std::endl;
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPresynapticUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
-
+            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
-
-            synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
-            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
-            // We need shLg if any synapse groups accumulate into shared memory
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [this](const PresynapticUpdateGroupMerged &sg)
-                           {
-                               return getPresynapticUpdateStrategy(sg.getArchetype())->shouldAccumulateInSharedMemory(sg, *this);
-                           }))
-            {
-                synapseUpdateKernels << "__local " << model.getPrecision() << " shLg[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
-
-            // If any of these synapse groups also have sparse connectivity, allocate shared memory for row length
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [](const PresynapticUpdateGroupMerged &sg)
-                           {
-                               return (sg.getArchetype().getSpanType() == SynapseGroup::SpanType::POSTSYNAPTIC
-                                       && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE));
-                           }))
-            {
-                synapseUpdateKernels << "__local unsigned int shRowLength[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
-
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [](const PresynapticUpdateGroupMerged &sg)
-                           {
-                               return (sg.getArchetype().isTrueSpikeRequired() || !sg.getArchetype().getWUModel()->getLearnPostCode().empty());
-                           }))
-            {
-                synapseUpdateKernels << "__local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
-            }
-
-            if(std::any_of(modelMerged.getMergedPresynapticUpdateGroups().cbegin(), modelMerged.getMergedPresynapticUpdateGroups().cend(),
-                           [](const PresynapticUpdateGroupMerged &sg) { return (sg.getArchetype().isSpikeEventRequired()); }))
-                           {
-                               synapseUpdateKernels << "__local unsigned int shSpkEvnt[" << m_KernelWorkGroupSizes[KernelPresynapticUpdate] << "];" << std::endl;
-                           }
-
-            // Parallelise over synapse groups
-            genParallelGroup<PresynapticUpdateGroupMerged>(synapseUpdateKernels, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), idPresynapticStart,
-                [this](const SynapseGroupInternal &sg) { return padSize(getNumPresynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPresynapticUpdate]); },
-                [wumThreshHandler, wumSimHandler, wumEventHandler, &modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
-                {
-                    // Get presynaptic update strategy to use for this synapse group
-                    const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
-                    LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
-
-                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-                    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int preReadDelaySlot = " << sg.getPresynapticAxonalDelaySlot() << ";" << std::endl;
-                        os << "const unsigned int preReadDelayOffset = preReadDelaySlot * group->numSrcNeurons;" << std::endl;
-                    }
-
-                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-                    if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-                    }
-
-                    // If we are going to accumulate postsynaptic input into a register, zero register value
-                    if(presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
-                        os << "// only do this for existing neurons" << std::endl;
-                        os << modelMerged.getModel().getPrecision() << " linSyn = 0;" << std::endl;
-                    }
-                    // Otherwise, if we are going to accumulate into shared memory, zero entry in array for each target neuron
-                    // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                    else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
-                        os << "if(localId < group->numTrgNeurons)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "shLg[localId] = 0;" << std::endl;
-                        }
-                        os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-                    }
-
-                    // If spike events should be processed
-                    if(sg.getArchetype().isSpikeEventRequired()) {
-                        CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genCode(os, modelMerged, sg, popSubs, *this, false,
-                                                           wumThreshHandler, wumEventHandler);
-                    }
-
-                    // If true spikes should be processed
-                    if(sg.getArchetype().isTrueSpikeRequired()) {
-                        CodeStream::Scope b(os);
-                        presynapticUpdateStrategy->genCode(os, modelMerged, sg, popSubs, *this, true,
-                                                           wumThreshHandler, wumSimHandler);
-                    }
-                    os << std::endl;
-
-                    // If we have been accumulating into a register, write value back to global memory
-                    if(presynapticUpdateStrategy->shouldAccumulateInRegister(sg, *this)) {
-                        os << "// only do this for existing neurons" << std::endl;
-                        os << "if (" << popSubs["id"] << " < group->numTrgNeurons)";
-                        {
-                            CodeStream::Scope b(os);
-                            const std::string inSyn = "group->inSyn[" + popSubs["id"] + "]";
-                            if(sg.getArchetype().isPSModelMerged()) {
-                                os << getFloatAtomicAdd(modelMerged.getModel().getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
-                            }
-                            else {
-                                os << inSyn << " += linSyn;" << std::endl;
-                            }
-                        }
-                    }
-                    // Otherwise, if we have been accumulating into shared memory, write value back to global memory
-                    // **NOTE** is ok as number of target neurons <= synapseBlkSz
-                    else if(presynapticUpdateStrategy->shouldAccumulateInSharedMemory(sg, *this)) {
-                        os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-                        os << "if (localId < group->numTrgNeurons)";
-                        {
-                            CodeStream::Scope b(os);
-                            const std::string inSyn = "group->inSyn[localId]";
-
-                            if(sg.getArchetype().isPSModelMerged()) {
-                                os << getFloatAtomicAdd(modelMerged.getModel().getPrecision()) << "(&" << inSyn << ", shLg[localId]);" << std::endl;
-                            }
-                            else {
-                                os << inSyn << " += shLg[localId];" << std::endl;
-                            }
-                        }
-                    }
-                });
+            genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, wumThreshHandler, 
+                                       wumSimHandler, wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
         }
     }
 
     // If any synapse groups require postsynaptic learning
     size_t idPostsynapticStart = 0;
     if(!modelMerged.getMergedPostsynapticUpdateGroups().empty()) {
-        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ", 1, 1)))" << std::endl;
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPostsynapticUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPostsynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPostsynapticUpdateGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
@@ -775,102 +501,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(synapseUpdateKernels);
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
-
-            synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-            synapseUpdateKernels << "__local unsigned int shSpk[" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << "];" << std::endl;
-            if(std::any_of(modelMerged.getMergedPostsynapticUpdateGroups().cbegin(), modelMerged.getMergedPostsynapticUpdateGroups().cend(),
-                           [](const PostsynapticUpdateGroupMerged &s)
-                           {
-                               return ((s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.getArchetype().getWUModel()->getLearnPostCode().empty());
-                           }))
-            {
-                synapseUpdateKernels << "__local unsigned int shColLength[" << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << "];" << std::endl;
-            }
-
-            // Parallelise over synapse groups whose weight update models have code for postsynaptic learning
-            genParallelGroup<PostsynapticUpdateGroupMerged>(synapseUpdateKernels, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idPostsynapticStart,
-                [this](const SynapseGroupInternal &sg) { return padSize(getNumPostsynapticUpdateThreads(sg), m_KernelWorkGroupSizes[KernelPostsynapticUpdate]); },
-                [postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
-                {
-                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-                    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-                    }
-
-                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-                    if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot() << ";" << std::endl;
-                        os << "const unsigned int postReadDelayOffset = postReadDelaySlot * group->numTrgNeurons;" << std::endl;
-                    }
-
-                    if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() && sg.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                        os << "const unsigned int numSpikes = group->trgSpkCnt[postReadDelaySlot];" << std::endl;
-                    }
-                    else {
-                        os << "const unsigned int numSpikes = group->trgSpkCnt[0];" << std::endl;
-                    }
-                    
-                    os << "const unsigned int numSpikeBlocks = (numSpikes + " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] - 1 << ") / " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ";" << std::endl;
-                    os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ") + 1 : " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ";" << std::endl;
-
-                        os << "if (localId < numSpikesInBlock)";
-                        {
-                            CodeStream::Scope b(os);
-                            const std::string offsetTrueSpkPost = (sg.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-                            os << "const unsigned int spk = group->trgSpk[" << offsetTrueSpkPost << "(r * " << m_KernelWorkGroupSizes[KernelPostsynapticUpdate] << ") + localId];" << std::endl;
-                            os << "shSpk[localId] = spk;" << std::endl;
-
-                            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                os << "shColLength[localId] = group->colLength[spk];" << std::endl;
-                            }
-                        }
-
-                        os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-                        os << "// only work on existing neurons" << std::endl;
-                        os << "if (" << popSubs["id"] << " < group->colStride)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "// loop through all incoming spikes for learning" << std::endl;
-                            os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
-                            {
-                                CodeStream::Scope b(os);
-
-                                Substitutions synSubs(&popSubs);
-                                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    os << "if (" << popSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
-                                    os << "const unsigned int synAddress = group->remap[(shSpk[j] * group->colStride) + " << popSubs["id"] << "];" << std::endl;
-
-                                    os << "const unsigned int ipre = synAddress / group->rowStride;" << std::endl;
-                                    synSubs.addVarSubstitution("id_pre", "ipre");
-                                }
-                                else {
-                                    os << "const unsigned int synAddress = (" << popSubs["id"] << " * group->numTrgNeurons) + shSpk[j];" << std::endl;
-                                    synSubs.addVarSubstitution("id_pre", synSubs["id"]);
-                                }
-
-                                synSubs.addVarSubstitution("id_post", "shSpk[j]");
-                                synSubs.addVarSubstitution("id_syn", "synAddress");
-
-                                postLearnHandler(os, sg, synSubs);
-
-                                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                    os << CodeStream::CB(1540);
-                                }
-                            }
-                        }
-                    }
-                });
+            genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
         }
     }
-    //! KernelPostsynapticUpdate BODY END
-
+ 
     size_t idSynapseDynamicsStart = 0;
     if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
-        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate] << ", 1, 1)))" << std::endl;
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelSynapseDynamicsUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDynamicsGroups(), true);
         synapseUpdateKernels << model.getTimePrecision() << " t)";
@@ -879,63 +517,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
 
-            synapseUpdateKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
-            // Parallelise over synapse groups whose weight update models have code for synapse dynamics
-            genParallelGroup<SynapseDynamicsGroupMerged>(synapseUpdateKernels, kernelSubs, modelMerged.getMergedSynapseDynamicsGroups(), idSynapseDynamicsStart,
-                [this](const SynapseGroupInternal &sg) { return ::padSize(getNumSynapseDynamicsThreads(sg), m_KernelWorkGroupSizes[KernelSynapseDynamicsUpdate]); },
-                [synapseDynamicsHandler, &model, this](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &popSubs)
-                {
-                    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-                    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-                    }
-
-                    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-                    if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                        os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-                    }
-
-                    Substitutions synSubs(&popSubs);
-
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << "if (" << popSubs["id"] << " < group->synRemap[0])";
-                    }
-                    else {
-                        os << "if (" << popSubs["id"] << " < (group->numSrcNeurons * group->numTrgNeurons))";
-                    }
-                    {
-                        CodeStream::Scope b(os);
-
-                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            // Determine synapse and presynaptic indices for this thread
-                            os << "const unsigned int s = group->synRemap[1 + " << popSubs["id"] << "];" << std::endl;
-
-                            // **OPTIMIZE** we can do a fast constant divide optimization here
-                            synSubs.addVarSubstitution("id_pre", "(s / group->rowStride)");
-                            synSubs.addVarSubstitution("id_post", "group->ind[s]");
-                            synSubs.addVarSubstitution("id_syn", "s");
-                        }
-                        else {
-                            // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
-                            synSubs.addVarSubstitution("id_pre", "(" + popSubs["id"] + " / group->rowStride)");
-                            synSubs.addVarSubstitution("id_post", "(" + popSubs["id"] + " % group->rowStride)");
-                            synSubs.addVarSubstitution("id_syn", popSubs["id"]);
-                        }
-
-                        // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
-                        if(sg.getArchetype().isDendriticDelayRequired()) {
-                            synSubs.addFuncSubstitution("addToInSynDelay", 2, getFloatAtomicAdd(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + synSubs["id_post"] + "], $(0))");
-                        }
-                        // Otherwise
-                        else {
-                            synSubs.addFuncSubstitution("addToInSyn", 1, getFloatAtomicAdd(model.getPrecision()) + "(&group->inSyn[" + synSubs["id_post"] + "], $(0))");
-                        }
-
-                        synapseDynamicsHandler(os, sg, synSubs);
-                    }
-                });
+            genSynapseDynamicsKernel(synapseUpdateKernels, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
         }
     }
     synapseUpdateKernels << std::endl;
@@ -955,7 +538,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         if(idPreSynapseReset > 0 || idPresynapticStart > 0 || idPostsynapticStart > 0 || idSynapseDynamicsStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
-            os << "if(synapseUpdateProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            genBuildProgramFlagsString(os);
+            os << "if(synapseUpdateProgram.build(buildProgramFlags.c_str()) != CL_SUCCESS)";
             {
                 CodeStream::Scope b(os);
                 os << "std::cerr << synapseUpdateProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -1101,13 +685,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
-    genMergedKernelDataStructures(initializeKernels, m_KernelWorkGroupSizes[KernelInitialize],
+    genMergedKernelDataStructures(initializeKernels, getKernelBlockSize(KernelInitialize),
                                   modelMerged.getMergedNeuronInitGroups(), [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); },
                                   modelMerged.getMergedSynapseDenseInitGroups(), [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getNumNeurons(); },
                                   modelMerged.getMergedSynapseConnectivityInitGroups(), [](const SynapseGroupInternal &sg) { return getNumConnectivityInitThreads(sg); });
 
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
-    genMergedKernelDataStructures(initializeKernels, m_KernelWorkGroupSizes[KernelInitializeSparse],
+    genMergedKernelDataStructures(initializeKernels, getKernelBlockSize(KernelInitializeSparse),
                                   modelMerged.getMergedSynapseSparseInitGroups(), [](const SynapseGroupInternal &sg) { return sg.getMaxConnections(); });
     initializeKernels << std::endl;
 
@@ -1117,7 +701,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseSparseInitGroups());
 
-    initializeKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelInitialize] << ", 1, 1)))" << std::endl;
+    initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitialize) << ", 1, 1)))" << std::endl;
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
     bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
     const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
@@ -1131,181 +715,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     initializeKernels << ")";
     {
         CodeStream::Scope b(initializeKernels);
-
-        initializeKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
         initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
-        initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernels << "// Local neuron groups" << std::endl;
-        // Parallelise over neuron groups
-        genParallelGroup<NeuronInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idInitStart,
-            [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelWorkGroupSize(KernelInitialize)); },
-            [localNGHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
-            {
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->numNeurons)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // Add substitution for RNG
-                    if (ng.getArchetype().isInitRNGRequired()) {
-                        genPhiloxSkipAhead(os);
-                        popSubs.addVarSubstitution("rng", "&localStream");
-                    }
-
-                    localNGHandler(os, ng, popSubs);
-                }
-            });
-        initializeKernels << std::endl;
-
-        initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernels << "// Synapse groups with dense connectivity" << std::endl;
-        genParallelGroup<SynapseDenseInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), idInitStart,
-            [this](const SynapseGroupInternal& sg) { return padSize(sg.getTrgNeuronGroup()->getNumNeurons(), getKernelWorkGroupSize(KernelInitialize)); },
-            [sgDenseInitHandler](CodeStream& os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
-            {
-                os << "// only do this for existing postsynaptic neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // Add substitution for RNG
-                    if (sg.getArchetype().isWUInitRNGRequired()) {
-                        genPhiloxSkipAhead(os);
-                        popSubs.addVarSubstitution("rng", "&localStream");
-                    }
-
-                    popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                    sgDenseInitHandler(os, sg, popSubs);
-                }
-            });
-        initializeKernels << std::endl;
-
-        initializeKernels << "// ------------------------------------------------------------------------" << std::endl;
-        initializeKernels << "// Synapse groups with sparse connectivity" << std::endl;
-        genParallelGroup<SynapseConnectivityInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idInitStart,
-            [this](const SynapseGroupInternal& sg) { return padSize(getNumConnectivityInitThreads(sg), getKernelWorkGroupSize(KernelInitialize)); },
-            [sgSparseRowConnectHandler, sgSparseColConnectHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
-            {
-                // If there is row-building code in this snippet
-                const auto *snippet = sg.getArchetype().getConnectivityInitialiser().getSnippet();
-                if(!snippet->getRowBuildCode().empty()) {
-                    os << "// only do this for existing presynaptic neurons" << std::endl;
-                    os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
-                    {
-                        CodeStream::Scope b(os);
-                        popSubs.addVarSubstitution("id_pre", popSubs["id"]);
-                        popSubs.addVarSubstitution("id_post_begin", "0");
-                        popSubs.addVarSubstitution("id_thread", "0");
-                        popSubs.addVarSubstitution("num_threads", "1");
-                        popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
-
-                        // Add substitution for RNG
-                        if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                            genPhiloxSkipAhead(os);
-                            popSubs.addVarSubstitution("rng", "&localStream");
-                        }
-
-                        // If the synapse group has bitmask connectivity
-                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                            // Get maximum number of synapses anywhere in merged group
-                            size_t maxSynapses = 0;
-                            for(const auto &s : sg.getGroups()) {
-                                maxSynapses = std::max(maxSynapses, (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getSrcNeuronGroup()->getNumNeurons());
-                            }
-
-                            // Calculate indices of bits at start and end of row
-                            os << "// Calculate indices" << std::endl;
-                            if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                                os << "const ulong rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
-                            }
-                            else {
-                                os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->numTrgNeurons;" << std::endl;
-                            }
-
-                            // Build function template to set correct bit in bitmask
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "atomic_or(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
-                        }
-                        // Otherwise, if synapse group has ragged connectivity
-                        else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            const std::string rowLength = "group->rowLength[" + popSubs["id"] + "]";
-                            const std::string ind = "group->ind";
-
-                            // Zero row length
-                            os << rowLength << " = 0;" << std::endl;
-
-                            // Build function template to increment row length and insert synapse into ind array
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
-                        }
-                        else {
-                            throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
-                        }
-
-                        sgSparseRowConnectHandler(os, sg, popSubs);
-                    }
-                }
-                // Otherwise, if there is column building code
-                else if(!snippet->getColBuildCode().empty()) {
-                    os << "// only do this for existing postsynaptic neurons" << std::endl;
-                    os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
-                    {
-                        CodeStream::Scope b(os);
-                        popSubs.addVarSubstitution("id_pre_begin", "0");
-                        popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                        popSubs.addVarSubstitution("id_thread", "0");
-                        popSubs.addVarSubstitution("num_threads", "1");
-                        popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-
-                        // Add substitution for RNG
-                        if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getColBuildCode())) {
-                            genPhiloxSkipAhead(os);
-                            popSubs.addVarSubstitution("rng", "&localStream");
-                        }
-
-                        // If the synapse group has bitmask connectivity
-                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                            // Calculate the maximum number of synapses in any groups
-                            size_t maxSynapses = 0;
-                            for(const auto &s : sg.getGroups()) {
-                                maxSynapses = std::max(maxSynapses, (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getSrcNeuronGroup()->getNumNeurons());
-                            }
-
-                            // Calculate indices of bits at start and end of row
-                            os << "// Calculate indices" << std::endl;
-                            if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                                os << "const uint64_t colStartGID = " << popSubs["id"] << ";" << std::endl;
-                            }
-                            else {
-                                os << "const unsigned int colStartGID = " << popSubs["id"] << ";" << std::endl;
-                            }
-
-                            // Build function template to set correct bit in bitmask
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "atomic_or(&group->gp[(colStartGID + ($(0) * group->rowStride)) / 32], 0x80000000 >> ((colStartGID + ($(0) * group->rowStride)) & 31))");
-                        }
-                        // Otherwise, if synapse group has ragged connectivity
-                        else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            // Build function template to atomically increment correct row length and insert synapse into ind array
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "group->ind[(($(0)) * group->rowStride) + atomic_add(&group->rowLength[$(0)], 1)] = " + popSubs["id_post"]);
-                        }
-                        else {
-                            throw std::runtime_error("Only BITMASK and SPARSE format connectivity can be generated using a connectivity initialiser");
-                        }
-                        sgSparseColConnectHandler(os, sg, popSubs);
-
-                    }
-                }
-            });
+        genInitializeKernel(initializeKernels, kernelSubs, modelMerged, localNGHandler, sgDenseInitHandler, 
+                            sgSparseRowConnectHandler, sgSparseColConnectHandler, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
     // Generate sparse initialisation kernel
     size_t idSparseInitStart = 0;
     if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
-        initializeKernels << "__attribute__((reqd_work_group_size(" << m_KernelWorkGroupSizes[KernelInitializeSparse] << ", 1, 1)))" << std::endl;
+        initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitializeSparse) << ", 1, 1)))" << std::endl;
         initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
         genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), globalRNGRequired);
         if(globalRNGRequired) {
@@ -1314,142 +733,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         initializeKernels << ")";
         {
             CodeStream::Scope b(initializeKernels);
-
-            // Common variables for all cases
-            Substitutions kernelSubs(openclPhilloxFunctions);
-
-            initializeKernels << "const unsigned int localId = get_local_id(0);" << std::endl;
             initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
-            // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
-            // **TODO** check actually required
-            initializeKernels << "__local unsigned int shRowLength[" << m_KernelWorkGroupSizes[KernelInitializeSparse] << "];" << std::endl;
-            if (std::any_of(modelMerged.getMergedSynapseSparseInitGroups().cbegin(), modelMerged.getMergedSynapseSparseInitGroups().cend(),
-                [](const SynapseSparseInitGroupMerged &s) { return (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.getArchetype().getWUModel()->getSynapseDynamicsCode().empty(); }))
-            {
-                initializeKernels << "__local unsigned int shRowStart[" << m_KernelWorkGroupSizes[KernelInitializeSparse] + 1 << "];" << std::endl;
-            }
-
-            // Initialise weight update variables for synapse groups with sparse connectivity
-            genParallelGroup<SynapseSparseInitGroupMerged>(initializeKernels, kernelSubs, modelMerged.getMergedSynapseSparseInitGroups(), idSparseInitStart,
-                [this](const SynapseGroupInternal &sg) { return padSize(sg.getMaxConnections(), m_KernelWorkGroupSizes[KernelInitializeSparse]); },
-                [this, sgSparseInitHandler, numStaticInitThreads](CodeStream &os, const SynapseSparseInitGroupMerged  &sg, Substitutions& popSubs)
-                {
-                    // Add substitution for RNG
-                    if (sg.getArchetype().isWUInitRNGRequired()) {
-                        genPhiloxSkipAhead(os, " + " + std::to_string(numStaticInitThreads));
-                        popSubs.addVarSubstitution("rng", "&localStream");
-                    }
-
-                    os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
-
-                    // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
-                    const size_t workGroupSize = m_KernelWorkGroupSizes[KernelInitializeSparse];
-                    os << "const unsigned int numBlocks = (group->numSrcNeurons + " << workGroupSize << " - 1) / " << workGroupSize << ";" << std::endl;
-
-                    // Loop through blocks
-                    os << "for(unsigned int r = 0; r < numBlocks; r++)";
-                    {
-                        CodeStream::Scope b(os);
-
-                        // Calculate number of rows to process in this block
-                        os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
-                        os << " ? ((group->numSrcNeurons - 1) % " << workGroupSize << ") + 1";
-                        os << " : " << workGroupSize << ";" << std::endl;
-
-                        // Use threads to copy block of sparse structure into shared memory
-                        os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-                        os << "if (localId < numRowsInBlock)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "shRowLength[localId] = group->rowLength[(r * " << workGroupSize << ") + localId];" << std::endl;
-                        }
-
-                        // If this synapse group has synapse dynamics
-                        if (!sg.getArchetype().getWUModel()->getSynapseDynamicsCode().empty()) {
-                            os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-                            // Use first thread to generate cumulative sum
-                            os << "if (localId == 0)";
-                            {
-                                CodeStream::Scope b(os);
-
-                                // Get index of last row in resultant synapse dynamics structure
-                                // **NOTE** if there IS a previous block, it will always have had initSparseBlkSz rows in it
-                                os << "unsigned int rowStart = (r == 0) ? 0 : shRowStart[" << workGroupSize << "];" << std::endl;
-                                os << "shRowStart[0] = rowStart;" << std::endl;
-
-                                // Loop through rows in block
-                                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
-                                {
-                                    CodeStream::Scope b(os);
-
-                                    // Add this row's length to cumulative sum and write this to this row's end
-                                    os << "rowStart += shRowLength[i];" << std::endl;
-                                    os << "shRowStart[i + 1] = rowStart;" << std::endl;
-                                }
-
-                                // If this is the first thread block of the first block in the group AND the last block of rows,
-                                // write the total cumulative sum to the first entry of the remap structure
-                                os << "if(" << popSubs["id"] << " == 0 && (r == numBlocks - 1))";
-                                {
-                                    CodeStream::Scope b(os);
-                                    os << "group->synRemap[0] = shRowStart[numRowsInBlock];" << std::endl;
-                                }
-
-                            }
-                        }
-
-                        os << "barrier(CLK_LOCAL_MEM_FENCE);" << std::endl;
-
-                        // Loop through rows
-                        os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
-                        {
-                            CodeStream::Scope b(os);
-
-                            // If there is a synapse for this thread to initialise
-                            os << "if(" << popSubs["id"] << " < shRowLength[i])";
-                            {
-                                CodeStream::Scope b(os);
-
-                                // Generate sparse initialisation code
-                                if (sg.getArchetype().isWUVarInitRequired()) {
-                                    popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(workGroupSize) + ") + i)");
-                                    popSubs.addVarSubstitution("id_post", "group->ind[idx]");
-
-                                    sgSparseInitHandler(os, sg, popSubs);
-                                }
-
-                                // If postsynaptic learning is required
-                                if (!sg.getArchetype().getWUModel()->getLearnPostCode().empty()) {
-                                    CodeStream::Scope b(os);
-
-                                    // Extract index of synapse's postsynaptic target
-                                    os << "const unsigned int postIndex = group->ind[idx];" << std::endl;
-
-                                    // Atomically increment length of column of connectivity associated with this target
-                                    // **NOTE** this returns previous length i.e. where to insert new entry
-                                    os << "const unsigned int colLocation = atomic_add(&group->colLength[postIndex], 1);" << std::endl;
-
-                                    // From this calculate index into column-major matrix
-                                    os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
-
-                                    // Add remapping entry at this location poining back to row-major index
-                                    os << "group->remap[colMajorIndex] = idx;" << std::endl;
-                                }
-
-                                // If synapse dynamics are required, copy idx into syn remap structure
-                                if (!sg.getArchetype().getWUModel()->getSynapseDynamicsCode().empty()) {
-                                    CodeStream::Scope b(os);
-                                    os << "group->synRemap[shRowStart[i] + " + popSubs["id"] + " + 1] = idx;" << std::endl;
-                                }
-                            }
-
-                            // If matrix is ragged, advance index to next row by adding stride
-                            os << "idx += group->rowStride;" << std::endl;
-                        }
-                    }
-                });
+            genInitializeSparseKernel(initializeKernels, kernelSubs, modelMerged, 
+                                      sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
             os << std::endl;
         }
     }
@@ -1470,7 +756,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         if(idInitStart > 0 || idSparseInitStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(initializeProgram = cl::Program(clContext, initializeSrc, false, &error));" << std::endl;
-            os << "if(initializeProgram.build(\"" << getBuildProgramFlags(modelMerged) << "\") != CL_SUCCESS)";
+            genBuildProgramFlagsString(os);
+            os << "if(initializeProgram.build(buildProgramFlags.c_str()) != CL_SUCCESS)";
             {
                 CodeStream::Scope b(os);
                 os << "std::cerr << initializeProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(clDevice);" << std::endl;
@@ -1586,11 +873,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     }
 }
 //--------------------------------------------------------------------------
-size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
-{
-    return getPresynapticUpdateStrategy(sg)->getSynapticMatrixRowStride(sg);
-}
-//--------------------------------------------------------------------------
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // If any neuron groups require support code, raise error
@@ -1669,26 +951,38 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "// OpenCL functions declaration" << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "const char* clGetErrorString(cl_int error);" << std::endl;
-
+    os << "std::string getAbsoluteCodePath();" << std::endl;
     os << std::endl;
 
     // Declaration of OpenCL variables
     os << "// OpenCL variables" << std::endl;
-    os << "EXPORT_VAR cl::Context clContext;" << std::endl;
-    os << "EXPORT_VAR cl::Device clDevice;" << std::endl;
-    os << "EXPORT_VAR cl::CommandQueue commandQueue;" << std::endl;
+    os << "extern cl::Context clContext;" << std::endl;
+    os << "extern cl::Device clDevice;" << std::endl;
+    os << "extern cl::CommandQueue commandQueue;" << std::endl;
     os << std::endl;
 
     os << "// OpenCL program initialization functions" << std::endl;
-    os << "EXPORT_FUNC void buildInitializeProgram();" << std::endl;
-    os << "EXPORT_FUNC void buildNeuronUpdateProgram();" << std::endl;
-    os << "EXPORT_FUNC void buildSynapseUpdateProgram();" << std::endl;
+    os << "void buildInitializeProgram();" << std::endl;
+    os << "void buildNeuronUpdateProgram();" << std::endl;
+    os << "void buildSynapseUpdateProgram();" << std::endl;
     
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
+#ifdef _WIN32
+    os << "#include <windows.h>" << std::endl;
+#else
+    os << "#include <dlfcn.h>" << std::endl;
+#ifdef __APPLE__
+    os << "#include <sys/syslimits.h>" << std::endl;
+#else
+    os << "#include <linux/limits.h>" << std::endl;
+#endif
+#endif
+    os << std::endl;
+
     // Generating OpenCL variables for the runner
     os << "// OpenCL variables" << std::endl;
     os << "cl::Context clContext;" << std::endl;
@@ -1774,6 +1068,66 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&) const
             #undef GEN_CL_ERROR_CASE
             #undef STRINGIFY
         }
+    }
+    os << std::endl;
+
+    os << "// Get OpenCL error as string" << std::endl;
+    os << "std::string getAbsoluteCodePath()";
+    {
+        CodeStream::Scope b(os);
+#ifdef _WIN32
+        // Find the module i.e. dll within which this function appears
+        os << "HMODULE hm = NULL;" << std::endl;
+        os << "if(GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT," << std::endl;
+        os << "                     (LPCSTR)&getAbsoluteCodePath, &hm) == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"GetModuleHandle failed with error:\" + std::to_string(GetLastError()));" << std::endl;
+        }
+
+        // Get the path to this module
+        os << "char libraryPathRaw[MAX_PATH];" << std::endl;
+        os << "if(GetModuleFileName(hm, libraryPathRaw, MAX_PATH) == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"GetModuleFileName failed with error:\" + std::to_string(GetLastError()));" << std::endl;
+        }
+
+        // Convert library path to std::string
+        os << "std::string libraryPath(libraryPathRaw);" << std::endl;
+
+        // Replace backslashes with slashes
+        os << "std::replace(libraryPath.begin(), libraryPath.end(), '\\\\', '/');" << std::endl;
+
+        // Remove library filename from end of library path
+        os << "libraryPath = libraryPath.substr(0, libraryPath.find_last_of('/'));" << std::endl;
+
+        // Return code directory
+        os << "return libraryPath + \"/" << modelMerged.getModel().getName() << "_CODE\";" << std::endl;
+#else
+        // Suppress unused parameters
+        (void)(modelMerged);
+
+        // Get info about dynamic library this function is in
+        os << "Dl_info dlInfo;" << std::endl;
+        os << "if(dladdr((void*)&getAbsoluteCodePath, &dlInfo) == 0)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"dladdr failed with error:\" + std::string(dlerror()));" << std::endl;
+        }
+
+        os << "char libraryPathRaw[PATH_MAX];" << std::endl;
+        os << "if(realpath(dlInfo.dli_fname, libraryPathRaw) == nullptr)";
+        {
+            CodeStream::Scope b(os);
+            os << "throw std::runtime_error(\"realpath failed with error:\" + std::to_string(errno));" << std::endl;
+        }
+        // Convert library path to std::string
+        os << "std::string libraryPath(libraryPathRaw);" << std::endl;
+
+        // Remove library filename from end of library path and return
+        os << "return libraryPath.substr(0, libraryPath.find_last_of('/'));" << std::endl;
+#endif
     }
     os << std::endl;
 }
@@ -1946,6 +1300,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
 {
     if (loc & VarLocation::HOST) {
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+        definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
         definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
@@ -1956,6 +1311,7 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
+        os << "cl::Buffer h_" << name << ";" << std::endl;
     }
     if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
         os << "cl::Buffer d_" << name << ";" << std::endl;
@@ -1990,7 +1346,7 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 
     // Get underlying type
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
@@ -2011,7 +1367,7 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
 void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
-    assert(!m_Preferences.automaticCopy);
+    assert(!getPreferences().automaticCopy);
 
     // Get underlying type
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
@@ -2055,40 +1411,6 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     else {
         return type;
     }
-}
-//--------------------------------------------------------------------------
-void Backend::genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
-{
-    Substitutions varSubs(&kernelSubs);
-
-    // If this is first thread in group
-    os << "if(" << varSubs["id"] << " == 0)";
-    {
-        CodeStream::Scope b(os);
-        handler(os, varSubs);
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableInit(CodeStream &os, const std::string &, const std::string &countVarName,
-                              const Substitutions &kernelSubs, Handler handler) const
-{
-    // Variable should already be provided via parallelism
-    assert(kernelSubs.hasVarSubstitution(countVarName));
-
-    Substitutions varSubs(&kernelSubs);
-    handler(os, varSubs);
-}
-//--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &,
-                                        const Substitutions &kernelSubs, Handler handler) const
-{
-    // Pre and postsynaptic ID should already be provided via parallelism
-    assert(kernelSubs.hasVarSubstitution("id_pre"));
-    assert(kernelSubs.hasVarSubstitution("id_post"));
-
-    Substitutions varSubs(&kernelSubs);
-    varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + " + kernelSubs["id"]);
-    handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
@@ -2344,99 +1666,6 @@ std::vector<filesystem::path> Backend::getFilesToCopy(const ModelSpecMerged &) c
             clRNGIncludePrivateRandom123 / "features" / "sse.h"};
 }
 //--------------------------------------------------------------------------
-std::string Backend::getFloatAtomicAdd(const std::string &ftype, const char* memoryType) const
-{
-    if (ftype == "float" || ftype == "double") {
-        return "atomic_add_f_" + std::string(memoryType);
-    }
-    else {
-        return "atomic_add";
-    }
-}
-//--------------------------------------------------------------------------
-size_t Backend::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg)
-{
-     return getPresynapticUpdateStrategy(sg)->getNumThreads(sg);
-}
-//--------------------------------------------------------------------------
-size_t Backend::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg)
-{
-    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return sg.getMaxSourceConnections();
-    }
-    else {
-        return sg.getSrcNeuronGroup()->getNumNeurons();
-    }
-}
-//--------------------------------------------------------------------------
-size_t Backend::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
-{
-    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
-    }
-    else {
-        return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
-    }
-}
-//--------------------------------------------------------------------------
-size_t Backend::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
-{
-    // If there's row building code, return number of source neurons i.e. rows
-    if(!sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
-        return sg.getSrcNeuronGroup()->getNumNeurons();
-    }
-    // Otherwise, if there's column building code, return number of target neurons i.e. columns
-    else if(!sg.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
-        return sg.getTrgNeuronGroup()->getNumNeurons();
-    }
-    // Otherwise, give an error
-    else {
-        throw std::runtime_error("Cannot calculate number of connectivity init threads without connectivity building code");
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::addPresynapticUpdateStrategy(PresynapticUpdateStrategy::Base *strategy)
-{
-    s_PresynapticUpdateStrategies.push_back(strategy);
-}
-//--------------------------------------------------------------------------
-bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
-{
-    // Host RNG is required if any synapse groups require a host initialization RNG
-    const ModelSpecInternal &model = modelMerged.getModel();
-    return std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                       [](const ModelSpec::SynapseGroupValueType &s)
-    {
-        return (s.second.isHostInitRNGRequired());
-    });
-}
-//--------------------------------------------------------------------------
-bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const
-{
-    // If any neuron groups require  RNG for initialisation, return true
-    // **NOTE** this takes postsynaptic model initialisation into account
-    const ModelSpecInternal &model = modelMerged.getModel();
-    if(std::any_of(model.getNeuronGroups().cbegin(), model.getNeuronGroups().cend(),
-                   [](const ModelSpec::NeuronGroupValueType &n){
-                       return n.second.isInitRNGRequired();
-                   }))
-    {
-        return true;
-    }
-
-    // If any synapse groups require an RNG for weight update model initialisation or procedural connectivity, return true
-    if(std::any_of(model.getSynapseGroups().cbegin(), model.getSynapseGroups().cend(),
-                   [](const ModelSpec::SynapseGroupValueType &s)
-                   {
-                       return (s.second.isWUInitRNGRequired() || s.second.isProceduralConnectivityRNGRequired());
-                   }))
-    {
-        return true;
-    }
-
-    return false;
-}
-//--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
 {
     return {};
@@ -2528,7 +1757,7 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
     {
         CodeStream::Scope b(os);
 
-        // If device is NVIDIA running an NVIDIA platofmr, insert PTX code for fire-and-forget floating point atomic add
+        // If device is NVIDIA running an NVIDIA platoform, insert PTX code for fire-and-forget floating point atomic add
         // https://github.com/openai/blocksparse/blob/master/src/ew_op_gpu.h#L648-L652
         if(isChosenDeviceNVIDIA() && isChosenPlatformNVIDIA()) {
             const std::string space = (memoryType == "global") ? "global" : "shared";
@@ -2551,18 +1780,12 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
-{
-    os << "const unsigned int spk" << suffix << "Idx = atomic_add(&shSpk" << suffix << "Count, 1);" << std::endl;
-    os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
 void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
 {
     // Calculate global and local work size
-    const size_t numOfWorkGroups = ceilDivide(numThreads, m_KernelWorkGroupSizes[kernel]);
-    os << "const cl::NDRange globalWorkSize(" << (m_KernelWorkGroupSizes[kernel] * numOfWorkGroups) << ", 1);" << std::endl;
-    os << "const cl::NDRange localWorkSize(" << m_KernelWorkGroupSizes[kernel] << ", 1);" << std::endl;
+    const size_t numOfWorkGroups = ceilDivide(numThreads, getKernelBlockSize(kernel));
+    os << "const cl::NDRange globalWorkSize(" << (getKernelBlockSize(kernel) * numOfWorkGroups) << ", 1);" << std::endl;
+    os << "const cl::NDRange localWorkSize(" << getKernelBlockSize(kernel) << ", 1);" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -2591,10 +1814,9 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 
     os << "typedef " << precision << " scalar;" << std::endl;
     os << "#define DT " << model.scalarExpr(model.getDT()) << std::endl;
+    os << "#define SUPPORT_CODE_FUNC" << std::endl;
     genTypeRange(os, model.getTimePrecision(), "TIME");
 
-   
-    
     // Generate non-uniform generators for each supported RNG type
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Non-uniform generators" << std::endl;
@@ -2692,19 +1914,13 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     }
 }
 //--------------------------------------------------------------------------
-void Backend::addDeviceType(const std::string &type, size_t size)
+void Backend::genBuildProgramFlagsString(CodeStream &os) const
 {
-    addType(type, size);
-    m_DeviceTypes.emplace(type);
-}
-//--------------------------------------------------------------------------
-bool Backend::isDeviceType(const std::string &type) const
-{
-    // Get underlying type
-    const std::string underlyingType = ::Utils::isTypePointer(type) ? ::Utils::getUnderlyingType(type) : type;
-
-    // Return true if it is in device types set
-    return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
+    os << "const std::string buildProgramFlags = \"-cl-std=CL1.2 -I \" + getAbsoluteCodePath() + \"/opencl/clRNG/include";
+    if(getPreferences().optimizeCode) {
+        os << " -cl-fast-relaxed-math";
+    }
+    os << "\";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const
@@ -2714,16 +1930,6 @@ void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream 
     for(size_t i = 0; i < parts; i++) {
         os << "R\"(" << kernelStr.substr(i * partLength, partLength) << ")\"" << std::endl;
     }
-}
-//--------------------------------------------------------------------------
-std::string Backend::getBuildProgramFlags(const ModelSpecMerged &modelMerged) const
-{
-    // **YUCK** add two include paths so model can be build from parent directory or code directory
-    std::string flags = "-cl-std=CL1.2 -I " + modelMerged.getModel().getName() + "_CODE/opencl/clRNG/include -I opencl/clRNG/include";
-    if(m_Preferences.optimizeCode) {
-        flags += " -cl-fast-relaxed-math";
-    }
-    return flags;
 }
 //--------------------------------------------------------------------------
 bool Backend::isChosenDeviceAMD() const
@@ -2747,20 +1953,6 @@ bool Backend::isChosenPlatformNVIDIA() const
 {
     const std::string platform = m_ChosenPlatform.getInfo<CL_PLATFORM_NAME>();
     return (platform.find("NVIDIA") != std::string::npos);
-}
-//--------------------------------------------------------------------------
-const PresynapticUpdateStrategy::Base* Backend::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg)
-{
-    // Loop through presynaptic update strategies until we find one that is compatible with this synapse group
-    // **NOTE** this is done backwards so that user-registered strategies get first priority
-    for (auto s = s_PresynapticUpdateStrategies.rbegin(); s != s_PresynapticUpdateStrategies.rend(); ++s) {
-        if ((*s)->isCompatible(sg)) {
-            return *s;
-        }
-    }
-
-    throw std::runtime_error("Unable to find a suitable presynaptic update strategy for synapse group '" + sg.getName() + "'");
-    return nullptr;
 }
 } // namespace OpenCL
 } // namespace CodeGenerator
