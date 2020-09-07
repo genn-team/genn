@@ -87,6 +87,12 @@ struct Preferences : public PreferencesBase
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelBlockSize manualBlockSizes;
 
+    //! How much constant cache is already used and therefore can't be used by GeNN?
+    /*! Each of the four modules which includes CUDA headers(neuronUpdate, synapseUpdate, init and runner)
+        Takes 72 bytes of constant memory for a lookup table used by cuRAND. If your application requires
+        additional constant cache, increase this */
+    size_t constantCacheOverhead = 72 * 4;
+
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
 };
@@ -304,6 +310,13 @@ private:
                 os << "sizeof(Merged" << T::name << "Group" << g.getIndex() << "), idx * sizeof(Merged" << T::name << "Group" << g.getIndex() << ")));" << std::endl;
             }
         }
+    }
+
+
+    //! Get the safe amount of constant cache we can use
+    size_t getChosenDeviceSafeConstMemBytes() const
+    {
+        return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;

@@ -2,37 +2,13 @@
 This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
-from collections import namedtuple
 from numbers import Number
 from weakref import proxy
 import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
-from .genn_wrapper.SharedLibraryModelNumpy import SharedLibraryModelNumpy_f as slm
 from .genn_wrapper.Models import VarInit, VarInitVector
 from .genn_wrapper.StlContainers import DoubleVector
-
-GeNNType = namedtuple("GeNNType", ["np_dtype", "assign_ext_ptr_array", "assign_ext_ptr_single"])
-
-"""Dictionary containing conversions between GeNN C++ types and numpy types"""
-genn_types = {
-    "scalar":           GeNNType(np.float32, slm.assign_external_pointer_array_f, slm.assign_external_pointer_single_f),
-    "float":            GeNNType(np.float32, slm.assign_external_pointer_array_f, slm.assign_external_pointer_single_f),
-    "double":           GeNNType(np.float64, slm.assign_external_pointer_array_d, slm.assign_external_pointer_single_d),
-    "int":              GeNNType(np.int32, slm.assign_external_pointer_array_i, slm.assign_external_pointer_single_i),
-    "unsigned int":     GeNNType(np.uint32, slm.assign_external_pointer_array_ui, slm.assign_external_pointer_single_ui),
-    "short":            GeNNType(np.int16, slm.assign_external_pointer_array_s, slm.assign_external_pointer_single_s),
-    "unsigned short":   GeNNType(np.uint16, slm.assign_external_pointer_array_us, slm.assign_external_pointer_single_us),
-    "char":             GeNNType(np.int8, slm.assign_external_pointer_array_sc, slm.assign_external_pointer_single_sc),
-    "unsigned char":    GeNNType(np.uint8, slm.assign_external_pointer_array_uc, slm.assign_external_pointer_single_uc),
-    "uint64_t":         GeNNType(np.uint64, None, None),
-    "int64_t":          GeNNType(np.int64, None, None),
-    "uint32_t":         GeNNType(np.uint32, slm.assign_external_pointer_array_ui, slm.assign_external_pointer_single_ui),
-    "int32_t":          GeNNType(np.int32, slm.assign_external_pointer_array_i, slm.assign_external_pointer_single_i),
-    "uint16_t":         GeNNType(np.uint16, slm.assign_external_pointer_array_us, slm.assign_external_pointer_single_us),
-    "int16_t":          GeNNType(np.int16, slm.assign_external_pointer_array_s, slm.assign_external_pointer_single_s),
-    "uint8_t":          GeNNType(np.uint8, slm.assign_external_pointer_array_uc, slm.assign_external_pointer_single_uc),
-    "int8_t":           GeNNType(np.int8, slm.assign_external_pointer_array_sc, slm.assign_external_pointer_single_sc)}
 
 def prepare_model(model, group, param_space, var_space, pre_var_space=None,
                   post_var_space=None, model_family=None):
@@ -286,7 +262,8 @@ class Variable(object):
             try:
                 iter(values)
                 self.init_val = genn_wrapper.uninitialised_var()
-                self.values = np.asarray(values, dtype=genn_types[self.type].np_dtype)
+                self.values = np.asarray(
+                    values, dtype=self.group._model.genn_types[self.type].np_dtype)
                 self.init_required = True
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
@@ -296,7 +273,7 @@ class ExtraGlobalVariable(object):
 
     """Class holding information about GeNN extra global pointer variable"""
 
-    def __init__(self, variable_name, variable_type, values=None):
+    def __init__(self, variable_name, variable_type, group, values=None):
         """Init Variable
 
         Args:
@@ -312,7 +289,8 @@ class ExtraGlobalVariable(object):
         else:
             self.is_scalar = True
             self.type = variable_type
-
+        
+        self.group = proxy(group)
         self.name = variable_name
         self.view = None
         self.set_values(values)
@@ -333,7 +311,8 @@ class ExtraGlobalVariable(object):
             # Try and iterate values
             try:
                 iter(values)
-                self.values = np.asarray(values, dtype=genn_types[self.type].np_dtype)
+                self.values = np.asarray(
+                    values, dtype=self.group._model.genn_types[self.type].np_dtype)
             # Otherwise give an error
             except TypeError:
                 raise ValueError("extra global variables can only be "

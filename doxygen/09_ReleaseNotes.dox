@@ -1,4 +1,17 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.3.2 (PyGeNN 0.4.2)
+====
+This release fixes several small issues found in the 4.3.1 release.
+
+Bug fixes:
+----
+1. Fixed bug when simulating models with very small timesteps.
+2. Fixed bug in code generator where synapse groups with procedural variables could be incorrectly merged.
+3. Fixed bug in code generator where references to parameters in sparse connectivity initialisation snippet row build state variables were not found.
+4. Fixed issue with PyGeNN and custom sparse connectivity init snippets that led to segfaults.
+5. Fixed bug that prevented PyGeNN being used with procedural connectivity.
+6. In models with a large number of populations, the CUDA constant cache could overflow. This has been fixed and, if your application has additional constant cache requirements, these can be added to ``GENN_PREFERENCES.constantCacheOverhead``.
+
 Release Notes for GeNN v4.3.1 (PyGeNN 0.4.1)
 ====
 This release fixes several small issues found in the 4.3.0 release.
