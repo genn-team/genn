@@ -212,11 +212,10 @@ inline int _clz(unsigned int value)
 }
 
 inline void writeTextSpikeRecording(const std::string &filename, const uint32_t *spkRecord,
-                                    unsigned int popSize, unsigned int numTimesteps,
+                                    unsigned int popSize, unsigned int numTimesteps, double dt = 1.0,
                                     const std::string &delimiter = " ", bool header = false)
                              
 {
-    //assert(false);
     // Calculate number of words per-timestep
     const unsigned int timestepWords = (popSize + 31) / 32;
     
@@ -229,22 +228,34 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
         stream << "Time [ms], Neuron ID" << std::endl;
     }
     
+    // Loop through timesteps
     for(unsigned int t = 0; t < numTimesteps; t++) {
-        const double time = t * 1.0;
-        unsigned int spikeIdx = t * 32;
+        // Convert timestep to time
+        const double time = t * dt;
+        
+        // Loop through words representing timestep
         for(unsigned int w = 0; w < timestepWords; w++) {
+            // Get word
             uint32_t spikeWord = spkRecord[(t * timestepWords) + w];
             
+            // Calculate neuron id of highest bit of this word
+            unsigned int neuronID = (w * 32) + 31;
+            
+            // While bits remain
             while(spikeWord != 0) {
+                // Calculate leading zeros
                 const int numLZ = _clz(spikeWord);
                 
+                // If all bits have now been processed, zero spike word
+                // Otherwise shift past the spike we have found
                 spikeWord = (numLZ == 31) ? 0 : (spikeWord << (numLZ + 1));
                 
-                spikeIdx += numLZ;
+                // Subtract number of leading zeros from neuron ID
+                neuronID -= numLZ;
                 
-                stream << time << delimiter << spikeIdx << std::endl;
+                // Write out CSV line
+                stream << time << delimiter << neuronID << std::endl;
             }
-
         }
     }
 }

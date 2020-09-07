@@ -266,6 +266,29 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         }
         os << std::endl;
     }
+    // If any neuron groups record spikes
+    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
+                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeRecordingEnabled(); }))
+    {
+        os << getSharedPrefix() << "uint32_t shSpkRecord[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
+        os << "if (" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ");";
+        {
+            CodeStream::Scope b(os);
+            os << "shSpkRecord[" << getThreadID() << "] = 0;" << std::endl;
+        }
+    }
+
+    // If any neuron groups record spike-like events
+    if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
+                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRecordingEnabled(); }))
+    {
+        os << getSharedPrefix() << "uint32_t shSpkEvntRecord[" << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << "];" << std::endl;
+        os << "if (" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ");";
+        {
+            CodeStream::Scope b(os);
+            os << "shSpkEvntRecord[" << getThreadID() << ".x] = 0;" << std::endl;
+        }
+    }
 
     genSharedMemBarrier(os);
 
@@ -298,14 +321,14 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 simHandler(os, ng, popSubs,
                            // Emit true spikes
-                           [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &, Substitutions &subs)
+                           [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                            {
-                               genEmitSpike(neuronUpdateKernelsBody, subs, "");
+                               genEmitSpike(neuronUpdateKernelsBody, subs, "", ng.getArchetype().isSpikeRecordingEnabled());
                            },
                            // Emit spike-like events
-                           [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &, Substitutions &subs)
+                           [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                            {
-                               genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt");
+                               genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
                            });
 
                 // Copy local stream back to local
@@ -380,6 +403,27 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + " << getThreadID() << "] = n;" << std::endl;
                     if(ng.getArchetype().isSpikeTimeRequired()) {
                         os << "group->sT[" << queueOffset << "n] = t;" << std::endl;
+                    }
+                }
+            }
+
+            // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
+            if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
+                os << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Calculate number of words which will be used to record this population's spikes
+                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+
+                    // If we are recording spikes, copy word to correct location in global memory
+                    if(ng.getArchetype().isSpikeRecordingEnabled()) {
+                        os << "group->recordSpk[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkRecord[threadIdx.x];" << std::endl;
+                    }
+
+                    // If we are recording spike-like events, copy word to correct location in global memory
+                    if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
+                        os << "group->recordSpk[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkRecord[threadIdx.x];" << std::endl;
                     }
                 }
             }
@@ -989,10 +1033,15 @@ bool BackendSIMT::isDeviceType(const std::string &type) const
     return (m_DeviceTypes.find(underlyingType) != m_DeviceTypes.cend());
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix) const
+void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const
 {
     os << "const unsigned int spk" << suffix << "Idx = " << getAtomic("unsigned int", AtomicOperation::ADD, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Count, 1);" << std::endl;
     os << "shSpk" << suffix << "[spk" << suffix << "Idx] = " << subs["id"] << ";" << std::endl;
+    
+    // If recording is enabled, set bit in recording word
+    if(recordingEnabled) {
+        os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record[threadIdx.x / 32], 1 << (threadIdx.x % 32));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

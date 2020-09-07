@@ -306,6 +306,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
         kernelSubs.addVarSubstitution("t", "t");
 
+        genNeuronUpdateKernel(os, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
     }
 
     os << "void updateNeurons(" << model.getTimePrecision() << " t";
