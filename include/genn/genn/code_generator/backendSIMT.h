@@ -231,6 +231,9 @@ private:
                     os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                     os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+                    // Use the starting thread ID of the whole merged group as group_start_id
+                    popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
                 }
                 else {
                     // Perform bisect operation to get index of merged struct
