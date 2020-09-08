@@ -580,9 +580,6 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             }
             skipAhead << " + " << connSubs["group_start_id"] << " + " << backend.getNumInitialisationRNGStreams(modelMerged);
             backend.genGlobalRNGSkipAhead(os, connSubs, skipAhead.str());
-
-            // Add substitution for connection generation code
-            connSubs.addVarSubstitution("rng", "&connectRNG");
         }
 
         // If we are using more than one thread to process each row
