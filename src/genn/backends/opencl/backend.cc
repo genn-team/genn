@@ -475,11 +475,16 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
+    const bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPresynapticUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), true);
-        synapseUpdateKernels << model.getTimePrecision() << " t)";
+        synapseUpdateKernels << model.getTimePrecision() << " t";
+        if(globalRNGRequired) {
+            synapseUpdateKernels << ", __global clrngPhilox432HostStream *d_rng";
+        }
+        synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
@@ -566,6 +571,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "// Configure presynaptic update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelPresynapticUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelPresynapticUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelPresynapticUpdate], modelMerged.getMergedPresynapticUpdateGroups());
+            if(globalRNGRequired) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() + 1 << ", d_rng));" << std::endl;
+            }
             os << std::endl;
         }
 
