@@ -19,6 +19,7 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixConnectivity_DENSE,
                            SynapseMatrixWeight_INDIVIDUAL,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
+                           SynapseMatrixWeight_KERNEL,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
 
@@ -408,7 +409,7 @@ class SynapseGroup(Group):
         if self.is_dense:
             return self.trg.size * self.src.size
         elif self.has_kernel_synapse_vars:
-            return numpy.prod(self.get_kernel_size())
+            return np.prod(self.pop.get_kernel_size())
         elif self.is_ragged:
             return self.max_row_length * self.src.size
 
