@@ -1211,7 +1211,7 @@ def create_cksf_class(cks_func):
         cksf.__init__(self)
 
     def call(self, pars):
-        return cksf(pars)
+        return cks_func(pars)
 
     return type("", (cksf,), {"__init__": ctor, "__call__": call})
 
