@@ -409,7 +409,7 @@ class SynapseGroup(Group):
         if self.is_dense:
             return self.trg.size * self.src.size
         elif self.has_kernel_synapse_vars:
-            return np.prod(self.pop.get_kernel_size())
+            return int(np.prod(self.pop.get_kernel_size()))
         elif self.is_ragged:
             return self.max_row_length * self.src.size
 
@@ -902,7 +902,7 @@ class SynapseGroup(Group):
             # If connectivity is dense,
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
-            if self.is_dense:
+            if self.is_dense or self.has_kernel_synapse_vars:
                 var_data.view[:] = var_data.values
             elif self.is_ragged:
                 # Sort variable to match GeNN order
