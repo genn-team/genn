@@ -119,6 +119,7 @@ public:
     unsigned int getMaxSourceConnections() const;
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
+    const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
 
     //! Get variable mode used for variables used to combine input from this synapse group
     VarLocation getInSynLocation() const { return m_InSynLocation; }
@@ -347,6 +348,9 @@ private:
 
     //! Maximum dendritic delay timesteps supported for synapses in this population
     unsigned int m_MaxDendriticDelayTimesteps;
+
+    //! Kernel size 
+    std::vector<unsigned int> m_KernelSize;
     
     //! Connectivity type of synapses
     const SynapseMatrixType m_MatrixType;

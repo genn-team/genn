@@ -19,6 +19,7 @@ enum class SynapseMatrixWeight : unsigned int
     INDIVIDUAL      = (1 << 6),
     PROCEDURAL      = (1 << 7),
     INDIVIDUAL_PSM  = (1 << 8),
+    KERNEL          = (1 << 9)
 };
 
 //!< Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
@@ -36,6 +37,7 @@ enum class SynapseMatrixType : unsigned int
     PROCEDURAL_GLOBALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
     PROCEDURAL_GLOBALG_INDIVIDUAL_PSM   = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
     PROCEDURAL_PROCEDURALG              = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    PROCEDURAL_KERNELG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
 };
 
 //----------------------------------------------------------------------------

@@ -908,17 +908,20 @@ public:
     //! Should the connectivity initialization parameter be implemented heterogeneously?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
 
-    //! Is presynaptic neuron parameter heterogeneous
+    //! Is presynaptic neuron parameter heterogeneous?
     bool isSrcNeuronParamHeterogeneous(size_t paramIndex) const;
 
-    //! Is presynaptic neuron derived parameter heterogeneous
+    //! Is presynaptic neuron derived parameter heterogeneous?
     bool isSrcNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
 
-    //! Is postsynaptic neuron parameter heterogeneous
+    //! Is postsynaptic neuron parameter heterogeneous?
     bool isTrgNeuronParamHeterogeneous(size_t paramIndex) const;
 
-    //! Is postsynaptic neuron derived parameter heterogeneous
+    //! Is postsynaptic neuron derived parameter heterogeneous?
     bool isTrgNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
+
+    //! Is kernel size heterogeneous in this dimension?
+    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
 
 protected:
     //----------------------------------------------------------------------------

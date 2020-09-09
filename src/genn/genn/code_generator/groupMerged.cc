@@ -1041,6 +1041,19 @@ bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous
                                      [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) const
+{
+    // Get size of this kernel dimension for archetype
+    const unsigned archetypeValue = getArchetype().getKernelSize().at(dimensionIndex);
+
+    // Return true if any of the other groups have a different value
+    return std::any_of(getGroups().cbegin(), getGroups().cend(),
+                       [archetypeValue, dimensionIndex](const GroupInternal &g)
+                       {
+                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
+                       });
+}
+//----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                               Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, precision, groups), m_ArchetypeCode(archetypeCode)
@@ -1051,10 +1064,10 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
     addField("unsigned int", "rowStride",
-                   [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
     if(role == Role::PostsynapticUpdate || role == Role::SparseInit) {
         addField("unsigned int", "colStride",
-                       [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
     }
 
     addField("unsigned int", "numSrcNeurons",
@@ -1242,13 +1255,13 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
                 backend.getVarPrefix());
     }
 
-    // If WU variables are procedural and this is an update or WU variables are individual
+    // If WU variables are procedural and this is an update or WU variables are individual or kernel
     const auto vars = wum->getVars();
     const auto &varInit = getArchetype().getWUVarInitialisers();
     const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
     const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
     if((proceduralWeights && updateRole) || individualWeights) {
-        // If we're performing a procedural update or we're initializing individual variables
+        // If weights are procedural or we're initializing individual variables
         if((proceduralWeights && updateRole) || !updateRole) {
             // Add heterogeneous variable initialization parameters and derived parameters
             addHeterogeneousVarInitParams<SynapseGroupMergedBase>(
@@ -1287,6 +1300,26 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
                              },
                              isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
                 }
+            }
+        }
+    }
+    // Otherwise, if WU variables are kernels
+    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if(isKernelSizeHeterogeneous(d)) {
+                addField("unsigned int", "kernelSize" + std::to_string(d),
+                         [d](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getKernelSize().at(d)); });
+            }
+        }
+        
+        // Loop through variables and add pointers to struct if we're
+        // updating or if there is initialization code for this variable 
+        for(size_t v = 0; v < vars.size(); v++) {
+            const auto var = vars[v];
+            if(updateRole || !varInit.at(v).getSnippet()->getCode().empty()) {
+                addWeightSharingPointerField(var.type, var.name, backend.getVarPrefix() + var.name);
             }
         }
     }

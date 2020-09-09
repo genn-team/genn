@@ -22,6 +22,7 @@
 
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
+#define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
 #define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector<double> &){ return MAX_ROW_LENGTH; }; }
 #define SET_MAX_COL_LENGTH(MAX_COL_LENGTH) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return [](unsigned int, unsigned int, const std::vector<double> &){ return MAX_COL_LENGTH; }; }
@@ -39,7 +40,8 @@ public:
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::function<unsigned int(unsigned int, unsigned int, const std::vector<double> &)> CalcMaxLengthFunc;
-    
+    typedef std::function<std::vector<unsigned int>(const std::vector<double> &)> CalcKernelSizeFunc;
+
     //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
@@ -53,6 +55,9 @@ public:
 
     //! Get function to calculate the maximum column length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const{ return CalcMaxLengthFunc(); }
+
+    //! Get function to calculate kernel size required for this conenctor based on its parameters
+    virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const{ return CalcKernelSizeFunc(); }
 
     //------------------------------------------------------------------------
     // Public methods

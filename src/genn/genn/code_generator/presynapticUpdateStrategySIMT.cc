@@ -473,10 +473,11 @@ size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal 
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &) const
 {
     // Presynaptic procedural parallelism can be used when synapse groups have 
-    // procedural connectivity and weights are either GLOBAL or PROCEDURAL
+    // procedural connectivity and weights are either GLOBAL, PROCEDURAL or KERNEL
     const auto matrixType = sg.getMatrixType();
     return ((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
-            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)));
+            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)
+                || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------
 size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
@@ -608,6 +609,15 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         // going to be, in turn, substituted into procedural connectivity generation code
         presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
 
+        // If weights are provided by a kernel
+        if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+            // Replace kernel indices with the subsequent 'function' parameters
+            for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                presynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
+                                                         "$(" + std::to_string(i + 1) + ")");
+            }
+        }
+
         // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
         if(sg.getArchetype().isDendriticDelayRequired()) {
             presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + "$(id_post)], $(0))");
@@ -630,7 +640,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         wumSimHandler(presynapticUpdate, sg, presynapticUpdateSubs);
 
         // When a synapse should be 'added', substitute in presynaptic update code
-        connSubs.addFuncSubstitution("addSynapse", 1, presynapticUpdateStream.str());
+        connSubs.addFuncSubstitution("addSynapse", 1 + sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
         // Generate procedural connectivity code
         wumProceduralConnectHandler(os, sg, connSubs);
