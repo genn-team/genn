@@ -9,7 +9,5 @@ var model__preprocessor_8py =
     [ "pre_var_space_to_vals", "d2/d3e/model__preprocessor_8py.html#aa3a43765e294bbd7fe4976a3b377b733", null ],
     [ "prepare_model", "d2/d3e/model__preprocessor_8py.html#a698da20e6a95c9e0624aaba819b4a71b", null ],
     [ "prepare_snippet", "d2/d3e/model__preprocessor_8py.html#aef83afc60aa51f177264dcb416a6035c", null ],
-    [ "var_space_to_vals", "d2/d3e/model__preprocessor_8py.html#a4ece878baa9619ecfcbdf5770e5a4eec", null ],
-    [ "genn_types", "d2/d3e/model__preprocessor_8py.html#ab29978366a28dbf75398c02e2b2f523d", null ],
-    [ "GeNNType", "d2/d3e/model__preprocessor_8py.html#a7a03d30eef6245ce3e97d487742c48ae", null ]
+    [ "var_space_to_vals", "d2/d3e/model__preprocessor_8py.html#a4ece878baa9619ecfcbdf5770e5a4eec", null ]
 ];

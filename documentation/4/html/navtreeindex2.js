@@ -1,6 +1,5 @@
 var NAVTREEINDEX2 =
 {
-"d3/d1a/clRNG_8c.html#a206fb062df8822c20a48900c38a2fb89":[17,0,13,0],
 "d3/d1a/clRNG_8c.html#a50c748264576533e4c2c955a8ab0d45a":[17,0,13,3],
 "d3/d1a/clRNG_8c.html#a563a3b7476f6be20e10b006309d2efbb":[17,0,13,1],
 "d3/d1a/clRNG_8c.html#adf709b84aa9a04e6ec7725ae355988d9":[17,0,13,5],
@@ -93,12 +92,12 @@ var NAVTREEINDEX2 =
 "d3/de9/namespaceSpineMLSimulator_1_1Input.html":[16,0,9,0],
 "d3/de9/namespaceSpineMLSimulator_1_1Input.html":[15,0,14,1],
 "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html":[16,0,0,0,0,2],
-"d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a1bc11aa1c4a6025bbd788095b9389300":[16,0,0,0,0,2,0],
 "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a3628f9308388758ae92e3039a0843399":[16,0,0,0,0,2,4],
-"d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a5ba70964e07724c36e04b44e2c0ae098":[16,0,0,0,0,2,2],
+"d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a4ead53218d93c522047d9c0a89e4fafd":[16,0,0,0,0,2,2],
 "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a5deb8289a114389cb990e83a0e3ffb2f":[16,0,0,0,0,2,3],
-"d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a7b2b83b384793340fbd67831753b6987":[16,0,0,0,0,2,1],
 "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#a9b3f90bcd02497cd29be0c6d34c2adbf":[16,0,0,0,0,2,5],
+"d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#aa3958867bea39fc296a3e9cdde3e5cc4":[16,0,0,0,0,2,1],
+"d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#af69b270a63c00d8b8a30e05c1311b652":[16,0,0,0,0,2,0],
 "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html#afbcdd661a644dbb4c2449f0a4b6acdd7":[16,0,0,0,0,2,6],
 "d4/d0e/cuda_2backend_8h.html":[17,0,5],
 "d4/d0e/cuda_2backend_8h.html#a05381dc4178da4eb5cd21384a44dace4":[17,0,5,5],
@@ -249,5 +248,6 @@ var NAVTREEINDEX2 =
 "d5/d38/philox432_8c.html#ac951b10f31d7c43832ee046497637724":[17,0,98,8],
 "d5/d38/philox432_8c.html#ad50fecdf3e5e8cc30187832a6f01b24d":[17,0,98,4],
 "d5/d38/philox432_8c.html#adb7d15eeea4713661d06dc46dd751728":[17,0,98,9],
-"d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html":[16,0,9,1,6]
+"d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html":[16,0,9,1,6],
+"d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html#a85388131ce7f7812530073be3d1ef62e":[16,0,9,1,6,1]
 };

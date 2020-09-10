@@ -41,7 +41,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.2</span>
+   &#160;<span id="projectnumber">4.3.3</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -95,8 +95,7 @@ $(document).ready(function(){initNavTree('d0/d17/namespacepygenn_1_1model__prepr
 <div class="header">
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#func-members">Functions</a> &#124;
-<a href="#var-members">Variables</a>  </div>
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">pygenn.model_preprocessor Namespace Reference</div>  </div>
 </div><!--header-->
@@ -137,13 +136,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a5d924093505fd70d9261b35a0f9c6a6d"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a5d924093505fd70d9261b35a0f9c6a6d">post_var_space_to_vals</a> (model, var_space)</td></tr>
 <tr class="memdesc:a5d924093505fd70d9261b35a0f9c6a6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_space dict to PostVarValues.  <a href="#a5d924093505fd70d9261b35a0f9c6a6d">More...</a><br /></td></tr>
 <tr class="separator:a5d924093505fd70d9261b35a0f9c6a6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
-Variables</h2></td></tr>
-<tr class="memitem:a7a03d30eef6245ce3e97d487742c48ae"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a> = namedtuple(&quot;GeNNType&quot;, [&quot;np_dtype&quot;, &quot;assign_ext_ptr_array&quot;, &quot;assign_ext_ptr_single&quot;])</td></tr>
-<tr class="separator:a7a03d30eef6245ce3e97d487742c48ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab29978366a28dbf75398c02e2b2f523d"><td class="memItemLeft" align="right" valign="top">dictionary&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#ab29978366a28dbf75398c02e2b2f523d">genn_types</a></td></tr>
-<tr class="separator:ab29978366a28dbf75398c02e2b2f523d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a8394727291320f68735c9ad636362853"></a>
@@ -493,43 +485,13 @@ Variables</h2></td></tr>
 
 </div>
 </div>
-<h2 class="groupheader">Variable Documentation</h2>
-<a id="ab29978366a28dbf75398c02e2b2f523d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab29978366a28dbf75398c02e2b2f523d">&#9670;&nbsp;</a></span>genn_types</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">dictionary pygenn.model_preprocessor.genn_types</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Initial value:</b><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;=  {</div><div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;    <span class="stringliteral">&quot;scalar&quot;</span>:           <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.float32, slm.assign_external_pointer_array_f, slm.assign_external_pointer_single_f),</div><div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;    <span class="stringliteral">&quot;float&quot;</span>:            <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.float32, slm.assign_external_pointer_array_f, slm.assign_external_pointer_single_f),</div><div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;    <span class="stringliteral">&quot;double&quot;</span>:           <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.float64, slm.assign_external_pointer_array_d, slm.assign_external_pointer_single_d),</div><div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;    <span class="stringliteral">&quot;int&quot;</span>:              <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int32, slm.assign_external_pointer_array_i, slm.assign_external_pointer_single_i),</div><div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;    <span class="stringliteral">&quot;unsigned int&quot;</span>:     <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint32, slm.assign_external_pointer_array_ui, slm.assign_external_pointer_single_ui),</div><div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;    <span class="stringliteral">&quot;short&quot;</span>:            <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int16, slm.assign_external_pointer_array_s, slm.assign_external_pointer_single_s),</div><div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;    <span class="stringliteral">&quot;unsigned short&quot;</span>:   <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint16, slm.assign_external_pointer_array_us, slm.assign_external_pointer_single_us),</div><div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;    <span class="stringliteral">&quot;char&quot;</span>:             <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int8, slm.assign_external_pointer_array_sc, slm.assign_external_pointer_single_sc),</div><div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;    <span class="stringliteral">&quot;unsigned char&quot;</span>:    <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint8, slm.assign_external_pointer_array_uc, slm.assign_external_pointer_single_uc),</div><div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;    <span class="stringliteral">&quot;uint64_t&quot;</span>:         <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint64, <span class="keywordtype">None</span>, <span class="keywordtype">None</span>),</div><div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;    <span class="stringliteral">&quot;int64_t&quot;</span>:          <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int64, <span class="keywordtype">None</span>, <span class="keywordtype">None</span>),</div><div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;    <span class="stringliteral">&quot;uint32_t&quot;</span>:         <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint32, slm.assign_external_pointer_array_ui, slm.assign_external_pointer_single_ui),</div><div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;    <span class="stringliteral">&quot;int32_t&quot;</span>:          <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int32, slm.assign_external_pointer_array_i, slm.assign_external_pointer_single_i),</div><div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;    <span class="stringliteral">&quot;uint16_t&quot;</span>:         <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint16, slm.assign_external_pointer_array_us, slm.assign_external_pointer_single_us),</div><div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;    <span class="stringliteral">&quot;int16_t&quot;</span>:          <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int16, slm.assign_external_pointer_array_s, slm.assign_external_pointer_single_s),</div><div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;    <span class="stringliteral">&quot;uint8_t&quot;</span>:          <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.uint8, slm.assign_external_pointer_array_uc, slm.assign_external_pointer_single_uc),</div><div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;    <span class="stringliteral">&quot;int8_t&quot;</span>:           <a class="code" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">GeNNType</a>(np.int8, slm.assign_external_pointer_array_sc, slm.assign_external_pointer_single_sc)}</div><div class="ttc" id="namespacepygenn_1_1model__preprocessor_html_a7a03d30eef6245ce3e97d487742c48ae"><div class="ttname"><a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a7a03d30eef6245ce3e97d487742c48ae">pygenn.model_preprocessor.GeNNType</a></div><div class="ttdeci">GeNNType</div><div class="ttdef"><b>Definition:</b> model_preprocessor.py:15</div></div>
-</div><!-- fragment -->
-</div>
-</div>
-<a id="a7a03d30eef6245ce3e97d487742c48ae"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7a03d30eef6245ce3e97d487742c48ae">&#9670;&nbsp;</a></span>GeNNType</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">pygenn.model_preprocessor.GeNNType = namedtuple(&quot;GeNNType&quot;, [&quot;np_dtype&quot;, &quot;assign_ext_ptr_array&quot;, &quot;assign_ext_ptr_single&quot;])</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html">model_preprocessor</a></li>
-    <li class="footer">Generated on Thu Sep 3 2020 18:55:55 for GeNN by
+    <li class="footer">Generated on Thu Sep 10 2020 13:35:37 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

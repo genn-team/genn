@@ -13,5 +13,6 @@ var genn__model_8py =
     [ "init_connectivity", "de/db7/genn__model_8py.html#a7fa33c9872ab0cf97d0b60fa41bf17fe", null ],
     [ "init_var", "de/db7/genn__model_8py.html#aa2daf7a01b3f49dcbc5dba9690020bc3", null ],
     [ "backend_modules", "de/db7/genn__model_8py.html#a0378993ab51a2871fc274bddf7b55bcd", null ],
+    [ "GeNNType", "de/db7/genn__model_8py.html#a9288192a7e32920c04a3647efcd52304", null ],
     [ "m", "de/db7/genn__model_8py.html#a0ae588c769b098f97bc66450ab28011c", null ]
 ];

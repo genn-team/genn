@@ -102,15 +102,15 @@ var NAVTREEINDEX =
 [
 "annotated.html",
 "d2/d05/classWeightUpdateModels_1_1Base.html#a8c4939c38b32ae603cd237f0e8d76b8a",
-"d3/d1a/clRNG_8c.html#a206fb062df8822c20a48900c38a2fb89",
-"d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html#a85388131ce7f7812530073be3d1ef62e",
-"d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#af4eb927f939b6416b193848660287f48",
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9ab15b615590abd00a4b181289553e32",
-"da/dfd/classModelSpec.html#a0bde9e959e2d306b6af799e5b9fb9eaa",
+"d3/d1a/clRNG_8c.html#a50c748264576533e4c2c955a8ab0d45a",
+"d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html#ac4cf4907dbb0ff527b760de94d86eef6",
+"d6/d4e/compilerfeatures_8h.html",
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9c298d56317ad90d5b23a9bcbbec4e17",
+"da/dfd/classModelSpec.html#a15622cc92f6c37e56aee253e02ad923e",
 "db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html#a244f67720b960375c1e1e08fad8ea8a6",
 "dc/dfa/classSynapseGroup.html#a96d91075d474de8c87b63988715c920d",
 "de/db0/synapseGroup_8h.html",
-"hierarchy.html"
+"globals_vars.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

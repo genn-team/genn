@@ -1,6 +1,5 @@
 var NAVTREEINDEX4 =
 {
-"d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#af4eb927f939b6416b193848660287f48":[16,0,0,0,1,60],
 "d6/d4e/compilerfeatures_8h.html":[17,0,19],
 "d6/d4e/compilerfeatures_8h_source.html":[17,0,19],
 "d6/d5a/structclrngPhilox432StreamState.html":[16,0,19],
@@ -249,5 +248,6 @@ var NAVTREEINDEX4 =
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a661d32a979e85d7cb116c1a82a2c599a":[16,0,0,9,2],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a72a1908777dbd553dd6afd172bb18cf5":[16,0,0,9,1],
 "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a7e4d3abf757c1a61e9547e05df1762b4":[16,0,0,9,23],
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a931205cee9f3f4fedb1f645563d12521":[16,0,0,9,22]
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a931205cee9f3f4fedb1f645563d12521":[16,0,0,9,22],
+"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a9ab15b615590abd00a4b181289553e32":[16,0,0,9,17]
 };

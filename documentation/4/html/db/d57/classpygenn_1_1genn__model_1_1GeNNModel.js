@@ -1,6 +1,6 @@
 var classpygenn_1_1genn__model_1_1GeNNModel =
 [
-    [ "__init__", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#adede5692fb02a001d2bc5ebd89f056d7", null ],
+    [ "__init__", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a707a6343ef7de18dec66b562d3ab19af", null ],
     [ "add_current_source", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3a292992d6141aab34e3dee468069b45", null ],
     [ "add_neuron_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a100324e214546094fced5e66fb0582d4", null ],
     [ "add_slave_synapse_population", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ad94018835547182c738aba36d0c15de3", null ],
@@ -49,6 +49,7 @@ var classpygenn_1_1genn__model_1_1GeNNModel =
     [ "current_sources", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a93daad6952a3dd9e66bc292617ae1830", null ],
     [ "default_var_location", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab76469f3e0329c1bc7827b6b98d276b3", null ],
     [ "dT", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa2abcf499adbe2380463cc68ec614db", null ],
+    [ "genn_types", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a81288a619a25a65d3ff4afd52bed3647", null ],
     [ "model_name", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab1164b8374a4b390e77bc32effed638c", null ],
     [ "neuron_populations", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a64509d979db91e40ebb1c92e0e246e94", null ],
     [ "synapse_populations", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a97cca022c95e6744c4b0f6ea8f770565", null ],
