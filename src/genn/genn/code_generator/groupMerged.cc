@@ -868,6 +868,15 @@ CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupM
                          FieldType::PointerEGP);
             }
         }
+
+        // Loop through kernel size dimensions
+        for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if(isKernelSizeHeterogeneous(d)) {
+                addField("unsigned int", "kernelSize" + std::to_string(d),
+                         [d](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getKernelSize().at(d)); });
+            }
+        }
     }
 }
 //----------------------------------------------------------------------------
