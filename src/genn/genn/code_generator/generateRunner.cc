@@ -1000,7 +1000,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 for(size_t i = 0; i < wuVars.size(); i++) {
                     const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
                     if(individualWeights) {
-                        const bool autoInitialized = !varInitSnippet->getCode().empty();
+                        const bool autoInitialized = !(varInitSnippet->getCode().empty() && varInitSnippet->getExtraGlobalParams().empty());
                         mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                            runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
                                            s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);

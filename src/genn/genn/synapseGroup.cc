@@ -458,18 +458,22 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         }
     }
 
-    // If synaptic weights are kernel-based
-    if(m_MatrixType & SynapseMatrixWeight::KERNEL) {
-        // If connectivitity initialisation snippet provides a function to calculate kernel size, call it
-        auto calcKernelSizeFunc = m_ConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
-        if(calcKernelSizeFunc) {
-            m_KernelSize = calcKernelSizeFunc(m_ConnectivityInitialiser.getParams());
-        }
-        else {
-            throw std::runtime_error("Kernel weights must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
-        }
+    // If connectivitity initialisation snippet provides a function to calculate kernel size, call it
+    auto calcKernelSizeFunc = m_ConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
+    if(calcKernelSizeFunc) {
+        m_KernelSize = calcKernelSizeFunc(m_ConnectivityInitialiser.getParams());
+    }
+    // Otherwise, if synapse group uses procedural weights, give error as this is required
+    else if(m_MatrixType & SynapseMatrixWeight::KERNEL) {
+        throw std::runtime_error("Kernel weights must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }
 
+    // If a kernel is demanded by the connectivity initialisation snippet and matrix type doesn't support
+    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG) 
+       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG)) 
+    {
+        
+    }
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();

@@ -699,66 +699,106 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
 
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Synapse groups with sparse connectivity" << std::endl;
-    genParallelGroup<SynapseConnectivityInitGroupMerged>(os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idStart,
-                                                         [this](const SynapseGroupInternal &sg) { return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
-                                                         [this, synapseConnectivityInitHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
-    {
-        os << "// only do this for existing presynaptic neurons" << std::endl;
-        os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
+    genParallelGroup<SynapseConnectivityInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedSynapseConnectivityInitGroups(), idStart,
+        [this](const SynapseGroupInternal &sg) { return padSize(sg.getSrcNeuronGroup()->getNumNeurons(), m_KernelBlockSizes[KernelInitialize]); },
+        [this, synapseConnectivityInitHandler](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
         {
-            CodeStream::Scope b(os);
-            popSubs.addVarSubstitution("id_pre", popSubs["id"]);
-            popSubs.addVarSubstitution("id_post_begin", "0");
-            popSubs.addVarSubstitution("id_thread", "0");
-            popSubs.addVarSubstitution("num_threads", "1");
-            popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+            os << "// only do this for existing presynaptic neurons" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";
+            {
+                CodeStream::Scope b(os);
+                popSubs.addVarSubstitution("id_pre", popSubs["id"]);
+                popSubs.addVarSubstitution("id_post_begin", "0");
+                popSubs.addVarSubstitution("id_thread", "0");
+                popSubs.addVarSubstitution("num_threads", "1");
+                popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
-            // If the synapse group has bitmask connectivity
-            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                // Calculate the maximum number of synapses in any groups
-                size_t maxSynapses = 0;
-                for(const auto &g : sg.getGroups()) {
-                    const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(g.get());
-                    maxSynapses = std::max(maxSynapses, numSynapses);
+                // If the synapse group has bitmask connectivity
+                if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                    // Calculate the maximum number of synapses in any groups
+                    size_t maxSynapses = 0;
+                    for(const auto &g : sg.getGroups()) {
+                        const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(g.get());
+                        maxSynapses = std::max(maxSynapses, numSynapses);
+                    }
+
+                    // Calculate indices of bits at start and end of row
+                    os << "// Calculate indices" << std::endl;
+                    if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                        os << "const uint64_t rowStartGID = " << popSubs["id"] << " * (uint64_t)group->rowStride;" << std::endl;
+                    }
+                    else {
+                        os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->rowStride;" << std::endl;
+                    }
+
+                    // Build function template to set correct bit in bitmask
+                    popSubs.addFuncSubstitution("addSynapse", 1,
+                                                getAtomic("unsigned int", AtomicOperation::OR) + "(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
                 }
+                // Otherwise, if synapse group has ragged connectivity
+                else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    // Zero row length
+                    const std::string rowLength = "group->rowLength[" + popSubs["id"] + "]";
+                    os << rowLength << " = 0;" << std::endl;
 
-                // Calculate indices of bits at start and end of row
-                os << "// Calculate indices" << std::endl;
-                if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
-                    os << "const uint64_t rowStartGID = " << popSubs["id"] << " * (uint64_t)group->rowStride;" << std::endl;
+                    // If synapse group demand kernels, 
+                    if(!sg.getArchetype().getKernelSize().empty()) {
+                        std::stringstream addSynapseStream;
+                        CodeStream addSynapse(addSynapseStream);
+
+                        Substitutions addSynapseSubs(popSubs);
+                        for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                            addSynapseSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
+                                                              "$(" + std::to_string(i + 1) + ")");
+                        }
+
+                        addSynapse << "do";
+                        {
+                            CodeStream::Scope b(addSynapse);
+                            addSynapse << "const unsigned int synIndex = (" << popSubs["id"] << " * group->rowStride) + (" << rowLength << "++);" << std::endl;
+                            addSynapse << "const unsigned int kernelIndex = ";
+                            genKernelIndex(addSynapse, addSynapseSubs, sg);
+                            addSynapse << ";" << std::endl;
+                            addSynapse << "group->ind[synIndex] = $(0); ";
+
+                            // Loop through variables
+                            const auto vars = sg.getArchetype().getWUModel()->getVars();
+                            const auto &varInit = sg.getArchetype().getWUVarInitialisers();
+                            for(size_t v = 0; v < vars.size(); v++) {
+                                // If variable is initialised by kernel, copy value from kernel
+                                const auto var = vars[v];
+                                const auto varInitSnippet = dynamic_cast<const InitVarSnippet::Kernel*>(varInit.at(v).getSnippet());
+                                if(varInitSnippet != nullptr) {
+                                    addSynapse << "group->" << var.name << "[synIndex] = group->kernel" << var.name << "[kernelIndex];" << std::endl;
+                                }
+                            }
+                        }
+                        addSynapse << "while(false)";
+                        popSubs.addFuncSubstitution("addSynapse", 1 + sg.getArchetype().getKernelSize().size(),
+                                                    addSynapseStream.str());
+                    
+                    }
+                    // Otherwise, build function template to increment row length and insert synapse into ind array
+                    else {
+                        popSubs.addFuncSubstitution("addSynapse", 1,
+                                                    "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
+                    }
                 }
                 else {
-                    os << "const unsigned int rowStartGID = " << popSubs["id"] << " * group->rowStride;" << std::endl;
+                    assert(false);
                 }
 
-                // Build function template to set correct bit in bitmask
-                popSubs.addFuncSubstitution("addSynapse", 1,
-                                            getAtomic("unsigned int", AtomicOperation::OR) + "(&group->gp[(rowStartGID + $(0)) / 32], 0x80000000 >> ((rowStartGID + $(0)) & 31))");
-            }
-            // Otherwise, if synapse group has ragged connectivity
-            else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                // Zero row length
-                const std::string rowLength = "group->rowLength[" + popSubs["id"] + "]";
-                os << rowLength << " = 0;" << std::endl;
+                // If this connectivity requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
 
-                // Build function template to increment row length and insert synapse into ind array
-                popSubs.addFuncSubstitution("addSynapse", 1,
-                                            "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
+                synapseConnectivityInitHandler(os, sg, popSubs);
             }
-            else {
-                assert(false);
-            }
-
-            // If this connectivity requires an RNG for initialisation,
-            // make copy of global phillox RNG and skip ahead by thread id
-            // **NOTE** not LOCAL id
-            if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())) {
-                genGlobalRNGSkipAhead(os, popSubs, "id");
-            }
-
-            synapseConnectivityInitHandler(os, sg, popSubs);
-        }
-    });
+        });
     os << std::endl;
 }
 //--------------------------------------------------------------------------

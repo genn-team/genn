@@ -60,6 +60,17 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// InitVarSnippet::Kernel
+//----------------------------------------------------------------------------
+//! Used to initialise synapse variables from a kernel
+class Kernel : public Base
+{
+    DECLARE_SNIPPET(InitVarSnippet::Kernel, 0);
+
+    SET_EXTRA_GLOBAL_PARAMS({{"kernel", "scalar*"}});
+};
+
+//----------------------------------------------------------------------------
 // InitVarSnippet::Uniform
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the uniform distribution

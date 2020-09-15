@@ -854,6 +854,9 @@ public:
     //! Should the connectivity initialization parameter be implemented heterogeneously?
     bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
 
+    //! Is kernel size heterogeneous in this dimension?
+    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
+
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const

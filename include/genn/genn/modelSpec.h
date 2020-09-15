@@ -80,6 +80,15 @@ inline Models::VarInit uninitialisedVar()
     return Models::VarInit(InitVarSnippet::Uninitialised::getInstance(), {});
 }
 
+
+//! Mark a variable as initialized via kernel
+/*! This means that the backend will initialize variable alongside connectivity
+    during the ``initialize`` function -- copying values from kernel */
+inline Models::VarInit initVarKernel()
+{
+    return Models::VarInit(InitVarSnippet::Kernel::getInstance(), {});
+}
+
 //! Initialise connectivity using a sparse connectivity snippet
 /*! \tparam S       type of sparse connectivitiy initialisation snippet (derived from InitSparseConnectivitySnippet::Base).
     \param params   parameters for snippet wrapped in S::ParamValues object.

@@ -11,16 +11,16 @@
 #include "code_generator/modelSpecMerged.h"
 #include "code_generator/substitutions.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                       const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronInitGroupMerged &ng, bool spikeEvent)
+void genInitSpikeCount(CodeStream &os, const BackendBase &backend,
+                       const Substitutions &popSubs, const NeuronInitGroupMerged &ng, bool spikeEvent)
 {
-    using namespace CodeGenerator;
-
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
@@ -51,11 +51,9 @@ void genInitSpikeCount(CodeGenerator::CodeStream &os, const CodeGenerator::Backe
 
 }
 //--------------------------------------------------------------------------
-void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                   const CodeGenerator::Substitutions &popSubs, const CodeGenerator::NeuronInitGroupMerged &ng, bool spikeEvent)
+void genInitSpikes(CodeStream &os, const BackendBase &backend,
+                   const Substitutions &popSubs, const NeuronInitGroupMerged &ng, bool spikeEvent)
 {
-    using namespace CodeGenerator;
-
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
@@ -86,13 +84,11 @@ void genInitSpikes(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBa
 }
 //------------------------------------------------------------------------
 template<typename I, typename Q, typename P, typename D>
-void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
+void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
                           size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
                           I getVarInitialiser, Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
-    using namespace CodeGenerator;
-
     const std::string count = "group->" + countMember;
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = getVarInitialiser(k);
@@ -149,7 +145,7 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 }
 //------------------------------------------------------------------------
 template<typename I, typename P, typename D>
-void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend, const CodeGenerator::Substitutions &popSubs,
+void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
                           const size_t groupIndex, const std::string &ftype, 
                           I getVarInitialiser, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
@@ -162,11 +158,9 @@ void genInitNeuronVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::Ba
 }
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
-void genInitWUVarCode(CodeGenerator::CodeStream &os, const CodeGenerator::BackendBase &backend,
-                      const CodeGenerator::Substitutions &popSubs, const CodeGenerator::SynapseGroupMergedBase &sg, const std::string &ftype)
+void genInitWUVarCode(CodeStream &os, const BackendBase &backend,
+                      const Substitutions &popSubs, const SynapseGroupMergedBase &sg, const std::string &ftype)
 {
-    using namespace CodeGenerator;
-
     const auto vars = sg.getArchetype().getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);

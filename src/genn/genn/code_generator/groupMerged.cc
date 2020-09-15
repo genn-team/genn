@@ -759,7 +759,6 @@ CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostIn
         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
         &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
 
-
     // Add heterogeneous connectivity initialiser derived parameters
     addHeterogeneousDerivedParams<SynapseConnectivityHostInitGroupMerged>(
         getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
@@ -849,6 +848,27 @@ CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupM
     addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
             backend.getVarPrefix());
 
+    // Loop through variables
+    // **HACK**
+    if(!getArchetype().getKernelSize().empty()) {
+        const auto vars = getArchetype().getWUModel()->getVars();
+        const auto &varInit = getArchetype().getWUVarInitialisers();
+        for(size_t v = 0; v < vars.size(); v++) {
+            // If variable is initialised by kernel, copy value from kernel
+            const auto var = vars[v];
+            const auto varInitSnippet = dynamic_cast<const InitVarSnippet::Kernel *>(varInit.at(v).getSnippet());
+            if(varInitSnippet != nullptr) {
+                addPointerField(var.type, var.name, backend.getVarPrefix() + var.name);
+                
+                addField("scalar*", "kernel" + var.name,
+                         [&backend, var](const SynapseGroupInternal &sg, size_t)
+                         {
+                             return backend.getVarPrefix() + "kernel" + var.name + sg.getName();
+                         },
+                         FieldType::PointerEGP);
+            }
+        }
+    }
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
@@ -879,6 +899,19 @@ bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitDerive
     const std::string derivedParamName = connectivityInitSnippet->getDerivedParams().at(paramIndex).name;
     return isParamValueHeterogeneous(codeStrings, derivedParamName, paramIndex,
                                      [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+bool CodeGenerator::SynapseConnectivityInitGroupMerged::isKernelSizeHeterogeneous(size_t dimensionIndex) const
+{
+    // Get size of this kernel dimension for archetype
+    const unsigned archetypeValue = getArchetype().getKernelSize().at(dimensionIndex);
+
+    // Return true if any of the other groups have a different value
+    return std::any_of(getGroups().cbegin(), getGroups().cend(),
+                       [archetypeValue, dimensionIndex](const GroupInternal &g)
+                       {
+                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
+                       });
 }
 
 //----------------------------------------------------------------------------
