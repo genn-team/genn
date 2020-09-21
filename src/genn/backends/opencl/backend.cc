@@ -1554,6 +1554,8 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     os << "LINKFLAGS := -shared";
 #ifdef __APPLE__
     os << " -framework OpenCL";
+#else
+    os << " -L$(OPENCL_PATH)/lib64";
 #endif
     os << std::endl;
     os << "CCFLAGS := -c -fPIC -MMD -MP";
