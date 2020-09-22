@@ -165,8 +165,8 @@ void genInitWUVarCode(CodeStream &os, const BackendBase &backend,
     for (size_t k = 0; k < vars.size(); k++) {
         const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
 
-        // If this variable has any initialisation code
-        if(!varInit.getSnippet()->getCode().empty()) {
+        // If this variable has any initialisation code and doesn't require a kernel
+        if(!varInit.getSnippet()->getCode().empty() && !varInit.getSnippet()->requiresKernel()) {
             CodeStream::Scope b(os);
 
             // Generate target-specific code to initialise variable
@@ -391,6 +391,44 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
                 // Write out code
                 os << code << std::endl;
+            }
+        },
+        // Kernel matrix var initialisation
+        [&backend, &model](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
+        {
+            // Generate kernel index
+            os << "const unsigned int kernelInd = ";
+            genKernelIndex(os, popSubs, sg);
+            os << ";" << std::endl;
+
+            // Add 
+            popSubs.addVarSubstitution("id_syn", "(" + popSubs["id_pre"] + " * group->rowStride) + " + popSubs["id_post"]);
+            popSubs.addVarSubstitution("id_kernel", "kernelInd");
+
+            const auto vars = sg.getArchetype().getWUModel()->getVars();
+            for(size_t k = 0; k < vars.size(); k++) {
+                const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
+
+                // If this variable require a kernel
+                if(varInit.getSnippet()->requiresKernel()) {
+                    CodeStream::Scope b(os);
+
+                    popSubs.addVarSubstitution("value", "group->" + vars[k].name + "[" + popSubs["id_syn"] + "]");
+                    /*popSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                                      [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
+                                                      "", "group->", vars[k].name);
+                    popSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                                    [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
+                                                    "", "group->", vars[k].name);*/
+                    popSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                                    "", "group->", vars[k].name);
+
+                    std::string code = varInit.getSnippet()->getCode();
+                    //popSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
+                    popSubs.apply(code);
+                    code = ensureFtype(code, model.getPrecision());
+                    os << code << std::endl;
+                }
             }
         },
         // Sparse synaptic matrix var initialisation
