@@ -62,7 +62,7 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    //! Can this sparse connectivity init snippet be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
 };
 

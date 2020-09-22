@@ -33,7 +33,7 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    //! Can this postsynaptic model be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
 };
 
