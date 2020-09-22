@@ -396,10 +396,13 @@ bool SynapseGroup::isHostInitRNGRequired() const
 bool SynapseGroup::isWUVarInitRequired() const
 {
     // If this synapse group has per-synapse state variables and isn't a 
-    // weight sharing slave, return true if any of them have initialisation code
+    // weight sharing slave, return true if any of them have initialisation code which doesn't require a kernel
     if (!isWeightSharingSlave() && (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
-                           [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+                           [](const Models::VarInit &init)
+                           { 
+                               return !init.getSnippet()->getCode().empty() && !init.getSnippet()->requiresKernel(); 
+                           });
     }
     else {
         return false;
@@ -472,8 +475,17 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG) 
        && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG)) 
     {
-        
+        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_KERNELG or SPARSE_INDIVIDUALG connectivity.");
     }
+
+    // If synapse group uses sparse connectivity but no kernel size is provided, check that no variables require a kernel
+    if((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) && m_KernelSize.empty() && 
+       std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+                   [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
+    {
+        throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
+    }
+
     // If connectivitity initialisation snippet provides a function to calculate row length, call it
     // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
     auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();

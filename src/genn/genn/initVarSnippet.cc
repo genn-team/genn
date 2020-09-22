@@ -19,3 +19,8 @@ bool InitVarSnippet::Base::canBeMerged(const Base *other) const
     return (Snippet::Base::canBeMerged(other)
             && (getCode() == other->getCode()));
 }
+//----------------------------------------------------------------------------
+bool InitVarSnippet::Base::requiresKernel() const
+{
+    return (getCode().find("$(id_kernel)") != std::string::npos);
+}
