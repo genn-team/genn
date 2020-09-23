@@ -747,6 +747,9 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                         popSubs.addFuncSubstitution("addSynapse", 1,
                                                     "group->ind[(" + popSubs["id"] + " * group->rowStride) + (" + rowLength + "++)] = $(0)");
                     }
+                    // Otherwise
+                    // **YUCK** there is a lot of duplication here with backendSIMT but,
+                    // the double substitution business is a bit gnarly to expose
                     else {
                         // Create new stream to generate addSynapse function which initializes all kernel variables
                         std::ostringstream kernelInitStream;

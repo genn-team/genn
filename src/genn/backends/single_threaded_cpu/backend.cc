@@ -497,10 +497,51 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                         popSubs.addVarSubstitution("num_threads", "1");
                         popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
                         
-                        // Add function to increment row length and insert synapse into ind array
-                        popSubs.addFuncSubstitution("addSynapse", 1,
-                                                    "group->ind[(i * group->rowStride) + (group->rowLength[i]++)] = $(0)");
+                        // If synapse group doesn't define a kernel, build function template to increment row length and insert synapse into ind array
+                        if(s.getArchetype().getKernelSize().empty()) {
+                            popSubs.addFuncSubstitution("addSynapse", 1,
+                                                        "group->ind[(i * group->rowStride) + (group->rowLength[i]++)] = $(0)");
+                        }
+                        // Otherwise
+                        // **YUCK** there is a lot of duplication here with backendSIMT but,
+                        // the double substitution business is a bit gnarly to expose
+                        else {
+                            // Create new stream to generate addSynapse function which initializes all kernel variables
+                            std::ostringstream kernelInitStream;
+                            CodeStream kernelInit(kernelInitStream);
 
+                            // Calculate index in data structure of this synapse
+                            kernelInit << "const unsigned int idx = " << "(" + popSubs["id_pre"] + " * group->rowStride) + group->rowLength[i];" << std::endl;
+
+                            // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
+                            kernelInit << "do";
+                            {
+                                CodeStream::Scope b(kernelInit);
+                                Substitutions kernelInitSubs(&popSubs);
+
+                                // Replace $(id_post) with first 'function' parameter as simulation code is
+                                // going to be, in turn, substituted into procedural connectivity generation code
+                                kernelInitSubs.addVarSubstitution("id_post", "$(0)");
+
+                                // Add index of synapse
+                                kernelInitSubs.addVarSubstitution("id_syn", "idx");
+
+                                // Replace kernel indices with the subsequent 'function' parameters
+                                for(size_t i = 0; i < s.getArchetype().getKernelSize().size(); i++) {
+                                    kernelInitSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "$(" + std::to_string(i + 1) + ")");
+                                }
+
+                                // Call handler to initialize variables
+                                sgKernelInitHandler(kernelInit, s, kernelInitSubs);
+
+                                // End initialization code with code to set postsynaptic index and increment row length
+                                kernelInit << "group->ind[idx] = $(0);" << std::endl;
+                                kernelInit << "group->rowLength[i]++;" << std::endl;
+                            }
+                            kernelInit << "while(false)";
+                            popSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)s.getArchetype().getKernelSize().size(),
+                                                        kernelInitStream.str());
+                        }
                         sgSparseConnectHandler(os, s, popSubs);
                     }
 
@@ -653,6 +694,11 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
 {
     os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
+
+    // CUDA and OpenCL both provide generic min and max functions 
+    // to match this, bring std::min and std::max into global namespace
+    os << "using std::min;" << std::endl;
+    os << "using std::max;" << std::endl;
 
     // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
 #ifdef _WIN32
