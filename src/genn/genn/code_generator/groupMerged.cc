@@ -1135,22 +1135,6 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
 
         // Add EGPs to struct
         addEGPs(wum->getExtraGlobalParams(), backend.getVarPrefix());
-
-        // If we're updating a group with procedural connectivity
-        if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-            // Add heterogeneous connectivity initialiser model parameters
-            addHeterogeneousParams<SynapseGroupMergedBase>(
-                getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
-                [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-                &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
-
-
-            // Add heterogeneous connectivity initialiser derived parameters
-            addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-                getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
-                [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-                &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
-        }
     }
 
     // Add pointers to connectivity data
@@ -1176,7 +1160,22 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         addWeightSharingPointerField("uint32_t", "gp", backend.getVarPrefix() + "gp");
     }
-    else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+
+    // If we're updating a group with procedural connectivity or initialising connectivity
+    if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
+        // Add heterogeneous connectivity initialiser model parameters
+        addHeterogeneousParams<SynapseGroupMergedBase>(
+            getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
+            &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
+
+
+        // Add heterogeneous connectivity initialiser derived parameters
+        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
+            getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
+            &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
+
         addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
                 backend.getVarPrefix());
     }
