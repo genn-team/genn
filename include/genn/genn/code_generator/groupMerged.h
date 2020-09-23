@@ -836,41 +836,6 @@ public:
     static const std::string name;
 };
 
-// ----------------------------------------------------------------------------
-// SynapseConnectivityInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityInitGroupMerged : public GroupMerged<SynapseGroupInternal>
-{
-public:
-    SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    //! Should the connectivity initialization parameter be implemented heterogeneously?
-    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
-
-    //! Should the connectivity initialization parameter be implemented heterogeneously?
-    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
-
-    //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
-
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-};
-
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
@@ -937,6 +902,7 @@ protected:
         SynapseDynamics,
         DenseInit,
         SparseInit,
+        ConnectivityInit,
     };
 
     SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
@@ -1074,6 +1040,32 @@ public:
     SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
     :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
+    {}
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+
+// ----------------------------------------------------------------------------
+// SynapseConnectivityInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                       const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
     {}
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,

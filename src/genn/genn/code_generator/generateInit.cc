@@ -414,12 +414,12 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                     CodeStream::Scope b(os);
 
                     popSubs.addVarSubstitution("value", "group->" + vars[k].name + "[" + popSubs["id_syn"] + "]");
-                    /*popSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                    popSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
                                                       "", "group->", vars[k].name);
                     popSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
                                                     [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
-                                                    "", "group->", vars[k].name);*/
+                                                    "", "group->", vars[k].name);
                     popSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
                                                     "", "group->", vars[k].name);
 
