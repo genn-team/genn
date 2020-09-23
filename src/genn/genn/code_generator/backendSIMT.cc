@@ -649,7 +649,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     genParallelGroup<NeuronInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
-        [this, &modelMerged, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
+        [this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
