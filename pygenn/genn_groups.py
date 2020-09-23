@@ -19,7 +19,6 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixConnectivity_DENSE,
                            SynapseMatrixWeight_INDIVIDUAL,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
-                           SynapseMatrixWeight_KERNEL,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
 
