@@ -401,13 +401,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         // Kernel matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
         {
-            // Generate kernel index
+            // Generate kernel index and add to substitutions
             os << "const unsigned int kernelInd = ";
             genKernelIndex(os, popSubs, sg);
             os << ";" << std::endl;
-
-            // Add 
-            popSubs.addVarSubstitution("id_syn", "(" + popSubs["id_pre"] + " * group->rowStride) + " + popSubs["id_post"]);
             popSubs.addVarSubstitution("id_kernel", "kernelInd");
 
             const auto vars = sg.getArchetype().getWUModel()->getVars();

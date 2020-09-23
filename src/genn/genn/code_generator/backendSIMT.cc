@@ -752,16 +752,21 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                         std::ostringstream kernelInitStream;
                         CodeStream kernelInit(kernelInitStream);
 
+                        // Calculate index in data structure of this synapse
+                        kernelInit << "const unsigned int idx = " << "(" + popSubs["id_pre"] + " * group->rowStride) + " << rowLength << ";" << std::endl;
+                        
                         // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
                         kernelInit << "do";
                         {
                             CodeStream::Scope b(kernelInit);
-
                             Substitutions kernelInitSubs(&popSubs);
 
                             // Replace $(id_post) with first 'function' parameter as simulation code is
                             // going to be, in turn, substituted into procedural connectivity generation code
                             kernelInitSubs.addVarSubstitution("id_post", "$(0)");
+
+                            // Add index of synapse
+                            kernelInitSubs.addVarSubstitution("id_syn", "idx");
 
                             // Replace kernel indices with the subsequent 'function' parameters
                             for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
@@ -771,15 +776,14 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                             // Call handler to initialize variables
                             sgKernelInitHandler(kernelInit, sg, kernelInitSubs);
 
-                            // End initialization code with code to actually add synapse
-                            kernelInit << "group->ind[(" << popSubs["id"] << " * group->rowStride) + (" << rowLength << "++)] = $(0);" << std::endl;
+                            // End initialization code with code to set postsynaptic index and increment row length
+                            kernelInit << "group->ind[idx] = $(0);" << std::endl;
+                            kernelInit << rowLength << "++;" << std::endl;
                         }
                         kernelInit << "while(false)";
-                        popSubs.addFuncSubstitution("addSynapse", 1 + sg.getArchetype().getKernelSize().size(),
+                        popSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(),
                                                     kernelInitStream.str());
                     }
-                    // 
-                    
                 }
                 else {
                     assert(false);
