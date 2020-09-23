@@ -443,11 +443,10 @@ size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal 
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &) const
 {
     // Presynaptic procedural parallelism can be used when synapse groups have 
-    // procedural connectivity and weights are either GLOBAL, PROCEDURAL or KERNEL
+    // procedural connectivity and weights are either GLOBAL or PROCEDURAL
     const auto matrixType = sg.getMatrixType();
     return ((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
-            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)
-                || (matrixType & SynapseMatrixWeight::KERNEL)));
+            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)));
 }
 //----------------------------------------------------------------------------
 size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
@@ -571,7 +570,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
 
         // If weights are provided by a kernel
-        if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        if(!sg.getArchetype().getKernelSize().empty()) {
             // Replace kernel indices with the subsequent 'function' parameters
             for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
                 presynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),

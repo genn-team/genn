@@ -466,23 +466,19 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     if(calcKernelSizeFunc) {
         m_KernelSize = calcKernelSizeFunc(m_ConnectivityInitialiser.getParams());
     }
-    // Otherwise, if synapse group uses procedural weights, give error as this is required
-    else if(m_MatrixType & SynapseMatrixWeight::KERNEL) {
-        throw std::runtime_error("Kernel weights must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
-    }
 
-    // If a kernel is demanded by the connectivity initialisation snippet and matrix type doesn't support
-    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG) 
+    // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
+    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) 
        && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG)) 
     {
-        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_KERNELG or SPARSE_INDIVIDUALG connectivity.");
+        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG or SPARSE_INDIVIDUALG connectivity.");
     }
 
-    // If synapse group uses sparse connectivity but no kernel size is provided, 
+    // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
-    if((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) && m_KernelSize.empty() && 
-       std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
-                   [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
+    if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
+       m_KernelSize.empty() &&  std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+                                            [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }

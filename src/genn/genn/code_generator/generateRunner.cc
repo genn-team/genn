@@ -1,7 +1,6 @@
 #include "code_generator/generateRunner.h"
 
 // Standard C++ includes
-#include <numeric>
 #include <random>
 #include <sstream>
 #include <string>
@@ -988,51 +987,30 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         const auto *wu = s.second.getWUModel();
         const auto *psm = s.second.getPSModel();
 
-        // If group isn't a weight sharing slave
+        // If group isn't a weight sharing slave and per-synapse variables should be individual
         const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
         const bool proceduralWeights = (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         std::vector<std::string> synapseGroupStatePushPullFunctions;
-        if(!s.second.isWeightSharingSlave()) {
-            // If weights are individual or procedural
+        if (!s.second.isWeightSharingSlave() && (individualWeights || proceduralWeights)) {
+            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
+
             const auto wuVars = wu->getVars();
-            if(individualWeights || proceduralWeights) {
-                const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
-                for(size_t i = 0; i < wuVars.size(); i++) {
-                    const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
-                    if(individualWeights) {
-                        const bool autoInitialized = !varInitSnippet->getCode().empty();
-                        mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                           runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
-                                           s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
-                    }
-
-                    // Loop through EGPs required to initialize WUM variable
-                    const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-                    for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                        genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                            runnerVarDecl, runnerExtraGlobalParamFunc,
-                                            extraGlobalParams[e].type, extraGlobalParams[e].name + wuVars[i].name + s.second.getName(),
-                                            true, VarLocation::HOST_DEVICE);
-                    }
-                }
-            }
-            // Otherwise, if weights are kernel-based
-            else if(s.second.getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                // Calculate size of kernel
-                const size_t size = std::accumulate(s.second.getKernelSize().cbegin(), s.second.getKernelSize().cend(), 
-                                                    1, std::multiplies<unsigned int>());
-
-                // Loop through variables
-                for(size_t i = 0; i < wuVars.size(); i++) {
-                    // If there is a weight initializer
-                    if(!s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty()) {
-                        throw std::runtime_error("Kernel WUM variables must be manually initialised.");
-                    }
-
-                    // Generate variable
+            for(size_t i = 0; i < wuVars.size(); i++) {
+                const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
+                if(individualWeights) {
+                    const bool autoInitialized = !varInitSnippet->getCode().empty();
                     mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                        runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
-                                       s.second.getWUVarLocation(i), false, size, synapseGroupStatePushPullFunctions);
+                                       s.second.getWUVarLocation(i), autoInitialized, size, synapseGroupStatePushPullFunctions);
+                }
+
+                // Loop through EGPs required to initialize WUM variable
+                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuVars[i].name + s.second.getName(),
+                                        true, VarLocation::HOST_DEVICE);
                 }
             }
         }

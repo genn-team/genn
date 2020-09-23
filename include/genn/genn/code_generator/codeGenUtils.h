@@ -66,10 +66,6 @@ inline size_t padSize(size_t size, size_t blockSize)
     return ceilDivide(size, blockSize) * blockSize;
 }
 
-GENN_EXPORT void genParamValVecInit(CodeStream &os, const CodeGenerator::Substitutions &subs, const Snippet::Base::ParamValVec &paramValVec, 
-                                    const std::string &errorContext, bool constant = false);
-
-
 GENN_EXPORT void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix);
 
 //--------------------------------------------------------------------------

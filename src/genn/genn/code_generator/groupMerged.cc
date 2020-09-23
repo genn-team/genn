@@ -1199,12 +1199,12 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     // Otherwise
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
-        // If this is an update using kernel weights or connectivity init with individual weights and a kernel
-        if((kernelWeights && updateRole) || (connectInitRole && individualWeights && !getArchetype().getKernelSize().empty())) {
+        // If synapse group has a kernel and we're either updating 
+        // with procedural weights or initialising individual weights
+        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
             // Loop through kernel size dimensions
             for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
                 // If this dimension has a heterogeneous size, add it to struct
@@ -1237,8 +1237,8 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
             const bool varInitRequired = ((connectInitRole && snippet->requiresKernel()) 
                                           || (!updateRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
 
-            // If we're performing an update with individual or kernel weights; or this variable should be initialised
-            if((updateRole && individualWeights) || (kernelWeights && updateRole) || varInitRequired) {
+            // If we're performing an update with individual weights; or this variable should be initialised
+            if((updateRole && individualWeights) || varInitRequired) {
                 addWeightSharingPointerField(var.type, var.name, backend.getVarPrefix() + var.name);
             }
 

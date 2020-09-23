@@ -177,8 +177,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             addNeuronModelSubstitutions(neuronSubs, ng);
 
             // Initialise any additional input variables supported by neuron model
-            genParamValVecInit(os, neuronSubs, nm->getAdditionalInputVars(),
-                               "neuron additional input var : merged" + std::to_string(ng.getIndex()));
+            for (const auto &a : nm->getAdditionalInputVars()) {
+                // Apply substitutions to value
+                std::string value = a.value;
+                neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(ng.getIndex()));
+
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
+            }
 
             // Loop through incoming synapse groups
             for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {

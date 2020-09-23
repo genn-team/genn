@@ -340,21 +340,6 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 
-void genParamValVecInit(CodeStream &os, const CodeGenerator::Substitutions &subs, const Snippet::Base::ParamValVec &paramValVec,
-                        const std::string &errorContext, bool constant)
-{
-    for(const auto &a : paramValVec) {
-        // Apply substitutions to value
-        std::string value = a.value;
-        subs.applyCheckUnreplaced(value, errorContext);
-
-        if(constant) {
-            os << "const ";
-        }
-        os << a.type << " " << a.name << " = " << value << ";" << std::endl;
-    }
-}
-
 void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
     os << "#define " << prefix << "_MIN ";

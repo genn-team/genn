@@ -52,8 +52,16 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        const auto vars = wu->getVars();
+        if(!sg.getArchetype().getKernelSize().empty()) {
+            // Generate kernel index
+            os << "const unsigned int kernelInd = ";
+            genKernelIndex(os, synapseSubs, sg);
+            os << ";" << std::endl;
 
+            // Add substitution
+            synapseSubs.addVarSubstitution("id_kernel", "kernelInd");
+        }
+        const auto vars = wu->getVars();
         for(size_t k = 0; k < vars.size(); k++) {
             const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
 
@@ -88,16 +96,6 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
         // Substitute variables for newly-declared local variables
         synapseSubs.addVarNameSubstitution(vars, "", "l");
-    }
-    // Otherwise, if weights are kernels
-    else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
-        // Generate kernel index
-        os << "const unsigned int kernelInd = ";
-        genKernelIndex(os, synapseSubs, sg);
-        os << ";" << std::endl;
-
-        // Use kernel index to index into variables
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", "[kernelInd]");
     }
     // Otherwise, substitute variables for constant values
     else {
@@ -229,8 +227,13 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
 
             // Initialise row building state variables for procedural connectivity
-            genParamValVecInit(os, baseSubs, connectInit.getSnippet()->getRowBuildStateVars(),
-                               "proceduralSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
+            for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
+                // Apply substitutions to value
+                std::string value = a.value;
+                baseSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(sg.getIndex()));
+
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
+            }
 
             // Loop through synapses in row
             os << "while(true)";
