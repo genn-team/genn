@@ -1765,11 +1765,15 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
-            os << ", CL_TRUE";
-            os << ", 0";
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
-            os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            os << "if(" << spikeCntPrefix << ng.getName() << "[0] > 0";
+            {
+                CodeStream::Scope b(os);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
+                os << ", CL_TRUE";
+                os << ", 0";
+                os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
+                os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            }
         }
     }
 }
