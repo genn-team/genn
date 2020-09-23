@@ -478,7 +478,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_KERNELG or SPARSE_INDIVIDUALG connectivity.");
     }
 
-    // If synapse group uses sparse connectivity but no kernel size is provided, check that no variables require a kernel
+    // If synapse group uses sparse connectivity but no kernel size is provided, 
+    // check that no variable's initialisation snippets require a kernel
     if((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) && m_KernelSize.empty() && 
        std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
                    [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
