@@ -546,7 +546,9 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
                 skipAhead << "preInd";
             }
             skipAhead << " + " << connSubs["group_start_id"] << " + " << backend.getNumInitialisationRNGStreams(modelMerged);
-            backend.genGlobalRNGSkipAhead(os, connSubs, skipAhead.str());
+
+            // **NOTE** add RNG to synSubs so it can be correctly referenced in presynapticUpdateSubs below
+            backend.genGlobalRNGSkipAhead(os, synSubs, skipAhead.str());
         }
 
         // If we are using more than one thread to process each row
@@ -563,13 +565,6 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
 
         // Create another substitution stack for generating presynaptic simulation code
         Substitutions presynapticUpdateSubs(&synSubs);
-
-        // If this synapse group has procedural connectivity and any of it's variables require an RNG
-        if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL)
-           && ::Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers()))
-        {
-            presynapticUpdateSubs.addVarSubstitution("rng", "&connectRNG");
-        }
 
         // Replace $(id_post) with first 'function' parameter as simulation code is
         // going to be, in turn, substituted into procedural connectivity generation code
