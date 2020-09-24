@@ -1180,23 +1180,26 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
                 backend.getVarPrefix());
     }
 
-    // If WU variables are global andthis is an update kernel
-    // **NOTE** global variable values aren't useful during initialization
+    // If WU variables are global
     const auto vars = wum->getVars();
     const auto &varInit = getArchetype().getWUVarInitialisers();
-    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL && updateRole) {
-        for(size_t v = 0; v < vars.size(); v++) {
-            // If variable should be implemented heterogeneously, add scalar field
-            if(isWUGlobalVarHeterogeneous(v)) {
-                addScalarField(vars[v].name,
-                               [v](const SynapseGroupInternal &sg, size_t)
-                               {
-                                   return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
-                               });
+    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+        // If this is an update role
+        // **NOTE **global variable values aren't useful during initialization
+        if(updateRole) {
+            for(size_t v = 0; v < vars.size(); v++) {
+                // If variable should be implemented heterogeneously, add scalar field
+                if(isWUGlobalVarHeterogeneous(v)) {
+                    addScalarField(vars[v].name,
+                                   [v](const SynapseGroupInternal &sg, size_t)
+                                   {
+                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
+                                   });
+                }
             }
         }
     }
-    // Otherwise
+    // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
