@@ -2040,7 +2040,13 @@ std::string Backend::getNVCCFlags() const
 #ifdef _WIN32
     nvccFlags += " -Xcudafe \"--diag_suppress=2961\"";
 #else
-    nvccFlags += " -Xcudafe \"--diag_suppress=2937\" -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
+    nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
+
+    // If runtime is new enough, hide forementioned warnings. On CUDA 7.5 and 8.0 this causes a fatal error
+    // and, as no warnings are shown, presumably this is because this warning simply isn't implemented until CUDA 9
+    if(m_RuntimeVersion >= 9000) {
+        nvccFlags += " -Xcudafe \"--diag_suppress=2937\"";
+    }
 #endif
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
