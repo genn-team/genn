@@ -55,6 +55,7 @@ struct clrngPhilox432StreamCreator_ {
 */
 
 #define BASE_CREATOR_STATE { \
+        {0, 0}, \
         {{ 0, 0},{ 0, 1}}, \
         { 0, 0, 0, 0 }, \
         0 }
@@ -147,7 +148,7 @@ clrngStatus clrngPhilox432ChangeStreamsSpacing(clrngPhilox432StreamCreator* crea
 
 	//Create Base Creator
 	clrngPhilox432StreamCreator* baseCreator = clrngPhilox432CopyStreamCreator(NULL, NULL);
-	clrngPhilox432StreamState baseState = { { { 0, 0 }, { 0, 0 } },	{ 0, 0, 0, 0 },	0 };
+	clrngPhilox432StreamState baseState = { { 0, 0 }, { { 0, 0 }, { 0, 0 } },	{ 0, 0, 0, 0 },	0 };
 	clrngPhilox432SetBaseCreatorState(baseCreator, &baseState);
 
 	//Create stream

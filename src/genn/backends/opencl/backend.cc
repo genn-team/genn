@@ -159,7 +159,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 
     // Add OpenCL-specific types
     addType("clrngLfsr113Stream", 16);
-    addType("clrngPhilox432Stream", 36);
+    addType("clrngPhilox432Stream", 44);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -222,12 +222,11 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "clrngPhilox432Stream localStream;" << std::endl;
     os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
 
-    // Convert id into steps, add these to steps, zero deck index and regenerate deck
+    // Convert id into steps, add these to steps, zero deck index
+    // **NOTE** manually regenerating deck is not necessary as it is done on next call to clrngPhilox432NextState if deckIndex == 0
     os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
     os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
     os << "localStream.current.deckIndex = 0;" << std::endl;
-    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
-
     subs.addVarSubstitution(name, "&localStream");
 }
 //--------------------------------------------------------------------------
@@ -1232,6 +1231,42 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
             os << "clrngLfsr113SetBaseCreatorState(lfsrStreamCreator, &lfsrBaseState);" << std::endl;
         }
     }
+    
+    // If a global device RNG is required
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
+        os << "// Seed Philox RNG" << std::endl;
+        os << "clrngPhilox432StreamCreator *philoxStreamCreator = clrngPhilox432CopyStreamCreator(nullptr, nullptr);" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            
+            // If no seed is specified, get system random device
+            if(model.getSeed() == 0) {
+                os << "std::random_device seedSource;" << std::endl;
+            }
+
+            // Define Philox base state
+            os << "clrngPhilox432StreamState philoxBaseState = ";
+            {
+                CodeStream::Scope b(os);
+                if(model.getSeed() == 0) {
+                    os << "{seedSource(), seedSource()},    // key" << std::endl;
+                }
+                // Otherwise use model seed as first key word
+                else {
+                    os << "{" << model.getSeed() << ", 0},  // key" << std::endl;
+                }
+
+                // Zero counter, deck and deck index
+                os << "{{0, 0}, {0, 0}},                // ctr" << std::endl;
+                os << "{0, 0, 0, 0},                    // deck" << std::endl;
+                os << "0                                // deck index" << std::endl;
+            }
+            os << ";" << std::endl;
+
+            // Configure stream creator
+            os << "clrngPhilox432SetBaseCreatorState(philoxStreamCreator, &philoxBaseState);" << std::endl;
+        }
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -1513,7 +1548,7 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInterna
     {
         CodeStream::Scope b(allocations);
         allocations << "size_t deviceBytes;" << std::endl;
-        allocations << "rng = clrngPhilox432CreateStreams(nullptr, 1, &deviceBytes, nullptr);" << std::endl;
+        allocations << "rng = clrngPhilox432CreateStreams(philoxStreamCreator, 1, &deviceBytes, nullptr);" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
     }
     return MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
