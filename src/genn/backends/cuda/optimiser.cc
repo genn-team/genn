@@ -70,13 +70,19 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
         regAllocGran = 256;
         maxBlocksPerSM = 32;
     }
-    else {
+    else if(deviceProps.major == 7) {
         smemAllocGran = 256;
         warpAllocGran = 4;
         regAllocGran = 256;
-        maxBlocksPerSM = 32;
-
-        if(deviceProps.major > 7) {
+	maxBlocksPerSM = (deviceProps.minor == 0) ? 32 : 16;
+    }
+    else {
+        smemAllocGran = 128;
+        warpAllocGran = 4;
+        regAllocGran = 256;
+        maxBlocksPerSM = (deviceProps.minor == 0) ? 32 : 16;
+	
+        if(deviceProps.major > 8) {
             LOGW_BACKEND << "Unsupported CUDA device major version: " << deviceProps.major;
             LOGW_BACKEND << "This is a bug! Please report it at https://github.com/genn-team/genn.";
             LOGW_BACKEND << "Falling back to next latest SM version parameters.";
