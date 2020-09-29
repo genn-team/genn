@@ -2039,16 +2039,12 @@ std::string Backend::getNVCCFlags() const
     // presumably this is because this warning simply wasn't implemented until CUDA 9
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string nvccFlags = "-x cu -arch " + architecture;
-#ifdef _WIN32
-    if(m_RuntimeVersion >= 9000) {
-        nvccFlags += " -Xcudafe \"--diag_suppress=2961\"";
-    }
-#else
+#ifndef _WIN32
     nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
-    if(m_RuntimeVersion >= 9000) {
-        nvccFlags += " -Xcudafe \"--diag_suppress=2937\"";
-    }
 #endif
+    if(m_RuntimeVersion >= 9000) {
+        nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
+    }
 
     nvccFlags += " " + m_Preferences.userNvccFlags;
     if(m_Preferences.optimizeCode) {
