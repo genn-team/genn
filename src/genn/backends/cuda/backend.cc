@@ -878,10 +878,6 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
-    // Get chosen device's PCI bus ID
-    char pciBusID[32];
-    CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
-
     // If the model requires zero-copy
     if(modelMerged.getModel().zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
@@ -893,18 +889,37 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "CHECK_CUDA_ERRORS(cudaSetDeviceFlags(cudaDeviceMapHost));" << std::endl;
         os << std::endl;
     }
-    
+
     // If we should select GPU by device ID, do so
+    const bool runtimeDeviceSelect = (getPreferences<Preferences>().deviceSelectMethod == DeviceSelect::MANUAL_RUNTIME);
     if(getPreferences<Preferences>().selectGPUByDeviceID) {
-        os << "CHECK_CUDA_ERRORS(cudaSetDevice(" << m_ChosenDeviceID << "));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaSetDevice(";
+        if(runtimeDeviceSelect) {
+            os << "deviceID";
+        }
+        else {
+            os << m_ChosenDeviceID;
+        }
+        os << "));" << std::endl;
     }
     // Otherwise, write code to get device by PCI bus ID
     // **NOTE** this is required because device IDs are not guaranteed to remain the same and we want the code to be run on the same GPU it was optimise for
     else {
         os << "int deviceID;" << std::endl;
-        os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, \"" << pciBusID << "\"));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaDeviceGetByPCIBusId(&deviceID, ";
+        if(runtimeDeviceSelect) {
+            os << "pciBusID";
+        }
+        else {
+            // Get chosen device's PCI bus ID and write into code
+            char pciBusID[32];
+            CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
+            os << "\"" << pciBusID << "\"";
+        }
+        os << "));" << std::endl;
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
+    
     os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1359,7 +1374,25 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
     os << "\t\t<Import Project=\"$(VCTargetsPath)\\BuildCustomizations\\CUDA $(CudaVersion).targets\" />" << std::endl;
     os << "\t</ImportGroup>" << std::endl;
 }
-
+//--------------------------------------------------------------------------
+std::string Backend::getAllocateMemParams(const ModelSpecMerged &) const
+{
+    // If device should be selected at runtime
+    if(getPreferences<Preferences>().deviceSelectMethod == DeviceSelect::MANUAL_RUNTIME) {
+        // If devices should be delected by ID, add an integer parameter
+        if(getPreferences<Preferences>().selectGPUByDeviceID) {
+            return "int deviceID";
+        }
+        // Otherwise, add a pci bus ID parameter
+        else {
+            return "const char *pciBusID";
+        }
+    }
+    // Othewise, no parameters are required
+    else {
+        return "";
+    }
+}
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
 {

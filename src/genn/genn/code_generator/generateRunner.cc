@@ -1217,7 +1217,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // ---------------------------------------------------------------------
     // Function for setting the device and the host's global variables.
     // Also estimates memory usage on device ...
-    runner << "void allocateMem()";
+    runner << "void allocateMem(" << backend.getAllocateMemParams(modelMerged) << ")";
     {
         CodeStream::Scope b(runner);
 
@@ -1311,7 +1311,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
         definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
     }
-    definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
+    definitions << "EXPORT_FUNC void allocateMem(" << backend.getAllocateMemParams(modelMerged) << ");" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC size_t getFreeDeviceMemBytes();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
