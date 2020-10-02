@@ -299,7 +299,11 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
     std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPostSpikeCode().empty(); });
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return (!sg->getWUModel()->getPostSpikeCode().empty()
+                             || !sg->getWUModel()->getPostDynamicsCode().empty());
+                 });
     return vec;
 }
 //----------------------------------------------------------------------------
@@ -307,7 +311,11 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPreSpikeCode().empty(); });
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return (!sg->getWUModel()->getPreSpikeCode().empty()
+                             || !sg->getWUModel()->getPreDynamicsCode().empty());
+                });
     return vec;
 }
 //----------------------------------------------------------------------------
