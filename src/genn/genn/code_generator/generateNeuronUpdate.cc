@@ -458,13 +458,23 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
                     const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
 
-                    // Are there any outgoing synapse groups with axonal delay and presynaptic WUM variables?
+                    // Are there any outgoing synapse groups with presynaptic code
+                    // which have axonal delay and no presynaptic dynamics
                     const bool preVars = std::any_of(outSynWithPreCode.cbegin(), outSynWithPreCode.cend(),
-                                                     [](const SynapseGroupInternal *sg){ return (sg->getDelaySteps() != NO_DELAY); });
+                                                     [](const SynapseGroupInternal *sg)
+                                                     {
+                                                         return ((sg->getDelaySteps() != NO_DELAY)
+                                                                 && sg->getWUModel()->getPreDynamicsCode().empty());
+                                                     });
 
-                    // Are there any incoming synapse groups with back-propagation delay and postsynaptic WUM variables?
+                    // Are there any incoming synapse groups with postsynaptic code
+                    // which have back-propagation delay and no postsynaptic dynamics
                     const bool postVars = std::any_of(inSynWithPostCode.cbegin(), inSynWithPostCode.cend(),
-                                                      [](const SynapseGroupInternal *sg){ return (sg->getBackPropDelaySteps() != NO_DELAY); });
+                                                      [](const SynapseGroupInternal *sg)
+                                                      {
+                                                          return ((sg->getBackPropDelaySteps() != NO_DELAY)
+                                                                   && sg->getWUModel()->getPostDynamicsCode().empty());
+                                                      });
 
                     // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
                     if(ng.getArchetype().isSpikeTimeRequired() || preVars || postVars) {
@@ -476,10 +486,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                             os << "group->sT[writeDelayOffset + " << popSubs["id"] << "] = lsT;" << std::endl;
                         }
 
-                        // Copy presynaptic WUM variables between delay slots
+                        // Loop through outgoing synapse groups with some sort of presynaptic code
                         for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
                             const auto *sg = outSynWithPreCode[i];
-                            if(sg->getDelaySteps() != NO_DELAY) {
+                            // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
+                            if(sg->getDelaySteps() != NO_DELAY && sg->getWUModel()->getPreDynamicsCode().empty()) {
+                                // Loop through variables and copy between read and write delay slots
                                 for(const auto &v : sg->getWUModel()->getPreVars()) {
                                     os << "group->" << v.name << "WUPre" << i << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
                                     os << "group->" << v.name << "WUPre" << i << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
@@ -487,11 +499,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                             }
                         }
 
-
-                        // Copy postsynaptic WUM variables between delay slots
+                        // Loop through outgoing synapse groups with some sort of postsynaptic code
                         for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
                             const auto *sg = inSynWithPostCode[i];
-                            if(sg->getBackPropDelaySteps() != NO_DELAY) {
+                            // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
+                            if(sg->getBackPropDelaySteps() != NO_DELAY && sg->getWUModel()->getPostDynamicsCode().empty()) {
+                                // Loop through variables and copy between read and write delay slots
                                 for(const auto &v : sg->getWUModel()->getPostVars()) {
                                     os << "group->" << v.name << "WUPost" << i << "[writeDelayOffset + " << popSubs["id"] <<  "] = ";
                                     os << "group->" << v.name << "WUPost" << i << "[readDelayOffset + " << popSubs["id"] << "];" << std::endl;
