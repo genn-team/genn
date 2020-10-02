@@ -313,7 +313,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 }
             }
 
-            // Loop through incoming synaptic populations with postsynaptic update code
+            // Loop through incoming synaptic populations with postsynaptic variables
             // **NOTE** number of delay slots is based on the target neuron (for simplicity) but whether delay is required is based on the synapse group
             const auto inSynWithPostVars = ng.getArchetype().getInSynWithPostVars();
             for(size_t i = 0; i < inSynWithPostVars.size(); i++) {
@@ -327,7 +327,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                      [&ng, i](size_t v, size_t p) { return ng.isInSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
             }
 
-            // Loop through outgoing synaptic populations with presynaptic update code
+            // Loop through outgoing synaptic populations with presynaptic variables
             // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
             const auto outSynWithPostVars = ng.getArchetype().getOutSynWithPreVars();
             for(size_t i = 0; i < outSynWithPostVars.size(); i++) {
