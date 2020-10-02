@@ -452,6 +452,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 // Spike triggered variables don't need to be copied
                 // if delay isn't required as there's only one copy of them
                 if(ng.getArchetype().isDelayRequired()) {
+                    // **FIXME** there is a corner case here where, if pre or postsynaptic variables have no update code
+                    // but there are delays they won't get copied. It might make more sense (and tidy up several things
+                    // to instead build merged neuron update groups based on inSynWithPostVars/outSynWithPreVars instead.
                     const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
                     const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
 
