@@ -528,7 +528,7 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *wum = getArchetype().getInSynWithPostCode().at(childIndex)->getWUModel();
     const std::string paramName = wum->getParamNames().at(paramIndex);
-    return isChildParamValueHeterogeneous({wum->getPostSpikeCode()}, paramName, childIndex, paramIndex, m_SortedInSynWithPostCode,
+    return isChildParamValueHeterogeneous({wum->getPostSpikeCode(), wum->getPostDynamicsCode()}, paramName, childIndex, paramIndex, m_SortedInSynWithPostCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUParams(); });
 }
 //----------------------------------------------------------------------------
@@ -537,7 +537,7 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous
     // If derived parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *wum = getArchetype().getInSynWithPostCode().at(childIndex)->getWUModel();
     const std::string derivedParamName = wum->getDerivedParams().at(paramIndex).name;
-    return isChildParamValueHeterogeneous({wum->getPostSpikeCode()}, derivedParamName, childIndex, paramIndex, m_SortedInSynWithPostCode,
+    return isChildParamValueHeterogeneous({wum->getPostSpikeCode(), wum->getPostDynamicsCode()}, derivedParamName, childIndex, paramIndex, m_SortedInSynWithPostCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
 }
 //----------------------------------------------------------------------------
@@ -546,7 +546,7 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous(size_
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *wum = getArchetype().getOutSynWithPreCode().at(childIndex)->getWUModel();
     const std::string paramName = wum->getParamNames().at(paramIndex);
-    return isChildParamValueHeterogeneous({wum->getPreSpikeCode()}, paramName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
+    return isChildParamValueHeterogeneous({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, paramName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUParams(); });
 }
 //----------------------------------------------------------------------------
@@ -555,7 +555,7 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneou
     // If derived parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *wum = getArchetype().getOutSynWithPreCode().at(childIndex)->getWUModel();
     const std::string derivedParamName = wum->getDerivedParams().at(paramIndex).name;
-    return isChildParamValueHeterogeneous({wum->getPreSpikeCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
+    return isChildParamValueHeterogeneous({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
 }
 //----------------------------------------------------------------------------
