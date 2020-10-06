@@ -96,7 +96,7 @@ template<typename P, typename D>
 void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
                                        const std::string &offset, const std::string &delayOffset, const std::string &idx, 
                                        const std::string &sourceSuffix, const std::string &destSuffix, 
-                                       const std::string &varPrefix, const std::string &varSuffix,
+                                       const std::string &varPrefix, const std::string &varSuffix, bool useLocalNeuronVars,
                                        P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
 
@@ -106,11 +106,16 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
 
     // Substitute neuron variables
     const auto *nm = archetypeNG->getNeuronModel();
-    for(const auto &v : nm->getVars()) {
-        const std::string varIdx = archetypeNG->isVarQueueRequired(v.name) ? offset + idx : idx;
+    if(useLocalNeuronVars) {
+        substitutions.addVarNameSubstitution(nm->getVars(), sourceSuffix, "l");
+    }
+    else {
+        for(const auto &v : nm->getVars()) {
+            const std::string varIdx = archetypeNG->isVarQueueRequired(v.name) ? offset + idx : idx;
 
-        substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                         varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
+            substitutions.addVarSubstitution(v.name + sourceSuffix,
+                                            varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
+        }
     }
 
     // Substitute (potentially heterogeneous) parameters and derived parameters from neuron model
