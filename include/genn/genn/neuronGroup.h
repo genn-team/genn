@@ -28,18 +28,18 @@ public:
     struct SpikeEventThreshold
     {
         SpikeEventThreshold(const std::string &e, const std::string &s, bool egp, SynapseGroupInternal *sg)
-            : eventThresholdCode(e), supportCode(s), egpInThresholdCode(egp), synapseGroup(sg)
+            : eventThresholdCode(e), supportCode(s), synapseStateInThresholdCode(egp), synapseGroup(sg)
         {
         }
 
         const std::string eventThresholdCode;
         const std::string supportCode;
-        const bool egpInThresholdCode;
+        const bool synapseStateInThresholdCode;
         SynapseGroupInternal *synapseGroup;
 
-        //! Less than operator (used for std::set::insert), lexicographically compares all three 
-        //! struct members - meaning that event thresholds featuring extra global parameters from
-        //! different synapse groups will not get combined together in neuron update
+        //! Less than operator (used for std::set::insert), lexicographically compares all three struct
+        //! members - meaning that event thresholds featuring extra global parameters or presynaptic
+        //! state variables from different synapse groups will not get combined together in neuron update
         bool operator < (const SpikeEventThreshold &other) const
         {
             if(other.eventThresholdCode < eventThresholdCode) {
@@ -56,7 +56,7 @@ public:
                 return true;
             }
 
-            if(egpInThresholdCode) {
+            if(synapseStateInThresholdCode) {
                 if(other.synapseGroup < synapseGroup) {
                     return false;
                 }

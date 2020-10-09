@@ -429,42 +429,6 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
 
         }
     }
-
-    // Loop through neuron groups
-    std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
-    for(const auto &g : getGroups()) {
-        // Reserve vector for this group's children
-        eventThresholdSGs.emplace_back();
-
-        // Add synapse groups 
-        for(const auto &s : g.get().getSpikeEventCondition()) {
-            if(s.egpInThresholdCode) {
-                eventThresholdSGs.back().push_back(s.synapseGroup);
-            }
-        }
-    }
-
-    // Loop through all spike event conditions
-    size_t i = 0;
-    for(const auto &s : getArchetype().getSpikeEventCondition()) {
-        // If threshold condition references any EGPs
-        if(s.egpInThresholdCode) {
-            // Loop through all EGPs in synapse group and add to merged group
-            // **TODO** should only be ones referenced
-            const auto sgEGPs = s.synapseGroup->getWUModel()->getExtraGlobalParams();
-            for(const auto &egp : sgEGPs) {
-                const bool isPointer = Utils::isTypePointer(egp.type);
-                const std::string prefix = isPointer ? backend.getVarPrefix() : "";
-                addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
-                         [eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
-                         },
-                         Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
-            }
-            i++;
-        }
-    }
 }
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, const std::string &name, 
@@ -508,6 +472,59 @@ CodeGenerator::NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, co
     generateWUVar(backend, "WUPre", outSynWithPreCode, m_SortedOutSynWithPreCode,
                   &WeightUpdateModels::Base::getPreVars, &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
                   &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
+
+    // Loop through neuron groups
+    std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
+    for(const auto &g : getGroups()) {
+        // Reserve vector for this group's children
+        eventThresholdSGs.emplace_back();
+
+        // Add synapse groups 
+        for(const auto &s : g.get().getSpikeEventCondition()) {
+            if(s.synapseStateInThresholdCode) {
+                eventThresholdSGs.back().push_back(s.synapseGroup);
+            }
+        }
+    }
+
+    // Loop through all spike event conditions
+    size_t i = 0;
+    for(const auto &s : getArchetype().getSpikeEventCondition()) {
+        // If threshold condition references any synapse state
+        if(s.synapseStateInThresholdCode) {
+            const auto wum = s.synapseGroup->getWUModel();
+
+            // Loop through all EGPs in synapse group 
+            const auto sgEGPs = wum->getExtraGlobalParams();
+            for(const auto &egp : sgEGPs) {
+                // If EGP is referenced in event threshold code
+                if(s.eventThresholdCode.find("$(" + egp.name + ")") != std::string::npos) {
+                    const bool isPointer = Utils::isTypePointer(egp.type);
+                    const std::string prefix = isPointer ? backend.getVarPrefix() : "";
+                    addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
+                             [eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 return prefix + egp.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
+                             },
+                             Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                }
+            }
+
+            // Loop through all presynaptic variables in synapse group 
+            const auto sgPreVars = wum->getPreVars();
+            for(const auto &var : sgPreVars) {
+                // If variable is referenced in event threshold code
+                if(s.eventThresholdCode.find("$(" + var.name + ")") != std::string::npos) {
+                    addField(var.type + "*", var.name + "EventThresh" + std::to_string(i),
+                             [&backend, eventThresholdSGs, var, i](const NeuronGroupInternal &, size_t groupIndex)
+                             {
+                                 return backend.getVarPrefix() + var.name + eventThresholdSGs.at(groupIndex).at(i)->getName();
+                             });
+                }
+            }
+            i++;
+        }
+    }
 
 }
 //----------------------------------------------------------------------------

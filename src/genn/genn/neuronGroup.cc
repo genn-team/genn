@@ -346,8 +346,17 @@ void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInte
                                                 {
                                                     return (code.find("$(" + egp.name + ")") != std::string::npos);
                                                 });
+
+    // Determine if any presynaptic variables are required by threshold code
+    const auto wuPreVars = wu->getPreVars();
+    const bool preVarInThresholdCode = std::any_of(wuPreVars.cbegin(), wuPreVars.cend(),
+                                                   [&code](const Models::Base::Var &var)
+                                                   {
+                                                       return (code.find("$(" + var.name + ")") != std::string::npos);
+                                                   });
+
     // Add threshold, support code, synapse group and whether egps are required to set
-    m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode, synapseGroup);
+    m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode || preVarInThresholdCode, synapseGroup);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const

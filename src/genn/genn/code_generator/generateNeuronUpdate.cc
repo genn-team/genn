@@ -386,9 +386,15 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     // Replace of parameters, derived parameters and extraglobalsynapse parameters
                     Substitutions spkEventCondSubs(&popSubs);
 
-                    // If this spike event condition requires EGPS, substitute them
-                    if(spkEventCond.egpInThresholdCode) {
+                    // If this spike event condition requires synapse state
+                    if(spkEventCond.synapseStateInThresholdCode) {
+                        // Substitute EGPs
                         spkEventCondSubs.addVarNameSubstitution(spkEventCond.synapseGroup->getWUModel()->getExtraGlobalParams(), "", "group->", "EventThresh" + std::to_string(i));
+
+                        // Substitute presynaptic variables
+                        // **NOTE**
+                        const std::string delayedPreIdx = (spkEventCond.synapseGroup->getDelaySteps() == NO_DELAY) ? popSubs["id"] : "writeDelayOffset + " + popSubs["id"];
+                        spkEventCondSubs.addVarNameSubstitution(spkEventCond.synapseGroup->getWUModel()->getPreVars(), "", "group->", "EventThresh" + std::to_string(i) + "[" + delayedPreIdx + "]");
                         i++;
                     }
                     addNeuronModelSubstitutions(spkEventCondSubs, ng, "_pre");
