@@ -30,17 +30,18 @@ Preferences GENN_PREFERENCES;
 // Include model
 #include MODEL
 
-int main(int argc,     //!< number of arguments; expected to be 2
-         char *argv[]) //!< Arguments; expected to contain the target directory for code generation.
+int main(int argc,     //!< number of arguments; expected to be 3
+         char *argv[]) //!< Arguments; expected to contain the genn directory and the target directory for code generation.
 {
     try
     {
-        if (argc != 2) {
-            std::cerr << "usage: generator <target dir>";
+        if (argc != 3) {
+            std::cerr << "usage: generator <genn dir> <target dir>" << std::endl;
             return EXIT_FAILURE;
         }
 
-        const filesystem::path targetPath(argv[1]);
+        const filesystem::path gennPath(argv[1]);
+        const filesystem::path targetPath(argv[2]);
 
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
@@ -54,19 +55,20 @@ int main(int argc,     //!< number of arguments; expected to be 2
         // Finalize model
         model.finalize();
 
-        // Create code generation path
+        // Determine code generation path
         const filesystem::path outputPath = targetPath / (model.getName() + "_CODE");
+        const filesystem::path sharePath = gennPath / "share" / "genn";
 
         // Create output path
         filesystem::create_directory(outputPath);
 
         // Create backend
-        auto backend = Optimiser::createBackend(model, outputPath,
+        auto backend = Optimiser::createBackend(model, sharePath, outputPath,
                                                 GENN_PREFERENCES.logLevel, &consoleAppender,
                                                 GENN_PREFERENCES);
 
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, outputPath).first;
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, outputPath).first;
 
 #ifdef _WIN32
         // If runner GUID file doesn't exist

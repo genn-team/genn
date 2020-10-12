@@ -1,0 +1,24 @@
+# Configure for OpenCL backend
+BACKEND_NAME		:=opencl
+BACKEND_NAMESPACE 	:=OpenCL
+
+# Include common makefile
+include MakefileCommon
+
+# Add include and link flags for OpenCL
+CXXFLAGS			+= -Wno-ignored-attributes -DCL_HPP_TARGET_OPENCL_VERSION=120 -DCL_HPP_MINIMUM_OPENCL_VERSION=120
+ifeq ($(DARWIN),DARWIN)
+    CXXFLAGS		+= -framework OpenCL
+else
+    # Check OpenCL is present
+    ifndef OPENCL_PATH
+        $(error Environment variable OPENCL_PATH must be defined)
+    endif
+
+    CXXFLAGS		+= -I"$(OPENCL_PATH)/include"
+    ifeq ($(OS_SIZE),32)
+        LDFLAGS		+= -L"$(OPENCL_PATH)/lib" -lOpenCL
+    else
+        LDFLAGS		+= -L"$(OPENCL_PATH)/lib64" -lOpenCL
+    endif
+endif

@@ -38,7 +38,7 @@ const std::string op= std::string("+-*/(<>= ,;")+std::string("\n")+std::string("
 
 enum MathsFunc
 {
-    MathsFuncDouble,
+    MathsFuncCPP,
     MathsFuncSingle,
     MathsFuncMax,
 };
@@ -103,24 +103,18 @@ const char *mathsFuncs[][MathsFuncMax] = {
 };
 
 //--------------------------------------------------------------------------
-/*! \brief This function converts code to contain only explicit single precision (float) function calls (C99 standard)
+/*! \brief This function removes explicit single precision function calls as
+           single-threaded CPU and CUDA kernels both support C++ i.e. overloads 
+           and, while OpenCL kernels aren't in C++, OpenCL doesn't provide explicit
+           single precision maths functions, instead having some weird special case
  */
 //--------------------------------------------------------------------------
-void ensureMathFunctionFtype(std::string &code, const std::string &type)
+void ensureMathFunctionFtype(std::string &code)
 {
-    using namespace CodeGenerator;
-
-    // If type is double, substitute any single precision maths functions for double precision version
-    if (type == "double") {
-        for(const auto &m : mathsFuncs) {
-            regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncDouble]);
-        }
-    }
-    // Otherwise, substitute any double precision maths functions for single precision version
-    else {
-        for(const auto &m : mathsFuncs) {
-            regexFuncSubstitute(code, m[MathsFuncDouble], m[MathsFuncSingle]);
-        }
+    // Replace any outstanding explicit single-precision maths functions  
+    // with C++ versions where overloads should work the same
+    for(const auto &m : mathsFuncs) {
+        CodeGenerator::regexFuncSubstitute(code, m[MathsFuncSingle], m[MathsFuncCPP]);
     }
 }
 
@@ -346,22 +340,28 @@ void functionSubstitute(std::string &code, const std::string &funcName,
     }
 }
 
-void genScalarEGPPush(CodeStream &os, const MergedStructData &mergedStructData, const std::string &suffix, const BackendBase &backend)
+void genTypeRange(CodeStream &os, const std::string &precision, const std::string &prefix)
 {
-    // Loop through all merged EGPs
-    for(const auto &e : mergedStructData.getMergedEGPs()) {
-        // Loop through range with correct suffix
-        const auto groupEGPs = e.second.equal_range(suffix);
-        for (auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-            // If EGP is scalar, generate code to copy
-            if(!Utils::isTypePointer(g->second.type)) {
-                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex, 
-                                                      std::to_string(g->second.groupIndex), 
-                                                      g->second.fieldName, e.first);
-            }
-
-        }
+    os << "#define " << prefix << "_MIN ";
+    if(precision == "float") {
+        Utils::writePreciseString(os, std::numeric_limits<float>::min());
+        os << "f" << std::endl;
     }
+    else {
+        Utils::writePreciseString(os, std::numeric_limits<double>::min());
+        os << std::endl;
+    }
+
+    os << "#define " << prefix << "_MAX ";
+    if(precision == "float") {
+        Utils::writePreciseString(os, std::numeric_limits<float>::max());
+        os << "f" << std::endl;
+    }
+    else {
+        Utils::writePreciseString(os, std::numeric_limits<double>::max());
+        os << std::endl;
+    }
+    os << std::endl;
 }
 
 //--------------------------------------------------------------------------
@@ -462,7 +462,7 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
             code= code+"f";
         }
     }
-    ensureMathFunctionFtype(code, type);
+    ensureMathFunctionFtype(code);
     return code;
 }
 
@@ -485,5 +485,34 @@ void checkUnreplacedVariables(const std::string &code, const std::string &codeNa
        
         throw std::runtime_error("The "+vars+"undefined in code "+codeName+".");
     }
+}
+
+//--------------------------------------------------------------------------
+/*! \brief This function substitutes function names in a code with namespace as prefix of the function name for backends that do not support namespaces by checking that the function indeed exists in the support code and returns the substituted code.
+ */
+ //--------------------------------------------------------------------------
+std::string disambiguateNamespaceFunction(const std::string supportCode, const std::string code, std::string namespaceName) {
+    // Regex for function call - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments)
+    std::regex funcCallRegex(R"(\w+(?=\(.*\)))");
+    std::smatch matchedInCode;
+    std::regex_search(code.begin(), code.end(), matchedInCode, funcCallRegex);
+    std::string newCode = code;
+
+    // Regex for function definition - looks for words with succeeding parentheses with or without any data inside the parentheses (arguments) followed by braces on the same or new line
+    std::regex supportCodeRegex(R"(\w+(?=\(.*\)\s*\{))");
+    std::smatch matchedInSupportCode;
+    std::regex_search(supportCode.begin(), supportCode.end(), matchedInSupportCode, supportCodeRegex);
+
+    // Iterating each function in code
+    for (const auto& funcInCode : matchedInCode) {
+        // Iterating over every function in support code to check if that function is indeed defined in support code (and not called - like fmod())
+        for (const auto& funcInSupportCode : matchedInSupportCode) {
+            if (funcInSupportCode.str() == funcInCode.str()) {
+                newCode = std::regex_replace(newCode, std::regex(funcInCode.str()), namespaceName + "_$&");
+                break;
+            }
+        }
+    }
+    return newCode;
 }
 }   // namespace CodeGenerator

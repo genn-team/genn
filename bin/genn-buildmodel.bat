@@ -8,6 +8,7 @@ rem :: display genn-buildmodel.bat help
 echo genn-buildmodel.bat script usage:
 echo genn-buildmodel.bat [cdho] model
 echo -c             only generate simulation code for the CPU
+echo -l             generate simulation code for OpenCL
 echo -d             enables the debugging mode
 echo -h             shows this help message
 echo -s             build GeNN without SDL checks
@@ -20,7 +21,7 @@ rem :: define genn-buildmodel.bat options separated by spaces
 rem :: -<option>:              option
 rem :: -<option>:""            option with argument
 rem :: -<option>:"<default>"   option with argument and default value
-set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h: -s:"
+set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h: -s: -l:"
 for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
 :genn_option
@@ -71,20 +72,33 @@ if defined -d (
         set "MACROS=%MACROS% /p:Configuration=Debug"
         set GENERATOR=.\generator_Debug.exe
     ) else (
-        set "BACKEND_PROJECT=cuda_backend"
-        set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
-        set GENERATOR=.\generator_Debug_CUDA.exe
-    )    
-    ) else (
+        if defined -l (
+            set "BACKEND_PROJECT=opencl_backend"
+            set "MACROS=%MACROS% /p:Configuration=Debug_OpenCL"
+            set GENERATOR=.\generator_Debug_OpenCL.exe
+        ) else (
+            set "BACKEND_PROJECT=cuda_backend"
+            set "MACROS=%MACROS% /p:Configuration=Debug_CUDA"
+            set GENERATOR=.\generator_Debug_CUDA.exe
+        )
+    )
+) else (
+    set "BACKEND_MACROS= /p:Configuration=Release"
     set "BACKEND_MACROS= /p:Configuration=Release"
     if defined -c (
         set "BACKEND_PROJECT=single_threaded_cpu_backend"
         set "MACROS=%MACROS% /p:Configuration=Release"
         set GENERATOR=.\generator_Release.exe
-    ) else (
-        set "BACKEND_PROJECT=cuda_backend"
-        set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
-        set GENERATOR=.\generator_Release_CUDA.exe
+    ) else ( 
+        if defined -l (
+            set "BACKEND_PROJECT=opencl_backend"
+            set "MACROS=%MACROS% /p:Configuration=Release_OpenCL"
+            set GENERATOR=.\generator_Release_OpenCL.exe
+        ) else (
+            set "BACKEND_PROJECT=cuda_backend"
+            set "MACROS=%MACROS% /p:Configuration=Release_CUDA"
+            set GENERATOR=.\generator_Release_CUDA.exe
+        )
     )
 )
 
@@ -106,9 +120,9 @@ msbuild "%GENN_PATH%..\src\genn\generator\generator.vcxproj" /m /verbosity:minim
 )
 
 if defined -d (
-    devenv /debugexe "%GENERATOR%" "%-o%"
+    devenv /debugexe "%GENERATOR%" "%GENN_PATH%.." "%-o%"
 ) else (
-    "%GENERATOR%" "%-o%"
+    "%GENERATOR%" "%GENN_PATH%.." "%-o%"
 )
 
 echo Model build complete

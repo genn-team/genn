@@ -6,6 +6,8 @@ GeNN was created by Thomas Nowotny.
 
 GeNN is currently maintained and developed by James Knight.
 
+OpenCL support was developed by Fawad Ali, Obaid Ur Rehman, Muhammad Irfan Ali.
+
 Current sources and PyGeNN were first implemented by Anton Komissarov.
 
 Izhikevich model and sparse connectivity by Esin Yavuz.

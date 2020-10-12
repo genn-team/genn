@@ -26,7 +26,7 @@ double gammaCDF4(double x)
 // Macro to generate full set of tests for a particular model
 #define PROB_TEST(PREFIX, SUFFIX, N) \
     { \
-        EXPECT_TRUE(std::all_of(&PREFIX##constant##SUFFIX[0], &PREFIX##constant##SUFFIX[N], [](scalar x){ return (x == 13.0); })); \
+        EXPECT_TRUE(std::all_of(&PREFIX##constant_val##SUFFIX[0], &PREFIX##constant_val##SUFFIX[N], [](scalar x){ return (x == 13.0); })); \
         const double PREFIX##uniform##SUFFIX##Prob = getProb(PREFIX##uniform##SUFFIX, N, Stats::uniformCDF); \
         EXPECT_GT(PREFIX##uniform##SUFFIX##Prob, p); \
         const double PREFIX##normal##SUFFIX##Prob = getProb(PREFIX##normal##SUFFIX, N, Stats::normalCDF); \

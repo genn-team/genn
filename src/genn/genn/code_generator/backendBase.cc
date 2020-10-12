@@ -10,8 +10,8 @@
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-CodeGenerator::BackendBase::BackendBase(const std::string &scalarType)
-:   m_TypeBytes{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
+CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
+:   m_PointerBytes(sizeof(char*)), m_TypeBytes{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
     TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
     TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
     TYPE(signed long long int), TYPE(unsigned char), TYPE(unsigned short), TYPE(unsigned short int), TYPE(unsigned),
@@ -21,7 +21,7 @@ CodeGenerator::BackendBase::BackendBase(const std::string &scalarType)
     TYPE(int64_t), TYPE(uint64_t), TYPE(int_least8_t), TYPE(uint_least8_t), TYPE(int_least16_t), TYPE(uint_least16_t),
     TYPE(int_least32_t), TYPE(uint_least32_t), TYPE(int_least64_t), TYPE(uint_least64_t), TYPE(int_fast8_t),
     TYPE(uint_fast8_t), TYPE(int_fast16_t), TYPE(uint_fast16_t), TYPE(int_fast32_t), TYPE(uint_fast32_t),
-    TYPE(int_fast64_t), TYPE(uint_fast64_t)}}
+    TYPE(int_fast64_t), TYPE(uint_fast64_t)}}, m_Preferences(preferences)
 {
     // Add scalar type
     addType("scalar", (scalarType == "float") ? sizeof(float) : sizeof(double));
@@ -31,7 +31,7 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
 {
      // If type is a pointer, any pointer should have the same type
     if(Utils::isTypePointer(type)) {
-        return sizeof(char*);
+        return m_PointerBytes;
     }
     // Otherwise
     else {

@@ -35,25 +35,25 @@ class BACKEND_EXPORT Backend : public BackendBase
 {
 public:
     Backend(const std::string &scalarType, const Preferences &preferences)
-    :   BackendBase(scalarType), m_Preferences(preferences)
+    :   BackendBase(scalarType, preferences)
     {
     }
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
@@ -70,7 +70,7 @@ public:
     virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
@@ -79,17 +79,16 @@ public:
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
 
-    //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
-                                              size_t idx, size_t numGroups) const override;
-    
-    //! Generate code for pushing merged group data to the 'device'
-    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const override;
-
     ///! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
                                                const std::string &groupIdx, const std::string &fieldName,
                                                const std::string &egpName) const override;
+
+    //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
+    virtual std::string getMergedGroupFieldHostType(const std::string &type) const override;
+
+    //! When generating merged structures what type to use for simulation RNGs
+    virtual std::string getMergedGroupSimRNGType() const override;
 
     virtual void genPopVariableInit(CodeStream &os,const Substitutions &kernelSubs, Handler handler) const override;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
@@ -126,23 +125,20 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
 
-    virtual std::string getArrayPrefix() const override{ return ""; }
-    virtual std::string getScalarPrefix() const override{ return ""; }
+    virtual std::string getVarPrefix() const override{ return ""; }
+
+    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
+    virtual bool isDeviceScalarRequired() const override { return false; }
 
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const override;
     virtual bool isPopulationRNGRequired() const override { return false; }
+
+    //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
+    virtual bool isPopulationRNGInitialisedOnDevice() const override { return false; }
+
     virtual bool isSynRemapRequired() const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
-
-    //! Is automatic copy mode enabled in the preferences?
-    virtual bool isAutomaticCopyEnabled() const override { return m_Preferences.automaticCopy; }
-
-    //! Should GeNN generate empty state push and pull functions?
-    virtual bool shouldGenerateEmptyStatePushPull() const override { return m_Preferences.generateEmptyStatePushPull; }
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    virtual bool shouldGenerateExtraGlobalParamPull() const override { return m_Preferences.generateExtraGlobalParamPull; }
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return 0; }
@@ -151,6 +147,8 @@ public:
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
+
+    virtual bool supportsNamespace() const override { return true; };
 
 private:
     //--------------------------------------------------------------------------
@@ -162,10 +160,29 @@ private:
     void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
 
   
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    const Preferences m_Preferences;
+    template<typename T>
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
+    {
+        // Loop through groups
+        for(const auto &g : groups) {
+            // Implement merged group
+            os << "static Merged" << T::name << "Group" << g.getIndex() << " merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
+
+            // Write function to update
+            os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
+            g.generateStructFieldArgumentDefinitions(os, *this);
+            os << ")";
+            {
+                CodeStream::Scope b(os);
+
+                // Loop through sorted fields and set array entry
+                const auto sortedFields = g.getSortedFields(*this);
+                for(const auto &f : sortedFields) {
+                    os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
+                }
+            }
+        }
+    }
 };
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

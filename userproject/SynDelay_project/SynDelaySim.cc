@@ -56,7 +56,9 @@ int main(int argc, char *argv[])
         while(t < TOTAL_TIME) {
             stepTime();
 
-            copyStateFromDevice();
+            pullVInputFromDevice();
+            pullVInterFromDevice();
+            pullVOutputFromDevice();
             pullInputCurrentSpikesFromDevice();
             pullInterCurrentSpikesFromDevice();
             pullOutputCurrentSpikesFromDevice();

@@ -5,12 +5,20 @@
       <Configuration>Debug_CUDA</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug_OpenCL|x64">
+      <Configuration>Debug_OpenCL</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
     <ProjectConfiguration Include="Debug|x64">
       <Configuration>Debug</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release_CUDA|x64">
       <Configuration>Release_CUDA</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release_OpenCL|x64">
+      <Configuration>Release_OpenCL</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
     <ProjectConfiguration Include="Release|x64">
@@ -37,6 +45,12 @@
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_OpenCL|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -45,6 +59,13 @@
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_CUDA|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_OpenCL|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
@@ -69,7 +90,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\backend\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -83,12 +104,26 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>genn_Debug.lib;genn_cuda_backend_Debug.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\lib;$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug_OpenCL|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\include\genn\backends\opencl;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(OPENCL_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>genn_Debug.lib;genn_opencl_backend_Debug.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib;$(OPENCL_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -99,7 +134,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party;..\..\..\include\genn\backends\single_threaded_cpu;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=SingleThreadedCPU;BACKEND_NAME=single_threaded_cpu;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -117,7 +152,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>$(BuildModelSDLCheck)</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\backends\cuda;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(CUDA_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NOMINMAX;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=CUDA;BACKEND_NAME=cuda;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -125,6 +160,24 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>genn_Release.lib;genn_cuda_backend_Release.lib;cudart.lib;cuda.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\..\..\lib;$(CUDA_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release_OpenCL|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>..\..\..\include\genn\backends\opencl;..\..\..\include\genn\genn;..\..\..\include\genn\third_party;$(OPENCL_PATH)\include;$(BuildModelInclude)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>NOMINMAX;_CRT_SECURE_NO_WARNINGS;BACKEND_NAMESPACE=OpenCL;BACKEND_NAME=opencl;CL_HPP_TARGET_OPENCL_VERSION=120;CL_HPP_MINIMUM_OPENCL_VERSION=120;%(PreprocessorDefinitions);MODEL="$(ModelFile)"</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>genn_Release.lib;genn_opencl_backend_Release.lib;OpenCL.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\..\lib;$(OPENCL_PATH)\lib\$(Platform);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

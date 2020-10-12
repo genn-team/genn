@@ -67,7 +67,7 @@ from .model_preprocessor import prepare_snippet
 
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
-for b in ["CUDA", "SingleThreadedCPU"]:
+for b in ["CUDA", "OpenCL", "SingleThreadedCPU"]:
     # Try and import
     try:
         m = import_module(".genn_wrapper." + b + "Backend", "pygenn")
@@ -490,6 +490,7 @@ class GeNNModel(object):
 
         # Create output path
         output_path = path.join(path_to_model, self.model_name + "_CODE")
+        share_path = path.join(path.split(__file__)[0], "share")
 
         # Finalize model
         self._model.finalize()
@@ -503,10 +504,12 @@ class GeNNModel(object):
                 setattr(preferences, k, v)
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, output_path, self.backend_log_level, preferences);
+        backend = self._backend_module.create_backend(self._model, share_path, output_path, 
+                                                      self.backend_log_level, preferences);
 
         # Generate code
-        mem_alloc = genn_wrapper.generate_code(self._model, backend, output_path, 0)
+        mem_alloc = genn_wrapper.generate_code(self._model, backend, 
+                                               share_path, output_path, 0)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         backend = None

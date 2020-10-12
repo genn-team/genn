@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="code_generator\backendBase.cc" />
+    <ClCompile Include="code_generator\backendSIMT.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\generateAll.cc" />
@@ -32,6 +33,7 @@
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
+    <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />
     <ClCompile Include="code_generator\substitutions.cc" />
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
@@ -54,6 +56,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\backendExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\binomial.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendBase.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendSIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateAll.h" />
@@ -65,8 +68,8 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\mergedStructGenerator.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
@@ -127,7 +130,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">NOMINMAX;BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>

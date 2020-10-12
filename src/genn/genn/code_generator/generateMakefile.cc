@@ -17,14 +17,15 @@ void CodeGenerator::generateMakefile(std::ostream &os, const BackendBase &backen
 {
     //**TODO** deal with standard include paths e.g. MPI here
 
-    // Generate make file preamble
-    backend.genMakefilePreamble(os);
-
     // List objects in makefile
     os << "OBJECTS := ";
     for(const auto &m : moduleNames) {
         os << m << ".o ";
     }
+    os << std::endl;
+
+    // Generate make file preamble
+    backend.genMakefilePreamble(os);
     os << std::endl;
 
     // Apply substitution to generate dependency list

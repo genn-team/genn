@@ -5,6 +5,7 @@ genn_help () {
     echo "genn-buildmodel.sh script usage:"
     echo "genn-buildmodel.sh [cdho] model"
     echo "-c            only generate simulation code for the CPU"
+    echo "-l            generate simulation code for OpenCL"
     echo "-d            enables the debugging mode"
     echo "-m            generate MPI simulation code"
     echo "-v            generates coverage information"
@@ -27,11 +28,11 @@ BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++11"
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cdmvs:o:i:h" option; do
+    while getopts "cldvs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
+        l) GENERATOR_MAKEFILE="MakefileOpenCL";;
         d) DEBUG=1;;
-        m) MPI_ENABLE=1;;
         v) COVERAGE=1;;
         h) genn_help; exit;;
         s) CXX_STANDARD="$OPTARG";;
@@ -60,11 +61,6 @@ if [[ -n "$DEBUG" ]]; then
     GENERATOR="$GENERATOR"_debug
 fi
 
-if [[ -n "$MPI_ENABLE" ]]; then
-    MACROS="$MACROS MPI_ENABLE=1";
-    GENERATOR="$GENERATOR"_mpi
-fi
-
 if [[ -n "$COVERAGE" ]]; then
     MACROS="$MACROS COVERAGE=1";
     GENERATOR="$GENERATOR"_coverage
@@ -75,7 +71,7 @@ fi
 export CUDA_PATH=${CUDA_PATH-/usr/local/cuda} 
 
 # Count cores using approach lifted from https://stackoverflow.com/questions/6481005/how-to-obtain-the-number-of-cpus-cores-in-linux-from-the-command-line
-if [[ $(uname) = "Darwin" ]]; then
+if [[ $(uname) == "Darwin" ]]; then
     CORE_COUNT=$(sysctl -n hw.physicalcpu_max)
 else
     CORE_COUNT=$(lscpu -p | egrep -v '^#' | sort -u -t, -k 2,4 | wc -l)
@@ -83,20 +79,13 @@ fi
 
 # generate model code
 BASEDIR=$(dirname "$0")
+
 make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
-if [[ -n "$MPI_ENABLE" ]]; then
-    cp "$GENERATOR" "$GENERATOR"_"$OMPI_COMM_WORLD_RANK"
-fi
-
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args "$GENERATOR" "$OUT_PATH"
+    gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH"
 else
-    if [[ -n "$MPI_ENABLE" ]]; then
-        "$GENERATOR"_"$OMPI_COMM_WORLD_RANK" "$OUT_PATH"
-    else
-        "$GENERATOR" "$OUT_PATH"
-    fi
+    "$GENERATOR" "$BASEDIR/../" "$OUT_PATH"
 fi
 
 echo "model build complete"

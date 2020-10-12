@@ -23,13 +23,11 @@
   </PropertyGroup>
   <ItemGroup>
     <ClCompile Include="backend.cc" />
-    <ClCompile Include="presynapticUpdateStrategy.cc" />
     <ClCompile Include="optimiser.cc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\..\include\genn\backends\cuda\backend.h" />
     <ClInclude Include="..\..\..\..\include\genn\backends\cuda\optimiser.h" />
-    <ClInclude Include="..\..\..\..\include\genn\backends\cuda\presynapticUpdateStrategy.h" />
     <ClInclude Include="..\..\..\..\include\genn\backends\cuda\utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

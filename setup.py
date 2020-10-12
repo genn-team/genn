@@ -7,7 +7,7 @@ from copy import deepcopy
 from platform import system
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
-
+from shutil import copytree, rmtree
 from generate_swig_interfaces import generateConfigs
 
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
@@ -16,6 +16,12 @@ cuda_path = os.environ.get("CUDA_PATH")
 # Is CUDA installed?
 cuda_installed = cuda_path is not None and os.path.exists(cuda_path)
 
+# Get OpenCL path from environment variable
+opencl_path = os.environ.get("OPENCL_PATH")
+
+# Is OpenCL installed
+opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
+
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 windows = system() == "Windows"
@@ -23,12 +29,15 @@ windows = system() == "Windows"
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
 
-genn_wrapper_path = os.path.join(genn_path, "pygenn", "genn_wrapper")
+pygenn_path = os.path.join(genn_path, "pygenn")
+genn_wrapper_path = os.path.join(pygenn_path, "genn_wrapper")
 genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
 genn_wrapper_swig = os.path.join(genn_wrapper_path, "swig")
 genn_wrapper_generated = os.path.join(genn_wrapper_path, "generated")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
+genn_share = os.path.join(genn_path, "share", "genn")
+pygenn_share = os.path.join(pygenn_path, "share")
 
 swig_opts = ["-c++", "-relativeimport", "-outdir", genn_wrapper_path, "-I" + genn_wrapper_include,
              "-I" + genn_wrapper_generated, "-I" + genn_wrapper_swig]
@@ -85,8 +94,37 @@ if cuda_installed:
                       "library_dirs": [cuda_library_dir],
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if mac_os_x else []}))
 
+# If OpenCL was found, add backend configuration
+if opencl_installed:
+    # Get OpenCL library directory
+    if mac_os_x:
+        raise NotImplementedError("Mac not currently supported")
+    elif windows:
+        opencl_library_dir = os.path.join(opencl_path, "lib", "x64")
+    else:
+        opencl_library_dir = os.path.join(opencl_path, "lib64")
+    
+    # Add backend
+    # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
+    backends.append(("opencl", "OpenCL",
+                     {"libraries": ["OpenCL"],
+                      "include_dirs": [os.path.join(opencl_path, "include")],
+                      "library_dirs": [opencl_library_dir],
+                      "extra_link_args": ["-Wl,-rpath," + opencl_library_dir] if mac_os_x else [],
+                      "extra_compile_args": ["-DCL_HPP_TARGET_OPENCL_VERSION=120", "-DCL_HPP_MINIMUM_OPENCL_VERSION=120"]}))
+
 # Before building extension, generate auto-generated parts of genn_wrapper
 generateConfigs(genn_path, backends)
+
+# Copy GeNN 'share' tree into pygenn and add all files to pacakge
+# **THINK** this could be done on a per-backend basis
+rmtree(pygenn_share, ignore_errors=True)
+copytree(genn_share, pygenn_share)
+for root, _, filenames in os.walk(pygenn_share):
+    for f in filenames:
+        f_path = os.path.join(root, f)
+        if os.path.isfile(f_path):
+            package_data.append(f_path)
 
 # Create list of extension modules required to wrap utilities and various libGeNN namespaces
 ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlContainers.i"], **extension_kwargs),

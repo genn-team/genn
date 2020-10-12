@@ -7,6 +7,9 @@
 #include <unordered_map>
 #include <vector>
 
+// Filesystem includes
+#include "path.h"
+
 // PLOG includes
 #include <plog/Severity.h>
 
@@ -102,6 +105,7 @@ public:
     //--------------------------------------------------------------------------
     static MemAlloc zero(){ return MemAlloc(0, 0, 0); }
     static MemAlloc host(size_t hostBytes){ return MemAlloc(hostBytes, 0, 0); }
+    static MemAlloc hostDevice(size_t bytes) { return MemAlloc(bytes, bytes, 0); }
     static MemAlloc device(size_t deviceBytes){ return MemAlloc(0, deviceBytes, 0); }
     static MemAlloc zeroCopy(size_t zeroCopyBytes){ return MemAlloc(0, 0, zeroCopyBytes); }
 
@@ -153,7 +157,7 @@ public:
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
 
-    BackendBase(const std::string &scalarType);
+    BackendBase(const std::string &scalarType, const PreferencesBase &preferences);
     virtual ~BackendBase(){}
 
     //--------------------------------------------------------------------------
@@ -164,8 +168,8 @@ public:
         \param model                    merged model to generate code for
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
+                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
@@ -186,14 +190,14 @@ public:
         \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
-                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
-                         NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                          HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
@@ -207,7 +211,6 @@ public:
     //! Definitions internal is the internal header file for the generated code. This function generates a 'preamble' to this header file.
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
-
 
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
@@ -223,7 +226,7 @@ public:
     virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
@@ -232,17 +235,16 @@ public:
     virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
-    //! Generate code for declaring merged group data to the 'device'
-    virtual void genMergedGroupImplementation(CodeStream &os, const std::string &memorySpace, const std::string &suffix,
-                                              size_t idx, size_t numGroups) const = 0;
-    
-    //! Generate code for pushing merged group data to the 'device'
-    virtual void genMergedGroupPush(CodeStream &os, const std::string &suffix, size_t idx, size_t numGroups) const = 0;
-
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
                                                const std::string &groupIdx, const std::string &fieldName,
                                                const std::string &egpName) const = 0;
+
+    //! When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host
+    virtual std::string getMergedGroupFieldHostType(const std::string &type) const = 0;
+
+    //! When generating merged structures what type to use for simulation RNGs
+    virtual std::string getMergedGroupSimRNGType() const = 0;
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
@@ -312,11 +314,19 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
 
+    //! Get list of files to copy into generated code
+    /*! Paths should be relative to share/genn/backends/ */
+    virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
+
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
     //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getArrayPrefix() const{ return ""; }
+    virtual std::string getVarPrefix() const{ return ""; }
 
-    virtual std::string getScalarPrefix() const{ return ""; }
+    //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
+    virtual std::string getPointerPrefix() const { return ""; }
+
+    //! Should 'scalar' variables be implemented on device or can host variables be used directly?
+    virtual bool isDeviceScalarRequired() const = 0;
 
     //! Different backends use different RNGs for different things. Does this one require a global host RNG for the specified model?
     virtual bool isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const = 0;
@@ -327,20 +337,14 @@ public:
     //! Different backends use different RNGs for different things. Does this one require population RNGs?
     virtual bool isPopulationRNGRequired() const = 0;
 
+    //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
+    virtual bool isPopulationRNGInitialisedOnDevice() const = 0;
+
     //! Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure?
     virtual bool isSynRemapRequired() const = 0;
 
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
-
-    //! Is automatic copy mode enabled in the preferences?
-    virtual bool isAutomaticCopyEnabled() const = 0;
-
-    //! Should GeNN generate empty state push and pull functions?
-    virtual bool shouldGenerateEmptyStatePushPull() const = 0;
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    virtual bool shouldGenerateExtraGlobalParamPull() const = 0;
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
@@ -349,6 +353,8 @@ public:
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
+
+    virtual bool supportsNamespace() const = 0;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -379,15 +385,19 @@ public:
         return genVariableAllocation(allocations, type, name, loc, count);
     }
 
-    //! Helper function to generate matching definition and declaration code for a scalar variable
-    void genScalar(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, const std::string &type, const std::string &name, VarLocation loc) const
-    {
-        genVariableDefinition(definitions, definitionsInternal, type, name, loc);
-        genVariableImplementation(runner, type, name, loc);
-    }
-
     //! Get the size of the type
     size_t getSize(const std::string &type) const;
+
+    //! Get the prefix for accessing the address of 'scalar' variables
+    std::string getScalarAddressPrefix() const
+    {
+        return isDeviceScalarRequired() ? getVarPrefix() : ("&" + getVarPrefix());
+    }
+
+    const PreferencesBase &getPreferences() const { return m_Preferences; }
+
+    template<typename T>
+    const T &getPreferences() const { return static_cast<const T &>(m_Preferences); }
 
 protected:
     //--------------------------------------------------------------------------
@@ -398,12 +408,22 @@ protected:
         m_TypeBytes.emplace(type, size);
     }
 
+    void setPointerBytes(size_t pointerBytes) 
+    {
+        m_PointerBytes = pointerBytes;
+    }
+
 private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    // Size of supported types in bytes - used for estimating memory usage
+    //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
+    size_t m_PointerBytes;
+
+    //! Size of supported types in bytes - used for estimating memory usage
     std::unordered_map<std::string, size_t> m_TypeBytes;
 
+    //! Preferences
+    const PreferencesBase &m_Preferences;
 };
 }   // namespace CodeGenerator

@@ -1,4 +1,10 @@
-CXXFLAGS +=-std=c++11 -Wall -Wpedantic -Wextra -I $(GTEST_DIR) -isystem $(GTEST_DIR)/include
+CXXFLAGS	+=-std=c++11 -Wall -Wpedantic -Wextra -I $(GTEST_DIR) -isystem $(GTEST_DIR)/include
+OS_UPPER	:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+DARWIN   	:=$(strip $(findstring DARWIN,$(OS_UPPER)))
+
+ifeq ($(DARWIN),DARWIN)
+    CXXFLAGS	+=-Wno-return-type-c-linkage
+endif
 
 .PHONY: all clean generated_code
 

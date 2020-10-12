@@ -17,7 +17,7 @@ class Neuron : public NeuronModels::Base
 public:
     DECLARE_MODEL(Neuron, 0, 5);
 
-    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
+    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
 };
 IMPLEMENT_MODEL(Neuron);
 
@@ -29,7 +29,7 @@ class CurrentSrc : public CurrentSourceModels::Base
 public:
     DECLARE_MODEL(CurrentSrc, 0, 5);
 
-    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
+    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
 };
 IMPLEMENT_MODEL(CurrentSrc);
 
@@ -41,7 +41,7 @@ class PostsynapticModel : public PostsynapticModels::Base
 public:
     DECLARE_MODEL(PostsynapticModel, 0, 5);
 
-    SET_VARS({{"pconstant", "scalar"}, {"puniform", "scalar"}, {"pnormal", "scalar"}, {"pexponential", "scalar"}, {"pgamma", "scalar"}});
+    SET_VARS({{"pconstant_val", "scalar"}, {"puniform", "scalar"}, {"pnormal", "scalar"}, {"pexponential", "scalar"}, {"pgamma", "scalar"}});
 };
 IMPLEMENT_MODEL(PostsynapticModel);
 
@@ -53,15 +53,24 @@ class WeightUpdateModel : public WeightUpdateModels::Base
 public:
     DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 5, 5, 5);
 
-    SET_VARS({{"constant", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
-    SET_PRE_VARS({{"pre_constant", "scalar"}, {"pre_uniform", "scalar"}, {"pre_normal", "scalar"}, {"pre_exponential", "scalar"}, {"pre_gamma", "scalar"}});
-    SET_POST_VARS({{"post_constant", "scalar"}, {"post_uniform", "scalar"}, {"post_normal", "scalar"}, {"post_exponential", "scalar"}, {"post_gamma", "scalar"}});
+    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
+    SET_PRE_VARS({{"pre_constant_val", "scalar"}, {"pre_uniform", "scalar"}, {"pre_normal", "scalar"}, {"pre_exponential", "scalar"}, {"pre_gamma", "scalar"}});
+    SET_POST_VARS({{"post_constant_val", "scalar"}, {"post_uniform", "scalar"}, {"post_normal", "scalar"}, {"post_exponential", "scalar"}, {"post_gamma", "scalar"}});
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
 void modelDefinition(ModelSpec &model)
 {
-    model.setSeed(2345678);
+#ifdef CL_HPP_TARGET_OPENCL_VERSION
+    if(std::getenv("OPENCL_DEVICE") != nullptr) {
+        GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+        GENN_PREFERENCES.manualDeviceID = std::atoi(std::getenv("OPENCL_DEVICE"));
+    }
+    if(std::getenv("OPENCL_PLATFORM") != nullptr) {
+        GENN_PREFERENCES.manualPlatformID = std::atoi(std::getenv("OPENCL_PLATFORM"));
+    }
+#endif
+    model.setSeed(2346679);
     model.setDT(0.1);
     model.setName("var_init");
 

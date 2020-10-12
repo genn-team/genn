@@ -43,12 +43,28 @@ TEST(EnsureMathFunctionFtype, not2well) {
     ASSERT_EQ(code, substitutedCode);
 }
 
-// Test based on my own discovering this wasn't actually working
+// Check that generic maths functions DON'T get messed with
 TEST(EnsureMathFunctionFtype, rint) {
     const std::string code = "$(value) = (uint8_t)rint(normal / DT);";
 
-    std::string substitutedCode = ensureFtype(code, "float");
-    ASSERT_EQ(substitutedCode, "$(value) = (uint8_t)rintf(normal / DT);");
+    const std::string substitutedCode = ensureFtype(code, "float");
+    ASSERT_EQ(substitutedCode, "$(value) = (uint8_t)rint(normal / DT);");
+}
+
+// Check that old-style single-precision maths functions get replaced with generic version
+TEST(EnsureMathFunctionFtype, rintf) {
+    const std::string code = "$(value) = (uint8_t)rintf(normal / DT);";
+
+    const std::string substitutedCode = ensureFtype(code, "float");
+    ASSERT_EQ(substitutedCode, "$(value) = (uint8_t)rint(normal / DT);");
+}
+
+// Check that namespace substitution in support code works
+TEST(EnsureMathFunctionFtype, supportCodeFunc) {
+    const std::string supportCode = "SUPPORT_CODE_FUNC scalar supportCodeFunc(scalar x){ return x; }";
+    const std::string code = "supportCodeFunc(x);";
+    const std::string substitutedCode = disambiguateNamespaceFunction(supportCode, code, "TestNamespace");
+    ASSERT_EQ(substitutedCode, "TestNamespace_supportCodeFunc(x);");
 }
 
 //--------------------------------------------------------------------------

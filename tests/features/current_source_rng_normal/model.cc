@@ -26,6 +26,15 @@ IMPLEMENT_MODEL(Neuron);
 
 void modelDefinition(ModelSpec &model)
 {
+#ifdef CL_HPP_TARGET_OPENCL_VERSION
+    if(std::getenv("OPENCL_DEVICE") != nullptr) {
+        GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
+        GENN_PREFERENCES.manualDeviceID = std::atoi(std::getenv("OPENCL_DEVICE"));
+    }
+    if(std::getenv("OPENCL_PLATFORM") != nullptr) {
+        GENN_PREFERENCES.manualPlatformID = std::atoi(std::getenv("OPENCL_PLATFORM"));
+    }
+#endif
     CurrentSourceModels::GaussianNoise::ParamValues paramVals(
         0.0,        // 2 - mean
         1.0);       // 3 - standard deviation

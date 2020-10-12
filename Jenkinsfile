@@ -2,39 +2,31 @@
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda10", "windows", "python27"] as Set,
-    ["cuda9", "windows", "python27"] as Set,
-    ["cuda8", "windows", "python27"] as Set,
     ["cuda10", "windows", "python3"] as Set,
     ["cuda9", "windows", "python3"] as Set,
-    ["cuda8", "windows", "python3"] as Set,
-    ["cuda10", "linux", "x86_64", "python27"] as Set,
-    ["cuda9", "linux", "x86_64", "python27"] as Set,
-    ["cuda8", "linux", "x86_64", "python27"] as Set,
-    ["cpu_only", "linux", "x86_64", "python27"] as Set,
-    ["cuda9", "linux", "x86", "python27"] as Set,
-    ["cuda8", "linux", "x86", "python27"] as Set,
-    ["cpu_only", "linux", "x86", "python27"] as Set,
+    ["opencl", "windows", "python3"] as Set,
+    ["cpu_only", "windows", "python3"] as Set,
+    ["cuda10", "linux", "python27"] as Set,
+    ["cuda9", "linux", "python27"] as Set,
+    ["opencl", "linux", "python27"] as Set,
+    ["cpu_only", "linux", "python27"] as Set,
     ["cuda10", "mac", "python27"] as Set,
     ["cuda9", "mac", "python27"] as Set,
-    ["cuda8", "mac", "python27"] as Set,
+    ["opencl", "mac", "python27"] as Set,
     ["cpu_only", "mac", "python27"] as Set,
-    ["cuda10", "linux", "x86_64", "python3"] as Set,
-    ["cuda9", "linux", "x86_64", "python3"] as Set,
-    ["cuda8", "linux", "x86_64", "python3"] as Set,
-    ["cpu_only", "linux", "x86_64", "python3"] as Set,
-    ["cuda9", "linux", "x86", "python3"] as Set,
-    ["cuda8", "linux", "x86", "python3"] as Set,
-    ["cpu_only", "linux", "x86", "python3"] as Set,
+    ["cuda10", "linux","python3"] as Set,
+    ["cuda9", "linux", "python3"] as Set,
+    ["cpu_only", "linux", "python3"] as Set,
+    ["opencl", "linux", "python3"] as Set,
     ["cuda10", "mac", "python3"] as Set,
     ["cuda9", "mac", "python3"] as Set,
-    ["cuda8", "mac", "python3"] as Set,
-    ["cpu_only", "mac", "python3"] as Set]
+    ["cpu_only", "mac", "python3"] as Set,
+    ["opencl", "mac", "python3"] as Set]
 
 //--------------------------------------------------------------------------
 // Helper functions
 //--------------------------------------------------------------------------
-// Wrapper around setting of GitHUb commit status curtesy of https://groups.google.com/forum/#!topic/jenkinsci-issues/p-UFjxKkXRI
+// Wrapper around setting of GitHub commit status curtesy of https://groups.google.com/forum/#!topic/jenkinsci-issues/p-UFjxKkXRI
 // **NOTE** since that forum post, stage now takes a Closure as the last argument hence slight modification 
 void buildStep(String message, Closure closure) {
     stage(message)
@@ -68,11 +60,6 @@ for(node in jenkins.model.Jenkins.instance.nodes) {
     if(node.getComputer().isOnline() && node.getComputer().countIdle() > 0) {
         availableNodes[node.name] = node.getLabelString().split() as Set
     }
-}
-
-// Add master if it has any idle executors
-if(jenkins.model.Jenkins.instance.toComputer().countIdle() > 0) {
-    availableNodes["master"] = jenkins.model.Jenkins.instance.getLabelString().split() as Set
 }
 
 // Loop through the desired builds
@@ -158,11 +145,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 runTestArguments += " -d";
                             }
                             
-                            // If node is a CPU_ONLY node add -c option 
-                            if("cpu_only" in nodeLabel) {
+                            // If node has suitable CUDA, add -c option
+                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
                                 runTestArguments += " -c";
                             }
-
+                            
+                            // If node has OpenCL, add -l option
+                            if(nodeLabel.contains("opencl")) {
+                                runTestArguments += " -l";
+                            }
+                            
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
@@ -257,9 +249,13 @@ for(b = 0; b < builderNodes.size(); b++) {
                             msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${uniqueMsg}" 2>&1
                             """;
                             
-                            // If this isn't a CPU_ONLY node, also build CUDA backend
-                            if(!nodeLabel.contains("cpu_only")) {
+                            // If node has suitable CUDA, also build CUDA backend
+                            if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
                                 msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
+                            }
+                            // If this node has OpenCL, also build OpenCL backend
+                            if(nodeLabel.contains("opencl")) {
+                                msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> \"${uniqueMsg}\" 2>&1";
                             }
                             
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true

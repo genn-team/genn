@@ -1,15 +1,19 @@
 #!/bin/bash
 # By default no flags are passed to genn-buildmodel.sh
-BUILD_FLAGS=""
-BACKEND="CUDA"
+BACKENDS="SingleThreadedCPU"
 REPORT=0
+
+# Variables containing build flags corresponding to various backends
+BUILD_FLAGS_SingleThreadedCPU=-c
+BUILD_FLAGS_OpenCL=-l
 
 # Parse command line arguments
 OPTIND=1
-while getopts "crd" opt; do
+while getopts "clrd" opt; do
     case "$opt" in
-    c)  BUILD_FLAGS="-c";
-        BACKEND="SingleThreadedCPU"
+    c)  BACKENDS+=" CUDA"
+        ;;
+    l)  BACKENDS+=" OpenCL"
         ;;
     r) REPORT=1
         ;;
@@ -44,27 +48,34 @@ for f in features/*/ ; do
     # Push feature directory
     pushd $f
     
-    # If skip file exists for this backend, skip
-    if [ -f "skip_$BACKEND" ]; then
-        echo "Skipping..."
-    # Otherwise
-    else
-        # Determine where the sim code is located for this test
-        c=$(basename $f)"_CODE"
+    # Determine where the sim code is located for this test
+    c=$(basename $f)"_CODE"
 
-        # Clean test 
-        # **NOTE** we do this to be sure profile data is deleted, even if building model fails
-        make clean SIM_CODE=$c
-        
-        # Run code generator once, generating coverage
-        if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
-            # Build test
-            if make -j $CORE_COUNT SIM_CODE=$c; then
-                # Run tests
-                ./test --gtest_output="xml:test_results$s.xml"
+    # Clean test 
+    # **NOTE** we do this to be sure profile data is deleted, even if building model fails
+    make clean SIM_CODE=$c
+    
+    # Loop through backends to test
+    for b in $BACKENDS; do
+        # If skip file exists for this backend, skip
+        if [ -f "skip_$b" ]; then
+            echo "Skipping..."
+        # Otherwise
+        else
+            # Get build flags for this backend
+            BUILD_FLAGS_VAR="BUILD_FLAGS_$b"
+            BUILD_FLAGS=${!BUILD_FLAGS_VAR}
+            
+            # Run code generator once, generating coverage
+            if genn-buildmodel.sh $BUILD_FLAGS -v model.cc; then
+                # Build test
+                if make -j $CORE_COUNT SIM_CODE=$c; then
+                    # Run tests
+                    ./test --gtest_output="xml:test_results_$b.xml"
+                fi
             fi
         fi
-    fi
+    done;
 
     # Pop feature directory
     popd

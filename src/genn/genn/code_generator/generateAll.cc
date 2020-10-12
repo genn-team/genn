@@ -24,10 +24,38 @@
 #include "code_generator/modelSpecMerged.h"
 
 //--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
+void copyFile(const filesystem::path &file, const filesystem::path &sharePath, const filesystem::path &outputPath)
+{
+    // Get full path to input and output files
+    const auto inputFile = sharePath / file;
+    const auto outputFile = outputPath / file;
+
+    // Assert that input file exists
+    assert(inputFile.exists());
+
+    // Create output directory if required
+    filesystem::create_directory_recursive(outputFile.parent_path());
+
+    // Copy file
+    // **THINK** we could check modification etc but it doesn't seem worthwhile
+    LOGD_CODE_GEN << "Copying '" << inputFile << "' to '" << outputFile << "'" << std::endl;
+    std::ifstream inputFileStream(inputFile.str(), std::ios::binary);
+    std::ofstream outputFileStream(outputFile.str(), std::ios::binary);
+    assert(outputFileStream.good());
+    outputFileStream << inputFileStream.rdbuf();
+}
+}
+
+//--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                                                        const filesystem::path &outputPath, bool standaloneModules)
+                                                                                        const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                                                        bool standaloneModules)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -35,7 +63,6 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Open output file streams for generated code files
     std::ofstream definitionsStream((outputPath / "definitions.h").str());
     std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
-    std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
     std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
     std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
     std::ofstream initStream((outputPath / "init.cc").str());
@@ -44,7 +71,6 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Wrap output file streams in CodeStreams for formatting
     CodeStream definitions(definitionsStream);
     CodeStream definitionsInternal(definitionsInternalStream);
-    CodeStream supportCode(supportCodeStream);
     CodeStream neuronUpdate(neuronUpdateStream);
     CodeStream synapseUpdate(synapseUpdateStream);
     CodeStream init(initStream);
@@ -55,13 +81,26 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
 
     // Generate modules
     //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
-    MergedStructData mergedStructData;
     auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
-    auto mem = generateRunner(definitions, definitionsInternal, runner, mergedStructData, modelMerged, backend);
-    generateSynapseUpdate(synapseUpdate, mergedStructData, memorySpaces, modelMerged, backend);
-    generateNeuronUpdate(neuronUpdate, mergedStructData, memorySpaces, modelMerged, backend);
-    generateInit(init, mergedStructData, memorySpaces, modelMerged, backend);
-    generateSupportCode(supportCode, modelMerged);
+    auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
+    generateSynapseUpdate(synapseUpdate, memorySpaces, modelMerged, backend);
+    generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
+    generateInit(init, memorySpaces, modelMerged, backend);
+
+    // Generate support code module if the backend supports namespaces
+    if (backend.supportsNamespace()) {
+        std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
+        CodeStream supportCode(supportCodeStream);
+        generateSupportCode(supportCode, modelMerged);
+    }
+
+    // Get list of files to copy into generated code
+    const auto backendSharePath = sharePath / "backends";
+    const auto filesToCopy = backend.getFilesToCopy(modelMerged);
+    const auto absOutputPath = outputPath.make_absolute();
+    for(const auto &f : filesToCopy) {
+        copyFile(f, backendSharePath, absOutputPath);
+    }
 
     // Create basic list of modules
     std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};
