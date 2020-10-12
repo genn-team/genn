@@ -185,13 +185,13 @@ private:
 };
 
 inline void writeBinarySpikeRecording(const std::string &filename, const uint32_t *spkRecord,
-                                      unsigned int popSize, unsigned int numTimesteps)
+                                      unsigned int popSize, unsigned int numTimesteps, bool append = false)
 {
     // Calculate recording size
     const unsigned int numWords = ((popSize + 31) / 32) * numTimesteps;
     
     // Write spikes to binary file
-    std::ofstream spikes(filename, std::ofstream::binary);
+    std::ofstream spikes(filename, append ? std::ofstream::app | std::ofstream::binary : std::ofstream::binary);
     spikes.write(reinterpret_cast<const char*>(spkRecord), sizeof(uint32_t) * numWords);
 }
 
@@ -213,14 +213,14 @@ inline int _clz(unsigned int value)
 
 inline void writeTextSpikeRecording(const std::string &filename, const uint32_t *spkRecord,
                                     unsigned int popSize, unsigned int numTimesteps, double dt = 1.0,
-                                    const std::string &delimiter = " ", bool header = false)
+                                    const std::string &delimiter = " ", bool header = false, bool append = false)
                              
 {
     // Calculate number of words per-timestep
     const unsigned int timestepWords = (popSize + 31) / 32;
     
     // Create stream and set precision
-    std::ofstream stream(filename);
+    std::ofstream stream(filename, append ? std::ofstream::app : 0);
     stream.precision(16);
     
     // Write header if required
