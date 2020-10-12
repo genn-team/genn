@@ -58,6 +58,7 @@ typedef struct clrngPhilox432Counter_ {
 
 
 typedef struct {
+	cl_uint  key[2];             // 64-bit key
 	clrngPhilox432Counter  ctr;  // 128 bits counter
 	cl_uint  deck[4];            // this table hold the 4x32 generated uint from philox4x32(ctr,kry) function
 	cl_uint deckIndex;           //the index of actual pregenerated integer to give to the user

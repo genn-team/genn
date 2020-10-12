@@ -270,12 +270,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
-    // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launches
+    // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launched
     // so subtract constant memory requirements of synapse group start ids from total constant memory
     const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
-    size_t totalConstMem = (m_ChosenDevice.totalConstMem > synapseGroupStartIDSize) ? (m_ChosenDevice.totalConstMem - synapseGroupStartIDSize) : 0;
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelNeuronUpdate), totalConstMem,
                                   modelMerged.getMergedNeuronUpdateGroups(),
                                   [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
@@ -364,7 +364,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
-    size_t totalConstMem = m_ChosenDevice.totalConstMem;
+    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelPresynapticUpdate), totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg)
                                   {
@@ -1382,7 +1382,7 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
                                      getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
 
     // Return available constant memory and to
-    return {{"__device__ __constant__", (groupStartIDSize > m_ChosenDevice.totalConstMem) ? 0 : (m_ChosenDevice.totalConstMem - groupStartIDSize)},
+    return {{"__device__ __constant__", (groupStartIDSize > getChosenDeviceSafeConstMemBytes()) ? 0 : (getChosenDeviceSafeConstMemBytes() - groupStartIDSize)},
             {"__device__", m_ChosenDevice.totalGlobalMem}};
 }
 //--------------------------------------------------------------------------

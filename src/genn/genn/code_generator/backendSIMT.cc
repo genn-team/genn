@@ -487,7 +487,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
     genParallelGroup<PresynapticUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(getNumPresynapticUpdateThreads(sg, getPreferences()), getKernelBlockSize(KernelPresynapticUpdate)); },
-        [&idStart, wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
+        [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
         {
             // Get presynaptic update strategy to use for this synapse group
             const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
@@ -505,26 +505,26 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
             }
 
             // Generate preamble
-            presynapticUpdateStrategy->genPreamble(os, modelMerged, sg, popSubs, *this, idStart);
+            presynapticUpdateStrategy->genPreamble(os, modelMerged, sg, popSubs, *this);
 
             // If spike events should be processed
             if(sg.getArchetype().isSpikeEventRequired()) {
                 CodeStream::Scope b(os);
-                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, false, idStart,
+                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, false,
                                                      wumThreshHandler, wumEventHandler, wumProceduralConnectHandler);
             }
 
             // If true spikes should be processed
             if(sg.getArchetype().isTrueSpikeRequired()) {
                 CodeStream::Scope b(os);
-                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, true, idStart,
+                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, true,
                                                      wumThreshHandler, wumSimHandler, wumProceduralConnectHandler);
             }
 
             os << std::endl;
 
             // Generate pre-amble
-            presynapticUpdateStrategy->genPostamble(os, modelMerged, sg, popSubs, *this, idStart);
+            presynapticUpdateStrategy->genPostamble(os, modelMerged, sg, popSubs, *this);
         });
 }
 //--------------------------------------------------------------------------
@@ -692,7 +692,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     genParallelGroup<NeuronInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
-        [this, &modelMerged, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
+        [this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numNeurons)";

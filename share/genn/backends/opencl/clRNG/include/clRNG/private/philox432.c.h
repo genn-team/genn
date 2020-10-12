@@ -86,7 +86,7 @@ clrngStatus clrngPhilox432CopyOverStreams(size_t count, clrngPhilox432Stream* de
 void clrngPhilox432GenerateDeck(clrngPhilox432StreamState *currentState)
 {
 	//Default key
-	philox4x32_key_t k = { { 0, 0 } };
+	philox4x32_key_t k = { { currentState->key[0], currentState->key[1] } };
 
 	//get the currect state
 	philox4x32_ctr_t c = { { 0 } };

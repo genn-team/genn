@@ -232,6 +232,9 @@ private:
                     os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                     os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+                    // Use the starting thread ID of the whole merged group as group_start_id
+                    popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
                 }
                 else {
                     // Perform bisect operation to get index of merged struct
@@ -258,9 +261,12 @@ private:
                     os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                     os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
-                    // Use this and starting thread of merged group to calculate local id within neuron group
-                    os << "const unsigned int lid = id - (d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                    // Get group start thread ID and use as group_start_id
+                    os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                    popSubs.addVarSubstitution("group_start_id", "groupStartID");
 
+                    // Use this to calculate local id within group
+                    os << "const unsigned int lid = id - groupStartID;" << std::endl;
                 }
                 popSubs.addVarSubstitution("id", "lid");
                 handler(os, gMerge, popSubs);
