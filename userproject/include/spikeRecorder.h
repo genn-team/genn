@@ -220,7 +220,7 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
     const unsigned int timestepWords = (popSize + 31) / 32;
     
     // Create stream and set precision
-    std::ofstream stream(filename, append ? std::ofstream::app : 0);
+    std::ofstream stream(filename, append ? std::ofstream::app : std::ofstream::out);
     stream.precision(16);
     
     // Write header if required
