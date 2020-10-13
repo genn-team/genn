@@ -345,6 +345,13 @@ public:
         });
 };
 
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::Conv2D
+//----------------------------------------------------------------------------
+//! Initialises convolutional connectivity
+//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
+//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+/*! This sparse connectivity snippet does not support multiple threads per neuron */
 class Conv2D : public Base
 {
 public:
@@ -375,8 +382,8 @@ public:
         "    const int kernCol = $(inCol) - strideCol;\n"
         "    for(unsigned int outChan = 0; outChan < (unsigned int)$(conv_oc); outChan++) {\n"
         "        const int idPost = (($(outRow) * (int)$(conv_ow) * (int)$(conv_oc)) +\n"
-        "                           (outCol * (int)$(conv_oc)) +\n"
-        "                           outChan);\n"
+        "                            (outCol * (int)$(conv_oc)) +\n"
+        "                            outChan);\n"
         "        $(addSynapse, idPost, kernRow, kernCol, $(inChan), outChan);\n"
         "    }\n"
         "}\n"
@@ -400,4 +407,4 @@ public:
                     (unsigned int)pars[8], (unsigned int)pars[11]};
         });
 };
-}   // namespace InitVarSnippet
+}   // namespace InitSparseConnectivitySnippet
