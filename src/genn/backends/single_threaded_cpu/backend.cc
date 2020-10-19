@@ -95,7 +95,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate preamble
     preambleHandler(os);
 
-    os << "void updateNeurons(" << model.getTimePrecision() << " t)";
+    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")";
     {
         CodeStream::Scope b(os);
 
@@ -134,6 +138,21 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 // Get reference to group
                 os << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
+                // If spike or spike-like event recording is in use
+                if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
+                    // Calculate number of words which will be used to record this population's spikes
+                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+
+                    // Zero spike recording buffer
+                    if(n.getArchetype().isSpikeRecordingEnabled()) {
+                        os << "std::fill_n(&group->recordSpk[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                    }
+
+                    // Zero spike-like-event recording buffer
+                    if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                        os << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                    }
+                }
                 // If axonal delays are required
                 if(n.getArchetype().isDelayRequired()) {
                     // We should READ from delay slot before spkQuePtr
@@ -164,13 +183,13 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                    wuVarUpdateHandler(os, ng, subs);
 
                                    // Insert code to emit true spikes
-                                   genEmitSpike(os, ng, subs, true);
+                                   genEmitSpike(os, ng, subs, true, ng.getArchetype().isSpikeRecordingEnabled());
                                },
                                // Emit spike-like events
-                                   [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                               [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                                {
                                    // Insert code to emit spike-like events
-                                   genEmitSpike(os, ng, subs, false);
+                                   genEmitSpike(os, ng, subs, false, ng.getArchetype().isSpikeEventRecordingEnabled());
                                });
                 }
             }
@@ -1132,7 +1151,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const
+void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();
@@ -1152,6 +1171,13 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, co
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
         const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
         os << "group->sT[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
+    }
+
+    // If recording is enabled
+    if(recordingEnabled) {
+        const std::string recordSuffix = trueSpike ? "" : "Event";
+        os << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << subs["id"] << " / 32)]";
+        os << " |= (1 << (" << subs["id"] << " % 32));" << std::endl;
     }
 }
 }   // namespace SingleThreadedCPU
