@@ -299,7 +299,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronUpdate) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(), true);
-    neuronUpdateKernels << model.getTimePrecision() << " t)";
+    neuronUpdateKernels << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        neuronUpdateKernels << ", unsigned int recordingTimestep";
+    }
+    neuronUpdateKernels << ")" << std::endl;
     {
         CodeStream::Scope b(neuronUpdateKernels);
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
@@ -363,7 +367,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     os << std::endl;
 
-    os << "void updateNeurons(" << model.getTimePrecision() << " t)";
+    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")";
     {
         CodeStream::Scope b(os);
 
@@ -380,6 +388,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if (idStart > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << modelMerged.getMergedNeuronUpdateGroups().size() << ", t));" << std::endl;
+            if(model.isRecordingInUse()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << modelMerged.getMergedNeuronUpdateGroups().size() + 1 << ", recordingTimestep));" << std::endl;
+            }
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
@@ -1381,20 +1392,28 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-    const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string deviceBuffer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string hostBuffer = pointerToPointer ? ("*" + prefix + "h_" + name) : (prefix + "h_" + name);
 
     // If variable is present on device at all
     if(loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << devicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-        if(loc & VarLocation::HOST) {
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+        if(loc & VarLocation::ZERO_COPY) {
             os << " | CL_MEM_ALLOC_HOST_PTR";
         }
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
     }
 
     if(loc & VarLocation::HOST) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << devicePointer;
-        os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << deviceBuffer;
+            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
+        }
+        else {
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << hostBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << hostBuffer;
+            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
