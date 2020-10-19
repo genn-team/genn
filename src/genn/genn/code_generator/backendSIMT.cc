@@ -270,7 +270,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         os << "if (" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ");";
         {
             CodeStream::Scope b(os);
-            os << "shSpkEvntRecord[" << getThreadID() << ".x] = 0;" << std::endl;
+            os << "shSpkEvntRecord[" << getThreadID() << "] = 0;" << std::endl;
         }
     }
 
@@ -407,7 +407,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                     // If we are recording spike-like events, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                        os << "group->recordSpk[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkRecord[threadIdx.x];" << std::endl;
+                        os << "group->recordSpkEvent[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkEvntRecord[threadIdx.x];" << std::endl;
                     }
                 }
             }

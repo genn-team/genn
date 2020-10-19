@@ -1272,7 +1272,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
                     // Get destinations in merged structures, this EGP 
                     // needs to be copied to and call push function
-                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpk" + n.first, backend);
+                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpkEvent" + n.first, backend);
                     for(const auto &v : mergedDestinations) {
                         runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
                         runner << v.second.groupIndex << ", " << backend.getVarPrefix() << "recordSpkEvent" + n.first << ");" << std::endl;
