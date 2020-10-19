@@ -400,14 +400,17 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     // Calculate number of words which will be used to record this population's spikes
                     os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
 
+                    // Build global index
+                    const std::string globalIndex = "(recordingTimestep * numRecordingWords) + (" + popSubs["id"] + " / 32) + " + getThreadID();
+
                     // If we are recording spikes, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                        os << "group->recordSpk[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkRecord[threadIdx.x];" << std::endl;
+                        os << "group->recordSpk[" << globalIndex << "] = shSpkRecord[" << getThreadID() << "];" << std::endl;
                     }
 
                     // If we are recording spike-like events, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                        os << "group->recordSpkEvent[(recordingTimestep * numRecordingWords) + (" << popSubs["id"] << " / 32) + threadIdx.x] = shSpkEvntRecord[threadIdx.x];" << std::endl;
+                        os << "group->recordSpkEvent[" << globalIndex << "] = shSpkEvntRecord[" << getThreadID() << "];" << std::endl;
                     }
                 }
             }
@@ -963,7 +966,7 @@ void BackendSIMT::genEmitSpike(CodeStream &os, const Substitutions &subs, const 
     
     // If recording is enabled, set bit in recording word
     if(recordingEnabled) {
-        os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record[threadIdx.x / 32], 1 << (threadIdx.x % 32));" << std::endl;
+        os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpk" << suffix << "Record[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
