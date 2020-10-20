@@ -237,6 +237,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
 
+    // Atomic or into a shared memory array - which is required for recording with more than one 
+    // word per workgroup - seems broken on NVIDIA OpenCL so give error if this configuration is used
+    if(isChosenDeviceNVIDIA() && getKernelBlockSize(KernelNeuronUpdate) != 32 && model.isRecordingInUse()) {
+        LOGE_BACKEND << "A bug in NVIDIA OpenCL drivers means that spike recording is broken with neuron workgroup size != 32" << std::endl;
+    }
+
     os << "//--------------------------------------------------------------------------" << std::endl;
     os << "// OpenCL program and kernels" << std::endl;
     os << "//--------------------------------------------------------------------------" << std::endl;

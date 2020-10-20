@@ -278,6 +278,8 @@ private:
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
 
+    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
+
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
     {
