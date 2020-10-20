@@ -178,7 +178,8 @@ protected:
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                             SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, size_t &idStart) const;
+                             SynapseConnectivityInitMergedGroupHandler synapseConnectivityInitHandler, 
+                             SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                    SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 

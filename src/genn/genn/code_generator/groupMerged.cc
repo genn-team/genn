@@ -781,7 +781,6 @@ CodeGenerator::SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostIn
         [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
         &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
 
-
     // Add heterogeneous connectivity initialiser derived parameters
     addHeterogeneousDerivedParams<SynapseConnectivityHostInitGroupMerged>(
         getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
@@ -836,79 +835,6 @@ bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitDe
                                      });
 }
 
-// ----------------------------------------------------------------------------
-// CodeGenerator::SynapseConnectivityInitGroupMerged
-//----------------------------------------------------------------------------
-const std::string CodeGenerator::SynapseConnectivityInitGroupMerged::name = "SynapseConnectivityInit";
-//----------------------------------------------------------------------------
-CodeGenerator::SynapseConnectivityInitGroupMerged::SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
-                                                                                      const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
-{
-    // **TODO** these could be generic
-    addField("unsigned int", "numSrcNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "numTrgNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "rowStride",
-             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
-
-    // Add heterogeneous connectivity initialiser model parameters
-    addHeterogeneousParams<SynapseConnectivityInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
-        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-        &SynapseConnectivityInitGroupMerged::isConnectivityInitParamHeterogeneous);
-
-
-    // Add heterogeneous connectivity initialiser derived parameters
-    addHeterogeneousDerivedParams<SynapseConnectivityInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
-        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-        &SynapseConnectivityInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
-
-    if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addPointerField("unsigned int", "rowLength", backend.getDeviceVarPrefix() + "rowLength");
-        addPointerField(getArchetype().getSparseIndType(), "ind", backend.getDeviceVarPrefix() + "ind");
-    }
-    else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        addPointerField("uint32_t", "gp", backend.getDeviceVarPrefix() + "gp");
-    }
-
-    // Add EGPs to struct
-    addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-            backend.getDeviceVarPrefix());
-
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
-{
-   const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const auto rowBuildStateVars = connectivityInitSnippet->getRowBuildStateVars();
-    
-    // Build list of code strings containing row build code and any row build state variable values
-    std::vector<std::string> codeStrings{connectivityInitSnippet->getRowBuildCode()};
-    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-    
-    const std::string paramName = connectivityInitSnippet->getParamNames().at(paramIndex);
-    return isParamValueHeterogeneous(codeStrings, paramName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); });
-}
-//----------------------------------------------------------------------------
-bool CodeGenerator::SynapseConnectivityInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
-{
-    const auto *connectivityInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const auto rowBuildStateVars = connectivityInitSnippet->getRowBuildStateVars();
-
-    // Build list of code strings containing row build code and any row build state variable values
-    std::vector<std::string> codeStrings{connectivityInitSnippet->getRowBuildCode()};
-    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-
-    const std::string derivedParamName = connectivityInitSnippet->getDerivedParams().at(paramIndex).name;
-    return isParamValueHeterogeneous(codeStrings, derivedParamName, paramIndex,
-                                     [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); });
-}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
@@ -1070,6 +996,19 @@ bool CodeGenerator::SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous
                                      [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) const
+{
+    // Get size of this kernel dimension for archetype
+    const unsigned archetypeValue = getArchetype().getKernelSize().at(dimensionIndex);
+
+    // Return true if any of the other groups have a different value
+    return std::any_of(getGroups().cbegin(), getGroups().cend(),
+                       [archetypeValue, dimensionIndex](const GroupInternal &g)
+                       {
+                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
+                       });
+}
+//----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                               Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
 :   GroupMerged<SynapseGroupInternal>(index, precision, groups), m_ArchetypeCode(archetypeCode)
@@ -1080,10 +1019,10 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
     addField("unsigned int", "rowStride",
-                   [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
     if(role == Role::PostsynapticUpdate || role == Role::SparseInit) {
         addField("unsigned int", "colStride",
-                       [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
     }
 
     addField("unsigned int", "numSrcNeurons",
@@ -1225,22 +1164,6 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
 
         // Add EGPs to struct
         addEGPs(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix());
-
-        // If we're updating a group with procedural connectivity
-        if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-            // Add heterogeneous connectivity initialiser model parameters
-            addHeterogeneousParams<SynapseGroupMergedBase>(
-                getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
-                [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-                &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
-
-
-            // Add heterogeneous connectivity initialiser derived parameters
-            addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-                getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
-                [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-                &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
-        }
     }
 
     // Add pointers to connectivity data
@@ -1266,19 +1189,67 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         addWeightSharingPointerField("uint32_t", "gp", backend.getDeviceVarPrefix() + "gp");
     }
-    else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+
+    // If we're updating a group with procedural connectivity or initialising connectivity
+    if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
+        // Add heterogeneous connectivity initialiser model parameters
+        addHeterogeneousParams<SynapseGroupMergedBase>(
+            getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
+            &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
+
+
+        // Add heterogeneous connectivity initialiser derived parameters
+        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
+            getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
+            &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
+
         addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
                 backend.getDeviceVarPrefix());
     }
 
-    // If WU variables are procedural and this is an update or WU variables are individual
+    // If WU variables are global
     const auto vars = wum->getVars();
     const auto &varInit = getArchetype().getWUVarInitialisers();
-    const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
-    const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
-    if((proceduralWeights && updateRole) || individualWeights) {
-        // If we're performing a procedural update or we're initializing individual variables
-        if((proceduralWeights && updateRole) || !updateRole) {
+    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+        // If this is an update role
+        // **NOTE **global variable values aren't useful during initialization
+        if(updateRole) {
+            for(size_t v = 0; v < vars.size(); v++) {
+                // If variable should be implemented heterogeneously, add scalar field
+                if(isWUGlobalVarHeterogeneous(v)) {
+                    addScalarField(vars[v].name,
+                                   [v](const SynapseGroupInternal &sg, size_t)
+                                   {
+                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
+                                   });
+                }
+            }
+        }
+    }
+    // Otherwise (weights are individual or procedural)
+    else {
+        const bool connectInitRole = (role == Role::ConnectivityInit);
+        const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
+        const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+
+        // If synapse group has a kernel and we're either updating 
+        // with procedural weights or initialising individual weights
+        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
+            // Loop through kernel size dimensions
+            for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
+                // If this dimension has a heterogeneous size, add it to struct
+                if(isKernelSizeHeterogeneous(d)) {
+                    addField("unsigned int", "kernelSize" + std::to_string(d),
+                             [d](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getKernelSize().at(d)); });
+                }
+            }
+        }
+
+        // If weights are procedural or we're initializing individual variables
+        // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
+        if((proceduralWeights && updateRole) || (!updateRole && individualWeights)) {
             // Add heterogeneous variable initialization parameters and derived parameters
             addHeterogeneousVarInitParams<SynapseGroupMergedBase>(
                 wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
@@ -1291,16 +1262,21 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
 
         // Loop through variables
         for(size_t v = 0; v < vars.size(); v++) {
-            // If we're updating or if there is initialization code for this variable 
-            // (otherwise, it's not needed during initialization)
+            // Variable initialisation is required if we're performing connectivity init and var init snippet requires a kernel or
+            // We're performing some other sort of initialisation, the snippet DOESN'T require a kernel but has SOME code
             const auto var = vars[v];
-            if(individualWeights && (updateRole || !varInit.at(v).getSnippet()->getCode().empty())) {
+            const auto *snippet = varInit.at(v).getSnippet();
+            const bool varInitRequired = ((connectInitRole && snippet->requiresKernel()) 
+                                          || (!updateRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
+
+            // If we're performing an update with individual weights; or this variable should be initialised
+            if((updateRole && individualWeights) || varInitRequired) {
                 addWeightSharingPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
             }
 
-            // If we're performing a procedural update or we're initializing, add any var init EGPs to structure
-            if((proceduralWeights && updateRole) || !updateRole) {
-                const auto egps = varInit.at(v).getSnippet()->getExtraGlobalParams();
+            // If we're performing a procedural update or this variable should be initialised, add any var init EGPs to structure
+            if((proceduralWeights && updateRole) || varInitRequired) {
+                const auto egps = snippet->getExtraGlobalParams();
                 for(const auto &e : egps) {
                     const bool isPointer = Utils::isTypePointer(e.type);
                     const std::string prefix = isPointer ? backend.getDeviceVarPrefix() : "";
@@ -1316,20 +1292,6 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
                              },
                              isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
                 }
-            }
-        }
-    }
-    // Otherwise, if WU variables are global and this is an update kernel
-    // **NOTE** global variable values aren't useful during initialization
-    else if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL && updateRole) {
-        for(size_t v = 0; v < vars.size(); v++) {
-            // If variable should be implemented heterogeneously, add scalar field
-            if(isWUGlobalVarHeterogeneous(v)) {
-                addScalarField(vars[v].name,
-                               [v](const SynapseGroupInternal &sg, size_t)
-                               {
-                                   return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
-                               });
             }
         }
     }
@@ -1392,3 +1354,8 @@ const std::string CodeGenerator::SynapseDenseInitGroupMerged::name = "SynapseDen
 // CodeGenerator::SynapseSparseInitGroupMerged
 //----------------------------------------------------------------------------
 const std::string CodeGenerator::SynapseSparseInitGroupMerged::name = "SynapseSparseInit";
+
+// ----------------------------------------------------------------------------
+// CodeGenerator::SynapseConnectivityInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CodeGenerator::SynapseConnectivityInitGroupMerged::name = "SynapseConnectivityInit";

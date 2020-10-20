@@ -16,6 +16,9 @@ protected:
     {
         // Perform GeNN initialization
         allocateMem();
+        
+        PreInit();
+        
         initialize();
 
         Init();
@@ -32,6 +35,7 @@ protected:
     //--------------------------------------------------------------------------
     // Declared virtuals
     //--------------------------------------------------------------------------
+    virtual void PreInit(){}
     virtual void Init(){}
 
     //--------------------------------------------------------------------------
