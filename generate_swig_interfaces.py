@@ -640,6 +640,25 @@ def generateConfigs(gennPath, backends):
             }
             %}''')
 
+         # Add wrapper around InitSparseConnectivitySnippet::Base::CalcKernelSizeFunc
+        iniSparseSmg.write('''
+            %feature("director") CalcKernelSizeFunc;
+            %rename(__call__) CalcKernelSizeFunc::operator();
+            %inline %{
+            struct CalcKernelSizeFunc {
+            virtual std::vector<unsigned int> operator()( const std::vector<double> & pars ) const = 0;
+            virtual ~CalcKernelSizeFunc() {}
+            };
+            %}
+
+            // helper function to convert CalcKernelSizeFunc to std::function
+            %inline %{
+            std::function<std::vector<unsigned int>(const std::vector<double> &)> makeCKSF( CalcKernelSizeFunc* cksf )
+            {
+            return std::bind( &CalcKernelSizeFunc::operator(), cksf, std::placeholders::_1 );
+            }
+            %}''')
+            
         # wrap NeuronGroup, SynapseGroup and CurrentSource
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
