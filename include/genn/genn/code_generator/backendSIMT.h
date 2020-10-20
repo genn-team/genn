@@ -114,8 +114,8 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
+    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getDeviceVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
