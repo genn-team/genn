@@ -328,8 +328,12 @@ public:
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getVarPrefix() const{ return ""; }
+    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getDeviceVarPrefix() const{ return ""; }
+
+    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
+    //! This function returns the host prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getHostVarPrefix() const { return ""; }
 
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
@@ -400,7 +404,7 @@ public:
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
     {
-        return isDeviceScalarRequired() ? getVarPrefix() : ("&" + getVarPrefix());
+        return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
     }
 
     const PreferencesBase &getPreferences() const { return m_Preferences; }

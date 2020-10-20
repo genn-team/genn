@@ -671,7 +671,9 @@ def generateConfigs(gennPath, backends):
         # wrap modelSpec.h
         pygennSmg.addSwigIgnore( 'init_connectivity()' )
         pygennSmg.addSwigIgnore( 'init_var()' )
-
+        # **HACK** raised https://github.com/swig/swig/issues/1840 with SWIG - explicit rename rules required for these method to get wrapped
+        pygennSmg.addSwigRename( 'isRecordingInUse', 'is_recording_in_use' )
+        pygennSmg.addSwigRename( 'zeroCopyInUse', 'zero_copy_in_use' )
         pygennSmg.addSwigInclude( '"modelSpec.h"' )
         pygennSmg.addSwigInclude( '"modelSpecInternal.h"' )
 

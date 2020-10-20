@@ -294,7 +294,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << std::endl;
 
     size_t idStart = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "("  << model.getTimePrecision() << " t)" << std::endl;
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronUpdate] << "(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")" << std::endl;
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
@@ -305,7 +309,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         genNeuronUpdateKernel(os, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
     }
 
-    os << "void updateNeurons(" << model.getTimePrecision() << ")";
+    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")";
     {
         CodeStream::Scope b(os);
 
@@ -324,7 +332,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
-            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
+            if(model.isRecordingInUse()) {
+                os << ", recordingTimestep";
+            }
+            os << ");" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }

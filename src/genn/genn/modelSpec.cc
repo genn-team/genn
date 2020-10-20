@@ -228,19 +228,25 @@ bool ModelSpec::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
     if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
-        [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
+              [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
     // If any synapse groups use zero copy return true
     if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
-        [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
+              [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
     return false;
+}
+
+bool ModelSpec::isRecordingInUse() const
+{
+    return std::any_of(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(),
+                       [](const NeuronGroupValueType &n) { return n.second.isRecordingEnabled(); });
 }
 
 NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)

@@ -22,4 +22,5 @@ public:
     using ModelSpec::scalarExpr;
 
     using ModelSpec::zeroCopyInUse;
+    using ModelSpec::isRecordingInUse;
 };

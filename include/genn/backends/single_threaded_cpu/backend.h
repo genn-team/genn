@@ -125,7 +125,7 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
 
-    virtual std::string getVarPrefix() const override{ return ""; }
+    virtual std::string getDeviceVarPrefix() const override{ return ""; }
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const override { return false; }
@@ -157,7 +157,7 @@ private:
     void genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
                               bool trueSpike, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler) const;
 
-    void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const;
+    void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const;
 
   
     template<typename T>
