@@ -52,7 +52,7 @@ public:
     }
 };
 
-TEST_F(SimTest, SpikeRecording)
+TEST_F(SimTest, SpikeEventRecording)
 {
     // Simulate 100 timesteps
     while(iT < 100) {
