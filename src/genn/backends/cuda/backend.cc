@@ -270,12 +270,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
-    // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launches
+    // **NOTE** constant cache is preferentially given to synapse groups as, typically, more synapse kernels are launched
     // so subtract constant memory requirements of synapse group start ids from total constant memory
     const size_t synapseGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
-    size_t totalConstMem = (m_ChosenDevice.totalConstMem > synapseGroupStartIDSize) ? (m_ChosenDevice.totalConstMem - synapseGroupStartIDSize) : 0;
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelNeuronUpdate), totalConstMem,
                                   modelMerged.getMergedNeuronUpdateGroups(),
                                   [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
@@ -364,7 +364,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
-    size_t totalConstMem = m_ChosenDevice.totalConstMem;
+    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelPresynapticUpdate), totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg)
                                   {
@@ -488,7 +488,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
+                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -551,7 +552,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
         genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, sgDenseInitHandler, 
-                            sgSparseRowConnectHandler, sgSparseColConnectHandler, idInitStart);
+                            sgSparseRowConnectHandler, sgSparseColConnectHandler,
+                            sgKernelInitHandler, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
@@ -1392,7 +1394,7 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
                                      getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
 
     // Return available constant memory and to
-    return {{"__device__ __constant__", (groupStartIDSize > m_ChosenDevice.totalConstMem) ? 0 : (m_ChosenDevice.totalConstMem - groupStartIDSize)},
+    return {{"__device__ __constant__", (groupStartIDSize > getChosenDeviceSafeConstMemBytes()) ? 0 : (getChosenDeviceSafeConstMemBytes() - groupStartIDSize)},
             {"__device__", m_ChosenDevice.totalGlobalMem}};
 }
 //--------------------------------------------------------------------------
@@ -1401,13 +1403,16 @@ std::string Backend::getNVCCFlags() const
     // **NOTE** now we don't include runner.cc when building standalone modules we get loads of warnings about
     // How you hide device compiler warnings is totally non-documented but https://stackoverflow.com/a/17095910/1476754
     // holds the answer! For future reference --display_error_number option can be used to get warning ids to use in --diag-supress
+    // HOWEVER, on CUDA 7.5 and 8.0 this causes a fatal error and, as no warnings are shown when --diag-suppress is removed,
+    // presumably this is because this warning simply wasn't implemented until CUDA 9
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string nvccFlags = "-x cu -arch " + architecture;
-#ifdef _WIN32
-    nvccFlags += " -Xcudafe \"--diag_suppress=2961\"";
-#else
-    nvccFlags += " -Xcudafe \"--diag_suppress=2937\" -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
+#ifndef _WIN32
+    nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
 #endif
+    if(m_RuntimeVersion >= 9000) {
+        nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
+    }
 
     nvccFlags += " " + getPreferences<Preferences>().userNvccFlags;
     if(getPreferences().optimizeCode) {

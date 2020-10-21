@@ -70,7 +70,7 @@ void modelDefinition(ModelSpec &model)
         GENN_PREFERENCES.manualPlatformID = std::atoi(std::getenv("OPENCL_PLATFORM"));
     }
 #endif
-    model.setSeed(2345678);
+    model.setSeed(2346679);
     model.setDT(0.1);
     model.setName("var_init");
 

@@ -47,33 +47,6 @@ bool isSmallSharedMemoryPop(const PresynapticUpdateGroupMerged &sg, const Backen
         return false;
     }
 }
-//----------------------------------------------------------------------------
-void genSmallSharedMemoryPopPreamble(CodeStream &os, const PresynapticUpdateGroupMerged &, const BackendSIMT &backend)
-{
-    os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
-    {
-        CodeGenerator::CodeStream::Scope b(os);
-        os << "shLg[" << backend.getThreadID() << "] = 0;" << std::endl;
-    }
-    backend.genSharedMemBarrier(os);
-}
-//----------------------------------------------------------------------------
-void genSmallSharedMemoryPopPostamble(CodeGenerator::CodeStream &os, const ModelSpecInternal &model,
-                                      const ::PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend)
-{
-    backend.genSharedMemBarrier(os);
-    os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
-    {
-        CodeGenerator::CodeStream::Scope b(os);
-        const std::string inSyn = "group->inSyn[" + backend.getThreadID() + "]";
-        if(sg.getArchetype().isPSModelMerged()) {
-            os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", shLg[" << backend.getThreadID() << "]);" << std::endl;
-        }
-        else {
-            os << inSyn << " += shLg[" << backend.getThreadID() << "];" << std::endl;
-        }
-    }
-}
 }   // Anonymous namespace
 
 //----------------------------------------------------------------------------
@@ -101,23 +74,19 @@ bool PreSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase
             && (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE));
 }
 //----------------------------------------------------------------------------
-size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+size_t PreSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
-    // One element is required per thread if small shared memory optimization should be used for sg
-    return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
+    return 0;
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPreamble(CodeStream &os, const ModelSpecMerged &, const PresynapticUpdateGroupMerged &sg,
-                          const Substitutions &, const BackendSIMT &backend, size_t) const
+void PreSpan::genPreamble(CodeStream &, const ModelSpecMerged&, const PresynapticUpdateGroupMerged&,
+                          const Substitutions&, const BackendSIMT&) const
 {
-    if(isSmallSharedMemoryPop(sg, backend)) {
-        genSmallSharedMemoryPopPreamble(os, sg, backend);
-    }
 }
 //----------------------------------------------------------------------------
 void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                        const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t,
-                        BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                        const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                        BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                         BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                         BackendBase::PresynapticUpdateGroupMergedHandler) const
 {
@@ -198,20 +167,13 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
             synSubs.addVarSubstitution("id_post", "ipost");
             synSubs.addVarSubstitution("id_syn", "synAddress");
 
-            // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+            // If dendritic delay is required, use atomic operation to update dendritic delay buffer
             if(sg.getArchetype().isDendriticDelayRequired()) {
                 synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + "ipost], $(0))");
             }
-            // Otherwise
+            // Otherwise, substitute global memory array for $(inSyn)
             else {
-                // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
-                if(isSmallSharedMemoryPop(sg, backend)) {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision(), BackendSIMT::AtomicOperation::ADD, BackendSIMT::AtomicMemSpace::SHARED) + "(&shLg[ipost], $(0))");
-                }
-                // Otherwise, substitute global memory array for $(inSyn)
-                else {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[ipost], $(0))");
-                }
+                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[ipost], $(0))");
             }
 
             wumSimHandler(os, sg, synSubs);
@@ -223,12 +185,9 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
     }
 }
 //----------------------------------------------------------------------------
-void PreSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &, const BackendSIMT &backend, size_t) const
+void PreSpan::genPostamble(CodeStream&, const ModelSpecMerged&, const PresynapticUpdateGroupMerged&,
+                           const Substitutions&, const BackendSIMT&) const
 {
-    if(isSmallSharedMemoryPop(sg, backend)) {
-        genSmallSharedMemoryPopPostamble(os, modelMerged.getModel(), sg, backend);
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -263,14 +222,19 @@ bool PostSpan::isCompatible(const SynapseGroupInternal &sg, const PreferencesBas
 }
 //----------------------------------------------------------------------------
 void PostSpan::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &, const BackendSIMT &backend, size_t) const
+                           const Substitutions &, const BackendSIMT &backend) const
 {
     // If data structure is dense, we can accumulate output directly into register
     if(shouldAccumulateInRegister(sg)) {
         os << modelMerged.getModel().getPrecision() << " linSyn = 0;" << std::endl;
     }
     else if(isSmallSharedMemoryPop(sg, backend)) {
-        genSmallSharedMemoryPopPreamble(os, sg, backend);
+        os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
+        {
+            CodeGenerator::CodeStream::Scope b(os);
+            os << "shLg[" << backend.getThreadID() << "] = 0;" << std::endl;
+        }
+        backend.genSharedMemBarrier(os);
     }
 }
 //----------------------------------------------------------------------------
@@ -281,8 +245,8 @@ size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg
 }
 //----------------------------------------------------------------------------
 void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                         const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t,
-                         BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                         const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                         BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                          BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                          BackendBase::PresynapticUpdateGroupMergedHandler) const
 {
@@ -424,7 +388,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
 }
 //----------------------------------------------------------------------------
 void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                            const Substitutions &popSubs, const BackendSIMT &backend, size_t) const
+                            const Substitutions &popSubs, const BackendSIMT &backend) const
 {
     // If we should accumulate output directly into register
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -444,7 +408,13 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
     }
     // Otherwise, if we should accumulate into shared memory
     else if(isSmallSharedMemoryPop(sg, backend)) {
-        genSmallSharedMemoryPopPostamble(os, model, sg, backend);
+        backend.genSharedMemBarrier(os);
+        os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
+        {
+            CodeGenerator::CodeStream::Scope b(os);
+            os << backend.getAtomic(model.getPrecision()) << "(&group->inSyn[" << backend.getThreadID() << "], ";
+            os << "shLg[" << backend.getThreadID() << "]); " << std::endl;
+        }
     }
 }
 // ----------------------------------------------------------------------------
@@ -479,23 +449,19 @@ bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const Prefe
             && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)));
 }
 //----------------------------------------------------------------------------
-size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const
+size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
-    // One element is required per thread if small shared memory optimization should be used for sg
-    return isSmallSharedMemoryPop(sg, backend) ? 1 : 0;
+    return 0;
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genPreamble(CodeStream &os, const ModelSpecMerged &, const PresynapticUpdateGroupMerged &sg,
-                                    const Substitutions &, const BackendSIMT &backend, size_t) const
+void PreSpanProcedural::genPreamble(CodeStream&, const ModelSpecMerged&, const PresynapticUpdateGroupMerged&,
+                                    const Substitutions&, const BackendSIMT&) const
 {
-    if(isSmallSharedMemoryPop(sg, backend)) {
-        genSmallSharedMemoryPopPreamble(os, sg, backend);
-    }
 }
 //----------------------------------------------------------------------------
 void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                  const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
-                                  BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                                  const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                                  BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                                   BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const
 {
@@ -571,20 +537,17 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getRowBuildCode())
            || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && ::Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
         {
-            // Only start using streams after those that may have been used for initialisation
-            const size_t rngStreamOffset = idStart + backend.getNumInitialisationRNGStreams(modelMerged);
-
+            std::stringstream skipAhead;
             if(numThreadsPerSpike > 1) {
-                backend.genGlobalRNGSkipAhead(os, connSubs, 
-                                              "(preInd * " + std::to_string(numThreadsPerSpike) + ") + thread + " + std::to_string(rngStreamOffset));
+                skipAhead << "(preInd * " << numThreadsPerSpike << ") + thread";
             }
             else {
-                backend.genGlobalRNGSkipAhead(os, connSubs,
-                                              "preInd + " + std::to_string(rngStreamOffset));
+                skipAhead << "preInd";
             }
+            skipAhead << " + " << connSubs["group_start_id"] << " + " << backend.getNumInitialisationRNGStreams(modelMerged);
 
-            // Add substitution for connection generation code
-            connSubs.addVarSubstitution("rng", "&connectRNG");
+            // **NOTE** add RNG to synSubs so it can be correctly referenced in presynapticUpdateSubs below
+            backend.genGlobalRNGSkipAhead(os, synSubs, skipAhead.str());
         }
 
         // If we are using more than one thread to process each row
@@ -602,31 +565,26 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         // Create another substitution stack for generating presynaptic simulation code
         Substitutions presynapticUpdateSubs(&synSubs);
 
-        // If this synapse group has procedural connectivity and any of it's variables require an RNG
-        if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL)
-           && ::Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers()))
-        {
-            presynapticUpdateSubs.addVarSubstitution("rng", "&connectRNG");
-        }
-
         // Replace $(id_post) with first 'function' parameter as simulation code is
         // going to be, in turn, substituted into procedural connectivity generation code
         presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
 
-        // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+        // If weights are provided by a kernel
+        if(!sg.getArchetype().getKernelSize().empty()) {
+            // Replace kernel indices with the subsequent 'function' parameters
+            for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                presynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
+                                                         "$(" + std::to_string(i + 1) + ")");
+            }
+        }
+
+        // If dendritic delay is required, use atomic operation to update dendritic delay buffer
         if(sg.getArchetype().isDendriticDelayRequired()) {
             presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + "$(id_post)], $(0))");
         }
-        // Otherwise
+        // Otherwise, substitute global memory array for $(inSyn)
         else {
-            // If postsynaptic input should be accumulated in shared memory, substitute shared memory array for $(inSyn)
-            if(isSmallSharedMemoryPop(sg, backend)) {
-                presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision(), BackendSIMT::AtomicOperation::ADD, BackendSIMT::AtomicMemSpace::SHARED) + "(&shLg[$(id_post)], $(0))");
-            }
-            // Otherwise, substitute global memory array for $(inSyn)
-            else {
-                presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[$(id_post)], $(0))");
-            }
+            presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[$(id_post)], $(0))");
         }
 
         // Generate presynaptic simulation code into new stringstream-backed code stream
@@ -635,7 +593,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         wumSimHandler(presynapticUpdate, sg, presynapticUpdateSubs);
 
         // When a synapse should be 'added', substitute in presynaptic update code
-        connSubs.addFuncSubstitution("addSynapse", 1, presynapticUpdateStream.str());
+        connSubs.addFuncSubstitution("addSynapse", 1 + sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
         // Generate procedural connectivity code
         wumProceduralConnectHandler(os, sg, connSubs);
@@ -646,12 +604,9 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
     }
 }
 //----------------------------------------------------------------------------
-void PreSpanProcedural::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                     const Substitutions &, const BackendSIMT &backend, size_t) const
+void PreSpanProcedural::genPostamble(CodeStream&, const ModelSpecMerged&, const PresynapticUpdateGroupMerged&,
+                                     const Substitutions&, const BackendSIMT&) const
 {
-    if(isSmallSharedMemoryPop(sg, backend)) {
-        genSmallSharedMemoryPopPostamble(os, modelMerged.getModel(), sg, backend);
-    }
 }
 
 //----------------------------------------------------------------------------
@@ -679,7 +634,7 @@ bool PostSpanBitmask::isCompatible(const SynapseGroupInternal &sg, const Prefere
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecMerged &, const PresynapticUpdateGroupMerged &,
-                                  const Substitutions &, const BackendSIMT &backend, size_t) const
+                                  const Substitutions &, const BackendSIMT &backend) const
 {
     // Loop through bits written by this thread
     for(size_t i = 0; i < 32; i++) {
@@ -691,14 +646,14 @@ void PostSpanBitmask::genPreamble(CodeStream &os, const ModelSpecMerged &, const
     backend.genSharedMemBarrier(os);
 }
 //----------------------------------------------------------------------------
-size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &, const BackendSIMT&) const
+size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
 {
     // Each thread sums up the input to 32 postsynaptic neurons
     return 32;
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t,
+                                const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                                 BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                                 BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                                 BackendBase::PresynapticUpdateGroupMergedHandler) const
@@ -804,7 +759,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                   const Substitutions &, const BackendSIMT &backend, size_t idStart) const
+                                   const Substitutions &popSubs, const BackendSIMT &backend) const
 {
     backend.genSharedMemBarrier(os);
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
@@ -813,7 +768,7 @@ void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelM
     os << "if (" << backend.getThreadID() << " < 32)";
     {
         CodeStream::Scope b(os);
-        os << "unsigned int glbIdx = ((" << backend.getBlockID() << " - " << idStart / blockSize << ") * " << 32 * blockSize << ") + " << backend.getThreadID() << ";" << std::endl;
+        os << "unsigned int glbIdx = ((" << backend.getBlockID() << " - (" << popSubs["group_start_id"]  << " / " << blockSize << ")) * " << 32 * blockSize << ") + " << backend.getThreadID() << ";" << std::endl;
         os << "unsigned int shIdx = " << backend.getThreadID() << " * " << blockSize << ";" << std::endl;
         os << "const unsigned int endShIdx = shIdx + 32;" << std::endl;
         os << "for(;shIdx < endShIdx && glbIdx < group->numTrgNeurons; shIdx++, glbIdx += 32)";

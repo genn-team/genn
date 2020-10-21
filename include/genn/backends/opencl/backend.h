@@ -83,6 +83,10 @@ struct Preferences : public PreferencesBase
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelBlockSize manualWorkGroupSizes;
+    
+    //! On AMD devices, command queue flushes are inserted after every kernel launch  
+    //! to workaround driver issues. Set this flag to disable this behaviour.
+    bool disableAMDFlush = false;
 };
 
 //--------------------------------------------------------------------------
@@ -147,8 +151,9 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
+                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
+                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
+                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
@@ -228,6 +233,10 @@ public:
     /*! Paths should be relative to share/genn/backends/ */
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged &modelMerged) const override;
 
+    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
+    //! This function returns the host prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getHostVarPrefix() const final { return "h_"; }
+
     virtual std::string getPointerPrefix() const override { return "__global "; };
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
@@ -288,6 +297,7 @@ private:
                 os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
                 os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << buildKernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+                genPostKernelFlush(os);
             }
         }
 
@@ -402,6 +412,8 @@ private:
 
     //! Build a string called "buildProgramFlags" containing flags to pass to cl::Program::build
     void genBuildProgramFlagsString(CodeStream &os) const;
+
+    void genPostKernelFlush(CodeStream &os) const;
 
     void divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const;
 

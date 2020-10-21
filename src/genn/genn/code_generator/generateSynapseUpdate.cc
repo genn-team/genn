@@ -11,19 +11,21 @@
 #include "code_generator/substitutions.h"
 #include "code_generator/teeStream.h"
 
+using namespace CodeGenerator;
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
-void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, const std::string &errorContext,
-                               const CodeGenerator::SynapseGroupMergedBase &sg, const CodeGenerator::Substitutions &baseSubs,
-                               const CodeGenerator::ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
+void applySynapseSubstitutions(CodeStream &os, std::string code, const std::string &errorContext,
+                               const SynapseGroupMergedBase &sg, const Substitutions &baseSubs,
+                               const ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     const auto *wu = sg.getArchetype().getWUModel();
 
-    CodeGenerator::Substitutions synapseSubs(&baseSubs);
+    Substitutions synapseSubs(&baseSubs);
 
     // Substitute parameter and derived parameter names
     synapseSubs.addParamValueSubstitution(wu->getParamNames(), sg.getArchetype().getWUParams(),
@@ -50,8 +52,16 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        const auto vars = wu->getVars();
+        if(!sg.getArchetype().getKernelSize().empty()) {
+            // Generate kernel index
+            os << "const unsigned int kernelInd = ";
+            genKernelIndex(os, synapseSubs, sg);
+            os << ";" << std::endl;
 
+            // Add substitution
+            synapseSubs.addVarSubstitution("id_kernel", "kernelInd");
+        }
+        const auto vars = wu->getVars();
         for(size_t k = 0; k < vars.size(); k++) {
             const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
 
@@ -114,19 +124,19 @@ void applySynapseSubstitutions(CodeGenerator::CodeStream &os, std::string code, 
     // If the backend does not support namespaces then we substitute all support code functions with namepsace as prefix
     if (!backendSupportsNamespace) {
         if (!wu->getSimSupportCode().empty()) {
-            code = CodeGenerator::disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
+            code = disambiguateNamespaceFunction(wu->getSimSupportCode(), code, modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()));
         }
         if (!wu->getLearnPostSupportCode().empty()) {
-            code = CodeGenerator::disambiguateNamespaceFunction(wu->getLearnPostSupportCode(), code, modelMerged.getPostsynapticUpdateSupportCodeNamespace(wu->getLearnPostSupportCode()));
+            code = disambiguateNamespaceFunction(wu->getLearnPostSupportCode(), code, modelMerged.getPostsynapticUpdateSupportCodeNamespace(wu->getLearnPostSupportCode()));
         }
         if (!wu->getSynapseDynamicsSuppportCode().empty()) {
-            code = CodeGenerator::disambiguateNamespaceFunction(wu->getSynapseDynamicsSuppportCode(), code, modelMerged.getSynapseDynamicsSupportCodeNamespace(wu->getSynapseDynamicsSuppportCode()));
+            code = disambiguateNamespaceFunction(wu->getSynapseDynamicsSuppportCode(), code, modelMerged.getSynapseDynamicsSupportCodeNamespace(wu->getSynapseDynamicsSuppportCode()));
         }
     }
 
     synapseSubs.apply(code);
     //synapseSubs.applyCheckUnreplaced(code, errorContext + " : " + sg.getName());
-    code = CodeGenerator::ensureFtype(code, model.getPrecision());
+    code = ensureFtype(code, model.getPrecision());
     os << code;
 }
 }   // Anonymous namespace

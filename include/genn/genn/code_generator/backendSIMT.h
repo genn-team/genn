@@ -114,8 +114,8 @@ public:
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const final;
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
+    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getDeviceVarPrefix() const final { return getPreferences().automaticCopy ? "" : "d_"; }
 
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
@@ -180,7 +180,7 @@ protected:
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
                              SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                             size_t &idStart) const;
+                             SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                    SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
@@ -234,6 +234,9 @@ private:
                     os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                     os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
                     os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+                    // Use the starting thread ID of the whole merged group as group_start_id
+                    popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
                 }
                 else {
                     // Perform bisect operation to get index of merged struct
@@ -260,9 +263,12 @@ private:
                     os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
                     os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
 
-                    // Use this and starting thread of merged group to calculate local id within neuron group
-                    os << "const unsigned int lid = id - (d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1]);" << std::endl;
+                    // Get group start thread ID and use as group_start_id
+                    os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                    popSubs.addVarSubstitution("group_start_id", "groupStartID");
 
+                    // Use this to calculate local id within group
+                    os << "const unsigned int lid = id - groupStartID;" << std::endl;
                 }
                 popSubs.addVarSubstitution("id", "lid");
                 handler(os, gMerge, popSubs);
@@ -273,6 +279,8 @@ private:
     }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
+
+    void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const

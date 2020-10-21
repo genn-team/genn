@@ -13,13 +13,14 @@ from six import iteritems
 import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
-from .model_preprocessor import ExtraGlobalVariable, Variable, genn_types
+from .model_preprocessor import ExtraGlobalVariable, Variable
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
-                          SynapseMatrixConnectivity_BITMASK,
-                          SynapseMatrixConnectivity_DENSE,
-                          SynapseMatrixWeight_INDIVIDUAL,
-                          SynapseMatrixWeight_INDIVIDUAL_PSM,
-                          VarLocation_HOST)
+                           SynapseMatrixConnectivity_BITMASK,
+                           SynapseMatrixConnectivity_DENSE,
+                           SynapseMatrixWeight_INDIVIDUAL,
+                           SynapseMatrixWeight_INDIVIDUAL_PSM,
+                           VarLocation_HOST,
+                           SynapseMatrixConnectivity_PROCEDURAL)
 
 
 class Group(object):
@@ -108,7 +109,7 @@ class Group(object):
 
         assert param_type is not None
         egp_dict[param_name] = ExtraGlobalVariable(param_name, param_type,
-                                                   param_values)
+                                                   self, param_values)
 
     def _assign_ext_ptr_array(self, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
@@ -132,9 +133,8 @@ class Group(object):
         if var_type == "scalar":
             var_type = self._model._scalar
 
-        return genn_types[var_type].assign_ext_ptr_array(self._model._slm,
-                                                         internal_var_name,
-                                                         var_size)
+        return self._model.genn_types[var_type].assign_ext_ptr_array(
+            internal_var_name, var_size)
 
     def _assign_ext_ptr_single(self, var_name, var_type):
         """Assign a variable to an external scalar value containing one element
@@ -157,8 +157,8 @@ class Group(object):
         if var_type == "scalar":
             var_type = self._model._scalar
 
-        return genn_types[var_type].assign_ext_ptr_single(self._model._slm,
-                                                          internal_var_name)
+        return self._model.genn_types[var_type].assign_ext_ptr_single(
+            internal_var_name)
 
     def _load_vars(self, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
@@ -576,6 +576,16 @@ class SynapseGroup(Group):
                             "can only be set on the 'master' population")
 
     @property
+    def has_procedural_connectivity(self):
+        """Tests whether synaptic connectivity is procedural"""
+        return (self.matrix_type & SynapseMatrixConnectivity_PROCEDURAL) != 0
+
+    @property
+    def has_procedural_weights(self):
+        """Tests whether synaptic weights are procedural"""
+        return (self.matrix_type & SynapseMatrixWeight_PROCEDURAL) != 0
+
+    @property
     def is_ragged(self):
         """Tests whether synaptic connectivity uses Ragged format"""
         return (self.matrix_type & SynapseMatrixConnectivity_SPARSE) != 0
@@ -847,8 +857,7 @@ class SynapseGroup(Group):
                     raise Exception("If sparse connectivity is only located "
                                     "on device, it cannot be set with "
                                     "set_sparse_connections")
-
-            else:
+            elif self.connections_set:
                 raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables

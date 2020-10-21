@@ -184,14 +184,20 @@ private:
     unsigned int m_Sum;
 };
 
+//! Writes spikes recorded using GeNN's spike timing sytem directly to binary file
+/*! \param filename string containing filename to write to.
+    \param spkRecord pointer to spike recording data to write (accessable via ``recordSpk<neuron group name>`` or ``recordSpkEvent<neuron group name>``).
+    \param popSize number of neurons in population
+    \param numTimesteps how many timesteps were recorded (should match the value passed to ``allocateRecordingBuffers``).
+    \param append boolean specifying whether to overwrite or append to any existing file called filename. */
 inline void writeBinarySpikeRecording(const std::string &filename, const uint32_t *spkRecord,
-                                      unsigned int popSize, unsigned int numTimesteps)
+                                      unsigned int popSize, unsigned int numTimesteps, bool append = false)
 {
     // Calculate recording size
     const unsigned int numWords = ((popSize + 31) / 32) * numTimesteps;
     
     // Write spikes to binary file
-    std::ofstream spikes(filename, std::ofstream::binary);
+    std::ofstream spikes(filename, append ? std::ofstream::app | std::ofstream::binary : std::ofstream::binary);
     spikes.write(reinterpret_cast<const char*>(spkRecord), sizeof(uint32_t) * numWords);
 }
 
@@ -211,16 +217,25 @@ inline int _clz(unsigned int value)
 #endif
 }
 
+//! Writes spikes recorded using GeNN's spike timing sytem directly to text file 
+//! with one column containing spike times in ms and one neuron ids
+/*! \param filename string containing filename to write to.
+    \param spkRecord pointer to spike recording data to write (accessable via ``recordSpk<neuron group name>`` or ``recordSpkEvent<neuron group name>``).
+    \param popSize number of neurons in population
+    \param dt double precision number specifying size of each timestep
+    \param delimiter string specifying character(s) which should appear between columns in text file
+    \param header boolean specifying whether to write a header row at start of text file or not
+    \param append boolean specifying whether to overwrite or append to any existing file called filename. */
 inline void writeTextSpikeRecording(const std::string &filename, const uint32_t *spkRecord,
                                     unsigned int popSize, unsigned int numTimesteps, double dt = 1.0,
-                                    const std::string &delimiter = " ", bool header = false)
+                                    const std::string &delimiter = " ", bool header = false, bool append = false)
                              
 {
     // Calculate number of words per-timestep
     const unsigned int timestepWords = (popSize + 31) / 32;
     
     // Create stream and set precision
-    std::ofstream stream(filename);
+    std::ofstream stream(filename, append ? std::ofstream::app : std::ofstream::out);
     stream.precision(16);
     
     // Write header if required

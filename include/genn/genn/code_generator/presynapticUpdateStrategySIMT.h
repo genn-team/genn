@@ -38,17 +38,17 @@ public:
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const = 0;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const = 0;
+                             const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const = 0;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const = 0;
+                              const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
 };
 
 //--------------------------------------------------------------------------
@@ -74,17 +74,17 @@ public:
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -110,17 +110,17 @@ public:
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
 private:
     //--------------------------------------------------------------------------
@@ -154,17 +154,17 @@ public:
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
 
 //--------------------------------------------------------------------------
@@ -190,17 +190,17 @@ public:
     virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
 
     virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                             const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike, size_t idStart,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
+                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
                            BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
                            BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                              const Substitutions &popSubs, const BackendSIMT &backend, size_t idStart) const override;
+                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
 };
 }   // namespace PresynapticUpdateStrategySIMT
 }   // namespace CodeGenerator

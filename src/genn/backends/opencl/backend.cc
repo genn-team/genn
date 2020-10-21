@@ -159,7 +159,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 
     // Add OpenCL-specific types
     addType("clrngLfsr113Stream", 16);
-    addType("clrngPhilox432Stream", 36);
+    addType("clrngPhilox432Stream", 44);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -222,12 +222,11 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     os << "clrngPhilox432Stream localStream;" << std::endl;
     os << "clrngPhilox432CopyOverStreamsFromGlobal(1, &localStream, &d_rng[0]);" << std::endl;
 
-    // Convert id into steps, add these to steps, zero deck index and regenerate deck
+    // Convert id into steps, add these to steps, zero deck index
+    // **NOTE** manually regenerating deck is not necessary as it is done on next call to clrngPhilox432NextState if deckIndex == 0
     os << "const clrngPhilox432Counter steps = {{0, " << sequence << "}, {0, 0}};" << std::endl;
     os << "localStream.current.ctr = clrngPhilox432Add(localStream.current.ctr, steps);" << std::endl;
     os << "localStream.current.deckIndex = 0;" << std::endl;
-    os << "clrngPhilox432GenerateDeck(&localStream.current);" << std::endl;
-
     subs.addVarSubstitution(name, "&localStream");
 }
 //--------------------------------------------------------------------------
@@ -237,6 +236,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Atomic or into a shared memory array - which is required for recording with more than one 
+    // word per workgroup - seems broken on NVIDIA OpenCL so give error if this configuration is used
+    if(isChosenDeviceNVIDIA() && getKernelBlockSize(KernelNeuronUpdate) != 32 && model.isRecordingInUse()) {
+        LOGE_BACKEND << "A bug in NVIDIA OpenCL drivers means that spike recording is broken with neuron workgroup size != 32" << std::endl;
+    }
 
     os << "//--------------------------------------------------------------------------" << std::endl;
     os << "// OpenCL program and kernels" << std::endl;
@@ -300,7 +305,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronUpdate) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(), true);
-    neuronUpdateKernels << model.getTimePrecision() << " t)";
+    neuronUpdateKernels << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        neuronUpdateKernels << ", unsigned int recordingTimestep";
+    }
+    neuronUpdateKernels << ")" << std::endl;
     {
         CodeStream::Scope b(neuronUpdateKernels);
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
@@ -364,7 +373,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     os << std::endl;
 
-    os << "void updateNeurons(" << model.getTimePrecision() << " t)";
+    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")";
     {
         CodeStream::Scope b(os);
 
@@ -375,11 +388,15 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            genPostKernelFlush(os);
             os << std::endl;
         }
         if (idStart > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << modelMerged.getMergedNeuronUpdateGroups().size() << ", t));" << std::endl;
+            if(model.isRecordingInUse()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << modelMerged.getMergedNeuronUpdateGroups().size() + 1 << ", recordingTimestep));" << std::endl;
+            }
             os << std::endl;
             genKernelDimensions(os, KernelNeuronUpdate, idStart);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
@@ -387,6 +404,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << ", nullptr, &neuronUpdateEvent";
             }
             os << "));" << std::endl;
+            genPostKernelFlush(os);
         }
     }
 }
@@ -475,11 +493,16 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // If there are any presynaptic update groups
     size_t idPresynapticStart = 0;
+    const bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
     if(!modelMerged.getMergedPresynapticUpdateGroups().empty()) {
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPresynapticUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPresynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPresynapticUpdateGroups(), true);
-        synapseUpdateKernels << model.getTimePrecision() << " t)";
+        synapseUpdateKernels << model.getTimePrecision() << " t";
+        if(globalRNGRequired) {
+            synapseUpdateKernels << ", __global clrngPhilox432HostStream *d_rng";
+        }
+        synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
@@ -566,6 +589,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "// Configure presynaptic update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelPresynapticUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelPresynapticUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelPresynapticUpdate], modelMerged.getMergedPresynapticUpdateGroups());
+            if(globalRNGRequired) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() + 1 << ", d_rng));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -598,6 +624,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            genPostKernelFlush(os);
         }
 
         // Launch synapse dynamics kernel if required
@@ -611,6 +638,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << ", nullptr, &synapseDynamicsEvent";
             }
             os << "));" << std::endl;
+            genPostKernelFlush(os);
         }
 
         // Launch presynaptic update kernel
@@ -624,6 +652,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << ", nullptr, &presynapticUpdateEvent";
             }
             os << "));" << std::endl;
+            genPostKernelFlush(os);
         }
 
         // Launch postsynaptic update kernel
@@ -637,6 +666,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << ", nullptr, &postsynapticUpdateEvent";
             }
             os << "));" << std::endl;
+            genPostKernelFlush(os);
         }
     }
 }
@@ -644,7 +674,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler,
+                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -717,7 +748,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(initializeKernels);
         initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
         genInitializeKernel(initializeKernels, kernelSubs, modelMerged, localNGHandler, sgDenseInitHandler, 
-                            sgSparseRowConnectHandler, sgSparseColConnectHandler, idInitStart);
+                            sgSparseRowConnectHandler, sgSparseColConnectHandler,
+                            sgKernelInitHandler, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
@@ -834,6 +866,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
                 genReadEventTiming(os, "init");
             }
+            else {
+                genPostKernelFlush(os);
+            }
         }
     }
 
@@ -868,6 +903,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             if(model.isTimingEnabled()) {
                 os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
                 genReadEventTiming(os, "initSparse");
+            }
+            else {
+                genPostKernelFlush(os);
             }
         }
     }
@@ -1211,6 +1249,42 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
             os << "clrngLfsr113SetBaseCreatorState(lfsrStreamCreator, &lfsrBaseState);" << std::endl;
         }
     }
+    
+    // If a global device RNG is required
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
+        os << "// Seed Philox RNG" << std::endl;
+        os << "clrngPhilox432StreamCreator *philoxStreamCreator = clrngPhilox432CopyStreamCreator(nullptr, nullptr);" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            
+            // If no seed is specified, get system random device
+            if(model.getSeed() == 0) {
+                os << "std::random_device seedSource;" << std::endl;
+            }
+
+            // Define Philox base state
+            os << "clrngPhilox432StreamState philoxBaseState = ";
+            {
+                CodeStream::Scope b(os);
+                if(model.getSeed() == 0) {
+                    os << "{seedSource(), seedSource()},    // key" << std::endl;
+                }
+                // Otherwise use model seed as first key word
+                else {
+                    os << "{" << model.getSeed() << ", 0},  // key" << std::endl;
+                }
+
+                // Zero counter, deck and deck index
+                os << "{{0, 0}, {0, 0}},                // ctr" << std::endl;
+                os << "{0, 0, 0, 0},                    // deck" << std::endl;
+                os << "0                                // deck index" << std::endl;
+            }
+            os << ";" << std::endl;
+
+            // Configure stream creator
+            os << "clrngPhilox432SetBaseCreatorState(philoxStreamCreator, &philoxBaseState);" << std::endl;
+        }
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -1326,20 +1400,28 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
     const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-    const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string deviceBuffer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string hostBuffer = pointerToPointer ? ("*" + prefix + "h_" + name) : (prefix + "h_" + name);
 
     // If variable is present on device at all
     if(loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << devicePointer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-        if(loc & VarLocation::HOST) {
+        os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+        if(loc & VarLocation::ZERO_COPY) {
             os << " | CL_MEM_ALLOC_HOST_PTR";
         }
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
     }
 
     if(loc & VarLocation::HOST) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << devicePointer;
-        os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << deviceBuffer;
+            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
+        }
+        else {
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << hostBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << hostPointer << " = (" << underlyingType << "*)commandQueue.enqueueMapBuffer(" << hostBuffer;
+            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << countVarName << " * sizeof(" << underlyingType << "), nullptr, nullptr, &error));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -1396,6 +1478,7 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
     os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+    genPostKernelFlush(os);
 }
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
@@ -1491,7 +1574,7 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInterna
     {
         CodeStream::Scope b(allocations);
         allocations << "size_t deviceBytes;" << std::endl;
-        allocations << "rng = clrngPhilox432CreateStreams(nullptr, 1, &deviceBytes, nullptr);" << std::endl;
+        allocations << "rng = clrngPhilox432CreateStreams(philoxStreamCreator, 1, &deviceBytes, nullptr);" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
     }
     return MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
@@ -1546,6 +1629,8 @@ void Backend::genMakefilePreamble(std::ostream &os) const
     os << "LINKFLAGS := -shared";
 #ifdef __APPLE__
     os << " -framework OpenCL";
+#else
+    os << " -L$(OPENCL_PATH)/lib64";
 #endif
     os << std::endl;
     os << "CCFLAGS := -c -fPIC -MMD -MP";
@@ -1689,11 +1774,15 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", sizeof(unsigned int)";
             os << ", &" << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "]));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikePrefix << ng.getName();
-            os << ", CL_TRUE";
-            os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
-            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int)";
-            os << ", &" << spikePrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+            os << "if(" << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] > 0)";            
+            {
+                CodeStream::Scope b(os);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikePrefix << ng.getName();
+                os << ", CL_TRUE";
+                os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
+                os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int)";
+                os << ", &" << spikePrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+            }
         }
         else {
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikeCntPrefix << ng.getName();
@@ -1702,11 +1791,15 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikePrefix << ng.getName();
-            os << ", CL_TRUE";
-            os << ", 0";
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
-            os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            os << "if(" << spikeCntPrefix << ng.getName() << "[0] > 0)";
+            {
+                CodeStream::Scope b(os);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << spikePrefix << ng.getName();
+                os << ", CL_TRUE";
+                os << ", 0";
+                os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
+                os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+             }
         }
     }
 }
@@ -1729,11 +1822,15 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", sizeof(unsigned int)";
             os << ", &" << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "]));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
-            os << ", CL_TRUE";
-            os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
-            os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int)";
-            os << ", &" << spikePrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+            os << "if(" << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] > 0)";
+            {
+                CodeStream::Scope b(os);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
+                os << ", CL_TRUE";
+                os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
+                os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int)";
+                os << ", &" << spikePrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
+            }
         }
         else {
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikeCntPrefix << ng.getName();
@@ -1742,11 +1839,15 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", sizeof(unsigned int)";
             os << ", " << spikeCntPrefix << ng.getName() << "));" << std::endl;
 
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
-            os << ", CL_TRUE";
-            os << ", 0";
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
-            os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            os << "if(" << spikeCntPrefix << ng.getName() << "[0] > 0)";
+            {
+                CodeStream::Scope b(os);
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << spikePrefix << ng.getName();
+                os << ", CL_TRUE";
+                os << ", 0";
+                os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int)";
+                os << ", " << spikePrefix << ng.getName() << "));" << std::endl;
+            }
         }
     }
 }
@@ -1921,6 +2022,13 @@ void Backend::genBuildProgramFlagsString(CodeStream &os) const
         os << " -cl-fast-relaxed-math";
     }
     os << "\";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genPostKernelFlush(CodeStream &os) const
+{
+    if(isChosenDeviceAMD() && !getPreferences<Preferences>().disableAMDFlush) {
+        os << "CHECK_OPENCL_ERRORS(commandQueue.flush());" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const

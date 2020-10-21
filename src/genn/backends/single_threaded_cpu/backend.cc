@@ -69,6 +69,7 @@ const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const s
 {
     return (precision == "double") ? cpuDoublePrecisionFunctions : cpuSinglePrecisionFunctions;
 }
+
 }
 
 //--------------------------------------------------------------------------
@@ -95,7 +96,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate preamble
     preambleHandler(os);
 
-    os << "void updateNeurons(" << model.getTimePrecision() << " t)";
+    os << "void updateNeurons(" << model.getTimePrecision() << " t";
+    if(model.isRecordingInUse()) {
+        os << ", unsigned int recordingTimestep";
+    }
+    os << ")";
     {
         CodeStream::Scope b(os);
 
@@ -134,6 +139,21 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 // Get reference to group
                 os << "const auto *group = &mergedNeuronUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
+                // If spike or spike-like event recording is in use
+                if(n.getArchetype().isSpikeRecordingEnabled() || n.getArchetype().isSpikeEventRecordingEnabled()) {
+                    // Calculate number of words which will be used to record this population's spikes
+                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+
+                    // Zero spike recording buffer
+                    if(n.getArchetype().isSpikeRecordingEnabled()) {
+                        os << "std::fill_n(&group->recordSpk[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                    }
+
+                    // Zero spike-like-event recording buffer
+                    if(n.getArchetype().isSpikeEventRecordingEnabled()) {
+                        os << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
+                    }
+                }
                 // If axonal delays are required
                 if(n.getArchetype().isDelayRequired()) {
                     // We should READ from delay slot before spkQuePtr
@@ -164,13 +184,13 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                    wuVarUpdateHandler(os, ng, subs);
 
                                    // Insert code to emit true spikes
-                                   genEmitSpike(os, ng, subs, true);
+                                   genEmitSpike(os, ng, subs, true, ng.getArchetype().isSpikeRecordingEnabled());
                                },
                                // Emit spike-like events
-                                   [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                               [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
                                {
                                    // Insert code to emit spike-like events
-                                   genEmitSpike(os, ng, subs, false);
+                                   genEmitSpike(os, ng, subs, false, ng.getArchetype().isSpikeEventRecordingEnabled());
                                });
                 }
             }
@@ -402,7 +422,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
+                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -480,10 +501,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 // Get reference to group
                 os << "const auto *group = &mergedSynapseConnectivityInitGroup" << s.getIndex() << "[g]; " << std::endl;
 
-                Substitutions popSubs(&funcSubs);
-
-                const auto *snippet = s.getArchetype().getConnectivityInitialiser().getSnippet();
-               
                 // If matrix connectivity is ragged
                 if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // Zero row lengths
@@ -498,54 +515,118 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 }
 
                 // If there is row-building code in this snippet
+                Substitutions popSubs(&funcSubs);
+                const auto *snippet = s.getArchetype().getConnectivityInitialiser().getSnippet();
                 if(!snippet->getRowBuildCode().empty()) {
-                    // Loop through source neurons
+                    // Generate loop through source neurons
                     os << "for (unsigned int i = 0; i < group->numSrcNeurons; i++)";
-                    {
-                        CodeStream::Scope b(os);
-                        popSubs.addVarSubstitution("id_pre", "i");
-                        popSubs.addVarSubstitution("id_post_begin", "0");
-                        popSubs.addVarSubstitution("id_thread", "0");
-                        popSubs.addVarSubstitution("num_threads", "1");
-                        popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
 
-                        // If matrix is sparse, add function to increment row length and insert synapse into ind array
-                        if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "group->ind[(i * group->rowStride) + (group->rowLength[i]++)] = $(0)");
-                        }
-                        // Otherwise, add function to set correct bit in bitmask
-                        else {
-                            os << "const int64_t rowStartGID = i * group->rowStride;" << std::endl;
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "setB(group->gp[(rowStartGID + $(0)) / 32], (rowStartGID + $(0)) & 31)");
-                        }
-
-                        sgSparseRowConnectHandler(os, s, popSubs);
-                    }
+                    // Configure substitutions
+                    popSubs.addVarSubstitution("id_pre", "i");
+                    popSubs.addVarSubstitution("id_post_begin", "0");
+                    popSubs.addVarSubstitution("id_thread", "0");
+                    popSubs.addVarSubstitution("num_threads", "1");
+                    popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
                 }
-                // Otherwise, if there is column building code
-                else if(!snippet->getColBuildCode().empty()) {
+                // Otherwise
+                else {
+                    assert(!snippet->getColBuildCode().empty());
+
                     // Loop through target neurons
                     os << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
-                    {
-                        CodeStream::Scope b(os);
-                        popSubs.addVarSubstitution("id_post", "j");
-                        popSubs.addVarSubstitution("id_pre_begin", "0");
-                        popSubs.addVarSubstitution("id_thread", "0");
-                        popSubs.addVarSubstitution("num_threads", "1");
-                        popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
 
-                        // If matrix is sparse, add function to increment row length and insert synapse into ind array
+                    // Configure substitutions
+                    popSubs.addVarSubstitution("id_post", "j");
+                    popSubs.addVarSubstitution("id_pre_begin", "0");
+                    popSubs.addVarSubstitution("id_thread", "0");
+                    popSubs.addVarSubstitution("num_threads", "1");
+                    popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+                }
+                {
+                    CodeStream::Scope b(os);
+
+                    // Create new stream to generate addSynapse function which initializes all kernel variables
+                    std::ostringstream kernelInitStream;
+                    CodeStream kernelInit(kernelInitStream);
+
+                    // Use classic macro trick to turn block of initialization code into statement and 'eat' semicolon
+                    kernelInit << "do";
+                    {
+                        CodeStream::Scope b(kernelInit);
+
+                        // Calculate index in data structure of this synapse
                         if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "group->ind[(($(0)) * group->rowStride) + group->rowLength[$(0)]++] = " + popSubs["id_post"]);
+                            if(!snippet->getRowBuildCode().empty()) {
+                                kernelInit << "const unsigned int idx = " << "(" + popSubs["id_pre"] + " * group->rowStride) + group->rowLength[i];" << std::endl;
+                            }
+                            else {
+                                kernelInit << "const unsigned int idx = " << "(($(0)) * group->rowStride) + group->rowLength[$(0)];" << std::endl;
+                            }
                         }
+
+                        // If there is a kernel
+                        if(!s.getArchetype().getKernelSize().empty()) {
+                            Substitutions kernelInitSubs(&popSubs);
+
+                            // Replace $(id_post) with first 'function' parameter as simulation code is
+                            // going to be, in turn, substituted into procedural connectivity generation code
+                            if(!snippet->getRowBuildCode().empty()) {
+                                kernelInitSubs.addVarSubstitution("id_post", "$(0)");
+                            }
+                            else {
+                                kernelInitSubs.addVarSubstitution("id_pre", "$(0)");
+                            }
+
+                            // Add index of synapse
+                            if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                kernelInitSubs.addVarSubstitution("id_syn", "idx");
+                            }
+
+                            // Replace kernel indices with the subsequent 'function' parameters
+                            for(size_t i = 0; i < s.getArchetype().getKernelSize().size(); i++) {
+                                kernelInitSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "$(" + std::to_string(i + 1) + ")");
+                            }
+
+                            // Call handler to initialize variables
+                            sgKernelInitHandler(kernelInit, s, kernelInitSubs);
+                        }
+
+                        // If there is row-building code in this snippet
+                        if(!snippet->getRowBuildCode().empty()) {
+                            // If matrix is sparse, add function to increment row length and insert synapse into ind array
+                            if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                kernelInit << "group->ind[idx] = $(0);" << std::endl;
+                                kernelInit << "group->rowLength[i]++;" << std::endl;
+                            }
+                            // Otherwise, add function to set correct bit in bitmask
+                            else {
+                                kernelInit << "const int64_t rowStartGID = i * group->rowStride;" << std::endl;
+                                kernelInit << "setB(group->gp[(rowStartGID + ($(0))) / 32], (rowStartGID + $(0)) & 31);" << std::endl;
+                            }
+                        }
+                        // Otherwise
                         else {
-                            os << "const int64_t colStartGID = j;" << std::endl;
-                            popSubs.addFuncSubstitution("addSynapse", 1,
-                                                        "setB(group->gp[(colStartGID + ($(0) * group->rowStride)) / 32], ((colStartGID + ($(0) * group->rowStride)) & 31))");
+                            // If matrix is sparse, add function to increment row length and insert synapse into ind array
+                            if(s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                kernelInit << "group->ind[idx] = " << popSubs["id_post"] << ";" << std::endl;
+                                kernelInit << "group->rowLength[$(0)]++;" << std::endl;
+                            }
+                            else {
+                                kernelInit << "const int64_t colStartGID = j;" << std::endl;
+                                kernelInit << "setB(group->gp[(colStartGID + (($(0)) * group->rowStride)) / 32], ((colStartGID + (($(0)) * group->rowStride)) & 31));" << std::endl;
+                            }
                         }
+                    }
+                    kernelInit << "while(false)";
+
+                    popSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)s.getArchetype().getKernelSize().size(),
+                                                kernelInitStream.str());
+
+                    // Call appropriate connectivity handler
+                    if(!snippet->getRowBuildCode().empty()) {
+                        sgSparseRowConnectHandler(os, s, popSubs);
+                    }
+                    else {
                         sgSparseColConnectHandler(os, s, popSubs);
                     }
                 }
@@ -668,6 +749,11 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &mode
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
 {
     os << "#define SUPPORT_CODE_FUNC inline" << std::endl;
+
+    // CUDA and OpenCL both provide generic min and max functions 
+    // to match this, bring std::min and std::max into global namespace
+    os << "using std::min;" << std::endl;
+    os << "using std::max;" << std::endl;
 
     // On windows, define an inline function, matching the signature of __builtin_clz which counts leading zeros
 #ifdef _WIN32
@@ -1147,7 +1233,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike) const
+void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const
 {
     // Determine if delay is required and thus, at what offset we should write into the spike queue
     const bool spikeDelayRequired = trueSpike ? (ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) : ng.getArchetype().isDelayRequired();
@@ -1167,6 +1253,13 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, co
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
         const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
         os << "group->sT[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
+    }
+
+    // If recording is enabled
+    if(recordingEnabled) {
+        const std::string recordSuffix = trueSpike ? "" : "Event";
+        os << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << subs["id"] << " / 32)]";
+        os << " |= (1 << (" << subs["id"] << " % 32));" << std::endl;
     }
 }
 }   // namespace SingleThreadedCPU
