@@ -674,7 +674,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler,
+                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
