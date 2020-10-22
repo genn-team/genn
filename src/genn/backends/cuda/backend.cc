@@ -608,6 +608,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             }
         }
 
+        // Loop through all synapse groups
+        // **TODO** this logic belongs in BackendSIMT
         // **TODO** apply merging to this process - large models could generate thousands of lines of code here
         for(const auto &s : model.getSynapseGroups()) {
             // If this synapse population has BITMASK connectivity and is intialised on device, insert a call to cudaMemset to zero the whole bitmask

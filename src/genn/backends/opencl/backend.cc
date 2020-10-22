@@ -830,14 +830,25 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
 
         // Loop through all synapse groups
+        // **TODO** this logic belongs in BackendSIMT
+        // **TODO** apply merging to this process - large models could generate thousands of lines of code here
         for(const auto &s : model.getSynapseGroups()) {
             // If this synapse population has BITMASK connectivity and is intialised on device, enqueue a buffer fill operation to zero the whole bitmask
             if(s.second.isSparseConnectivityInitRequired() && s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * getSynapticMatrixRowStride(s.second), 32);
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<uint32_t>(d_gp" << s.first << ", 0, 0, " << gpSize << " * sizeof(uint32_t)));" << std::endl;
             }
-            // Otherwise, if this synapse population has RAGGED connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
-            else if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
+            
+            // If this synapse population has SPARSE connectivity and column-based on device connectivity, enqueue a buffer fill operation to zero row lengths
+            // **NOTE** we could also use this code path for row-based connectivity but, leaving this in the kernel is much better as it gets merged
+            if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE && !s.second.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()
+               && !s.second.isWeightSharingSlave())
+            {
+                os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_rowLength" << s.first << ", 0, 0, " << s.second.getSrcNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
+            }
+
+            // If this synapse population has SPARSE connectivity and has postsynaptic learning, enqueue a buffer fill operation to zero column lengths
+            if((s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getLearnPostCode().empty()) {
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueFillBuffer<unsigned int>(d_colLength" << s.first << ", 0, 0, " << s.second.getTrgNeuronGroup()->getNumNeurons() << " * sizeof(unsigned int)));" << std::endl;
             }
         }
