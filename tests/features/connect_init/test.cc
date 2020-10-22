@@ -31,8 +31,8 @@ class SimTest : public SimulationTest
 {
 };
 
-template<unsigned int N>
-void calcHistogram(const unsigned int *rowLength, const unsigned int *ind, 
+template<size_t N>
+void calcHistogram(const unsigned int *rowLength, const uint32_t *ind,
                    unsigned int maxRowLength, std::array<unsigned int, N> &histogram)
 {
     // Loop through rows
