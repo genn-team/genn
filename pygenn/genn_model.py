@@ -1290,6 +1290,8 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
                                                     derived_params=None,
                                                     row_build_code=None,
                                                     row_build_state_vars=None,
+                                                    col_build_code=None,
+                                                    col_build_state_vars=None,
                                                     calc_max_row_len_func=None,
                                                     calc_max_col_len_func=None,
                                                     calc_kernel_size_func=None,
@@ -1317,6 +1319,10 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     row_build_state_vars    --  list of tuples of state variables, their types
                                 and their initial values to use across
                                 row building loop
+    col_build_code          --  string with column building initialization code
+    col_build_state_vars    --  list of tuples of state variables, their types
+                                and their initial values to use across
+                                column building loop
     calc_max_row_len_func   --  instance of class inheriting from
                                 CalcMaxLengthFunc used to calculate maximum
                                 row length of synaptic matrix
@@ -1344,6 +1350,14 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
             lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
                                          for r in row_build_state_vars])
 
+    if col_build_code is not None:
+        body["get_col_build_code"] = lambda self: dedent(col_build_code)
+
+    if col_build_state_vars is not None:
+        body["get_col_build_state_vars"] = \
+            lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
+                                         for r in col_build_state_vars])
+ 
     if calc_max_row_len_func is not None:
         body["get_calc_max_row_length_func"] = \
             lambda self: make_cmlf(calc_max_row_len_func)
