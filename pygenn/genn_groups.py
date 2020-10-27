@@ -270,6 +270,28 @@ class NeuronGroup(Group):
             offset:offset + self.spike_count[self.spike_que_ptr[0]]]
 
     @property
+    def spike_recording_data(self):
+        # Get byte view of data
+        data_bytes = self._spike_recording_data.view(dtype=np.uint8)
+        
+        # Reshape view so there's a row per timestep and a column per byte
+        data_bytes = np.reshape(data_bytes, (-1, self._spike_recording_words * 4))
+
+        # Unpack data (results in one byte per bit)
+        # **THINK** is there a way to avoid this step?
+        data_unpack = data_unpack = np.unpackbits(data_bytes, axis=1, 
+                                                  count=self.size,
+                                                  bitorder="little")
+
+        # Calculate indices where there are spikes
+        spikes = np.where(data_unpack == 1)
+
+        # Convert spike times to ms
+        spike_times = spikes[0] * self._model.dT
+
+        return spike_times, spikes[1]
+
+    @property
     def delay_slots(self):
         """Maximum delay steps needed for this group"""
         return self.pop.get_num_delay_slots()
@@ -277,6 +299,14 @@ class NeuronGroup(Group):
     @property
     def size(self):
         return self.pop.get_num_neurons()
+
+    @property
+    def spike_recording_enabled(self):
+        return self.pop.is_spike_recording_enabled()
+    
+    @spike_recording_enabled.setter
+    def spike_recording_enabled(self, enabled):
+        return self.pop.set_spike_recording_enabled(enabled)
 
     def set_neuron(self, model, param_space, var_space):
         """Set neuron, its parameters and initial variables
@@ -342,14 +372,26 @@ class NeuronGroup(Group):
         """Wrapper around GeNNModel.push_current_spikes_to_device"""
         self._model.push_current_spikes_to_device(self.name)
 
-    def load(self):
+    def load(self, num_recording_timesteps):
         """Loads neuron group"""
-        self.spikes = self._assign_ext_ptr_array("glbSpk", 
-                                                 self.size * self.delay_slots,
-                                                 "unsigned int")
-        self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
-                                                      self.delay_slots, 
-                                                      "unsigned int")
+        # If spike data is present on the host
+        if (self.pop.get_spike_location() & VarLocation_HOST) != 0:
+            self.spikes = self._assign_ext_ptr_array("glbSpk", 
+                                                    self.size * self.delay_slots,
+                                                    "unsigned int")
+            self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
+                                                        self.delay_slots, 
+                                                        "unsigned int")
+
+        # If spike recording is enabled
+        if self.spike_recording_enabled:
+            # Calculate spike recording words
+            recording_words = self._spike_recording_words * num_recording_timesteps
+
+            # Assign pointer to recording data
+            self._spike_recording_data = self._assign_ext_ptr_array("recordSpk",
+                                                                    recording_words,
+                                                                    "uint32_t")
         if self.delay_slots > 1:
             self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
                 "spkQuePtr" + self.name)
@@ -369,6 +411,10 @@ class NeuronGroup(Group):
 
         # Reinitialise neuron state variables
         self._reinitialise_vars()
+        
+    @property
+    def _spike_recording_words(self):
+        return ((self.size + 31) // 32)
 
 class SynapseGroup(Group):
 

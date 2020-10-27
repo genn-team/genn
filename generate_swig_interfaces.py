@@ -640,6 +640,25 @@ def generateConfigs(gennPath, backends):
             }
             %}''')
 
+         # Add wrapper around InitSparseConnectivitySnippet::Base::CalcKernelSizeFunc
+        iniSparseSmg.write('''
+            %feature("director") CalcKernelSizeFunc;
+            %rename(__call__) CalcKernelSizeFunc::operator();
+            %inline %{
+            struct CalcKernelSizeFunc {
+            virtual std::vector<unsigned int> operator()( const std::vector<double> & pars ) const = 0;
+            virtual ~CalcKernelSizeFunc() {}
+            };
+            %}
+
+            // helper function to convert CalcKernelSizeFunc to std::function
+            %inline %{
+            std::function<std::vector<unsigned int>(const std::vector<double> &)> makeCKSF( CalcKernelSizeFunc* cksf )
+            {
+            return std::bind( &CalcKernelSizeFunc::operator(), cksf, std::placeholders::_1 );
+            }
+            %}''')
+            
         # wrap NeuronGroup, SynapseGroup and CurrentSource
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
@@ -652,7 +671,9 @@ def generateConfigs(gennPath, backends):
         # wrap modelSpec.h
         pygennSmg.addSwigIgnore( 'init_connectivity()' )
         pygennSmg.addSwigIgnore( 'init_var()' )
-
+        # **HACK** raised https://github.com/swig/swig/issues/1840 with SWIG - explicit rename rules required for these method to get wrapped
+        pygennSmg.addSwigRename( 'isRecordingInUse', 'is_recording_in_use' )
+        pygennSmg.addSwigRename( 'zeroCopyInUse', 'zero_copy_in_use' )
         pygennSmg.addSwigInclude( '"modelSpec.h"' )
         pygennSmg.addSwigInclude( '"modelSpecInternal.h"' )
 

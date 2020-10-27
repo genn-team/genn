@@ -165,7 +165,7 @@ public:
     //--------------------------------------------------------------------------
     //! Generate platform-specific function to update the state of all neurons
     /*! \param os                       CodeStream to write function to
-        \param model                    merged model to generate code for
+        \param modelMerged              merged model to generate code for
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
@@ -174,7 +174,7 @@ public:
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
-        \param model                        model to generate code for
+        \param modelMerged                  merged model to generate code for
         \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
         \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
@@ -196,10 +196,19 @@ public:
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
 
+    //! Generate platform-specific function to initialise model
+    /*! \param os                           CodeStream to write function to
+        \param modelMerged                  merged model to generate code for
+        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
+        \param preambleHandler              sss
+        \param localNGHandler               callback to write platform-independent code to initialize a merged neuron group
+        \param sgDenseInitHandler           callback to write platform-independent code to initialize the synaptic state of a merged synapse group with 
+                                            dense connectivity depending on parallelism strategy, "id_pre" or "id_post" variables may be provided to 
+                                            to callback via Substitutions.*/
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
-                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
+                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
@@ -319,8 +328,12 @@ public:
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
 
     //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
-    //! This function returns this prefix so it can be used in otherwise platform-independent code.
-    virtual std::string getVarPrefix() const{ return ""; }
+    //! This function returns the device prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getDeviceVarPrefix() const{ return ""; }
+
+    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
+    //! This function returns the host prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getHostVarPrefix() const { return ""; }
 
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
@@ -391,7 +404,7 @@ public:
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
     {
-        return isDeviceScalarRequired() ? getVarPrefix() : ("&" + getVarPrefix());
+        return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
     }
 
     const PreferencesBase &getPreferences() const { return m_Preferences; }

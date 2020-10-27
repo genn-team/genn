@@ -20,28 +20,20 @@ int main(int argc, char *argv[])
 
     const std::string outLabel = argv[1];
     const std::string outDir = "../" + outLabel + "_output";
-
+    const unsigned int timesteps = round(Parameters::durationMs / Parameters::dtMs);
+    
     SharedLibraryModel<float> model("./", "PotjansMicrocircuit");
 
     model.allocateMem();
+    model.allocateRecordingBuffers(timesteps);
     model.initialize();
     model.initializeSparse();
 
     double recordS = 0.0;
     {
-        // Create spike recorders
-        std::vector<SpikeRecorder<SpikeWriterTextCached>> spikeRecorders;
-        spikeRecorders.reserve(Parameters::LayerMax * Parameters::PopulationMax);
-        for(unsigned int layer = 0; layer < Parameters::LayerMax; layer++) {
-            for(unsigned int pop = 0; pop < Parameters::PopulationMax; pop++) {
-                const std::string name = Parameters::getPopulationName(layer, pop);
-                spikeRecorders.push_back(model.getSpikeRecorder<SpikeWriterTextCached>(name,  outDir + "/" + outLabel + "." + name + ".st"));
-            }
-        }
-
         Timer timer("Simulation:");
+
         // Loop through timesteps
-        const unsigned int timesteps = round(Parameters::durationMs / Parameters::dtMs);
         const unsigned int tenPercentTimestep = timesteps / 10;
         for(unsigned int i = 0; i < timesteps; i++) {
             // Indicate every 10%
@@ -51,25 +43,27 @@ int main(int argc, char *argv[])
 
             // Simulate
             model.stepTime();
+        }
+    }
+    {
+        TimerAccumulate timer(recordS);
 
-            // Pull spikes from each population from device
-            for(unsigned int layer = 0; layer < Parameters::LayerMax; layer++) {
-                for(unsigned int pop = 0; pop < Parameters::PopulationMax; pop++) {
-                    model.pullCurrentSpikesFromDevice(Parameters::getPopulationName(layer, pop));
-                }
-            }
+        // Download recording data from device
+        model.pullRecordingBuffersFromDevice();
 
-            {
-                TimerAccumulate timer(recordS);
+        // Loop through populations
+        for(unsigned int layer = 0; layer < Parameters::LayerMax; layer++) {
+            for(unsigned int pop = 0; pop < Parameters::PopulationMax; pop++) {
+                // Get pointer to recording data
+                const std::string name = Parameters::getPopulationName(layer, pop);
+                const uint32_t *recordSpk = model.getArray<uint32_t>("recordSpk" + name);
 
-                // Record spikes
-                for(auto &s : spikeRecorders) {
-                    s.record(model.getTime());
-                }
+                // Write to text file
+                writeTextSpikeRecording(outDir + "/" + outLabel + "." + name + ".st", recordSpk, Parameters::getScaledNumNeurons(layer, pop), timesteps, Parameters::dtMs);
             }
         }
     }
-
+    
     if(Parameters::measureTiming) {
         std::cout << "Timing:" << std::endl;
         std::cout << "\tInit:" << *model.getScalar<double>("initTime") * 1000.0 << std::endl;

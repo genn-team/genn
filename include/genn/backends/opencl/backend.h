@@ -151,8 +151,8 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
-                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
+                         SynapseConnectivityInitMergedGroupHandler sgSparseConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
+                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
@@ -231,6 +231,10 @@ public:
     //! Get list of files to copy into generated code
     /*! Paths should be relative to share/genn/backends/ */
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged &modelMerged) const override;
+
+    //! When backends require separate 'device' and 'host' versions of variables, they are identified with a prefix.
+    //! This function returns the host prefix so it can be used in otherwise platform-independent code.
+    virtual std::string getHostVarPrefix() const final { return "h_"; }
 
     virtual std::string getPointerPrefix() const override { return "__global "; };
 

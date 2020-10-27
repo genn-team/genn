@@ -167,7 +167,7 @@ for filename, namespace, kwargs in backends:
                                  **backend_extension_kwargs))
 
 setup(name = "pygenn",
-      version = "0.4.2",
+      version = "0.4.3",
       packages = find_packages(),
       package_data={"pygenn": package_data},
 
@@ -178,6 +178,6 @@ setup(name = "pygenn",
       ext_modules=ext_modules,
 
       # Requirements
-      install_requires=["numpy>=1.10.0,!=1.16.*", "six", "deprecated", "psutil"],
+      install_requires=["numpy>=1.17", "six", "deprecated", "psutil"],
       zip_safe=False,  # Partly for performance reasons
 )
