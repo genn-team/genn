@@ -165,10 +165,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             // OR any incoming synapse groups have post synaptic models which reference $(Isyn), declare it
             if (nm->getSimCode().find("$(Isyn)") != std::string::npos ||
                 std::any_of(ng.getArchetype().getMergedInSyn().cbegin(), ng.getArchetype().getMergedInSyn().cend(),
-                            [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &p)
+                            [](const SynapseGroupInternal *sg)
                             {
-                                return (p.first->getPSModel()->getApplyInputCode().find("$(Isyn)") != std::string::npos
-                                        || p.first->getPSModel()->getDecayCode().find("$(Isyn)") != std::string::npos);
+                                return (sg->getPSModel()->getApplyInputCode().find("$(Isyn)") != std::string::npos
+                                        || sg->getPSModel()->getDecayCode().find("$(Isyn)") != std::string::npos);
                             }))
             {
                 os << model.getPrecision() << " Isyn = 0;" << std::endl;
@@ -193,7 +193,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
                 CodeStream::Scope b(os);
 
-                const auto *sg = ng.getArchetype().getMergedInSyn()[i].first;;
+                const auto *sg = ng.getArchetype().getMergedInSyn()[i];
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;

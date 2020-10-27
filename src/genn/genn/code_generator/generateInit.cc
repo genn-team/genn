@@ -265,7 +265,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
                 CodeStream::Scope b(os);
 
-                const auto *sg = ng.getArchetype().getMergedInSyn()[i].first;
+                const auto *sg = ng.getArchetype().getMergedInSyn()[i];
 
                 // If this synapse group's input variable should be initialised on device
                 // Generate target-specific code to initialise variable

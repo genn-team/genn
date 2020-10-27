@@ -130,64 +130,64 @@ bool CodeGenerator::NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamHet
 bool CodeGenerator::NeuronGroupMergedBase::isPSMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
 {  
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
+    const auto *psm = getArchetype().getMergedInSyn().at(childIndex)->getPSModel();
     const std::string paramName = psm->getParamNames().at(paramIndex);
     return isChildParamValueHeterogeneous({psm->getApplyInputCode(), psm->getDecayCode()}, paramName, childIndex, paramIndex, m_SortedMergedInSyns,
-                                          [](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn)
+                                          [](const SynapseGroupInternal *inSyn)
                                           {
-                                              return inSyn.first->getPSParams();
+                                              return inSyn->getPSParams();
                                           });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
+    const auto *psm = getArchetype().getMergedInSyn().at(childIndex)->getPSModel();
     const std::string derivedParamName = psm->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({psm->getApplyInputCode(), psm->getDecayCode()}, derivedParamName, childIndex, paramIndex, m_SortedMergedInSyns,
-                                          [](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn)
+                                          [](const SynapseGroupInternal *inSyn)
                                           {
-                                              return inSyn.first->getPSDerivedParams();
+                                              return inSyn->getPSDerivedParams();
                                           });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isPSMGlobalVarHeterogeneous(size_t childIndex, size_t varIndex) const
 {
     // If synapse group doesn't have individual PSM variables to start with, return false
-    const auto *sg = getArchetype().getMergedInSyn().at(childIndex).first;
+    const auto *sg = getArchetype().getMergedInSyn().at(childIndex);
     if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
         return false;
     }
     else {
-        const auto *psm = getArchetype().getMergedInSyn().at(childIndex).first->getPSModel();
+        const auto *psm = sg->getPSModel();
         const std::string varName = psm->getVars().at(varIndex).name;
         return isChildParamValueHeterogeneous({psm->getApplyInputCode(), psm->getDecayCode()}, varName, childIndex, varIndex, m_SortedMergedInSyns,
-                                              [](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn)
+                                              [](const SynapseGroupInternal *inSyn)
                                               {
-                                                  return inSyn.first->getPSConstInitVals();
+                                                  return inSyn->getPSConstInitVals();
                                               });
     }
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getMergedInSyn().at(childIndex).first->getPSVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getMergedInSyn().at(childIndex)->getPSVarInitialisers().at(varIndex).getSnippet();
     const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, childIndex, paramIndex, m_SortedMergedInSyns,
-                                          [varIndex](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn) 
+                                          [varIndex](const SynapseGroupInternal *inSyn)
                                           { 
-                                              return inSyn.first->getPSVarInitialisers().at(varIndex).getParams();
+                                              return inSyn->getPSVarInitialisers().at(varIndex).getParams();
                                           });
 }
 //----------------------------------------------------------------------------
 bool CodeGenerator::NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {
-    const auto *varInitSnippet = getArchetype().getMergedInSyn().at(childIndex).first->getPSVarInitialisers().at(varIndex).getSnippet();
+    const auto *varInitSnippet = getArchetype().getMergedInSyn().at(childIndex)->getPSVarInitialisers().at(varIndex).getSnippet();
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, childIndex, paramIndex, m_SortedMergedInSyns,
-                                          [varIndex](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &inSyn) 
+                                          [varIndex](const SynapseGroupInternal *inSyn)
                                           { 
-                                              return inSyn.first->getPSVarInitialisers().at(varIndex).getDerivedParams();
+                                              return inSyn->getPSVarInitialisers().at(varIndex).getDerivedParams();
                                           });
 }
 //----------------------------------------------------------------------------
@@ -197,10 +197,9 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
 {
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getMergedInSyn,
-                             [init](const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &a,
-                                    const std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>> &b)
+                             [init](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
                              {
-                                 return init ? a.first->canPSInitBeMerged(*b.first) : a.first->canPSBeMerged(*b.first);
+                                 return init ? a->canPSInitBeMerged(*b) : a->canPSBeMerged(*b);
                              });
 
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
@@ -284,7 +283,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
 
     // Loop through merged synaptic inputs in archetypical neuron group
     for(size_t i = 0; i < getArchetype().getMergedInSyn().size(); i++) {
-        const SynapseGroupInternal *sg = getArchetype().getMergedInSyn()[i].first;
+        const SynapseGroupInternal *sg = getArchetype().getMergedInSyn()[i];
 
         // Add pointer to insyn
         addMergedInSynPointerField(precision, "inSynInSyn", i, backend.getDeviceVarPrefix() + "inSyn");
@@ -312,7 +311,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
                     const auto *varInitSnippet = varInit.at(v).getSnippet();
                     auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
                                                {
-                                                   return m_SortedMergedInSyns.at(groupIndex).at(childIndex).first->getPSVarInitialisers();
+                                                   return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSVarInitialisers();
                                                };
                     addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), i, v, var.name + "InSyn",
                                                        &NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous, getVarInitialiserFn);
@@ -321,7 +320,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
                     addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "InSyn",
                                  [var, this](size_t groupIndex, size_t childIndex)
                                  {
-                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex).first->getPSModelTargetName();
+                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSModelTargetName();
                                  });
                 }
             }
@@ -333,7 +332,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
                     addScalarField(var.name + "InSyn" + std::to_string(i),
                                    [this, i, v](const NeuronGroupInternal &, size_t groupIndex)
                                    {
-                                       const double val = m_SortedMergedInSyns.at(groupIndex).at(i).first->getPSConstInitVals().at(v);
+                                       const double val = m_SortedMergedInSyns.at(groupIndex).at(i)->getPSConstInitVals().at(v);
                                        return Utils::writePreciseString(val);
                                    });
                 }
@@ -346,7 +345,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
             addHeterogeneousChildParams(paramNames, i, "InSyn", &NeuronGroupMergedBase::isPSMParamHeterogeneous,
                                         [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
                                         {
-                                            return m_SortedMergedInSyns.at(groupIndex).at(childIndex).first->getPSParams().at(paramIndex);
+                                            return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSParams().at(paramIndex);
                                         });
 
             // Add any heterogeneous postsynaptic mode derived parameters
@@ -354,13 +353,13 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
             addHeterogeneousChildDerivedParams(derivedParams, i, "InSyn", &NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous,
                                                [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
                                                {
-                                                    return m_SortedMergedInSyns.at(groupIndex).at(childIndex).first->getPSDerivedParams().at(paramIndex);
+                                                    return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSDerivedParams().at(paramIndex);
                                                });
             // Add EGPs
             addChildEGPs(sg->getPSModel()->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), "InSyn",
                          [this](size_t groupIndex, size_t childIndex)
                          {
-                             return m_SortedMergedInSyns.at(groupIndex).at(childIndex).first->getPSModelTargetName();
+                             return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSModelTargetName();
                          });
         }
     }
@@ -438,7 +437,7 @@ void CodeGenerator::NeuronGroupMergedBase::addMergedInSynPointerField(const std:
     addField(type + "*", name + std::to_string(archetypeIndex),
              [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
              {
-                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex).first->getPSModelTargetName();
+                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getPSModelTargetName();
              });
 }
 

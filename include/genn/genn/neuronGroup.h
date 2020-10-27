@@ -213,7 +213,7 @@ protected:
     //------------------------------------------------------------------------
     //! Gets pointers to all synapse groups which provide input to this neuron group
     const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
-    const std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> &getMergedInSyn() const{ return m_MergedInSyn; }
+    const std::vector<SynapseGroupInternal*> &getMergedInSyn() const{ return m_MergedInSyn; }
 
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
@@ -268,7 +268,7 @@ private:
     std::vector<Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
-    std::vector<std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>>> m_MergedInSyn;
+    std::vector<SynapseGroupInternal*> m_MergedInSyn;
     std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;

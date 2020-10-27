@@ -891,9 +891,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     for(const auto &n : model.getNeuronGroups()) {
         // Loop through merged incoming synaptic populations
         // **NOTE** because of merging we need to loop through postsynaptic models in this
-        for(const auto &m : n.second.getMergedInSyn()) {
-            const auto *sg = m.first;
-
+        for(const auto *sg : n.second.getMergedInSyn()) {
             mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                     model.getPrecision(), "inSyn" + sg->getPSModelTargetName(), sg->getInSynLocation(),
                                     sg->getTrgNeuronGroup()->getNumNeurons());
@@ -1389,8 +1387,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         // Generate code to advance host side dendritic delay buffers
         for(const auto &n : model.getNeuronGroups()) {
             // Loop through incoming synaptic populations
-            for(const auto &m : n.second.getMergedInSyn()) {
-                const auto *sg = m.first;
+            for(const auto *sg : n.second.getMergedInSyn()) {
                 if(sg->isDendriticDelayRequired()) {
                     runner << "denDelayPtr" << sg->getPSModelTargetName() << " = (denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                 }
