@@ -270,6 +270,9 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
                 
                 // Write out CSV line
                 stream << time << delimiter << neuronID << std::endl;
+                
+                // New neuron id of the highest bit of this word
+                neuronID--;
             }
         }
     }
