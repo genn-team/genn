@@ -1242,6 +1242,7 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
+        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
@@ -1260,7 +1261,9 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
 
         // If weights are procedural or we're initializing individual variables
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
-        if((proceduralWeights && updateRole) || (!updateRole && individualWeights)) {
+        if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty()) 
+           || (varInitRole && individualWeights)) 
+        {
             // Add heterogeneous variable initialization parameters and derived parameters
             addHeterogeneousVarInitParams<SynapseGroupMergedBase>(
                 wum->getVars(), &SynapseGroupInternal::getWUVarInitialisers,
@@ -1278,7 +1281,7 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
             const auto var = vars[v];
             const auto *snippet = varInit.at(v).getSnippet();
             const bool varInitRequired = ((connectInitRole && snippet->requiresKernel()) 
-                                          || (!updateRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
+                                          || (varInitRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
 
             // If we're performing an update with individual weights; or this variable should be initialised
             if((updateRole && individualWeights) || varInitRequired) {
