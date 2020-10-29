@@ -449,7 +449,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                         os << "else";
                         CodeStream::Scope b(os);
 
-                        // If spike timing is required, copy spike time from register
+                        // If spike timing is required and they aren't updated after update, copy spike time from register
                         if(ng.getArchetype().isSpikeTimeRequired()) {
                             os << "group->sT[writeDelayOffset + " << popSubs["id"] << "] = lsT;" << std::endl;
                         }

@@ -190,30 +190,93 @@ void BackendSIMT::addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Ba
     s_PresynapticUpdateStrategies.push_back(strategy);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // Loop through local neuron groups
     idStart = 0;
     for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
         os << "// merged" << n.getIndex() << std::endl;
-        if(idStart == 0) {
-            os << "if(id < " << n.getGroups().size() << ")";
-        }
-        else {
-            os << "if(id >= " << idStart << " && id < " << idStart + n.getGroups().size() << ")";
-        }
-        {
-            CodeStream::Scope b(os);
+        
+        // If group requires spike times resetting here i.e. each group requires multiple threads
+        if(n.getArchetype().isSpikeTimeRequired() && n.getArchetype().shouldResetSpikeTimesAfterUpdate()) {
+            // Sum padded sizes of each group within merged group
+            const size_t paddedSize = std::accumulate(
+                    n.getGroups().cbegin(), n.getGroups().cend(), size_t{0},
+                    [this](size_t acc, std::reference_wrapper<const NeuronGroupInternal> g)
+                    {
+                        return (acc + padSize(g.get().getNumNeurons(), getKernelBlockSize(KernelPreNeuronReset)));
+                    });
 
-            // Use this to get reference to merged group structure
-            os << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
-
-            if(n.getArchetype().isDelayRequired()) { // with delay
-                os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+            // If this is the first  group
+            if(idStart == 0) {
+                os << "if(id < " << paddedSize << ")";
             }
-            n.genMergedGroupSpikeCountReset(os);
+            else {
+                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
+            }
+            {
+                CodeStream::Scope b(os);
+
+                // Generate code to find correct group structure for this thread
+                Substitutions popSubs(&kernelSubs);
+                genGroupMergedSearch(os, popSubs, n, idStart);
+
+                // If neuron group requires delays
+                if(n.getArchetype().isDelayRequired()) {
+                    // If there is a spike for this thread, update spike time to time of last timestep
+                    // **NOTE** spkQuePtr is updated below so this is already for 
+                    os << "if(" << popSubs["id"] << " < group->spkCnt[*group->spkQuePtr])";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "const unsigned int lastTimestepDelayOffset = *group->spkQuePtr * group->numNeurons;" << std::endl;
+                        os << "group->sT[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + " << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                    }
+                }
+                // Otherwise
+                else {
+                    // If there is a spike for this thread, update spike time to time of last timestep
+                    os << "if(" << popSubs["id"] << " < group->spkCnt[0])";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "group->sT[group->spk[" << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                    }
+                }
+                os << std::endl;
+
+                // Use first thread to update spike queue pointer and reset spike counts
+                os << "if(" << popSubs["id"] << " == 0)";
+                {
+                    CodeStream::Scope b(os);
+
+                    if(n.getArchetype().isDelayRequired()) { // with delay
+                        os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+                    }
+                    n.genMergedGroupSpikeCountReset(os);
+                }
+            }
+            idStart += paddedSize;
+        } 
+        // Otherwise
+        else {
+            if(idStart == 0) {
+                os << "if(id < " << n.getGroups().size() << ")";
+            }
+            else {
+                os << "if(id >= " << idStart << " && id < " << idStart + n.getGroups().size() << ")";
+            }
+            {
+                CodeStream::Scope b(os);
+
+                // Use this to get reference to merged group structure
+                os << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
+
+                if(n.getArchetype().isDelayRequired()) { // with delay
+                    os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+                }
+                n.genMergedGroupSpikeCountReset(os);
+            }
+            idStart += n.getGroups().size();
         }
-        idStart += n.getGroups().size();
     }
 }
 //--------------------------------------------------------------------------
@@ -376,7 +439,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     wuVarUpdateHandler(os, ng, wuSubs);
 
                     os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + " << getThreadID() << "] = n;" << std::endl;
-                    if(ng.getArchetype().isSpikeTimeRequired()) {
+                    if(ng.getArchetype().isSpikeTimeRequired() && !ng.getArchetype().shouldResetSpikeTimesAfterUpdate()) {
                         os << "group->sT[" << queueOffset << "n] = t;" << std::endl;
                     }
                 }

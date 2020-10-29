@@ -16,7 +16,7 @@
 //----------------------------------------------------------------------------
 const std::string CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
+CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                                     const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   GroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
@@ -31,6 +31,17 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
 
     if(getArchetype().isSpikeEventRequired()) {
         addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
+    }
+
+    if(getArchetype().isSpikeTimeRequired() && getArchetype().shouldResetSpikeTimesAfterUpdate()) {
+        addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
+
+        addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
+
+        if(getArchetype().isDelayRequired()) {
+            addField("unsigned int", "numNeurons",
+                     [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+        }
     }
 }
 //----------------------------------------------------------------------------

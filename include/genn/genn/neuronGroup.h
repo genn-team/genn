@@ -126,6 +126,7 @@ public:
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
+    bool shouldResetSpikeTimesAfterUpdate() const;
     bool isTrueSpikeRequired() const;
     bool isSpikeEventRequired() const;
 
@@ -197,8 +198,8 @@ protected:
 
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
-    void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
-    void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
+    void addInSyn(SynapseGroupInternal *synapseGroup);
+    void addOutSyn(SynapseGroupInternal *synapseGroup);
 
     void initDerivedParams(double dt);
 
@@ -254,6 +255,10 @@ private:
     //------------------------------------------------------------------------
     //! Update which variables require queues based on piece of code
     void updateVarQueues(const std::string &code, const std::string &suffix);
+
+    //! Return false if existing incoming or outgoing synapse groups 
+    //! require spike times to reset at incompatible times
+    bool checkSpikeTimeReset(bool resetSpikeTimesAfterUpdate) const;
 
     //------------------------------------------------------------------------
     // Members

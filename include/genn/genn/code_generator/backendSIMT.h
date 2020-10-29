@@ -163,7 +163,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genPreNeuronResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const;
 
@@ -202,6 +202,52 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
+    void genGroupMergedSearch(CodeStream &os, Substitutions &popSubs, const T &g, size_t idStart) const
+    {
+        if(g.getGroups().size() == 1) {
+            os << getPointerPrefix() << "struct Merged" << T::name << "Group" << g.getIndex() << " *group";
+            os << " = &d_merged" << T::name << "Group" << g.getIndex() << "[0]; " << std::endl;
+            os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+            // Use the starting thread ID of the whole merged group as group_start_id
+            popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
+        }
+        else {
+            // Perform bisect operation to get index of merged struct
+            os << "unsigned int lo = 0;" << std::endl;
+            os << "unsigned int hi = " << g.getGroups().size() << ";" << std::endl;
+            os << "while(lo < hi)" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+
+                os << "if(id < d_merged" << T::name << "GroupStartID" << g.getIndex() << "[mid])";
+                {
+                    CodeStream::Scope b(os);
+                    os << "hi = mid;" << std::endl;
+                }
+                os << "else";
+                {
+                    CodeStream::Scope b(os);
+                    os << "lo = mid + 1;" << std::endl;
+                }
+            }
+
+            // Use this to get reference to merged group structure
+            os << getPointerPrefix() << "struct Merged" << T::name << "Group" << g.getIndex() << " *group";
+            os << " = &d_merged" << T::name << "Group" << g.getIndex() << "[lo - 1]; " << std::endl;
+
+            // Get group start thread ID and use as group_start_id
+            os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << g.getIndex() << "[lo - 1];" << std::endl;
+            popSubs.addVarSubstitution("group_start_id", "groupStartID");
+
+            // Use this to calculate local id within group
+            os << "const unsigned int lid = id - groupStartID;" << std::endl;
+        }
+        popSubs.addVarSubstitution("id", "lid");
+    }
+
+    template<typename T>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
                           GroupHandler<T> handler) const
@@ -229,47 +275,8 @@ private:
                 CodeStream::Scope b(os);
                 Substitutions popSubs(&kernelSubs);
 
-                if(gMerge.getGroups().size() == 1) {
-                    os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                    os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
-                    os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+                genGroupMergedSearch(os, popSubs, gMerge, idStart);
 
-                    // Use the starting thread ID of the whole merged group as group_start_id
-                    popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
-                }
-                else {
-                    // Perform bisect operation to get index of merged struct
-                    os << "unsigned int lo = 0;" << std::endl;
-                    os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
-                    os << "while(lo < hi)" << std::endl;
-                    {
-                        CodeStream::Scope b(os);
-                        os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
-
-                        os << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "hi = mid;" << std::endl;
-                        }
-                        os << "else";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "lo = mid + 1;" << std::endl;
-                        }
-                    }
-
-                    // Use this to get reference to merged group structure
-                    os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
-                    os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
-
-                    // Get group start thread ID and use as group_start_id
-                    os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
-                    popSubs.addVarSubstitution("group_start_id", "groupStartID");
-
-                    // Use this to calculate local id within group
-                    os << "const unsigned int lid = id - groupStartID;" << std::endl;
-                }
-                popSubs.addVarSubstitution("id", "lid");
                 handler(os, gMerge, popSubs);
 
                 idStart += paddedSize;

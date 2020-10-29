@@ -283,13 +283,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     // Generate reset kernel to be run before the neuron kernel
     size_t idPreNeuronReset = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "()";
+    os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        genPreNeuronResetKernel(os, modelMerged, idPreNeuronReset);
+        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+        kernelSubs.addVarSubstitution("t", "t");
+
+        genPreNeuronResetKernel(os, kernelSubs, modelMerged, idPreNeuronReset);
     }
     os << std::endl;
 
@@ -323,7 +326,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
-            os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>();" << std::endl;
+            os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
         if(idStart > 0) {
