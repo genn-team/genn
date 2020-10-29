@@ -954,6 +954,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                       extra_global_params=None,
                                       is_pre_spike_time_required=None,
                                       is_post_spike_time_required=None,
+                                      should_reset_spike_times_after_update=None,
                                       custom_body=None):
     """This helper function creates a custom WeightUpdateModel class.
     See also:
@@ -1067,6 +1068,10 @@ def create_custom_weight_update_class(class_name, param_names=None,
     if is_post_spike_time_required is not None:
         body["is_post_spike_time_required"] = \
             lambda self: is_post_spike_time_required
+    
+    if should_reset_spike_times_after_update is not None:
+        body["should_reset_spike_times_after_update"] = \
+            lambda self: should_reset_spike_times_after_update
 
     if custom_body is not None:
         body.update(custom_body)
