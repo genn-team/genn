@@ -1264,7 +1264,7 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
             }
         }
 
-        // If weights are procedural or we're initializing individual variables
+        // If weights are procedura, we're initializing individual variables or we're initialising variables in a kernel
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
         if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty()) 
            || (varInitRole && individualWeights)) 
