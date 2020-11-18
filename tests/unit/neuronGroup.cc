@@ -432,8 +432,8 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     // Find which child in the DC + gaussian merged group is the gaussian current source
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().size() == 2);
     ASSERT_TRUE(deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().size() == 2);
-    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().at(0).first->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
-    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().at(0).first->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
 
     // Check that parameter and both derived parameters are heterogeneous
     // **NOTE** tau is NOT heterogeneous because it's unused
