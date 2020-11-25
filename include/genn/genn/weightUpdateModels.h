@@ -23,6 +23,8 @@
 #define SET_SYNAPSE_DYNAMICS_SUPPORT_CODE(SYNAPSE_DYNAMICS_SUPPORT_CODE) virtual std::string getSynapseDynamicsSuppportCode() const override{ return SYNAPSE_DYNAMICS_SUPPORT_CODE; }
 #define SET_PRE_SPIKE_CODE(PRE_SPIKE_CODE) virtual std::string getPreSpikeCode() const override{ return PRE_SPIKE_CODE; }
 #define SET_POST_SPIKE_CODE(POST_SPIKE_CODE) virtual std::string getPostSpikeCode() const override{ return POST_SPIKE_CODE; }
+#define SET_PRE_DYNAMICS_CODE(PRE_DYNAMICS_CODE) virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }
+#define SET_POST_DYNAMICS_CODE(POST_DYNAMICS_CODE) virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }
 
 #define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
@@ -91,6 +93,16 @@ public:
     /*! This is typically for the code to update postsynaptic variables. Presynaptic
         and synapse variables are not accesible from within this code */
     virtual std::string getPostSpikeCode() const{ return ""; }
+
+    //! Gets code to be run after presynaptic neuron update
+    /*! This is typically for the code to update presynaptic variables. Postsynaptic
+        and synapse variables are not accesible from within this code */
+    virtual std::string getPreDynamicsCode() const{ return ""; }
+
+    //! Gets code to be run after postsynaptic neuron update
+    /*! This is typically for the code to update postsynaptic variables. Presynaptic
+        and synapse variables are not accesible from within this code */
+    virtual std::string getPostDynamicsCode() const{ return ""; }
 
     //! Gets names and types (as strings) of state variables that are common
     //! across all synapses coming from the same presynaptic neuron

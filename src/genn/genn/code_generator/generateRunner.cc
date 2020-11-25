@@ -891,9 +891,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     for(const auto &n : model.getNeuronGroups()) {
         // Loop through merged incoming synaptic populations
         // **NOTE** because of merging we need to loop through postsynaptic models in this
-        for(const auto &m : n.second.getMergedInSyn()) {
-            const auto *sg = m.first;
-
+        for(const auto *sg : n.second.getMergedInSyn()) {
             mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                     model.getPrecision(), "inSyn" + sg->getPSModelTargetName(), sg->getInSynLocation(),
                                     sg->getTrgNeuronGroup()->getNumNeurons());
@@ -1323,7 +1321,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // ---------------------------------------------------------------------
     // Function for setting the device and the host's global variables.
     // Also estimates memory usage on device ...
-    runner << "void allocateMem()";
+    runner << "void allocateMem(" << backend.getAllocateMemParams(modelMerged) << ")";
     {
         CodeStream::Scope b(runner);
 
@@ -1389,8 +1387,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         // Generate code to advance host side dendritic delay buffers
         for(const auto &n : model.getNeuronGroups()) {
             // Loop through incoming synaptic populations
-            for(const auto &m : n.second.getMergedInSyn()) {
-                const auto *sg = m.first;
+            for(const auto *sg : n.second.getMergedInSyn()) {
                 if(sg->isDendriticDelayRequired()) {
                     runner << "denDelayPtr" << sg->getPSModelTargetName() << " = (denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                 }
@@ -1421,11 +1418,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
         definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
     }
+
     if(model.isRecordingInUse()) {
         definitions << "EXPORT_FUNC void allocateRecordingBuffers(unsigned int timesteps);" << std::endl;
         definitions << "EXPORT_FUNC void pullRecordingBuffersFromDevice();" << std::endl;
     }
-    definitions << "EXPORT_FUNC void allocateMem();" << std::endl;
+    definitions << "EXPORT_FUNC void allocateMem(" << backend.getAllocateMemParams(modelMerged) << ");" << std::endl;
     definitions << "EXPORT_FUNC void freeMem();" << std::endl;
     definitions << "EXPORT_FUNC size_t getFreeDeviceMemBytes();" << std::endl;
     definitions << "EXPORT_FUNC void stepTime();" << std::endl;
