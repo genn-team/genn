@@ -42,6 +42,7 @@ enum class DeviceSelect
     OPTIMAL,        //!< Pick optimal device based on how well kernels can be simultaneously simulated and occupancy
     MOST_MEMORY,    //!< Pick device with most global memory
     MANUAL,         //!< Use device specified by user
+    MANUAL_RUNTIME, //!< Use device specified by user at runtime with allocateMem parameter. Optimisation will be performed on device specified with manualDeviceID.
 };
 
 //--------------------------------------------------------------------------
@@ -235,6 +236,9 @@ public:
     virtual void genMSBuildItemDefinitions(std::ostream &os) const override;
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const override;
     virtual void genMSBuildImportTarget(std::ostream &os) const override;
+
+    //! Get backend-specific allocate memory parameters
+    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const override;
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }

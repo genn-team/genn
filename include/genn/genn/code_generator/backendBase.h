@@ -323,6 +323,9 @@ public:
     virtual void genMSBuildCompileModule(const std::string &moduleName, std::ostream &os) const = 0;
     virtual void genMSBuildImportTarget(std::ostream &os) const = 0;
 
+    //! Get backend-specific allocate memory parameters
+    virtual std::string getAllocateMemParams(const ModelSpecMerged &) const { return ""; }
+
     //! Get list of files to copy into generated code
     /*! Paths should be relative to share/genn/backends/ */
     virtual std::vector<filesystem::path> getFilesToCopy(const ModelSpecMerged&) const{ return {}; }
