@@ -99,7 +99,7 @@ public:
     virtual std::string getPreDynamicsCode() const{ return ""; }
 
     //! Gets code to be run after postsynaptic neuron update
-    /*! This is typically for the code to update postsynaptic variables. Postsynaptic
+    /*! This is typically for the code to update postsynaptic variables. Presynaptic
         and synapse variables are not accesible from within this code */
     virtual std::string getPostDynamicsCode() const{ return ""; }
 
