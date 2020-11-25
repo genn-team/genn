@@ -3,6 +3,7 @@
 // Implement value initialization snippets
 IMPLEMENT_SNIPPET(InitVarSnippet::Uninitialised);
 IMPLEMENT_SNIPPET(InitVarSnippet::Constant);
+IMPLEMENT_SNIPPET(InitVarSnippet::Kernel);
 IMPLEMENT_SNIPPET(InitVarSnippet::Uniform);
 IMPLEMENT_SNIPPET(InitVarSnippet::Normal);
 IMPLEMENT_SNIPPET(InitVarSnippet::NormalClipped);
@@ -17,4 +18,9 @@ bool InitVarSnippet::Base::canBeMerged(const Base *other) const
 {
     return (Snippet::Base::canBeMerged(other)
             && (getCode() == other->getCode()));
+}
+//----------------------------------------------------------------------------
+bool InitVarSnippet::Base::requiresKernel() const
+{
+    return (getCode().find("$(id_kernel)") != std::string::npos);
 }

@@ -105,6 +105,12 @@ public:
         and only applies to extra global parameters which are pointers. */
     void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
+    //! Enables and disable spike recording for this population
+    void setSpikeRecordingEnabled(bool enabled) { m_SpikeRecordingEnabled = enabled; }
+    
+    //! Enables and disable spike event recording for this population
+    void setSpikeEventRecordingEnabled(bool enabled) { m_SpikeEventRecordingEnabled = enabled; }
+
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -150,12 +156,20 @@ public:
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
 
+    //! Is spike recording enabled for this population?
+    bool isSpikeRecordingEnabled() const { return m_SpikeRecordingEnabled; }
+
+    //! Is spike event recording enabled for this population?
+    bool isSpikeEventRecordingEnabled() const { return m_SpikeEventRecordingEnabled; }
+
     //! Does this neuron group require an RNG to simulate?
     bool isSimRNGRequired() const;
 
     //! Does this neuron group require an RNG for it's init code?
     bool isInitRNGRequired() const;
 
+    //! Does this neuron group require any sort of recording?
+    bool isRecordingEnabled() const;
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
@@ -164,7 +178,8 @@ protected:
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
         m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+        m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
     {
     }
 
@@ -275,4 +290,10 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Is spike recording enabled for this population?
+    bool m_SpikeRecordingEnabled;
+
+    //! Is spike event recording enabled?
+    bool m_SpikeEventRecordingEnabled;
 };

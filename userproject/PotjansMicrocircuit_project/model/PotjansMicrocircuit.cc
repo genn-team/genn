@@ -97,7 +97,7 @@ void modelDefinition(NNmodel &model)
             model.addCurrentSource<CurrentSourceModels::PoissonExp>(popName + "_poisson", popName,
                                                                     poissonParams, poissonInit);
             // Make recordable on host
-            neuronPop->setSpikeLocation(VarLocation::HOST_DEVICE);
+            neuronPop->setSpikeRecordingEnabled(true);
             std::cout << "\tPopulation " << popName << ": num neurons:" << popSize << ", external weight:" << extWeight << ", external input rate:" << extInputRate << std::endl;
 
             // Add number of neurons to total

@@ -25,8 +25,11 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
+    //! Can this var init snippet be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
+
+    //! Does this var init snippet require kernel-based connectivity
+    bool requiresKernel() const;
 };
 
 //----------------------------------------------------------------------------
@@ -57,6 +60,19 @@ public:
     SET_CODE("$(value) = $(constant);");
 
     SET_PARAM_NAMES({"constant"});
+};
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::Kernel
+//----------------------------------------------------------------------------
+//! Used to initialise synapse variables from a kernel
+class Kernel : public Base
+{
+    DECLARE_SNIPPET(InitVarSnippet::Kernel, 0);
+
+    SET_CODE("$(value) = $(kernel)[$(id_kernel)];");
+
+    SET_EXTRA_GLOBAL_PARAMS({{"kernel", "scalar*"}});
 };
 
 //----------------------------------------------------------------------------

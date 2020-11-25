@@ -71,8 +71,8 @@ Therefore, in order to maximise performance, we recommend you do not use automat
 - `pull<neuron name>SpikeTimesFromDevice()`
 - `push<neuron name>CurrentSpikesToDevice()`
 - `pull<neuron name>CurrentSpikesFromDevice()`
-- `push<neuron name>CurrentSpikesEventsToDevice()`
-- `pull<neuron name>CurrentSpikesEventsFromDevice()`
+- `push<neuron name>CurrentSpikeEventsToDevice()`
+- `pull<neuron name>CurrentSpikeEventsFromDevice()`
 - `pull<synapse name>ConnectivityFromDevice()`
 - `push<synapse name>ConnectivityToDevice()`
 - `pull<var name><neuron or synapse name>FromDevice()`
@@ -153,7 +153,16 @@ $(V)+= (-$(V)+$(Isyn))*DT
 - \c sT : This is a neuron variable containing the last spike time of each neuron and is automatically generated for pre and postsynaptic neuron groups if they are connected using a synapse population with a weight update model that has SET_NEEDS_PRE_SPIKE_TIME(true) or SET_NEEDS_POST_SPIKE_TIME(true) set.
 
 In addition to these variables, neuron variables can be referred to in the synapse models by calling $(\<neuronVarName\>_pre) for the presynaptic neuron population, and $(\<neuronVarName\>_post) for the postsynaptic population. For example, \$(sT_pre), \$(sT_post), \$(V_pre), etc.
- 
+
+\section spikeRecording Spike Recording
+Especially in models simulated with small timesteps, very few spikes may be emitted every timestep, making calling ``pull<neuron name>CurrentSpikesFromDevice()`` or ``pull<neuron name>SpikesFromDevice()`` every timestep very inefficient.
+Instead, the spike recording system allows spikes and spike-like events emitted over a number of timesteps to be collected in GPU memory before transferring to the host.
+Spike recording can be enabled on chosen neuron groups with the ``NeuronGroup::setSpikeRecordingEnabled`` and ``NeuronGroup::setSpikeEventRecordingEnabled`` methods.
+Remaining GPU memory can then be allocated at runtime for spike recording by calling ``allocateRecordingBuffers(<number of timesteps>)`` from user code.
+The data structures can then be copied from the GPU to the host using the ``pullRecordingBuffersFromDevice()`` function and the spikes emitted by a population can be accessed in bitmask form via the ``recordSpk<neuron name>`` variable.
+Similarly, spike-like events emitted by a population can be accessed via the ``recordSpkEvent<neuron name>`` variable.
+To make decoding the bitmask data structure easier, the ``::writeBinarySpikeRecording`` and ``::writeTextSpikeRecording`` helper functions can be used by including spikeRecorder.h in the user code.
+
 \section Debugging Debugging suggestions
 In Linux, users can call `cuda-gdb` to debug on the GPU. Example projects in the `userproject` directory come with a flag to enable debugging (--debug). genn-buildmodel.sh has a debug flag (-d) to generate debugging data.
 If you are executing a project with debugging on, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb,

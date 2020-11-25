@@ -59,7 +59,7 @@ from .genn_wrapper.InitSparseConnectivitySnippet import Init
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
                                    EGPVector, ParamValVector,
                                    DerivedParamVector)
-from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf
+from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf, make_cksf
 from .genn_wrapper.StlContainers import StringVector
 from .genn_wrapper import VarLocation_HOST_DEVICE
 from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
@@ -524,7 +524,7 @@ class GeNNModel(object):
         self._built = True
         return mem_alloc
 
-    def load(self, path_to_model="./"):
+    def load(self, path_to_model="./", num_recording_timesteps=None):
         """import the model as shared library and initialize it"""
         if self._loaded:
             raise Exception("GeNN model already loaded")
@@ -533,6 +533,16 @@ class GeNNModel(object):
         self._slm.open(self._path_to_model, self.model_name)
 
         self._slm.allocate_mem()
+
+        # If model uses recording system
+        if self._model.is_recording_in_use():
+            # Raise exception if recording timesteps is not set
+            if num_recording_timesteps is None:
+                raise Exception("Cannot use recording system without passing "
+                                "number of recording timesteps to GeNNModel.load")
+            
+            # Allocate recording buffers
+            self._slm.allocate_recording_buffers(num_recording_timesteps)
 
         # Loop through synapse populations and load any 
         # extra global parameters required for initialization
@@ -553,7 +563,7 @@ class GeNNModel(object):
 
         # Loop through neuron populations
         for pop_data in itervalues(self.neuron_populations):
-            pop_data.load()
+            pop_data.load(num_recording_timesteps)
 
         # Loop through synapse populations
         for pop_data in itervalues(self.synapse_populations):
@@ -683,6 +693,17 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_extra_global_param(pop_name, egp_name, size)
+
+    def pull_recording_buffers_from_device(self):
+        """Pull recording buffers from device"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling recording buffers")
+        
+        if not self._model.is_recording_in_use():
+            raise Exception("Cannot pull recording buffer if recording system is not in use")
+            
+        # Pull recording buffers from device
+        self._slm.pull_recording_buffers_from_device()
 
     def end(self):
         """Free memory"""
@@ -1197,6 +1218,23 @@ def create_cmlf_class(cml_func):
 
     return type("", (cmlf,), {"__init__": ctor, "__call__": call})
 
+def create_cksf_class(cks_func):
+    """Helper function to create function class for calculating sizes 
+    of kernels from connectivity initialiser parameters 
+
+    Args:
+    cks_func -- a function which computes the kernel size and takes
+                one arg "pars" (vector of double)
+    """
+    cksf = genn_wrapper.InitSparseConnectivitySnippet.CalcKernelSizeFunc
+
+    def ctor(self):
+        cksf.__init__(self)
+
+    def call(self, pars):
+        return cks_func(pars)
+
+    return type("", (cksf,), {"__init__": ctor, "__call__": call})
 
 def create_custom_init_var_snippet_class(class_name, param_names=None,
                                          derived_params=None,
@@ -1254,6 +1292,7 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
                                                     row_build_state_vars=None,
                                                     calc_max_row_len_func=None,
                                                     calc_max_col_len_func=None,
+                                                    calc_kernel_size_func=None,
                                                     extra_global_params=None,
                                                     custom_body=None):
     """This helper function creates a custom
@@ -1284,6 +1323,8 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     calc_max_col_len_func   --  instance of class inheriting from
                                 CalcMaxLengthFunc used to calculate maximum
                                 col length of synaptic matrix
+    calc_kernel_size_func   --  instance of class inheriting from CalcKernelSizeFunc
+                                used to calculate kernel dimensions
     extra_global_params     --  list of pairs of strings with names and
                                 types of additional parameters
     custom_body             --  dictionary with additional attributes and
@@ -1310,6 +1351,9 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     if calc_max_col_len_func is not None:
         body["get_calc_max_col_length_func"] = \
             lambda self: make_cmlf(calc_max_col_len_func)
+    if calc_kernel_size_func is not None:
+        body["get_calc_kernel_size_func"] = \
+            lambda self: make_cksf(calc_kernel_size_func)
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \

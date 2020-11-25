@@ -1,4 +1,13 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.3.3 (PyGeNN 0.4.3)
+====
+This release fixes several small issues found in the 4.3.2 release.
+
+Bug fixes:
+----
+1. Fixed bug in bitmask connectivity and procedural connectivity kernels.
+2. Fixed issues with setting model precision in PyGeNN. Time precision can now be set seperately using the ``time_precision`` option to the ``pygenn.genn_model.GeNNModel`` constructor.
+
 Release Notes for GeNN v4.3.2 (PyGeNN 0.4.2)
 ====
 This release fixes several small issues found in the 4.3.1 release.
