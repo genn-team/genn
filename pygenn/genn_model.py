@@ -948,6 +948,8 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                       event_threshold_condition_code=None,
                                       pre_spike_code=None,
                                       post_spike_code=None,
+                                      pre_dynamics_code=None,
+                                      post_dynamics_code=None,
                                       sim_support_code=None,
                                       learn_post_support_code=None,
                                       synapse_dynamics_suppport_code=None,
@@ -993,6 +995,10 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                         spiking presynaptic neuron
     post_spike_code                 --  string with the code run once per
                                         spiking postsynaptic neuron
+    pre_dynamics_code               --  string with the code run every
+                                        timestep on presynaptic neuron
+    post_dynamics_code              --  string with the code run every
+                                        timestep on postsynaptic neuron
     sim_support_code                --  string with simulation support code
     learn_post_support_code         --  string with support code for
                                         learn_synapse_post kernel/function
@@ -1033,6 +1039,12 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     if post_spike_code is not None:
         body["get_post_spike_code"] = lambda self: dedent(post_spike_code)
+
+    if pre_dynamics_code is not None:
+        body["get_pre_dynamics_code"] = lambda self: dedent(pre_dynamics_code)
+
+    if post_dynamics_code is not None:
+        body["get_post_dynamics_code"] = lambda self: dedent(post_dynamics_code)
 
     if sim_support_code is not None:
         body["get_sim_support_code"] = lambda self: dedent(sim_support_code)

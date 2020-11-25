@@ -264,8 +264,8 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         SynapseGroupInternal *a = inSyn.back();
         inSyn.pop_back();
 
-        // Add A to vector of merged incoming synape populations - initially only merged with itself
-        m_MergedInSyn.emplace_back(a, std::vector<SynapseGroupInternal*>{a});
+        // Add A to vector of merged incoming synape populations
+        m_MergedInSyn.push_back(a);
 
         // Continue if merging of postsynaptic models is disabled
         if(!merge) {
@@ -283,19 +283,20 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
 
         // Loop through remainder of incoming synapse populations
+        bool anyMerged = false;
         for(auto b = inSyn.begin(); b != inSyn.end();) {
             // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
             if(a->canPSBeLinearlyCombined(**b)) {
                 LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
-
-                // Add to list of merged synapses
-                m_MergedInSyn.back().second.push_back(*b);
 
                 // Set b's merge target to our unique name
                 (*b)->setPSModelMergeTarget(mergedPSMName);
 
                 // Remove from temporary vector
                 b = inSyn.erase(b);
+
+                // Set flag
+                anyMerged = true;
             }
             // Otherwise, advance to next synapse group
             else {
@@ -305,7 +306,7 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         }
 
         // If synapse group A was successfully merged with anything, set it's merge target to the unique name
-        if(m_MergedInSyn.back().second.size() > 1) {
+        if(anyMerged) {
             a->setPSModelMergeTarget(mergedPSMName);
         }
     }
@@ -315,7 +316,11 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getInSynWithPostCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
     std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPostSpikeCode().empty(); });
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return (!sg->getWUModel()->getPostSpikeCode().empty()
+                             || !sg->getWUModel()->getPostDynamicsCode().empty());
+                 });
     return vec;
 }
 //----------------------------------------------------------------------------
@@ -323,7 +328,11 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getOutSynWithPreCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(vec),
-                 [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getPreSpikeCode().empty(); });
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return (!sg->getWUModel()->getPreSpikeCode().empty()
+                             || !sg->getWUModel()->getPreDynamicsCode().empty());
+                });
     return vec;
 }
 //----------------------------------------------------------------------------
@@ -354,8 +363,17 @@ void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInte
                                                 {
                                                     return (code.find("$(" + egp.name + ")") != std::string::npos);
                                                 });
+
+    // Determine if any presynaptic variables are required by threshold code
+    const auto wuPreVars = wu->getPreVars();
+    const bool preVarInThresholdCode = std::any_of(wuPreVars.cbegin(), wuPreVars.cend(),
+                                                   [&code](const Models::Base::Var &var)
+                                                   {
+                                                       return (code.find("$(" + var.name + ")") != std::string::npos);
+                                                   });
+
     // Add threshold, support code, synapse group and whether egps are required to set
-    m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode, synapseGroup);
+    m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode || preVarInThresholdCode, synapseGroup);
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isVarQueueRequired(const std::string &var) const
@@ -412,10 +430,9 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
         // Check if, by reshuffling, all merged incoming synapses are compatible
         auto otherMergedInSyn = other.getMergedInSyn();
         if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
-                                     [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &a,
-                                        const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &b)
+                                     [](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
                                      {
-                                         return a.first->canPSBeMerged(*b.first);
+                                         return a->canPSBeMerged(*b);
                                      }))
         {
             return false;
@@ -479,10 +496,9 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         // If both groups have the same number of incoming synapse groups after merging
         auto otherMergedInSyn = other.getMergedInSyn();
         if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
-                                     [](const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &a,
-                                        const std::pair<SynapseGroupInternal*, std::vector<SynapseGroupInternal*>> &b)
+                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
                                      {
-                                         return a.first->canPSInitBeMerged(*b.first);
+                                         return a->canPSInitBeMerged(*b);
                                      }))
         {
             return false;

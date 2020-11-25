@@ -657,7 +657,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::vector<std::vector<std::pair<SynapseGroupInternal *, std::vector<SynapseGroupInternal *>>>> m_SortedMergedInSyns;
+    std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedInSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
 };
 
