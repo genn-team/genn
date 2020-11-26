@@ -82,7 +82,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
             subs.addVarNameSubstitution(vars, "", "l");
 
             const std::string offset = ng.getArchetype().isDelayRequired() ? "readDelayOffset + " : "";
-            neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, "", subs["id"], sourceSuffix, "", "", "", useLocalNeuronVars,
+            neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, offset, "", subs["id"], sourceSuffix, "", "", "", useLocalNeuronVars,
                                               [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
                                               [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
 

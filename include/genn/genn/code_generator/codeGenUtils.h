@@ -94,15 +94,15 @@ GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportC
 //-------------------------------------------------------------------------
 template<typename P, typename D>
 void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
-                                       const std::string &offset, const std::string &delayOffset, const std::string &idx, 
-                                       const std::string &sourceSuffix, const std::string &destSuffix, 
+                                       const std::string &offset, const std::string &spikeTimeOffset, const std::string &delayOffset,
+                                       const std::string &idx, const std::string &sourceSuffix, const std::string &destSuffix, 
                                        const std::string &varPrefix, const std::string &varSuffix, bool useLocalNeuronVars,
                                        P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
 
     // Substitute spike times
     substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + spikeTimeOffset + idx + "]" + varSuffix + ")");
 
     // Substitute neuron variables
     const auto *nm = archetypeNG->getNeuronModel();

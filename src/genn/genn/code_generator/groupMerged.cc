@@ -880,6 +880,22 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot
     }
 }
 //----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticSpikeTimeAxonalDelaySlot() const
+{
+    // If we should reset spike times after update, always read from previous delay slot
+    if(getArchetype().getWUModel()->shouldResetSpikeTimesAfterUpdate()) {
+        assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
+
+        const unsigned int numDelaySteps = getArchetype().getDelaySteps();
+        const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
+        return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ")";
+    }
+    // Otherwise, treat spike times exactly the same as other variables
+    else {
+        return getPresynapticAxonalDelaySlot();
+    }
+}
+//----------------------------------------------------------------------------
 std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot() const
 {
     assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
@@ -891,6 +907,22 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelayS
     else {
         const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
         return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
+    }
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticSpikeTimeBackPropDelaySlot() const
+{
+    // If we should reset spike times after update, always read from previous delay slot
+    if(getArchetype().getWUModel()->shouldResetSpikeTimesAfterUpdate()) {
+        assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
+
+        const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
+        const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
+        return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ")";
+    }
+     // Otherwise, treat spike times exactly the same as other variables
+    else {
+        return getPostsynapticBackPropDelaySlot();
     }
 }
 //----------------------------------------------------------------------------
