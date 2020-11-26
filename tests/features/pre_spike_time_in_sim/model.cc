@@ -70,7 +70,7 @@ void modelDefinition(ModelSpec &model)
 
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
         "syn", SynapseMatrixType::SPARSE_INDIVIDUALG, 20, "pre", "post",
-        {}, WeightUpdateModel::VarValues(0.0),
+        {}, WeightUpdateModel::VarValues(-std::numeric_limits<float>::max()),
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>({}));
 

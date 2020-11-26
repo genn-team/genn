@@ -32,17 +32,18 @@ public:
                 // Loop through neurons
                 for(unsigned int i = 0; i < 10; i++) {
                     // Calculate time of spikes we SHOULD be reading
-                    // **NOTE** we delay by 21 timesteps because:
+                    // **NOTE** we delay by 11 timesteps because:
                     // 1) delay = 20
-                    // 2) presynaptic kernel reads spike times from PREVIOUS timestep
-                    const float delayedTime = (scalar)i + 21.0f + (10.0f * std::floor((t - 22.0f - (scalar)i) / 10.0f));
-                    
-                    // If, theoretically, spike would have arrived before delay wsyn won't have been updated so should be zero
-                    if(delayedTime < 21.0f) {
-                        ASSERT_FLOAT_EQ(wsyn[i], 0.0);
+                    // 2) PREVIOUS spike occurred 10 timesteps before
+                    // 3) t is incremented one timestep at the end of StepGeNN
+                    const float delayedLastSpikeTime = (scalar)i + 11.0f + (10.0f * std::floor((t - 22.0f - (scalar)i) / 10.0f));
+                 
+                    // If, theoretically, spike would have arrived before delay it's impossible so time should be a very large negative number
+                    if(delayedLastSpikeTime < 21.0f) {
+                        ASSERT_LT(wsyn[i], -1.0E6);
                     }
                     else {
-                        ASSERT_FLOAT_EQ(wsyn[i], delayedTime);
+                        ASSERT_FLOAT_EQ(wsyn[i], delayedLastSpikeTime);
                     }
                 }
             }
@@ -50,7 +51,7 @@ public:
     }
 };
 
-TEST_F(SimTest, PreSpikeTimeInPostLearn)
+TEST_F(SimTest, PreSpikeTimeInSim)
 {
     Simulate();
 }
