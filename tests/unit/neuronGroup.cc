@@ -38,31 +38,6 @@ public:
 };
 IMPLEMENT_MODEL(WeightUpdateModelPre);
 
-class WeightUpdateOldSpikeReset : public WeightUpdateModels::Base
-{
-public:
-    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateOldSpikeReset, 0, 1, 0, 0);
-
-    SET_VARS({{"w", "scalar"}});
-
-    SET_SIM_CODE("$(w)= $(sT_pre);\n");
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-};
-IMPLEMENT_MODEL(WeightUpdateOldSpikeReset);
-
-class WeightUpdateNewSpikeReset : public WeightUpdateModels::Base
-{
-public:
-    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateNewSpikeReset, 0, 1, 0, 0);
-
-    SET_VARS({{"w", "scalar"}});
-
-    SET_SIM_CODE("$(w)= $(sT_pre);\n");
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_RESET_SPIKE_TIMES_AFTER_UPDATE(true);
-};
-IMPLEMENT_MODEL(WeightUpdateNewSpikeReset);
-
 class AlphaCurr : public PostsynapticModels::Base
 {
 public:
@@ -658,57 +633,4 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     // Check that parameter is heterogeneous
     ASSERT_TRUE(wumPostMergedUpdateGroup->isInSynWUMParamHeterogeneous(0, 0));
     ASSERT_TRUE(wumPostMergedInitGroup->isInSynWUMVarInitParamHeterogeneous(0, 0, 0));
-}
-
-
-TEST(NeuronGroup, CompatibleSpikeReset)
-{
-    ModelSpecInternal model;
-
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(uninitialisedVar(), uninitialisedVar());
-    NeuronGroup *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    NeuronGroup *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
-
-    WeightUpdateNewSpikeReset::VarValues testVarVals(0.0);
-  
-    // Connect neuron group Pre to Post with two compatible weight update models
-    model.addSynapsePopulation<WeightUpdateNewSpikeReset, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                         "Pre", "Post",
-                                                                                         {}, testVarVals, {}, {},
-                                                                                         {}, {});
-    model.addSynapsePopulation<WeightUpdateNewSpikeReset, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                         "Pre", "Post",
-                                                                                         {}, testVarVals, {}, {},
-                                                                                         {}, {});
-    model.finalize();
-}
-
-
-TEST(NeuronGroup, IncompatibleSpikeReset)
-{
-    ModelSpecInternal model;
-
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(uninitialisedVar(), uninitialisedVar());
-    NeuronGroup *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    NeuronGroup *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
-
-    WeightUpdateNewSpikeReset::VarValues testVarVals(0.0);
-  
-    // Connect neuron group Pre to Post with two incompatible weight update models
-    model.addSynapsePopulation<WeightUpdateNewSpikeReset, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                         "Pre", "Post",
-                                                                                         {}, testVarVals, {}, {},
-                                                                                         {}, {});
-    try {
-        model.addSynapsePopulation<WeightUpdateOldSpikeReset, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-                                                                                             "Pre", "Post",
-                                                                                             {}, testVarVals, {}, {},
-                                                                                             {}, {});
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
-    model.finalize();
 }
