@@ -173,6 +173,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
                 os << popSubs["id"] << "];" << std::endl;
             }
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                os <<  "const " << model.getTimePrecision() << " lprevSET = group->prevSET[";
+                if (ng.getArchetype().isDelayRequired()) {
+                    os << "readDelayOffset + ";
+                }
+                os << popSubs["id"] << "];" << std::endl;
+            }
             os << std::endl;
 
             // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
@@ -199,6 +206,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             }
             if(ng.getArchetype().isSpikeEventTimeRequired()) {
                 neuronSubs.addVarSubstitution("seT", "lseT");
+            }
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                neuronSubs.addVarSubstitution("prev_seT", "lprevSET");
             }
             neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
             addNeuronModelSubstitutions(neuronSubs, ng);
@@ -454,11 +464,16 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
 
                 // If spike-like-event timing is required and they aren't updated after update, copy spime-like-event time from register
-                if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isSpikeEventTimeRequired()) {
+                if(ng.getArchetype().isDelayRequired() && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeTimeRequired())) {
                     os << "else";
                     CodeStream::Scope b(os);
 
-                    os << "group->seT[writeDelayOffset + " << popSubs["id"] << "] = lseT;" << std::endl;
+                    if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                        os << "group->seT[writeDelayOffset + " << popSubs["id"] << "] = lseT;" << std::endl;
+                    }
+                    if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        os << "group->prevSET[writeDelayOffset + " << popSubs["id"] << "] = lprevSET;" << std::endl;
+                    }
                 }
             }
 

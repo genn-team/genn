@@ -152,6 +152,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             os << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
                             {
                                 CodeStream::Scope b(os);
+                                os << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
                             }
                         }
                         if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
@@ -159,6 +160,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             os << "for(unsigned int i = 0; i < group->spkCntEvnt[0]; i++)";
                             {
                                 CodeStream::Scope b(os);
+                                os << "group->prevSET[group->spkEvnt[i]] = t - DT;" << std::endl;
                             }
                         }
                     }

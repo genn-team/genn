@@ -446,7 +446,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                     os << "group->spkEvnt[" << queueOffset << "shPosSpkEvnt + " << getThreadID() << "] = n;" << std::endl;
                     if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                        os << "group->sleT[" << queueOffset << "n] = t;" << std::endl;
+                        os << "group->seT[" << queueOffset << "n] = t;" << std::endl;
                     }
                 }
             }
@@ -749,7 +749,7 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
             if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                 os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
 
-                if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired()) {
+                if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
                     os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
                 }
             }
