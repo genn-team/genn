@@ -31,6 +31,7 @@
 
 #define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }
 #define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }
+#define SET_NEEDS_PRE_SPIKE_EVENT_TIME(PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPreSpikeEventTimeRequired() const override{ return PRE_SPIKE_EVENT_TIME_REQUIRED; }
 #define SET_RESET_SPIKE_TIMES_AFTER_UPDATE(RESET_SPIKE_TIMES_AFTER_UPDATE) virtual bool shouldResetSpikeTimesAfterUpdate() const override{ return RESET_SPIKE_TIMES_AFTER_UPDATE; }
 
 //----------------------------------------------------------------------------
@@ -117,6 +118,9 @@ public:
 
     //! Whether postsynaptic spike times are needed or not
     virtual bool isPostSpikeTimeRequired() const{ return false; }
+
+    //! Whether presynaptic spike-like-event times are needed or not
+    virtual bool isPreSpikeEventTimeRequired() const { return false;  }
 
     //! Previously, spike times were set when neurons spike meaning that 
     //! they couldn't be used in synapse code to determine time of last spike.

@@ -33,10 +33,16 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
         addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
     }
 
-    if(getArchetype().isSpikeTimeRequired() && getArchetype().shouldResetSpikeTimesAfterUpdate()) {
-        addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
+    if(getArchetype().shouldResetSpikeTimesAfterUpdate() && (getArchetype().isSpikeTimeRequired() || getArchetype().isSpikeEventTimeRequired())) {
+        if(getArchetype().isSpikeTimeRequired()) {
+            addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
+            addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
+        }
 
-        addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
+        if(getArchetype().isSpikeEventTimeRequired()) {
+            addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
+            addPointerField(timePrecision, "seT", backend.getDeviceVarPrefix() + "seT");
+        }
 
         if(getArchetype().isDelayRequired()) {
             addField("unsigned int", "numNeurons",
@@ -237,6 +243,9 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
 
     if(getArchetype().isSpikeTimeRequired()) {
         addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
+    }
+    if(getArchetype().isSpikeEventTimeRequired()) {
+        addPointerField(timePrecision, "seT", backend.getDeviceVarPrefix() + "seT");
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
@@ -1200,6 +1209,9 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         // Add spike times if required
         if(wum->isPreSpikeTimeRequired()) {
             addSrcPointerField(timePrecision, "sTPre", backend.getDeviceVarPrefix() + "sT");
+        }
+        if(wum->isPreSpikeEventTimeRequired()) {
+            addSrcPointerField(timePrecision, "seTPre", backend.getDeviceVarPrefix() + "seT");
         }
         if(wum->isPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");

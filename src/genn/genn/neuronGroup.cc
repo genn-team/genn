@@ -92,9 +92,16 @@ bool NeuronGroup::isSpikeTimeRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isSpikeEventTimeRequired() const
+{
+    // If any OUTGOING synapse groups require PRESYNAPTIC spike-like event times, return true
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](SynapseGroup *sg) { return sg->getWUModel()->isPreSpikeEventTimeRequired(); });
+}
+//----------------------------------------------------------------------------
 bool NeuronGroup::shouldResetSpikeTimesAfterUpdate() const
 {
-    assert(isSpikeTimeRequired());
+    assert(isSpikeTimeRequired() || isSpikeEventTimeRequired());
 
     // Find first inSyn requiring spike times from this neuron group
     const auto inSyn = std::find_if(getInSyn().cbegin(), getInSyn().cend(), 
@@ -108,7 +115,7 @@ bool NeuronGroup::shouldResetSpikeTimesAfterUpdate() const
 
     // Find first outSyn requiring spike times from this neuron group
     const auto outSyn = std::find_if(getOutSyn().cbegin(), getOutSyn().cend(),
-                                     [](SynapseGroup *sg) { return sg->getWUModel()->isPreSpikeTimeRequired(); });
+                                     [](SynapseGroup *sg) { return sg->getWUModel()->isPreSpikeTimeRequired() || sg->getWUModel()->isPreSpikeEventTimeRequired(); });
 
     // Check one is found
     // **NOTE** because spike times must be required to call this method, 
@@ -586,7 +593,8 @@ bool NeuronGroup::checkSpikeTimeReset(bool resetSpikeTimesAfterUpdate) const
     if(std::any_of(m_InSyn.cbegin(), m_InSyn.cend(),
                    [resetSpikeTimesAfterUpdate](SynapseGroupInternal *sg)
                    {
-                        return sg->getWUModel()->isPostSpikeTimeRequired() && sg->getWUModel()->shouldResetSpikeTimesAfterUpdate() != resetSpikeTimesAfterUpdate;
+                        const auto *wum = sg->getWUModel();
+                        return wum->isPostSpikeTimeRequired() && wum->shouldResetSpikeTimesAfterUpdate() != resetSpikeTimesAfterUpdate;
                    }))
     {
         return false;
@@ -596,7 +604,8 @@ bool NeuronGroup::checkSpikeTimeReset(bool resetSpikeTimesAfterUpdate) const
     if(std::any_of(m_OutSyn.cbegin(), m_OutSyn.cend(),
                    [resetSpikeTimesAfterUpdate](SynapseGroupInternal *sg)
                    {
-                       return sg->getWUModel()->isPreSpikeTimeRequired() && sg->getWUModel()->shouldResetSpikeTimesAfterUpdate() != resetSpikeTimesAfterUpdate;
+                       const auto *wum = sg->getWUModel();
+                       return (wum->isPreSpikeTimeRequired() ||wum->isPreSpikeEventTimeRequired()) && wum->shouldResetSpikeTimesAfterUpdate() != resetSpikeTimesAfterUpdate;
                    }))
     {
         return false;

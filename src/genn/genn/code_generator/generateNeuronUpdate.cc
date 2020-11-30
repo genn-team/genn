@@ -151,9 +151,16 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 os << popSubs["id"] << "];" << std::endl;
             }
     
-            // Also read spike time into local variable
+            // Also read spike and spike-like-event times into local variables if required
             if(ng.getArchetype().isSpikeTimeRequired()) {
-                os << model.getTimePrecision() << " lsT = group->sT[";
+                os << "const " << model.getTimePrecision() << " lsT = group->sT[";
+                if (ng.getArchetype().isDelayRequired()) {
+                    os << "readDelayOffset + ";
+                }
+                os << popSubs["id"] << "];" << std::endl;
+            }
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                os <<  "const " << model.getTimePrecision() << " lseT = group->seT[";
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -176,7 +183,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             Substitutions neuronSubs(&popSubs);
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
-            neuronSubs.addVarSubstitution("sT", "lsT");
+
+            if(ng.getArchetype().isSpikeTimeRequired()) {
+                neuronSubs.addVarSubstitution("sT", "lsT");
+            }
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                neuronSubs.addVarSubstitution("seT", "lseT");
+            }
             neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
             addNeuronModelSubstitutions(neuronSubs, ng);
 
@@ -428,6 +441,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 {
                     CodeStream::Scope b(os);
                     genEmitSpikeLikeEvent(os, ng, popSubs);
+                }
+
+                // If spike-like-event timing is required and they aren't updated after update, copy spime-like-event time from register
+                if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isSpikeEventTimeRequired()) {
+                    os << "else";
+                    CodeStream::Scope b(os);
+
+                    os << "group->seT[writeDelayOffset + " << popSubs["id"] << "] = lseT;" << std::endl;
                 }
             }
 
