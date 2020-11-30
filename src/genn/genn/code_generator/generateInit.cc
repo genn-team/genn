@@ -245,7 +245,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
 
             // If previous spike times are required
-            if(ng.getArchetype().isPreviousSpikeTimeRequired()) {
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                 // Generate variable initialisation code
                 backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                     [&ng] (CodeStream &os, Substitutions &varSubs)

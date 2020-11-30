@@ -106,7 +106,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
 
         // If neuron group requires previous spike times to be reset after update 
         // i.e. in the pre-neuron reset kernel, add number of neurons to kernel
-        if(n.second.isPreviousSpikeTimeRequired()) {
+        if(n.second.isPrevSpikeTimeRequired()) {
             groupSizes[KernelPreNeuronReset].push_back(n.second.getNumNeurons());
         }
     }

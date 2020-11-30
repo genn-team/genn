@@ -159,7 +159,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
                 os << popSubs["id"] << "];" << std::endl;
             }
-            if(ng.getArchetype().isPreviousSpikeTimeRequired()) {
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                 os << model.getTimePrecision() << " lprevST = group->prevST[";
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
@@ -491,7 +491,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                                                       });
 
                     // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
-                    if(ng.getArchetype().isSpikeTimeRequired() || ng.getArchetype().isPreviousSpikeTimeRequired() || preVars || postVars) {
+                    if(ng.getArchetype().isSpikeTimeRequired() || ng.getArchetype().isPrevSpikeTimeRequired() || preVars || postVars) {
                         os << "else";
                         CodeStream::Scope b(os);
 
@@ -501,7 +501,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                         }
 
                         // If previous spike times are required, copy times from register
-                        if(ng.getArchetype().isPreviousSpikeTimeRequired()) {
+                        if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                             os << "group->prevST[writeDelayOffset + " << popSubs["id"] << "] = lprevST;" << std::endl;
                         }
 

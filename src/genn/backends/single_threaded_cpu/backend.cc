@@ -123,7 +123,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 // If previous spikes times are required
-                if(n.getArchetype().isPreviousSpikeTimeRequired()) {
+                if(n.getArchetype().isPrevSpikeTimeRequired()) {
                     if(n.getArchetype().isDelayRequired()) {
                         // Calculate delay slot corresponding to last timestep
                         os << "const unsigned int lastTimestepDelaySlot = (*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;

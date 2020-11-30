@@ -33,7 +33,7 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
         addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
     }
 
-    if(getArchetype().isPreviousSpikeTimeRequired()) {
+    if(getArchetype().isPrevSpikeTimeRequired()) {
         addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
 
         addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
@@ -239,7 +239,7 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
         addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
     }
 
-    if(getArchetype().isPreviousSpikeTimeRequired()) {
+    if(getArchetype().isPrevSpikeTimeRequired()) {
         addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
     }
 

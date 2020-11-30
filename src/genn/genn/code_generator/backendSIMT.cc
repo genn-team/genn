@@ -198,7 +198,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
         os << "// merged" << n.getIndex() << std::endl;
         
         // If group requires previous spike times resetting here i.e. each group requires multiple threads
-        if(n.getArchetype().isPreviousSpikeTimeRequired()) {
+        if(n.getArchetype().isPrevSpikeTimeRequired()) {
             // Sum padded sizes of each group within merged group
             const size_t paddedSize = std::accumulate(
                     n.getGroups().cbegin(), n.getGroups().cend(), size_t{0},
