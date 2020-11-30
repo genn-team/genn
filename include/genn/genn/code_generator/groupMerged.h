@@ -858,7 +858,7 @@ public:
     std::string getPostsynapticBackPropDelaySlot() const;
 
     //! Get the expression to calculate the delay slot for accessing previous
-    //! Postsynaptic neuron spike times, taking into account back propagation delay
+    //! postsynaptic neuron spike times, taking into account back propagation delay
     std::string getPrevPostsynapticSpikeTimeBackPropDelaySlot() const;
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;

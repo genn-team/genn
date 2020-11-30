@@ -145,6 +145,8 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     }
 
     // Add group sizes for reset kernels
+    // **NOTE** individual pre-neuron reset groups have already been added for neuron groups 
+    // which require previous spike times, just add single big group for remainder here
     groupSizes[KernelPreNeuronReset].push_back(model.getNeuronGroups().size() - groupSizes[KernelPreNeuronReset].size());
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }

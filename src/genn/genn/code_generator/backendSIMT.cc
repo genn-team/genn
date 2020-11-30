@@ -223,8 +223,8 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
 
                 // If neuron group requires delays
                 if(n.getArchetype().isDelayRequired()) {
-                    // If there is a spike for this thread, update spike time to time of last timestep
-                    // **NOTE** spkQuePtr is updated below so this is already for 
+                    // If there is a spike for this thread, set previous spike time to time of last timestep
+                    // **NOTE** spkQuePtr is updated below so this already points to last timestep
                     os << "if(" << popSubs["id"] << " < group->spkCnt[*group->spkQuePtr])";
                     {
                         CodeStream::Scope b(os);
@@ -234,7 +234,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 }
                 // Otherwise
                 else {
-                    // If there is a spike for this thread, update spike time to time of last timestep
+                    // If there is a spike for this thread, set previous spike time to time of last timestep
                     os << "if(" << popSubs["id"] << " < group->spkCnt[0])";
                     {
                         CodeStream::Scope b(os);

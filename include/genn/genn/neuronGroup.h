@@ -96,7 +96,7 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
 
-    //! Set location of this neuron group's output previous spike times
+    //! Set location of this neuron group's previous output spike times
     /*! This is ignored for simulations on hardware with a single memory space */
     void setPrevSpikeTimeLocation(VarLocation loc) { m_PrevSpikeTimeLocation = loc; }
 
@@ -147,7 +147,7 @@ public:
     //! Get location of this neuron group's output spike times
     VarLocation getSpikeTimeLocation() const{ return m_SpikeTimeLocation; }
 
-    //! Get location of this neuron group's output previous spike times
+    //! Get location of this neuron group's previous output spike times
     VarLocation getPrevSpikeTimeLocation() const { return m_PrevSpikeTimeLocation; }
 
     //! Get location of neuron model state variable by name
