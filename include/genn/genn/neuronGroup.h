@@ -96,6 +96,10 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeTimeLocation(VarLocation loc) { m_SpikeTimeLocation = loc; }
 
+    //! Set location of this neuron group's output previous spike times
+    /*! This is ignored for simulations on hardware with a single memory space */
+    void setPreviousSpikeTimeLocation(VarLocation loc) { m_PreviousSpikeTimeLocation = loc; }
+
     //! Set variable location of neuron model state variable
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
@@ -126,7 +130,7 @@ public:
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
-    bool shouldResetSpikeTimesAfterUpdate() const;
+    bool isPreviousSpikeTimeRequired() const;
     bool isTrueSpikeRequired() const;
     bool isSpikeEventRequired() const;
 
@@ -142,6 +146,9 @@ public:
 
     //! Get location of this neuron group's output spike times
     VarLocation getSpikeTimeLocation() const{ return m_SpikeTimeLocation; }
+
+    //! Get location of this neuron group's output previous spike times
+    VarLocation getPreviousSpikeTimeLocation() const { return m_PreviousSpikeTimeLocation; }
 
     //! Get location of neuron model state variable by name
     VarLocation getVarLocation(const std::string &varName) const;
@@ -178,7 +185,7 @@ protected:
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-        m_SpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+        m_SpikeTimeLocation(defaultVarLocation), m_PreviousSpikeTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
     {
@@ -198,8 +205,8 @@ protected:
 
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
-    void addInSyn(SynapseGroupInternal *synapseGroup);
-    void addOutSyn(SynapseGroupInternal *synapseGroup);
+    void addInSyn(SynapseGroupInternal *synapseGroup){ m_InSyn.push_back(synapseGroup); }
+    void addOutSyn(SynapseGroupInternal *synapseGroup){ m_OutSyn.push_back(synapseGroup); }
 
     void initDerivedParams(double dt);
 
@@ -256,10 +263,6 @@ private:
     //! Update which variables require queues based on piece of code
     void updateVarQueues(const std::string &code, const std::string &suffix);
 
-    //! Return false if existing incoming or outgoing synapse groups 
-    //! require spike times to reset at incompatible times
-    bool checkSpikeTimeReset(bool resetSpikeTimesAfterUpdate) const;
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -289,6 +292,9 @@ private:
 
     //! Whether spike times from neuron group should use zero-copied memory
     VarLocation m_SpikeTimeLocation;
+
+    //! Location of previous spike times
+    VarLocation m_PreviousSpikeTimeLocation;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;

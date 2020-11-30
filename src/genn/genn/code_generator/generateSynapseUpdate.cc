@@ -107,9 +107,9 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // Make presynaptic neuron substitutions
     const std::string axonalDelayOffset = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getDelaySteps() + 1u)) + " + ";
     const std::string preOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-    const std::string preSpikeOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preSpikeTimeReadDelayOffset + " : "";
+    const std::string prevPreSpikeOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "prevPreSpikeTimeReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(),
-                                      preOffset, preSpikeOffset, axonalDelayOffset, synapseSubs["id_pre"], "_pre", "Pre", "", "", false,
+                                      preOffset, prevPreSpikeOffset, axonalDelayOffset, synapseSubs["id_pre"], "_pre", "Pre", "", "", false,
                                       [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
                                       [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
 
@@ -117,9 +117,9 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // Make postsynaptic neuron substitutions
     const std::string backPropDelayMs = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u)) + " + ";
     const std::string postOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
-    const std::string postSpikeOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "postSpikeTimeReadDelayOffset + " : "";
+    const std::string prevPostSpikeOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "prevPostSpikeTimeReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getTrgNeuronGroup(),
-                                      postOffset, postSpikeOffset, backPropDelayMs, synapseSubs["id_post"], "_post", "Post", "", "", false,
+                                      postOffset, prevPostSpikeOffset, backPropDelayMs, synapseSubs["id_post"], "_post", "Post", "", "", false,
                                       [&sg](size_t paramIndex) { return sg.isTrgNeuronParamHeterogeneous(paramIndex); },
                                       [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); });
 
@@ -184,8 +184,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
 
             // Get read offset if required and substitute in presynaptic neuron properties
             const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            const std::string preSpikeOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preSpikeTimeReadDelayOffset + " : "";
-            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, preSpikeOffset, "", baseSubs["id_pre"], "_pre", "Pre", "", "", false,
+            const std::string prevPreSpikeOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "prevPreSpikeTimeReadDelayOffset + " : "";
+            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, prevPreSpikeOffset, "", baseSubs["id_pre"], "_pre", "Pre", "", "", false,
                                               [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
                                               [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
             
