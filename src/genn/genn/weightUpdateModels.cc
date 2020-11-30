@@ -23,9 +23,10 @@ bool WeightUpdateModels::Base::canBeMerged(const Base *other) const
             && (getPostSpikeCode() == other->getPostSpikeCode())
             && (getPreVars() == other->getPreVars())
             && (getPostVars() == other->getPostVars())
-            && (isPreSpikeEventTimeRequired() == other->isPreSpikeEventTimeRequired())
             && (isPreSpikeTimeRequired() == other->isPreSpikeTimeRequired())
             && (isPostSpikeTimeRequired() == other->isPostSpikeTimeRequired())
+            && (isPreSpikeEventTimeRequired() == other->isPreSpikeEventTimeRequired())
             && (isPrevPreSpikeTimeRequired() == other->isPrevPreSpikeTimeRequired())
-            && (isPrevPostSpikeTimeRequired() == other->isPrevPostSpikeTimeRequired()));
+            && (isPrevPostSpikeTimeRequired() == other->isPrevPostSpikeTimeRequired())
+            && (isPrevPreSpikeEventTimeRequired() == other->isPrevPreSpikeEventTimeRequired()));
 }

@@ -811,6 +811,23 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                 });
         }
 
+        // If neuron group needs to record its previous spike-like-event times
+        if (n.second.isPrevSpikeEventTimeRequired()) {
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    model.getTimePrecision(), "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(),
+                                    numNeuronDelaySlots);
+
+            // Generate push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeEventTimeLocation(),
+                                backend.getPreferences().automaticCopy, n.first + "PreviousSpikeEventTimes",
+                                [&]()
+                                {
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
+                                                                "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(), true, 
+                                                                numNeuronDelaySlots);
+                                });
+        }
+
         // If neuron group needs per-neuron RNGs
         if(n.second.isSimRNGRequired()) {
             mem += backend.genPopulationRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, "rng" + n.first, n.second.getNumNeurons());

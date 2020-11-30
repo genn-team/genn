@@ -1196,11 +1196,11 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         if(wum->isPreSpikeTimeRequired()) {
             addSrcPointerField(timePrecision, "sTPre", backend.getDeviceVarPrefix() + "sT");
         }
-        if(wum->isPreSpikeEventTimeRequired()) {
-            addSrcPointerField(timePrecision, "seTPre", backend.getDeviceVarPrefix() + "seT");
-        }
         if(wum->isPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
+        }
+        if(wum->isPreSpikeEventTimeRequired()) {
+            addSrcPointerField(timePrecision, "seTPre", backend.getDeviceVarPrefix() + "seT");
         }
         if(wum->isPrevPreSpikeTimeRequired()) {
             addSrcPointerField(timePrecision, "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
@@ -1208,7 +1208,10 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         if(wum->isPrevPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "prevSTPost", backend.getDeviceVarPrefix() + "prevST");
         }
-
+        if(wum->isPrevPreSpikeEventTimeRequired()) {
+            addSrcPointerField(timePrecision, "prevS
+                               ETPre", backend.getDeviceVarPrefix() + "prevSET");
+        }
         // Add heterogeneous weight update model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
             wum->getParamNames(), "",

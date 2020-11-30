@@ -104,9 +104,9 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         // Add number of neurons to initialisation kernel (all neuron groups at least require spike counts initialising)
         groupSizes[KernelInitialize].push_back(n.second.getNumNeurons());
 
-        // If neuron group requires previous spike times to be reset after update 
+        // If neuron group requires previous spike or spike-like-event times to be reset after update 
         // i.e. in the pre-neuron reset kernel, add number of neurons to kernel
-        if(n.second.isPrevSpikeTimeRequired()) {
+        if(n.second.isPrevSpikeTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
             groupSizes[KernelPreNeuronReset].push_back(n.second.getNumNeurons());
         }
     }
@@ -146,7 +146,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
 
     // Add group sizes for reset kernels
     // **NOTE** individual pre-neuron reset groups have already been added for neuron groups 
-    // which require previous spike times, just add single big group for remainder here
+    // which require previous spike or spike-like-event times, just add single big group for remainder here
     groupSizes[KernelPreNeuronReset].push_back(model.getNeuronGroups().size() - groupSizes[KernelPreNeuronReset].size());
     groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
 }

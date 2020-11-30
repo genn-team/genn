@@ -118,6 +118,13 @@ bool NeuronGroup::isSpikeEventTimeRequired() const
                        [](SynapseGroup *sg) { return sg->getWUModel()->isPreSpikeEventTimeRequired(); });
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isPrevSpikeEventTimeRequired() const
+{
+    // If any OUTGOING synapse groups require previous PRESYNAPTIC spike-like event times, return true
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](SynapseGroup *sg) { return sg->getWUModel()->isPrevPreSpikeEventTimeRequired(); });
+}
+//----------------------------------------------------------------------------
 bool NeuronGroup::isTrueSpikeRequired() const
 {
     // If any OUTGOING synapse groups require true spikes, return true

@@ -35,6 +35,7 @@
 
 #define SET_NEEDS_PREV_PRE_SPIKE_TIME(PREV_PRE_SPIKE_TIME_REQUIRED) virtual bool isPrevPreSpikeTimeRequired() const override{ return PREV_PRE_SPIKE_TIME_REQUIRED; }
 #define SET_NEEDS_PREV_POST_SPIKE_TIME(PREV_POST_SPIKE_TIME_REQUIRED) virtual bool isPrevPostSpikeTimeRequired() const override{ return PREV_POST_SPIKE_TIME_REQUIRED; }
+#define SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME(PREV_PRE_SPIKE_EVENT_TIME_REQUIRED) virtual bool isPrevPreSpikeEventTimeRequired() const override{ return PREV_PRE_SPIKE_EVENT_TIME_REQUIRED; }
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::Base
@@ -121,14 +122,17 @@ public:
     //! Whether postsynaptic spike times are needed or not
     virtual bool isPostSpikeTimeRequired() const{ return false; }
 
+    //! Whether presynaptic spike-like-event times are needed or not
+    virtual bool isPreSpikeEventTimeRequired() const { return false;  }
+
     //! Whether PREVIOUS presynaptic spike times are needed or not
     virtual bool isPrevPreSpikeTimeRequired() const{ return false; }
 
     //! Whether PREVIOUS postsynaptic spike times are needed or not
     virtual bool isPrevPostSpikeTimeRequired() const{ return false; }
 
-    //! Whether presynaptic spike-like-event times are needed or not
-    virtual bool isPreSpikeEventTimeRequired() const { return false;  }
+    //! Whether PREVIOUS presynaptic spike-like-event times are needed or not
+    virtual bool isPrevPreSpikeEventTimeRequired() const { return false;  }
 
     //------------------------------------------------------------------------
     // Public methods

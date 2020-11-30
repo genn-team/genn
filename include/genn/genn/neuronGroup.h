@@ -103,6 +103,10 @@ public:
     //! Set location of this neuron group's output spike-like-event times
     /*! This is ignored for simulations on hardware with a single memory space */
     void setSpikeEventTimeLocation(VarLocation loc) { m_SpikeEventTimeLocation = loc; }
+    
+    //! Set location of this neuron group's previous output spike-like-event times
+    /*! This is ignored for simulations on hardware with a single memory space */
+    void setPrevSpikeEventTimeLocation(VarLocation loc) { m_PrevSpikeEventTimeLocation = loc; }
 
     //! Set variable location of neuron model state variable
     /*! This is ignored for simulations on hardware with a single memory space */
@@ -136,6 +140,7 @@ public:
     bool isSpikeTimeRequired() const;
     bool isPrevSpikeTimeRequired() const;
     bool isSpikeEventTimeRequired() const;
+    bool isPrevSpikeEventTimeRequired() const;
     bool isTrueSpikeRequired() const;
     bool isSpikeEventRequired() const;
 
@@ -157,6 +162,9 @@ public:
 
     //! Get location of this neuron group's output spike-like-event times
     VarLocation getSpikeEventTimeLocation() const { return m_SpikeEventTimeLocation;  }
+
+    //! Get location of this neuron group's previous output spike-like-event times
+    VarLocation getPrevSpikeEventTimeLocation() const { return m_PrevSpikeEventTimeLocation; }
 
     //! Get location of neuron model state variable by name
     VarLocation getVarLocation(const std::string &varName) const;
@@ -193,8 +201,8 @@ protected:
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation) :
         m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
         m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-        m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+        m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation),
+        m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
     {
     }
@@ -304,8 +312,11 @@ private:
     //! Location of previous spike times
     VarLocation m_PrevSpikeTimeLocation;
 
-    //! Location of spike-like-event times from neuron group
+    //! Location of spike-like-event times
     VarLocation m_SpikeEventTimeLocation;
+
+    //! Location of previous spike-like-event times
+    VarLocation m_PrevSpikeEventTimeLocation;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
