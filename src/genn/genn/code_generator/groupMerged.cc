@@ -1196,7 +1196,7 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         if(wum->isPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
         }
-         if(wum->isPrevPreSpikeTimeRequired()) {
+        if(wum->isPrevPreSpikeTimeRequired()) {
             addSrcPointerField(timePrecision, "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
         }
         if(wum->isPrevPostSpikeTimeRequired()) {
