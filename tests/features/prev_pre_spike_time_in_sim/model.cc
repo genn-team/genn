@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file pre_spike_time_in_sim/model.cc
+/*! \file prev_pre_spike_time_in_sim/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -44,9 +44,8 @@ public:
 
     SET_VARS({{"w", "scalar"}});
 
-    SET_SIM_CODE("$(w)= $(sT_pre);");
-    SET_NEEDS_PRE_SPIKE_TIME(true);
-    SET_RESET_SPIKE_TIMES_AFTER_UPDATE(true);
+    SET_SIM_CODE("$(w)= $(prev_sT_pre);");
+    SET_NEEDS_PREV_PRE_SPIKE_TIME(true);
 };
 
 IMPLEMENT_MODEL(WeightUpdateModel);
@@ -63,7 +62,7 @@ void modelDefinition(ModelSpec &model)
     }
 #endif
     model.setDT(1.0);
-    model.setName("pre_spike_time_in_sim");
+    model.setName("prev_pre_spike_time_in_sim");
 
     model.addNeuronPopulation<PreNeuron>("pre", 10, {}, {});
     model.addNeuronPopulation<PostNeuron>("post", 10, {}, {});
