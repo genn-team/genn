@@ -184,6 +184,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             Substitutions neuronSubs(&popSubs);
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
             neuronSubs.addVarSubstitution("sT", "lsT");
+            neuronSubs.addVarSubstitution("prev_sT", "lsT");
             neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
             addNeuronModelSubstitutions(neuronSubs, ng);
 

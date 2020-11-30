@@ -103,8 +103,8 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
     // Substitute spike times
     substitutions.addVarSubstitution("sT" + sourceSuffix,
                                      "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
-    substitutions.addVarSubstitution("preST" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + prevSpikeTimeOffset + idx + "]" + varSuffix + ")");
+    substitutions.addVarSubstitution("prev_sT" + sourceSuffix,
+                                     "(" + delayOffset + varPrefix + "group->prevST" + destSuffix + "[" + prevSpikeTimeOffset + idx + "]" + varSuffix + ")");
 
     // Substitute neuron variables
     const auto *nm = archetypeNG->getNeuronModel();

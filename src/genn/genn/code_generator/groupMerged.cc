@@ -36,7 +36,7 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
     if(getArchetype().isPreviousSpikeTimeRequired()) {
         addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
 
-        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "ST");
+        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
 
         if(getArchetype().isDelayRequired()) {
             addField("unsigned int", "numNeurons",
@@ -1195,6 +1195,12 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         }
         if(wum->isPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
+        }
+         if(wum->isPrevPreSpikeTimeRequired()) {
+            addSrcPointerField(timePrecision, "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
+        }
+        if(wum->isPrevPostSpikeTimeRequired()) {
+            addTrgPointerField(timePrecision, "prevSTPost", backend.getDeviceVarPrefix() + "prevST");
         }
 
         // Add heterogeneous weight update model parameters
