@@ -748,11 +748,19 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
             // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
             if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                 os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
+
+                if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired()) {
+                    os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
+                }
             }
 
             // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
             if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
                 os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
+
+                if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
+                    os << "const unsigned int prevPostSpikeTimeReadDelayOffset = " << sg.getPrevPostsynapticSpikeTimeBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
+                }
             }
 
             Substitutions synSubs(&popSubs);
