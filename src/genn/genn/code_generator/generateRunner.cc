@@ -777,6 +777,23 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                 });
         }
 
+        // If neuron group needs to record its previous spike times
+        if (n.second.isPrevSpikeTimeRequired()) {
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    model.getTimePrecision(), "prevST" + n.first, n.second.getPrevSpikeTimeLocation(),
+                                    numNeuronDelaySlots);
+
+            // Generate push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeTimeLocation(),
+                                backend.getPreferences().automaticCopy, n.first + "PreviousSpikeTimes",
+                                [&]()
+                                {
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
+                                                                "prevST" + n.first, n.second.getPrevSpikeTimeLocation(), true,
+                                                                numNeuronDelaySlots);
+                                });
+        }
+
         // If neuron group needs to record its spike-like-event times
         if (n.second.isSpikeEventTimeRequired()) {
             mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,

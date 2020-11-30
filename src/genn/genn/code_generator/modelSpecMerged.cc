@@ -71,13 +71,10 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
                        {
-                           const bool aSpikeTimeUpdate = ((a.isSpikeTimeRequired() || a.isSpikeEventTimeRequired()) && a.shouldResetSpikeTimesAfterUpdate());
-                           const bool bSpikeTimeUpdate = ((b.isSpikeTimeRequired() || a.isSpikeEventTimeRequired()) && b.shouldResetSpikeTimesAfterUpdate());
-
                            return ((a.getNumDelaySlots() == b.getNumDelaySlots())
                                    && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
                                    && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired())
-                                   && (aSpikeTimeUpdate == bSpikeTimeUpdate));
+                                   && (a.isPrevSpikeTimeRequired() == b.isPrevSpikeTimeRequired()));
                        });
 
     // Build vector of merged synapse groups which require dendritic delay

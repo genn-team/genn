@@ -2,12 +2,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "post_spike_time_in_post_learn", "post_spike_time_in_post_learn.vcxproj", "{B2275998-258C-40D4-AF32-17073B553CCA}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "prev_post_spike_time_in_post_learn", "prev_post_spike_time_in_post_learn.vcxproj", "{B2275998-258C-40D4-AF32-17073B553CCA}"
 	ProjectSection(ProjectDependencies) = postProject
 		{8E3E8445-2CB1-4B8C-9EF3-F46A95D18237} = {8E3E8445-2CB1-4B8C-9EF3-F46A95D18237}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "post_spike_time_in_post_learn_CODE\runner.vcxproj", "{8E3E8445-2CB1-4B8C-9EF3-F46A95D18237}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "prev_post_spike_time_in_post_learn_CODE\runner.vcxproj", "{8E3E8445-2CB1-4B8C-9EF3-F46A95D18237}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

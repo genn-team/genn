@@ -33,16 +33,10 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
         addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
     }
 
-    if(getArchetype().shouldResetSpikeTimesAfterUpdate() && (getArchetype().isSpikeTimeRequired() || getArchetype().isSpikeEventTimeRequired())) {
-        if(getArchetype().isSpikeTimeRequired()) {
-            addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
-            addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
-        }
+    if(getArchetype().isPrevSpikeTimeRequired()) {
+        addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
 
-        if(getArchetype().isSpikeEventTimeRequired()) {
-            addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
-            addPointerField(timePrecision, "seT", backend.getDeviceVarPrefix() + "seT");
-        }
+        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
 
         if(getArchetype().isDelayRequired()) {
             addField("unsigned int", "numNeurons",
@@ -246,6 +240,10 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     }
     if(getArchetype().isSpikeEventTimeRequired()) {
         addPointerField(timePrecision, "seT", backend.getDeviceVarPrefix() + "seT");
+    }
+
+    if(getArchetype().isPrevSpikeTimeRequired()) {
+        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
@@ -889,20 +887,14 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot
     }
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticSpikeTimeAxonalDelaySlot() const
+std::string CodeGenerator::SynapseGroupMergedBase::getPrevPresynapticSpikeTimeAxonalDelaySlot() const
 {
-    // If we should reset spike times after update, always read from previous delay slot
-    if(getArchetype().getWUModel()->shouldResetSpikeTimesAfterUpdate()) {
-        assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
+    // Always read from previous delay slot
+    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
 
-        const unsigned int numDelaySteps = getArchetype().getDelaySteps();
-        const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-        return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ")";
-    }
-    // Otherwise, treat spike times exactly the same as other variables
-    else {
-        return getPresynapticAxonalDelaySlot();
-    }
+    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
+    const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
+    return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ")";
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot() const
@@ -919,20 +911,14 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelayS
     }
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticSpikeTimeBackPropDelaySlot() const
+std::string CodeGenerator::SynapseGroupMergedBase::getPrevPostsynapticSpikeTimeBackPropDelaySlot() const
 {
-    // If we should reset spike times after update, always read from previous delay slot
-    if(getArchetype().getWUModel()->shouldResetSpikeTimesAfterUpdate()) {
-        assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
+    // Always read from previous delay slot
+    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
 
-        const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
-        const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-        return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ")";
-    }
-     // Otherwise, treat spike times exactly the same as other variables
-    else {
-        return getPostsynapticBackPropDelaySlot();
-    }
+    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
+    const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
+    return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ")";
 }
 //----------------------------------------------------------------------------
 std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const std::string &offset) const
@@ -1215,6 +1201,12 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         }
         if(wum->isPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
+        }
+        if(wum->isPrevPreSpikeTimeRequired()) {
+            addSrcPointerField(timePrecision, "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
+        }
+        if(wum->isPrevPostSpikeTimeRequired()) {
+            addTrgPointerField(timePrecision, "prevSTPost", backend.getDeviceVarPrefix() + "prevST");
         }
 
         // Add heterogeneous weight update model parameters

@@ -159,6 +159,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
                 os << popSubs["id"] << "];" << std::endl;
             }
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                os << "const " << model.getTimePrecision() << " lprevST = group->prevST[";
+                if (ng.getArchetype().isDelayRequired()) {
+                    os << "readDelayOffset + ";
+                }
+                os << popSubs["id"] << "];" << std::endl;
+            }
             if(ng.getArchetype().isSpikeEventTimeRequired()) {
                 os <<  "const " << model.getTimePrecision() << " lseT = group->seT[";
                 if (ng.getArchetype().isDelayRequired()) {
@@ -186,6 +193,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             if(ng.getArchetype().isSpikeTimeRequired()) {
                 neuronSubs.addVarSubstitution("sT", "lsT");
+            }
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                neuronSubs.addVarSubstitution("prev_sT", "lprevST");
             }
             if(ng.getArchetype().isSpikeEventTimeRequired()) {
                 neuronSubs.addVarSubstitution("seT", "lseT");
@@ -504,13 +514,18 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                                                       });
 
                     // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
-                    if(ng.getArchetype().isSpikeTimeRequired() || preVars || postVars) {
+                    if(ng.getArchetype().isSpikeTimeRequired() || ng.getArchetype().isPrevSpikeTimeRequired() || preVars || postVars) {
                         os << "else";
                         CodeStream::Scope b(os);
 
-                        // If spike timing is required and they aren't updated after update, copy spike time from register
+                        // If spike times are required, copy times from register
                         if(ng.getArchetype().isSpikeTimeRequired()) {
                             os << "group->sT[writeDelayOffset + " << popSubs["id"] << "] = lsT;" << std::endl;
+                        }
+
+                        // If previous spike times are required, copy times from register
+                        if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                            os << "group->prevST[writeDelayOffset + " << popSubs["id"] << "] = lprevST;" << std::endl;
                         }
 
                         // Loop through outgoing synapse groups with some sort of presynaptic code

@@ -244,6 +244,26 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                     });
             }
 
+            // If previous spike times are required
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                // Generate variable initialisation code
+                backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+                    [&ng] (CodeStream &os, Substitutions &varSubs)
+                    {
+                        // Is delay required
+                        if(ng.getArchetype().isDelayRequired()) {
+                            os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "group->prevST[(d * group->numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
+                            }
+                        }
+                        else {
+                            os << "group->prevST[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
+                        }
+                    });
+            }
+
             // If spike-like-event times are required
             if(ng.getArchetype().isSpikeEventTimeRequired()) {
                 // Generate variable initialisation code

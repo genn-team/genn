@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file post_spike_time_in_post_learn/model.cc
+/*! \file prev_post_spike_time_in_post_learn/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -47,9 +47,8 @@ public:
 
     SET_VARS({{"w", "scalar"}});
 
-    SET_LEARN_POST_CODE("$(w)= $(sT_post);");
-    SET_NEEDS_POST_SPIKE_TIME(true);
-    SET_RESET_SPIKE_TIMES_AFTER_UPDATE(true);
+    SET_LEARN_POST_CODE("$(w)= $(prev_sT_post);");
+    SET_NEEDS_PREV_POST_SPIKE_TIME(true);
 };
 
 IMPLEMENT_MODEL(WeightUpdateModel);
@@ -66,7 +65,7 @@ void modelDefinition(ModelSpec &model)
     }
 #endif
     model.setDT(1.0);
-    model.setName("post_spike_time_in_post_learn");
+    model.setName("prev_post_spike_time_in_post_learn");
 
     model.addNeuronPopulation<PreNeuron>("pre", 10, {}, {});
     model.addNeuronPopulation<PostNeuron>("post", 10, {}, {});
