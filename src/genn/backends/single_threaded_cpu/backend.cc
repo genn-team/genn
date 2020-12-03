@@ -1156,7 +1156,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
 
         // If this is a spike-like event, insert threshold check for this presynaptic neuron
-        if (!trueSpike) {
+        if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << "if(";
 
             Substitutions threshSubs(&popSubs);
@@ -1259,7 +1259,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
             }
         }
         // If this is a spike-like event, close braces around threshold check
-        if (!trueSpike) {
+        if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << CodeStream::CB(10);
         }
     }
