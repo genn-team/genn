@@ -130,6 +130,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         if((s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && s.second.isWUVarInitRequired()) {
             const size_t numSrcNeurons = s.second.getSrcNeuronGroup()->getNumNeurons();
             const size_t numTrgNeurons = s.second.getTrgNeuronGroup()->getNumNeurons();
+            // **FIXME**
             if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSizes[KernelInitializeSparse].push_back(numSrcNeurons);
             }

@@ -40,6 +40,7 @@ void modelDefinition(ModelSpec &model)
                                 
     InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement::ParamValues fixedNumTotalParams(1000);
     InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues fixedNumPostParams(10);
+    InitSparseConnectivitySnippet::FixedNumberPreWithReplacement::ParamValues fixedNumPreParams(10);
     
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
     model.addNeuronPopulation<NeuronModels::LIF>("LIF", 100, lifParams, lifInit);
@@ -59,4 +60,12 @@ void modelDefinition(ModelSpec &model)
         {}, staticSynapseInit, {}, {},
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumPostParams));
+    
+    // Fixed number pre connectivity
+    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "FixedNumberPre", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "LIF",
+        {}, staticSynapseInit, {}, {},
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPreWithReplacement>(fixedNumPreParams));
 }

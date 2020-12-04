@@ -18,6 +18,9 @@
 #define SET_ROW_BUILD_CODE(CODE) virtual std::string getRowBuildCode() const override{ return CODE; }
 #define SET_ROW_BUILD_STATE_VARS(...) virtual ParamValVec getRowBuildStateVars() const override{ return __VA_ARGS__; }
 
+#define SET_COL_BUILD_CODE(CODE) virtual std::string getColBuildCode() const override{ return CODE; }
+#define SET_COL_BUILD_STATE_VARS(...) virtual ParamValVec getColBuildStateVars() const override{ return __VA_ARGS__; }
+
 #define SET_HOST_INIT_CODE(CODE) virtual std::string getHostInitCode() const override{ return CODE; }
 
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
@@ -47,6 +50,9 @@ public:
     //----------------------------------------------------------------------------
     virtual std::string getRowBuildCode() const{ return ""; }
     virtual ParamValVec getRowBuildStateVars() const{ return {}; }
+
+    virtual std::string getColBuildCode() const { return ""; }
+    virtual ParamValVec getColBuildStateVars() const { return {}; }
 
     virtual std::string getHostInitCode() const{ return ""; }
 
@@ -342,6 +348,46 @@ public:
             // Each of the numConnections connections has an independent p=float(numPre)/(numPre*numPost)
             // probability of being selected and the number of synapses in the sub-row is binomially distributed
             return binomialInverseCDF(quantile, (unsigned int)pars[0], (double)numPre / ((double)numPre * (double)numPost));
+        });
+};
+
+//----------------------------------------------------------------------------
+// InitSparseConnectivitySnippet::FixedNumberPreWithReplacement
+//----------------------------------------------------------------------------
+//! Initialises connectivity with a fixed number of random synapses per column.
+/*! No need for ordering here so fine to sample directly from uniform distribution */
+class FixedNumberPreWithReplacement : public Base
+{
+public:
+    DECLARE_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement, 1);
+
+    SET_COL_BUILD_CODE(
+        "if(c == 0) {\n"
+        "   $(endCol);\n"
+        "}\n"
+        "const unsigned int idPre = (unsigned int)ceil($(gennrand_uniform) * $(num_pre)) - 1;\n"
+        "$(addSynapse, idPre + $(id_pre_begin));\n"
+        "c--;\n");
+    SET_COL_BUILD_STATE_VARS({{"c", "unsigned int", "$(colLength)"}});
+
+    SET_PARAM_NAMES({"colLength"});
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
+        {
+            // Calculate suitable quantile for 0.9999 change when drawing numPre times
+            const double quantile = pow(0.9999, 1.0 / (double)numPre);
+
+            // In each column the number of connections that end up in a row are distributed
+            // binomially with n=numConnections and p=1.0 / numPre. As there are numPost columns the total number
+            // of connections that end up in each row are distributed binomially with n=numConnections * numPost and p=1.0 / numPre
+            return binomialInverseCDF(quantile, (unsigned int)pars[0] * numPost, 1.0 / (double)numPre);
+        });
+
+    SET_CALC_MAX_COL_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[0];
         });
 };
 

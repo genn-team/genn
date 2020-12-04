@@ -7,6 +7,7 @@ IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedProbability);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPostWithReplacement);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement);
+IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::Conv2D);
 
 //----------------------------------------------------------------------------
@@ -17,5 +18,7 @@ bool InitSparseConnectivitySnippet::Base::canBeMerged(const Base *other) const
     return (Snippet::Base::canBeMerged(other)
             && (getRowBuildCode() == other->getRowBuildCode())
             && (getRowBuildStateVars() == other->getRowBuildStateVars())
+            && (getColBuildCode() == other->getColBuildCode())
+            && (getColBuildStateVars() == other->getColBuildStateVars())
             && (getHostInitCode() == other->getHostInitCode()));
 }

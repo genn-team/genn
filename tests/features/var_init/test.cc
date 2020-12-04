@@ -53,9 +53,8 @@ double getProb(scalar *data, unsigned int size, F cdf)
     std::copy_n(data, size, std::back_inserter(doubleData));
 
     // Perform Kolmogorov-Smirnow test
-    double d;
     double prob;
-    std::tie(d, prob) = Stats::kolmogorovSmirnovTest(doubleData, cdf);
+    std::tie(std::ignore, prob) = Stats::kolmogorovSmirnovTest(doubleData, cdf);
     return prob;
 }
 
