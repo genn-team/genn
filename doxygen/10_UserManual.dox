@@ -769,16 +769,31 @@ IMPLEMENT_SNIPPET(Ring);
 ring_model = genn_model.create_custom_sparse_connect_init_snippet_class(
     "ring",
     param_names=["numNeighbours"],
-    
+    row_build_state_vars=[("offset", "unsigned int", 1)],
+    row_build_code=
+        """
+        const unsigned int target = ($(id_pre) + offset) % $(num_post);
+        $(addSynapse, target);
+        offset++;
+        if(offset > (unsigned int)$(numNeighbours)) {
+           $(endRow);
+        }
+        """,
+        
+    calc_max_row_len_func=genn_model.create_cmlf_class(
+        lambda num_pre, num_post, pars: int(pars[0]))(),
+    calc_max_col_len_func=genn_model.create_cmlf_class(
+        lambda num_pre, num_post, pars: int(pars[0]))())
 \endcode
 \end_toggle
-Each <i>row</i> of sparse connectivity is initialised independantly by running the snippet of code specified using the `SET_ROW_BUILD_CODE()` macro within a loop.
+Each <i>row</i> of sparse connectivity is initialised independantly by running the snippet of code specified using the \add_cpp_python_text{`SET_ROW_BUILD_CODE()` macro,`row_build_code` keyword argument} within a loop.
 The \$(num_post) variable can be used to access the number of neurons in the postsynaptic population and the \$(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated.
-The `SET_ROW_BUILD_STATE_VARS()` macro can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
+The \add_cpp_python_text{`SET_ROW_BUILD_STATE_VARS()` macro,`row_build_state_vars` keyword argument} can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
 Synapses are added to the row using the \$(addSynapse, target) function and iteration is stopped using the \$(endRow) function.
+\add_toggle_cpp
 To avoid having to manually call SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections, sparse connectivity snippets can also provide code to calculate the maximum row and column lengths this connectivity will result in using the SET_CALC_MAX_ROW_LENGTH_FUNC() and SET_CALC_MAX_COL_LENGTH_FUNC() macros.
 Alternatively, if the maximum row or column length is constant, the `SET_MAX_ROW_LENGTH()` and `SET_MAX_COL_LENGTH()` shorthand macros can be used.
-
+\end_toggle
 \section sect_sparse_connect_init_modes Sparse connectivity locations
 Once you have defined <b>how</b> sparse connectivity is going to be initialised, similarly to variables, you can control <b>where</b> it is allocated. 
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
