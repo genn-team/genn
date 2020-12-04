@@ -1,31 +1,3 @@
-function getLabelName(innerHTML) {
-    var str = innerHTML.toLowerCase();
-    // Replace all '+' with 'p'
-    str = str.split('+').join('p');
-    // Replace all ' ' with '_'
-    str = str.split(' ').join('_');
-    // Replace all '#' with 'sharp'
-    str = str.split('#').join('sharp');
-    // Replace other special characters with 'ascii' + code
-    for (var i = 0; i < str.length; i++) {
-        var charCode = str.charCodeAt(i);
-        if (!(charCode == 95 || (charCode > 96 && charCode < 123) || (charCode > 47 && charCode < 58)))
-            str = str.substr(0, i) + 'ascii' + charCode + str.substr(i + 1);
-    }
-    return str;
-}
-
-function addToggle() {
-    var $getDiv = $('div.newInnerHTML').last();
-    var buttonName = $getDiv.html();
-    var label = getLabelName(buttonName.trim());
-    $getDiv.attr("title", label);
-    $getDiv.hide();
-    $getDiv = $getDiv.next();
-    $getDiv.attr("class", "toggleable_div label_" + label);
-    $getDiv.hide();
-}
-
 function addButton(label, buttonName) {
     var b = document.createElement("BUTTON");
     b.innerHTML = buttonName;
@@ -40,7 +12,7 @@ function addButton(label, buttonName) {
             'border-radius': '4px'
         });
         $('.toggleable_div').css('display', 'none');
-        $('.toggleable_div.label_' + label).css('display', 'block');
+        $('.toggleable_div.label_' + label).css('display', 'inline');
     };
     b.style.border = '2px outset';
     b.style.borderRadius = '4px';
@@ -72,6 +44,7 @@ function buttonsToAdd($elements, $heading, $type) {
 }
 
 function addLanguageToggleButtons() {
+    // Search for H1 headings (in GeNN documentation these are the only heading really used)
     $smallerHeadings = $(".contents").first().find("h1");
     if ($smallerHeadings.length) {
         $smallerHeadings.each(function() {
