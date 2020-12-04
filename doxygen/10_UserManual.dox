@@ -85,11 +85,17 @@ tasks must be completed:
    by resources.
 
 \section subsect11 Defining neuron populations
-
 Neuron populations are added using the function
+\add_toggle_cpp
 \code{.cc}
 model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varInitialisers);
 \endcode
+\end_toggle
+\add_toggle_python
+\code{.py}
+model.add_neuron_population(name, num, model, param_values, var_initialisers)
+\endcode
+\end_toggle
 where the arguments are:
 \arg `NeuronModel`:        Template argument specifying the type of neuron model
                            These should be derived off NeuronModels::Base and can
@@ -143,12 +149,12 @@ where the arguments are
 \arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
 \arg `InitSparseConnectivitySnippet::Init connectivityInitialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
-
+\add_toggle_cpp 
 The ModelSpec::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::SPARSE connectivity (see \ref subsect34).
 \note
 When using a sparse connectivity initialisation snippet, these values are set automatically.
-
+\end_toggle
 - SynapseGroup::setMaxDendriticDelayTimesteps() sets the maximum dendritic delay (in terms of the simulation
      time step `DT`) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the `addToDenDelay` function in user code (see \ref sect34).
 - SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.
@@ -181,11 +187,14 @@ There is a number of predefined models which can be used with the ModelSpec::add
 - NeuronModels::TraubMilesNStep
 
 \section sect_own Defining your own neuron type 
-
 In order to define a new neuron type for use in a GeNN application,
 it is necessary to define a new class derived from NeuronModels::Base. 
+\add_toggle_python
+For convenience, this can be done using the ``pygenn.genn_model.create_custom_neuron_class`` function with the following keyword arguments:
+\end_toggle
+\add_toggle_cpp
 For convenience the methods this class should implement can be implemented using macros:
-
+\end_toggle
 - DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS): declared the boilerplate code required for the model e.g. the correct
   specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values.
 - SET_SIM_CODE(SIM_CODE): where SIM_CODE contains the code for executing 
@@ -195,6 +204,7 @@ For convenience the methods this class should implement can be implemented using
   primitives `DT` for the
   time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
 - SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) defines the condition for true spike detection.
+- SET_RESET_CODE(RESET_CODE) defines code to be run after a true spike is emitted.
 - SET_PARAM_NAMES() defines the names of the model parameters. 
     If defined as `NAME` here, they can then be referenced as \$(NAME) in the code string. 
     The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
@@ -205,8 +215,9 @@ For convenience the methods this class should implement can be implemented using
     syntax \$(NAME) in the code string. If the access mode is set to ``VarAccess::READ_ONLY``, GeNN applies additional optimisations and models should not write to it.
 - SET_NEEDS_AUTO_REFRACTORY() defines whether the neuron should include an automatic refractory period to prevent it emitting spikes in successive timesteps.
 
-For example, using these macros, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
+For example, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
 
+\add_toggle_cpp
 \code
 class LeakyIntegrator : public NeuronModels::Base
 {
@@ -214,16 +225,29 @@ public:
     DECLARE_MODEL(LeakyIntegrator, 1, 1);
     
     SET_SIM_CODE("$(V)+= (-$(V)+$(Isyn))*(DT/$(tau));");
-    
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 1.0");
+    SET_RESET_CODE("$(V) = 0.0;");
     
     SET_PARAM_NAMES({"tau"});
     
     SET_VARS({{"V", "scalar", VarAccess::READ_WRITE}});
 };
 \endcode
-
-Additionally "dependent parameters" can be defined. Dependent parameters are a mechanism 
+\end_toggle
+\add_toggle_python
+\code
+leaky_integrator_model = genn_model.create_custom_neuron_class(
+    "leaky_integrator_model",
+    
+    sim_code="$(V)+= (-$(V)+$(Isyn))*(DT/$(tau));",
+    threshold_condition_code="$(V) >= 1.0",
+    reset_code="$(V) = 0.0;",
+    
+    param_names=["tau"],
+    var_name_types=[("V", "scalar", VarAccess_READ_WRITE)])
+\endcode
+\end_toggle
+Additionally "derived parameters" can be defined. Derived parameters are a mechanism 
 for enhanced efficiency when running neuron models. If parameters with model-side meaning, such as time
 constants or conductances always appear in a certain combination in the model, then it is more efficient 
 to pre-compute this combination and define it as a dependent parameter.
