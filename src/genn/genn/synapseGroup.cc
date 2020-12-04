@@ -374,8 +374,9 @@ bool SynapseGroup::isWUInitRNGRequired() const
     }
 
     // Return true if matrix has sparse or bitmask connectivity and an RNG is required to initialise connectivity
+    const auto *snippet = m_ConnectivityInitialiser.getSnippet();
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
-            && Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
+            && (Utils::isRNGRequired(snippet->getRowBuildCode()) || Utils::isRNGRequired(snippet->getColBuildCode())));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUPreInitRNGRequired() const
@@ -413,8 +414,10 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 {
     // Return true if the matrix type is sparse or bitmask, there is code to  
     // initialise sparse connectivity and synapse group isn't a weight sharing slave,
+    const auto *snippet = getConnectivityInitialiser().getSnippet();
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
-            && !getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty() && !isWeightSharingSlave());
+            && (!snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty())
+            && !isWeightSharingSlave());
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
@@ -440,7 +443,12 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
         // If there's no row build code, give an error
         if(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode().empty()) {
-            throw std::runtime_error("Cannot use procedural connectivity without specifying connectivity initialisation snippet");
+            throw std::runtime_error("Cannot use procedural connectivity without specifying a connectivity initialisation snippet with row building code");
+        }
+
+        // If there's column build code, give an error
+        if(!m_ConnectivityInitialiser.getSnippet()->getColBuildCode().empty()) {
+            throw std::runtime_error("Cannot use procedural connectivity with connectivity initialisation snippets with column building code");
         }
 
         // If the weight update model has code for postsynaptic-spike triggered updating, give an error

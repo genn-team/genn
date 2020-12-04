@@ -949,13 +949,23 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     for(const auto &s : model.getSynapseGroups()) {
         // If this synapse group isn't a weight sharing slave i.e. it's connectivity isn't initialized on the master
         if(!s.second.isWeightSharingSlave()) {
-            const bool autoInitialized = !s.second.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty();
+            const auto *snippet = s.second.getConnectivityInitialiser().getSnippet();
+            const bool autoInitialized = !snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty();
 
             if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                 const size_t gpSize = ceilDivide((size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second), 32);
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                   runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
-                                   s.second.getSparseConnectivityLocation(), autoInitialized, gpSize, connectivityPushPullFunctions);
+                mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                        "uint32_t", "gp" + s.second.getName(), s.second.getSparseConnectivityLocation(), gpSize);
+
+                // Generate push and pull functions for bitmask
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                    backend.getPreferences().automaticCopy, s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+                                    [&]()
+                                    {
+                                        // Row lengths
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
+                                                                    s.second.getSparseConnectivityLocation(), autoInitialized, gpSize);
+                                    });
             }
             else if(s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 const VarLocation varLoc = s.second.getSparseConnectivityLocation();
