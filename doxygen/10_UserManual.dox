@@ -605,6 +605,9 @@ or initialised using one of a number of predefined _variable initialisation snip
 - InitVarSnippet::Exponential
 - InitVarSnippet::Gamma
 
+\add_toggle_python
+In Python, these models can be selected by name e.g. "Normal".
+\end_toggle
 For example, to initialise a parameter using values drawn from the normal distribution:
 \add_toggle_cpp
 \code
@@ -628,6 +631,7 @@ ini = {"m": genn_model.init_var("Normal", params), ...}
 Similarly to neuron, weight update and postsynaptic models, new variable initialisation snippets can be created by simply defining a class in the model description.
 For example, when initialising excitatory (positive) synaptic weights with a normal distribution they should be clipped at 0 so the long tail of the normal distribution doesn't result in negative weights.
 This could be implemented using the following variable initialisation snippet which redraws until samples are within the desired bounds:
+\add_toggle_cpp
 \code
 class NormalPositive : public InitVarSnippet::Base
 {
@@ -635,7 +639,7 @@ public:
     DECLARE_SNIPPET(NormalPositive, 2);
 
     SET_CODE(
-        "scalar normal;"
+        "scalar normal;\n"
         "do\n"
         "{\n"
         "   normal = $(mean) + ($(gennrand_normal) * $(sd));\n"
@@ -646,7 +650,24 @@ public:
 };
 IMPLEMENT_SNIPPET(NormalPositive);
 \endcode
-Within the snippet of code specified using the `SET_CODE()` macro, when initialisising neuron and postaynaptic model state variables , the \$(id) variable can be used to access the id of the neuron being initialised.
+\end_toggle
+\add_toggle_python
+\code
+normal_positive_model = genn_model.create_custom_init_var_snippet_class(
+    "normal_positive",
+    param_names=["mean", "sd],
+    var_init_code=
+        """
+        scalar normal;
+        do
+        {
+           normal = $(mean) + ($(gennrand_normal) * $(sd));
+        } while (normal < 0.0);
+        $(value) = normal;
+        """)
+\endcode
+\end_toggle
+Within the snippet of code specified using the \add_cpp_python_text{`SET_CODE()` macro, `var_init_code` keyword argument}, when initialisising neuron and postaynaptic model state variables , the \$(id) variable can be used to access the id of the neuron being initialised.
 Similarly, when initialising weight update model state variables, the \$(id_pre) and \$(id_post) variables can used to access the ids of the pre and postsynaptic neurons connected by the synapse being initialised.
 
 \section sect_var_init_modes Variable locations
@@ -686,7 +707,11 @@ This can be done using one of a number of predefined _sparse connectivity initia
 - InitSparseConnectivitySnippet::FixedProbability
 - InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
 
+\add_toggle_python
+In Python, these models can be selected by name e.g. "FixedProbability".
+\end_toggle
 For example, to initialise synaptic connectivity with a 10% connection probability (allowing connections between neurons with the same id):
+\add_toggle_cpp
 \code
 InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1);
     
@@ -694,18 +719,28 @@ model.addSynapsePopulation<...>(
         ...
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+fixed_prob = {"prob": 0.1}
+model.add_synapse_population(
+    ...
+    genn_model.init_connectivity("FixedProbability", fixed_prob))
+\endcode
+\end_toggle
 
 \section sect_new_sparse_connect Defining a new sparse connectivity snippet
 Similarly to variable initialisation snippets, sparse connectivity initialisation snippets can be created by simply defining a class in the model description.
 
 For example, the following sparse connectivity initialisation snippet could be used to initialise a 'ring' of connectivity where each neuron is connected to a number of subsequent neurons specified using the ``numNeighbours`` parameter:
+\add_toggle_cpp
 \code
 class Ring : public InitSparseConnectivitySnippet::Base
 {
 public:
     DECLARE_SNIPPET(Ring, 1);
 
-    SET_ROW_BUILD_STATE_VARS({{"offset", {"unsigned int", 1}}}});
+    SET_ROW_BUILD_STATE_VARS({{"offset", "unsigned int", 1}}});
     SET_ROW_BUILD_CODE(
         "const unsigned int target = ($(id_pre) + offset) % $(num_post);\n"
         "$(addSynapse, target);\n"
@@ -728,6 +763,15 @@ public:
 };
 IMPLEMENT_SNIPPET(Ring);
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+ring_model = genn_model.create_custom_sparse_connect_init_snippet_class(
+    "ring",
+    param_names=["numNeighbours"],
+    
+\endcode
+\end_toggle
 Each <i>row</i> of sparse connectivity is initialised independantly by running the snippet of code specified using the `SET_ROW_BUILD_CODE()` macro within a loop.
 The \$(num_post) variable can be used to access the number of neurons in the postsynaptic population and the \$(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated.
 The `SET_ROW_BUILD_STATE_VARS()` macro can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
