@@ -956,6 +956,8 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                       extra_global_params=None,
                                       is_pre_spike_time_required=None,
                                       is_post_spike_time_required=None,
+                                      is_prev_pre_spike_time_required=None,
+                                      is_prev_post_spike_time_required=None,
                                       custom_body=None):
     """This helper function creates a custom WeightUpdateModel class.
     See also:
@@ -969,49 +971,53 @@ def create_custom_weight_update_class(class_name, param_names=None,
     class_name                      --  name of the new class
 
     Keyword args:
-    param_names                     --  list of strings with param names of
-                                        the model
-    var_name_types                  --  list of pairs of strings with variable
-                                        names and types of the model
-    pre_var_name_types              --  list of pairs of strings with
-                                        presynaptic variable names and
-                                        types of the model
-    post_var_name_types             --  list of pairs of strings with
-                                        postsynaptic variable names and
-                                        types of the model
-    derived_params                  --  list of pairs, where the first member
-                                        is string with name of the derived
-                                        parameter and the second MUST be an
-                                        instance of a class which inherits from
-                                        ``pygenn.genn_wrapper.DerivedParamFunc``
-    sim_code                        --  string with the simulation code
-    event_code                      --  string with the event code
-    learn_post_code                 --  string with the code to include in
-                                        learn_synapse_post kernel/function
-    synapse_dynamics_code           --  string with the synapse dynamics code
-    event_threshold_condition_code  --  string with the event threshold
-                                        condition code
-    pre_spike_code                  --  string with the code run once per
-                                        spiking presynaptic neuron
-    post_spike_code                 --  string with the code run once per
-                                        spiking postsynaptic neuron
-    pre_dynamics_code               --  string with the code run every
-                                        timestep on presynaptic neuron
-    post_dynamics_code              --  string with the code run every
-                                        timestep on postsynaptic neuron
-    sim_support_code                --  string with simulation support code
-    learn_post_support_code         --  string with support code for
-                                        learn_synapse_post kernel/function
-    synapse_dynamics_suppport_code  --  string with synapse dynamics
-                                        support code
-    extra_global_params             --  list of pairs of strings with names and
-                                        types of additional parameters
-    is_pre_spike_time_required      --  boolean, is presynaptic spike time
-                                        required in any weight update kernels?
-    is_post_spike_time_required     --  boolean, is postsynaptic spike time
-                                        required in any weight update kernels?
-    custom_body                     --  dictionary with additional attributes
-                                        and methods of the new class
+    param_names                         --  list of strings with param names of
+                                            the model
+    var_name_types                      --  list of pairs of strings with variable
+                                            names and types of the model
+    pre_var_name_types                  --  list of pairs of strings with
+                                            presynaptic variable names and
+                                            types of the model
+    post_var_name_types                 --  list of pairs of strings with
+                                            postsynaptic variable names and
+                                            types of the model
+    derived_params                      --  list of pairs, where the first member
+                                            is string with name of the derived
+                                            parameter and the second MUST be an
+                                            instance of a class which inherits from
+                                            ``pygenn.genn_wrapper.DerivedParamFunc``
+    sim_code                            --  string with the simulation code
+    event_code                          --  string with the event code
+    learn_post_code                     --  string with the code to include in
+                                            learn_synapse_post kernel/function
+    synapse_dynamics_code               --  string with the synapse dynamics code
+    event_threshold_condition_code      --  string with the event threshold
+                                            condition code
+    pre_spike_code                      --  string with the code run once per
+                                            spiking presynaptic neuron
+    post_spike_code                     --  string with the code run once per
+                                            spiking postsynaptic neuron
+    pre_dynamics_code                   --  string with the code run every
+                                            timestep on presynaptic neuron
+    post_dynamics_code                  --  string with the code run every
+                                            timestep on postsynaptic neuron
+    sim_support_code                    --  string with simulation support code
+    learn_post_support_code             --  string with support code for
+                                            learn_synapse_post kernel/function
+    synapse_dynamics_suppport_code      --  string with synapse dynamics
+                                            support code
+    extra_global_params                 --  list of pairs of strings with names and
+                                            types of additional parameters
+    is_pre_spike_time_required          --  boolean, is presynaptic spike time
+                                            required in any weight update kernels?
+    is_post_spike_time_required         --  boolean, is postsynaptic spike time
+                                            required in any weight update kernels?
+    is_prev_pre_spike_time_required     --  boolean, are previous presynaptic spike time
+                                            required in any weight update kernels?
+    is_prev_post_spike_time_required    --  boolean, are previous postsynaptic spike time
+                                            required in any weight update kernels?
+    custom_body                         --  dictionary with additional attributes
+                                            and methods of the new class
     """
     if not isinstance(custom_body, dict) and custom_body is not None:
         raise ValueError("custom_body must be an instance of dict or None")
@@ -1079,6 +1085,14 @@ def create_custom_weight_update_class(class_name, param_names=None,
     if is_post_spike_time_required is not None:
         body["is_post_spike_time_required"] = \
             lambda self: is_post_spike_time_required
+    
+    if is_prev_pre_spike_time_required is not None:
+        body["is_prev_pre_spike_time_required"] = \
+            lambda self: is_prev_pre_spike_time_required
+
+    if is_prev_post_spike_time_required is not None:
+        body["is_prev_post_spike_time_required"] = \
+            lambda self: is_prev_post_spike_time_required
 
     if custom_body is not None:
         body.update(custom_body)

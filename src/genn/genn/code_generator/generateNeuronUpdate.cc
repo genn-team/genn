@@ -82,7 +82,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
             subs.addVarNameSubstitution(vars, "", "l");
 
             const std::string offset = ng.getArchetype().isDelayRequired() ? "readDelayOffset + " : "";
-            neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, "", subs["id"], sourceSuffix, "", "", "", useLocalNeuronVars,
+            neuronSubstitutionsInSynapticCode(subs, &ng.getArchetype(), offset, offset, "", subs["id"], sourceSuffix, "", "", "", useLocalNeuronVars,
                                               [&ng](size_t paramIndex) { return ng.isParamHeterogeneous(paramIndex); },
                                               [&ng](size_t derivedParamIndex) { return ng.isDerivedParamHeterogeneous(derivedParamIndex); });
 
@@ -159,6 +159,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
                 os << popSubs["id"] << "];" << std::endl;
             }
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                os << model.getTimePrecision() << " lprevST = group->prevST[";
+                if (ng.getArchetype().isDelayRequired()) {
+                    os << "readDelayOffset + ";
+                }
+                os << popSubs["id"] << "];" << std::endl;
+            }
             os << std::endl;
 
             // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
@@ -177,6 +184,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             Substitutions neuronSubs(&popSubs);
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
             neuronSubs.addVarSubstitution("sT", "lsT");
+            neuronSubs.addVarSubstitution("prev_sT", "lsT");
             neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
             addNeuronModelSubstitutions(neuronSubs, ng);
 
@@ -483,13 +491,18 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                                                       });
 
                     // If spike times, presynaptic variables or postsynaptic variables are required, add if clause
-                    if(ng.getArchetype().isSpikeTimeRequired() || preVars || postVars) {
+                    if(ng.getArchetype().isSpikeTimeRequired() || ng.getArchetype().isPrevSpikeTimeRequired() || preVars || postVars) {
                         os << "else";
                         CodeStream::Scope b(os);
 
-                        // If spike timing is required, copy spike time from register
+                        // If spike times are required, copy times from register
                         if(ng.getArchetype().isSpikeTimeRequired()) {
                             os << "group->sT[writeDelayOffset + " << popSubs["id"] << "] = lsT;" << std::endl;
+                        }
+
+                        // If previous spike times are required, copy times from register
+                        if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                            os << "group->prevST[writeDelayOffset + " << popSubs["id"] << "] = lprevST;" << std::endl;
                         }
 
                         // Loop through outgoing synapse groups with some sort of presynaptic code

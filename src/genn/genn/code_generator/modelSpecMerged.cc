@@ -73,7 +73,8 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        {
                            return ((a.getNumDelaySlots() == b.getNumDelaySlots())
                                    && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
-                                   && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired()));
+                                   && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired())
+                                   && (a.isPrevSpikeTimeRequired() == b.isPrevSpikeTimeRequired()));
                        });
 
     // Build vector of merged synapse groups which require dendritic delay

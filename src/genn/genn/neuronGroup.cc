@@ -92,6 +92,25 @@ bool NeuronGroup::isSpikeTimeRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isPrevSpikeTimeRequired() const
+{
+    // If any INCOMING synapse groups require previous POSTSYNAPTIC spike times, return true
+    if(std::any_of(getInSyn().cbegin(), getInSyn().cend(),
+        [](SynapseGroup *sg){ return sg->getWUModel()->isPrevPostSpikeTimeRequired(); }))
+    {
+        return true;
+    }
+
+    // If any OUTGOING synapse groups require previous PRESYNAPTIC spike times, return true
+    if(std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+        [](SynapseGroup *sg){ return sg->getWUModel()->isPrevPreSpikeTimeRequired(); }))
+    {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 bool NeuronGroup::isTrueSpikeRequired() const
 {
     // If any OUTGOING synapse groups require true spikes, return true
@@ -386,6 +405,7 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
 {
     if(getNeuronModel()->canBeMerged(other.getNeuronModel())
        && (isSpikeTimeRequired() == other.isSpikeTimeRequired())
+       && (isPrevSpikeTimeRequired() == other.isPrevSpikeTimeRequired())
        && (getSpikeEventCondition() == other.getSpikeEventCondition())
        && (isSpikeEventRequired() == other.isSpikeEventRequired())
        && (isSpikeRecordingEnabled() == other.isSpikeRecordingEnabled())
@@ -447,6 +467,7 @@ bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
 bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
 {
     if((isSpikeTimeRequired() == other.isSpikeTimeRequired())
+       && (isPrevSpikeTimeRequired() == other.isPrevSpikeTimeRequired())
        && (isSpikeEventRequired() == other.isSpikeEventRequired())
        && (getNumDelaySlots() == other.getNumDelaySlots())
        && (m_VarQueueRequired == other.m_VarQueueRequired)

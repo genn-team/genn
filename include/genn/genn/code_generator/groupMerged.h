@@ -849,9 +849,17 @@ public:
     //! Presynaptic neuron state variables, taking into account axonal delay
     std::string getPresynapticAxonalDelaySlot() const;
 
+    //! Get the expression to calculate the delay slot for accessing previous
+    //! presynaptic neuron spike times, taking into account axonal delay
+    std::string getPrevPresynapticSpikeTimeAxonalDelaySlot() const;
+
     //! Get the expression to calculate the delay slot for accessing
     //! Postsynaptic neuron state variables, taking into account back propagation delay
     std::string getPostsynapticBackPropDelaySlot() const;
+
+    //! Get the expression to calculate the delay slot for accessing previous
+    //! postsynaptic neuron spike times, taking into account back propagation delay
+    std::string getPrevPostsynapticSpikeTimeBackPropDelaySlot() const;
 
     std::string getDendriticDelayOffset(const std::string &offset = "") const;
 

@@ -32,6 +32,9 @@
 #define SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }
 #define SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }
 
+#define SET_NEEDS_PREV_PRE_SPIKE_TIME(PREV_PRE_SPIKE_TIME_REQUIRED) virtual bool isPrevPreSpikeTimeRequired() const override{ return PREV_PRE_SPIKE_TIME_REQUIRED; }
+#define SET_NEEDS_PREV_POST_SPIKE_TIME(PREV_POST_SPIKE_TIME_REQUIRED) virtual bool isPrevPostSpikeTimeRequired() const override{ return PREV_POST_SPIKE_TIME_REQUIRED; }
+
 //----------------------------------------------------------------------------
 // WeightUpdateModels::Base
 //----------------------------------------------------------------------------
@@ -117,6 +120,12 @@ public:
     //! Whether postsynaptic spike times are needed or not
     virtual bool isPostSpikeTimeRequired() const{ return false; }
 
+    //! Whether PREVIOUS presynaptic spike times are needed or not
+    virtual bool isPrevPreSpikeTimeRequired() const{ return false; }
+
+    //! Whether PREVIOUS postsynaptic spike times are needed or not
+    virtual bool isPrevPostSpikeTimeRequired() const{ return false; }
+
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
@@ -134,7 +143,6 @@ public:
 
     //! Can this weight update model be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
-
 };
 
 //----------------------------------------------------------------------------
