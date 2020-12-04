@@ -237,7 +237,7 @@ public:
 \add_toggle_python
 \code
 leaky_integrator_model = genn_model.create_custom_neuron_class(
-    "leaky_integrator_model",
+    "leaky_integrator",
     
     sim_code="$(V)+= (-$(V)+$(Isyn))*(DT/$(tau));",
     threshold_condition_code="$(V) >= 1.0",
@@ -253,59 +253,105 @@ constants or conductances always appear in a certain combination in the model, t
 to pre-compute this combination and define it as a dependent parameter.
 
 For example, because the equation defining the previous leaky integrator example has an algebraic solution, it can be more accurately solved as follows - using a derived parameter to calculate \f$\exp\left(\frac{-t}{\tau}\right)\f$:
-
+\add_toggle_cpp
 \code
 class LeakyIntegrator2 : public NeuronModels::Base
 {
 public:
     DECLARE_MODEL(LeakyIntegrator2, 1, 1);
-    
+
     SET_SIM_CODE("$(V) = $(Isyn) - $(ExpTC)*($(Isyn) - $(V));");
-    
     SET_THRESHOLD_CONDITION_CODE("$(V) >= 1.0");
-    
+    SET_RESET_CODE("$(V) = 0.0;");
+
     SET_PARAM_NAMES({"tau"});
-    
     SET_VARS({{"V", "scalar", VarAccess::READ_WRITE}});
-    
     SET_DERIVED_PARAMS({
         {"ExpTC", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
 };
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+leaky_integrator_2_model = genn_model.create_custom_neuron_class(
+    "leaky_integrator_2",
 
+    sim_code="$(V) = $(Isyn) - $(ExpTC)*($(Isyn) - $(V));",
+    threshold_condition_code="$(V) >= 1.0",
+    reset_code="$(V) = 0.0;",
+
+    param_names=["tau"],
+    var_name_types=[("V", "scalar", VarAccess_READ_WRITE)],
+    derived_params=[("ExpTC", genn_model.create_dpf_class(lambda pars, dt: np.exp(-dt / pars[0]))())])
+\endcode
+\end_toggle
 GeNN provides several additional features that might be useful when defining more complex neuron models.
 \subsection neuron_support_code Support code
-Support code enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these should be defined as `__host__ __device__` functions so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it. Support code is added to a model using the SET_SUPPORT_CODE() macro, for example:
+Support code enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these functions should be prefixed with ``SUPPORT_CODE_FUNC`` so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it.
+\add_toggle_cpp
+Support code is added to a model using the ``SET_SUPPORT_CODE()`` macro, for example:
 \code
-SET_SUPPORT_CODE("__device__ __host__ scalar mysin(float x){ return sin(x); }");
+SET_SUPPORT_CODE("SUPPORT_CODE_FUNC scalar mysin(float x){ return sin(x); }");
 \endcode
-
+\end_toggle
+\add_toggle_python
+Support code is added to a model using the ``support_code`` keyword argument, for example:
+\code
+support_code="SUPPORT_CODE_FUNC scalar mysin(float x){ return sin(x); }"
+\endcode
+\end_toggle
 \subsection neuron_extra_global_param Extra global parameters
 Extra global parameters are parameters common to all neurons in the population. However, unlike the standard neuron parameters, they can be varied at runtime meaning they could, for example, be used to provide a global reward signal.
+\add_toggle_cpp
 These parameters are defined by using the SET_EXTRA_GLOBAL_PARAMS() macro to specify a list of variable names and type strings (like the SET_VARS() macro). For example:
 \code
 SET_EXTRA_GLOBAL_PARAMS({{"R", "float"}});
 \endcode
-
+\end_toggle
+\add_toggle_python
+These parameters are defined by using the ``extra_global_params`` keyword to specify a list of variable names and type string tuples (like the ``var_name_types`` keyword argument). For example:
+\code
+extra_global_params=[("R", "float")]
+\endcode
+\end_toggle
 These variables are available to all neurons in the population. They can also be used in synaptic code snippets; in this case it need to be addressed with a `_pre` or `_post` postfix.
 
 For example, if the model with the "R" parameter was used for the pre-synaptic neuron population, the weight update model of a synapse population could have simulation code like:
+\add_toggle_cpp
 \code
 SET_SIM_CODE("$(x)= $(x)+$(R_pre);");
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+sim_code="$(x)= $(x)+$(R_pre);"
+\endcode
+\end_toggle
 where we have assumed that the weight update model has a variable `x` and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
 
 \subsection neuron_additional_input Additional input variables
 Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the \$(inSyn) variable. 
 However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
 For example, if we wanted our leaky integrator to operate on the the product of two input currents, it could be defined as follows:
+\add_toggle_cpp
 \code
 SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 1.0}});
 SET_SIM_CODE("const scalar input = $(Isyn) * $(Isyn2);\n"
              "$(V) = input - $(ExpTC)*(input - $(V));");
 \endcode
-Where the SET_ADDITIONAL_INPUT_VARS() macro defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
-
+where the SET_ADDITIONAL_INPUT_VARS() macro defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
+\end_toggle
+\add_toggle_python
+\code
+additional_input_vars=[("Isyn2", "scalar", 1.0)],
+sim_code=
+    """
+    const scalar input = $(Isyn) * $(Isyn2);
+    $(V) = input - $(ExpTC)*(input - $(V));
+    """,
+\endcode
+where the ``additional_input_vars`` keyword argument defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
+\end_toggle
 \subsection neuron_rng Random number generation
 Many neuron models have probabilistic terms, for example a source of noise or a probabilistic spiking mechanism. In GeNN this can be implemented by using the following functions in blocks of model code:
 - <code>\$(gennrand_uniform)</code> returns a number drawn uniformly from the interval \f$[0.0, 1.0]\f$
@@ -314,13 +360,20 @@ Many neuron models have probabilistic terms, for example a source of noise or a 
 - <code>\$(gennrand_log_normal, MEAN, STDDEV)</code> returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
 - <code>\$(gennrand_gamma, ALPHA)</code> returns a number drawn from a gamma distribution with the specified shape.
 
+\section neuron_pop_own_type Creating neuron populations with your own neuron type
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
+\add_toggle_cpp
 \code
 networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1, 
                                                   LeakyIntegrator::ParamValues(20.0), // tau
                                                   LeakyIntegrator::VarValues(0.0)); // V
 \endcode
-
+\end_toggle
+\add_toggle_python
+\code
+network_model.add_neuron_population("Neurons", 1, leaky_integrator_model, {"tau": 20.0}, {"V": 0.0})
+\endcode
+\end_toggle
 
 -----
 \link sectDefiningNetwork Previous\endlink | \link UserManual Top\endlink | \link sectSynapseModels Next\endlink
@@ -432,10 +485,11 @@ In order to define a new current source type for use in a GeNN application,
 it is necessary to define a new class derived from CurrentSourceModels::Base. 
 For convenience the methods this class should implement can be implemented using macros:
 
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
-- SET_INJECTION_CODE(INJECTION_CODE): where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep.
+- \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS)\, SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_PARAM_NAMES()\, SET_VARS(), ``derived_params``\, ``param_names``\, ``var_name_types``} perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- \add_cpp_python_text{SET_INJECTION_CODE(INJECTION_CODE),``injection_code=INJECTION_CODE``}: where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep.
   The \$(injectCurrent, $(amp)) function is used to inject current.
 
+\add_toggle_cpp
 For example, using these macros, we can define a uniformly distributed noisy current source:
 
 \code
@@ -449,7 +503,18 @@ public:
     SET_PARAM_NAMES({"magnitude"});
 };
 \endcode
+\end_toggle
+\add_toggle_python
+For example, using these keyword arguments, we can define a uniformly distributed noisy current source:
 
+\code
+uniform_noise_model = genn_model.create_custom_current_source_class(
+    "uniform_noise",
+
+    param_names=["magnitude"],
+    injection_code="$(injectCurrent, $(gennrand_uniform) * $(magnitude));")
+\endcode
+\end_toggle
 
 -----
 \link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
@@ -463,11 +528,11 @@ Synaptic matrix types are made up of two components: SynapseMatrixConnectivity a
 SynapseMatrixConnectivity defines what data structure is used to store the synaptic matrix:
 - SynapseMatrixConnectivity::DENSE stores synaptic matrices as a dense matrix. Large dense matrices require a large amount of memory and if they contain a lot of zeros it may be inefficient.
 - SynapseMatrixConnectivity::SPARSE stores synaptic matrices in a(padded) 'ragged array' format. In general, this is less efficient to traverse using a GPU than the dense matrix format but does result in significant memory savings for large matrices.
-Ragged matrix connectivity is stored using several variables whose names, like state variables, have the name of the synapse population appended to them:
+Sparse matrix connectivity is stored using several variables whose names, like state variables, have the name of the synapse population appended to them:
         -# `const unsigned int maxRowLength`: a constant set via the ``SynapseGroup::setMaxConnections`` method which specifies the maximum number of connections in any given row (this is the width the structure is padded to). 
         -# `unsigned int *rowLength` (sized to number of presynaptic neurons): actual length of the row of connections associated with each presynaptic neuron
         -# `unsigned int *ind` (sized to ``maxRowLength * number of presynaptic neurons``): Indices of corresponding postsynaptic neurons concatenated for each presynaptic neuron.
-For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected only to the 0th neuron. The struct RaggedProjection should have these members, with indexing from 0 (where X represents a padding value):
+For example, consider a network of two presynaptic neurons connected to three postsynaptic neurons: 0th presynaptic neuron connected to 1st and 2nd postsynaptic neurons, the 1st presynaptic neuron connected only to the 0th neuron. Indexing starts from 0 and X represents a padding value:
 \code
 maxRowLength = 2
 ind = [1 2 0 X]
@@ -475,7 +540,7 @@ rowLength = [2 1]
 \endcode
 Weight update model variables associated with the sparsely connected synaptic population will be kept in an array using the same indexing as ind. For example, a variable caled \c g will be kept in an array such as:
 \c g=[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 X]
-- SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` and ``SynapseMatrixConnectivity::RAGGED`` formats and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
+- SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` format and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
  
 Furthermore the SynapseMatrixWeight defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
@@ -506,19 +571,34 @@ Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight a
 Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
 
 Previously we have shown variables being initialised to constant values such as:
+\add_toggle_cpp
 \code
 NeuronModels::TraubMiles::VarValues ini(
     0.0529324,     // 1 - prob. for Na channel activation m
     ...
 );
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+ini = {"m": 0.0529324, ...}
+\endcode
+\end_toggle
+
 state variables can also be left _uninitialised_ leaving it up to the user code to initialise them between the calls to ``initialize()`` and ``initializeSparse()``:
+\add_toggle_cpp
 \code
 NeuronModels::TraubMiles::VarValues ini(
     uninitialisedVar(),     // 1 - prob. for Na channel activation m
     ...
 );
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+ini = {"m": None, ...}
+\endcode
+\end_toggle
 or initialised using one of a number of predefined _variable initialisation snippets_:
 - InitVarSnippet::Uniform
 - InitVarSnippet::Normal
@@ -526,6 +606,7 @@ or initialised using one of a number of predefined _variable initialisation snip
 - InitVarSnippet::Gamma
 
 For example, to initialise a parameter using values drawn from the normal distribution:
+\add_toggle_cpp
 \code
 InitVarSnippet::Normal::ParamValues params(
     0.05,   // 0 - mean
@@ -536,6 +617,13 @@ NeuronModels::TraubMiles::VarValues ini(
     ...
 );
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+params = {"mean": 0.05, "sd": 0.01}
+ini = {"m": genn_model.init_var("Normal", params), ...}
+\endcode
+\end_toggle
 \section sect_new_var_init Defining a new variable initialisation snippet
 Similarly to neuron, weight update and postsynaptic models, new variable initialisation snippets can be created by simply defining a class in the model description.
 For example, when initialising excitatory (positive) synaptic weights with a normal distribution they should be clipped at 0 so the long tail of the normal distribution doesn't result in negative weights.

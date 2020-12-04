@@ -20,41 +20,16 @@ function addButton(label, buttonName) {
     return b;
 }
 
-function buttonsToAdd($elements, $heading, $type) {
-    if ($elements.length === 0) {
-        $elements = $("" + $type + ":contains(" + $heading.html() + ")").parent().prev("div.newInnerHTML");
-    }
-    var arr = jQuery.makeArray($elements);
-    var seen = {};
-    arr.forEach(function(e) {
-        var txt = e.innerHTML;
-        if (!seen[txt]) {
-            $button = addButton(e.title, txt);
-            if (Object.keys(seen).length == 0) {
-                var linebreak1 = document.createElement("br");
-                var linebreak2 = document.createElement("br");
-                ($heading).append(linebreak1);
-                ($heading).append(linebreak2);
-            }
-            ($heading).append($button);
-            seen[txt] = true;
-        }
-    });
-    return;
-}
 
 function addLanguageToggleButtons() {
-    // Search for H1 headings (in GeNN documentation these are the only heading really used)
-    $smallerHeadings = $(".contents").first().find("h1");
-    if ($smallerHeadings.length) {
-        $smallerHeadings.each(function() {
-            var $elements = $(this).nextUntil("h1").filter("div.newInnerHTML");
-            buttonsToAdd($elements, $(this), "h1");
-        });
-    } else {
-        var $elements = $(".contents").first().find("div.newInnerHTML");
-        buttonsToAdd($elements, $heading, "h2");
+    // If there are any toggleable divs
+    $toggleableDivs = $(".contents").find("div.toggleable_div")
+    if ($toggleableDivs.length) {
+        // Add buttons to toggle between C++ and Python
+        $(".headertitle").append(addButton("cpp", "C++"))
+        $(".headertitle").append(addButton("python", "Python"))
     }
+    
     $(".toggleable_button").first().click();
     var $clickDefault = $('.toggleable_button.label_python').first();
     if ($clickDefault.length) {
