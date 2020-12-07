@@ -186,34 +186,37 @@ There is a number of predefined models which can be used with the ModelSpec::add
 - NeuronModels::TraubMilesAlt
 - NeuronModels::TraubMilesNStep
 
+\add_toggle_python
+In Python, these models can be selected by name e.g. "Izhikevich".
+\end_toggle
+
 \section sect_own Defining your own neuron type 
 In order to define a new neuron type for use in a GeNN application,
 it is necessary to define a new class derived from NeuronModels::Base. 
 \add_toggle_python
-For convenience, this can be done using the ``pygenn.genn_model.create_custom_neuron_class`` function with the following keyword arguments:
+For convenience, this can be done using the ``pygenn.genn_model.create_custom_neuron_class`` function with the following basic keyword arguments:
 \end_toggle
 \add_toggle_cpp
 For convenience the methods this class should implement can be implemented using macros:
 \end_toggle
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS): declared the boilerplate code required for the model e.g. the correct
-  specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values.
-- SET_SIM_CODE(SIM_CODE): where SIM_CODE contains the code for executing 
+- \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS): declared the boilerplate code required for the model e.g. the correct  specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values, `class_name`: the name of the new model}.
+- \add_cpp_python_text{SET_SIM_CODE(SIM_CODE),`sim_code=SIM_CODE`}: where SIM_CODE contains the code for executing 
   the integration of the model for one time stepWithin this code string, variables need to be
   referred to by \$(NAME), where NAME is the name of the variable as
   defined in the vector varNames. The code may refer to the predefined
   primitives `DT` for the
   time step size and `$(Isyn)` for the total incoming synaptic current. It can also refer to a unique ID (within the population) using $(id).
-- SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE) defines the condition for true spike detection.
-- SET_RESET_CODE(RESET_CODE) defines code to be run after a true spike is emitted.
-- SET_PARAM_NAMES() defines the names of the model parameters. 
+- \add_cpp_python_text{SET_THRESHOLD_CONDITION_CODE(THRESHOLD_CONDITION_CODE),`threshold_condition_code=THRESHOLD_CONDITION_CODE`} defines the condition for true spike detection.
+- \add_cpp_python_text{SET_RESET_CODE(RESET_CODE),`reset_code=RESET_CODE`} defines code to be run after a true spike is emitted.
+- \add_cpp_python_text{SET_PARAM_NAMES(),`param_names`} defines the names of the model parameters. 
     If defined as `NAME` here, they can then be referenced as \$(NAME) in the code string. 
-    The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. 
+    \add_toggle_cpp The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. \end_toggle
     Parameters are assumed to be always of type double.
-- SET_VARS() defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
-    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model with ModelSpec::setPrecision.
+- \add_cpp_python_text{SET_VARS(),`var_name_types`} defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
+    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model \add_cpp_python_text{with ModelSpec::setPrecision, from ``pygenn.genn_model.GeNNModel.__init__``}.
     The variables defined here as `NAME` can then be used in the
-    syntax \$(NAME) in the code string. If the access mode is set to ``VarAccess::READ_ONLY``, GeNN applies additional optimisations and models should not write to it.
-- SET_NEEDS_AUTO_REFRACTORY() defines whether the neuron should include an automatic refractory period to prevent it emitting spikes in successive timesteps.
+    syntax \$(NAME) in the code string. If the access mode is set to \add_cpp_python_text{``VarAccess::READ_ONLY``,``VarAccess_READ_ONLY``}, GeNN applies additional optimisations and models should not write to it.
+- \add_cpp_python_text{SET_NEEDS_AUTO_REFRACTORY(), `is_auto_refractory_required`} defines whether the neuron should include an automatic refractory period to prevent it emitting spikes in successive timesteps.
 
 For example, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
 
@@ -232,6 +235,7 @@ public:
     
     SET_VARS({{"V", "scalar", VarAccess::READ_WRITE}});
 };
+IMPLEMENT_MODEL(LeakyIntegrator);
 \endcode
 \end_toggle
 \add_toggle_python
@@ -247,8 +251,9 @@ leaky_integrator_model = genn_model.create_custom_neuron_class(
     var_name_types=[("V", "scalar", VarAccess_READ_WRITE)])
 \endcode
 \end_toggle
-Additionally "derived parameters" can be defined. Derived parameters are a mechanism 
-for enhanced efficiency when running neuron models. If parameters with model-side meaning, such as time
+
+\subsection neuron_derived_params Derived Parameters
+"Derived parameters" are a mechanism for enhanced efficiency when running neuron models. If parameters with model-side meaning, such as time
 constants or conductances always appear in a certain combination in the model, then it is more efficient 
 to pre-compute this combination and define it as a dependent parameter.
 
@@ -269,6 +274,7 @@ public:
     SET_DERIVED_PARAMS({
         {"ExpTC", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
 };
+IMPLEMENT_MODEL(LeakyIntegrator2);
 \endcode
 \end_toggle
 \add_toggle_python
@@ -389,34 +395,235 @@ Currently 4 predefined weight update models are available:
 - WeightUpdateModels::StaticGraded
 - WeightUpdateModels::PiecewiseSTDP
 
-For more details about these built-in synapse models, see \cite Nowotny2010.
+\add_toggle_python
+In Python, these models can be selected by name e.g. "StaticPulse".
+\end_toggle
 
 \section sect34 Defining a new weight update model
 
-Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class.
-Weight update models should all be derived from WeightUpdateModel::Base and, for convenience, the methods a new weight update model should implement can be implemented using macros:
+Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class derived from WeightUpdateModel::Base.
+\add_toggle_cpp
+For convenience, the methods a new weight update model should implement can be implemented using the following basic macros:
+\end_toggle
+\add_toggle_python
+For convenience, new weight update models should be implemented using the ``pygenn.genn_model.create_custom_weight_update_class`` function with the following basic keyword arguments:
+ \end_toggle
 
-- SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() and SET_EXTRA_GLOBAL_PARAMS() perform the same roles as they do in the neuron
+- \add_cpp_python_text{SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_VARS() and SET_EXTRA_GLOBAL_PARAMS(), `derived_params`, `param_names`, `var_name_types` and `extra_global_params`} perform the same roles as they do in the neuron
   models discussed in \ref sect_own.
 - DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a weight update model with pre and postsynaptic as well as per-synapse state variables.
-- SET_PRE_VARS() and SET_POST_VARS() define state variables associated with pre or postsynaptic neurons rather than synapses. These are typically used to efficiently implement <i>trace</i> variables for use in STDP learning rules \cite Morrison2008. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
-- SET_SIM_CODE(SIM_CODE): defines the simulation code that is used when a true spike is detected. The update is performed only in timesteps after a neuron in the presynaptic population has fulfilled its threshold detection condition.
+- \add_cpp_python_text{SET_SIM_CODE(SIM_CODE),`sim_code=SIM_CODE`}: defines the simulation code that is used when a true spike is detected. The update is performed only in timesteps after a neuron in the presynaptic population has fulfilled its threshold detection condition.
 Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be applied using the the \$(addToInSyn, weight) function. 
 For example
+\add_toggle_cpp
 \code
 SET_SIM_CODE(
-    "$(addToInSyn, $(inc));\n"
+    "$(addToInSyn, $(inc));"
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+sim_code="$(addToInSyn, $(inc));"
+\endcode
+\end_toggle
 where "inc" is the increment of the synaptic input to a post-synaptic neuron for each pre-synaptic spike. The simulation code also typically contains updates to the internal synapse variables that may have contributed to $(inc). For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
 To apply input to the post-synaptic neuron with a dendritic (i.e. between the synapse and the postsynaptic neuron) delay you can instead use the \$(addToInSynDelay, weight, delay) function.
 For example
+\add_toggle_cpp
 \code
 SET_SIM_CODE(
     "$(addToInSynDelay, $(inc), $(delay));");
 \endcode
+\end_toggle
+\add_toggle_python
+\code
+sim_code="$(addToInSynDelay, $(inc), $(delay));"
+\endcode
+\end_toggle
 where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
 \note
 When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
+
+- \add_cpp_python_text{SET_LEARN_POST_CODE(LEARN_POST_CODE),`learn_post_code=LEARN_POST_CODE`} defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
+- \add_cpp_python_text{SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED),`is_pre_spike_time_required=PRE_SPIKE_TIME_REQUIRED` and `is_post_spike_time_required=POST_SPIKE_TIME_REQUIRED`} define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. For example an STDP rule would be likely to require:
+\add_toggle_cpp
+\code
+SET_NEEDS_PRE_SPIKE_TIME(true);
+SET_NEEDS_POST_SPIKE_TIME(true);
+\endcode
+\end_toggle
+\add_toggle_python
+\code
+is_pre_spike_time_required=True, is_post_spike_time_required=True
+\endcode
+\end_toggle
+For example, we can define a simple additive STDP rule with nearest-neighbour spike pairing and the following time-dependence:
+\f{align*}{
+  \Delta w_{ij} & = \
+    \begin{cases}
+      A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\
+      A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0
+    \end{cases}
+\f}
+in a fully event-driven manner as follows:
+\add_toggle_cpp
+\code
+class STDPAdditive : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditive, 6, 1, 0, 0);
+
+    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+                     "Wmin", "Wmax"});
+    SET_VARS({{"g", "scalar"}});
+
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "const scalar dt = $(t) - $(sT_post); \n"
+        "if (dt > 0) {\n"
+        "    const scalar timing = exp(-dt / $(tauMinus));\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * timing);\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_LEARN_POST_CODE(
+        "const scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    const scalar timing = exp(-dt / $(tauPlus));\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * timing);\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
+};
+IMPLEMENT_MODEL(STDPAdditive);
+\endcode
+\end_toggle
+\add_toggle_python
+\code
+stdp_additive_model = genn_model.create_custom_weight_update_class(
+    "stdp_additive",
+    param_names=["tauPlus", "tauMinus", "aPlus", "aMinus", "wMin", "wMax"],
+    var_name_types=[("g", "scalar")],
+
+    sim_code="""
+        $(addToInSyn, $(g));
+        const scalar dt = $(t) - $(sT_post);
+        if (dt > 0) {
+            const scalar timing = exp(-dt / $(tauMinus));
+            const scalar newWeight = $(g) - ($(Aminus) * timing);
+            $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));
+        }
+        """,
+    learn_post_code="""
+        const scalar dt = $(t) - $(sT_pre);
+        if (dt > 0) {
+            const scalar timing = exp(-dt / $(tauPlus));
+            const scalar newWeight = $(g) + ($(Aplus) * timing);
+            $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));
+        }
+        """,
+
+    is_pre_spike_time_required=True,
+    is_post_spike_time_required=True)
+\endcode
+\end_toggle
+
+\subsection wum_pre_post_dynamics Pre and postsynaptic dynamics
+The memory required for synapse variables and the computational cost of updating them tends to grow with \f$O(N^2)\f$ with the number of neurons.
+Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea. 
+The \add_cpp_python_text{SET_PRE_VARS() and SET_POST_VARS() macros, `pre_var_name_types` and `post_var_name_types` keyword arguments} are used to define any pre or postsynaptic state variables.
+Then the \add_cpp_python_text{SET_PRE_DYNAMICS_CODE() and SET_POST_DYNAMICS_CODE() macros, `pre_dynamics_code` and `post_dynamics_code` keyword arguments} can be used to define any time-driven updates to these variables and the \add_cpp_python_text{SET_PRE_SPIKE_CODE() and SET_POST_SPIKE_CODE() macros, `pre_spike_code` and `post_spike_code` keyword arguments} any spike-driven updates.
+
+For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic <i>trace</i> variables \cite Morrison2008 :
+\note
+These pre and postsynaptic code snippets can only access the corresponding pre and postsynaptic variables as well as those associated with the pre or postsynaptic neuron population. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
+
+\add_toggle_cpp
+\code
+class STDPAdditive2 : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditive2, 6, 1, 1, 1);
+
+    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+                     "Wmin", "Wmax"});
+    SET_DERIVED_PARAMS({
+        {"tauPlusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
+        {"tauMinusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }}});
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preTrace", "scalar"}});
+    SET_POST_VARS({{"postTrace", "scalar"}});
+    
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "const scalar dt = $(t) - $(sT_post); \n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_LEARN_POST_CODE(
+        "const scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
+};
+IMPLEMENT_MODEL(STDPAdditive2);
+\endcode
+\end_toggle
+\add_toggle_python
+\code
+stdp_additive_2_model = genn_model.create_custom_weight_update_class(
+    "stdp_additive_2",
+    param_names=["tauPlus", "tauMinus", "aPlus", "aMinus", "wMin", "wMax"],
+    var_name_types=[("g", "scalar")],
+    pre_var_name_types=[("preTrace", "scalar")],
+    post_var_name_types=[("postTrace", "scalar")],
+    
+    sim_code="""
+        $(addToInSyn, $(g));
+        const scalar dt = $(t) - $(sT_post);
+        if(dt > 0) {
+            const scalar newWeight = $(g) - ($(aMinus) * $(postTrace));
+            $(g) = fmin($(wMax), fmax($(wMin), newWeight));
+        }
+        """,
+    learn_post_code="""
+        const scalar dt = $(t) - $(sT_pre);
+        if(dt > 0) {
+            const scalar newWeight = $(g) + ($(aPlus) * $(preTrace));
+            $(g) = fmin($(wMax), fmax($(wMin), newWeight));
+        }
+        """,
+
+    pre_spike_code="""
+        $(preTrace) += 1.0;
+        """,
+    pre_dynamics_code="""
+        $(preTrace) *= $(tauPlusDecay);
+        """,
+    post_spike_code="""
+        $(postTrace) += 1.0;
+        """,
+    post_dynamics_code="""
+        $(postTrace) *= $(tauMinusDecay);
+        """,
+    
+    is_pre_spike_time_required=True,
+    is_post_spike_time_required=True)
+\endcode
+\end_toggle
+
+
+\subsection wum_spike_like_events Spike-like events
 
 - SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
@@ -426,18 +633,9 @@ Whenever this expression evaluates to true, the event code set using the SET_EVE
 
 - SET_EVENT_CODE(EVENT_CODE) defines the code that is used when the event threshold condition is met (as set using the SET_EVENT_THRESHOLD_CONDITION_CODE() macro). 
 
-- SET_LEARN_POST_CODE(LEARN_POST_CODE) defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
+\subsection wum_synapse_dynamics Synapse dynamics
 
 - SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
-- SET_PRE_SPIKE_CODE() and SET_POST_SPIKE_CODE() define code that is called whenever there is a pre or postsynaptic spike. Typically these code strings are used to update any pre or postsynaptic state variables.
-- SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED) define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. For example an STDP rule would be likely to require:
-\code
-SET_NEEDS_PRE_SPIKE_TIME(true);
-SET_NEEDS_POST_SPIKE_TIME(true);
-\endcode
-
-All code snippets, aside from those defined with ``SET_PRE_SPIKE_CODE()`` and ``SET_POST_SPIKE_CODE()``, can be used to manipulate any synapse variable and so learning rules can combine both time-drive and event-driven processes.
-
 
 -----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
