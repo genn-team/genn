@@ -291,7 +291,7 @@ int main()
             pushStimCurrentSpikesToDevice();
         }
 
-        stepTimeU();
+        stepTime();
         pullVPop1FromDevice();
 
         os << t << " ";
