@@ -567,9 +567,7 @@ stdp_additive_2_model = genn_model.create_custom_weight_update_class(
     is_post_spike_time_required=True)
 \end_toggle_code
 
-
 \subsection wum_spike_like_events Spike-like events
-
 - SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
 SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > -0.02");
@@ -579,7 +577,6 @@ Whenever this expression evaluates to true, the event code set using the SET_EVE
 - SET_EVENT_CODE(EVENT_CODE) defines the code that is used when the event threshold condition is met (as set using the SET_EVENT_THRESHOLD_CONDITION_CODE() macro). 
 
 \subsection wum_synapse_dynamics Synapse dynamics
-
 - SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
 
 -----
@@ -635,37 +632,28 @@ In Python, these models can be selected by their unqualified name e.g. "DC".
 In order to define a new current source type for use in a GeNN application,
 it is necessary to define a new class derived from CurrentSourceModels::Base. 
 For convenience the methods this class should implement can be implemented using macros:
-
 - \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS)\, SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_PARAM_NAMES()\, SET_VARS(), ``derived_params``\, ``param_names``\, ``var_name_types``} perform the same roles as they do in the neuron models discussed in \ref sect_own.
 - \add_cpp_python_text{SET_INJECTION_CODE(INJECTION_CODE),``injection_code=INJECTION_CODE``}: where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep.
   The \$(injectCurrent, $(amp)) function is used to inject current.
-
-\add_toggle_cpp
-For example, using these macros, we can define a uniformly distributed noisy current source:
-
-\code
+For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a uniformly distributed noisy current source:
+\add_toggle_code_cpp
 class UniformNoise : public CurrentSourceModels::Base
 {
 public:
     DECLARE_MODEL(UniformNoise, 1, 0);
-    
+
     SET_SIM_CODE("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
-    
+
     SET_PARAM_NAMES({"magnitude"});
 };
-\endcode
-\end_toggle
-\add_toggle_python
-For example, using these keyword arguments, we can define a uniformly distributed noisy current source:
-
-\code
+\end_toggle_code
+\add_toggle_code_python
 uniform_noise_model = genn_model.create_custom_current_source_class(
     "uniform_noise",
 
     param_names=["magnitude"],
     injection_code="$(injectCurrent, $(gennrand_uniform) * $(magnitude));")
-\endcode
-\end_toggle
+\end_toggle_code
 
 -----
 \link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
@@ -729,19 +717,15 @@ In Python, these matrix types can be selected by their unqualified name e.g. "DE
 Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
 
 Previously we have shown variables being initialised to constant values such as:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 NeuronModels::TraubMiles::VarValues ini(
     0.0529324,     // 1 - prob. for Na channel activation m
     ...
 );
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 ini = {"m": 0.0529324, ...}
-\endcode
-\end_toggle
+\end_toggle_code
 \add_toggle_cpp
 state variables can also be left _uninitialised_ leaving it up to the user code to initialise them between the calls to ``initialize()`` and ``initializeSparse()``:
 
@@ -768,8 +752,7 @@ or initialised using one of a number of predefined _variable initialisation snip
 In Python, these models can be selected by their unqualified name e.g. "Normal".
 \end_toggle
 For example, to initialise a parameter using values drawn from the normal distribution:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 InitVarSnippet::Normal::ParamValues params(
     0.05,   // 0 - mean
     0.01);  // 1 - standard deviation
@@ -778,20 +761,16 @@ NeuronModels::TraubMiles::VarValues ini(
     initVar<InitVarSnippet::Normal>(params),     // 1 - prob. for Na channel activation m
     ...
 );
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 params = {"mean": 0.05, "sd": 0.01}
 ini = {"m": genn_model.init_var("Normal", params), ...}
-\endcode
-\end_toggle
+\end_toggle_code
 \section sect_new_var_init Defining a new variable initialisation snippet
 Similarly to neuron, weight update and postsynaptic models, new variable initialisation snippets can be created by simply defining a class in the model description.
 For example, when initialising excitatory (positive) synaptic weights with a normal distribution they should be clipped at 0 so the long tail of the normal distribution doesn't result in negative weights.
 This could be implemented using the following variable initialisation snippet which redraws until samples are within the desired bounds:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 class NormalPositive : public InitVarSnippet::Base
 {
 public:
@@ -808,10 +787,8 @@ public:
     SET_PARAM_NAMES({"mean", "sd"});
 };
 IMPLEMENT_SNIPPET(NormalPositive);
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 normal_positive_model = genn_model.create_custom_init_var_snippet_class(
     "normal_positive",
     param_names=["mean", "sd],
@@ -824,8 +801,7 @@ normal_positive_model = genn_model.create_custom_init_var_snippet_class(
         } while (normal < 0.0);
         $(value) = normal;
         """)
-\endcode
-\end_toggle
+\end_toggle_code
 Within the snippet of code specified using the \add_cpp_python_text{`SET_CODE()` macro, `var_init_code` keyword argument}, when initialisising neuron and postaynaptic model state variables , the \$(id) variable can be used to access the id of the neuron being initialised.
 Similarly, when initialising weight update model state variables, the \$(id_pre) and \$(id_post) variables can used to access the ids of the pre and postsynaptic neurons connected by the synapse being initialised.
 
@@ -870,30 +846,25 @@ This can be done using one of a number of predefined _sparse connectivity initia
 In Python, these models can be selected by their unqualified name e.g. "FixedProbability".
 \end_toggle
 For example, to initialise synaptic connectivity with a 10% connection probability (allowing connections between neurons with the same id):
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 InitSparseConnectivitySnippet::FixedProbability::ParamValues fixedProb(0.1);
     
 model.addSynapsePopulation<...>(
         ...
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProb));
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 fixed_prob = {"prob": 0.1}
 model.add_synapse_population(
     ...
     genn_model.init_connectivity("FixedProbability", fixed_prob))
-\endcode
-\end_toggle
+\end_toggle_code
 
 \section sect_new_sparse_connect Defining a new sparse connectivity snippet
 Similarly to variable initialisation snippets, sparse connectivity initialisation snippets can be created by simply defining a class in the model description.
 
 For example, the following sparse connectivity initialisation snippet could be used to initialise a 'ring' of connectivity where each neuron is connected to a number of subsequent neurons specified using the ``numNeighbours`` parameter:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 class Ring : public InitSparseConnectivitySnippet::Base
 {
 public:
@@ -921,10 +892,8 @@ public:
         });
 };
 IMPLEMENT_SNIPPET(Ring);
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 ring_model = genn_model.create_custom_sparse_connect_init_snippet_class(
     "ring",
     param_names=["numNeighbours"],
@@ -943,16 +912,14 @@ ring_model = genn_model.create_custom_sparse_connect_init_snippet_class(
         lambda num_pre, num_post, pars: int(pars[0]))(),
     calc_max_col_len_func=genn_model.create_cmlf_class(
         lambda num_pre, num_post, pars: int(pars[0]))())
-\endcode
-\end_toggle
+\end_toggle_code
 Each <i>row</i> of sparse connectivity is initialised independantly by running the snippet of code specified using the \add_cpp_python_text{`SET_ROW_BUILD_CODE()` macro,`row_build_code` keyword argument} within a loop.
 The \$(num_post) variable can be used to access the number of neurons in the postsynaptic population and the \$(id_pre) variable can be used to access the index of the presynaptic neuron associated with the row being generated.
 The \add_cpp_python_text{`SET_ROW_BUILD_STATE_VARS()` macro,`row_build_state_vars` keyword argument} can be used to initialise state variables outside of the loop - in this case ``offset`` which is used to count the number of synapses created in each row.
 Synapses are added to the row using the \$(addSynapse, target) function and iteration is stopped using the \$(endRow) function.
-\add_toggle_cpp
-To avoid having to manually call SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections, sparse connectivity snippets can also provide code to calculate the maximum row and column lengths this connectivity will result in using the SET_CALC_MAX_ROW_LENGTH_FUNC() and SET_CALC_MAX_COL_LENGTH_FUNC() macros.
-Alternatively, if the maximum row or column length is constant, the `SET_MAX_ROW_LENGTH()` and `SET_MAX_COL_LENGTH()` shorthand macros can be used.
-\end_toggle
+\add_cpp_python_text{To avoid having to manually call SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections\, sparse,Sparse} connectivity snippets should also provide code to calculate the maximum row and column lengths this connectivity will result in using the \add_cpp_python_text{SET_CALC_MAX_ROW_LENGTH_FUNC() and SET_CALC_MAX_COL_LENGTH_FUNC() macros, `calc_max_row_len_func` and `calc_max_col_len_func` keyword arguments`}.
+\add_cpp_text{Alternatively\, if the maximum row or column length is constant\, the `SET_MAX_ROW_LENGTH()` and `SET_MAX_COL_LENGTH()` shorthand macros can be used.}
+
 \section sect_sparse_connect_init_modes Sparse connectivity locations
 Once you have defined <b>how</b> sparse connectivity is going to be initialised, similarly to variables, you can control <b>where</b> it is allocated. 
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
