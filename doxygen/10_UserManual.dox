@@ -114,41 +114,36 @@ predefined models and their parameters and initial values are detailed
 \section subsect12 Defining synapse populations
 
 Synapse populations are added with the function
-\code{.cc}
+\add_toggle_code_cpp
 model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(name, mType, delay, preName, postName, 
                                                                  weightParamValues, weightVarValues, weightPreVarInitialisers, weightPostVarInitialisers,
                                                                  postsynapticParamValues, postsynapticVarValues, connectivityInitialiser);
-\endcode
+\end_toggle_code
+\add_toggle_code_python
+model.add_synapse_population(pop_name, matrix_type, delay_steps,
+                             source, target, w_update_model, wu_param_space,
+                             wu_var_space, wu_pre_var_space,
+                             wu_post_var_space, postsyn_model,
+                             ps_param_space, ps_var_space,
+                             connectivity_initialiser
+\end_toggle_code
 where the arguments are
-\arg `WeightUpdateModel`:   Template parameter specifying the type of weight update model.
-                            These should be derived off WeightUpdateModels::Base and can
-                            either be one of the standard models or user-defined
-                            (see \ref sectSynapseModels).
-\arg `PostsynapticModel`:   Template parameter specifying the type of postsynaptic integration model.
-                            These should be derived off PostsynapticModels::Base and can
-                            either be one of the standard models or user-defined
-                            (see \ref sect_postsyn).
-\arg `const string &name`: The name of the synapse population
-\arg `unsigned int mType`: How the synaptic matrix is stored. See \ref subsect34 for available options.
-\arg `unsigned int delay`: Homogeneous (axonal) delay for synapse population (in terms of the simulation
+\arg \add_cpp_python_text{`WeightUpdateModel`: Template parameter specifying the type of weight update model. These should be derived off WeightUpdateModels::Base and can either be one of the standard models or user-defined,`w_update_model`: The type of weight update model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_weight_update_class} (see \ref sectSynapseModels).
+\arg \add_cpp_python_text{`PostsynapticModel`: Template parameter specifying the type of postsynaptic integration model. These should be derived off PostsynapticModels::Base and can either be one of the standard models or user-defined,`postsyn_model`: The type of postsynaptic model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_postsynaptic_class} (see \ref sect_postsyn).
+\arg \add_cpp_python_text{`const string &name`,`pop_name`}: The name of the synapse population
+\arg \add_cpp_python_text{`::SynapseMatrixType mType`: How,`matrix_type`: String specifying how} the synaptic matrix is stored. See \ref subsect34 for available options.
+\arg \add_cpp_python_text{`unsigned int delay`,`delay_steps`}: Homogeneous (axonal) delay for synapse population (in terms of the simulation
      time step `DT`). 
-\arg `const string preName`: Name of the (existing!) pre-synaptic
-     neuron population.
-\arg `const string postName`: Name of the (existing!) post-synaptic
-     neuron population.
-\arg `WeightUpdateModel::ParamValues weightParamValues`:    The parameter values (common to all synapses of 
+\arg \add_cpp_python_text{`const string preName`: Name, `source`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) presynaptic neuron population.
+\arg \add_cpp_python_text{`const string postName`: Name, `target`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) postsynaptic neuron population.
+\arg \add_cpp_python_text{`WeightUpdateModel::ParamValues weightParamValues`: The, `wu_param_space`: Dictionary containing the} parameter values (common to all synapses of 
                                                             the population) for the weight update model. 
-\arg `WeightUpdateModel::VarValues weightVarInitialisers`:    Initial values or initialisation snippets for the weight
-                                                        update model's state variables
-\arg `WeightUpdateModel::PreVarValues weightPreVarInitialisers`:    Initial values or initialisation snippets for the weight
-                                                        update model's presynaptic state variables
-\arg `WeightUpdateModel::PostVarValues weightPostVarInitialisers`:    Initial values or initialisation snippets for the weight
-                                                        update model's postsynaptic state variables
-\arg `PostsynapticModel::ParamValues postsynapticParamValues`:  The parameter values (common to all 
-                                                                postsynaptic neurons) for the postsynaptic model. 
-\arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
-                                                            postsynaptic model's state variables
-\arg `InitSparseConnectivitySnippet::Init connectivityInitialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
+\arg \add_cpp_python_text{``WeightUpdateModel::VarValues weightVarInitialisers`: The, `wu_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's state variables
+\arg \add_cpp_python_text{`WeightUpdateModel::PreVarValues weightPreVarInitialisers`: The, `wu_pre_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's presynaptic state variables
+\arg \add_cpp_python_text{`WeightUpdateModel::PostVarValues weightPostVarInitialisers`: The, `wu_post_var_space`: Dictionary containg the} initial values or initialisation snippets for the weight update model's postsynaptic state variables
+\arg \add_cpp_python_text{`PostsynapticModel::ParamValues postsynapticParamValues`: The,`ps_param_space`: Dictionary containing the} parameter values (common to all postsynaptic neurons) for the postsynaptic model. 
+\arg \add_cpp_python_text{`PostsynapticModel::VarValues postsynapticVarInitialisers`: The, `ps_var_space`: Dictionary containing the} initial values or initialisation snippets for variables for the postsynaptic model's state variables
+\arg \add_cpp_python_text{`InitSparseConnectivitySnippet::Init connectivityInitialiser`,`connectivity_initialiser`}: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
 The ModelSpec::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::SPARSE connectivity (see \ref subsect34).
@@ -365,7 +360,7 @@ In Python, these models can be selected by their unqualified name e.g. "StaticPu
 
 \section sect34 Defining a new weight update model
 
-Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class derived from WeightUpdateModel::Base.
+Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class derived from WeightUpdateModels::Base.
 \add_toggle_cpp
 For convenience, the methods a new weight update model should implement can be implemented using the following basic macros:
 \end_toggle
@@ -482,7 +477,6 @@ The memory required for synapse variables and the computational cost of updating
 Therefore, if it is possible, implementing synapse variables on a per-neuron rather than per-synapse basis is a good idea. 
 The \add_cpp_python_text{SET_PRE_VARS() and SET_POST_VARS() macros, `pre_var_name_types` and `post_var_name_types` keyword arguments} are used to define any pre or postsynaptic state variables.
 Then the \add_cpp_python_text{SET_PRE_DYNAMICS_CODE() and SET_POST_DYNAMICS_CODE() macros, `pre_dynamics_code` and `post_dynamics_code` keyword arguments} can be used to define any time-driven updates to these variables and the \add_cpp_python_text{SET_PRE_SPIKE_CODE() and SET_POST_SPIKE_CODE() macros, `pre_spike_code` and `post_spike_code` keyword arguments} any spike-driven updates.
-
 For example, using pre and postsynaptic variables, our event-driven STDP rule can be extended to use all-to-all spike pairing using pre and postsynaptic <i>trace</i> variables \cite Morrison2008 :
 \note
 These pre and postsynaptic code snippets can only access the corresponding pre and postsynaptic variables as well as those associated with the pre or postsynaptic neuron population. Like other state variables, variables defined here as `NAME` can be accessed in weight update model code strings using the \$(NAME) syntax. 
@@ -679,11 +673,8 @@ rowLength = [2 1]
 Weight update model variables associated with the sparsely connected synaptic population will be kept in an array using the same indexing as ind. For example, a variable caled \c g will be kept in an array such as:
 \c g=[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 X]
 - SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` format and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
- 
-\add_toggle_python
-In Python, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.genn_groups.SynapseGroup.set_sparse_connections method.
-\end_toggle
 
+\add_python_text{In Python\, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.genn_groups.SynapseGroup.set_sparse_connections method.}
 Furthermore the SynapseMatrixWeight defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
 Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
