@@ -559,20 +559,21 @@ Unlike the event-driven updates previously described, synapse dynamics code is r
 This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
 Synapse dynamics code is added to a model using the \add_cpp_python_text{``SET_SYNAPSE_DYNAMICS_CODE()`` macro, ``synapse_dynamics_code`` keyword argument}, for example a continous synapse could be implemented as follows:
 \add_toggle_code_cpp
-SET_SYNAPSE_DYNAMICS_CODE("$(addToInSyn, $(g) * $(V_pre));");
+SET_SYNAPSE_DYNAMICS_CODEs("$(addToInSyn, $(g) * $(V_pre));");
 \end_toggle_code
 \add_toggle_code_python
 synapse_dynamics_code="$(addToInSyn, $(g) * $(V_pre));",
 \end_toggle_code
 
 \subsection wum_spike_like_events Spike-like events
-- SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
-\code
+As well as time-driven synapse dynamics and spike event-driven updates, GeNN weight update models also support "spike-like events". These are triggerd by a threshold condition -- implemented with the code string specified using the  \add_cpp_python_text{SET_EVENT_THRESHOLD_CONDITION_CODE() macro,`event_threshold_condition_code` keyword argument}. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
+\add_toggle_code_cpp
 SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > -0.02");
-\endcode
-Whenever this expression evaluates to true, the event code set using the SET_EVENT_CODE() macro is executed. For an example, see WeightUpdateModels::StaticGraded.
-
-- SET_EVENT_CODE(EVENT_CODE) defines the code that is used when the event threshold condition is met (as set using the SET_EVENT_THRESHOLD_CONDITION_CODE() macro). 
+\end_toggle_code
+\add_toggle_code_python
+event_threshold_condition_code="$(V_pre) > -0.02"
+\end_toggle_code
+Whenever this expression evaluates to true, the event code set using the \add_cpp_python_text{SET_EVENT_CODE() macro,`event_code` keyword argument} is executed. For an example, see WeightUpdateModels::StaticGraded.
 
 -----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
