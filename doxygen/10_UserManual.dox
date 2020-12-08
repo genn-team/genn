@@ -71,12 +71,15 @@ in a separate file, such as `MyModel.cc`. In this function, the following
 tasks must be completed:
 \end_toggle
 \add_toggle_python
-
+A network model is defined as follows:
 \end_toggle
-1. The name of the model must be defined:
-   \code{.cc}
+1. \add_cpp_python_text{The name of the model must be defined,A pygenn.genn_model.GeNNModel must be created with a name and a default precision (see \ref floatPrecision)}:
+   \add_toggle_code_cpp
    model.setName("MyModel");
-   \endcode
+   \end_toggle_code
+   \add_toggle_code_python
+   model = GeNNModel("float", "YourModelName")
+   \end_toggle_code
 2. Neuron populations (at least one) must be added (see \ref subsect11).
    The user may add as many neuron populations as they wish. If resources
    run out, there will not be a warning but GeNN will fail. However,
@@ -94,17 +97,14 @@ Neuron populations are added using the function
 model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varInitialisers);
 \end_toggle_code
 \add_toggle_code_python
-model.add_neuron_population(name, num, model, param_values, var_initialisers)
+model.add_neuron_population(pop_name, num_neurons, neuron, param_space, var_space)
 \end_toggle_code
 where the arguments are:
-\arg `NeuronModel`:        Template argument specifying the type of neuron model
-                           These should be derived off NeuronModels::Base and can
-                           either be one of the standard models or user-defined
-                           (see \ref sectNeuronModels).
-\arg `const string &name`: Unique name of the neuron population
-\arg `unsigned int size`: number of neurons in the population
-\arg `NeuronModel::ParamValues paramValues`: Parameters of this neuron type
-\arg `NeuronModel::VarValues varInitialisers`: Initial values or initialisation snippets for variables of this neuron type 
+\arg \add_cpp_python_text{`NeuronModel`: Template argument specifying the type of neuron model. These should be derived off NeuronModels::Base and can either be one of the standard models or user-defined,`neuron`: The type of neuron model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_neuron_class} (see \ref sectNeuronModels).
+\arg \add_cpp_python_text{`const string &name`,`pop_name`}: Unique name of the neuron population
+\arg \add_cpp_python_text{`unsigned int size`,`num_neurons`}: number of neurons in the population
+\arg \add_cpp_python_text{`NeuronModel::ParamValues paramValues`: Parameters, `param_space`: Dictionary containing parameters} of this neuron type
+\arg \add_cpp_python_text{`NeuronModel::VarValues varInitialisers`: Initial, `var_space`: Dictionary containing initial} values or initialisation snippets for variables of this neuron type 
 
 The user may add as many neuron populations as the model necessitates.
 They must all have unique names. The possible values for the arguments,
@@ -149,12 +149,11 @@ where the arguments are
 \arg `PostsynapticModel::VarValues postsynapticVarInitialisers`:  Initial values or initialisation snippets for variables for the 
                                                             postsynaptic model's state variables
 \arg `InitSparseConnectivitySnippet::Init connectivityInitialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
-\add_toggle_cpp 
+
 The ModelSpec::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::SPARSE connectivity (see \ref subsect34).
 \note
 When using a sparse connectivity initialisation snippet, these values are set automatically.
-\end_toggle
 - SynapseGroup::setMaxDendriticDelayTimesteps() sets the maximum dendritic delay (in terms of the simulation
      time step `DT`) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the `addToDenDelay` function in user code (see \ref sect34).
 - SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.
