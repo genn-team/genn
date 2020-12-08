@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-/*! \page Tutorial2 Tutorial 2 (C++)
+/*! \page Tutorial2_Python Tutorial 2 (Python)
 
 In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synaptic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
 
@@ -310,6 +310,6 @@ Finally if we build, make and run this model; and plot the first 200 ms of the t
 
 
 -----
-\link Tutorial1_Python Previous\endlink | \link Tutorial2 Top\endlink | \link Tutorial2_Python Next\endlink
+\link Tutorial2 Previous\endlink | \link Tutorial2_Python Top\endlink | \link UserGuide Next\endlink
 
 */

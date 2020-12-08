@@ -187,7 +187,7 @@ You will also need to add:
 \code
 import numpy as np
 \endcode
-to the top of tenHH.py
+to the top of tenHH.py.
 \note 
 The pygenn.genn_model.GeNNModel.timestep property keeps track of the current simulation timestep count. This is updated at the end of pygenn.genn_model.GeNNModel.step_time so here, we subtract 1 from it to obtain indices into our array from 0 to 9999.
 \note
