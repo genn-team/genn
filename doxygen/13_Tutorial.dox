@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-/*! \page Tutorial2 Tutorial 2
+/*! \page Tutorial2 Tutorial 2 (C++)
 
 In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synaptic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
 

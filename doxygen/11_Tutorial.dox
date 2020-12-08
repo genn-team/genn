@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-/*! \page Tutorial1 Tutorial 1
+/*! \page Tutorial1 Tutorial 1 (C++)
 
 In this tutorial we will go through step by step instructions how to create and run your first GeNN simulation from scratch.
 
@@ -266,6 +266,6 @@ However so far, the neurons are not connected and do not receive input. As the N
 
 
 -----
-\link sectSynapseModels Previous\endlink | \link Tutorial1 Top\endlink | \link Tutorial2 Next\endlink
+\link sectSynapseModels Previous\endlink | \link Tutorial1 Top\endlink | \link Tutorial1_Python Next\endlink
 
 */
