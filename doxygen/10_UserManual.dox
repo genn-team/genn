@@ -62,13 +62,17 @@ right in.
 //----------------------------------------------------------------------------
 /*!  \page sectDefiningNetwork Defining a network model
 
+\add_toggle_cpp
 A network model is defined by the user by providing the function 
 \code{.cc}
 void modelDefinition(ModelSpec &model) 
 \endcode
 in a separate file, such as `MyModel.cc`. In this function, the following
 tasks must be completed:
+\end_toggle
+\add_toggle_python
 
+\end_toggle
 1. The name of the model must be defined:
    \code{.cc}
    model.setName("MyModel");
@@ -187,18 +191,13 @@ There is a number of predefined models which can be used with the ModelSpec::add
 - NeuronModels::TraubMilesNStep
 
 \add_toggle_python
-In Python, these models can be selected by name e.g. "Izhikevich".
+In Python, these models can be selected by their unqualified name e.g. "Izhikevich".
 \end_toggle
 
 \section sect_own Defining your own neuron type 
 In order to define a new neuron type for use in a GeNN application,
-it is necessary to define a new class derived from NeuronModels::Base. 
-\add_toggle_python
-For convenience, this can be done using the ``pygenn.genn_model.create_custom_neuron_class`` function with the following basic keyword arguments:
-\end_toggle
-\add_toggle_cpp
-For convenience the methods this class should implement can be implemented using macros:
-\end_toggle
+it is necessary to define a new class derived from NeuronModels::Base.
+For convenience, \add_cpp_python_text{the methods this class should implement can be implemented using macros,this can be done using the ``pygenn.genn_model.create_custom_neuron_class`` function with the following basic keyword arguments}:
 - \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS): declared the boilerplate code required for the model e.g. the correct  specialisations of NewModels::ValueBase used to wrap the neuron model parameters and values, `class_name`: the name of the new model}.
 - \add_cpp_python_text{SET_SIM_CODE(SIM_CODE),`sim_code=SIM_CODE`}: where SIM_CODE contains the code for executing 
   the integration of the model for one time stepWithin this code string, variables need to be
@@ -292,20 +291,21 @@ leaky_integrator_2_model = genn_model.create_custom_neuron_class(
 \endcode
 \end_toggle
 GeNN provides several additional features that might be useful when defining more complex neuron models.
+
 \subsection neuron_support_code Support code
 Support code enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these functions should be prefixed with ``SUPPORT_CODE_FUNC`` so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it.
+Support code is added to a model using the \add_cpp_python_text{``SET_SUPPORT_CODE()`` macro, ``support_code`` keyword argument}, for example:
 \add_toggle_cpp
-Support code is added to a model using the ``SET_SUPPORT_CODE()`` macro, for example:
 \code
 SET_SUPPORT_CODE("SUPPORT_CODE_FUNC scalar mysin(float x){ return sin(x); }");
 \endcode
 \end_toggle
 \add_toggle_python
-Support code is added to a model using the ``support_code`` keyword argument, for example:
 \code
 support_code="SUPPORT_CODE_FUNC scalar mysin(float x){ return sin(x); }"
 \endcode
 \end_toggle
+
 \subsection neuron_extra_global_param Extra global parameters
 Extra global parameters are parameters common to all neurons in the population. However, unlike the standard neuron parameters, they can be varied at runtime meaning they could, for example, be used to provide a global reward signal.
 \add_toggle_cpp
@@ -358,6 +358,7 @@ sim_code=
 \endcode
 where the ``additional_input_vars`` keyword argument defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
 \end_toggle
+
 \subsection neuron_rng Random number generation
 Many neuron models have probabilistic terms, for example a source of noise or a probabilistic spiking mechanism. In GeNN this can be implemented by using the following functions in blocks of model code:
 - <code>\$(gennrand_uniform)</code> returns a number drawn uniformly from the interval \f$[0.0, 1.0]\f$
@@ -396,7 +397,7 @@ Currently 4 predefined weight update models are available:
 - WeightUpdateModels::PiecewiseSTDP
 
 \add_toggle_python
-In Python, these models can be selected by name e.g. "StaticPulse".
+In Python, these models can be selected by their unqualified name e.g. "StaticPulse".
 \end_toggle
 
 \section sect34 Defining a new weight update model
@@ -651,6 +652,10 @@ There are currently 3 built-in postsynaptic integration methods:
 - PostsynapticModels::ExpCond
 - PostsynapticModels::DeltaCurr
 
+\add_toggle_python
+In Python, these models can be selected by their unqualified name e.g. "ExpCurr".
+\end_toggle
+
 \section sect_new_postsynaptic Defining a new postsynaptic model
 The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
 
@@ -676,6 +681,10 @@ However additional input variables can be added to a neuron model using the SET_
 There is a number of predefined models which can be used with the ModelSpec::addCurrentSource function:
 - CurrentSourceModels::DC
 - CurrentSourceModels::GaussianNoise
+
+\add_toggle_python
+In Python, these models can be selected by their unqualified name e.g. "DC".
+\end_toggle
 
 \section sect_own_current_source Defining your own current source model 
 
@@ -740,15 +749,19 @@ Weight update model variables associated with the sparsely connected synaptic po
 \c g=[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 X]
 - SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` format and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
  
+\add_toggle_python
+In Python, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.genn_groups.SynapseGroup.set_sparse_connections method.
+\end_toggle
+
 Furthermore the SynapseMatrixWeight defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
 Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::INDIVIDUAL_PSM allows each postsynapic neuron to have unique post synaptic model variables.
 Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
-This is automatically initialized to the initial value passed to ModelSpec::addSynapsePopulation.
+This is automatically initialized to the initial value passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.genn_model.GeNNModel.add_synapse_population}.
 
-Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to ModelSpec::addSynapsePopulation:
+Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.genn_model.GeNNModel.add_synapse_population}:
 - SynapseMatrixType::SPARSE_GLOBALG
 - SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::SPARSE_INDIVIDUALG
@@ -758,6 +771,9 @@ Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight a
 - SynapseMatrixType::BITMASK_GLOBALG
 - SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM
 
+\add_toggle_python
+In Python, these matrix types can be selected by their unqualified name e.g. "DENSE_INDIVIDUALG".
+\end_toggle
 
 -----
 \link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
@@ -782,9 +798,9 @@ NeuronModels::TraubMiles::VarValues ini(
 ini = {"m": 0.0529324, ...}
 \endcode
 \end_toggle
-
-state variables can also be left _uninitialised_ leaving it up to the user code to initialise them between the calls to ``initialize()`` and ``initializeSparse()``:
 \add_toggle_cpp
+state variables can also be left _uninitialised_ leaving it up to the user code to initialise them between the calls to ``initialize()`` and ``initializeSparse()``:
+
 \code
 NeuronModels::TraubMiles::VarValues ini(
     uninitialisedVar(),     // 1 - prob. for Na channel activation m
@@ -793,8 +809,9 @@ NeuronModels::TraubMiles::VarValues ini(
 \endcode
 \end_toggle
 \add_toggle_python
+state variables can alse be manually initialised to values specified in a numpy array:
 \code
-ini = {"m": None, ...}
+ini = {"m": np.arange(400.0), ...}
 \endcode
 \end_toggle
 or initialised using one of a number of predefined _variable initialisation snippets_:
@@ -804,7 +821,7 @@ or initialised using one of a number of predefined _variable initialisation snip
 - InitVarSnippet::Gamma
 
 \add_toggle_python
-In Python, these models can be selected by name e.g. "Normal".
+In Python, these models can be selected by their unqualified name e.g. "Normal".
 \end_toggle
 For example, to initialise a parameter using values drawn from the normal distribution:
 \add_toggle_cpp
@@ -906,7 +923,7 @@ This can be done using one of a number of predefined _sparse connectivity initia
 - InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
 
 \add_toggle_python
-In Python, these models can be selected by name e.g. "FixedProbability".
+In Python, these models can be selected by their unqualified name e.g. "FixedProbability".
 \end_toggle
 For example, to initialise synaptic connectivity with a 10% connection probability (allowing connections between neurons with the same id):
 \add_toggle_cpp

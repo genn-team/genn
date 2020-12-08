@@ -23,7 +23,7 @@ function addButton(label, buttonName) {
 
 function addLanguageToggleButtons() {
     // If there are any toggleable divs
-    $toggleableDivs = $(".contents").find("div.toggleable_div")
+    $toggleableDivs = $(".contents").find(".toggleable_div")
     if ($toggleableDivs.length) {
         // Add buttons to toggle between C++ and Python
         $(".headertitle").append(addButton("cpp", "C++"))
