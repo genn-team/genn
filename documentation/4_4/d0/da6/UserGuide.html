@@ -98,7 +98,7 @@ $(document).ready(function(){initNavTree('d0/da6/UserGuide.html','../../');});
 <div class="title">Best practices guide </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>GeNN generates code according to the network model defined by the user, and allows users to include the generated code in their programs as they want. Here we provide a guideline to setup GeNN and use generated functions. We recommend users to also have a look at the <a class="el" href="../../d9/d61/Examples.html">Examples</a>, and to follow the tutorials <a class="el" href="../../d5/dbb/Tutorial1.html">Tutorial 1</a> and <a class="el" href="../../dc/d7e/Tutorial2.html">Tutorial 2</a>.</p>
+<div class="textblock"><p>GeNN generates code according to the network model defined by the user, and allows users to include the generated code in their programs as they want. Here we provide a guideline to setup GeNN and use generated functions. We recommend users to also have a look at the <a class="el" href="../../d9/d61/Examples.html">Examples</a>, and to follow the tutorials <a class="el" href="../../d5/dbb/Tutorial1.html">Tutorial 1 (C++)</a> and <a class="el" href="../../dc/d7e/Tutorial2.html">Tutorial 2 (C++)</a>.</p>
 <h1><a class="anchor" id="CreateAndSimulate"></a>
 Creating and simulating a network model</h1>
 <p>The user is first expected to create an object of class <a class="el" href="../../da/dfd/classModelSpec.html" title="Object used for specifying a neuronal network model. ">ModelSpec</a> by creating the function modelDefinition() which includes calls to following methods:</p>
@@ -196,14 +196,14 @@ Debugging suggestions</h1>
 <dl class="section note"><dt>Note</dt><dd>Do not forget to switch debugging flags -g and -G off after debugging is complete as they may negatively affect performance.</dd></dl>
 <p>On Mac, some versions of <code>clang</code> aren't supported by the CUDA toolkit. This is a recurring problem on Fedora as well, where CUDA doesn't keep up with GCC releases. You can either hack the CUDA header which checks compiler versions - <code>cuda/include/host_config.h</code> - or just use an older XCode version (6.4 works fine).</p>
 <p>On Windows models can also be debugged and developed by opening the sln file used to build the model in Visual Studio. From here files can be added to the project, build settings can be adjusted and the full suite of Visual Studio debugging and profiling tools can be used. </p><dl class="section note"><dt>Note</dt><dd>When opening the models in the <code>userproject</code> directory in Visual Studio, right-click on the project in the solution explorer, select 'Properties'. Then, making sure the desired configuration is selected, navigate to 'Debugging' under 'Configuration Properties', set the 'Working Directory' to '..' and the 'Command Arguments' to match those passed to genn-buildmodel e.g. 'outdir' to use an output directory called outdir.  </div> <hr/>
- <a class="el" href="../../dc/d7e/Tutorial2.html">Previous</a> | <a class="el" href="../../d0/da6/UserGuide.html">Top</a> | <a class="el" href="../../dd/d51/Credits.html">Next</a> </dd></dl>
+ <a class="el" href="../../df/d0b/Tutorial2_Python.html">Previous</a> | <a class="el" href="../../d0/da6/UserGuide.html">Top</a> | <a class="el" href="../../dd/d51/Credits.html">Next</a> </dd></dl>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Dec 8 2020 14:30:34 for GeNN by
+    <li class="footer">Generated on Tue Dec 8 2020 18:11:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -30,7 +30,7 @@ var NAVTREE =
     [ "Python interface (PyGeNN)", "d0/d81/PyGeNN.html", null ],
     [ "Release Notes", "df/ddb/ReleaseNotes.html", null ],
     [ "User Manual", "dc/d05/UserManual.html", "dc/d05/UserManual" ],
-    [ "Tutorial 1", "d5/dbb/Tutorial1.html", [
+    [ "Tutorial 1 (C++)", "d5/dbb/Tutorial1.html", [
       [ "The Model Definition", "d5/dbb/Tutorial1.html#ModelDefinition", null ],
       [ "Building the model", "d5/dbb/Tutorial1.html#buildModel", null ],
       [ "User Code", "d5/dbb/Tutorial1.html#userCode", null ],
@@ -39,11 +39,13 @@ var NAVTREE =
       [ "Running the Simulation", "d5/dbb/Tutorial1.html#RunningSim", null ],
       [ "Reading", "d5/dbb/Tutorial1.html#Input", null ]
     ] ],
-    [ "Tutorial 2", "dc/d7e/Tutorial2.html", [
+    [ "Tutorial 1 (Python)", "d6/d8b/Tutorial1_Python.html", null ],
+    [ "Tutorial 2 (C++)", "dc/d7e/Tutorial2.html", [
       [ "Defining the Detailed Synaptic Connections", "dc/d7e/Tutorial2.html#SynapseMatrix", null ],
       [ "Adding Synaptic connections", "dc/d7e/Tutorial2.html#addSynapse", null ],
       [ "Providing initial stimuli", "dc/d7e/Tutorial2.html#initialConditions", null ]
     ] ],
+    [ "Tutorial 2 (Python)", "df/d0b/Tutorial2_Python.html", null ],
     [ "Best practices guide", "d0/da6/UserGuide.html", [
       [ "Creating and simulating a network model", "d0/da6/UserGuide.html#CreateAndSimulate", [
         [ "Extra Global Parameters", "d0/da6/UserGuide.html#extraGlobalParamSim", null ]
@@ -106,12 +108,12 @@ var NAVTREEINDEX =
 "d3/d15/classCodeGenerator_1_1BackendBase.html#a69eb5a2ba23bd05476534527ea325b47",
 "d5/d1f/classNeuronModels_1_1SpikeSource.html#a14f6e338a265bf369a6f7e6671736e8c",
 "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a40494ed5e5a10c9d36d487bb911edee5",
-"d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a6dc2104156a5a844a989ec30aa5d8a06",
-"d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a1a1b900ed7a854dc885110d34c6ec101",
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2",
-"dc/de1/modelSpec_8h.html#aa039815ec6b74d0fe4cb016415781c08",
-"de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html",
-"df/dfd/classCodeGenerator_1_1GroupMerged.html#a0cc9b236456bcdd0c56d743481cf0592"
+"d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a64b68a2fe8acdba26d310992eb47f82c",
+"d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html",
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4735ba33ebee63fe36e2da3f384ead4a",
+"dc/de1/modelSpec_8h.html#a957acf630622e4f9fd4ddd773e962a92",
+"de/d22/classCodeGenerator_1_1Substitutions.html#aff0168fcb07187481c05db1ae01455bd",
+"df/dfd/classCodeGenerator_1_1GroupMerged.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
