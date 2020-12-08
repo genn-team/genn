@@ -132,12 +132,10 @@ where the arguments are
 \arg \add_cpp_python_text{`PostsynapticModel`: Template parameter specifying the type of postsynaptic integration model. These should be derived off PostsynapticModels::Base and can either be one of the standard models or user-defined,`postsyn_model`: The type of postsynaptic model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_postsynaptic_class} (see \ref sect_postsyn).
 \arg \add_cpp_python_text{`const string &name`,`pop_name`}: The name of the synapse population
 \arg \add_cpp_python_text{`::SynapseMatrixType mType`: How,`matrix_type`: String specifying how} the synaptic matrix is stored. See \ref subsect34 for available options.
-\arg \add_cpp_python_text{`unsigned int delay`,`delay_steps`}: Homogeneous (axonal) delay for synapse population (in terms of the simulation
-     time step `DT`). 
+\arg \add_cpp_python_text{`unsigned int delay`,`delay_steps`}: Homogeneous (axonal) delay for synapse population (in terms of the simulation time step `DT`). 
 \arg \add_cpp_python_text{`const string preName`: Name, `source`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) presynaptic neuron population.
 \arg \add_cpp_python_text{`const string postName`: Name, `target`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) postsynaptic neuron population.
-\arg \add_cpp_python_text{`WeightUpdateModel::ParamValues weightParamValues`: The, `wu_param_space`: Dictionary containing the} parameter values (common to all synapses of 
-                                                            the population) for the weight update model. 
+\arg \add_cpp_python_text{`WeightUpdateModel::ParamValues weightParamValues`: The, `wu_param_space`: Dictionary containing the} parameter values (common to all synapses of the population) for the weight update model. 
 \arg \add_cpp_python_text{``WeightUpdateModel::VarValues weightVarInitialisers`: The, `wu_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's state variables
 \arg \add_cpp_python_text{`WeightUpdateModel::PreVarValues weightPreVarInitialisers`: The, `wu_pre_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's presynaptic state variables
 \arg \add_cpp_python_text{`WeightUpdateModel::PostVarValues weightPostVarInitialisers`: The, `wu_post_var_space`: Dictionary containg the} initial values or initialisation snippets for the weight update model's postsynaptic state variables

@@ -3,33 +3,38 @@
 
 In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synaptic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
 
-First, copy the files from Tutorial 1 into a new directory and rename the ``tenHHModel.cc`` to ``tenHHRingModel.cc`` and ``tenHHSimulation.cc`` to ``tenHHRingSimulation.cc``, e.g. on Linux or Mac:
+First, copy the files from Tutorial 1 into a new directory and rename the ``tenHH.py`` to ``tenHHRing.py``, e.g. on Linux or Mac:
 \code
 >> cp -r tenHH_project tenHHRing_project
 >> cd tenHHRing_project
->> mv tenHHModel.cc tenHHRingModel.cc
->> mv tenHHSimulation.cc tenHHRingSimulation.cc
+>> mv tenHH.py tenHHRing.py
 \endcode
-Finally, to reduce confusion we should rename the model itself. Open `tenHHRingModel.cc`, change the model name inside,
+Finally, to reduce confusion we should rename the model itself. Open `tenHHRing.py`, change the model name inside,
 \code
-model.setName("tenHHRing");
+model = GeNNModel("float", "tennHHRing")
+\endcode
+You will also need to import some additional PyGeNN functions and constants:
+\code
+from pygenn.genn_model import (GeNNModel, init_connectivity, create_cmlf_class,
+                               create_custom_sparse_connect_init_snippet_class)
+from pygenn.genn_wrapper import NO_DELAY
 \endcode
 
 \section SynapseMatrix Defining the Detailed Synaptic Connections
-We want to connect our ten neurons into a ring where each neuron connects to its neighbours. In order to initialise this connectivity we need to add a sparse connectivity initialisation snippet at the top of ``tenHHRingModel.cc``:
+We want to connect our ten neurons into a ring where each neuron connects to its neighbours. In order to initialise this connectivity we need to add a sparse connectivity initialisation snippet at the top of ``tennHHRing.cc``:
 \code
-class Ring : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(Ring, 0);
-    SET_ROW_BUILD_CODE(
-        "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(Ring);
+ring_model = create_custom_sparse_connect_init_snippet_class(
+    "ring",
+    row_build_code=
+        """
+        $(addSynapse, ($(id_pre) + 1) % $(num_post));
+        $(endRow);
+        """,
+
+    calc_max_row_len_func=create_cmlf_class(
+        lambda num_pre, num_post, pars: 1)())
 \endcode
-The ``SET_ROW_BUILD_CODE`` code string will be called to generate each row of the synaptic matrix (connections coming from a single presynaptic neuron) and, in this case, each row consists of a single synapses from the presynaptic neuron \$(id_pre) to \$(id_pre) + 1 (the modulus operator is used to ensure that the final connection between neuron `9` and `0` is made correctly).
+The ``row_build_code`` code string will be called to generate each row of the synaptic matrix (connections coming from a single presynaptic neuron) and, in this case, each row consists of a single synapses from the presynaptic neuron \$(id_pre) to \$(id_pre) + 1 (the modulus operator is used to ensure that the final connection between neuron `9` and `0` is made correctly).
 In order to allow GeNN to better optimise the generated code we also provide a maximum row length.
 In this case each row always contains only one synapse but, when more complex connectivity is used, the number of neurons in the pre and postsynaptic population as well as any parameters used to configure the snippet can be accessed from this function.
 \note When defining GeNN code strings, the \$(VariableName) syntax is used to refer to variables provided by GeNN and the \$(FunctionName, Parameter1,...) syntax is used to call functions provided by GeNN.
@@ -37,273 +42,202 @@ In this case each row always contains only one synapse but, when more complex co
 \section addSynapse Adding Synaptic connections
 Now we need additional initial values and parameters for the synapse and post-synaptic models. We will use the standard WeightUpdateModels::StaticPulse weight update model and PostsynapticModels::ExpCond post-synaptic model. They need the following initial variables and parameters:
 \code
-WeightUpdateModels::StaticPulse::VarValues s_ini(
-    -0.2); // 0 - g: the synaptic conductance value
+s_ini = {"g": -0.2}
 
-PostsynapticModels::ExpCond::ParamValues ps_p(
-    1.0,    // 0 - tau_S: decay time constant for S [ms]
-    -80.0); // 1 - Erev: Reversal potential
+ps_p = {"tau": 1.0, # Decay time constant [ms] 
+        "E": -80.0} # Reversal potential [mV]
 \endcode
 \note the WeightUpdateModels::StaticPulse weight update model has no parameters and the PostsynapticModels::ExpCond post-synaptic model has no state variables.
 
 We can then add a synapse population at the end of the `modelDefinition(...)` function,
 \code
-model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-    "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 10,
-    "Pop1", "Pop1",
-    {}, s_ini,
-    ps_p, {},
-    initConnectivity<Ring>());
+model.add_synapse_population("Pop1self", "SPARSE_GLOBALG", 10,
+    pop1, pop1,
+    "StaticPulse", {}, s_ini, {}, {},
+    "ExpCond", ps_p, {},
+    init_connectivity(ring_model, {}))
 \endcode
-The addSynapsePopulation parameters are
-\arg WeightUpdateModel: template parameter specifying the type of weight update model (derived from WeightUpdateModels::Base).
-\arg PostsynapticModel: template parameter specifying the  type of postsynaptic model (derived from PostsynapticModels::Base).
-\arg name string containing unique name of synapse population.
-\arg mtype how the synaptic matrix associated with this synapse population should be represented. Here SynapseMatrixType::SPARSE_GLOBALG means that there will be sparse connectivity and each connection will have the same weight (-0.2 as specified previously).
-\arg delayStep integer specifying number of timesteps of propagation delay that spikes travelling through this synapses population should incur (or NO_DELAY for none)
-\arg src string specifying name of presynaptic (source) population
-\arg trg string specifying name of postsynaptic (target) population
-\arg weightParamValues parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
-\arg weightVarInitialisers initial values or initialisation snippets for the weight update model's state variables wrapped in a WeightUpdateModel::VarValues object.
-\arg postsynapticParamValues parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
-\arg postsynapticVarInitialisers initial values or initialisation snippets for the postsynaptic model wrapped in PostsynapticModel::VarValues object.
-\arg connectivityInitialiser snippet and any paramaters (in this case there are none) used to initialise the synapse population's sparse connectivity.
+The pygenn.genn_model.GeNNModel.add_synapse_population parameters are
+\arg `pop_name`: The name of the synapse population
+\arg `matrix_type`: String specifying how the synaptic matrix is stored. See \ref subsect34 for available options.
+\arg `delay_steps`: Homogeneous (axonal) delay for synapse population (in terms of the simulation time step `DT`). 
+\arg `source`: pygenn.genn_groups.NeuronGroup or name of the (existing!) presynaptic neuron population.
+\arg `target`: pygenn.genn_groups.NeuronGroup or name of the (existing!) postsynaptic neuron population.
+\arg `w_update_model`: The type of weight update model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_weight_update_class (see \ref sectSynapseModels).
+\arg `wu_param_space`: Dictionary containing the parameter values (common to all synapses of  the population) for the weight update model. 
+\arg `wu_var_space`: Dictionary containing the initial values or initialisation snippets for the weight update model's state variables
+\arg `wu_pre_var_space`: Dictionary containing the initial values or initialisation snippets for the weight update model's presynaptic state variables
+\arg `wu_post_var_space`: Dictionary containg the initial values or initialisation snippets for the weight update model's postsynaptic state variables
+\arg `postsyn_model`: The type of postsynaptic model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_postsynaptic_class (see \ref sect_postsyn).
+\arg `ps_param_space`: Dictionary containing the parameter values (common to all postsynaptic neurons) for the postsynaptic model. 
+\arg `ps_var_space`: Dictionary containing the initial values or initialisation snippets for variables for the postsynaptic model's state variables
+\arg `connectivity_initialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
-Adding the addSynapsePopulation command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself. 
-At this point our model definition file `tenHHRingModel.cc` should look like this
+Adding the pygenn.genn_model.GeNNModel.add_synapse_population command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself with a delay of 10 (0.1 ms) timesteps. 
+At this point our script `tenHHRing.py` should look like this
 \code
-// Model definition file tenHHRing.cc
-#include "modelSpec.h"
+import matplotlib.pyplot as plt
+import numpy as np
+from pygenn.genn_model import (GeNNModel, init_connectivity, create_cmlf_class,
+                               create_custom_sparse_connect_init_snippet_class)
+from pygenn.genn_wrapper import NO_DELAY
 
-class Ring : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(Ring, 0);
-    SET_ROW_BUILD_CODE(
-        "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(Ring);
+ring_model = create_custom_sparse_connect_init_snippet_class(
+    "ring",
+    row_build_code=
+        """
+        $(addSynapse, ($(id_pre) + 1) % $(num_post));
+        $(endRow);
+        """,
 
-void modelDefinition(ModelSpec &model)
-{
-    // definition of tenHHRing
-    model.setDT(0.1);
-    model.setName("tenHHRing");
+    calc_max_row_len_func=create_cmlf_class(
+        lambda num_pre, num_post, pars: 1)())
 
-    NeuronModels::TraubMiles::ParamValues p(
-        7.15,       // 0 - gNa: Na conductance in muS
-        50.0,       // 1 - ENa: Na equi potential in mV
-        1.43,       // 2 - gK: K conductance in muS
-        -95.0,      // 3 - EK: K equi potential in mV
-        0.02672,    // 4 - gl: leak conductance in muS
-        -63.563,    // 5 - El: leak equi potential in mV
-        0.143);     // 6 - Cmem: membr. capacity density in nF
+model = GeNNModel("float", "tennHHRing")
+model.dT = 0.1
 
-    NeuronModels::TraubMiles::VarValues ini(
-        -60.0,         // 0 - membrane potential V
-        0.0529324,     // 1 - prob. for Na channel activation m
-        0.3176767,     // 2 - prob. for not Na channel blocking h
-        0.5961207);    // 3 - prob. for K channel activation n
+p = {"gNa": 7.15,   # Na conductance in [muS]
+     "ENa": 50.0,   # Na equi potential [mV]
+     "gK": 1.43,    # K conductance in [muS]
+     "EK": -95.0,   # K equi potential [mV] 
+     "gl": 0.02672, # leak conductance [muS]
+     "El": -63.563, # El: leak equi potential in mV, 
+     "C": 0.143}    # membr. capacity density in nF
 
-    model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
+ini = {"V": -60.0,      # membrane potential
+       "m": 0.0529324,  # prob. for Na channel activation
+       "h": 0.3176767,  # prob. for not Na channel blocking
+       "n": 0.5961207}  # prob. for K channel activation
 
-    WeightUpdateModels::StaticPulse::VarValues s_ini(
-         -0.2); // 0 - g: the synaptic conductance value
+s_ini = {"g": -0.2}
 
-    PostsynapticModels::ExpCond::ParamValues ps_p(
-        1.0,    // 0 - tau_S: decay time constant for S [ms]
-        -80.0); // 1 - Erev: Reversal potential
+ps_p = {"tau": 1.0, # Decay time constant [ms] 
+        "E": -80.0} # Reversal potential [mV]
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-        "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
-        "Pop1", "Pop1",
-        {}, s_ini,
-        ps_p, {},
-        initConnectivity<Ring>());
-}
+pop1 = model.add_neuron_population("Pop1", 10, "TraubMiles", p, ini)
+
+model.add_synapse_population("Pop1self", "SPARSE_GLOBALG", 10,
+    pop1, pop1,
+    "StaticPulse", {}, s_ini, {}, {},
+    "ExpCond", ps_p, {},
+    init_connectivity(ring_model, {}))
+
+model.build()
+model.load()
+
+v = np.empty((2000, 10))
+v_view = pop1.vars["V"].view
+while model.t < 200.0:
+    model.step_time()
+
+    pop1.pull_var_from_device("V")
+    
+    v[model.timestep - 1,:]=v_view[:]
+
+fig, axis = plt.subplots()
+axis.plot(v)
+plt.show()
 \endcode
 
-We can now build our new model:
-\code
->> genn-buildmodel.sh tenHHRingModel.cc
-\endcode
-\note
-Again, if you don't have an NVIDIA GPU and are running GeNN in CPU_ONLY mode, you can instead build with the `-c` option as described in \ref Tutorial1.
-
-Now we can open the `tenHHRingSimulation.cc` file and update the file name of the model includes to match the name we set previously:
-\code
-// tenHHRingModel simulation code
-#include "tenHHRing_CODE/definitions.h"
-\endcode
-
-Additionally, we need to add a call to a second initialisation function to ``main()`` after we call `initialize()`:
-\code
-initializeSparse();
-\endcode
-This initializes any variables associated with the sparse connectivity we have added (and will also copy any manually initialised variables to the GPU).
-Then, after using the ``genn-create-user-project`` tool to create a new project with a model name of ``tenHHRing`` and using ``tenHHRingSimulation.cc`` rather than ``tenHHSimulation.cc``, we can build and run our new simulator in the same way we did in \ref Tutorial1.
-However, even after all our hard work, if we plot the content of the first column against the subsequent 10 columns of `tenHHexample.V.dat` it looks very similar to the plot we obtained at the end of \ref Tutorial1.
+We can now we can build and run our new model in the same way we did in \ref Tutorial1_Python.
+However, even after all our hard work, the result looks very similar to the plot we obtained at the end of \ref Tutorial1_Python.
 \image html tenHHRingexample1.png
 \image latex tenHHRingexample1.png width=10cm
 
 This is because none of the neurons are spiking so there are no spikes to propagate around the ring.
 
 \section initialConditions Providing initial stimuli
-We can use a NeuronModels::SpikeSource to inject an initial spike into the first neuron in the ring during the first timestep to start spikes propagating. 
-Firstly we need to define another sparse connectivity initialisation snippet at the top of ``tenHHRingModel.cc`` which simply creates a single synapse on the first row of the synaptic matrix:
-\code
-class FirstToFirst : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(FirstToFirst, 0);
-    SET_ROW_BUILD_CODE(
-        "if($(id_pre) == 0) {\n"
-        "   $(addSynapse, $(id_pre));\n"
-        "}\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(FirstToFirst);
-\endcode
-
-We then need to add it to the network by adding the following to the end of the `modelDefinition(...)` function:
+We can use a NeuronModels::SpikeSourceArray to inject an initial spike into the first neuron in the ring during the first timestep to start spikes propagating. 
+We then need to add it to the network by adding the following before we call pygenn.genn_model.GeNNModel.build:
 
 \code
-model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
-model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-    "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-    "Stim", "Pop1",
-    {}, s_ini,
-    ps_p, {},
-    initConnectivity<FirstToFirst>());
+stim_ini = {"startSpike": [0], "endSpike": [1]}
+stim = model.add_neuron_population("Stim", 1, "SpikeSourceArray", {}, stim_ini)
+stim.set_extra_global_param("spikeTimes", [0.0])
+
+model.add_synapse_population("StimPop1", "SPARSE_GLOBALG", NO_DELAY,
+    stim, pop1,
+    "StaticPulse", {}, s_ini, {}, {},
+    "ExpCond", ps_p, {},
+    init_connectivity("OneToOne", {}))
 \endcode
 
-and finally inject a spike in the first timestep (in the same way that the `t` variable is provided by GeNN to keep track of the current simulation time in milliseconds, `iT` is provided to keep track of it in timesteps):
-
+At this point our user code `tenHHRing.py` should look like this
 \code
-if(iT == 0) {
-    spikeCount_Stim = 1;
-    spike_Stim[0] = 0;
-    pushStimCurrentSpikesToDevice();
-}
-\endcode
-\note
-``spike_Stim[n]`` is used to specify the indices of the neurons in population ``Stim`` spikes which should emit spikes where \f$n \in [0, \mbox{spikeCount\_Stim} )\f$.
+import matplotlib.pyplot as plt
+import numpy as np
+from pygenn.genn_model import (GeNNModel, init_connectivity, create_cmlf_class,
+                               create_custom_sparse_connect_init_snippet_class)
+from pygenn.genn_wrapper import NO_DELAY
 
-At this point our user code `tenHHRingModel.cc` should look like this
-\code
-// Model definintion file tenHHRing.cc
-#include "modelSpec.h"
+ring_model = create_custom_sparse_connect_init_snippet_class(
+    "ring",
+    row_build_code=
+        """
+        $(addSynapse, ($(id_pre) + 1) % $(num_post));
+        $(endRow);
+        """,
 
-class Ring : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(Ring, 0);
-    SET_ROW_BUILD_CODE(
-        "$(addSynapse, ($(id_pre) + 1) % $(num_post));\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(Ring);
+    calc_max_row_len_func=create_cmlf_class(
+        lambda num_pre, num_post, pars: 1)())
 
-class FirstToFirst : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(FirstToFirst, 0);
-    SET_ROW_BUILD_CODE(
-        "if($(id_pre) == 0) {\n"
-        "   $(addSynapse, $(id_pre));\n"
-        "}\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(FirstToFirst);
+model = GeNNModel("float", "tennHHRing")
+model.dT = 0.1
 
-void modelDefinition(ModelSpec &model)
-{
-    // definition of tenHHRing
-    model.setDT(0.1);
-    model.setName("tenHHRing");
+p = {"gNa": 7.15,   # Na conductance in [muS]
+     "ENa": 50.0,   # Na equi potential [mV]
+     "gK": 1.43,    # K conductance in [muS]
+     "EK": -95.0,   # K equi potential [mV] 
+     "gl": 0.02672, # leak conductance [muS]
+     "El": -63.563, # El: leak equi potential in mV, 
+     "C": 0.143}    # membr. capacity density in nF
 
-    NeuronModels::TraubMiles::ParamValues p(
-        7.15,       // 0 - gNa: Na conductance in muS
-        50.0,       // 1 - ENa: Na equi potential in mV
-        1.43,       // 2 - gK: K conductance in muS
-        -95.0,      // 3 - EK: K equi potential in mV
-        0.02672,    // 4 - gl: leak conductance in muS
-        -63.563,    // 5 - El: leak equi potential in mV
-        0.143);     // 6 - Cmem: membr. capacity density in nF
+ini = {"V": -60.0,      # membrane potential
+       "m": 0.0529324,  # prob. for Na channel activation
+       "h": 0.3176767,  # prob. for not Na channel blocking
+       "n": 0.5961207}  # prob. for K channel activation
 
-    NeuronModels::TraubMiles::VarValues ini(
-        -60.0,         // 0 - membrane potential V
-        0.0529324,     // 1 - prob. for Na channel activation m
-        0.3176767,     // 2 - prob. for not Na channel blocking h
-        0.5961207);    // 3 - prob. for K channel activation n
+s_ini = {"g": -0.2}
 
-    model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
-    model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
+ps_p = {"tau": 1.0, # Decay time constant [ms] 
+        "E": -80.0} # Reversal potential [mV]
 
-    WeightUpdateModels::StaticPulse::VarValues s_ini(
-         -0.2); // 0 - g: the synaptic conductance value
 
-    PostsynapticModels::ExpCond::ParamValues ps_p(
-        1.0,    // 0 - tau_S: decay time constant for S [ms]
-        -80.0); // 1 - Erev: Reversal potential
+stim_ini = {"startSpike": [0], "endSpike": [1]}
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-        "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
-        "Pop1", "Pop1",
-        {}, s_ini,
-        ps_p, {},
-        initConnectivity<Ring>());
+pop1 = model.add_neuron_population("Pop1", 10, "TraubMiles", p, ini)
+stim = model.add_neuron_population("Stim", 1, "SpikeSourceArray", {}, stim_ini)
 
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-        "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-        "Stim", "Pop1",
-        {}, s_ini,
-        ps_p, {},
-        initConnectivity<FirstToFirst>());
-}
+model.add_synapse_population("Pop1self", "SPARSE_GLOBALG", 10,
+    pop1, pop1,
+    "StaticPulse", {}, s_ini, {}, {},
+    "ExpCond", ps_p, {},
+    init_connectivity(ring_model, {}))
+
+model.add_synapse_population("StimPop1", "SPARSE_GLOBALG", NO_DELAY,
+    stim, pop1,
+    "StaticPulse", {}, s_ini, {}, {},
+    "ExpCond", ps_p, {},
+    init_connectivity("OneToOne", {}))
+stim.set_extra_global_param("spikeTimes", [0.0])
+
+model.build()
+model.load()
+
+v = np.empty((2000, 10))
+v_view = pop1.vars["V"].view
+while model.t < 200.0:
+    model.step_time()
+
+    pop1.pull_var_from_device("V")
+    
+    v[model.timestep - 1,:]=v_view[:]
+
+fig, axis = plt.subplots()
+axis.plot(v)
+plt.show()
 \endcode
 
-and `tenHHRingSimulation.cc`` should look like this:
-
-\code
-// Standard C++ includes
-#include <fstream>
-
-// tenHHRing simulation code
-#include "tenHHRing_CODE/definitions.h"
-
-int main()
-{
-    allocateMem();
-    initialize();
-    initializeSparse();
-
-    std::ofstream os("tenHHRing_output.V.dat");
-    while(t < 200.0f) {
-        if(iT == 0) {
-            glbSpkStim[0] = 0;
-            glbSpkCntStim[0] = 1;
-            pushStimCurrentSpikesToDevice();
-        }
-
-        stepTime();
-        pullVPop1FromDevice();
-
-        os << t << " ";
-        for (int j= 0; j < 10; j++) {
-            os << VPop1[j] << " ";
-        }
-        os << std::endl;
-    }
-    os.close();
-    return 0;
-}
-\endcode
 Finally if we build, make and run this model; and plot the first 200 ms of the ten neurons' membrane voltages - they now looks like this:
 \image html tenHHRingexample2.png
 \image latex tenHHRingexample2.png width=10cm

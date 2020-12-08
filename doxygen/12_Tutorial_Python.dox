@@ -91,12 +91,12 @@ The generated code to simulate the model will now have been generated. To make u
 model.load()
 \endcode
 For the purposes of this tutorial we will initially simply run the model for one simulated second and print the final neuron variables.
-Now we can use the generated code to integrate the neuron equations provided by GeNN for 1000ms. To do so, we add:
+Now we can use the generated code to integrate the neuron equations provided by GeNN for 200ms. To do so, we add:
 \note
 The pygenn.genn_model.GeNNModel.t property keeps track of the current simulation time in milliseconds.
 
 \code
-while model.t < 1000.0
+while model.t < 200.0
     model.step_time()
 \endcode
 and we need to copy the result back to the host (this will do nothing if you are running the model on a CPU) before printing it out,
@@ -137,7 +137,7 @@ pop1 = model.add_neuron_population("Pop1", 10, "TraubMiles", p, ini)
 model.build()
 model.load()
 
-while model.t < 1000.0:
+while model.t < 200.0:
     model.step_time()
 
 pop1.pull_state_from_device()
@@ -174,9 +174,9 @@ The output you obtain should look like
 This is not particularly interesting as we are just observing the final value of the membrane potentials. To see what is going on in the meantime, we need to copy intermediate values from the device into a data structure and plot them.
 This can be done in many ways but one sensible way of doing this is to replace the calls to pygenn.genn_model.GeNNModel.step_time in `tenHH.py` with something like this:
 \code
-v = np.empty((10000, 10))
+v = np.empty((2000, 10))
 v_view = pop1.vars["V"].view
-while model.t < 1000.0:
+while model.t < 200.0:
     model.step_time()
 
     pop1.pull_var_from_device("V")
