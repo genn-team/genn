@@ -90,16 +90,12 @@ tasks must be completed:
 
 \section subsect11 Defining neuron populations
 Neuron populations are added using the function
-\add_toggle_cpp
-\code{.cc}
+\add_toggle_code_cpp
 model.addNeuronPopulation<NeuronModel>(name, num, paramValues, varInitialisers);
-\endcode
-\end_toggle
-\add_toggle_python
-\code{.py}
+\end_toggle_code
+\add_toggle_code_python
 model.add_neuron_population(name, num, model, param_values, var_initialisers)
-\endcode
-\end_toggle
+\end_toggle_code
 where the arguments are:
 \arg `NeuronModel`:        Template argument specifying the type of neuron model
                            These should be derived off NeuronModels::Base and can
@@ -219,8 +215,7 @@ For convenience, \add_cpp_python_text{the methods this class should implement ca
 
 For example, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
 
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 class LeakyIntegrator : public NeuronModels::Base
 {
 public:
@@ -235,10 +230,8 @@ public:
     SET_VARS({{"V", "scalar", VarAccess::READ_WRITE}});
 };
 IMPLEMENT_MODEL(LeakyIntegrator);
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 leaky_integrator_model = genn_model.create_custom_neuron_class(
     "leaky_integrator",
     
@@ -248,8 +241,7 @@ leaky_integrator_model = genn_model.create_custom_neuron_class(
     
     param_names=["tau"],
     var_name_types=[("V", "scalar", VarAccess_READ_WRITE)])
-\endcode
-\end_toggle
+\end_toggle_code
 
 \subsection neuron_derived_params Derived Parameters
 "Derived parameters" are a mechanism for enhanced efficiency when running neuron models. If parameters with model-side meaning, such as time
@@ -257,8 +249,7 @@ constants or conductances always appear in a certain combination in the model, t
 to pre-compute this combination and define it as a dependent parameter.
 
 For example, because the equation defining the previous leaky integrator example has an algebraic solution, it can be more accurately solved as follows - using a derived parameter to calculate \f$\exp\left(\frac{-t}{\tau}\right)\f$:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 class LeakyIntegrator2 : public NeuronModels::Base
 {
 public:
@@ -274,10 +265,8 @@ public:
         {"ExpTC", [](const vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
 };
 IMPLEMENT_MODEL(LeakyIntegrator2);
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 leaky_integrator_2_model = genn_model.create_custom_neuron_class(
     "leaky_integrator_2",
 
@@ -288,76 +277,55 @@ leaky_integrator_2_model = genn_model.create_custom_neuron_class(
     param_names=["tau"],
     var_name_types=[("V", "scalar", VarAccess_READ_WRITE)],
     derived_params=[("ExpTC", genn_model.create_dpf_class(lambda pars, dt: np.exp(-dt / pars[0]))())])
-\endcode
-\end_toggle
+\end_toggle_code
 GeNN provides several additional features that might be useful when defining more complex neuron models.
 
 \subsection neuron_support_code Support code
 Support code enables a code block to be defined that contains supporting code that will be utilized in multiple pieces of user code. Typically, these are functions that are needed in the sim code or threshold condition code. If possible, these functions should be prefixed with ``SUPPORT_CODE_FUNC`` so that both GPU and CPU versions of GeNN code have an appropriate support code function available. The support code is protected with a namespace so that it is exclusively available for the neuron population whose neurons define it.
 Support code is added to a model using the \add_cpp_python_text{``SET_SUPPORT_CODE()`` macro, ``support_code`` keyword argument}, for example:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 SET_SUPPORT_CODE("SUPPORT_CODE_FUNC scalar mysin(float x){ return sin(x); }");
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 support_code="SUPPORT_CODE_FUNC scalar mysin(float x){ return sin(x); }"
-\endcode
-\end_toggle
+\end_toggle_code
 
 \subsection neuron_extra_global_param Extra global parameters
 Extra global parameters are parameters common to all neurons in the population. However, unlike the standard neuron parameters, they can be varied at runtime meaning they could, for example, be used to provide a global reward signal.
-\add_toggle_cpp
-These parameters are defined by using the SET_EXTRA_GLOBAL_PARAMS() macro to specify a list of variable names and type strings (like the SET_VARS() macro). For example:
-\code
+These parameters are defined by using the \add_cpp_python_text{SET_EXTRA_GLOBAL_PARAMS() macro, ``extra_global_params`` keyword argument} to specify a list of variable names and type strings (like the \add_cpp_python_text{SET_VARS() macro, ``var_name_types`` keyword argument}). For example:
+\add_toggle_code_cpp
 SET_EXTRA_GLOBAL_PARAMS({{"R", "float"}});
-\endcode
-\end_toggle
-\add_toggle_python
-These parameters are defined by using the ``extra_global_params`` keyword to specify a list of variable names and type string tuples (like the ``var_name_types`` keyword argument). For example:
-\code
+\end_toggle_code
+\add_toggle_code_python
 extra_global_params=[("R", "float")]
-\endcode
-\end_toggle
-These variables are available to all neurons in the population. They can also be used in synaptic code snippets; in this case it need to be addressed with a `_pre` or `_post` postfix.
-
-For example, if the model with the "R" parameter was used for the pre-synaptic neuron population, the weight update model of a synapse population could have simulation code like:
-\add_toggle_cpp
-\code
+\end_toggle_code
+These variables are available to all neurons in the population. They can also be used in synaptic code snippets; in this case it need to be addressed with a `_pre` or `_post` postfix. For example, if the model with the "R" parameter was used for the pre-synaptic neuron population, the weight update model of a synapse population could have simulation code like:
+\add_toggle_code_cpp
 SET_SIM_CODE("$(x)= $(x)+$(R_pre);");
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 sim_code="$(x)= $(x)+$(R_pre);"
-\endcode
-\end_toggle
+\end_toggle_code
 where we have assumed that the weight update model has a variable `x` and our synapse type will only be used in conjunction with pre-synaptic neuron populations that do have the extra global parameter `R`. If the pre-synaptic population does not have the required variable/parameter, GeNN will fail when compiling the kernels.
 
 \subsection neuron_additional_input Additional input variables
 Normally, neuron models receive the linear sum of the inputs coming from all of their synaptic inputs through the \$(inSyn) variable. 
 However neuron models can define additional input variables - allowing input from different synaptic inputs to be combined non-linearly.
 For example, if we wanted our leaky integrator to operate on the the product of two input currents, it could be defined as follows:
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", 1.0}});
 SET_SIM_CODE("const scalar input = $(Isyn) * $(Isyn2);\n"
              "$(V) = input - $(ExpTC)*(input - $(V));");
-\endcode
-where the SET_ADDITIONAL_INPUT_VARS() macro defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 additional_input_vars=[("Isyn2", "scalar", 1.0)],
 sim_code=
     """
     const scalar input = $(Isyn) * $(Isyn2);
     $(V) = input - $(ExpTC)*(input - $(V));
     """,
-\endcode
-where the ``additional_input_vars`` keyword argument defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
-\end_toggle
+\end_toggle_code
+where the \add_cpp_python_text{SET_ADDITIONAL_INPUT_VARS() macro,``additional_input_vars`` keyword argument} defines the name, type and its initial value before postsynaptic inputs are applyed (see section \ref sect_postsyn for more details).
 
 \subsection neuron_rng Random number generation
 Many neuron models have probabilistic terms, for example a source of noise or a probabilistic spiking mechanism. In GeNN this can be implemented by using the following functions in blocks of model code:
@@ -369,18 +337,14 @@ Many neuron models have probabilistic terms, for example a source of noise or a 
 
 \section neuron_pop_own_type Creating neuron populations with your own neuron type
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
-\add_toggle_cpp
-\code
+\add_toggle_code_cpp
 networkModel.addNeuronPopulation<LeakyIntegrator>("Neurons", 1, 
                                                   LeakyIntegrator::ParamValues(20.0), // tau
                                                   LeakyIntegrator::VarValues(0.0)); // V
-\endcode
-\end_toggle
-\add_toggle_python
-\code
+\end_toggle_code
+\add_toggle_code_python
 network_model.add_neuron_population("Neurons", 1, leaky_integrator_model, {"tau": 20.0}, {"V": 0.0})
-\endcode
-\end_toggle
+\end_toggle_code
 
 -----
 \link sectDefiningNetwork Previous\endlink | \link UserManual Top\endlink | \link sectSynapseModels Next\endlink
