@@ -1,0 +1,5 @@
+var classCodeGenerator_1_1SynapseSparseInitGroupMerged =
+[
+    [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#a504739846b13d6cf5af27ad71aa395d5", null ],
+    [ "generateRunner", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#aa3ee46fe0776e38cce20b80fd9e0dc8f", null ]
+];
