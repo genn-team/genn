@@ -19,8 +19,8 @@ var UserManual =
     [ "Weight update models", "d5/d24/sectSynapseModels.html", [
       [ "Defining a new weight update model", "d5/d24/sectSynapseModels.html#sect34", [
         [ "Pre and postsynaptic dynamics", "d5/d24/sectSynapseModels.html#wum_pre_post_dynamics", null ],
-        [ "Spike-like events", "d5/d24/sectSynapseModels.html#wum_spike_like_events", null ],
-        [ "Synapse dynamics", "d5/d24/sectSynapseModels.html#wum_synapse_dynamics", null ]
+        [ "Synapse dynamics", "d5/d24/sectSynapseModels.html#wum_synapse_dynamics", null ],
+        [ "Spike-like events", "d5/d24/sectSynapseModels.html#wum_spike_like_events", null ]
       ] ]
     ] ],
     [ "Postsynaptic integration methods", "dd/de4/sect_postsyn.html", [
