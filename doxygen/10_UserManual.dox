@@ -361,16 +361,10 @@ In Python, these models can be selected by their unqualified name e.g. "StaticPu
 \section sect34 Defining a new weight update model
 
 Like the neuron models discussed in \ref sect_own, new weight update models are created by defining a class derived from WeightUpdateModels::Base.
-\add_toggle_cpp
-For convenience, the methods a new weight update model should implement can be implemented using the following basic macros:
-\end_toggle
-\add_toggle_python
-For convenience, new weight update models should be implemented using the ``pygenn.genn_model.create_custom_weight_update_class`` function with the following basic keyword arguments:
- \end_toggle
-
+For convenience, \add_cpp_python_text{the methods a new weight update model should implement can be implemented using the following basic macros,new weight update models should be implemented using the ``pygenn.genn_model.create_custom_weight_update_class`` function with the following basic keyword arguments}:
 - \add_cpp_python_text{SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_VARS() and SET_EXTRA_GLOBAL_PARAMS(), `derived_params`\, `param_names`\, `var_name_types` and `extra_global_params`} perform the same roles as they do in the neuron
   models discussed in \ref sect_own.
-- DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a weight update model with pre and postsynaptic as well as per-synapse state variables.
+- \add_cpp_python_text{DECLARE_WEIGHT_UPDATE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS\, NUM_PRE_VARS\, NUM_POST_VARS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a weight update model with pre and postsynaptic as well as per-synapse state variables,`class_name`: the name of the new model}.
 - \add_cpp_python_text{SET_SIM_CODE(SIM_CODE),`sim_code=SIM_CODE`}: defines the simulation code that is used when a true spike is detected. The update is performed only in timesteps after a neuron in the presynaptic population has fulfilled its threshold detection condition.
 Typically, spikes lead to update of synaptic variables that then lead to the activation of input into the post-synaptic neuron. Most of the time these inputs add linearly at the post-synaptic neuron. This is assumed in GeNN and the term to be added to the activation of the post-synaptic neuron should be applied using the the \$(addToInSyn, weight) function. 
 For example
@@ -560,6 +554,9 @@ stdp_additive_2_model = genn_model.create_custom_weight_update_class(
     is_post_spike_time_required=True)
 \end_toggle_code
 
+\subsection wum_synapse_dynamics Synapse dynamics
+- SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
+
 \subsection wum_spike_like_events Spike-like events
 - SET_EVENT_THRESHOLD_CONDITION_CODE(EVENT_THRESHOLD_CONDITION_CODE) defines a condition for a synaptic event. This typically involves the pre-synaptic variables, e.g. the membrane potential: 
 \code
@@ -568,9 +565,6 @@ SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) > -0.02");
 Whenever this expression evaluates to true, the event code set using the SET_EVENT_CODE() macro is executed. For an example, see WeightUpdateModels::StaticGraded.
 
 - SET_EVENT_CODE(EVENT_CODE) defines the code that is used when the event threshold condition is met (as set using the SET_EVENT_THRESHOLD_CONDITION_CODE() macro). 
-
-\subsection wum_synapse_dynamics Synapse dynamics
-- SET_SYNAPSE_DYNAMICS_CODE(SYNAPSE_DYNAMICS_CODE) defines code that is run for each synapse, each timestep i.e. unlike the others it is not event driven. This can be used where synapses have internal variables and dynamics that are described in continuous time, e.g. by ODEs. However using this mechanism is typically computationally very costly because of the large number of synapses in a typical network. By using the \$(addtoinsyn), \$(updatelinsyn) and \$(addToDenDelay) mechanisms discussed in the context of SET_SIM_CODE(), the synapse dynamics can also be used to implement continuous synapses for rate-based models.
 
 -----
 \link sectNeuronModels Previous\endlink | \link UserManual Top\endlink | \link sect_postsyn Next\endlink
@@ -592,17 +586,19 @@ In Python, these models can be selected by their unqualified name e.g. "ExpCurr"
 
 \section sect_new_postsynaptic Defining a new postsynaptic model
 The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.
-
-In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:
-- DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS), SET_DERIVED_PARAMS(), SET_PARAM_NAMES(), SET_VARS() perform the same roles as they do in the neuron models discussed in \ref sect_own.
-- SET_DECAY_CODE(DECAY_CODE) defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
-- SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE) defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
-\code
+In the same manner as to both the neuron and weight update models discussed in \ref sect_own and \ref sect34, postsynamic model definitions are encapsulated in a class derived from PostsynapticModels::Base. Again, the methods that a postsynaptic model should implement can be implemented using the following \add_cpp_python_text{macros, keyword arguments}:
+- \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS)\, SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_VARS(), `param_names`\, `var_name_types` and `derived_params`}  perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- \add_cpp_python_text{SET_DECAY_CODE(DECAY_CODE),decay_code=DECAY_CODE} defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.
+- \add_cpp_python_text{SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE),apply_input_code=APPLY_INPUT_CODE} defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:
+\add_toggle_code_cpp
 SET_APPLY_INPUT_CODE("$(Isyn) += $(inSyn) * ($(E) - $(V))");
-\endcode
+\end_toggle_code
+\add_toggle_code_python
+apply_input_code="$(Isyn) += $(inSyn) * ($(E) - $(V))"
+\end_toggle_code
 where \$(E) is a postsynaptic model parameter specifying reversal potential and \$(V) is the variable containing the postsynaptic neuron's membrane potential.
 As discussed in \ref predefinedVars, \$(Isyn) is the built in variable used to sum neuron input.
-However additional input variables can be added to a neuron model using the SET_ADDITIONAL_INPUT_VARS() macro (see \ref sect_own for more details).
+However additional input variables can be added to a neuron model using the \add_cpp_python_text{SET_ADDITIONAL_INPUT_VARS() macro,`additional_input_vars` keyword argument} (see \ref sect_own for more details).
 
 
 -----
