@@ -166,7 +166,7 @@ in `weightVarInitialisers` therefore these must be constant rather than sampled 
 //----------------------------------------------------------------------------
 /*! 
 \page sectNeuronModels Neuron models
-There is a number of predefined models which can be used with the ModelSpec::addNeuronGroup function:
+There is a number of predefined models which can be used with the \add_cpp_python_text{ModelSpec::addNeuronPopulation,pygenn.genn_model.GeNNModel.add_neuron_population} method:
 - NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
