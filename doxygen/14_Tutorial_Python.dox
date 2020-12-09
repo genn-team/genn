@@ -161,7 +161,8 @@ model.add_synapse_population("StimPop1", "SPARSE_GLOBALG", NO_DELAY,
     "ExpCond", ps_p, {},
     init_connectivity("OneToOne", {}))
 \endcode
-
+Each neuron in the spike source array population has its own list of spikes which are concatenated together and stored in an array made accesible to all neurons in the population using an extra global parameter (see \ref neuron_extra_global_param). 
+The `startSpike` and `endSpike` variables are then initialised with the indices of each neuron's section of the `spikeTimes` extra global parameter array.
 At this point our user code `tenHHRing.py` should look like this
 \code
 import matplotlib.pyplot as plt
