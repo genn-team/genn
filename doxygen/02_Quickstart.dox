@@ -76,7 +76,7 @@ showcases many of the features of GeNN and how to program the
 user-side code for a GeNN application. More details in the
 \link UserManual User Manual \endlink.
 
-\section how_to How to use GeNN for New Projects
+\section how_to How to use GeNN for new C++ projects
 
 Creating and running projects in GeNN involves a few steps ranging
 from defining the fundamentals of the model, inputs to the model,
@@ -128,7 +128,7 @@ In more detail, the GeNN workflow consists of:
 5. Finally, run the resulting stand-alone simulator executable. In the
    MBody1 example, this is called `MBody1` on Linux and `MBody1_Release.exe` on Windows.
 
-\section ownmodel Defining a New Model in GeNN
+\section ownmodel Defining a new model in GeNN using C++
 According to the work flow outlined above, there are several steps to be
 completed to define a neuronal network model.
 
@@ -190,20 +190,17 @@ completed to define a neuronal network model.
    of options for defining a network, refer to the \link UserManual User
    Manual\endlink.
 	
-3. The programmer defines their own "user-side" modeling code similar to
+3. The programmer defines their own "simulation" code similar to
    the code in `userproject/MBody1_project/model/MBody1Sim.cc`. In this code,
 
-   a) They manually define the connectivity matrices between neuron groups. 
+   a) They can manually define the connectivity matrices between neuron groups. 
       Refer to the \ref subsect34 section for the required format of
       connectivity matrices for dense or sparse connectivities.
 
-   b) They define input patterns (e.g. for Poisson neurons like in the
-      MBody1 example) or individual initial values for neuron and / or
+   b) They can define input patterns or individual initial values for neuron and / or
       synapse variables.
       \note
-      The initial values given in the `modelDefinition` are automatically
-      applied homogeneously to every individual neuron or synapse in each
-      of the neuron or synapse groups. 
+      The initial values or initialisation "snippets" given in the `modelDefinition` are automatically applied. 
 
    c) They use `stepTime()` to run one time step on either the CPU or GPU depending on the options passed to genn-buildmodel.
     
@@ -214,6 +211,81 @@ completed to define a neuronal network model.
    e) They analyze the results. In the most simple case this could just be
       writing the relevant data to output files.
 
+\section ownmodel_python Defining a new model in GeNN using Python
+There are several steps to be completed to define a neuronal network model.
+1. The neuronal network of interest is defined in a script,
+   e.g. `Example1.py`.  
+
+2. Within the the script `Example1.py`, the following tasks
+   need to be completed:
+
+   a) Required PyGeNN classes needs to be imported,
+      \code
+      from pygenn.genn_model import GeNNModel
+      \endcode
+
+   b) The values for initial variables and parameters for neuron and synapse
+      populations need to be defined, e.g.
+      \code
+      poisson_params = {"rate": 10.0}
+      \endcode
+      would define the (homogeneous) parameters for a population of Poisson
+      neurons.
+      \note
+      The names of required parameters and their meaning is defined by the
+      neuron or synapse type. Refer to the \link UserManual User Manual
+      \endlink for details.
+
+      If heterogeneous parameter values are required for a particular
+      population of neurons (or synapses), they need to be defined as "variables"
+      rather than parameters.  See the \link UserManual User Manual
+      \endlink for how to define new neuron (or synapse) types and the
+      \ref sect_new_var_init section for more information on 
+      initialising these variables to hetererogenous values.
+
+   c) A pygenn.genn_model.GeNNModel object needs to be created and the floating point precision to use should be set (see \ref floatPrecision for more information on floating point precision), i.e. 
+      \code
+      model = GeNNModel("float", "example")
+      \endcode  
+      
+   d) The model's simulation time step `DT` needs to be defined, e.g.
+      \code
+      model.dT = 0.1
+      \endcode
+      \note
+      All provided examples and pre-defined model elements in GeNN work with
+      units of mV, ms, nF and muS. However, the choice of units is entirely
+      left to the user if custom model elements are used.
+
+   For a full range
+   of options for defining a network, refer to the \link UserManual User
+   Manual\endlink.
+3. Within the same script, the programmer builds the model -- running the GeNN code generator -- and loads it into Python, i.e.
+    \code
+    model.build()
+    model.load()
+    \endcode
+    \note
+    If the model isn't changed, pygenn.genn_model.GeNNModel.build doesn't need to be called.
+
+4. Also, within the same script, the programmer defines their own "simulation" code. In this code,
+
+   a) They can manually define the connectivity matrices between neuron groups. 
+      Refer to the \ref subsect34 section for the required format of
+      connectivity matrices for dense or sparse connectivities.
+
+   b) They can define input patterns or individual initial values for neuron and / or
+      synapse variables.
+      \note
+      The initial values or initialisation "snippets" specified when defining the model are automatically applied. 
+
+   c) They use pygenn.genn_model.GeNNModel.step_time() to run one time step on either the CPU or GPU depending on the available hardware.
+    
+   d) They use functions like pygenn.genn_groups.Group.pull_state_from_device etc to transfer the
+      results from GPU calculations to the main memory of the host computer
+      for further processing.
+
+   e) They analyze the results. In the most simple case this could involve plotting it from within the script using Matplotlib.
 <br />
 
 -----
