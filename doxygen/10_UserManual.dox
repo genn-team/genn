@@ -77,9 +77,16 @@ A network model is defined as follows:
    \add_toggle_code_cpp
    model.setName("MyModel");
    \end_toggle_code
-   \add_toggle_code_python
+   \add_toggle_python
+   \code
    model = GeNNModel("float", "YourModelName")
-   \end_toggle_code
+   \endcode
+   By default the model will use a hardware-accelerated code-generation backend if it is available. However, this can be overriden using the `backend` keyword argument. For example, the single-threaded CPU backend could be manually selected with:
+   \code
+   model = GeNNModel("float", "YourModelName", 
+                     backend="SingleThreadedCPU")
+   \endcode
+   \end_toggle
 2. Neuron populations (at least one) must be added (see \ref subsect11).
    The user may add as many neuron populations as they wish. If resources
    run out, there will not be a warning but GeNN will fail. However,
