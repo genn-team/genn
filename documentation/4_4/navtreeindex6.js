@@ -1,5 +1,10 @@
 var NAVTREEINDEX6 =
 {
+"d9/d7e/classSharedLibraryModel.html#ade6903395fd342e4b3b1e47c43f44f5f":[18,0,27,37],
+"d9/d7e/classSharedLibraryModel.html#aeb55925d39439c5b6d073fef80a60045":[18,0,27,40],
+"d9/d7e/classSharedLibraryModel.html#af6c7b50f91a08ddaf3f6c62553cc3707":[18,0,27,27],
+"d9/d7e/classSharedLibraryModel.html#af99fed274b4d6e768b7f2c23416685fe":[18,0,27,33],
+"d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html":[17,0,0,0,0],
 "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html":[18,0,0,1,3],
 "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a1a1b900ed7a854dc885110d34c6ec101":[18,0,0,1,3,6],
 "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a37de6c65c314235bed7e9ec241801145":[18,0,0,1,3,0],
@@ -244,10 +249,5 @@ var NAVTREEINDEX6 =
 "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a100324e214546094fced5e66fb0582d4":[18,0,7,1,0,2],
 "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a290cab59495dd92ea26f6d379ba3c373":[18,0,7,1,0,39],
 "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a2c68d702b36428da03126c0dd13d4c9e":[18,0,7,1,0,32],
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3137503c327f26fcc6d7323505233745":[18,0,7,1,0,45],
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a385b3616dad8cc31ce305ad378b5dbaa":[18,0,7,1,0,14],
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3a292992d6141aab34e3dee468069b45":[18,0,7,1,0,1],
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3cafe733ce4f7ccd2b53746ada70c40e":[18,0,7,1,0,37],
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3ea2a76a16f5aa01ac244d3a4eb289f4":[18,0,7,1,0,23],
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a414b34f9e91be639135b4b37658ebbf5":[18,0,7,1,0,24]
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3137503c327f26fcc6d7323505233745":[18,0,7,1,0,45]
 };

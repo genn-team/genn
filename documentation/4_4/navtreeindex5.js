@@ -28,6 +28,7 @@ var NAVTREEINDEX5 =
 "d7/d98/Quickstart.html#example":[2,0],
 "d7/d98/Quickstart.html#how_to":[2,1],
 "d7/d98/Quickstart.html#ownmodel":[2,2],
+"d7/d98/Quickstart.html#ownmodel_python":[2,3],
 "d7/d98/Quickstart.html#quick_visualising":[2,0,2],
 "d7/d98/Quickstart.html#unix_quick":[2,0,0],
 "d7/d98/Quickstart.html#windows_quick":[2,0,1],
@@ -130,6 +131,10 @@ var NAVTREEINDEX5 =
 "d8/d99/Installation.html#Downloading":[1,0],
 "d8/d99/Installation.html#GitSnapshot":[1,1],
 "d8/d99/Installation.html#installing":[1,2],
+"d8/d99/Installation.html#pygenn":[1,3],
+"d8/d99/Installation.html#pygenn_source_nix":[1,3,1],
+"d8/d99/Installation.html#pygenn_source_windows":[1,3,2],
+"d8/d99/Installation.html#pygenn_wheel":[1,3,0],
 "d8/daf/generateNeuronUpdate_8cc.html":[19,0,38],
 "d8/dcd/modular_8c_8h.html":[19,0,81],
 "d8/dcd/modular_8c_8h.html#a574c40a1d2b6a77253561afa27f10eb9":[19,0,81,2],
@@ -244,10 +249,5 @@ var NAVTREEINDEX5 =
 "d9/d7e/classSharedLibraryModel.html#ab965f7b4609f77e1a78ad2cbdedc6591":[18,0,27,39],
 "d9/d7e/classSharedLibraryModel.html#ac2e8b0538bef3905ae636174d70661b4":[18,0,27,32],
 "d9/d7e/classSharedLibraryModel.html#aced5b47a73c1aaed7e7981106184739f":[18,0,27,30],
-"d9/d7e/classSharedLibraryModel.html#acf5a56c0d4cb263d4a5a58974523a2a5":[18,0,27,1],
-"d9/d7e/classSharedLibraryModel.html#ade6903395fd342e4b3b1e47c43f44f5f":[18,0,27,37],
-"d9/d7e/classSharedLibraryModel.html#aeb55925d39439c5b6d073fef80a60045":[18,0,27,40],
-"d9/d7e/classSharedLibraryModel.html#af6c7b50f91a08ddaf3f6c62553cc3707":[18,0,27,27],
-"d9/d7e/classSharedLibraryModel.html#af99fed274b4d6e768b7f2c23416685fe":[18,0,27,33],
-"d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html":[17,0,0,0,0]
+"d9/d7e/classSharedLibraryModel.html#acf5a56c0d4cb263d4a5a58974523a2a5":[18,0,27,1]
 };

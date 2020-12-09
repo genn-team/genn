@@ -5,7 +5,12 @@ var NAVTREE =
     [ "Installation", "d8/d99/Installation.html", [
       [ "Downloading a release", "d8/d99/Installation.html#Downloading", null ],
       [ "Obtaining a Git snapshot", "d8/d99/Installation.html#GitSnapshot", null ],
-      [ "Installing GeNN", "d8/d99/Installation.html#installing", null ]
+      [ "Installing GeNN", "d8/d99/Installation.html#installing", null ],
+      [ "Installing PyGeNN", "d8/d99/Installation.html#pygenn", [
+        [ "Installing PyGeNN from binary wheels", "d8/d99/Installation.html#pygenn_wheel", null ],
+        [ "Installing PyGeNN from source on Linux or Mac OSX", "d8/d99/Installation.html#pygenn_source_nix", null ],
+        [ "Installing PyGeNN from source on Windows", "d8/d99/Installation.html#pygenn_source_windows", null ]
+      ] ]
     ] ],
     [ "Quickstart", "d7/d98/Quickstart.html", [
       [ "Running an Example Model", "d7/d98/Quickstart.html#example", [
@@ -13,8 +18,9 @@ var NAVTREE =
         [ "Windows", "d7/d98/Quickstart.html#windows_quick", null ],
         [ "Visualising results", "d7/d98/Quickstart.html#quick_visualising", null ]
       ] ],
-      [ "How to use GeNN for New Projects", "d7/d98/Quickstart.html#how_to", null ],
-      [ "Defining a New Model in GeNN", "d7/d98/Quickstart.html#ownmodel", null ]
+      [ "How to use GeNN for new C++ projects", "d7/d98/Quickstart.html#how_to", null ],
+      [ "Defining a new model in GeNN using C++", "d7/d98/Quickstart.html#ownmodel", null ],
+      [ "Defining a new model in GeNN using Python", "d7/d98/Quickstart.html#ownmodel_python", null ]
     ] ],
     [ "Examples", "d9/d61/Examples.html", [
       [ "Single compartment Izhikevich neuron(s)", "d9/d61/Examples.html#Ex_OneComp", null ],
@@ -47,7 +53,7 @@ var NAVTREE =
     ] ],
     [ "Tutorial 2 (Python)", "df/d0b/Tutorial2_Python.html", null ],
     [ "Best practices guide", "d0/da6/UserGuide.html", [
-      [ "Creating and simulating a network model", "d0/da6/UserGuide.html#CreateAndSimulate", [
+      [ "Simulating a network model", "d0/da6/UserGuide.html#Simulate", [
         [ "Extra Global Parameters", "d0/da6/UserGuide.html#extraGlobalParamSim", null ]
       ] ],
       [ "Floating point precision", "d0/da6/UserGuide.html#floatPrecision", null ],
@@ -109,11 +115,11 @@ var NAVTREEINDEX =
 "d5/d1f/classNeuronModels_1_1SpikeSource.html#a14f6e338a265bf369a6f7e6671736e8c",
 "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a40494ed5e5a10c9d36d487bb911edee5",
 "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a64b68a2fe8acdba26d310992eb47f82c",
-"d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html",
-"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4735ba33ebee63fe36e2da3f384ead4a",
-"dc/de1/modelSpec_8h.html#a957acf630622e4f9fd4ddd773e962a92",
-"de/d22/classCodeGenerator_1_1Substitutions.html#aff0168fcb07187481c05db1ae01455bd",
-"df/dfd/classCodeGenerator_1_1GroupMerged.html"
+"d9/d7e/classSharedLibraryModel.html#ade6903395fd342e4b3b1e47c43f44f5f",
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a385b3616dad8cc31ce305ad378b5dbaa",
+"dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8f",
+"de/d22/classCodeGenerator_1_1Substitutions.html#a91b64664509b98116949defaa084a9fc",
+"df/ddb/ReleaseNotes.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

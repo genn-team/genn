@@ -1,5 +1,10 @@
 var NAVTREEINDEX7 =
 {
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a385b3616dad8cc31ce305ad378b5dbaa":[18,0,7,1,0,14],
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3a292992d6141aab34e3dee468069b45":[18,0,7,1,0,1],
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3cafe733ce4f7ccd2b53746ada70c40e":[18,0,7,1,0,37],
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3ea2a76a16f5aa01ac244d3a4eb289f4":[18,0,7,1,0,23],
+"db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a414b34f9e91be639135b4b37658ebbf5":[18,0,7,1,0,24],
 "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4735ba33ebee63fe36e2da3f384ead4a":[18,0,7,1,0,44],
 "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2":[18,0,7,1,0,35],
 "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a481795d2e7a45410799786a1c5122834":[18,0,7,1,0,5],
@@ -61,8 +66,8 @@ var NAVTREEINDEX7 =
 "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a8ad49047e343c93b0c92be50b57ae7f5":[18,0,2,6,0],
 "db/d6d/single__threaded__cpu_2backend_8h.html":[19,0,6],
 "db/d6d/single__threaded__cpu_2backend_8h_source.html":[19,0,6],
-"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[17,0,0,2],
 "db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[18,0,0,2],
+"db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html":[17,0,0,2],
 "db/d97/classSnippet_1_1Base.html":[18,0,8,0],
 "db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48":[18,0,8,0,5],
 "db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519":[18,0,8,0,6],
@@ -244,10 +249,5 @@ var NAVTREEINDEX7 =
 "dc/de1/modelSpec_8h.html":[19,0,76],
 "dc/de1/modelSpec_8h.html#a291aa33d0e485ee09a6881cf8056e13c":[19,0,76,1],
 "dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073":[19,0,76,9],
-"dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043":[19,0,76,10],
-"dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8f":[19,0,76,4],
-"dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fa5b39c8b553c821e7cddc6da64b5bd2ee":[19,0,76,4,0],
-"dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fae738c26bf4ce1037fa81b039a915cbf6":[19,0,76,4,1],
-"dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8fafd3e4ece78a7d422280d5ed379482229":[19,0,76,4,2],
-"dc/de1/modelSpec_8h.html#a82512da3fc2cd603ff00f8f5b7f2f1ce":[19,0,76,7]
+"dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043":[19,0,76,10]
 };

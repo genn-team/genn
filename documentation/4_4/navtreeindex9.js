@@ -1,5 +1,10 @@
 var NAVTREEINDEX9 =
 {
+"de/d22/classCodeGenerator_1_1Substitutions.html#a91b64664509b98116949defaa084a9fc":[18,0,0,16,12],
+"de/d22/classCodeGenerator_1_1Substitutions.html#ace9f2d94bf7832f0f538c53d27063540":[18,0,0,16,6],
+"de/d22/classCodeGenerator_1_1Substitutions.html#ae2f104d7fb3d30afa560f4ea00eed80a":[18,0,0,16,10],
+"de/d22/classCodeGenerator_1_1Substitutions.html#ae3ed06630ef19dce975fd16651768c32":[18,0,0,16,7],
+"de/d22/classCodeGenerator_1_1Substitutions.html#aef723becd5e3a3d5d6dcc72ddce7dddb":[18,0,0,16,13],
 "de/d22/classCodeGenerator_1_1Substitutions.html#aff0168fcb07187481c05db1ae01455bd":[18,0,0,16,5],
 "de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html":[18,0,9,3,4],
 "de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html#aa183a4d40a65ef1c41c016bbf769ac72":[18,0,9,3,4,1],
@@ -208,8 +213,8 @@ var NAVTREEINDEX9 =
 "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#aaf6969f0f388155f2efedca6015c0b70":[18,0,10,1,4],
 "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#aef7011a4e9e3975ee432e2f901ccf4a9":[18,0,10,1,5],
 "df/da9/generateSupportCode_8cc.html":[19,0,43],
-"df/daa/namespaceSnippet.html":[17,0,13],
 "df/daa/namespaceSnippet.html":[18,0,8],
+"df/daa/namespaceSnippet.html":[17,0,13],
 "df/dac/modelSpecMerged_8h.html":[19,0,79],
 "df/dac/modelSpecMerged_8h_source.html":[19,0,79],
 "df/dc2/classSpineMLSimulator_1_1LogOutput_1_1AnalogueFile.html":[18,0,9,2,2],
@@ -244,10 +249,5 @@ var NAVTREEINDEX9 =
 "df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html#af4369f38e68bd86430c52808f7cbd808":[18,0,9,1,3,1],
 "df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html#afde7de455083870a30430db574a677e4":[18,0,9,1,3,0],
 "df/dd5/supportCodeMerged_8h.html":[19,0,118],
-"df/dd5/supportCodeMerged_8h_source.html":[19,0,118],
-"df/ddb/ReleaseNotes.html":[7],
-"df/de1/single__threaded__cpu_2backend_8cc.html":[19,0,4],
-"df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html":[18,0,0,15],
-"df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#a87af4f2611889fc88fa4bb29b0c6f651":[18,0,0,15,1],
-"df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#aa38c8730ae8e9005936e79c0feefe049":[18,0,0,15,0]
+"df/dd5/supportCodeMerged_8h_source.html":[19,0,118]
 };
