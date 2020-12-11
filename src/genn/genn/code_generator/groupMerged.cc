@@ -50,9 +50,11 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
     }
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os) const
+void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const
 {
     if(getArchetype().isDelayRequired()) { // with delay
+        assert(batchSize == 1);
+
         if(getArchetype().isSpikeEventRequired()) {
             os << "group->spkCntEvnt[*group->spkQuePtr] = 0;" << std::endl;
         }
@@ -65,9 +67,9 @@ void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountR
     }
     else { // no delay
         if(getArchetype().isSpikeEventRequired()) {
-            os << "group->spkCntEvnt[0] = 0;" << std::endl;
+            os << "group->spkCntEvnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
         }
-        os << "group->spkCnt[0] = 0;" << std::endl;
+        os << "group->spkCnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
     }
 }
 

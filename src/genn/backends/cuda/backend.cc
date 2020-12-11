@@ -288,6 +288,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
+        if(model.getBatchSize() > 1) {
+            os << "const unsigned int batch = blockIdx.y;" << std::endl;
+        }
 
         Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
         kernelSubs.addVarSubstitution("t", "t");
@@ -305,6 +308,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(os);
         os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+        if(model.getBatchSize() > 1) {
+            os << "const unsigned int batch = blockIdx.y;" << std::endl;
+        }
 
         Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
         kernelSubs.addVarSubstitution("t", "t");
@@ -325,7 +331,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         if(idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
+            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, model.getBatchSize());
             os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
@@ -334,7 +340,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
             Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelNeuronUpdate, idStart);
+            genKernelDimensions(os, KernelNeuronUpdate, idStart, model.getBatchSize());
             os << KernelNames[KernelNeuronUpdate] << "<<<grid, threads>>>(t";
             if(model.isRecordingInUse()) {
                 os << ", recordingTimestep";
@@ -388,7 +394,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelPreSynapseReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
-
             genPreSynapseResetKernel(os, modelMerged, idPreSynapseReset);
         }
         os << std::endl;
@@ -405,7 +410,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = blockIdx.y;" << std::endl;
+            }
             genPresynapticUpdateKernel(os, kernelSubs, modelMerged, wumThreshHandler, wumSimHandler, 
                                        wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
         }
@@ -422,7 +429,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = blockIdx.y;" << std::endl;
+            }
             genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
         }
     }
@@ -433,7 +442,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(os);
             os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = threadIdx.x;" << std::endl;
+            }
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
             kernelSubs.addVarSubstitution("t", "t");
 
@@ -451,7 +462,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         // Launch pre-synapse reset kernel if required
         if(idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
+            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, model.getBatchSize());
             os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
@@ -461,7 +472,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             Timer t(os, "synapseDynamics", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
+            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart, model.getBatchSize());
             os << KernelNames[KernelSynapseDynamicsUpdate] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
@@ -471,7 +482,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             Timer t(os, "presynapticUpdate", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
+            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart, model.getBatchSize());
             os << KernelNames[KernelPresynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
@@ -481,7 +492,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             Timer t(os, "postsynapticUpdate", model.isTimingEnabled());
 
-            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
+            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart, model.getBatchSize());
             os << KernelNames[KernelPostsynapticUpdate] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
@@ -554,6 +565,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
+        if(model.getBatchSize() > 1) {
+            os << "const unsigned int batch = blockIdx.y;" << std::endl;
+        }
         genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, sgDenseInitHandler, 
                             sgSparseRowConnectHandler, sgSparseColConnectHandler,
                             sgKernelInitHandler, idInitStart);
@@ -571,6 +585,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = blockIdx.y;" << std::endl;
+            }
             genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
         }
     }
@@ -644,7 +661,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             {
                 Timer t(os, "init", model.isTimingEnabled(), true);
 
-                genKernelDimensions(os, KernelInitialize, idInitStart);
+                genKernelDimensions(os, KernelInitialize, idInitStart, model.getBatchSize());
                 os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
@@ -670,7 +687,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             {
                 Timer t(os, "initSparse", model.isTimingEnabled(), true);
 
-                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart);
+                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart, model.getBatchSize());
                 os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
@@ -1536,14 +1553,14 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const
 {
     // Calculate grid size
     const size_t gridSize = ceilDivide(numThreads, getKernelBlockSize(kernel));
     os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", 1);" << std::endl;
 
     if (gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]) {
-        os << "const dim3 grid(" << gridSize << ", 1);" << std::endl;
+        os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
     else {
         // **TODO** this needs to be implemented in genParallelGroup

@@ -208,6 +208,8 @@ void BackendSIMT::addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Ba
 //--------------------------------------------------------------------------
 void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+
     // Loop through local neuron groups
     idStart = 0;
     for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
@@ -215,6 +217,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
         
         // If group requires previous spike or spike-like-event times resetting here i.e. each group requires multiple threads
         if(n.getArchetype().isPrevSpikeTimeRequired() || n.getArchetype().isPrevSpikeEventTimeRequired()) {
+            assert(batchSize == 1);
             // Sum padded sizes of each group within merged group
             const size_t paddedSize = std::accumulate(
                     n.getGroups().cbegin(), n.getGroups().cend(), size_t{0},
@@ -282,14 +285,18 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 os << std::endl;
 
                 // Use first thread to update spike queue pointer and reset spike counts
-                os << "if(" << popSubs["id"] << " == 0)";
+                os << "if(" << popSubs["id"] << " == 0";
+                if(batchSize > 1) {
+                    os << " && batch == 0";
+                }
+                os << ")";
                 {
                     CodeStream::Scope b(os);
 
                     if(n.getArchetype().isDelayRequired()) { // with delay
                         os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
                     }
-                    n.genMergedGroupSpikeCountReset(os);
+                    n.genMergedGroupSpikeCountReset(os, batchSize);
                 }
             }
             idStart += paddedSize;
@@ -309,9 +316,16 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 os << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
+                    if(batchSize > 1) {
+                        os << "if(batch == 0)" << CodeStream::OB(1);
+                    }
                     os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+                    
+                    if(batchSize > 1) {
+                        os << CodeStream::CB(1);
+                    }
                 }
-                n.genMergedGroupSpikeCountReset(os);
+                n.genMergedGroupSpikeCountReset(os, batchSize);
             }
             idStart += n.getGroups().size();
         }
@@ -321,6 +335,8 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
 void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                         NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const
 {
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+
     // If any neuron groups emit spike events
     if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
                    [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
@@ -373,10 +389,20 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     genParallelGroup<NeuronUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate)); },
-        [simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
+        [batchSize, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
+            // If batch size is greater than 1, calculate ID into batched arrays and add to substitutions
+            if(batchSize > 1) {
+                os << "const unsigned int batchID = (group->numNeurons * batch) + " << popSubs["id"] << ";" << std::endl;
+                popSubs.addVarSubstitution("batch_id", "batchID");
+            }
+            else {
+                popSubs.addVarSubstitution("batch_id", popSubs["id"]);
+            }
+
             // If axonal delays are required
             if(ng.getArchetype().isDelayRequired()) {
+                assert(batchSize == 1);
                 // We should READ from delay slot before spkQuePtr
                 os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset() << ";" << std::endl;
 
@@ -392,7 +418,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy global RNG stream to local and use pointer to this for rng
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["id"] + "]");
+                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["batch_id"] + "]");
                 }
 
                 simHandler(os, ng, popSubs,
@@ -409,7 +435,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy local stream back to local
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPostamble(os, "group->rng[" + popSubs["id"] + "]");
+                    genPopulationRNGPostamble(os, "group->rng[" + popSubs["batch_id"] + "]");
                 }
             }
 
@@ -427,7 +453,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                             os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
                         }
                         else {
-                            os << "[0], shSpkEvntCount);" << std::endl;
+                            os << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkEvntCount);" << std::endl;
                         }
                     }
                 } 
@@ -446,7 +472,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                             os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
                         }
                         else {
-                            os << "[0], shSpkCount);" << std::endl;
+                            os << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkCount);" << std::endl;
                         }
                     }
                 } 
@@ -830,17 +856,26 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     genParallelGroup<NeuronInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
-        [this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
+        [&modelMerged, this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
             {
                 CodeStream::Scope b(os);
 
+                // If batch size is greater than 1, calculate ID into batched arrays and add to substitutions
+                if(modelMerged.getModel().getBatchSize() > 1) {
+                    os << "const unsigned int batchID = (group->numNeurons * batch) + " << popSubs["id"] << ";" << std::endl;
+                    popSubs.addVarSubstitution("batch_id", "batchID");
+                }
+                else {
+                    popSubs.addVarSubstitution("batch_id", popSubs["id"]);
+                }
+
                 // If population RNGs are initialised on device and this neuron is going to require one, 
                 // Initialise RNG using GLOBAL thread id for sequence
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
+                    genPopulationRNGInit(os, "group->rng[" + popSubs["batch_id"] + "]", "deviceRNGSeed", "id");
                 }
 
                 // If this neuron requires an RNG for initialisation,

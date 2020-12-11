@@ -69,7 +69,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
                 if(delayed) {
                     os << "readDelayOffset + ";
                 }
-                os << subs["id"] << "];" << std::endl;
+                os << subs[(v.access == VarAccess::READ_ONLY) ? "id" : "batch_id"] << "];" << std::endl;
             }
 
             subs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
@@ -101,7 +101,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
                     if(delayed) {
                         os << "writeDelayOffset + ";
                     }
-                    os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
+                    os << popSubs[(v.access == VarAccess::READ_ONLY) ? "id" : "batch_id"] << "] = l" << v.name << ";" << std::endl;
                 }
             }
         }
@@ -148,7 +148,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 if (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
-                os << popSubs["id"] << "];" << std::endl;
+                os << popSubs[(v.access == VarAccess::READ_ONLY) ? "id" : "batch_id"] << "];" << std::endl;
             }
     
             // Also read spike and spike-like-event times into local variables if required
@@ -157,7 +157,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
-                os << popSubs["id"] << "];" << std::endl;
+                os << popSubs["batch_id"] << "];" << std::endl;
             }
             if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                 os << "const " << model.getTimePrecision() << " lprevST = group->prevST[";
@@ -178,7 +178,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
-                os << popSubs["id"] << "];" << std::endl;
+                os << popSubs["batch_id"] << "];" << std::endl;
             }
             os << std::endl;
 
@@ -230,13 +230,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
-                os << model.getPrecision() << " linSyn = group->inSynInSyn" << i << "[" << popSubs["id"] << "];" << std::endl;
+                os << model.getPrecision() << " linSyn = group->inSynInSyn" << i << "[" << popSubs["batch_id"] << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront = ";
-                    os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * group->numNeurons) + " << popSubs["id"] << "];" << std::endl;
+                    os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * group->numNeurons) + " << popSubs["batch_id"] << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += *denDelayFront;" << std::endl;
@@ -253,7 +253,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                             os << "const ";
                         }
                         os << v.type << " lps" << v.name;
-                        os << " = group->" << v.name << "InSyn" << i << "[" << neuronSubs["id"] << "];" << std::endl;
+                        os << " = group->" << v.name << "InSyn" << i << "[" << neuronSubs[(v.access == VarAccess::READ_ONLY) ? "id" : "batch_id"] << "];" << std::endl;
                     }
                 }
 
@@ -304,12 +304,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 }
 
                 // Write back linSyn
-                os << "group->inSynInSyn"  << i << "[" << inSynSubs["id"] << "] = linSyn;" << std::endl;
+                os << "group->inSynInSyn"  << i << "[" << inSynSubs["batch_id"] << "] = linSyn;" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << "group->" << v.name << "InSyn" << i << "[" << inSynSubs["id"] << "]" << " = lps" << v.name << ";" << std::endl;
+                        os << "group->" << v.name << "InSyn" << i << "[" << inSynSubs["batch_id"] << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -328,7 +328,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     if(v.access == VarAccess::READ_ONLY) {
                         os << "const ";
                     }
-                    os << v.type << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i <<"[" << popSubs["id"] << "];" << std::endl;
+                    os << v.type << " lcs" << v.name;
+                    os << " = " << "group->" << v.name << "CS" << i << "[" << popSubs[(v.access == VarAccess::READ_ONLY) ? "id" : "batch_id"] << "];" << std::endl;
                 }
 
                 Substitutions currSourceSubs(&popSubs);
@@ -350,7 +351,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 // Write read/write variables back to global memory
                 for(const auto &v : csm->getVars()) {
                     if(v.access == VarAccess::READ_WRITE) {
-                        os << "group->" << v.name << "CS" << i << "[" << currSourceSubs["id"] << "] = lcs" << v.name << ";" << std::endl;
+                        os << "group->" << v.name << "CS" << i << "[" << currSourceSubs["batch_id"] << "] = lcs" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -504,6 +505,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 // Spike triggered variables don't need to be copied
                 // if delay isn't required as there's only one copy of them
                 if(ng.getArchetype().isDelayRequired()) {
+                    assert(model.getBatchSize() == 1);
                     // **FIXME** there is a corner case here where, if pre or postsynaptic variables have no update code
                     // but there are delays they won't get copied. It might make more sense (and tidy up several things
                     // to instead build merged neuron update groups based on inSynWithPostVars/outSynWithPreVars instead.
@@ -584,7 +586,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     if (delayed) {
                         os << "writeDelayOffset + ";
                     }
-                    os << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
+                    os << popSubs[(v.access == VarAccess::READ_ONLY) ? "id" : "batch_id"] << "] = l" << v.name << ";" << std::endl;
                 }
             }
         },

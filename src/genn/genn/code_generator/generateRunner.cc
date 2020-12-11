@@ -1314,7 +1314,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
                 // Calculate number of words required for spike/spike event buffers
                 if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
-                    runner << "const unsigned int numWords = " << ceilDivide(n.second.getNumNeurons(), 32) << " * timesteps;" << std::endl;
+                    runner << "const unsigned int numWords = " << (ceilDivide(n.second.getNumNeurons(), 32) * model.getBatchSize()) << " * timesteps;" << std::endl;
                 }
 
                 // Allocate spike array if required
@@ -1368,7 +1368,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
                 // Calculate number of words required for spike/spike event buffers
                 if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
-                    runner << "const unsigned int numWords = " << ceilDivide(n.second.getNumNeurons(), 32) << " * numRecordingTimesteps;" << std::endl;
+                    runner << "const unsigned int numWords = " << (ceilDivide(n.second.getNumNeurons(), 32) * model.getBatchSize()) << " * numRecordingTimesteps;" << std::endl;
                 }
 
                 // Pull spike array if required
@@ -1401,7 +1401,6 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();
-
 
         // Write merged struct allocations to runner
         runner << runnerMergedStructAllocStream.str();

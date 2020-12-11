@@ -421,7 +421,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void genMergedGroupSpikeCountReset(CodeStream &os) const;
+    void genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants
