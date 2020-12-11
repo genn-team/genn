@@ -298,7 +298,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             }
                
             // Initialize spike-like-event times
-            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
                 genInitSpikeTime(os, backend, popSubs, ng, "seT");
             }
 
