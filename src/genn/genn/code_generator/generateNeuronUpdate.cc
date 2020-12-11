@@ -463,8 +463,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     genEmitSpikeLikeEvent(os, ng, popSubs);
                 }
 
-                // If spike-like-event timing is required and they aren't updated after update, copy spime-like-event time from register
-                if(ng.getArchetype().isDelayRequired() && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeTimeRequired())) {
+                // If spike-like-event timing is required and they aren't updated after update, copy spike-like-event time from register
+                if(ng.getArchetype().isDelayRequired() && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeEventTimeRequired())) {
                     os << "else";
                     CodeStream::Scope b(os);
 
