@@ -200,6 +200,9 @@ void ModelSpec::finalize()
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {
+            if(n.second.isSpikeEventTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
+                LOGW << "Neuron group '" << n.first << "' records spike-like-event times but, it has outgoing synapse groups with multiple spike-like-event conditions so the recorded times may be ambiguous.";
+            }
             for(auto *sg : n.second.getOutSyn()) {
                 if (!sg->getWUModel()->getEventCode().empty()) {
                     sg->setEventThresholdReTestRequired(true);
