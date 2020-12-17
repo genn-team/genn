@@ -111,6 +111,20 @@ bool NeuronGroup::isPrevSpikeTimeRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isSpikeEventTimeRequired() const
+{
+    // If any OUTGOING synapse groups require PRESYNAPTIC spike-like event times, return true
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](SynapseGroup *sg) { return sg->getWUModel()->isPreSpikeEventTimeRequired(); });
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isPrevSpikeEventTimeRequired() const
+{
+    // If any OUTGOING synapse groups require previous PRESYNAPTIC spike-like event times, return true
+    return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
+                       [](SynapseGroup *sg) { return sg->getWUModel()->isPrevPreSpikeEventTimeRequired(); });
+}
+//----------------------------------------------------------------------------
 bool NeuronGroup::isTrueSpikeRequired() const
 {
     // If any OUTGOING synapse groups require true spikes, return true
@@ -132,9 +146,9 @@ bool NeuronGroup::isTrueSpikeRequired() const
 //----------------------------------------------------------------------------
 bool NeuronGroup::isSpikeEventRequired() const
 {
-     // Spike like events are required if any OUTGOING synapse groups require spike like events
+    // Spike like events are required if any OUTGOING synapse groups has a spike like event threshold
     return std::any_of(getOutSyn().cbegin(), getOutSyn().cend(),
-                       [](SynapseGroupInternal *sg){ return sg->isSpikeEventRequired(); });
+                       [](SynapseGroupInternal *sg){ return !sg->getWUModel()->getEventThresholdConditionCode().empty(); });
 }
 //----------------------------------------------------------------------------
 bool NeuronGroup::isZeroCopyEnabled() const

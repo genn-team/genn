@@ -279,15 +279,21 @@ class NeuronGroup(Group):
 
         # Unpack data (results in one byte per bit)
         # **THINK** is there a way to avoid this step?
-        data_unpack = data_unpack = np.unpackbits(data_bytes, axis=1, 
-                                                  count=self.size,
-                                                  bitorder="little")
+        data_unpack = np.unpackbits(data_bytes, axis=1, 
+                                    count=self.size,
+                                    bitorder="little")
 
         # Calculate indices where there are spikes
         spikes = np.where(data_unpack == 1)
 
+        # Calculate start time of recording
+        start_time_ms = (self._model.timestep - data_bytes.shape[0]) * self._model.dT
+        if start_time_ms < 0.0:
+            raise Exception("spike_recording_data can only be "
+                            "accessed once buffer is full.")
+        
         # Convert spike times to ms
-        spike_times = spikes[0] * self._model.dT
+        spike_times = start_time_ms + (spikes[0] * self._model.dT)
 
         return spike_times, spikes[1]
 

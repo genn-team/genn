@@ -225,10 +225,12 @@ inline int _clz(unsigned int value)
     \param dt double precision number specifying size of each timestep
     \param delimiter string specifying character(s) which should appear between columns in text file
     \param header boolean specifying whether to write a header row at start of text file or not
-    \param append boolean specifying whether to overwrite or append to any existing file called filename. */
+    \param append boolean specifying whether to overwrite or append to any existing file called filename. 
+    \param startTime double precision number specifying start time of current data.*/
 inline void writeTextSpikeRecording(const std::string &filename, const uint32_t *spkRecord,
                                     unsigned int popSize, unsigned int numTimesteps, double dt = 1.0,
-                                    const std::string &delimiter = " ", bool header = false, bool append = false)
+                                    const std::string &delimiter = " ", bool header = false, bool append = false, 
+                                    double startTime = 0.0)
                              
 {
     // Calculate number of words per-timestep
@@ -246,7 +248,7 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
     // Loop through timesteps
     for(unsigned int t = 0; t < numTimesteps; t++) {
         // Convert timestep to time
-        const double time = t * dt;
+        const double time = startTime + (t * dt);
         
         // Loop through words representing timestep
         for(unsigned int w = 0; w < timestepWords; w++) {

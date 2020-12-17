@@ -124,25 +124,45 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
 
                 // If previous spikes times are required
-                if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                if(n.getArchetype().isPrevSpikeTimeRequired() || n.getArchetype().isPrevSpikeEventTimeRequired()) {
                     if(n.getArchetype().isDelayRequired()) {
                         // Calculate delay slot corresponding to last timestep
                         os << "const unsigned int lastTimestepDelaySlot = (*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
                         os << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
 
-                        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                        os << "for(unsigned int i = 0; i < group->spkCnt[lastTimestepDelaySlot]; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                            os << "for(unsigned int i = 0; i < group->spkCnt[lastTimestepDelaySlot]; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                            }
+                        }
+                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                            os << "for(unsigned int i = 0; i < group->spkCntEvnt[lastTimestepDelaySlot]; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                            }
                         }
                     }
                     else {
-                        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                        os << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
+                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                            os << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
+                            }
+                        }
+                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                            os << "for(unsigned int i = 0; i < group->spkCntEvnt[0]; i++)";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "group->prevSET[group->spkEvnt[i]] = t - DT;" << std::endl;
+                            }
                         }
                     }
                 }
@@ -273,7 +293,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     if(s.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         os << "const unsigned int preReadDelayOffset = " << s.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
 
-                        if(s.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired()) {
+                        if(s.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || s.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
                             os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << s.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
                         }
                     }
@@ -355,7 +375,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                         os << "const unsigned int preReadDelaySlot = " << s.getPresynapticAxonalDelaySlot() << ";" << std::endl;
                         os << "const unsigned int preReadDelayOffset = preReadDelaySlot * group->numSrcNeurons;" << std::endl;
 
-                        if(s.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired()) {
+                        if(s.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || s.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
                             os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << s.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
                         }
                     }
@@ -400,7 +420,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     if(s.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
                         os << "const unsigned int preReadDelayOffset = " << s.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
 
-                        if(s.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired()) {
+                        if(s.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || s.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
                             os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << s.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
                         }
                     }
@@ -1172,7 +1192,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
 
         // If this is a spike-like event, insert threshold check for this presynaptic neuron
-        if (!trueSpike) {
+        if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << "if(";
 
             Substitutions threshSubs(&popSubs);
@@ -1275,7 +1295,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
             }
         }
         // If this is a spike-like event, close braces around threshold check
-        if (!trueSpike) {
+        if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << CodeStream::CB(10);
         }
     }
@@ -1297,12 +1317,15 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, co
     }
     os << " = " << subs["id"] << ";" << std::endl;
 
-    // Reset spike time if this is a true spike and spike time is required
+    // Reset spike and spike-like-event times
+    const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
     if(trueSpike && ng.getArchetype().isSpikeTimeRequired()) {
-        const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
         os << "group->sT[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
     }
-
+    else if(!trueSpike && ng.getArchetype().isSpikeEventTimeRequired()) {
+        os << "group->seT[" << queueOffset << subs["id"] << "] = " << subs["t"] << ";" << std::endl;
+    }
+    
     // If recording is enabled
     if(recordingEnabled) {
         const std::string recordSuffix = trueSpike ? "" : "Event";

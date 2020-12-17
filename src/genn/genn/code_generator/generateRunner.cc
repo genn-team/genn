@@ -789,7 +789,41 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                 [&]()
                                 {
                                     backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "prevST" + n.first, n.second.getPrevSpikeTimeLocation(), true, 
+                                                                "prevST" + n.first, n.second.getPrevSpikeTimeLocation(), true,
+                                                                numNeuronDelaySlots);
+                                });
+        }
+
+        // If neuron group needs to record its spike-like-event times
+        if (n.second.isSpikeEventTimeRequired()) {
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    model.getTimePrecision(), "seT" + n.first, n.second.getSpikeEventTimeLocation(),
+                                    numNeuronDelaySlots);
+
+            // Generate push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
+                                backend.getPreferences().automaticCopy, n.first + "SpikeEventTimes",
+                                [&]()
+                                {
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
+                                                                "seT" + n.first, n.second.getSpikeEventTimeLocation(), true, 
+                                                                numNeuronDelaySlots);
+                                });
+        }
+
+        // If neuron group needs to record its previous spike-like-event times
+        if (n.second.isPrevSpikeEventTimeRequired()) {
+            mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    model.getTimePrecision(), "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(),
+                                    numNeuronDelaySlots);
+
+            // Generate push and pull functions
+            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeEventTimeLocation(),
+                                backend.getPreferences().automaticCopy, n.first + "PreviousSpikeEventTimes",
+                                [&]()
+                                {
+                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
+                                                                "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(), true, 
                                                                 numNeuronDelaySlots);
                                 });
         }

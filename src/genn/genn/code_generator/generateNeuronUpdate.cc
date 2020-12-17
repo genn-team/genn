@@ -151,16 +151,30 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 os << popSubs["id"] << "];" << std::endl;
             }
     
-            // Also read spike time into local variable
+            // Also read spike and spike-like-event times into local variables if required
             if(ng.getArchetype().isSpikeTimeRequired()) {
-                os << model.getTimePrecision() << " lsT = group->sT[";
+                os << "const " << model.getTimePrecision() << " lsT = group->sT[";
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
                 os << popSubs["id"] << "];" << std::endl;
             }
             if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-                os << model.getTimePrecision() << " lprevST = group->prevST[";
+                os << "const " << model.getTimePrecision() << " lprevST = group->prevST[";
+                if (ng.getArchetype().isDelayRequired()) {
+                    os << "readDelayOffset + ";
+                }
+                os << popSubs["id"] << "];" << std::endl;
+            }
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                os <<  "const " << model.getTimePrecision() << " lseT = group->seT[";
+                if (ng.getArchetype().isDelayRequired()) {
+                    os << "readDelayOffset + ";
+                }
+                os << popSubs["id"] << "];" << std::endl;
+            }
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                os <<  "const " << model.getTimePrecision() << " lprevSET = group->prevSET[";
                 if (ng.getArchetype().isDelayRequired()) {
                     os << "readDelayOffset + ";
                 }
@@ -183,8 +197,19 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             Substitutions neuronSubs(&popSubs);
             neuronSubs.addVarSubstitution("Isyn", "Isyn");
-            neuronSubs.addVarSubstitution("sT", "lsT");
-            neuronSubs.addVarSubstitution("prev_sT", "lsT");
+
+            if(ng.getArchetype().isSpikeTimeRequired()) {
+                neuronSubs.addVarSubstitution("sT", "lsT");
+            }
+            if(ng.getArchetype().isPrevSpikeTimeRequired()) {
+                neuronSubs.addVarSubstitution("prev_sT", "lprevST");
+            }
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                neuronSubs.addVarSubstitution("seT", "lseT");
+            }
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                neuronSubs.addVarSubstitution("prev_seT", "lprevSET");
+            }
             neuronSubs.addVarNameSubstitution(nm->getAdditionalInputVars());
             addNeuronModelSubstitutions(neuronSubs, ng);
 
@@ -436,6 +461,19 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 {
                     CodeStream::Scope b(os);
                     genEmitSpikeLikeEvent(os, ng, popSubs);
+                }
+
+                // If spike-like-event timing is required and they aren't updated after update, copy spike-like-event time from register
+                if(ng.getArchetype().isDelayRequired() && (ng.getArchetype().isSpikeEventTimeRequired() || ng.getArchetype().isPrevSpikeEventTimeRequired())) {
+                    os << "else";
+                    CodeStream::Scope b(os);
+
+                    if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                        os << "group->seT[writeDelayOffset + " << popSubs["id"] << "] = lseT;" << std::endl;
+                    }
+                    if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        os << "group->prevSET[writeDelayOffset + " << popSubs["id"] << "] = lprevSET;" << std::endl;
+                    }
                 }
             }
 
