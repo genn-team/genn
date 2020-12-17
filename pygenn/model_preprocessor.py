@@ -1,4 +1,5 @@
-"""Model preprocessor
+## @namespace pygenn.model_preprocessor
+"""
 This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
@@ -17,9 +18,9 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
 
     Args:
     model           --  string or instance of a class derived from
-                        ``pygenn.genn_wrapper.NeuronModels.Custom`` or
-                        ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` or
-                        ``pygenn.genn_wrapper.CurrentSourceModels.Custom``
+                        pygenn.genn_wrapper.NeuronModels.Custom or
+                        pygenn.genn_wrapper.WeightUpdateModels.Custom or
+                        pygenn.genn_wrapper.CurrentSourceModels.Custom
     group           --  group model will belong to
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
@@ -27,9 +28,9 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
                         presynaptic variables
     post_var_space  --  optional dict with (weight update) model
                         postsynaptic variables
-    model_family    --  ``pygenn.genn_wrapper.NeuronModels`` or
-                        ``pygenn.genn_wrapper.WeightUpdateModels`` or
-                        ``pygenn.genn_wrapper.CurrentSourceModels``
+    model_family    --  pygenn.genn_wrapper.NeuronModels or
+                        pygenn.genn_wrapper.WeightUpdateModels or
+                        pygenn.genn_wrapper.CurrentSourceModels
 
     Returns:
     tuple consisting of (model instance, model type, model parameter names,
@@ -80,11 +81,11 @@ def prepare_snippet(snippet, param_space, snippet_family):
 
     Args:
     snippet         --  string or instance of a class derived from
-                        ``pygenn.genn_wrapper.InitVarSnippet.Custom`` or
-                        ``pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom``
+                        pygenn.genn_wrapper.InitVarSnippet.Custom or
+                        pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom
     param_space     --  dict with model parameters
-    snippet_family  --  ``pygenn.genn_wrapper.InitVarSnippet`` or
-                        ``pygenn.genn_wrapper.InitSparseConnectivitySnippet``
+    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet or
+                        pygenn.genn_wrapper.InitSparseConnectivitySnippet
 
     Returns:
     tuple consisting of (snippet instance, snippet type,
@@ -216,8 +217,9 @@ class Variable(object):
         Args:
         variable_name   -- string name of the variable
         variable_type   -- string type of the variable
-        values          --  iterable, single value or VarInit instance
-        group           -- group variable belongs to
+        values          -- iterable, single value or VarInit instance
+        group           -- pygenn.genn_groups.Group this  
+                           variable is associated with
         """
         self.name = variable_name
         self.type = variable_type
@@ -233,12 +235,12 @@ class Variable(object):
             raise ValueError("Extra global initialisation parameters can only "
                              "be set on variables configured using variable "
                              "initialization snippets")
-        
+
         # Set extra global init params
         self.group._set_extra_global_param(param_name, param_values, 
                                            self.init_val.get_snippet(),
                                            self.extra_global_params)
-    
+
     def set_values(self, values):
         """Set Variable's values
 
@@ -279,6 +281,8 @@ class ExtraGlobalVariable(object):
         Args:
         variable_name   --  string name of the variable
         variable_type   --  string type of the variable
+        group           --  pygenn.genn_groups.Group this  
+                            variable is associated with
 
         Keyword args:
         values          --  iterable

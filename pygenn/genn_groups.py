@@ -1,6 +1,7 @@
-"""GeNNGroups
-This module provides classes which automatize model checks and parameter
-convesions for GeNN Groups
+## @namespace pygenn.genn_groups
+"""
+This module provides classes which automate model checks and parameter
+conversions for GeNN Groups
 """
 try:
     xrange
@@ -31,7 +32,8 @@ class Group(object):
         """Init Group
 
         Args:
-        name    --  string name of the Group
+        name    -- string name of the Group
+        model   -- pygenn.genn_model.GeNNModel this group is part of
         """
         self.name = name
         self._model = proxy(model)
@@ -63,7 +65,7 @@ class Group(object):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
-        var_name    --  string with the name of the variable
+        egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
         self._model.pull_extra_global_param_from_device(self.name, egp_name, size)
@@ -84,7 +86,7 @@ class Group(object):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
         Args:
-        var_name    --  string with the name of the variable
+        egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
         self._model.push_extra_global_param_to_device(self.name, egp_name, size)
@@ -252,7 +254,8 @@ class NeuronGroup(Group):
         """Init NeuronGroup
 
         Args:
-        name    --  string name of the group
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
         super(NeuronGroup, self).__init__(name, model)
         self.neuron = None
@@ -423,7 +426,9 @@ class SynapseGroup(Group):
         """Init SynapseGroup
 
         Args:
-        name    --  string name of the group
+        name                    -- string name of the group
+        model                   -- pygenn.genn_model.GeNNModel this synapse group is part of
+        weight_sharing_master   -- SynapseGroup this synapse group is a slave of
         """
         self.connections_set = False
         super(SynapseGroup, self).__init__(name, model)
