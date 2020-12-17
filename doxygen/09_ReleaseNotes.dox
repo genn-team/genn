@@ -101,7 +101,7 @@ User Side Changes
 3. Previously, unless models were very large or had very high spike rates, using ``SynapseGroup::SpanType::PRESYNAPTIC`` typically resulted in poor performance. When using the CUDA backend, ``SynapseGroup::setNumThreadsPerSpike`` can now be used to increase parallelism.
 4. There were useful helpers for recording spikes (``SpikeRecorder``) and timing (``Timer``, ``TimerAccumulate``) in "userproject\include" which were not easily usable to user projects. ``genn-create-userproject.sh`` and ``genn-create-userproject.bat`` now have a "-u" option which puts this in the include path of the generated project.
 5. Timing information generated when ``ModelSpec::setTiming`` is enabled was not accesible to SpineML models. This is now exposed through the ``SpineMLSimulator::Simulator`` class.
-6. Neuron population state variables were not easily accessible if the populations had incoming or outgoing connections with synaptic delays. Additional helper functions are now generated. See \ref CreateAndSimulate for more details.
+6. Neuron population state variables were not easily accessible if the populations had incoming or outgoing connections with synaptic delays. Additional helper functions are now generated. See \ref Simulate for more details.
 7. SpineML interface will now use heterogeneous dendritic delay system introduced in GeNN 3.2.0 if required.
 8. Add ``CodeGenerator::CUDA::Preferences::generateLineInfo`` option to output CUDA line info for profiling.
 9. CUDA backend supports ``half`` datatype allowing memory savings through reduced precision. Host C++ code does not support half-precision types so such state variables must have their location set to ``VarLocation::DEVICE``.
