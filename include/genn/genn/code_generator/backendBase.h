@@ -166,8 +166,11 @@ public:
     //! Generate platform-specific function to update the state of all neurons
     /*! \param os                       CodeStream to write function to
         \param modelMerged              merged model to generate code for
+        \param memorySpaces             for supported backends, data structure containing the remaining space in different named memory spaces
+        \param preambleHandler          callback to write functions for pushing extra-global parameters
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
-        \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes*/
+        \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes
+        \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
                                  HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
@@ -175,6 +178,8 @@ public:
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
+        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
+        \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
         \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
@@ -189,7 +194,8 @@ public:
                                             "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
         \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.*/
+                                            to callback via Substitutions.
+        \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                   HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
@@ -200,11 +206,20 @@ public:
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
-        \param preambleHandler              sss
+        \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param localNGHandler               callback to write platform-independent code to initialize a merged neuron group
-        \param sgDenseInitHandler           callback to write platform-independent code to initialize the synaptic state of a merged synapse group with 
-                                            dense connectivity depending on parallelism strategy, "id_pre" or "id_post" variables may be provided to 
-                                            to callback via Substitutions.*/
+        \param sgDenseInitHandler           callback to write platform-independent code to initialize the synapse variables of
+                                            a merged synapse group with dense connectivity
+        \param sgSparseRowConnectHandler    callback to write platform-independent code to initialize sparse connectivity
+                                            for a merged synapse group with a row-wise connectivity initialisation snippet
+        \param sgSparseColConnectHandler    callback to write platform-independent code to initialize sparse connectivity
+                                            for a merged synapse group with a column-wise connectivity initialisation snippet
+        \param sgKernelInitHandler          callback to write platform-independent code to initialize the synapse variables  of
+                                            merged synapse group variables which require a kernel
+        \param sgSparseInitHandler          callback to write platform-independent code to initialize the synapse variables of
+                                            a merged synapse group with sparse connectivity
+        \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
+        \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                          SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 

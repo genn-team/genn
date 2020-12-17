@@ -442,7 +442,7 @@ public:
 
     //! Adds a new current source to the model using a current source model managed by the user
     /*! \tparam CurrentSourceModel type of current source model (derived from CurrentSourceModels::Base).
-        \param name string containing unique name of current source.
+        \param currentSourceName string containing unique name of current source.
         \param model current source model to use for current source.
         \param targetNeuronGroupName string name of the target neuron group
         \param paramValues parameters for model wrapped in CurrentSourceModel::ParamValues object.
@@ -474,7 +474,7 @@ public:
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
-        \param name string containing unique name of current source.
+        \param currentSourceName string containing unique name of current source.
         \param targetNeuronGroupName string name of the target neuron group
         \param paramValues parameters for model wrapped in CurrentSourceModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSourceModel::VarValues object.
