@@ -233,12 +233,12 @@ class Group(object):
                 # Push egp_data
                 self._model._slm.push_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
-                    
+
     def _load_var_init_egps(self, var_dict=None):
         # If no variable dictionary is specified, use standard one
         if var_dict is None:
             var_dict = self.vars
-        
+
         # Loop through variables and load any associated initialisation egps
         for var_name, var_data in iteritems(var_dict):
             self._load_egp(var_data.extra_global_params, var_name)
@@ -324,14 +324,13 @@ class NeuronGroup(Group):
         if self.type == "SpikeSourceArray":
             self.is_spike_source_array = True
 
-    def add_to(self, model_spec, num_neurons):
+    def add_to(self, num_neurons):
         """Add this NeuronGroup to a model
 
         Args:
-        model_spec  --  ``pygenn.genn_model.GeNNModel`` to add to
         num_neurons --  int number of neurons
         """
-        add_fct = getattr(model_spec, "add_neuron_population_" + self.type)
+        add_fct = getattr(self._model._model, "add_neuron_population_" + self.type)
 
         var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
         self.pop = add_fct(self.name, num_neurons, self.neuron,
@@ -717,11 +716,10 @@ class SynapseGroup(Group):
         self.src = source
         self.trg = target
 
-    def add_to(self, model_spec, delay_steps):
+    def add_to(self, delay_steps):
         """Add this SynapseGroup to the a model
 
         Args:
-        model_spec  -- ``pygenn.genn_model.GeNNModel`` to add to
         delay_steps -- number of axonal delay timesteps to simulate for this synapse group
         """
         ps_var_ini = model_preprocessor.var_space_to_vals(
@@ -730,7 +728,7 @@ class SynapseGroup(Group):
 
         if self.weight_sharing_master is None:
             add_fct = getattr(
-                model_spec,
+                self._model._model,
                 ("add_synapse_population_" + self.wu_type + "_" + self.ps_type))
 
             wu_var_ini = model_preprocessor.var_space_to_vals(
@@ -757,7 +755,7 @@ class SynapseGroup(Group):
                                ps_var_ini, connect_init)
         else:
             add_fct = getattr(
-                model_spec,
+                self._model._model,
                 ("add_slave_synapse_population_" + self.ps_type))
 
             self.pop = add_fct(self.name, self.weight_sharing_master.name,
@@ -967,7 +965,8 @@ class CurrentSource(Group):
         """Init CurrentSource
 
         Args:
-        name -- string name of the current source
+        name    -- string name of the current source
+        model   -- pygenn.genn_model.GeNNModel this current source is part of
         """
         super(CurrentSource, self).__init__(name, model)
         self.current_source_model = None
@@ -983,7 +982,7 @@ class CurrentSource(Group):
         pass
 
     def set_current_source_model(self, model, param_space, var_space):
-        """Set curront source model, its parameters and initial variables
+        """Set current source model, its parameters and initial variables
 
         Args:
         model       --  type as string of intance of the model
@@ -995,16 +994,15 @@ class CurrentSource(Group):
              model, self, param_space, var_space,
              model_family=genn_wrapper.CurrentSourceModels)
 
-    def add_to(self, nn_model, pop):
-        """Inject this CurrentSource into population and
-        add it to the GeNN NNmodel
+    def add_to(self, pop):
+        """Attach this CurrentSource to NeuronGroup and
+        add it to the pygenn.genn_model.GeNNModel
 
         Args:
         pop         --  instance of NeuronGroup into which this CurrentSource
                         should be injected
-        nn_model    --  GeNN NNmodel
         """
-        add_fct = getattr(nn_model, "add_current_source_" + self.type)
+        add_fct = getattr(self._model._model, "add_current_source_" + self.type)
         self.target_pop = pop
 
         var_ini = model_preprocessor.var_space_to_vals(

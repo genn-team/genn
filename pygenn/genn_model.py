@@ -325,7 +325,7 @@ class GeNNModel(object):
 
         n_group = NeuronGroup(pop_name, self)
         n_group.set_neuron(neuron, param_space, var_space)
-        n_group.add_to(self._model, int(num_neurons))
+        n_group.add_to(int(num_neurons))
 
         self.neuron_populations[pop_name] = n_group
 
@@ -388,7 +388,7 @@ class GeNNModel(object):
                                   wu_pre_var_space, wu_post_var_space)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
         s_group.connectivity_initialiser = connectivity_initialiser
-        s_group.add_to(self._model, delay_steps)
+        s_group.add_to(delay_steps)
 
         self.synapse_populations[pop_name] = s_group
 
@@ -433,7 +433,7 @@ class GeNNModel(object):
         s_group = SynapseGroup(pop_name, self, master_pop)
         s_group.set_connected_populations(source, target)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
-        s_group.add_to(self._model, delay_steps)
+        s_group.add_to(delay_steps)
 
         self.synapse_populations[pop_name] = s_group
 
@@ -470,7 +470,7 @@ class GeNNModel(object):
         c_source = CurrentSource(cs_name, self)
         c_source.set_current_source_model(current_source_model,
                                           param_space, var_space)
-        c_source.add_to(self._model, pop)
+        c_source.add_to(pop)
 
         self.current_sources[cs_name] = c_source
 
