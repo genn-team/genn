@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -195,7 +195,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:ad4215bf86ae742887c34d9184865ff59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for pushing an updated EGP value into the merged group structure on 'device'.  <a href="#ad4215bf86ae742887c34d9184865ff59">More...</a><br /></td></tr>
 <tr class="separator:ad4215bf86ae742887c34d9184865ff59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afcdabb73a782b69709e4723972dfbd2c"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#afcdabb73a782b69709e4723972dfbd2c">getMergedGroupFieldHostType</a> (const std::string &amp;type) const override</td></tr>
-<tr class="memdesc:afcdabb73a782b69709e4723972dfbd2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host.  <a href="#afcdabb73a782b69709e4723972dfbd2c">More...</a><br /></td></tr>
+<tr class="memdesc:afcdabb73a782b69709e4723972dfbd2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a> 1.2 may use different types on host.  <a href="#afcdabb73a782b69709e4723972dfbd2c">More...</a><br /></td></tr>
 <tr class="separator:afcdabb73a782b69709e4723972dfbd2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7eee1a781c23929a3fc23abc814cce21"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7eee1a781c23929a3fc23abc814cce21">getMergedGroupSimRNGType</a> () const override</td></tr>
 <tr class="memdesc:a7eee1a781c23929a3fc23abc814cce21"><td class="mdescLeft">&#160;</td><td class="mdescRight">When generating merged structures what type to use for simulation RNGs.  <a href="#a7eee1a781c23929a3fc23abc814cce21">More...</a><br /></td></tr>
@@ -320,7 +320,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d0a17f6b00c6810a1d9bb0a3b2b37ca inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2d0a17f6b00c6810a1d9bb0a3b2b37ca">getHostVarPrefix</a> () const</td></tr>
 <tr class="separator:a2d0a17f6b00c6810a1d9bb0a3b2b37ca inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afe6c0120cf2f9f0bbcd59dcc8beac71d">getPointerPrefix</a> () const</td></tr>
-<tr class="memdesc:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may have different or no pointer prefix (e.g. __global for OpenCL)  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afe6c0120cf2f9f0bbcd59dcc8beac71d">More...</a><br /></td></tr>
+<tr class="memdesc:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may have different or no pointer prefix (e.g. __global for <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a>)  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afe6c0120cf2f9f0bbcd59dcc8beac71d">More...</a><br /></td></tr>
 <tr class="separator:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3adc59ef44b8c052dc8038c59ae743a3 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3adc59ef44b8c052dc8038c59ae743a3">genVariablePushPull</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;push, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;pull, const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc, bool autoInitialized, size_t count) const</td></tr>
 <tr class="memdesc:a3adc59ef44b8c052dc8038c59ae743a3 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to generate matching push and pull functions for a variable.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3adc59ef44b8c052dc8038c59ae743a3">More...</a><br /></td></tr>
@@ -1402,9 +1402,15 @@ Additional Inherited Members</h2></td></tr>
     <tr><td class="paramname">os</td><td><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write function to </td></tr>
     <tr><td class="paramname">modelMerged</td><td>merged model to generate code for </td></tr>
     <tr><td class="paramname">memorySpaces</td><td>for supported backends, data structure containing the remaining space in different named memory spaces </td></tr>
-    <tr><td class="paramname">preambleHandler</td><td>sss </td></tr>
+    <tr><td class="paramname">preambleHandler</td><td>callback to write functions for pushing extra-global parameters </td></tr>
     <tr><td class="paramname">localNGHandler</td><td>callback to write platform-independent code to initialize a merged neuron group </td></tr>
-    <tr><td class="paramname">sgDenseInitHandler</td><td>callback to write platform-independent code to initialize the synaptic state of a merged synapse group with dense connectivity depending on parallelism strategy, "id_pre" or "id_post" variables may be provided to to callback via <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>. </td></tr>
+    <tr><td class="paramname">sgDenseInitHandler</td><td>callback to write platform-independent code to initialize the synapse variables of a merged synapse group with dense connectivity </td></tr>
+    <tr><td class="paramname">sgSparseRowConnectHandler</td><td>callback to write platform-independent code to initialize sparse connectivity for a merged synapse group with a row-wise connectivity initialisation snippet </td></tr>
+    <tr><td class="paramname">sgSparseColConnectHandler</td><td>callback to write platform-independent code to initialize sparse connectivity for a merged synapse group with a column-wise connectivity initialisation snippet </td></tr>
+    <tr><td class="paramname">sgKernelInitHandler</td><td>callback to write platform-independent code to initialize the synapse variables of merged synapse group variables which require a kernel </td></tr>
+    <tr><td class="paramname">sgSparseInitHandler</td><td>callback to write platform-independent code to initialize the synapse variables of a merged synapse group with sparse connectivity </td></tr>
+    <tr><td class="paramname">initPushEGPHandler</td><td>callback to write required extra-global parameter pushing code to start of initialize function </td></tr>
+    <tr><td class="paramname">initSparsePushEGPHandler</td><td>callback to write required extra-global parameter pushing code to start of initialize function </td></tr>
   </table>
   </dd>
 </dl>
@@ -1788,8 +1794,11 @@ Additional Inherited Members</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">os</td><td><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write function to </td></tr>
     <tr><td class="paramname">modelMerged</td><td>merged model to generate code for </td></tr>
+    <tr><td class="paramname">memorySpaces</td><td>for supported backends, data structure containing the remaining space in different named memory spaces </td></tr>
+    <tr><td class="paramname">preambleHandler</td><td>callback to write functions for pushing extra-global parameters </td></tr>
     <tr><td class="paramname">simHandler</td><td>callback to write platform-independent code to update an individual <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> </td></tr>
     <tr><td class="paramname">wuVarUpdateHandler</td><td>callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes </td></tr>
+    <tr><td class="paramname">pushEGPHandler</td><td>callback to write required extra-global parameter pushing code to start of synapseUpdate function </td></tr>
   </table>
   </dd>
 </dl>
@@ -1955,7 +1964,7 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>If required, generate a postamble for population RNG. </p>
-<p>For example, in OpenCL, this is used to write local RNG state back to global memory </p>
+<p>For example, in <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a>, this is used to write local RNG state back to global memory </p>
 
 <p>Implements <a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a2859d5fe31c118ab0f3a4c66aba2762a">CodeGenerator::BackendSIMT</a>.</p>
 
@@ -2244,12 +2253,15 @@ Additional Inherited Members</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">os</td><td><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write function to </td></tr>
     <tr><td class="paramname">modelMerged</td><td>merged model to generate code for </td></tr>
+    <tr><td class="paramname">memorySpaces</td><td>for supported backends, data structure containing the remaining space in different named memory spaces </td></tr>
+    <tr><td class="paramname">preambleHandler</td><td>callback to write functions for pushing extra-global parameters </td></tr>
     <tr><td class="paramname">wumThreshHandler</td><td>callback to write platform-independent code to update an individual <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> </td></tr>
     <tr><td class="paramname">wumSimHandler</td><td>callback to write platform-independent code to process presynaptic spikes. "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided to callback via <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>. </td></tr>
     <tr><td class="paramname">wumEventHandler</td><td>callback to write platform-independent code to process presynaptic spike-like events. "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided to callback via <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>. </td></tr>
     <tr><td class="paramname">wumProceduralConnectHandler</td><td>callback to write platform-indepent code to procedurally generate connectivity "id_pre" variable and "addSynapse" function will be provided to callback via <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>. callback needs to implement loop over synapses in row, providing "synAddress" variable if INDIVIDUALG </td></tr>
     <tr><td class="paramname">postLearnHandler</td><td>callback to write platform-independent code to process postsynaptic spikes. "id_pre", "id_post" and "id_syn" variables will be provided to callback via <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>. </td></tr>
     <tr><td class="paramname">synapseDynamicsHandler</td><td>callback to write platform-independent code to update time-driven synapse dynamics. "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided to callback via <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a>. </td></tr>
+    <tr><td class="paramname">pushEGPHandler</td><td>callback to write required extra-global parameter pushing code to start of synapseUpdate function </td></tr>
   </table>
   </dd>
 </dl>
@@ -2897,7 +2909,7 @@ Additional Inherited Members</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host. </p>
+<p>When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a> 1.2 may use different types on host. </p>
 
 <p>Implements <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#abd13817e3a9112d1d4187562c6a694a0">CodeGenerator::BackendBase</a>.</p>
 
@@ -3128,7 +3140,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a></li><li class="navelem"><a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html">Backend</a></li>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

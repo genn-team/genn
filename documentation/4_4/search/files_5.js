@@ -18,5 +18,6 @@ var searchData=
   ['currentsourcemodels_2ecc',['currentSourceModels.cc',['../d4/d8a/currentSourceModels_8cc.html',1,'']]],
   ['currentsourcemodels_2eh',['currentSourceModels.h',['../da/d49/currentSourceModels_8h.html',1,'']]],
   ['optimiser_2ecc',['optimiser.cc',['../d7/dff/cuda_2optimiser_8cc.html',1,'']]],
-  ['optimiser_2eh',['optimiser.h',['../d5/d50/cuda_2optimiser_8h.html',1,'']]]
+  ['optimiser_2eh',['optimiser.h',['../d5/d50/cuda_2optimiser_8h.html',1,'']]],
+  ['utils_2eh',['utils.h',['../d3/dcc/cuda_2utils_8h.html',1,'']]]
 ];

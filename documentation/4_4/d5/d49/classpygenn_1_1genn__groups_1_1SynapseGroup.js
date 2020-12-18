@@ -2,7 +2,7 @@ var classpygenn_1_1genn__groups_1_1SynapseGroup =
 [
     [ "__init__", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a3f1cad39927cdce8e59bd4d071303d4b", null ],
     [ "add_extra_global_param", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac5806934aaf2a806aa7d5e6199f07335", null ],
-    [ "add_to", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7661170e06a9fbc945f697599618a285", null ],
+    [ "add_to", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aaba1d5e1be34233a72ee11ad29232882", null ],
     [ "get_sparse_post_inds", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8e3a0f310ee5ce1afcfffea3eb0fe67c", null ],
     [ "get_sparse_pre_inds", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f", null ],
     [ "get_var_values", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af4d5e6078a2f7e231a869909731d90ab", null ],

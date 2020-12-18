@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -126,11 +126,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a22d0a70cf9e9129a0696065fb0c3f823"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a22d0a70cf9e9129a0696065fb0c3f823">size</a> (self, _)</td></tr>
 <tr class="separator:a22d0a70cf9e9129a0696065fb0c3f823"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60fec602182442bd50577602ee30f57e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a60fec602182442bd50577602ee30f57e">set_current_source_model</a> (self, model, param_space, var_space)</td></tr>
-<tr class="memdesc:a60fec602182442bd50577602ee30f57e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set curront source model, its parameters and initial variables.  <a href="#a60fec602182442bd50577602ee30f57e">More...</a><br /></td></tr>
+<tr class="memdesc:a60fec602182442bd50577602ee30f57e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set current source model, its parameters and initial variables.  <a href="#a60fec602182442bd50577602ee30f57e">More...</a><br /></td></tr>
 <tr class="separator:a60fec602182442bd50577602ee30f57e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac48d2951f6388fd03df83f80bb8e1b97"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ac48d2951f6388fd03df83f80bb8e1b97">add_to</a> (self, nn_model, <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a8559a76c85d0c217d97c7797b38e8411">pop</a>)</td></tr>
-<tr class="memdesc:ac48d2951f6388fd03df83f80bb8e1b97"><td class="mdescLeft">&#160;</td><td class="mdescRight">Inject this <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html" title="Class representing a current injection into a group of neurons. ">CurrentSource</a> into population and add it to the GeNN NNmodel.  <a href="#ac48d2951f6388fd03df83f80bb8e1b97">More...</a><br /></td></tr>
-<tr class="separator:ac48d2951f6388fd03df83f80bb8e1b97"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa6a687f8f29b0e6496142f66d0161b64"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#aa6a687f8f29b0e6496142f66d0161b64">add_to</a> (self, <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a8559a76c85d0c217d97c7797b38e8411">pop</a>)</td></tr>
+<tr class="memdesc:aa6a687f8f29b0e6496142f66d0161b64"><td class="mdescLeft">&#160;</td><td class="mdescRight">Attach this <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html" title="Class representing a current injection into a group of neurons. ">CurrentSource</a> to <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html" title="Class representing a group of neurons. ">NeuronGroup</a> and add it to the <a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html" title="GeNNModel class This class helps to define, build and run a GeNN model from python. ">pygenn.genn_model.GeNNModel</a>.  <a href="#aa6a687f8f29b0e6496142f66d0161b64">More...</a><br /></td></tr>
+<tr class="separator:aa6a687f8f29b0e6496142f66d0161b64"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae6e20b0ea58f3e85341b835b07f5126c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ae6e20b0ea58f3e85341b835b07f5126c">add_extra_global_param</a> (self, param_name, param_values)</td></tr>
 <tr class="memdesc:ae6e20b0ea58f3e85341b835b07f5126c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set extra global parameter.  <a href="#ae6e20b0ea58f3e85341b835b07f5126c">More...</a><br /></td></tr>
 <tr class="separator:ae6e20b0ea58f3e85341b835b07f5126c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -225,6 +225,7 @@ Public Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>string name of the current source </td></tr>
+    <tr><td class="paramname">model</td><td><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html" title="GeNNModel class This class helps to define, build and run a GeNN model from python. ">pygenn.genn_model.GeNNModel</a> this current source is part of </td></tr>
   </table>
   </dd>
 </dl>
@@ -275,8 +276,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ac48d2951f6388fd03df83f80bb8e1b97"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac48d2951f6388fd03df83f80bb8e1b97">&#9670;&nbsp;</a></span>add_to()</h2>
+<a id="aa6a687f8f29b0e6496142f66d0161b64"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa6a687f8f29b0e6496142f66d0161b64">&#9670;&nbsp;</a></span>add_to()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -286,12 +287,6 @@ Public Attributes</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>nn_model</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -307,11 +302,10 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Inject this <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html" title="Class representing a current injection into a group of neurons. ">CurrentSource</a> into population and add it to the GeNN NNmodel. </p>
+<p>Attach this <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html" title="Class representing a current injection into a group of neurons. ">CurrentSource</a> to <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html" title="Class representing a group of neurons. ">NeuronGroup</a> and add it to the <a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html" title="GeNNModel class This class helps to define, build and run a GeNN model from python. ">pygenn.genn_model.GeNNModel</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">pop</td><td>instance of <a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html" title="Class representing a group of neurons. ">NeuronGroup</a> into which this <a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html" title="Class representing a current injection into a group of neurons. ">CurrentSource</a> should be injected </td></tr>
-    <tr><td class="paramname">nn_model</td><td>GeNN NNmodel </td></tr>
   </table>
   </dd>
 </dl>
@@ -412,7 +406,7 @@ Public Attributes</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Set curront source model, its parameters and initial variables. </p>
+<p>Set current source model, its parameters and initial variables. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">model</td><td>type as string of intance of the model </td></tr>
@@ -568,7 +562,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d5/da5/namespacepygenn_1_1genn__groups.html">genn_groups</a></li><li class="navelem"><a class="el" href="../../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html">CurrentSource</a></li>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

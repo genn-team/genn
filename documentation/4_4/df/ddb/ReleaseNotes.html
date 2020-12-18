@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,26 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.3.3 (PyGeNN 0.4.3) </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.4.0 (PyGeNN 0.4.4) </h1>
+<p>This release adds a number of significant new features to GeNN and expands the documentation to cover using GeNN from Python with PyGeNN. It also includes a number of bug fixes that have been identified since the 4.3.3 release.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>New system for efficiently recording spikes from multiple timesteps into GPU memory (see <a class="el" href="../../d0/da6/UserGuide.html#spikeRecording">Spike Recording</a>).</li>
+<li>Connectivity can now be initialised using column-wise as well as row-wise sparse connectivity initialisation snippets (see <a class="el" href="../../d5/dd4/sectSparseConnectivityInitialisation.html#sect_new_sparse_connect">Defining a new sparse connectivity snippet</a>).</li>
+<li>Support for 'kernel-based' connectivity, allowing efficient support for connectivity such as convolutions (see <a class="el" href="../../d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_kernel">Kernel-based connectivity</a>).</li>
+<li>Improved access to spike times from weight update models - previous spike times can now be accessed via $(prev_sT_pre) and $(prev_sT_post) (see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect34">Defining a new weight update model</a>).</li>
+<li>Added support for accessing spike-like-event times from weight update models via $(seT_pre) and $(prev_seT_pre) variables (see <a class="el" href="../../d5/d24/sectSynapseModels.html#wum_spike_like_events">Spike-like events</a>)</li>
+<li>Added support for continuous as well as spike-driven dynamics for pre and postsynaptic weight update model variables (see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect34">Defining a new weight update model</a>).</li>
+<li>Added experimental OpenCL backend - there are still issues outstanding but any feedback would be much appreciated.</li>
+<li>Improved supression of irrelevant NVCC warnings when optimizing block sizes.</li>
+<li>Added support for SM 8.0 and 8.6 architectures to CUDA backend.</li>
+</ol>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed support for CUDA 8 and older.</li>
+<li>Replaced deprecated <code>__linux</code> macro with <code>__linux__</code> making GeNN compatible with compiler on POWER9 Linux.</li>
+</ol>
+<h1>Release Notes for GeNN v4.3.3 (PyGeNN 0.4.3) </h1>
 <p>This release fixes several small issues found in the 4.3.2 release.</p>
 <h2>Bug fixes: </h2>
 <ol type="1">
@@ -185,7 +204,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li>Previously, unless models were very large or had very high spike rates, using <code><a class="el" href="../../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2ac583511247567bdc79915d057babba12">SynapseGroup::SpanType::PRESYNAPTIC</a></code> typically resulted in poor performance. When using the CUDA backend, <code><a class="el" href="../../dc/dfa/classSynapseGroup.html#a50da6b80e10ac9175f34e901b252803d" title="Set how many threads CUDA implementation uses to process each spike when span type is PRESYNAPTIC...">SynapseGroup::setNumThreadsPerSpike</a></code> can now be used to increase parallelism.</li>
 <li>There were useful helpers for recording spikes (<code><a class="el" href="../../dd/d9b/classSpikeRecorder.html" title="Class to read spikes from neuron groups. ">SpikeRecorder</a></code>) and timing (<code><a class="el" href="../../dc/dea/classTimer.html" title="A generic timer which can give the current elapsed time. ">Timer</a></code>, <code><a class="el" href="../../de/d18/classTimerAccumulate.html" title="A timer which adds its elapsed time to an accumulator variable on destruction. ">TimerAccumulate</a></code>) in "userproject\include" which were not easily usable to user projects. <code>genn-create-userproject.sh</code> and <code>genn-create-userproject.bat</code> now have a "-u" option which puts this in the include path of the generated project.</li>
 <li>Timing information generated when <code><a class="el" href="../../da/dfd/classModelSpec.html#ae1678fdcd6c8381a402c58673064fa6a" title="Set whether timers and timing commands are to be included. ">ModelSpec::setTiming</a></code> is enabled was not accesible to SpineML models. This is now exposed through the <code><a class="el" href="../../db/d3e/classSpineMLSimulator_1_1Simulator.html">SpineMLSimulator::Simulator</a></code> class.</li>
-<li>Neuron population state variables were not easily accessible if the populations had incoming or outgoing connections with synaptic delays. Additional helper functions are now generated. See CreateAndSimulate for more details.</li>
+<li>Neuron population state variables were not easily accessible if the populations had incoming or outgoing connections with synaptic delays. Additional helper functions are now generated. See <a class="el" href="../../d0/da6/UserGuide.html#Simulate">Simulating a network model</a> for more details.</li>
 <li>SpineML interface will now use heterogeneous dendritic delay system introduced in GeNN 3.2.0 if required.</li>
 <li>Add <code><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522" title="Should line info be included in resultant executable for debugging/profiling purposes? ">CodeGenerator::CUDA::Preferences::generateLineInfo</a></code> option to output CUDA line info for profiling.</li>
 <li>CUDA backend supports <code>half</code> datatype allowing memory savings through reduced precision. Host C++ code does not support half-precision types so such state variables must have their location set to <code><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087ae10b6ab6a278644ce40631f62f360b6d">VarLocation::DEVICE</a></code>.</li>
@@ -470,7 +489,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

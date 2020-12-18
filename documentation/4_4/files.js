@@ -7,11 +7,13 @@ var files =
     [ "array.h", "db/d63/array_8h.html", "db/d63/array_8h" ],
     [ "cuda/backend.cc", "d2/d57/cuda_2backend_8cc.html", null ],
     [ "single_threaded_cpu/backend.cc", "df/de1/single__threaded__cpu_2backend_8cc.html", null ],
+    [ "opencl/backend.cc", "d0/d78/opencl_2backend_8cc.html", "d0/d78/opencl_2backend_8cc" ],
     [ "cuda/backend.h", "d4/d0e/cuda_2backend_8h.html", "d4/d0e/cuda_2backend_8h" ],
     [ "single_threaded_cpu/backend.h", "db/d6d/single__threaded__cpu_2backend_8h.html", [
       [ "Preferences", "d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html", null ],
       [ "Backend", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend" ]
     ] ],
+    [ "opencl/backend.h", "dd/df5/opencl_2backend_8h.html", "dd/df5/opencl_2backend_8h" ],
     [ "backendBase.cc", "d7/df6/backendBase_8cc.html", "d7/df6/backendBase_8cc" ],
     [ "backendBase.h", "d9/d67/backendBase_8h.html", [
       [ "PreferencesBase", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html", "d1/d7a/structCodeGenerator_1_1PreferencesBase" ],
@@ -154,8 +156,10 @@ var files =
     [ "openclfeatures.h", "d2/dfd/openclfeatures_8h.html", "d2/dfd/openclfeatures_8h" ],
     [ "cuda/optimiser.cc", "d7/dff/cuda_2optimiser_8cc.html", "d7/dff/cuda_2optimiser_8cc" ],
     [ "single_threaded_cpu/optimiser.cc", "dd/da2/single__threaded__cpu_2optimiser_8cc.html", "dd/da2/single__threaded__cpu_2optimiser_8cc" ],
+    [ "opencl/optimiser.cc", "d3/dcd/opencl_2optimiser_8cc.html", "d3/dcd/opencl_2optimiser_8cc" ],
     [ "cuda/optimiser.h", "d5/d50/cuda_2optimiser_8h.html", "d5/d50/cuda_2optimiser_8h" ],
     [ "single_threaded_cpu/optimiser.h", "d5/d68/single__threaded__cpu_2optimiser_8h.html", "d5/d68/single__threaded__cpu_2optimiser_8h" ],
+    [ "opencl/optimiser.h", "d6/dfe/opencl_2optimiser_8h.html", "d6/dfe/opencl_2optimiser_8h" ],
     [ "philox.h", "d1/d4c/philox_8h.html", "d1/d4c/philox_8h" ],
     [ "philox432.c", "d5/d38/philox432_8c.html", "d5/d38/philox432_8c" ],
     [ "device/philox432.c.h", "d3/dbc/device_2philox432_8c_8h.html", "d3/dbc/device_2philox432_8c_8h" ],
@@ -214,7 +218,8 @@ var files =
       [ "Timer", "dc/dea/classTimer.html", "dc/dea/classTimer" ],
       [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", "de/d18/classTimerAccumulate" ]
     ] ],
-    [ "utils.h", "d5/d60/utils_8h.html", "d5/d60/utils_8h" ],
+    [ "cuda/utils.h", "d3/dcc/cuda_2utils_8h.html", "d3/dcc/cuda_2utils_8h" ],
+    [ "opencl/utils.h", "da/d2b/opencl_2utils_8h.html", "da/d2b/opencl_2utils_8h" ],
     [ "variableMode.h", "d6/d8f/variableMode_8h.html", "d6/d8f/variableMode_8h" ],
     [ "weightUpdateModels.cc", "da/dd6/weightUpdateModels_8cc.html", "da/dd6/weightUpdateModels_8cc" ],
     [ "weightUpdateModels.h", "dc/dab/weightUpdateModels_8h.html", "dc/dab/weightUpdateModels_8h" ]

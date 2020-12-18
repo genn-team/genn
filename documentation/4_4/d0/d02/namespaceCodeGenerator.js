@@ -1,6 +1,7 @@
 var namespaceCodeGenerator =
 [
     [ "CUDA", "d1/df6/namespaceCodeGenerator_1_1CUDA.html", "d1/df6/namespaceCodeGenerator_1_1CUDA" ],
+    [ "OpenCL", "d8/de5/namespaceCodeGenerator_1_1OpenCL.html", "d8/de5/namespaceCodeGenerator_1_1OpenCL" ],
     [ "PresynapticUpdateStrategySIMT", "d1/d45/namespaceCodeGenerator_1_1PresynapticUpdateStrategySIMT.html", "d1/d45/namespaceCodeGenerator_1_1PresynapticUpdateStrategySIMT" ],
     [ "SingleThreadedCPU", "db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html", "db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU" ],
     [ "BackendBase", "d3/d15/classCodeGenerator_1_1BackendBase.html", "d3/d15/classCodeGenerator_1_1BackendBase" ],

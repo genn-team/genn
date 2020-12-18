@@ -1,5 +1,7 @@
 var searchData=
 [
+  ['backend_2ecc',['backend.cc',['../d0/d78/opencl_2backend_8cc.html',1,'']]],
+  ['backend_2eh',['backend.h',['../dd/df5/opencl_2backend_8h.html',1,'']]],
   ['ob',['OB',['../d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB.html',1,'CodeGenerator::CodeStream::OB'],['../d4/d6b/structCodeGenerator_1_1CodeStream_1_1OB.html#a890a4c3888f1439c4c51166d8518135c',1,'CodeGenerator::CodeStream::OB::OB()']]],
   ['occupancy',['OCCUPANCY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abad835e9b82eae5eafdd8c3cb305a7d7a5',1,'CodeGenerator::CUDA']]],
   ['onetoone',['OneToOne',['../d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne.html',1,'InitSparseConnectivitySnippet']]],
@@ -15,7 +17,10 @@ var searchData=
   ['operator_5b_5d',['operator[]',['../de/d22/classCodeGenerator_1_1Substitutions.html#a72a45ab0c1741af1611a6f6ab71e7ee9',1,'CodeGenerator::Substitutions::operator[]()'],['../d6/d24/classModels_1_1VarInitContainerBase.html#a2de564fbceeb1e57aad2199313e8ead6',1,'Models::VarInitContainerBase::operator[]()'],['../da/d76/classSnippet_1_1ValueBase.html#ab16d489b13647bff35b63dffb357ad24',1,'Snippet::ValueBase::operator[]()']]],
   ['operator_7c',['operator|',['../dd/dd5/synapseMatrixType_8h.html#ac70199b3851e323c188061b2e40b29ee',1,'synapseMatrixType.h']]],
   ['optimal',['OPTIMAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0af00c8dbdd6e1f11bdae06be94277d293',1,'CodeGenerator::CUDA']]],
+  ['optimiser_2ecc',['optimiser.cc',['../d3/dcd/opencl_2optimiser_8cc.html',1,'']]],
+  ['optimiser_2eh',['optimiser.h',['../d6/dfe/opencl_2optimiser_8h.html',1,'']]],
   ['optimizecode',['optimizeCode',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a78a5449e9e05425cebb11d1ffba5dc21',1,'CodeGenerator::PreferencesBase']]],
   ['or',['OR',['../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a8f14c05ac0d013316a18d606864863e8a1d00e7dce692e8dc3f6877f035e3a616',1,'CodeGenerator::BackendSIMT']]],
-  ['orderneurongroupchildren',['orderNeuronGroupChildren',['../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a931205cee9f3f4fedb1f645563d12521',1,'CodeGenerator::NeuronGroupMergedBase::orderNeuronGroupChildren(const std::vector&lt; T &gt; &amp;archetypeChildren, std::vector&lt; std::vector&lt; T &gt;&gt; &amp;sortedGroupChildren, G getVectorFunc, C isCompatibleFunc) const'],['../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a7e4d3abf757c1a61e9547e05df1762b4',1,'CodeGenerator::NeuronGroupMergedBase::orderNeuronGroupChildren(std::vector&lt; std::vector&lt; T &gt;&gt; &amp;sortedGroupChildren, G getVectorFunc, C isCompatibleFunc) const']]]
+  ['orderneurongroupchildren',['orderNeuronGroupChildren',['../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a931205cee9f3f4fedb1f645563d12521',1,'CodeGenerator::NeuronGroupMergedBase::orderNeuronGroupChildren(const std::vector&lt; T &gt; &amp;archetypeChildren, std::vector&lt; std::vector&lt; T &gt;&gt; &amp;sortedGroupChildren, G getVectorFunc, C isCompatibleFunc) const'],['../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a7e4d3abf757c1a61e9547e05df1762b4',1,'CodeGenerator::NeuronGroupMergedBase::orderNeuronGroupChildren(std::vector&lt; std::vector&lt; T &gt;&gt; &amp;sortedGroupChildren, G getVectorFunc, C isCompatibleFunc) const']]],
+  ['utils_2eh',['utils.h',['../da/d2b/opencl_2utils_8h.html',1,'']]]
 ];

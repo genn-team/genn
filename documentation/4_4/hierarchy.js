@@ -3,7 +3,8 @@ var hierarchy =
     [ "AnalogueRecorder< T >", "dc/d01/classAnalogueRecorder.html", null ],
     [ "CodeGenerator::BackendBase", "d3/d15/classCodeGenerator_1_1BackendBase.html", [
       [ "CodeGenerator::BackendSIMT", "d1/de3/classCodeGenerator_1_1BackendSIMT.html", [
-        [ "CodeGenerator::CUDA::Backend", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html", null ]
+        [ "CodeGenerator::CUDA::Backend", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html", null ],
+        [ "CodeGenerator::OpenCL::Backend", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html", null ]
       ] ],
       [ "CodeGenerator::SingleThreadedCPU::Backend", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html", null ]
     ] ],
@@ -188,6 +189,7 @@ var hierarchy =
     [ "Snippet::Base::ParamVal", "d7/dda/structSnippet_1_1Base_1_1ParamVal.html", null ],
     [ "CodeGenerator::PreferencesBase", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html", [
       [ "CodeGenerator::CUDA::Preferences", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html", null ],
+      [ "CodeGenerator::OpenCL::Preferences", "dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html", null ],
       [ "CodeGenerator::SingleThreadedCPU::Preferences", "d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html", null ]
     ] ],
     [ "CodeGenerator::CodeStream::Scope", "d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html", null ],
@@ -208,8 +210,8 @@ var hierarchy =
     ] ],
     [ "Timer", "dc/dea/classTimer.html", null ],
     [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
-    [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
     [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
+    [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
     [ "Snippet::ValueBase< NumVars >", "da/d76/classSnippet_1_1ValueBase.html", null ],
     [ "Snippet::ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", null ],
     [ "Models::Base::Var", "d5/d42/structModels_1_1Base_1_1Var.html", null ],

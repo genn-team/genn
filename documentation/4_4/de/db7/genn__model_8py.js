@@ -9,7 +9,7 @@ var genn__model_8py =
     [ "create_custom_neuron_class", "de/db7/genn__model_8py.html#a80f3b56cb2dc934ea04ed15a629c7db9", null ],
     [ "create_custom_postsynaptic_class", "de/db7/genn__model_8py.html#a091ea4fe261201327c877528287f9611", null ],
     [ "create_custom_sparse_connect_init_snippet_class", "de/db7/genn__model_8py.html#a6afa899f0322db64b39395534d1e29d8", null ],
-    [ "create_custom_weight_update_class", "de/db7/genn__model_8py.html#a2fad1d2f1b09ecd49bed77b86dedc449", null ],
+    [ "create_custom_weight_update_class", "de/db7/genn__model_8py.html#a7c2e854789f74d6ffd92be2a487a0e5b", null ],
     [ "create_dpf_class", "de/db7/genn__model_8py.html#a4877194a4aa6f04ecbc8768ec1c2de21", null ],
     [ "init_connectivity", "de/db7/genn__model_8py.html#a7fa33c9872ab0cf97d0b60fa41bf17fe", null ],
     [ "init_var", "de/db7/genn__model_8py.html#aa2daf7a01b3f49dcbc5dba9690020bc3", null ],

@@ -9,7 +9,7 @@ var searchData=
   ['postspan',['PostSpan',['../d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html',1,'CodeGenerator::PresynapticUpdateStrategySIMT']]],
   ['postspanbitmask',['PostSpanBitmask',['../d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html',1,'CodeGenerator::PresynapticUpdateStrategySIMT']]],
   ['postsynapticupdategroupmerged',['PostsynapticUpdateGroupMerged',['../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html',1,'CodeGenerator']]],
-  ['preferences',['Preferences',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html',1,'CodeGenerator::CUDA::Preferences'],['../d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html',1,'CodeGenerator::SingleThreadedCPU::Preferences']]],
+  ['preferences',['Preferences',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html',1,'CodeGenerator::CUDA::Preferences'],['../d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html',1,'CodeGenerator::SingleThreadedCPU::Preferences'],['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html',1,'CodeGenerator::OpenCL::Preferences']]],
   ['preferencesbase',['PreferencesBase',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html',1,'CodeGenerator']]],
   ['prespan',['PreSpan',['../d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html',1,'CodeGenerator::PresynapticUpdateStrategySIMT']]],
   ['prespanprocedural',['PreSpanProcedural',['../d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html',1,'CodeGenerator::PresynapticUpdateStrategySIMT']]],

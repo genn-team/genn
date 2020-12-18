@@ -18,7 +18,9 @@ var classWeightUpdateModels_1_1Base =
     [ "getSynapseDynamicsCode", "d2/d05/classWeightUpdateModels_1_1Base.html#ab3daed63a1d17897aa73c741b728ea6e", null ],
     [ "getSynapseDynamicsSuppportCode", "d2/d05/classWeightUpdateModels_1_1Base.html#aca2d11a28a6cb587dba5f7ae9c87c445", null ],
     [ "isPostSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a02fb269c52929c962bab49d86d2ca45e", null ],
+    [ "isPreSpikeEventTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#ab795891a64f68a8757ac63c6064f5112", null ],
     [ "isPreSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a26c3071dfdf87eaddb857a535894bf7a", null ],
     [ "isPrevPostSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a1aaced8f8f26f219b81fc2e4c55ce9ae", null ],
+    [ "isPrevPreSpikeEventTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a821ad5f4a7036bf16a4ed5ab01a51162", null ],
     [ "isPrevPreSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#afb029edbaf62060064726b3378b6652c", null ]
 ];

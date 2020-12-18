@@ -5,5 +5,5 @@ var spikeRecorder_8h =
     [ "SpikeRecorder", "dd/d9b/classSpikeRecorder.html", "dd/d9b/classSpikeRecorder" ],
     [ "_clz", "d8/d86/spikeRecorder_8h.html#a158428fbb7cc6952e86619ec1c27740f", null ],
     [ "writeBinarySpikeRecording", "d8/d86/spikeRecorder_8h.html#a7a75a9dcce1dbfc4f42fe6180a3c6a6d", null ],
-    [ "writeTextSpikeRecording", "d8/d86/spikeRecorder_8h.html#ad660cc2946867ebb051c5e85d934dece", null ]
+    [ "writeTextSpikeRecording", "d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456", null ]
 ];

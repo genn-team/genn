@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -101,8 +101,11 @@ $(document).ready(function(){initNavTree('d4/dc6/sectVariableInitialisation.html
 <div class="textblock"><p>Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise.</p>
 <p>Previously we have shown variables being initialised to constant values such as:  <div class='toggleable_div label_cpp' style='display: none;'></p><div class="fragment"><div class="line"><a class="code" href="../../d6/d24/classModels_1_1VarInitContainerBase.html">NeuronModels::TraubMiles::VarValues</a> ini(</div><div class="line">    0.0529324,     <span class="comment">// 1 - prob. for Na channel activation m</span></div><div class="line">    ...</div><div class="line">);</div></div><!-- fragment --><p> </div>  <div class='toggleable_div label_python' style='display: none;'></p><div class="fragment"><div class="line">ini = {<span class="stringliteral">&quot;m&quot;</span>: 0.0529324, ...}</div></div><!-- fragment --><p> </div>  <div class='toggleable_div label_cpp' style='display: none;'> state variables can also be left <em>uninitialised</em> leaving it up to the user code to initialise them between the calls to <code>initialize()</code> and <code>initializeSparse()</code>:</p>
 <div class="fragment"><div class="line"><a class="code" href="../../d6/d24/classModels_1_1VarInitContainerBase.html">NeuronModels::TraubMiles::VarValues</a> ini(</div><div class="line">    <a class="code" href="../../dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043">uninitialisedVar</a>(),     <span class="comment">// 1 - prob. for Na channel activation m</span></div><div class="line">    ...</div><div class="line">);</div></div><!-- fragment --><p>  </div>  <div class='toggleable_div label_python' style='display: none;'> state variables can alse be manually initialised to values specified in a numpy array: </p><div class="fragment"><div class="line">ini = {<span class="stringliteral">&quot;m&quot;</span>: np.arange(400.0), ...}</div></div><!-- fragment --><p>  </div> or initialised using one of a number of predefined <em>variable initialisation snippets</em>:</p><ul>
+<li><a class="el" href="../../df/d7b/classInitVarSnippet_1_1Kernel.html" title="Used to initialise synapse variables from a kernel. ">InitVarSnippet::Kernel</a></li>
 <li><a class="el" href="../../dd/da0/classInitVarSnippet_1_1Uniform.html" title="Initialises variable by sampling from the uniform distribution. ">InitVarSnippet::Uniform</a></li>
 <li><a class="el" href="../../d5/dc1/classInitVarSnippet_1_1Normal.html" title="Initialises variable by sampling from the normal distribution. ">InitVarSnippet::Normal</a></li>
+<li><a class="el" href="../../d7/d22/classInitVarSnippet_1_1NormalClipped.html">InitVarSnippet::NormalClipped</a></li>
+<li><a class="el" href="../../d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html">InitVarSnippet::NormalClippedDelay</a></li>
 <li><a class="el" href="../../d8/d70/classInitVarSnippet_1_1Exponential.html" title="Initialises variable by sampling from the exponential distribution. ">InitVarSnippet::Exponential</a></li>
 <li><a class="el" href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the exponential distribution. ">InitVarSnippet::Gamma</a></li>
 </ul>
@@ -138,7 +141,7 @@ Variable locations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

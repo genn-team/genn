@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -272,6 +272,7 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <li>isPopulationRNGInitialisedOnDevice()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a31bc245e4173e7a3249b8da968203fc7">CodeGenerator::BackendBase</a>
 , <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a3be10625dc21e68b073d419bd3a4b02e">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#afe33e07f9b862b3fa08bb25e77d25932">CodeGenerator::OpenCL::Backend</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a769924a8b809e8f83d4d28cb4b3b8bbb">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>isPopulationRNGRequired()
@@ -288,6 +289,9 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 , <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#aa157c2fa1dc333af77ad669ef98c8f80">CodeGenerator::BackendSIMT</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a64fd5b57078c789d09ff4b1e276399fa">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
+<li>isPreSpikeEventTimeRequired()
+: <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#ab795891a64f68a8757ac63c6064f5112">WeightUpdateModels::Base</a>
+</li>
 <li>isPreSpikeTimeRequired()
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a26c3071dfdf87eaddb857a535894bf7a">WeightUpdateModels::Base</a>
 , <a class="el" href="df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a060eb8fe3f26e106c662519d23a93717">WeightUpdateModels::PiecewiseSTDP</a>
@@ -295,8 +299,14 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <li>isPrevPostSpikeTimeRequired()
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a1aaced8f8f26f219b81fc2e4c55ce9ae">WeightUpdateModels::Base</a>
 </li>
+<li>isPrevPreSpikeEventTimeRequired()
+: <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a821ad5f4a7036bf16a4ed5ab01a51162">WeightUpdateModels::Base</a>
+</li>
 <li>isPrevPreSpikeTimeRequired()
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#afb029edbaf62060064726b3378b6652c">WeightUpdateModels::Base</a>
+</li>
+<li>isPrevSpikeEventTimeRequired()
+: <a class="el" href="d7/d3b/classNeuronGroup.html#af14fc3d231de6b485c088c4625679244">NeuronGroup</a>
 </li>
 <li>isPrevSpikeTimeRequired()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a8fda1d856c91f69415f99d64e2cbf517">NeuronGroup</a>
@@ -345,6 +355,9 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 : <a class="el" href="d7/d3b/classNeuronGroup.html#af3cc12aa18eaf34faa2297a16f257fab">NeuronGroup</a>
 , <a class="el" href="dc/dfa/classSynapseGroup.html#affc58ea4ce0833992eb99cb2debf9459">SynapseGroup</a>
 </li>
+<li>isSpikeEventTimeRequired()
+: <a class="el" href="d7/d3b/classNeuronGroup.html#a3cbd28d6427390d1a14c65439dec020a">NeuronGroup</a>
+</li>
 <li>isSpikeRecordingEnabled()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#ad89d70de9582681b574dc4086bf32a5f">NeuronGroup</a>
 </li>
@@ -382,7 +395,7 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 : <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a5d93c222fc77f875c272724a7d039ffe">CodeGenerator::NeuronGroupMergedBase</a>
 </li>
 <li>isVarQueueRequired()
-: <a class="el" href="d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">NeuronGroup</a>
+: <a class="el" href="d7/d3b/classNeuronGroup.html#aea0036098408c4e451602ff91396d426">NeuronGroup</a>
 </li>
 <li>isWeightSharingSlave()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a2948d9d9c159d940fe02042b04c81ef3">SynapseGroup</a>
@@ -425,7 +438,7 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:16 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

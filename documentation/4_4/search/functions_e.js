@@ -11,7 +11,7 @@ var searchData=
   ['postsynaptic_5fupdate_5ftime',['postsynaptic_update_time',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6d02ddf4868933a92ece0ac81d1d8afc',1,'pygenn::genn_model::GeNNModel']]],
   ['postsynapticupdategroupmerged',['PostsynapticUpdateGroupMerged',['../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html#aa6394b5dbffadb00949d58b5ccc4c2f0',1,'CodeGenerator::PostsynapticUpdateGroupMerged']]],
   ['pre_5fvar_5fspace_5fto_5fvals',['pre_var_space_to_vals',['../d0/d17/namespacepygenn_1_1model__preprocessor.html#aa3a43765e294bbd7fe4976a3b377b733',1,'pygenn::model_preprocessor']]],
-  ['preferences',['Preferences',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a81d2f28e0431fcbb375e6c0c547a879d',1,'CodeGenerator::CUDA::Preferences']]],
+  ['preferences',['Preferences',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a81d2f28e0431fcbb375e6c0c547a879d',1,'CodeGenerator::CUDA::Preferences::Preferences()'],['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a1ba45d8b97bd73fdd1201d6cbf1b2557',1,'CodeGenerator::OpenCL::Preferences::Preferences()']]],
   ['prepare_5fmodel',['prepare_model',['../d0/d17/namespacepygenn_1_1model__preprocessor.html#a698da20e6a95c9e0624aaba819b4a71b',1,'pygenn::model_preprocessor']]],
   ['prepare_5fsnippet',['prepare_snippet',['../d0/d17/namespacepygenn_1_1model__preprocessor.html#aef83afc60aa51f177264dcb416a6035c',1,'pygenn::model_preprocessor']]],
   ['presynaptic_5fupdate_5ftime',['presynaptic_update_time',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa372735033902cad5342e96d1c29b71',1,'pygenn::genn_model::GeNNModel']]],

@@ -36,6 +36,7 @@ var UserManual =
     ] ],
     [ "Sparse connectivity initialisation", "d5/dd4/sectSparseConnectivityInitialisation.html", [
       [ "Defining a new sparse connectivity snippet", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_new_sparse_connect", null ],
+      [ "Kernel-based connectivity", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_kernel", null ],
       [ "Sparse connectivity locations", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_connect_init_modes", null ]
     ] ]
 ];

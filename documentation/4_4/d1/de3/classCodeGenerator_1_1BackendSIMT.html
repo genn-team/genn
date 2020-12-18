@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -116,8 +116,9 @@ Inheritance diagram for CodeGenerator::BackendSIMT:</div>
  <div class="center">
   <img src="../../d1/de3/classCodeGenerator_1_1BackendSIMT.png" usemap="#CodeGenerator::BackendSIMT_map" alt=""/>
   <map id="CodeGenerator::BackendSIMT_map" name="CodeGenerator::BackendSIMT_map">
-<area href="../../d3/d15/classCodeGenerator_1_1BackendBase.html" alt="CodeGenerator::BackendBase" shape="rect" coords="0,0,195,24"/>
-<area href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html" alt="CodeGenerator::CUDA::Backend" shape="rect" coords="0,112,195,136"/>
+<area href="../../d3/d15/classCodeGenerator_1_1BackendBase.html" alt="CodeGenerator::BackendBase" shape="rect" coords="108,0,315,24"/>
+<area href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html" alt="CodeGenerator::CUDA::Backend" shape="rect" coords="0,112,207,136"/>
+<area href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html" alt="CodeGenerator::OpenCL::Backend" shape="rect" coords="217,112,424,136"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -284,7 +285,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aea491599f4db5115a59390baedc02875 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate code for pushing an updated EGP value into the merged group structure on 'device'.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aea491599f4db5115a59390baedc02875">More...</a><br /></td></tr>
 <tr class="separator:aea491599f4db5115a59390baedc02875 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abd13817e3a9112d1d4187562c6a694a0 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#abd13817e3a9112d1d4187562c6a694a0">getMergedGroupFieldHostType</a> (const std::string &amp;type) const =0</td></tr>
-<tr class="memdesc:abd13817e3a9112d1d4187562c6a694a0 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. OpenCL 1.2 may use different types on host.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#abd13817e3a9112d1d4187562c6a694a0">More...</a><br /></td></tr>
+<tr class="memdesc:abd13817e3a9112d1d4187562c6a694a0 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">When generating function calls to push to merged groups, backend without equivalent of Unified Virtual Addressing e.g. <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a> 1.2 may use different types on host.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#abd13817e3a9112d1d4187562c6a694a0">More...</a><br /></td></tr>
 <tr class="separator:abd13817e3a9112d1d4187562c6a694a0 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a622f5881a1f448d9fe10e9abc50a3725 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a622f5881a1f448d9fe10e9abc50a3725">getMergedGroupSimRNGType</a> () const =0</td></tr>
 <tr class="memdesc:a622f5881a1f448d9fe10e9abc50a3725 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">When generating merged structures what type to use for simulation RNGs.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a622f5881a1f448d9fe10e9abc50a3725">More...</a><br /></td></tr>
@@ -350,7 +351,7 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2d0a17f6b00c6810a1d9bb0a3b2b37ca inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2d0a17f6b00c6810a1d9bb0a3b2b37ca">getHostVarPrefix</a> () const</td></tr>
 <tr class="separator:a2d0a17f6b00c6810a1d9bb0a3b2b37ca inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afe6c0120cf2f9f0bbcd59dcc8beac71d">getPointerPrefix</a> () const</td></tr>
-<tr class="memdesc:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may have different or no pointer prefix (e.g. __global for OpenCL)  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afe6c0120cf2f9f0bbcd59dcc8beac71d">More...</a><br /></td></tr>
+<tr class="memdesc:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may have different or no pointer prefix (e.g. __global for <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a>)  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afe6c0120cf2f9f0bbcd59dcc8beac71d">More...</a><br /></td></tr>
 <tr class="separator:afe6c0120cf2f9f0bbcd59dcc8beac71d inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a31bc245e4173e7a3249b8da968203fc7 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a31bc245e4173e7a3249b8da968203fc7">isPopulationRNGInitialisedOnDevice</a> () const =0</td></tr>
 <tr class="memdesc:a31bc245e4173e7a3249b8da968203fc7 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a31bc245e4173e7a3249b8da968203fc7">More...</a><br /></td></tr>
@@ -628,7 +629,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>On some older devices, shared memory atomics are actually slower than global memory atomics so should be avoided. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a0fc62e7c02b4a9ce3f68e2962c3a2436">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a0fc62e7c02b4a9ce3f68e2962c3a2436">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a9e1bc3cb12c07535db4618a023f865eb">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -680,7 +681,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Generate code to skip ahead local copy of global RNG. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a03e3b5772c2f8974b1d2917423cc0d82">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a03e3b5772c2f8974b1d2917423cc0d82">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#afcc4e737da20e20871fdb425dc993ed6">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -930,7 +931,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>For SIMT backends which initialize RNGs on device, initialize population RNG with specified seed and sequence. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a8561a4a903ec74577c0e7546fd57a445">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a8561a4a903ec74577c0e7546fd57a445">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a4ed81888fff2fc9cd9ed57163cc8fce5">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -969,9 +970,9 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>If required, generate a postamble for population RNG. </p>
-<p>For example, in OpenCL, this is used to write local RNG state back to global memory </p>
+<p>For example, in <a class="el" href="../../d8/de5/namespaceCodeGenerator_1_1OpenCL.html">OpenCL</a>, this is used to write local RNG state back to global memory </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a8402f8980bb68f9c7ffd73900a366752">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a8402f8980bb68f9c7ffd73900a366752">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#aae2cc68d3276b5f58767b1c3814ec17d">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1023,7 +1024,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Generate a preamble to add substitution name for population RNG. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#abc6d4c7ffd003bde6e9656f293f0e78e">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#abc6d4c7ffd003bde6e9656f293f0e78e">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a66ba2ac0cec7c26b5f0c360247ea995d">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1313,7 +1314,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Generate a shared memory barrier. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a198aa2e372cf5e343f0bae97dbcf184a">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a198aa2e372cf5e343f0bae97dbcf184a">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a48dd33819891a360c5c703d689fc27d2">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1519,7 +1520,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get name of atomic operation. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac9f7b1244927ba46bfb2810df6b92ecc">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac9f7b1244927ba46bfb2810df6b92ecc">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#ace69593f0f80ae14d3ee8ebcc7278f38">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1548,7 +1549,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get the ID of the current thread block. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7dc8b0af11ffcecef09250a4ac85fa98">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a7dc8b0af11ffcecef09250a4ac85fa98">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#ab0149abc13a319e2382642ed3f4e56c8">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1577,7 +1578,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get the name of the count-leading-zeros function. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ad86461c5a88c256d2694f022f82243e5">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ad86461c5a88c256d2694f022f82243e5">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a998f7c02ed2ed847a1b713b0e59b0c99">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1793,7 +1794,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get the prefix to use for shared memory variables. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae72aa5e8013750ede913be70546260d4">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae72aa5e8013750ede913be70546260d4">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a58d0ad4f30725cacec8011d9fe94e0ba">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -1852,7 +1853,7 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get the ID of the current thread within the threadblock. </p>
 
-<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a50109468e0713780fa410bf82ecf16b8">CodeGenerator::CUDA::Backend</a>.</p>
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a50109468e0713780fa410bf82ecf16b8">CodeGenerator::CUDA::Backend</a>, and <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a275c020e5264e805804593abe1de7034">CodeGenerator::OpenCL::Backend</a>.</p>
 
 </div>
 </div>
@@ -2094,7 +2095,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html">BackendSIMT</a></li>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

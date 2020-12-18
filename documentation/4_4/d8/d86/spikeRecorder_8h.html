@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -132,8 +132,8 @@ Functions</h2></td></tr>
 <tr class="separator:a7a75a9dcce1dbfc4f42fe6180a3c6a6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a158428fbb7cc6952e86619ec1c27740f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d86/spikeRecorder_8h.html#a158428fbb7cc6952e86619ec1c27740f">_clz</a> (unsigned int value)</td></tr>
 <tr class="separator:a158428fbb7cc6952e86619ec1c27740f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad660cc2946867ebb051c5e85d934dece"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d86/spikeRecorder_8h.html#ad660cc2946867ebb051c5e85d934dece">writeTextSpikeRecording</a> (const std::string &amp;filename, const uint32_t *spkRecord, unsigned int popSize, unsigned int numTimesteps, double dt=1.0, const std::string &amp;delimiter=&quot; &quot;, bool header=false, bool append=false)</td></tr>
-<tr class="separator:ad660cc2946867ebb051c5e85d934dece"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6739ef4f0b3b6300bf68f4c8f27e456"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456">writeTextSpikeRecording</a> (const std::string &amp;filename, const uint32_t *spkRecord, unsigned int popSize, unsigned int numTimesteps, double dt=1.0, const std::string &amp;delimiter=&quot; &quot;, bool header=false, bool append=false, double startTime=0.0)</td></tr>
+<tr class="separator:af6739ef4f0b3b6300bf68f4c8f27e456"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a158428fbb7cc6952e86619ec1c27740f"></a>
@@ -228,8 +228,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="ad660cc2946867ebb051c5e85d934dece"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad660cc2946867ebb051c5e85d934dece">&#9670;&nbsp;</a></span>writeTextSpikeRecording()</h2>
+<a id="af6739ef4f0b3b6300bf68f4c8f27e456"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6739ef4f0b3b6300bf68f4c8f27e456">&#9670;&nbsp;</a></span>writeTextSpikeRecording()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -283,7 +283,13 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>append</em> = <code>false</code>&#160;</td>
+          <td class="paramname"><em>append</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>startTime</em> = <code>0.0</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -303,10 +309,12 @@ Functions</h2></td></tr>
     <tr><td class="paramname">filename</td><td>string containing filename to write to. </td></tr>
     <tr><td class="paramname">spkRecord</td><td>pointer to spike recording data to write (accessable via <code>recordSpk&lt;neuron group name&gt;</code> or <code>recordSpkEvent&lt;neuron group name&gt;</code>). </td></tr>
     <tr><td class="paramname">popSize</td><td>number of neurons in population </td></tr>
+    <tr><td class="paramname">numTimesteps</td><td>number of timesteps recorded </td></tr>
     <tr><td class="paramname">dt</td><td>double precision number specifying size of each timestep </td></tr>
     <tr><td class="paramname">delimiter</td><td>string specifying character(s) which should appear between columns in text file </td></tr>
     <tr><td class="paramname">header</td><td>boolean specifying whether to write a header row at start of text file or not </td></tr>
     <tr><td class="paramname">append</td><td>boolean specifying whether to overwrite or append to any existing file called filename. </td></tr>
+    <tr><td class="paramname">startTime</td><td>double precision number specifying start time of current data. </td></tr>
   </table>
   </dd>
 </dl>
@@ -320,7 +328,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_9222b5078f0808679094f1464c7a7eaf.html">include</a></li><li class="navelem"><a class="el" href="../../d8/d86/spikeRecorder_8h.html">spikeRecorder.h</a></li>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

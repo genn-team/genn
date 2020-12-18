@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -336,6 +336,10 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">model_name</td><td>string name of the model. Defaults to "GeNNModel". </td></tr>
     <tr><td class="paramname">backend</td><td>string specifying name of backend module to use Defaults to None to pick 'best' backend for your system </td></tr>
     <tr><td class="paramname">time_precision</td><td>string time precision as string ("float", "double" or "long double"). defaults to float. </td></tr>
+    <tr><td class="paramname">genn_log_level</td><td>Log level for GeNN </td></tr>
+    <tr><td class="paramname">code_gen_log_level</td><td>Log level for GeNN code-generator </td></tr>
+    <tr><td class="paramname">backend_log_level</td><td>Log level for backend </td></tr>
+    <tr><td class="paramname">preference_kwargs</td><td>Additional keyword arguments to set in backend preferences structure </td></tr>
   </table>
   </dd>
 </dl>
@@ -668,7 +672,7 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">delay_steps</td><td>delay in number of steps </td></tr>
     <tr><td class="paramname">source</td><td>source neuron group (either name or <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> object) </td></tr>
     <tr><td class="paramname">target</td><td>target neuron group (either name or <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> object) </td></tr>
-    <tr><td class="paramname">w_update_model</td><td>type of the <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> class as string or instance of weight update model class derived from <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> (see also <a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a2fad1d2f1b09ecd49bed77b86dedc449" title="This helper function creates a custom WeightUpdateModel class. ">pygenn.genn_model.create_custom_weight_update_class</a>) </td></tr>
+    <tr><td class="paramname">w_update_model</td><td>type of the <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> class as string or instance of weight update model class derived from <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> (see also <a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7c2e854789f74d6ffd92be2a487a0e5b" title="This helper function creates a custom WeightUpdateModel class. ">pygenn.genn_model.create_custom_weight_update_class</a>) </td></tr>
     <tr><td class="paramname">wu_param_space</td><td>dict with param values for the <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> class </td></tr>
     <tr><td class="paramname">wu_var_space</td><td>dict with initial values for <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> state variables </td></tr>
     <tr><td class="paramname">wu_pre_var_space</td><td>dict with initial values for <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> presynaptic variables </td></tr>
@@ -1872,7 +1876,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html">genn_model</a></li><li class="navelem"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html">GeNNModel</a></li>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:15 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

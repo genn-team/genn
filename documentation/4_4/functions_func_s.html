@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -280,6 +280,9 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <li>setPrecision()
 : <a class="el" href="da/dfd/classModelSpec.html#a7548f1bf634884c051e4fbac3cf6212c">ModelSpec</a>
 </li>
+<li>setPrevSpikeEventTimeLocation()
+: <a class="el" href="d7/d3b/classNeuronGroup.html#a65377840318b4199c4c464dd3f23b7b3">NeuronGroup</a>
+</li>
 <li>setPrevSpikeTimeLocation()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#ad0ce68e38a260e5129999856b5da347e">NeuronGroup</a>
 </li>
@@ -312,6 +315,9 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 </li>
 <li>setSpikeEventRecordingEnabled()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a3bb72f69aacc6d2ad3801d8975111847">NeuronGroup</a>
+</li>
+<li>setSpikeEventTimeLocation()
+: <a class="el" href="d7/d3b/classNeuronGroup.html#a58833ec29fc1ed2343394409aa7403a3">NeuronGroup</a>
 </li>
 <li>setSpikeLocation()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a9df1df6d85dde4a46ddef63954828a95">NeuronGroup</a>
@@ -367,7 +373,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="db/d9c/classSpineMLSimulator_1_1LogOutput_1_1Base.html#a970098968c983ad783f0d372cb02c59d">SpineMLSimulator::LogOutput::Base</a>
 </li>
 <li>Simulator()
-: <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#acc5bfa1d6619d52006577e68f1cd7b48">SpineMLSimulator::Simulator</a>
+: <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#a6017b9dd845793e66e1e8186db47a4ac">SpineMLSimulator::Simulator</a>
 </li>
 <li>size()
 : <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a22d0a70cf9e9129a0696065fb0c3f823">pygenn.genn_groups.CurrentSource</a>
@@ -377,7 +383,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a983894b5a8c49e837820ea7065d17e10">pygenn.genn_groups.NeuronGroup</a>
 </li>
 <li>spike_recording_enabled()
-: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0bc1278bca4c5cd0ef85c43cd6160ab2">pygenn.genn_groups.NeuronGroup</a>
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a040c63d3c2e9d9227ceec3644609d2d5">pygenn.genn_groups.NeuronGroup</a>
 </li>
 <li>SpikeBase()
 : <a class="el" href="d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ada03f5aa003c9e527de47f1577c36a9a">SpineMLSimulator::Input::SpikeBase</a>
@@ -392,7 +398,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html#a83f2afcf46b4c94f293b3dfef7e1c8ca">SpineMLSimulator::Input::SpikeTime</a>
 </li>
 <li>SpikeWriterText()
-: <a class="el" href="d5/dbb/classSpikeWriterText.html#a75aacf02b59eff51b5d90b5a7f7ba96c">SpikeWriterText</a>
+: <a class="el" href="d5/dbb/classSpikeWriterText.html#a4c22a7bf73352dab11ff24aead5c0516">SpikeWriterText</a>
 </li>
 <li>SpikeWriterTextCached()
 : <a class="el" href="d9/d5d/classSpikeWriterTextCached.html#aabdf9ffdf5beff9193db708b858653c8">SpikeWriterTextCached</a>
@@ -416,6 +422,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <li>supportsNamespace()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a3db5c6da768041efa01bb187f7127184">CodeGenerator::BackendBase</a>
 , <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a479dbb7a30b1c8c18c55b7bff522e3fb">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a59e23cbc8eadefcf7b79dcdd2c373bcd">CodeGenerator::OpenCL::Backend</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ac8230b149007bbac025c62e0c2be313d">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>synapse_dynamics_time()
@@ -455,7 +462,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:16 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

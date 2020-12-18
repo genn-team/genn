@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -106,10 +106,13 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 , <a class="el" href="d3/d1a/clRNG_8c.html#a563a3b7476f6be20e10b006309d2efbb">clRNG.c</a>
 </li>
 <li>CHECK_CU_ERRORS
-: <a class="el" href="d5/d60/utils_8h.html#ac1cf82f980a76bb9ef43b7027cb2348b">utils.h</a>
+: <a class="el" href="d3/dcc/cuda_2utils_8h.html#ac1cf82f980a76bb9ef43b7027cb2348b">cuda/utils.h</a>
 </li>
 <li>CHECK_CUDA_ERRORS
-: <a class="el" href="d5/d60/utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47">utils.h</a>
+: <a class="el" href="d3/dcc/cuda_2utils_8h.html#a3d4f854b9c80237b6f4c23540a823f47">cuda/utils.h</a>
+</li>
+<li>CHECK_OPENCL_ERRORS
+: <a class="el" href="da/d2b/opencl_2utils_8h.html#acec154183efff3573f5ae83cc2752910">opencl/utils.h</a>
 </li>
 <li>CLRNG_FUNCTION_NOT_IMPLEMENTED
 : <a class="el" href="d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44a50e67375e2aa057f878c3eb8af92f65c">clRNG.h</a>
@@ -168,8 +171,8 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 , <a class="el" href="d0/d7f/lfsr113_8c_8h.html#afe1a67e1e27cc79398be288b7978dd47">lfsr113.c.h</a>
 </li>
 <li>clrngLfsr113CopyStreamCreator()
-: <a class="el" href="df/dcc/lfsr113_8c.html#a3b5a800f871ba904b39b5ab1f3bc18d1">lfsr113.c</a>
-, <a class="el" href="d7/d63/lfsr113_8h.html#a3b19d08e2dec416d5c74dc94e074d038">lfsr113.h</a>
+: <a class="el" href="d7/d63/lfsr113_8h.html#a3b19d08e2dec416d5c74dc94e074d038">lfsr113.h</a>
+, <a class="el" href="df/dcc/lfsr113_8c.html#a3b5a800f871ba904b39b5ab1f3bc18d1">lfsr113.c</a>
 </li>
 <li>clrngLfsr113CopyStreams()
 : <a class="el" href="d7/d63/lfsr113_8h.html#abd66b56c6d4a51e856caab1277016390">lfsr113.h</a>
@@ -230,8 +233,8 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 <li>clrngLfsr113RandomIntegerArray_cl_float()
 : <a class="el" href="d7/d63/lfsr113_8h.html#ac9f1fd0c4ec98cd0300bfdfb0dee2858">lfsr113.h</a>
 </li>
-<li>clrngLfsr113RandomU01
-: <a class="el" href="d7/d63/lfsr113_8h.html#a97c4374b58e0fbfdee0af1e3fad93945">lfsr113.h</a>
+<li>clrngLfsr113RandomU01()
+: <a class="el" href="d7/d63/lfsr113_8h.html#a8bfe148622cc3554b3f4a755b852b7f6">lfsr113.h</a>
 </li>
 <li>clrngLfsr113RandomU01_cl_double()
 : <a class="el" href="d7/d63/lfsr113_8h.html#a094dfc2481da97b93cc34d4bd1097473">lfsr113.h</a>
@@ -288,17 +291,17 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 , <a class="el" href="d5/d38/philox432_8c.html#ad50fecdf3e5e8cc30187832a6f01b24d">philox432.c</a>
 </li>
 <li>clrngPhilox432AllocStreams()
-: <a class="el" href="df/d0d/philox432_8h.html#ae78ce6ae5b382fbf1d598a93005fa150">philox432.h</a>
-, <a class="el" href="d5/d38/philox432_8c.html#a4ba937aad5e587ed905ae5a70e4f2b4a">philox432.c</a>
+: <a class="el" href="d5/d38/philox432_8c.html#a4ba937aad5e587ed905ae5a70e4f2b4a">philox432.c</a>
+, <a class="el" href="df/d0d/philox432_8h.html#ae78ce6ae5b382fbf1d598a93005fa150">philox432.h</a>
 </li>
 <li>clrngPhilox432ChangeStreamsSpacing()
 : <a class="el" href="df/d0d/philox432_8h.html#a8df1a688b3617ec492061c10621e1514">philox432.h</a>
 , <a class="el" href="d5/d38/philox432_8c.html#a5b06ab87ded784174985e1330b603b51">philox432.c</a>
 </li>
 <li>clrngPhilox432CopyOverStreams()
-: <a class="el" href="d8/d57/philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">philox432.c.h</a>
+: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">device/philox432.c.h</a>
 , <a class="el" href="df/d0d/philox432_8h.html#a8555f40846124e0dd0e50146cb6ec7e3">philox432.h</a>
-, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">device/philox432.c.h</a>
+, <a class="el" href="d8/d57/philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">philox432.c.h</a>
 </li>
 <li>clrngPhilox432CopyStreamCreator()
 : <a class="el" href="df/d0d/philox432_8h.html#a221e7cce4556745dcd30656d828e32bd">philox432.h</a>
@@ -316,16 +319,16 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 , <a class="el" href="d5/d38/philox432_8c.html#adb7d15eeea4713661d06dc46dd751728">philox432.c</a>
 </li>
 <li>clrngPhilox432CreateStreams()
-: <a class="el" href="d5/d38/philox432_8c.html#a3cbb7bd6dc28d4db9a0b34306579d8d8">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a48bf5ac8d085b56df2e5598064c05797">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a48bf5ac8d085b56df2e5598064c05797">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a3cbb7bd6dc28d4db9a0b34306579d8d8">philox432.c</a>
 </li>
 <li>clrngPhilox432DestroyStreamCreator()
 : <a class="el" href="df/d0d/philox432_8h.html#ac11d17ee60e39f195fe9cd3dc43d7589">philox432.h</a>
 , <a class="el" href="d5/d38/philox432_8c.html#a91eb0ff2fe370d30914a6d3a975e0f59">philox432.c</a>
 </li>
 <li>clrngPhilox432DestroyStreams()
-: <a class="el" href="d5/d38/philox432_8c.html#a0682ba09bef9a0b5b72bc9578bb3c603">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#ad34db0e393052a26cc5cdf6eae657f9c">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#ad34db0e393052a26cc5cdf6eae657f9c">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a0682ba09bef9a0b5b72bc9578bb3c603">philox432.c</a>
 </li>
 <li>clrngPhilox432DeviceRandomU01Array
 : <a class="el" href="df/d0d/philox432_8h.html#a025049fbf97020d6dcccbdb3ffb25430">philox432.h</a>
@@ -335,25 +338,25 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 , <a class="el" href="d5/d38/philox432_8c.html#ac80fce0c1eb1300d1a8c97093306b9cb">philox432.c</a>
 </li>
 <li>clrngPhilox432ForwardToNextSubstreams()
-: <a class="el" href="d8/d57/philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">philox432.c.h</a>
+: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">device/philox432.c.h</a>
 , <a class="el" href="df/d0d/philox432_8h.html#ae2adbd3cf979ab4e63eb4a467ad071cb">philox432.h</a>
-, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">device/philox432.c.h</a>
+, <a class="el" href="d8/d57/philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">philox432.c.h</a>
 </li>
 <li>clrngPhilox432GenerateDeck()
-: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">device/philox432.c.h</a>
-, <a class="el" href="d8/d57/philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">philox432.c.h</a>
+: <a class="el" href="d8/d57/philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">philox432.c.h</a>
+, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">device/philox432.c.h</a>
 </li>
 <li>clrngPhilox432MakeOverSubstreams()
 : <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae197f36be28e67e584e3cd4d7b1129ab">device/philox432.c.h</a>
-, <a class="el" href="d8/d57/philox432_8c_8h.html#ae197f36be28e67e584e3cd4d7b1129ab">philox432.c.h</a>
 , <a class="el" href="df/d0d/philox432_8h.html#a3b74873fd51d15fe214bb47d3402a6ae">philox432.h</a>
+, <a class="el" href="d8/d57/philox432_8c_8h.html#ae197f36be28e67e584e3cd4d7b1129ab">philox432.c.h</a>
 </li>
 <li>clrngPhilox432MakeSubstreams()
-: <a class="el" href="d5/d38/philox432_8c.html#a7007a745824df1da23d839d4f97ba585">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a0a4d55299082ee308aa487a7573e4108">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a0a4d55299082ee308aa487a7573e4108">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a7007a745824df1da23d839d4f97ba585">philox432.c</a>
 </li>
-<li>clrngPhilox432RandomInteger()
-: <a class="el" href="df/d0d/philox432_8h.html#ae28fa4a30e2b7313139240feb2e718ed">philox432.h</a>
+<li>clrngPhilox432RandomInteger
+: <a class="el" href="df/d0d/philox432_8h.html#a8f53706514b501acd8f1b88208a974da">philox432.h</a>
 </li>
 <li>clrngPhilox432RandomInteger_cl_double()
 : <a class="el" href="df/d0d/philox432_8h.html#adb7d813d872b346d9cc073383afae881">philox432.h</a>
@@ -361,8 +364,8 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 <li>clrngPhilox432RandomInteger_cl_float()
 : <a class="el" href="df/d0d/philox432_8h.html#a06bb68f674668ecf1a2778da71f2c42e">philox432.h</a>
 </li>
-<li>clrngPhilox432RandomIntegerArray
-: <a class="el" href="df/d0d/philox432_8h.html#af176f746fa3b32d5f032fe00e24a5069">philox432.h</a>
+<li>clrngPhilox432RandomIntegerArray()
+: <a class="el" href="df/d0d/philox432_8h.html#a327508f49d3c7abbfc92f36791fbaa57">philox432.h</a>
 </li>
 <li>clrngPhilox432RandomIntegerArray_cl_double()
 : <a class="el" href="df/d0d/philox432_8h.html#aa9cd2147eb3fa8468abad142eaf36a7d">philox432.h</a>
@@ -379,8 +382,8 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 <li>clrngPhilox432RandomU01_cl_float()
 : <a class="el" href="df/d0d/philox432_8h.html#aedb4dffc5c71f016eaf15bce48fd4a7f">philox432.h</a>
 </li>
-<li>clrngPhilox432RandomU01Array
-: <a class="el" href="df/d0d/philox432_8h.html#ad60b64e3ec290cb47ea123a5c09bde9b">philox432.h</a>
+<li>clrngPhilox432RandomU01Array()
+: <a class="el" href="df/d0d/philox432_8h.html#abd115bff4f184efdddf45ce82738a7de">philox432.h</a>
 </li>
 <li>clrngPhilox432RandomU01Array_cl_double()
 : <a class="el" href="df/d0d/philox432_8h.html#a59e0b25d8acc9e4742712df792cc1c45">philox432.h</a>
@@ -406,8 +409,8 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 : <a class="el" href="df/d0d/philox432_8h.html#a3a4bff83823aab26d8c576238b401488">philox432.h</a>
 </li>
 <li>clrngPhilox432SetBaseCreatorState()
-: <a class="el" href="d5/d38/philox432_8c.html#a743998e98fc3394590c7ee1ae78401e4">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a3666ecbe81a9b721be7f01ac21eda557">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a3666ecbe81a9b721be7f01ac21eda557">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a743998e98fc3394590c7ee1ae78401e4">philox432.c</a>
 </li>
 <li>clrngPhilox432Stream
 : <a class="el" href="df/d0d/philox432_8h.html#a6df971a5e6cc5c54f4ef23e555a38fe9">philox432.h</a>
@@ -420,8 +423,8 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 , <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a630971c69601bb2427f1fbd0172ba08c">device/philox432.c.h</a>
 </li>
 <li>clrngPhilox432WriteStreamInfo()
-: <a class="el" href="d5/d38/philox432_8c.html#a6773b59c1eddaedbde95f9c79c554eaa">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a2603b07cc1961be786d6ac1b6b97c52b">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a2603b07cc1961be786d6ac1b6b97c52b">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a6773b59c1eddaedbde95f9c79c554eaa">philox432.c</a>
 </li>
 <li>clrngSetErrorString()
 : <a class="el" href="d3/d2e/private_8h.html#a5e083da05b8532206ab5b7e5dcf3dd46">private.h</a>
@@ -446,7 +449,7 @@ $(document).ready(function(){initNavTree('globals_c.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Wed Dec 9 2020 13:50:16 for GeNN by
+    <li class="footer">Generated on Fri Dec 18 2020 12:54:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

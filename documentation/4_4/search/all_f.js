@@ -3,10 +3,12 @@ var searchData=
   ['m',['m',['../de/d6e/namespacepygenn_1_1genn__model.html#a0ae588c769b098f97bc66450ab28011c',1,'pygenn::genn_model']]],
   ['m_5fdirect',['m_Direct',['../dc/db2/classSpineMLSimulator_1_1StateVar.html#adb46f517e10a5a315509959ed175f25e',1,'SpineMLSimulator::StateVar']]],
   ['m_5findirect',['m_Indirect',['../dc/db2/classSpineMLSimulator_1_1StateVar.html#a4a610bfd3668dd8e08053fe5e9df729c',1,'SpineMLSimulator::StateVar']]],
-  ['manual',['MANUAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()'],['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abaa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()']]],
+  ['manual',['MANUAL',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()'],['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7abaa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::CUDA::MANUAL()'],['../d8/de5/namespaceCodeGenerator_1_1OpenCL.html#a4f33e77f854ccff3cf4d2f32c2d2bad9aa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::OpenCL::MANUAL()'],['../d8/de5/namespaceCodeGenerator_1_1OpenCL.html#a46ce65e274e141a4f844b24c0e48a38faa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::OpenCL::MANUAL()'],['../d8/de5/namespaceCodeGenerator_1_1OpenCL.html#a06349e6459a1e852d9048932c0677b17aa60a6a471c0681e5a49c4f5d00f6bc5a',1,'CodeGenerator::OpenCL::MANUAL()']]],
   ['manual_5fruntime',['MANUAL_RUNTIME',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a838986270698f1a1afaf0721b7f0d4bf',1,'CodeGenerator::CUDA']]],
   ['manualblocksizes',['manualBlockSizes',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a24e6c8b33837783988259baa53fd4dda',1,'CodeGenerator::CUDA::Preferences']]],
-  ['manualdeviceid',['manualDeviceID',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d',1,'CodeGenerator::CUDA::Preferences']]],
+  ['manualdeviceid',['manualDeviceID',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d',1,'CodeGenerator::CUDA::Preferences::manualDeviceID()'],['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a5f78c233a2266b78038dd9524964004a',1,'CodeGenerator::OpenCL::Preferences::manualDeviceID()']]],
+  ['manualplatformid',['manualPlatformID',['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a06c1062749976c742475a4a5485276ef',1,'CodeGenerator::OpenCL::Preferences']]],
+  ['manualworkgroupsizes',['manualWorkGroupSizes',['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a9bac4cb7a430ffeac28f36abd4abb055',1,'CodeGenerator::OpenCL::Preferences']]],
   ['mathsfunc',['MathsFunc',['../d4/dba/codeGenUtils_8cc.html#a36f6ba9b5dd081f9a244f9a4edb3e460',1,'codeGenUtils.cc']]],
   ['matrix_5felem',['MATRIX_ELEM',['../d0/d1a/device_2modular_8c_8h.html#a98685670f16350be325bd77b33ccf26e',1,'MATRIX_ELEM():&#160;modular.c.h'],['../d8/dcd/modular_8c_8h.html#a98685670f16350be325bd77b33ccf26e',1,'MATRIX_ELEM():&#160;modular.c.h'],['../df/d40/modularHost_8c_8h.html#a98685670f16350be325bd77b33ccf26e',1,'MATRIX_ELEM():&#160;modularHost.c.h']]],
   ['matrix_5ftype',['matrix_type',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8a83848fea29eb821b094759b7448891',1,'pygenn.genn_groups.SynapseGroup.matrix_type(self)'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2f68c883612f6cba26d9ce34a2572c2f',1,'pygenn.genn_groups.SynapseGroup.matrix_type(self, matrix_type)']]],
@@ -41,7 +43,7 @@ var searchData=
   ['modular_2ec_2eh',['modular.c.h',['../d8/dcd/modular_8c_8h.html',1,'']]],
   ['modular_5fch',['MODULAR_CH',['../df/d40/modularHost_8c_8h.html#ac5af0a853b54bffaf91d79fe0feb0cc7',1,'modularHost.c.h']]],
   ['modularhost_2ec_2eh',['modularHost.c.h',['../df/d40/modularHost_8c_8h.html',1,'']]],
-  ['most_5fmemory',['MOST_MEMORY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a7091742b1aa4b0be2bcb9750a1f4b0b9',1,'CodeGenerator::CUDA']]],
+  ['most_5fmemory',['MOST_MEMORY',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a7091742b1aa4b0be2bcb9750a1f4b0b9',1,'CodeGenerator::CUDA::MOST_MEMORY()'],['../d8/de5/namespaceCodeGenerator_1_1OpenCL.html#a46ce65e274e141a4f844b24c0e48a38fa7091742b1aa4b0be2bcb9750a1f4b0b9',1,'CodeGenerator::OpenCL::MOST_MEMORY()']]],
   ['msb',['msb',['../d4/d95/structclrngPhilox432SB__.html#a1da37edcbed357486a76759fa1fe2a2f',1,'clrngPhilox432SB_']]],
   ['msvcfeatures_2eh',['msvcfeatures.h',['../d3/d5e/msvcfeatures_8h.html',1,'']]]
 ];

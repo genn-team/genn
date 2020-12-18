@@ -7,9 +7,11 @@ var searchData=
   ['weightupdatemodels',['WeightUpdateModels',['../da/d80/namespaceWeightUpdateModels.html',1,'']]],
   ['weightupdatemodels_2ecc',['weightUpdateModels.cc',['../da/dd6/weightUpdateModels_8cc.html',1,'']]],
   ['weightupdatemodels_2eh',['weightUpdateModels.h',['../dc/dab/weightUpdateModels_8h.html',1,'']]],
+  ['workgroupsizeselect',['WorkGroupSizeSelect',['../d8/de5/namespaceCodeGenerator_1_1OpenCL.html#a06349e6459a1e852d9048932c0677b17',1,'CodeGenerator::OpenCL']]],
+  ['workgroupsizeselectmethod',['workGroupSizeSelectMethod',['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a2226cda28c9cfdd36bcdc5012c719fbc',1,'CodeGenerator::OpenCL::Preferences']]],
   ['writebinaryspikerecording',['writeBinarySpikeRecording',['../d8/d86/spikeRecorder_8h.html#a7a75a9dcce1dbfc4f42fe6180a3c6a6d',1,'spikeRecorder.h']]],
   ['writecache',['writeCache',['../d9/d5d/classSpikeWriterTextCached.html#a4fa13b38ea34732773c93ca73435080a',1,'SpikeWriterTextCached']]],
   ['writeprecisestring',['writePreciseString',['../d4/d3d/namespaceUtils.html#ae03fe3aae05bd1f1522bdd541681a785',1,'Utils::writePreciseString(std::ostream &amp;os, T value)'],['../d4/d3d/namespaceUtils.html#a2ec4824de9bfbbcfa129f3df90b36c45',1,'Utils::writePreciseString(T value)']]],
   ['writesizes',['writeSizes',['../d4/d40/classGenerateRunBase.html#a69c50969f70935c2b97727588317db82',1,'GenerateRunBase']]],
-  ['writetextspikerecording',['writeTextSpikeRecording',['../d8/d86/spikeRecorder_8h.html#ad660cc2946867ebb051c5e85d934dece',1,'spikeRecorder.h']]]
+  ['writetextspikerecording',['writeTextSpikeRecording',['../d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456',1,'spikeRecorder.h']]]
 ];
