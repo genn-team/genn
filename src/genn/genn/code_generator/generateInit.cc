@@ -83,6 +83,27 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutio
     }
 }
 //------------------------------------------------------------------------
+void genInitSpikeTime(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
+                      const NeuronInitGroupMerged &ng, const std::string &varName)
+{
+    // Generate variable initialisation code
+    backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+        [varName, &ng] (CodeStream &os, Substitutions &varSubs)
+        {
+            // Is delay required
+            if(ng.getArchetype().isDelayRequired()) {
+                os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "group->" << varName << "[(d * group->numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
+                }
+            }
+            else {
+                os << "group->" << varName << "[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
+            }
+        });
+}
+//------------------------------------------------------------------------
 template<typename I, typename Q, typename P, typename D>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
@@ -266,46 +287,26 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             genInitSpikes(os, backend, popSubs, ng, false);
             genInitSpikes(os, backend, popSubs, ng, true);
 
-            // If spike times are required
+            // Initialize spike times
             if(ng.getArchetype().isSpikeTimeRequired()) {
-                // Generate variable initialisation code
-                backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                    [&ng] (CodeStream &os, Substitutions &varSubs)
-                    {
-                        // Is delay required
-                        if(ng.getArchetype().isDelayRequired()) {
-                            os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "group->sT[(d * group->numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
-                            }
-                        }
-                        else {
-                            os << "group->sT[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
-                        }
-                    });
+                genInitSpikeTime(os, backend, popSubs, ng, "sT");
             }
 
-            // If previous spike times are required
+            // Initialize previous spike times
             if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-                // Generate variable initialisation code
-                backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-                    [&ng] (CodeStream &os, Substitutions &varSubs)
-                    {
-                        // Is delay required
-                        if(ng.getArchetype().isDelayRequired()) {
-                            os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "group->prevST[(d * group->numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
-                            }
-                        }
-                        else {
-                            os << "group->prevST[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
-                        }
-                    });
+                genInitSpikeTime(os, backend, popSubs, ng, "prevST");
+            }
+               
+            // Initialize spike-like-event times
+            if(ng.getArchetype().isSpikeEventTimeRequired()) {
+                genInitSpikeTime(os, backend, popSubs, ng, "seT");
             }
 
+            // Initialize previous spike-like-event times
+            if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
+                genInitSpikeTime(os, backend, popSubs, ng, "prevSET");
+            }
+       
             // If neuron group requires delays, zero spike queue pointer
             if(ng.getArchetype().isDelayRequired()) {
                 backend.genPopVariableInit(os, popSubs,

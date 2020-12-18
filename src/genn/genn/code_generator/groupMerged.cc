@@ -33,10 +33,15 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
         addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
     }
 
-    if(getArchetype().isPrevSpikeTimeRequired()) {
-        addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
-
-        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
+    if(getArchetype().isPrevSpikeTimeRequired() || getArchetype().isPrevSpikeEventTimeRequired()) {
+        if(getArchetype().isPrevSpikeTimeRequired()) {
+            addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
+            addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
+        }
+        if(getArchetype().isPrevSpikeEventTimeRequired()) {
+            addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
+            addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
+        }
 
         if(getArchetype().isDelayRequired()) {
             addField("unsigned int", "numNeurons",
@@ -238,9 +243,15 @@ CodeGenerator::NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const 
     if(getArchetype().isSpikeTimeRequired()) {
         addPointerField(timePrecision, "sT", backend.getDeviceVarPrefix() + "sT");
     }
+    if(getArchetype().isSpikeEventTimeRequired()) {
+        addPointerField(timePrecision, "seT", backend.getDeviceVarPrefix() + "seT");
+    }
 
     if(getArchetype().isPrevSpikeTimeRequired()) {
         addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
+    }
+    if(getArchetype().isPrevSpikeEventTimeRequired()) {
+        addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
@@ -1201,13 +1212,18 @@ CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, cons
         if(wum->isPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "sTPost", backend.getDeviceVarPrefix() + "sT");
         }
+        if(wum->isPreSpikeEventTimeRequired()) {
+            addSrcPointerField(timePrecision, "seTPre", backend.getDeviceVarPrefix() + "seT");
+        }
         if(wum->isPrevPreSpikeTimeRequired()) {
             addSrcPointerField(timePrecision, "prevSTPre", backend.getDeviceVarPrefix() + "prevST");
         }
         if(wum->isPrevPostSpikeTimeRequired()) {
             addTrgPointerField(timePrecision, "prevSTPost", backend.getDeviceVarPrefix() + "prevST");
         }
-
+        if(wum->isPrevPreSpikeEventTimeRequired()) {
+            addSrcPointerField(timePrecision, "prevSETPre", backend.getDeviceVarPrefix() + "prevSET");
+        }
         // Add heterogeneous weight update model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
             wum->getParamNames(), "",

@@ -181,9 +181,8 @@ void ModelSpec::finalize()
         for(auto *sg : n.second.getOutSyn()) {
             const auto *wu = sg->getWUModel();
 
-            if(!wu->getEventCode().empty()) {
+            if(!wu->getEventThresholdConditionCode().empty()) {
                 using namespace CodeGenerator;
-                assert(!wu->getEventThresholdConditionCode().empty());
 
                 // do an early replacement of weight update model parameters and derived parameters
                 // **NOTE** this is really gross but I can't really see an alternative - merging decisions are based on the spike event conditions set
@@ -201,6 +200,9 @@ void ModelSpec::finalize()
             }
         }
         if (n.second.getSpikeEventCondition().size() > 1) {
+            if(n.second.isSpikeEventTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
+                LOGW << "Neuron group '" << n.first << "' records spike-like-event times but, it has outgoing synapse groups with multiple spike-like-event conditions so the recorded times may be ambiguous.";
+            }
             for(auto *sg : n.second.getOutSyn()) {
                 if (!sg->getWUModel()->getEventCode().empty()) {
                     sg->setEventThresholdReTestRequired(true);
