@@ -1,4 +1,27 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.4.0 (PyGeNN 0.4.4)
+====
+This release adds a number of significant new features to GeNN and expands the documentation to cover using GeNN from Python with PyGeNN.
+It also includes a number of bug fixes that have been identified since the 4.3.3 release.
+
+User Side Changes
+----
+1. New system for efficiently recording spikes from multiple timesteps into GPU memory (see \ref spikeRecording).
+2. Connectivity can now be initialised using column-wise as well as row-wise sparse connectivity initialisation snippets (see \ref sect_new_sparse_connect).
+3. Support for 'kernel-based' connectivity, allowing efficient support for connectivity such as convolutions (see \ref sect_sparse_kernel).
+4. Improved access to spike times from weight update models - previous spike times can now be accessed via \$(prev_sT_pre) and \$(prev_sT_post) (see \ref sect34).
+5. Added support for accessing spike-like-event times from weight update models via \$(seT_pre), \$(seT_post), \$(prev_seT_pre) and \$(seT_pre) (see \ref sect34)
+6. Added support for continuous as well as spike-driven dynamics for pre and postsynaptic weight update model variables (see \ref sect34).
+7. Added experimental OpenCL backend - there are still issues outstanding but any feedback would be much appreciated.
+8. Improved supression of irrelevant NVCC warnings when optimizing block sizes.
+9. Added support for SM 8.0 and 8.6 architectures to CUDA backend.
+
+Bug fixes:
+----
+1. Fixed support for CUDA 8 and older.
+2. Replaced deprecated ``__linux`` macro with ``__linux__`` making GeNN compatible with compiler on POWER9 Linux.
+
+
 Release Notes for GeNN v4.3.3 (PyGeNN 0.4.3)
 ====
 This release fixes several small issues found in the 4.3.2 release.
