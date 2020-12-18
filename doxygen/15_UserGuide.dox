@@ -85,11 +85,11 @@ pop.extra_global_params["reward"].view[:] = 5.0
 \endcode
 \end_toggle
 \add_toggle_cpp
-However, if extra global parameters have a pointer type such as ``float*``, GeNN generates additional functions to allocate, free and copy these variables between host and device:
-- `allocate<var name><neuron or synapse name>`
-- `free<var name><neuron or synapse name>`
-- `push<var name><neuron or synapse name>ToDevice`
-- `pull<var name><neuron or synapse name>FromDevice`
+However, if extra global parameters have a pointer type such as ``float*``, GeNN generates additional functions to allocate, free and copy these extra global parameters between host and device:
+- `allocate<egp name><neuron or synapse name>`
+- `free<egp name><neuron or synapse name>`
+- `push<egp name><neuron or synapse name>ToDevice`
+- `pull<egp name><neuron or synapse name>FromDevice`
 These operate in much the same manner as the functions for interacting with standard variables described above but the allocate, push and pull functions all take a "count" parameter specifying how many entries the extra global parameter array should be.
 \end_toggle
 \add_toggle_python
@@ -97,6 +97,20 @@ Extra global parameters with a pointer type such as ``float*`` should be initial
 \code
 pop.extra_global_params["reward"].view[:] = [1,2,3,4]
 pop.push_extra_global_param_to_device("reward", 4)
+\endcode
+\end_toggle
+Extra global parameters can also be used to provide additional data to snippets used for variable (see \ref sectVariableInitialisation) or sparse connectivity (see \ref sectSparseConnectivityInitialisation) initialisation.
+\add_toggle_cpp
+Like standard extra global parameters, GeNN generates additional functions to allocte, free and copy these extra global parameters between host and device:
+    - `allocate<egp name><var name><neuron or synapse name>`
+    - `free<egp name><var name><neuron or synapse name>`
+    - `push<egp name><var name><neuron or synapse name>ToDevice`
+    - `pull<egp name><var name><neuron or synapse name>FromDevice`
+\end_toggle
+\add_toggle_python
+These extra global parameters must be initialised before pygenn.genn_model.GeNNModel.load is called:
+\code
+pop.vars["g"].set_extra_global_init_param("kernel", [1, 2, 3, 4])
 \endcode
 \end_toggle
 \section floatPrecision Floating point precision

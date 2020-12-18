@@ -179,6 +179,7 @@ There is a number of predefined models which can be used with the \add_cpp_pytho
 - NeuronModels::IzhikevichVariable
 - NeuronModels::LIF
 - NeuronModels::SpikeSource
+- NeuronModels::SpikeSourceArray
 - NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
 - NeuronModels::TraubMilesFast
@@ -627,6 +628,7 @@ However additional input variables can be added to a neuron model using the \add
 There is a number of predefined models which can be used with the ModelSpec::addCurrentSource function:
 - CurrentSourceModels::DC
 - CurrentSourceModels::GaussianNoise
+- CurrentSourceModels::PoissonExp
 
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "DC".
@@ -749,8 +751,11 @@ ini = {"m": np.arange(400.0), ...}
 \endcode
 \end_toggle
 or initialised using one of a number of predefined _variable initialisation snippets_:
+- InitVarSnippet::Kernel
 - InitVarSnippet::Uniform
 - InitVarSnippet::Normal
+- InitVarSnippet::NormalClipped
+- InitVarSnippet::NormalClippedDelay
 - InitVarSnippet::Exponential
 - InitVarSnippet::Gamma
 
@@ -847,6 +852,10 @@ This can be done using one of a number of predefined _sparse connectivity initia
 - InitSparseConnectivitySnippet::OneToOne
 - InitSparseConnectivitySnippet::FixedProbability
 - InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
+- InitSparseConnectivitySnippet::FixedNumberPostWithReplacement
+- InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement
+- InitSparseConnectivitySnippet::FixedNumberPreWithReplacement
+- InitSparseConnectivitySnippet::Conv2D
 
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "FixedProbability".
@@ -913,7 +922,7 @@ ring_model = genn_model.create_custom_sparse_connect_init_snippet_class(
            $(endRow);
         }
         """,
-        
+
     calc_max_row_len_func=genn_model.create_cmlf_class(
         lambda num_pre, num_post, pars: int(pars[0]))(),
     calc_max_col_len_func=genn_model.create_cmlf_class(
@@ -928,10 +937,29 @@ Synapses are added to the row using the \$(addSynapse, target) function and iter
 \add_cpp_python_text{To avoid having to manually call SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections\, sparse,Sparse} connectivity snippets should also provide code to calculate the maximum row and column lengths this connectivity will result in using the \add_cpp_python_text{SET_CALC_MAX_ROW_LENGTH_FUNC() and SET_CALC_MAX_COL_LENGTH_FUNC() macros, `calc_max_row_len_func` and `calc_max_col_len_func` keyword arguments`}.
 \add_cpp_text{Alternatively\, if the maximum row or column length is constant\, the `SET_MAX_ROW_LENGTH()` and `SET_MAX_COL_LENGTH()` shorthand macros can be used.}
 
+\section sect_sparse_kernel Kernel-based connectivity
+Some forms of structured connectivity such as convolutions repeat a 'kernel' of weights across the entire connectivity matrix. 
+Sparse connectivity initialisation snippets which operate in this way need to provide two extra pieces of information.
+Firstly the dimensions of the kernel required by the connectivity are specified using the \add_cpp_python_text{SET_CALC_KERNEL_SIZE_FUNC() macro, `calc_kernel_size_func` keyword arguments`}:
+\add_toggle_code_cpp
+SET_CALC_KERNEL_SIZE_FUNC(
+    [](const std::vector<double> &pars)->std::vector<unsigned int>
+    {
+        return {(unsigned int)pars[0], (unsigned int)pars[1],
+                (unsigned int)pars[8], (unsigned int)pars[11]};
+    });
+\end_toggle_code
+\add_toggle_code_python
+calc_kernel_size_func=create_cksf_class(
+        lambda pars: UnsignedIntVector([int(pars[0]), int(pars[1]), int(pars[8]), int(pars[11])]))(),
+\end_toggle_code
+Secondly, the row build code must use an extended version of the `addSynapse` function which indicates the kernel indices associated with the synapse.
+For example, the following could be used with a 4 dimensional kernel: \$(addSynapse, idPost, kernRow, kernCol, inChan, outChan);
+Finally, in order to use a kernel to initialise SynapseMatrixWeight::INDIVIDUAL variables or generate SynapseMatrixWeight::PROCEDURAL variables on the fly, the variables should be initialised using the InitVarSnippet::Kernel variable initialisation snippet and the kernel itself allocated as an extra global parameter and pushed to device (see \ref extraGlobalParamSim).
+
 \section sect_sparse_connect_init_modes Sparse connectivity locations
 Once you have defined <b>how</b> sparse connectivity is going to be initialised, similarly to variables, you can control <b>where</b> it is allocated. 
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
-
 
 -----
 \link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
