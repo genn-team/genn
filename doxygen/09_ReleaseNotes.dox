@@ -10,7 +10,7 @@ User Side Changes
 2. Connectivity can now be initialised using column-wise as well as row-wise sparse connectivity initialisation snippets (see \ref sect_new_sparse_connect).
 3. Support for 'kernel-based' connectivity, allowing efficient support for connectivity such as convolutions (see \ref sect_sparse_kernel).
 4. Improved access to spike times from weight update models - previous spike times can now be accessed via \$(prev_sT_pre) and \$(prev_sT_post) (see \ref sect34).
-5. Added support for accessing spike-like-event times from weight update models via \$(seT_pre), \$(seT_post), \$(prev_seT_pre) and \$(seT_pre) (see \ref sect34)
+5. Added support for accessing spike-like-event times from weight update models via \$(seT_pre) and \$(prev_seT_pre) variables (see \ref wum_spike_like_events)
 6. Added support for continuous as well as spike-driven dynamics for pre and postsynaptic weight update model variables (see \ref sect34).
 7. Added experimental OpenCL backend - there are still issues outstanding but any feedback would be much appreciated.
 8. Improved supression of irrelevant NVCC warnings when optimizing block sizes.
