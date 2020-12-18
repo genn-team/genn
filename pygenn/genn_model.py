@@ -106,6 +106,7 @@ class GeNNModel(object):
         genn_log_level      -- Log level for GeNN
         code_gen_log_level  -- Log level for GeNN code-generator
         backend_log_level   -- Log level for backend
+        preference_kwargs   -- Additional keyword arguments to set in backend preferences structure
         """
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 

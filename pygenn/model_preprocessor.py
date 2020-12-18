@@ -17,10 +17,7 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
     about variables and parameters
 
     Args:
-    model           --  string or instance of a class derived from
-                        pygenn.genn_wrapper.NeuronModels.Custom or
-                        pygenn.genn_wrapper.WeightUpdateModels.Custom or
-                        pygenn.genn_wrapper.CurrentSourceModels.Custom
+    model           --  string or instance of a class derived from pygenn.genn_wrapper.NeuronModels.Custom or pygenn.genn_wrapper.WeightUpdateModels.Custom or pygenn.genn_wrapper.CurrentSourceModels.Custom
     group           --  group model will belong to
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
@@ -28,9 +25,7 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
                         presynaptic variables
     post_var_space  --  optional dict with (weight update) model
                         postsynaptic variables
-    model_family    --  pygenn.genn_wrapper.NeuronModels or
-                        pygenn.genn_wrapper.WeightUpdateModels or
-                        pygenn.genn_wrapper.CurrentSourceModels
+    model_family    --  pygenn.genn_wrapper.NeuronModels or pygenn.genn_wrapper.WeightUpdateModels or pygenn.genn_wrapper.CurrentSourceModels
 
     Returns:
     tuple consisting of (model instance, model type, model parameter names,
@@ -80,12 +75,9 @@ def prepare_snippet(snippet, param_space, snippet_family):
     information about parameters
 
     Args:
-    snippet         --  string or instance of a class derived from
-                        pygenn.genn_wrapper.InitVarSnippet.Custom or
-                        pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom
+    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom or pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom
     param_space     --  dict with model parameters
-    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet or
-                        pygenn.genn_wrapper.InitSparseConnectivitySnippet
+    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet or pygenn.genn_wrapper.InitSparseConnectivitySnippet
 
     Returns:
     tuple consisting of (snippet instance, snippet type,
