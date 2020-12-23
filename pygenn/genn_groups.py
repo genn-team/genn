@@ -1,5 +1,4 @@
-## @namespace pygenn.genn_groups
-"""
+""" @namespace pygenn.genn_groups
 This module provides classes which automate model checks and parameter
 conversions for GeNN Groups
 """
