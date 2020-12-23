@@ -1,5 +1,5 @@
 //----------------------------------------------------------------------------
-/*! \page Tutorial2 Tutorial 2
+/*! \page Tutorial2 Tutorial 2 (C++)
 
 In this tutorial we will learn to add synapsePopulations to connect neurons in neuron groups to each other with synaptic models. As an example we will connect the ten Hodgkin-Huxley neurons from tutorial 1 in a ring of excitatory synapses.
 
@@ -151,47 +151,36 @@ However, even after all our hard work, if we plot the content of the first colum
 This is because none of the neurons are spiking so there are no spikes to propagate around the ring.
 
 \section initialConditions Providing initial stimuli
-We can use a NeuronModels::SpikeSource to inject an initial spike into the first neuron in the ring during the first timestep to start spikes propagating. 
-Firstly we need to define another sparse connectivity initialisation snippet at the top of ``tenHHRingModel.cc`` which simply creates a single synapse on the first row of the synaptic matrix:
-\code
-class FirstToFirst : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(FirstToFirst, 0);
-    SET_ROW_BUILD_CODE(
-        "if($(id_pre) == 0) {\n"
-        "   $(addSynapse, $(id_pre));\n"
-        "}\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(FirstToFirst);
-\endcode
-
-We then need to add it to the network by adding the following to the end of the `modelDefinition(...)` function:
+We can use a NeuronModels::SpikeSourceArray to inject an initial spike into the first neuron in the ring during the first timestep to start spikes propagating.
+We can do this by adding the following neuron and synapse populations to the network at the end of the `modelDefinition(...)` function:
 
 \code
-model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
+NeuronModels::SpikeSourceArray::VarValues stim_ini(
+    uninitialisedVar(),     // 0 - startSpike indices
+    uninitialisedVar());    // 1 - endSpike indices
+
+model.addNeuronPopulation<NeuronModels::SpikeSourceArray>("Stim", 1, {}, stim_ini);
 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
-    "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
-    "Stim", "Pop1",
-    {}, s_ini,
-    ps_p, {},
-    initConnectivity<FirstToFirst>());
+        "StimPop1", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+        "Stim", "Pop1",
+        {}, s_ini,
+        ps_p, {},
+        initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
 \endcode
-
-and finally inject a spike in the first timestep (in the same way that the `t` variable is provided by GeNN to keep track of the current simulation time in milliseconds, `iT` is provided to keep track of it in timesteps):
-
+Each neuron in the spike source array population has its own list of spikes which are concatenated together and stored in an array made accesible to all neurons in the population using an extra global parameter (see \ref neuron_extra_global_param).
+Although, in this model, there is only one neuron in the Stim population so `startSpike` and `endSpike` <i>could</i> be automatically initialised in the model description, typically they need to be initialised manually in the user-code so we mark these as uninitialised using uninitialisedVar(). 
+We then connect the spike source array to Pop1 using another synapse population with sparse connectivity, initialised using the built in InitSparseConnectivitySnippet::OneToOne model so the single neuron in the Stim population is connected to the first neuron in the ring.
+Next, we add the code to initialise ``startSpike`` and ``endSpike`` to ``tenHHSimulation.cc``, between the calls to `initialize()` and `initializeSparse()`:
 \code
-if(iT == 0) {
-    spikeCount_Stim = 1;
-    spike_Stim[0] = 0;
-    pushStimCurrentSpikesToDevice();
-}
+startSpikeStim[0] = 0;
+endSpikeStim[0] = 1;
 \endcode
-\note
-``spike_Stim[n]`` is used to specify the indices of the neurons in population ``Stim`` spikes which should emit spikes where \f$n \in [0, \mbox{spikeCount\_Stim} )\f$.
-
+Finally, we also add code to allocate, intialise and push the spike times to the extra global parameter:
+\code
+allocatespikeTimesStim(1);
+spikeTimesStim[0] = 0.0f;
+pushspikeTimesStimToDevice(1);
+\endcode
 At this point our user code `tenHHRingModel.cc` should look like this
 \code
 // Model definintion file tenHHRing.cc
@@ -207,19 +196,6 @@ public:
     SET_MAX_ROW_LENGTH(1);
 };
 IMPLEMENT_SNIPPET(Ring);
-
-class FirstToFirst : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(FirstToFirst, 0);
-    SET_ROW_BUILD_CODE(
-        "if($(id_pre) == 0) {\n"
-        "   $(addSynapse, $(id_pre));\n"
-        "}\n"
-        "$(endRow);\n");
-    SET_MAX_ROW_LENGTH(1);
-};
-IMPLEMENT_SNIPPET(FirstToFirst);
 
 void modelDefinition(ModelSpec &model)
 {
@@ -242,8 +218,12 @@ void modelDefinition(ModelSpec &model)
         0.3176767,     // 2 - prob. for not Na channel blocking h
         0.5961207);    // 3 - prob. for K channel activation n
 
+    NeuronModels::SpikeSourceArray::VarValues stim_ini(
+        uninitialisedVar(),     // 0 - startSpike indices
+        uninitialisedVar());    // 1 - endSpike indices
+
     model.addNeuronPopulation<NeuronModels::TraubMiles>("Pop1", 10, p, ini);
-    model.addNeuronPopulation<NeuronModels::SpikeSource>("Stim", 1, {}, {});
+    model.addNeuronPopulation<NeuronModels::SpikeSourceArray>("Stim", 1, {}, stim_ini);
 
     WeightUpdateModels::StaticPulse::VarValues s_ini(
          -0.2); // 0 - g: the synaptic conductance value
@@ -251,7 +231,7 @@ void modelDefinition(ModelSpec &model)
     PostsynapticModels::ExpCond::ParamValues ps_p(
         1.0,    // 0 - tau_S: decay time constant for S [ms]
         -80.0); // 1 - Erev: Reversal potential
-
+    
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::ExpCond>(
         "Pop1self", SynapseMatrixType::SPARSE_GLOBALG, 100,
         "Pop1", "Pop1",
@@ -264,7 +244,7 @@ void modelDefinition(ModelSpec &model)
         "Stim", "Pop1",
         {}, s_ini,
         ps_p, {},
-        initConnectivity<FirstToFirst>());
+        initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
 }
 \endcode
 
@@ -281,17 +261,17 @@ int main()
 {
     allocateMem();
     initialize();
+    startSpikeStim[0] = 0;
+    endSpikeStim[0] = 1;
     initializeSparse();
+
+    allocatespikeTimesStim(1);
+    spikeTimesStim[0] = 0.0f;
+    pushspikeTimesStimToDevice(1);
 
     std::ofstream os("tenHHRing_output.V.dat");
     while(t < 200.0f) {
-        if(iT == 0) {
-            glbSpkStim[0] = 0;
-            glbSpkCntStim[0] = 1;
-            pushStimCurrentSpikesToDevice();
-        }
-
-        stepTimeU();
+        stepTime();
         pullVPop1FromDevice();
 
         os << t << " ";
@@ -310,6 +290,6 @@ Finally if we build, make and run this model; and plot the first 200 ms of the t
 
 
 -----
-\link Tutorial1 Previous\endlink | \link Tutorial2 Top\endlink | \link UserGuide Next\endlink
+\link Tutorial1_Python Previous\endlink | \link Tutorial2 Top\endlink | \link Tutorial2_Python Next\endlink
 
 */

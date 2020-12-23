@@ -1,42 +1,42 @@
-"""GeNNModel
-
-This module provides GeNNModel class to simplify working with pygenn module and
+## @namespace pygenn.genn_model
+"""
+This module provides the GeNNModel class to simplify working with pygenn module and
 helper functions to derive custom model classes.
 
-``GeNNModel`` can be (and should be) used to configure a model, build, load and
+GeNNModel should be used to configure a model, build, load and
 finally run it. Recording is done manually by pulling from the population of
-interest and then copying the values from ``Variable.view`` attribute. Each
-simulation step must be triggered manually by calling ``stepTime`` function.
+interest and then copying the values from Variable.view attribute. Each
+simulation step must be triggered manually by calling step_time function.
 
 Example:
-    The following example shows in a (very) simplified manner how to build and
-    run a simulation using GeNNModel::
+The following example shows in a (very) simplified manner how to build and
+run a simulation using GeNNModel::
 
-        import GeNNModel
-        gm = GeNNModel.GeNNModel()
+    from pygenn.genn_model import GeNNModel
+    gm = GeNNModel("float", "test")
 
-        # add populations
-        neuron_pop = gm.add_neuron_population(_parameters_truncated_)
-        syn_pop = gm.add_synapse_population(_parameters_truncated_)
+    # add populations
+    neuron_pop = gm.add_neuron_population(_parameters_truncated_)
+    syn_pop = gm.add_synapse_population(_parameters_truncated_)
 
-        # build and load model
-        gm.build(path_to_model)
-        gm.load()
+    # build and load model
+    gm.build()
+    gm.load()
 
-        Vs = numpy.empty((simulation_length, population_size))
-        # Variable.view provides a view into a raw C array
-        # here a Variable call V (voltage) will be recorded
-        v_view = neuron_pop.vars["V"].view
+    Vs = numpy.empty((simulation_length, population_size))
+    # Variable.view provides a view into a raw C array
+    # here a Variable call V (voltage) will be recorded
+    v_view = neuron_pop.vars["V"].view
 
-        # run a simulation for 1000 steps
-        for i in range 1000:
-            # manually trigger one simulation step
-            gm.step_time()
-            # when you pull state from device, views of all variables
-            # are updated and show current simulated values
-            gm.pull_state_from_device(neuron_pop_name)
-            # finally, record voltage by copying form view into array.
-            Vs[i,:] = v_view
+    # run a simulation for 1000 steps
+    for i in range 1000:
+        # manually trigger one simulation step
+        gm.step_time()
+        # when you pull state from device, views of all variables
+        # are updated and show current simulated values
+        neuron_pop.pull_state_from_device()
+        # finally, record voltage by copying form view into array.
+        Vs[i,:] = v_view
 """
 # python imports
 from collections import namedtuple, OrderedDict
@@ -96,13 +96,17 @@ class GeNNModel(object):
                  **preference_kwargs):
         """Init GeNNModel
         Keyword args:
-        precision       --  string precision as string ("float", "double"
-                            or "long double"). defaults to float.
-        model_name      --  string name of the model. Defaults to "GeNNModel".
-        backend         --  string specifying name of backend module to use
-                            Defaults to None to pick 'best' backend for your system
-        time_precision  --  string time precision as string ("float", "double"
-                            or "long double"). defaults to float.
+        precision           -- string precision as string ("float", "double"
+                               or "long double"). defaults to float.
+        model_name          -- string name of the model. Defaults to "GeNNModel".
+        backend             -- string specifying name of backend module to use
+                               Defaults to None to pick 'best' backend for your system
+        time_precision      -- string time precision as string ("float", "double"
+                               or "long double"). defaults to float.
+        genn_log_level      -- Log level for GeNN
+        code_gen_log_level  -- Log level for GeNN code-generator
+        backend_log_level   -- Log level for backend
+        preference_kwargs   -- Additional keyword arguments to set in backend preferences structure
         """
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
@@ -325,7 +329,7 @@ class GeNNModel(object):
 
         n_group = NeuronGroup(pop_name, self)
         n_group.set_neuron(neuron, param_space, var_space)
-        n_group.add_to(self._model, int(num_neurons))
+        n_group.add_to(int(num_neurons))
 
         self.neuron_populations[pop_name] = n_group
 
@@ -388,7 +392,7 @@ class GeNNModel(object):
                                   wu_pre_var_space, wu_post_var_space)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
         s_group.connectivity_initialiser = connectivity_initialiser
-        s_group.add_to(self._model, delay_steps)
+        s_group.add_to(delay_steps)
 
         self.synapse_populations[pop_name] = s_group
 
@@ -433,7 +437,7 @@ class GeNNModel(object):
         s_group = SynapseGroup(pop_name, self, master_pop)
         s_group.set_connected_populations(source, target)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
-        s_group.add_to(self._model, delay_steps)
+        s_group.add_to(delay_steps)
 
         self.synapse_populations[pop_name] = s_group
 
@@ -470,7 +474,7 @@ class GeNNModel(object):
         c_source = CurrentSource(cs_name, self)
         c_source.set_current_source_model(current_source_model,
                                           param_space, var_space)
-        c_source.add_to(self._model, pop)
+        c_source.add_to(pop)
 
         self.current_sources[cs_name] = c_source
 
@@ -830,9 +834,8 @@ def create_custom_neuron_class(class_name, param_names=None,
                                     and types of the model
     derived_params              --  list of pairs, where the first member
                                     is string with name of the derived
-                                    parameter and the second MUST be an
-                                    instance of a class which inherits from
-                                    ``pygenn.genn_wrapper.Snippet.DerivedParamFunc``
+                                    parameter and the second should be a 
+                                    functor returned by create_dpf_class
     sim_code                    --  string with the simulation code
     threshold_condition_code    --  string with the threshold condition code
     reset_code                  --  string with the reset code
@@ -908,8 +911,7 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
                             types of the model
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
-                            MUST be an instance of a class which inherits
-                            from ``pygenn.genn_wrapper.DerivedParamFunc``
+                            should be a functor returned by create_dpf_class
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
     support_code        --  string with the support code
@@ -985,9 +987,8 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                                 types of the model
     derived_params                          --  list of pairs, where the first member
                                                 is string with name of the derived
-                                                parameter and the second MUST be an
-                                                instance of a class which inherits from
-                                                ``pygenn.genn_wrapper.DerivedParamFunc``
+                                                parameter and the second should be 
+                                                a functor returned by create_dpf_class
     sim_code                                --  string with the simulation code
     event_code                              --  string with the event code
     learn_post_code                         --  string with the code to include in
@@ -1016,9 +1017,9 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                                 required in any weight update kernels?
     is_pre_spike_event_time_required        --  boolean, is presynaptic spike-like-event
                                                 time required in any weight update kernels?
-    is_prev_pre_spike_time_required         --  boolean, is _previous_ presynaptic spike time
+    is_prev_pre_spike_time_required         --  boolean, is previous presynaptic spike time
                                                 required in any weight update kernels?
-    is_prev_post_spike_time_required        --  boolean, is _previous_ postsynaptic spike time
+    is_prev_post_spike_time_required        --  boolean, is previous postsynaptic spike time
                                                 required in any weight update kernels?
     is_prev_pre_spike_event_time_required   --  boolean, is _previous_ presynaptic spike-like-event 
                                                 time required in any weight update kernels?
@@ -1139,8 +1140,7 @@ def create_custom_current_source_class(class_name, param_names=None,
                             types of the model
     derived_params      --  list of pairs, where the first member is string
                             with name of the derived parameter and the second
-                            MUST be an instance of the class which inherits
-                            from  ``pygenn.genn_wrapper.DerivedParamFunc``
+                            should be a functor returned by create_dpf_class
     injection_code      --  string with the current injection code
     extra_global_params --  list of pairs of strings with names and types of
                             additional parameters
@@ -1189,9 +1189,8 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     var_name_types  --  list of pairs of strings with varible names and
                         types of the model
     derived_params  --  list of pairs, where the first member is string with
-                        name of the derived parameter and the second MUST be
-                        an instance of the class which inherits from the
-                        ``pygenn.genn_wrapper.DerivedParamFunc`` class
+                        name of the derived parameter and the second should 
+                        be a functor returned by create_dpf_class
     custom_body     --  dictionary with attributes and methods of the new class
     """
 
@@ -1296,7 +1295,7 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
     param_names     --  list of strings with param names of the model
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second MUST be
-                        an instance of the `pygenn.genn_wrapper.DerivedParamFunc`` class
+                        an instance of the pygenn.genn_wrapper.DerivedParamFunc class
     var_init_code   --  string with the variable initialization code
     extra_global_params     --  list of pairs of strings with names and
                                 types of additional parameters
@@ -1354,7 +1353,7 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     derived_params          --  list of pairs, where the first member is string
                                 with name of the derived parameter and the
                                 second MUST be an instance of the class which
-                                inherits from ``pygenn.genn_wrapper.DerivedParamFunc``
+                                inherits from pygenn.genn_wrapper.DerivedParamFunc
     row_build_code          --  string with row building initialization code
     row_build_state_vars    --  list of tuples of state variables, their types
                                 and their initial values to use across

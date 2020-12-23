@@ -105,7 +105,48 @@ window used. One can open an instance of CMD.EXE with the development
 environment already set up by navigating to Start - All Programs - 
 Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may also wish to
 create a shortcut for this tool on the desktop, for convenience.
-     
+
+\section pygenn Installing PyGeNN
+Building PyGeNN is a little involved so we recommend installing a prebuilt binary wheel from our Releases page or direct from our <a href="https://gen-ci.inf.sussex.ac.uk/job/GeNN/job/genn/job/master/">build server</a>.
+
+\subsection pygenn_wheel Installing PyGeNN from binary wheels
+ - Select a suitable wheel from the Releases page (all wheels are build for CUDA 10 except for on Mac OS which is built for CUDA 9). For example, if you have a Linux system with Python 3.7 you would pick ``pygenn-0.2.1-cp37-cp37m-linux_x86_64.whl``. If you do not have CUDA installed, ignore the CUDA version and pick the wheel that otherwise matches your platform.
+ - Install the wheel using pip:
+ \code
+ pip install pygenn-0.2.1-cp37-cp37m-linux_x86_64.whl
+ \endcode
+ 
+\subsection pygenn_source_nix Installing PyGeNN from source on Linux or Mac OSX
+ - Navigate to the GeNN directory and build a dynamic library version of GeNN, directly into the PyGeNN directory with:
+ \code
+ make DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/
+ \endcode
+ - Build the Python extension with setup tools with: 
+ \code
+ python setup.py develop
+ \endcode
+ 
+\subsection pygenn_source_windows Installing PyGeNN from source on Windows
+ - Ensure that you have at least Python 3.5 and Visual Studio 2015 installed (extensions for earlier versions of Python cannot be built using any versions of Visual Studio new enough to support C++11). If you are using Visual Studio 2019, you need at least Python 3.7.5. These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in different way (please let us know if you suceed in doing so!)
+ - This process requires a command prompt with the environment correctly configured for both Visual Studio **and** Anaconda. To create one, launch an "x64 Native Tools Command Prompt" from your chosen version of Visual Studio's start menu folder and _activate_ your chosen version of Anaconda by running the ``activate.bat`` in its ``Scripts`` directory. For example, if your user is called "me" and Anaconda is installed in your home directory, you would run:
+ \code
+ c:\Users\Me\Anaconda3\Scripts\activate.bat c:\Users\Me\Anaconda3
+ \endcode
+ - From this command prompt, install SWIG using the ``conda install swig`` command.
+ - Navigate to the GeNN directory and build GeNN as a dll with:
+ \code
+ `msbuild genn.sln /t:Build /p:Configuration=Release_DLL
+ \endcode
+ (if you don't have CUDA installed, building the CUDA backend will fail but it should still build the CPU backend).
+ - Copy the newly built DLLs into pygenn using:
+ \code
+ copy /Y lib\genn*Release_DLL.* pygenn\genn_wrapper
+ \endcode
+ - Build the Python extension with setup tools with
+ \code
+ python setup.py develop
+ \endcode
+
 
 -----
 \link Installation Top\endlink | \link Quickstart Next\endlink

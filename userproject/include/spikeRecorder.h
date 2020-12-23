@@ -222,6 +222,7 @@ inline int _clz(unsigned int value)
 /*! \param filename string containing filename to write to.
     \param spkRecord pointer to spike recording data to write (accessable via ``recordSpk<neuron group name>`` or ``recordSpkEvent<neuron group name>``).
     \param popSize number of neurons in population
+    \param numTimesteps number of timesteps recorded
     \param dt double precision number specifying size of each timestep
     \param delimiter string specifying character(s) which should appear between columns in text file
     \param header boolean specifying whether to write a header row at start of text file or not
@@ -231,7 +232,6 @@ inline void writeTextSpikeRecording(const std::string &filename, const uint32_t 
                                     unsigned int popSize, unsigned int numTimesteps, double dt = 1.0,
                                     const std::string &delimiter = " ", bool header = false, bool append = false, 
                                     double startTime = 0.0)
-                             
 {
     // Calculate number of words per-timestep
     const unsigned int timestepWords = (popSize + 31) / 32;
