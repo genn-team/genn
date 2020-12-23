@@ -1,6 +1,6 @@
 """GeNNGroups
 This module provides classes which automatize model checks and parameter
-convesions for GeNN Groups
+conversions for GeNN Groups
 """
 try:
     xrange
