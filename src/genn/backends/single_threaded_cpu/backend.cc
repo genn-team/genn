@@ -594,6 +594,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                     popSubs.addVarSubstitution("id_post_begin", "0");
                     popSubs.addVarSubstitution("id_thread", "0");
                     popSubs.addVarSubstitution("num_threads", "1");
+                    popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
                     popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
                 }
                 // Otherwise
@@ -609,6 +610,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                     popSubs.addVarSubstitution("id_thread", "0");
                     popSubs.addVarSubstitution("num_threads", "1");
                     popSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+                    popSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
                 }
                 {
                     CodeStream::Scope b(os);
