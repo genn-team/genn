@@ -555,11 +555,13 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             connSubs.addVarSubstitution("id_post_begin", "idPostStart");
             connSubs.addVarSubstitution("id_thread", "thread");
             connSubs.addVarSubstitution("num_post", "numPost");
+            connSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
         }
         else {
             connSubs.addVarSubstitution("id_post_begin", "0");
             connSubs.addVarSubstitution("id_thread", "0");
             connSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+            connSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
         }
 
         // Create another substitution stack for generating presynaptic simulation code
