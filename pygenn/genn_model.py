@@ -67,7 +67,7 @@ from .model_preprocessor import prepare_snippet
 
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
-for b in ["CUDA", "OpenCL", "SingleThreadedCPU"]:
+for b in ["CUDA", "SingleThreadedCPU", "OpenCL"]:
     # Try and import
     try:
         m = import_module(".genn_wrapper." + b + "Backend", "pygenn")
