@@ -100,6 +100,50 @@ public:
 };
 IMPLEMENT_MODEL(LIFAdditional);
 
+
+//----------------------------------------------------------------------------
+// LIFRandom
+//----------------------------------------------------------------------------
+class LIFRandom : public NeuronModels::Base
+{
+public:
+    DECLARE_MODEL(LIFRandom, 7, 2);
+
+    SET_SIM_CODE(
+        "if ($(RefracTime) <= 0.0) {\n"
+        "  scalar alpha = (($(Isyn) + $(Ioffset) + $(gennrand_normal)) * $(Rmembrane)) + $(Vrest);\n"
+        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "}\n"
+        "else {\n"
+        "  $(RefracTime) -= DT;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+
+    SET_RESET_CODE(
+        "$(V) = $(Vreset);\n"
+        "$(RefracTime) = $(TauRefrac);\n");
+
+    SET_PARAM_NAMES({
+        "C",          // Membrane capacitance
+        "TauM",       // Membrane time constant [ms]
+        "Vrest",      // Resting membrane potential [mV]
+        "Vreset",     // Reset voltage [mV]
+        "Vthresh",    // Spiking threshold [mV]
+        "Ioffset",    // Offset current
+        "TauRefrac"});
+
+    SET_DERIVED_PARAMS({
+        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
+        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+IMPLEMENT_MODEL(LIFRandom);
+
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
@@ -248,6 +292,27 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     ASSERT_FALSE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous(6));
 }
 
+
+TEST(NeuronGroup, CompareSimRNG)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+    auto *ng0 = model.addNeuronPopulation<NeuronModels::LIF>("Neurons0", 10, paramVals, varVals);
+    auto *ng1 = model.addNeuronPopulation<LIFRandom>("Neurons1", 10, paramVals, varVals);
+
+    model.finalize();
+
+    // Check that groups cannot be merged
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
+    ASSERT_TRUE(!ng0Internal->canBeMerged(*ng1));
+    ASSERT_TRUE(!ng0Internal->canInitBeMerged(*ng1));
+
+    ASSERT_TRUE(!ng0->isSimRNGRequired());
+    ASSERT_TRUE(ng1->isSimRNGRequired());
+}
 
 TEST(NeuronGroup, CompareCurrentSources)
 {
