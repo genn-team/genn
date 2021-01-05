@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -113,8 +114,8 @@ Classes</h2></td></tr>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a7fe0822b5faffcadce98ffe3b8e10197"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#a7fe0822b5faffcadce98ffe3b8e10197">Substitutions</a> (const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> *parent=nullptr)</td></tr>
 <tr class="separator:a7fe0822b5faffcadce98ffe3b8e10197"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6e7c057f59d2af8be75d7bd4f81165b7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#a6e7c057f59d2af8be75d7bd4f81165b7">Substitutions</a> (const std::vector&lt; <a class="el" href="../../d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html">FunctionTemplate</a> &gt; &amp;functions, const std::string &amp;ftype)</td></tr>
-<tr class="separator:a6e7c057f59d2af8be75d7bd4f81165b7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6444a1bddee4aa79de970f284587238e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#a6444a1bddee4aa79de970f284587238e">Substitutions</a> (const std::vector&lt; <a class="el" href="../../d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html">FunctionTemplate</a> &gt; &amp;functions)</td></tr>
+<tr class="separator:a6444a1bddee4aa79de970f284587238e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ace9f2d94bf7832f0f538c53d27063540"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ace9f2d94bf7832f0f538c53d27063540"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#ace9f2d94bf7832f0f538c53d27063540">addVarNameSubstitution</a> (const std::vector&lt; T &gt; &amp;variables, const std::string &amp;sourceSuffix=&quot;&quot;, const std::string &amp;destPrefix=&quot;&quot;, const std::string &amp;destSuffix=&quot;&quot;)</td></tr>
 <tr class="separator:ace9f2d94bf7832f0f538c53d27063540"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,8 +172,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a6e7c057f59d2af8be75d7bd4f81165b7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6e7c057f59d2af8be75d7bd4f81165b7">&#9670;&nbsp;</a></span>Substitutions() <span class="overload">[2/2]</span></h2>
+<a id="a6444a1bddee4aa79de970f284587238e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6444a1bddee4aa79de970f284587238e">&#9670;&nbsp;</a></span>Substitutions() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -184,18 +185,8 @@ Public Member Functions</h2></td></tr>
           <td class="memname">CodeGenerator::Substitutions::Substitutions </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; <a class="el" href="../../d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html">FunctionTemplate</a> &gt; &amp;&#160;</td>
-          <td class="paramname"><em>functions</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramname"><em>functions</em></td><td>)</td>
           <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>ftype</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -648,14 +639,20 @@ template&lt;typename T , typename G &gt; </div>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:15 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:48 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

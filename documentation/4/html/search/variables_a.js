@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['kernelnames',['KernelNames',['../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a9efc38e97bacfddb2925921ce5df91e3',1,'CodeGenerator::CUDA::Backend']]]
+  ['kernelnames',['KernelNames',['../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a4949b011d7d97f451fcb12c3c2e2352e',1,'CodeGenerator::BackendSIMT']]],
+  ['key',['key',['../d6/d5a/structclrngPhilox432StreamState.html#a3b6f792fe31076e61420bfb3ec63c616',1,'clrngPhilox432StreamState']]]
 ];

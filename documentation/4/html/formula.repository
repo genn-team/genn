@@ -34,3 +34,9 @@
 \form#33:\[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \]
 \form#34:$V$
 \form#35:$E_{pre}$
+\form#36:\begin{align} \Delta w_{ij} & = \ \begin{cases} F_{+}(w_{ij})\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\ F_{-}(w_{ij})\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0 \end{cases} \label{eq:synaptic_plasticity/stdp_pair} \end{align}
+\form#37:\begin{align*} &\Delta w_{ij} & = \ \begin{cases} A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\ A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0 \end{cases} \label{eq:synaptic_plasticity/stdp_pair} \end{align*}
+\form#38:\begin{align*} \Delta w_{ij} & = \ \begin{cases} A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\ A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0 \end{cases} \label{eq:synaptic_plasticity/stdp_pair} \end{align*}
+\form#39:\begin{align*} \Delta w_{ij} & = \ \begin{cases} A_{+}\exp\left(-\frac{\Delta t}{\tau_{+}}\right) & if\, \Delta t>0\\ A_{-}\exp\left(\frac{\Delta t}{\tau_{-}}\right) & if\, \Delta t\leq0 \end{cases} \end{align*}
+\form#40:$O(N^2)$$
+\form#41:$O(N^2)$

@@ -2,7 +2,10 @@ var hierarchy =
 [
     [ "AnalogueRecorder< T >", "dc/d01/classAnalogueRecorder.html", null ],
     [ "CodeGenerator::BackendBase", "d3/d15/classCodeGenerator_1_1BackendBase.html", [
-      [ "CodeGenerator::CUDA::Backend", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html", null ],
+      [ "CodeGenerator::BackendSIMT", "d1/de3/classCodeGenerator_1_1BackendSIMT.html", [
+        [ "CodeGenerator::CUDA::Backend", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html", null ],
+        [ "CodeGenerator::OpenCL::Backend", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html", null ]
+      ] ],
       [ "CodeGenerator::SingleThreadedCPU::Backend", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html", null ]
     ] ],
     [ "SpineMLSimulator::Input::Base", "d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html", [
@@ -14,12 +17,6 @@ var hierarchy =
         ] ],
         [ "SpineMLSimulator::Input::SpikeTime", "da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html", null ]
       ] ]
-    ] ],
-    [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::Base", "d1/d48/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1Base.html", [
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan", "d1/d23/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpan.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask", "d3/dff/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PostSpanBitmask.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan", "db/d2f/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpan.html", null ],
-      [ "CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural", "d1/ddb/classCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy_1_1PreSpanProcedural.html", null ]
     ] ],
     [ "SpineMLSimulator::InputValue::Base", "d1/d5e/classSpineMLSimulator_1_1InputValue_1_1Base.html", [
       [ "SpineMLSimulator::InputValue::ConstantArray", "dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html", null ],
@@ -48,9 +45,17 @@ var hierarchy =
       [ "SpineMLSimulator::ModelProperty::UniformDistribution", "de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html", null ],
       [ "SpineMLSimulator::ModelProperty::ValueList", "d9/d11/classSpineMLSimulator_1_1ModelProperty_1_1ValueList.html", null ]
     ] ],
+    [ "CodeGenerator::PresynapticUpdateStrategySIMT::Base", "da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html", [
+      [ "CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan", "d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html", null ],
+      [ "CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask", "d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html", null ],
+      [ "CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan", "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html", null ],
+      [ "CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html", null ]
+    ] ],
     [ "Snippet::Base", "db/d97/classSnippet_1_1Base.html", [
       [ "InitSparseConnectivitySnippet::Base", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html", [
+        [ "InitSparseConnectivitySnippet::Conv2D", "d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html", null ],
         [ "InitSparseConnectivitySnippet::FixedNumberPostWithReplacement", "db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html", null ],
+        [ "InitSparseConnectivitySnippet::FixedNumberPreWithReplacement", "d1/d59/classInitSparseConnectivitySnippet_1_1FixedNumberPreWithReplacement.html", null ],
         [ "InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement", "da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html", null ],
         [ "InitSparseConnectivitySnippet::FixedProbabilityBase", "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html", [
           [ "InitSparseConnectivitySnippet::FixedProbability", "df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html", null ],
@@ -63,6 +68,7 @@ var hierarchy =
         [ "InitVarSnippet::Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", null ],
         [ "InitVarSnippet::Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", null ],
         [ "InitVarSnippet::Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", null ],
+        [ "InitVarSnippet::Kernel", "df/d7b/classInitVarSnippet_1_1Kernel.html", null ],
         [ "InitVarSnippet::Normal", "d5/dc1/classInitVarSnippet_1_1Normal.html", null ],
         [ "InitVarSnippet::NormalClipped", "d7/d22/classInitVarSnippet_1_1NormalClipped.html", null ],
         [ "InitVarSnippet::NormalClippedDelay", "d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html", null ],
@@ -118,6 +124,9 @@ var hierarchy =
     ] ],
     [ "Snippet::Base::DerivedParam", "d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html", null ],
     [ "Snippet::Base::EGP", "dd/d5d/structSnippet_1_1Base_1_1EGP.html", null ],
+    [ "CodeGenerator::ModelSpecMerged::EGPField", "dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html", [
+      [ "CodeGenerator::ModelSpecMerged::MergedEGP", "d7/d41/structCodeGenerator_1_1ModelSpecMerged_1_1MergedEGP.html", null ]
+    ] ],
     [ "CodeGenerator::Substitutions::FunctionTemplate", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html", null ],
     [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", null ],
     [ "CodeGenerator::GroupMerged< G >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", null ],
@@ -130,11 +139,11 @@ var hierarchy =
     ] ],
     [ "CodeGenerator::GroupMerged< SynapseGroupInternal >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
       [ "CodeGenerator::SynapseConnectivityHostInitGroupMerged", "d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html", null ],
-      [ "CodeGenerator::SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", null ],
       [ "CodeGenerator::SynapseDendriticDelayUpdateGroupMerged", "d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html", null ],
       [ "CodeGenerator::SynapseGroupMergedBase", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html", [
         [ "CodeGenerator::PostsynapticUpdateGroupMerged", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html", null ],
         [ "CodeGenerator::PresynapticUpdateGroupMerged", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html", null ],
+        [ "CodeGenerator::SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", null ],
         [ "CodeGenerator::SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", null ]
@@ -158,9 +167,6 @@ var hierarchy =
       ] ]
     ] ],
     [ "CodeGenerator::MemAlloc", "d2/d06/classCodeGenerator_1_1MemAlloc.html", null ],
-    [ "CodeGenerator::MergedStructData::MergedEGP", "db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html", null ],
-    [ "CodeGenerator::MergedStructData", "d2/dbe/classCodeGenerator_1_1MergedStructData.html", null ],
-    [ "CodeGenerator::MergedStructGenerator< T >", "dc/d85/classCodeGenerator_1_1MergedStructGenerator.html", null ],
     [ "ModelSpec", "da/dfd/classModelSpec.html", [
       [ "ModelSpecInternal", "dc/dfa/classModelSpecInternal.html", null ]
     ] ],
@@ -183,6 +189,7 @@ var hierarchy =
     [ "Snippet::Base::ParamVal", "d7/dda/structSnippet_1_1Base_1_1ParamVal.html", null ],
     [ "CodeGenerator::PreferencesBase", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html", [
       [ "CodeGenerator::CUDA::Preferences", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html", null ],
+      [ "CodeGenerator::OpenCL::Preferences", "dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html", null ],
       [ "CodeGenerator::SingleThreadedCPU::Preferences", "d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html", null ]
     ] ],
     [ "CodeGenerator::CodeStream::Scope", "d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html", null ],
@@ -201,10 +208,10 @@ var hierarchy =
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", [
       [ "SynapseGroupInternal", "dd/d48/classSynapseGroupInternal.html", null ]
     ] ],
-    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "Timer", "dc/dea/classTimer.html", null ],
-    [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
+    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
+    [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
     [ "Snippet::ValueBase< NumVars >", "da/d76/classSnippet_1_1ValueBase.html", null ],
     [ "Snippet::ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", null ],
     [ "Models::Base::Var", "d5/d42/structModels_1_1Base_1_1Var.html", null ],

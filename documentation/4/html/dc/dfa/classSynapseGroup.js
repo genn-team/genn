@@ -23,6 +23,7 @@ var classSynapseGroup =
     [ "getDelaySteps", "dc/dfa/classSynapseGroup.html#a46792ae6aadf1948ccc42450175a1c42", null ],
     [ "getDendriticDelayLocation", "dc/dfa/classSynapseGroup.html#ac91f10810d28560a1b60968834f8e41f", null ],
     [ "getInSynLocation", "dc/dfa/classSynapseGroup.html#aa02124fcc921b0e05785d277f0c9f415", null ],
+    [ "getKernelSize", "dc/dfa/classSynapseGroup.html#ad9f17c66599fe1c04d5c42433202d228", null ],
     [ "getMatrixType", "dc/dfa/classSynapseGroup.html#a91d96a0c0135910329c2922fdd82169c", null ],
     [ "getMaxConnections", "dc/dfa/classSynapseGroup.html#a66f15c24d427c6a7e88ff3cf20b6d39e", null ],
     [ "getMaxDendriticDelayTimesteps", "dc/dfa/classSynapseGroup.html#aa582cd38678138e44cd0ba9a3a8da7d4", null ],

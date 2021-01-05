@@ -1,5 +1,6 @@
 var searchData=
 [
+  ['calckernelsizefunc',['CalcKernelSizeFunc',['../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a5b924d2ef2001967702e892322b135e1',1,'InitSparseConnectivitySnippet::Base']]],
   ['calcmaxlengthfunc',['CalcMaxLengthFunc',['../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7719c85cf11d180023fa955ec86a4204',1,'InitSparseConnectivitySnippet::Base']]],
   ['clrnglfsr113stream',['clrngLfsr113Stream',['../d7/d63/lfsr113_8h.html#a2026e7c884ef6a30d41086a0af6b754e',1,'lfsr113.h']]],
   ['clrnglfsr113streamcreator',['clrngLfsr113StreamCreator',['../d7/d63/lfsr113_8h.html#a2343ad5dda3b1def209bd4431a7531af',1,'lfsr113.h']]],

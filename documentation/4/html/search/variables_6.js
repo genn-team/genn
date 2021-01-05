@@ -8,5 +8,5 @@ var searchData=
   ['genn_5ftypes',['genn_types',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a81288a619a25a65d3ff4afd52bed3647',1,'pygenn::genn_model::GeNNModel']]],
   ['genntype',['GeNNType',['../de/d6e/namespacepygenn_1_1genn__model.html#a9288192a7e32920c04a3647efcd52304',1,'pygenn::genn_model']]],
   ['group',['group',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a18fb691ce09b8b8e3e99fd50682894ec',1,'pygenn.model_preprocessor.Variable.group()'],['../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#af9100acc003a3a751ea5e3b175e6a658',1,'pygenn.model_preprocessor.ExtraGlobalVariable.group()']]],
-  ['groupindex',['groupIndex',['../db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#a1f113d87e4cbc15ae958bb101b255437',1,'CodeGenerator::MergedStructData::MergedEGP']]]
+  ['groupindex',['groupIndex',['../d7/d41/structCodeGenerator_1_1ModelSpecMerged_1_1MergedEGP.html#a0b6b8dc097746648a52eea87ef5ed1f6',1,'CodeGenerator::ModelSpecMerged::MergedEGP']]]
 ];

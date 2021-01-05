@@ -1,7 +1,7 @@
 var classCodeGenerator_1_1NeuronUpdateGroupMerged =
 [
-    [ "NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a942341dae0123bc0c17b1d4d0b950054", null ],
-    [ "generate", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#ac5804a77ce2b4a92c7d06a5c4e75f157", null ],
+    [ "NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a136e28001a9d124e592e0d3abd5ea840", null ],
+    [ "generateRunner", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a2b4c5afbe11a9203e6a7ea99c71cf4a2", null ],
     [ "getCurrentQueueOffset", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#adca7ad20be3f9eb47c1e40617ae35600", null ],
     [ "getPrevQueueOffset", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#ab47306a035a7773264defff2a95ccf90", null ],
     [ "isInSynWUMDerivedParamHeterogeneous", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#ac8c86f147c574d193478b8f0b8160318", null ],

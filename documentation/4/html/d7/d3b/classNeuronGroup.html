@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -135,12 +136,27 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a63004d6ff9f5b2982ef401e95314d531"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a63004d6ff9f5b2982ef401e95314d531">setSpikeTimeLocation</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc)</td></tr>
 <tr class="memdesc:a63004d6ff9f5b2982ef401e95314d531"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set location of this neuron group's output spike times.  <a href="#a63004d6ff9f5b2982ef401e95314d531">More...</a><br /></td></tr>
 <tr class="separator:a63004d6ff9f5b2982ef401e95314d531"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0ce68e38a260e5129999856b5da347e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad0ce68e38a260e5129999856b5da347e">setPrevSpikeTimeLocation</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc)</td></tr>
+<tr class="memdesc:ad0ce68e38a260e5129999856b5da347e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set location of this neuron group's previous output spike times.  <a href="#ad0ce68e38a260e5129999856b5da347e">More...</a><br /></td></tr>
+<tr class="separator:ad0ce68e38a260e5129999856b5da347e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58833ec29fc1ed2343394409aa7403a3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a58833ec29fc1ed2343394409aa7403a3">setSpikeEventTimeLocation</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc)</td></tr>
+<tr class="memdesc:a58833ec29fc1ed2343394409aa7403a3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set location of this neuron group's output spike-like-event times.  <a href="#a58833ec29fc1ed2343394409aa7403a3">More...</a><br /></td></tr>
+<tr class="separator:a58833ec29fc1ed2343394409aa7403a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65377840318b4199c4c464dd3f23b7b3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a65377840318b4199c4c464dd3f23b7b3">setPrevSpikeEventTimeLocation</a> (<a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc)</td></tr>
+<tr class="memdesc:a65377840318b4199c4c464dd3f23b7b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set location of this neuron group's previous output spike-like-event times.  <a href="#a65377840318b4199c4c464dd3f23b7b3">More...</a><br /></td></tr>
+<tr class="separator:a65377840318b4199c4c464dd3f23b7b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75951040bc142c60c4f0b5a8aa84bd57"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a75951040bc142c60c4f0b5a8aa84bd57">setVarLocation</a> (const std::string &amp;varName, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc)</td></tr>
 <tr class="memdesc:a75951040bc142c60c4f0b5a8aa84bd57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set variable location of neuron model state variable.  <a href="#a75951040bc142c60c4f0b5a8aa84bd57">More...</a><br /></td></tr>
 <tr class="separator:a75951040bc142c60c4f0b5a8aa84bd57"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f54ec7c3dbf68196a62c2c953eeccd4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a9f54ec7c3dbf68196a62c2c953eeccd4">setExtraGlobalParamLocation</a> (const std::string &amp;paramName, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> loc)</td></tr>
 <tr class="memdesc:a9f54ec7c3dbf68196a62c2c953eeccd4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set location of neuron model extra global parameter.  <a href="#a9f54ec7c3dbf68196a62c2c953eeccd4">More...</a><br /></td></tr>
 <tr class="separator:a9f54ec7c3dbf68196a62c2c953eeccd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a34da6fbc527096cc929cc17aa7b2ee86"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a34da6fbc527096cc929cc17aa7b2ee86">setSpikeRecordingEnabled</a> (bool enabled)</td></tr>
+<tr class="memdesc:a34da6fbc527096cc929cc17aa7b2ee86"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables and disable spike recording for this population.  <a href="#a34da6fbc527096cc929cc17aa7b2ee86">More...</a><br /></td></tr>
+<tr class="separator:a34da6fbc527096cc929cc17aa7b2ee86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bb72f69aacc6d2ad3801d8975111847"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a3bb72f69aacc6d2ad3801d8975111847">setSpikeEventRecordingEnabled</a> (bool enabled)</td></tr>
+<tr class="memdesc:a3bb72f69aacc6d2ad3801d8975111847"><td class="mdescLeft">&#160;</td><td class="mdescRight">Enables and disable spike event recording for this population.  <a href="#a3bb72f69aacc6d2ad3801d8975111847">More...</a><br /></td></tr>
+<tr class="separator:a3bb72f69aacc6d2ad3801d8975111847"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ca1529217cfe4c8b7858cae99ec3315"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a5ca1529217cfe4c8b7858cae99ec3315">getName</a> () const</td></tr>
 <tr class="separator:a5ca1529217cfe4c8b7858cae99ec3315"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4b9215c3c33eadc85c233d403034ac8"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aa4b9215c3c33eadc85c233d403034ac8">getNumNeurons</a> () const</td></tr>
@@ -155,6 +171,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a2217c2f1119bff7d7a471312d8d51004"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46de5e06d867bc56b257f69def0698d5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a46de5e06d867bc56b257f69def0698d5">isSpikeTimeRequired</a> () const</td></tr>
 <tr class="separator:a46de5e06d867bc56b257f69def0698d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8fda1d856c91f69415f99d64e2cbf517"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a8fda1d856c91f69415f99d64e2cbf517">isPrevSpikeTimeRequired</a> () const</td></tr>
+<tr class="separator:a8fda1d856c91f69415f99d64e2cbf517"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3cbd28d6427390d1a14c65439dec020a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a3cbd28d6427390d1a14c65439dec020a">isSpikeEventTimeRequired</a> () const</td></tr>
+<tr class="separator:a3cbd28d6427390d1a14c65439dec020a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af14fc3d231de6b485c088c4625679244"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#af14fc3d231de6b485c088c4625679244">isPrevSpikeEventTimeRequired</a> () const</td></tr>
+<tr class="separator:af14fc3d231de6b485c088c4625679244"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a779ffce6e38704ae33ae45affbffdaa2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a779ffce6e38704ae33ae45affbffdaa2">isTrueSpikeRequired</a> () const</td></tr>
 <tr class="separator:a779ffce6e38704ae33ae45affbffdaa2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af3cc12aa18eaf34faa2297a16f257fab"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#af3cc12aa18eaf34faa2297a16f257fab">isSpikeEventRequired</a> () const</td></tr>
@@ -174,6 +196,15 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a65601133dc934a9c46462e43e6d096dc"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a65601133dc934a9c46462e43e6d096dc">getSpikeTimeLocation</a> () const</td></tr>
 <tr class="memdesc:a65601133dc934a9c46462e43e6d096dc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get location of this neuron group's output spike times.  <a href="#a65601133dc934a9c46462e43e6d096dc">More...</a><br /></td></tr>
 <tr class="separator:a65601133dc934a9c46462e43e6d096dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af69c73b99e691d59d47f9a4a9731aa36"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#af69c73b99e691d59d47f9a4a9731aa36">getPrevSpikeTimeLocation</a> () const</td></tr>
+<tr class="memdesc:af69c73b99e691d59d47f9a4a9731aa36"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get location of this neuron group's previous output spike times.  <a href="#af69c73b99e691d59d47f9a4a9731aa36">More...</a><br /></td></tr>
+<tr class="separator:af69c73b99e691d59d47f9a4a9731aa36"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68cfb2b7eae38c25eea9cbfcdd54ee30"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a68cfb2b7eae38c25eea9cbfcdd54ee30">getSpikeEventTimeLocation</a> () const</td></tr>
+<tr class="memdesc:a68cfb2b7eae38c25eea9cbfcdd54ee30"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get location of this neuron group's output spike-like-event times.  <a href="#a68cfb2b7eae38c25eea9cbfcdd54ee30">More...</a><br /></td></tr>
+<tr class="separator:a68cfb2b7eae38c25eea9cbfcdd54ee30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a59df7d7ea45a8dd6d077726215fd705e"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a59df7d7ea45a8dd6d077726215fd705e">getPrevSpikeEventTimeLocation</a> () const</td></tr>
+<tr class="memdesc:a59df7d7ea45a8dd6d077726215fd705e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get location of this neuron group's previous output spike-like-event times.  <a href="#a59df7d7ea45a8dd6d077726215fd705e">More...</a><br /></td></tr>
+<tr class="separator:a59df7d7ea45a8dd6d077726215fd705e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcbb2b02e02286d4206e94bc3905883b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#adcbb2b02e02286d4206e94bc3905883b">getVarLocation</a> (const std::string &amp;varName) const</td></tr>
 <tr class="memdesc:adcbb2b02e02286d4206e94bc3905883b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get location of neuron model state variable by name.  <a href="#adcbb2b02e02286d4206e94bc3905883b">More...</a><br /></td></tr>
 <tr class="separator:adcbb2b02e02286d4206e94bc3905883b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -186,12 +217,21 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a13e3e1fba765cbcf3a5424c7a6ea53a0"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a13e3e1fba765cbcf3a5424c7a6ea53a0">getExtraGlobalParamLocation</a> (size_t index) const</td></tr>
 <tr class="memdesc:a13e3e1fba765cbcf3a5424c7a6ea53a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get location of neuron model extra global parameter by omdex.  <a href="#a13e3e1fba765cbcf3a5424c7a6ea53a0">More...</a><br /></td></tr>
 <tr class="separator:a13e3e1fba765cbcf3a5424c7a6ea53a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad89d70de9582681b574dc4086bf32a5f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad89d70de9582681b574dc4086bf32a5f">isSpikeRecordingEnabled</a> () const</td></tr>
+<tr class="memdesc:ad89d70de9582681b574dc4086bf32a5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is spike recording enabled for this population?  <a href="#ad89d70de9582681b574dc4086bf32a5f">More...</a><br /></td></tr>
+<tr class="separator:ad89d70de9582681b574dc4086bf32a5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66b456ce8ba36c21984b8d6e241908d7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a66b456ce8ba36c21984b8d6e241908d7">isSpikeEventRecordingEnabled</a> () const</td></tr>
+<tr class="memdesc:a66b456ce8ba36c21984b8d6e241908d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is spike event recording enabled for this population?  <a href="#a66b456ce8ba36c21984b8d6e241908d7">More...</a><br /></td></tr>
+<tr class="separator:a66b456ce8ba36c21984b8d6e241908d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a193c659939f14aa5442295804f203477"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a193c659939f14aa5442295804f203477">isSimRNGRequired</a> () const</td></tr>
 <tr class="memdesc:a193c659939f14aa5442295804f203477"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require an RNG to simulate?  <a href="#a193c659939f14aa5442295804f203477">More...</a><br /></td></tr>
 <tr class="separator:a193c659939f14aa5442295804f203477"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3377276c4239b87c72ba7a538fcca825"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a3377276c4239b87c72ba7a538fcca825">isInitRNGRequired</a> () const</td></tr>
 <tr class="memdesc:a3377276c4239b87c72ba7a538fcca825"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require an RNG for it's init code?  <a href="#a3377276c4239b87c72ba7a538fcca825">More...</a><br /></td></tr>
 <tr class="separator:a3377276c4239b87c72ba7a538fcca825"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bb0faa6491e992e997443abe51c5c83"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a3bb0faa6491e992e997443abe51c5c83">isRecordingEnabled</a> () const</td></tr>
+<tr class="memdesc:a3bb0faa6491e992e997443abe51c5c83"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this neuron group require any sort of recording?  <a href="#a3bb0faa6491e992e997443abe51c5c83">More...</a><br /></td></tr>
+<tr class="separator:a3bb0faa6491e992e997443abe51c5c83"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -223,8 +263,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a10befa3a320fdd65a3fd89230737160c"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a10befa3a320fdd65a3fd89230737160c">getInSyn</a> () const</td></tr>
 <tr class="memdesc:a10befa3a320fdd65a3fd89230737160c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all synapse groups which provide input to this neuron group.  <a href="#a10befa3a320fdd65a3fd89230737160c">More...</a><br /></td></tr>
 <tr class="separator:a10befa3a320fdd65a3fd89230737160c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70c82b2ceb022ecb0864823ca1966bbb"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::pair&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> *, std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a70c82b2ceb022ecb0864823ca1966bbb">getMergedInSyn</a> () const</td></tr>
-<tr class="separator:a70c82b2ceb022ecb0864823ca1966bbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94f9a56a42c986af96c51519be6c12e4"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a94f9a56a42c986af96c51519be6c12e4">getMergedInSyn</a> () const</td></tr>
+<tr class="separator:a94f9a56a42c986af96c51519be6c12e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5382014efec01cffac158fe208762f50"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a5382014efec01cffac158fe208762f50">getOutSyn</a> () const</td></tr>
 <tr class="memdesc:a5382014efec01cffac158fe208762f50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all synapse groups emanating from this neuron group.  <a href="#a5382014efec01cffac158fe208762f50">More...</a><br /></td></tr>
 <tr class="separator:a5382014efec01cffac158fe208762f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -734,8 +774,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a70c82b2ceb022ecb0864823ca1966bbb"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70c82b2ceb022ecb0864823ca1966bbb">&#9670;&nbsp;</a></span>getMergedInSyn()</h2>
+<a id="a94f9a56a42c986af96c51519be6c12e4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94f9a56a42c986af96c51519be6c12e4">&#9670;&nbsp;</a></span>getMergedInSyn()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -744,7 +784,7 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">const std::vector&lt;std::pair&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>*, std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>*&gt; &gt; &gt;&amp; NeuronGroup::getMergedInSyn </td>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>*&gt;&amp; NeuronGroup::getMergedInSyn </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -969,6 +1009,60 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a59df7d7ea45a8dd6d077726215fd705e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a59df7d7ea45a8dd6d077726215fd705e">&#9670;&nbsp;</a></span>getPrevSpikeEventTimeLocation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> NeuronGroup::getPrevSpikeEventTimeLocation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get location of this neuron group's previous output spike-like-event times. </p>
+
+</div>
+</div>
+<a id="af69c73b99e691d59d47f9a4a9731aa36"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af69c73b99e691d59d47f9a4a9731aa36">&#9670;&nbsp;</a></span>getPrevSpikeTimeLocation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> NeuronGroup::getPrevSpikeTimeLocation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get location of this neuron group's previous output spike times. </p>
+
+</div>
+</div>
 <a id="acc6ecb4f2adb3e38676e9a24e66b3789"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acc6ecb4f2adb3e38676e9a24e66b3789">&#9670;&nbsp;</a></span>getSpikeEventCondition()</h2>
 
@@ -1018,6 +1112,33 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get location of this neuron group's output spike events. </p>
+
+</div>
+</div>
+<a id="a68cfb2b7eae38c25eea9cbfcdd54ee30"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68cfb2b7eae38c25eea9cbfcdd54ee30">&#9670;&nbsp;</a></span>getSpikeEventTimeLocation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> NeuronGroup::getSpikeEventTimeLocation </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get location of this neuron group's output spike-like-event times. </p>
 
 </div>
 </div>
@@ -1246,6 +1367,59 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="af14fc3d231de6b485c088c4625679244"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af14fc3d231de6b485c088c4625679244">&#9670;&nbsp;</a></span>isPrevSpikeEventTimeRequired()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isPrevSpikeEventTimeRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8fda1d856c91f69415f99d64e2cbf517"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8fda1d856c91f69415f99d64e2cbf517">&#9670;&nbsp;</a></span>isPrevSpikeTimeRequired()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isPrevSpikeTimeRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3bb0faa6491e992e997443abe51c5c83"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bb0faa6491e992e997443abe51c5c83">&#9670;&nbsp;</a></span>isRecordingEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isRecordingEnabled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Does this neuron group require any sort of recording? </p>
+
+</div>
+</div>
 <a id="a193c659939f14aa5442295804f203477"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a193c659939f14aa5442295804f203477">&#9670;&nbsp;</a></span>isSimRNGRequired()</h2>
 
@@ -1265,6 +1439,33 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a66b456ce8ba36c21984b8d6e241908d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a66b456ce8ba36c21984b8d6e241908d7">&#9670;&nbsp;</a></span>isSpikeEventRecordingEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isSpikeEventRecordingEnabled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Is spike event recording enabled for this population? </p>
+
+</div>
+</div>
 <a id="af3cc12aa18eaf34faa2297a16f257fab"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af3cc12aa18eaf34faa2297a16f257fab">&#9670;&nbsp;</a></span>isSpikeEventRequired()</h2>
 
@@ -1279,6 +1480,50 @@ Protected Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3cbd28d6427390d1a14c65439dec020a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3cbd28d6427390d1a14c65439dec020a">&#9670;&nbsp;</a></span>isSpikeEventTimeRequired()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isSpikeEventTimeRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ad89d70de9582681b574dc4086bf32a5f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad89d70de9582681b574dc4086bf32a5f">&#9670;&nbsp;</a></span>isSpikeRecordingEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool NeuronGroup::isSpikeRecordingEnabled </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Is spike recording enabled for this population? </p>
 
 </div>
 </div>
@@ -1444,6 +1689,64 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a65377840318b4199c4c464dd3f23b7b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65377840318b4199c4c464dd3f23b7b3">&#9670;&nbsp;</a></span>setPrevSpikeEventTimeLocation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::setPrevSpikeEventTimeLocation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
+          <td class="paramname"><em>loc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set location of this neuron group's previous output spike-like-event times. </p>
+<p>This is ignored for simulations on hardware with a single memory space </p>
+
+</div>
+</div>
+<a id="ad0ce68e38a260e5129999856b5da347e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0ce68e38a260e5129999856b5da347e">&#9670;&nbsp;</a></span>setPrevSpikeTimeLocation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::setPrevSpikeTimeLocation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
+          <td class="paramname"><em>loc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set location of this neuron group's previous output spike times. </p>
+<p>This is ignored for simulations on hardware with a single memory space </p>
+
+</div>
+</div>
 <a id="a95f0660e93790ea764119002db68f706"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a95f0660e93790ea764119002db68f706">&#9670;&nbsp;</a></span>setSpikeEventLocation()</h2>
 
@@ -1469,6 +1772,63 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Set location of this neuron group's output spike events. </p>
+<p>This is ignored for simulations on hardware with a single memory space </p>
+
+</div>
+</div>
+<a id="a3bb72f69aacc6d2ad3801d8975111847"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bb72f69aacc6d2ad3801d8975111847">&#9670;&nbsp;</a></span>setSpikeEventRecordingEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::setSpikeEventRecordingEnabled </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enables and disable spike event recording for this population. </p>
+
+</div>
+</div>
+<a id="a58833ec29fc1ed2343394409aa7403a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58833ec29fc1ed2343394409aa7403a3">&#9670;&nbsp;</a></span>setSpikeEventTimeLocation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::setSpikeEventTimeLocation </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a>&#160;</td>
+          <td class="paramname"><em>loc</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set location of this neuron group's output spike-like-event times. </p>
 <p>This is ignored for simulations on hardware with a single memory space </p>
 
 </div>
@@ -1499,6 +1859,34 @@ Protected Member Functions</h2></td></tr>
 
 <p>Set location of this neuron group's output spikes. </p>
 <p>This is ignored for simulations on hardware with a single memory space </p>
+
+</div>
+</div>
+<a id="a34da6fbc527096cc929cc17aa7b2ee86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a34da6fbc527096cc929cc17aa7b2ee86">&#9670;&nbsp;</a></span>setSpikeRecordingEnabled()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::setSpikeRecordingEnabled </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>enabled</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Enables and disable spike recording for this population. </p>
 
 </div>
 </div>
@@ -1624,14 +2012,20 @@ Protected Member Functions</h2></td></tr>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:10 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

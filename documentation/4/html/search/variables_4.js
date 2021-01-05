@@ -1,6 +1,5 @@
 var searchData=
 [
-  ['egpinthresholdcode',['egpInThresholdCode',['../d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html#a400b04059df19534b62527695cf9298c',1,'NeuronGroup::SpikeEventThreshold']]],
   ['enablebitmaskoptimisations',['enableBitmaskOptimisations',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8',1,'CodeGenerator::PreferencesBase']]],
   ['errorstring',['errorString',['../d3/d1a/clRNG_8c.html#adf709b84aa9a04e6ec7725ae355988d9',1,'errorString():&#160;private.c'],['../d7/d07/private_8c.html#adf709b84aa9a04e6ec7725ae355988d9',1,'errorString():&#160;private.c']]],
   ['eventthresholdcode',['eventThresholdCode',['../d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html#a2ef99f9c032dc31943da3fb5fd218a1d',1,'NeuronGroup::SpikeEventThreshold']]],

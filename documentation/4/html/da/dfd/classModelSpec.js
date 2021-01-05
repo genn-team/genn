@@ -27,6 +27,7 @@ var classModelSpec =
     [ "getSeed", "da/dfd/classModelSpec.html#a24a6871d45b88b81fa8c5dd514621575", null ],
     [ "getSynapseGroups", "da/dfd/classModelSpec.html#a431331400e06bb2151d30da3b55cf8a7", null ],
     [ "getTimePrecision", "da/dfd/classModelSpec.html#a8ce5c434e12fecf2651d886bd22e82b7", null ],
+    [ "isRecordingInUse", "da/dfd/classModelSpec.html#ab08bc83824d4efbde2154b8b8985a1c2", null ],
     [ "isTimingEnabled", "da/dfd/classModelSpec.html#acadfb9fd83c86d18ccf678e43d08ac5d", null ],
     [ "operator=", "da/dfd/classModelSpec.html#aaf415f0379159d74d57d18126cf2982e", null ],
     [ "scalarExpr", "da/dfd/classModelSpec.html#ac484371c3488217f91da83fa93f713b3", null ],

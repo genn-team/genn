@@ -3,6 +3,7 @@ var initVarSnippet_8h =
     [ "Base", "d3/d9e/classInitVarSnippet_1_1Base.html", "d3/d9e/classInitVarSnippet_1_1Base" ],
     [ "Uninitialised", "d9/db6/classInitVarSnippet_1_1Uninitialised.html", "d9/db6/classInitVarSnippet_1_1Uninitialised" ],
     [ "Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", "dd/dcb/classInitVarSnippet_1_1Constant" ],
+    [ "Kernel", "df/d7b/classInitVarSnippet_1_1Kernel.html", null ],
     [ "Uniform", "dd/da0/classInitVarSnippet_1_1Uniform.html", "dd/da0/classInitVarSnippet_1_1Uniform" ],
     [ "Normal", "d5/dc1/classInitVarSnippet_1_1Normal.html", "d5/dc1/classInitVarSnippet_1_1Normal" ],
     [ "NormalClipped", "d7/d22/classInitVarSnippet_1_1NormalClipped.html", "d7/d22/classInitVarSnippet_1_1NormalClipped" ],

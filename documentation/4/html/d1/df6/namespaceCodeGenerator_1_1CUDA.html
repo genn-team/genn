@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -96,7 +97,6 @@ $(document).ready(function(){initNavTree('d1/df6/namespaceCodeGenerator_1_1CUDA.
   <div class="summary">
 <a href="#namespaces">Namespaces</a> &#124;
 <a href="#nested-classes">Classes</a> &#124;
-<a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a>  </div>
   <div class="headertitle">
 <div class="title">CodeGenerator::CUDA Namespace Reference</div>  </div>
@@ -107,8 +107,6 @@ $(document).ready(function(){initNavTree('d1/df6/namespaceCodeGenerator_1_1CUDA.
 Namespaces</h2></td></tr>
 <tr class="memitem:d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html">Optimiser</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:da/d97/namespaceCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy"><td class="memItemLeft" align="right" valign="top"> &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d97/namespaceCodeGenerator_1_1CUDA_1_1PresynapticUpdateStrategy.html">PresynapticUpdateStrategy</a></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -118,17 +116,12 @@ Classes</h2></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html" title="Preferences for CUDA backend. ">Preferences</a> for <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> backend.  <a href="../../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
-Typedefs</h2></td></tr>
-<tr class="memitem:a834e8ff4a9b37453a04e5bfa2743423b"><td class="memItemLeft" align="right" valign="top">using&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a834e8ff4a9b37453a04e5bfa2743423b">KernelBlockSize</a> = std::array&lt; size_t, <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8">KernelMax</a> &gt;</td></tr>
-<tr class="memdesc:a834e8ff4a9b37453a04e5bfa2743423b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Array of block sizes for each kernel.  <a href="#a834e8ff4a9b37453a04e5bfa2743423b">More...</a><br /></td></tr>
-<tr class="separator:a834e8ff4a9b37453a04e5bfa2743423b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
 <tr class="memitem:a05cdf29b66af2e1899cbb1d9c702f9d0"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0">DeviceSelect</a> { <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0af00c8dbdd6e1f11bdae06be94277d293">DeviceSelect::OPTIMAL</a>, 
 <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a7091742b1aa4b0be2bcb9750a1f4b0b9">DeviceSelect::MOST_MEMORY</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a">DeviceSelect::MANUAL</a>
+<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a">DeviceSelect::MANUAL</a>, 
+<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0a838986270698f1a1afaf0721b7f0d4bf">DeviceSelect::MANUAL_RUNTIME</a>
  }<tr class="memdesc:a05cdf29b66af2e1899cbb1d9c702f9d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Methods for selecting CUDA device.  <a href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:a05cdf29b66af2e1899cbb1d9c702f9d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -137,40 +130,7 @@ Enumerations</h2></td></tr>
  }<tr class="memdesc:a54abdd5e5351c160ba420cd758edb7ab"><td class="mdescLeft">&#160;</td><td class="mdescRight">Methods for selecting CUDA kernel block size.  <a href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a54abdd5e5351c160ba420cd758edb7ab">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:a54abdd5e5351c160ba420cd758edb7ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05381dc4178da4eb5cd21384a44dace4"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4">Kernel</a> { <br />
-&#160;&#160;<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4aaec9b086a2ef409550ce776d86aaa86a">KernelNeuronUpdate</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a04b623e2a4ab2808470363c22a79c7e7">KernelPresynapticUpdate</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9f45a6407688531cd48f2388bfafda5c">KernelPostsynapticUpdate</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4aa3a04c14a730249c086bb298983be99e">KernelSynapseDynamicsUpdate</a>, 
-<br />
-&#160;&#160;<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9acb34e35b42abc1f34588fdca07e991">KernelInitialize</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a451ac73ef4b58ec26077ede94530d289">KernelInitializeSparse</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a49f1596096bf3331e674c7a7cab58ddb">KernelPreNeuronReset</a>, 
-<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9c6a972a3c8a44df03be8a8d233adf46">KernelPreSynapseReset</a>, 
-<br />
-&#160;&#160;<a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8">KernelMax</a>
-<br />
- }<tr class="memdesc:a05381dc4178da4eb5cd21384a44dace4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Kernels generated by CUDA backend.  <a href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4">More...</a><br /></td></tr>
-</td></tr>
-<tr class="separator:a05381dc4178da4eb5cd21384a44dace4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Typedef Documentation</h2>
-<a id="a834e8ff4a9b37453a04e5bfa2743423b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a834e8ff4a9b37453a04e5bfa2743423b">&#9670;&nbsp;</a></span>KernelBlockSize</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">using <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a834e8ff4a9b37453a04e5bfa2743423b">CodeGenerator::CUDA::KernelBlockSize</a> = typedef std::array&lt;size_t, <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8">KernelMax</a>&gt;</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Array of block sizes for each kernel. </p>
-
-</div>
-</div>
 <h2 class="groupheader">Enumeration Type Documentation</h2>
 <a id="a54abdd5e5351c160ba420cd758edb7ab"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a54abdd5e5351c160ba420cd758edb7ab">&#9670;&nbsp;</a></span>BlockSizeSelect</h2>
@@ -230,47 +190,28 @@ Enumerations</h2></td></tr>
 </td></tr>
 <tr><td class="fieldname"><a id="a05cdf29b66af2e1899cbb1d9c702f9d0aa60a6a471c0681e5a49c4f5d00f6bc5a"></a>MANUAL&#160;</td><td class="fielddoc"><p>Use device specified by user. </p>
 </td></tr>
-</table>
-
-</div>
-</div>
-<a id="a05381dc4178da4eb5cd21384a44dace4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a05381dc4178da4eb5cd21384a44dace4">&#9670;&nbsp;</a></span>Kernel</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">enum <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4">CodeGenerator::CUDA::Kernel</a></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Kernels generated by <a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a> backend. </p>
-<table class="fieldtable">
-<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4aaec9b086a2ef409550ce776d86aaa86a"></a>KernelNeuronUpdate&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a04b623e2a4ab2808470363c22a79c7e7"></a>KernelPresynapticUpdate&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a9f45a6407688531cd48f2388bfafda5c"></a>KernelPostsynapticUpdate&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4aa3a04c14a730249c086bb298983be99e"></a>KernelSynapseDynamicsUpdate&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a9acb34e35b42abc1f34588fdca07e991"></a>KernelInitialize&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a451ac73ef4b58ec26077ede94530d289"></a>KernelInitializeSparse&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a49f1596096bf3331e674c7a7cab58ddb"></a>KernelPreNeuronReset&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a9c6a972a3c8a44df03be8a8d233adf46"></a>KernelPreSynapseReset&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8"></a>KernelMax&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a05cdf29b66af2e1899cbb1d9c702f9d0a838986270698f1a1afaf0721b7f0d4bf"></a>MANUAL_RUNTIME&#160;</td><td class="fielddoc"><p>Use device specified by user at runtime with allocateMem parameter. Optimisation will be performed on device specified with manualDeviceID. </p>
+</td></tr>
 </table>
 
 </div>
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/df6/namespaceCodeGenerator_1_1CUDA.html">CUDA</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:18 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:49 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

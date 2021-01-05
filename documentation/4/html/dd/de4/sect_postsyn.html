@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -102,26 +103,32 @@ $(document).ready(function(){initNavTree('dd/de4/sect_postsyn.html','../../');})
 <li><a class="el" href="../../d5/d27/classPostsynapticModels_1_1ExpCond.html" title="Exponential decay with synaptic input treated as a conductance value. ">PostsynapticModels::ExpCond</a></li>
 <li><a class="el" href="../../de/da9/classPostsynapticModels_1_1DeltaCurr.html" title="Simple delta current synapse. ">PostsynapticModels::DeltaCurr</a></li>
 </ul>
+<p> <div class='toggleable_div label_python' style='display: none;'> In Python, these models can be selected by their unqualified name e.g. "ExpCurr".  </div></p>
 <h1><a class="anchor" id="sect_new_postsynaptic"></a>
 Defining a new postsynaptic model</h1>
-<p>The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time.</p>
-<p>In the same manner as to both the neuron and weight update models discussed in <a class="el" href="../../de/ded/sectNeuronModels.html#sect_own">Defining your own neuron type</a> and <a class="el" href="../../d5/d24/sectSynapseModels.html#sect34">Defining a new weight update model</a>, postsynamic model definitions are encapsulated in a class derived from <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a>. Again, the methods that a postsynaptic model should implement can be implemented using the following macros:</p><ul>
-<li><a class="el" href="../../d4/d13/models_8h.html#ae0c817e85c196f39cf62d608883cda13">DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)</a>, <a class="el" href="../../de/d6c/snippet_8h.html#aa592bfe3ce05ffc19a8f21d8482add6b">SET_DERIVED_PARAMS()</a>, <a class="el" href="../../de/d6c/snippet_8h.html#a75315265035fd71c5b5f7d7f449edbd7">SET_PARAM_NAMES()</a>, <a class="el" href="../../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS()</a> perform the same roles as they do in the neuron models discussed in <a class="el" href="../../de/ded/sectNeuronModels.html#sect_own">Defining your own neuron type</a>.</li>
-<li><a class="el" href="../../d8/d47/postsynapticModels_8h.html#a76caa98a308e162345cee61e025de022">SET_DECAY_CODE(DECAY_CODE)</a> defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.</li>
-<li><a class="el" href="../../d8/d47/postsynapticModels_8h.html#a41d7141aeae91e2840c2629106b6a3b1">SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE)</a> defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model: <div class="fragment"><div class="line"><a class="code" href="../../d8/d47/postsynapticModels_8h.html#a41d7141aeae91e2840c2629106b6a3b1">SET_APPLY_INPUT_CODE</a>(<span class="stringliteral">&quot;$(Isyn) += $(inSyn) * ($(E) - $(V))&quot;</span>);</div></div><!-- fragment --> where $(E) is a postsynaptic model parameter specifying reversal potential and $(V) is the variable containing the postsynaptic neuron's membrane potential. As discussed in <a class="el" href="../../d0/da6/UserGuide.html#predefinedVars">Built-in Variables in GeNN</a>, $(Isyn) is the built in variable used to sum neuron input. However additional input variables can be added to a neuron model using the <a class="el" href="../../d3/dc0/neuronModels_8h.html#a96a3e23f5c7309a47bc6562e0be81e99">SET_ADDITIONAL_INPUT_VARS()</a> macro (see <a class="el" href="../../de/ded/sectNeuronModels.html#sect_own">Defining your own neuron type</a> for more details).</li>
+<p>The postsynaptic model defines how synaptic activation translates into an input current (or other input term for models that are not current based). It also can contain equations defining dynamics that are applied to the (summed) synaptic activation, e.g. an exponential decay over time. In the same manner as to both the neuron and weight update models discussed in <a class="el" href="../../de/ded/sectNeuronModels.html#sect_own">Defining your own neuron type</a> and <a class="el" href="../../d5/d24/sectSynapseModels.html#sect34">Defining a new weight update model</a>, postsynamic model definitions are encapsulated in a class derived from <a class="el" href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. ">PostsynapticModels::Base</a>. Again, the methods that a postsynaptic model should implement can be implemented using the following <span class='toggleable_div label_cpp' style='display: none;'>macros</span><span class='toggleable_div label_python' style='display: none;'> keyword arguments </span>:</p><ul>
+<li> <span class='toggleable_div label_cpp' style='display: none;'><a class="el" href="../../d4/d13/models_8h.html#ae0c817e85c196f39cf62d608883cda13">DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)</a>, <a class="el" href="../../de/d6c/snippet_8h.html#aa592bfe3ce05ffc19a8f21d8482add6b">SET_DERIVED_PARAMS()</a>, <a class="el" href="../../de/d6c/snippet_8h.html#a75315265035fd71c5b5f7d7f449edbd7">SET_PARAM_NAMES()</a>, <a class="el" href="../../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa">SET_VARS()</a></span><span class='toggleable_div label_python' style='display: none;'> <code>param_names</code>, <code>var_name_types</code> and <code>derived_params</code> </span> perform the same roles as they do in the neuron models discussed in <a class="el" href="../../de/ded/sectNeuronModels.html#sect_own">Defining your own neuron type</a>.</li>
+<li> <span class='toggleable_div label_cpp' style='display: none;'><a class="el" href="../../d8/d47/postsynapticModels_8h.html#a76caa98a308e162345cee61e025de022">SET_DECAY_CODE(DECAY_CODE)</a></span><span class='toggleable_div label_python' style='display: none;'>decay_code=DECAY_CODE</span> defines the code which provides the continuous time dynamics for the summed presynaptic inputs to the postsynaptic neuron. This usually consists of some kind of decay function.</li>
+<li> <span class='toggleable_div label_cpp' style='display: none;'><a class="el" href="../../d8/d47/postsynapticModels_8h.html#a41d7141aeae91e2840c2629106b6a3b1">SET_APPLY_INPUT_CODE(APPLY_INPUT_CODE)</a></span><span class='toggleable_div label_python' style='display: none;'>apply_input_code=APPLY_INPUT_CODE</span> defines the code specifying the conversion from synaptic inputs to a postsynaptic neuron input current. e.g. for a conductance model:  <div class='toggleable_div label_cpp' style='display: none;'><div class="fragment"><div class="line"><a class="code" href="../../d8/d47/postsynapticModels_8h.html#a41d7141aeae91e2840c2629106b6a3b1">SET_APPLY_INPUT_CODE</a>(<span class="stringliteral">&quot;$(Isyn) += $(inSyn) * ($(E) - $(V))&quot;</span>);</div></div><!-- fragment --> </div>  <div class='toggleable_div label_python' style='display: none;'><div class="fragment"><div class="line">apply_input_code=<span class="stringliteral">&quot;$(Isyn) += $(inSyn) * ($(E) - $(V))&quot;</span></div></div><!-- fragment --> </div> where $(E) is a postsynaptic model parameter specifying reversal potential and $(V) is the variable containing the postsynaptic neuron's membrane potential. As discussed in <a class="el" href="../../d0/da6/UserGuide.html#predefinedVars">Built-in Variables in GeNN</a>, $(Isyn) is the built in variable used to sum neuron input. However additional input variables can be added to a neuron model using the <span class='toggleable_div label_cpp' style='display: none;'><a class="el" href="../../d3/dc0/neuronModels_8h.html#a96a3e23f5c7309a47bc6562e0be81e99">SET_ADDITIONAL_INPUT_VARS()</a> macro</span><span class='toggleable_div label_python' style='display: none;'><code>additional_input_vars</code> keyword argument </span> (see <a class="el" href="../../de/ded/sectNeuronModels.html#sect_own">Defining your own neuron type</a> for more details).</li>
 </ul>
 <hr/>
 <p> <a class="el" href="../../de/ded/sectNeuronModels.html">Previous</a> | <a class="el" href="../../dc/d05/UserManual.html">Top</a> | <a class="el" href="../../d0/d1e/sectCurrentSourceModels.html">Next</a> </p>
 </div></div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:01 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

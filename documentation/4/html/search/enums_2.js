@@ -1,5 +1,5 @@
 var searchData=
 [
-  ['datatype',['DataType',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a9dd377f02bbae3d25c227bd306841823',1,'SpineMLSimulator::NetworkClient']]],
-  ['deviceselect',['DeviceSelect',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05cdf29b66af2e1899cbb1d9c702f9d0',1,'CodeGenerator::CUDA']]]
+  ['channel',['Channel',['../d4/dd8/namespaceLogging.html#a3f109e5c3f496896e86feaf521e329ab',1,'Logging']]],
+  ['clrngstatus_5f',['clrngStatus_',['../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44',1,'clRNG.h']]]
 ];

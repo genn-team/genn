@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -185,9 +186,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a481795d2e7a45410799786a1c5122834"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a481795d2e7a45410799786a1c5122834">build</a> (self, path_to_model=&quot;./&quot;)</td></tr>
 <tr class="memdesc:a481795d2e7a45410799786a1c5122834"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finalize and build a GeNN model.  <a href="#a481795d2e7a45410799786a1c5122834">More...</a><br /></td></tr>
 <tr class="separator:a481795d2e7a45410799786a1c5122834"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad9cf0be3aea2278bd790f146f0931491"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ad9cf0be3aea2278bd790f146f0931491">load</a> (self, path_to_model=&quot;./&quot;)</td></tr>
-<tr class="memdesc:ad9cf0be3aea2278bd790f146f0931491"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the model as shared library and initialize it  <a href="#ad9cf0be3aea2278bd790f146f0931491">More...</a><br /></td></tr>
-<tr class="separator:ad9cf0be3aea2278bd790f146f0931491"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a662cf82b5390a03b117581a47b0ae147"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a662cf82b5390a03b117581a47b0ae147">load</a> (self, path_to_model=&quot;./&quot;, num_recording_timesteps=None)</td></tr>
+<tr class="memdesc:a662cf82b5390a03b117581a47b0ae147"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the model as shared library and initialize it  <a href="#a662cf82b5390a03b117581a47b0ae147">More...</a><br /></td></tr>
+<tr class="separator:a662cf82b5390a03b117581a47b0ae147"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a475a22c65205debb202eb98d4dc929f2"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2">reinitialise</a> (self)</td></tr>
 <tr class="memdesc:a475a22c65205debb202eb98d4dc929f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">reinitialise model to its original state without re-loading  <a href="#a475a22c65205debb202eb98d4dc929f2">More...</a><br /></td></tr>
 <tr class="separator:a475a22c65205debb202eb98d4dc929f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -229,6 +230,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a94ccfe8b242fe621d60a1e705376101f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a94ccfe8b242fe621d60a1e705376101f">push_extra_global_param_to_device</a> (self, pop_name, egp_name, size=1)</td></tr>
 <tr class="memdesc:a94ccfe8b242fe621d60a1e705376101f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push extra global parameter to the device for a given population.  <a href="#a94ccfe8b242fe621d60a1e705376101f">More...</a><br /></td></tr>
 <tr class="separator:a94ccfe8b242fe621d60a1e705376101f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c5fc9394f573e6e464fa3a6add748f0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9c5fc9394f573e6e464fa3a6add748f0">pull_recording_buffers_from_device</a> (self)</td></tr>
+<tr class="memdesc:a9c5fc9394f573e6e464fa3a6add748f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pull recording buffers from device.  <a href="#a9c5fc9394f573e6e464fa3a6add748f0">More...</a><br /></td></tr>
+<tr class="separator:a9c5fc9394f573e6e464fa3a6add748f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a06269039e7798cafe00f637e5df88410"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a06269039e7798cafe00f637e5df88410">end</a> (self)</td></tr>
 <tr class="memdesc:a06269039e7798cafe00f637e5df88410"><td class="mdescLeft">&#160;</td><td class="mdescRight">Free memory.  <a href="#a06269039e7798cafe00f637e5df88410">More...</a><br /></td></tr>
 <tr class="separator:a06269039e7798cafe00f637e5df88410"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -332,6 +336,10 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">model_name</td><td>string name of the model. Defaults to "GeNNModel". </td></tr>
     <tr><td class="paramname">backend</td><td>string specifying name of backend module to use Defaults to None to pick 'best' backend for your system </td></tr>
     <tr><td class="paramname">time_precision</td><td>string time precision as string ("float", "double" or "long double"). defaults to float. </td></tr>
+    <tr><td class="paramname">genn_log_level</td><td>Log level for GeNN </td></tr>
+    <tr><td class="paramname">code_gen_log_level</td><td>Log level for GeNN code-generator </td></tr>
+    <tr><td class="paramname">backend_log_level</td><td>Log level for backend </td></tr>
+    <tr><td class="paramname">preference_kwargs</td><td>Additional keyword arguments to set in backend preferences structure </td></tr>
   </table>
   </dd>
 </dl>
@@ -664,7 +672,7 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">delay_steps</td><td>delay in number of steps </td></tr>
     <tr><td class="paramname">source</td><td>source neuron group (either name or <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> object) </td></tr>
     <tr><td class="paramname">target</td><td>target neuron group (either name or <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> object) </td></tr>
-    <tr><td class="paramname">w_update_model</td><td>type of the <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> class as string or instance of weight update model class derived from <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> (see also <a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#af8c5efd0096b17d61e13463b1cc73878" title="This helper function creates a custom WeightUpdateModel class. ">pygenn.genn_model.create_custom_weight_update_class</a>) </td></tr>
+    <tr><td class="paramname">w_update_model</td><td>type of the <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> class as string or instance of weight update model class derived from <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> (see also <a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7c2e854789f74d6ffd92be2a487a0e5b" title="This helper function creates a custom WeightUpdateModel class. ">pygenn.genn_model.create_custom_weight_update_class</a>) </td></tr>
     <tr><td class="paramname">wu_param_space</td><td>dict with param values for the <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> class </td></tr>
     <tr><td class="paramname">wu_var_space</td><td>dict with initial values for <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> state variables </td></tr>
     <tr><td class="paramname">wu_pre_var_space</td><td>dict with initial values for <a class="el" href="../../da/d80/namespaceWeightUpdateModels.html">WeightUpdateModels</a> presynaptic variables </td></tr>
@@ -933,8 +941,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="ad9cf0be3aea2278bd790f146f0931491"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad9cf0be3aea2278bd790f146f0931491">&#9670;&nbsp;</a></span>load()</h2>
+<a id="a662cf82b5390a03b117581a47b0ae147"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a662cf82b5390a03b117581a47b0ae147">&#9670;&nbsp;</a></span>load()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -949,7 +957,13 @@ Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>path_to_model</em> = <code>&quot;./&quot;</code>&#160;</td>
+          <td class="paramname"><em>path_to_model</em> = <code>&quot;./&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>num_recording_timesteps</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1164,6 +1178,26 @@ Public Attributes</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Pull extra global parameter from the device for a given population. </p>
+
+</div>
+</div>
+<a id="a9c5fc9394f573e6e464fa3a6add748f0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9c5fc9394f573e6e464fa3a6add748f0">&#9670;&nbsp;</a></span>pull_recording_buffers_from_device()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.pull_recording_buffers_from_device </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Pull recording buffers from device. </p>
 
 </div>
 </div>
@@ -1837,14 +1871,20 @@ Public Attributes</h2></td></tr>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html">genn_model</a></li><li class="navelem"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html">GeNNModel</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:37 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

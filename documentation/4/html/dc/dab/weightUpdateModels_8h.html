@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -152,6 +153,10 @@ Macros</h2></td></tr>
 <tr class="separator:aede2f97f853841236f081c8d7b9d156f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef99e5858038673e6b268f4af07864c2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#aef99e5858038673e6b268f4af07864c2">SET_POST_SPIKE_CODE</a>(POST_SPIKE_CODE)&#160;&#160;&#160;virtual std::string getPostSpikeCode() const override{ return POST_SPIKE_CODE; }</td></tr>
 <tr class="separator:aef99e5858038673e6b268f4af07864c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7d8b101bdb0b7d593c9cc82f75a6853"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#ab7d8b101bdb0b7d593c9cc82f75a6853">SET_PRE_DYNAMICS_CODE</a>(PRE_DYNAMICS_CODE)&#160;&#160;&#160;virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }</td></tr>
+<tr class="separator:ab7d8b101bdb0b7d593c9cc82f75a6853"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52759a81ea3269567b96c7b07a430ea6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a52759a81ea3269567b96c7b07a430ea6">SET_POST_DYNAMICS_CODE</a>(POST_DYNAMICS_CODE)&#160;&#160;&#160;virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }</td></tr>
+<tr class="separator:a52759a81ea3269567b96c7b07a430ea6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a2bc6f56fa2bfb7008e915710720cfd"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a9a2bc6f56fa2bfb7008e915710720cfd">SET_PRE_VARS</a>(...)&#160;&#160;&#160;virtual VarVec getPreVars() const override{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:a9a2bc6f56fa2bfb7008e915710720cfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a906e656a5980ea57c9f1b7c3185e876b"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a906e656a5980ea57c9f1b7c3185e876b">SET_POST_VARS</a>(...)&#160;&#160;&#160;virtual VarVec getPostVars() const override{ return __VA_ARGS__; }</td></tr>
@@ -160,6 +165,14 @@ Macros</h2></td></tr>
 <tr class="separator:ad06378df00a5d9ffe4068ba2c01b09ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f3e008922887cba8cfafc0fb0e53965"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a4f3e008922887cba8cfafc0fb0e53965">SET_NEEDS_POST_SPIKE_TIME</a>(POST_SPIKE_TIME_REQUIRED)&#160;&#160;&#160;virtual bool isPostSpikeTimeRequired() const override{ return POST_SPIKE_TIME_REQUIRED; }</td></tr>
 <tr class="separator:a4f3e008922887cba8cfafc0fb0e53965"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2995c30cbb73046095285c669cdcaed6"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a2995c30cbb73046095285c669cdcaed6">SET_NEEDS_PRE_SPIKE_EVENT_TIME</a>(PRE_SPIKE_EVENT_TIME_REQUIRED)&#160;&#160;&#160;virtual bool isPreSpikeEventTimeRequired() const override{ return PRE_SPIKE_EVENT_TIME_REQUIRED; }</td></tr>
+<tr class="separator:a2995c30cbb73046095285c669cdcaed6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe55020d64a8ec4a28679655ef8c4eb1"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#abe55020d64a8ec4a28679655ef8c4eb1">SET_NEEDS_PREV_PRE_SPIKE_TIME</a>(PREV_PRE_SPIKE_TIME_REQUIRED)&#160;&#160;&#160;virtual bool isPrevPreSpikeTimeRequired() const override{ return PREV_PRE_SPIKE_TIME_REQUIRED; }</td></tr>
+<tr class="separator:abe55020d64a8ec4a28679655ef8c4eb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a689cf929f3384f6ac4e47d3cfe89182e"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a689cf929f3384f6ac4e47d3cfe89182e">SET_NEEDS_PREV_POST_SPIKE_TIME</a>(PREV_POST_SPIKE_TIME_REQUIRED)&#160;&#160;&#160;virtual bool isPrevPostSpikeTimeRequired() const override{ return PREV_POST_SPIKE_TIME_REQUIRED; }</td></tr>
+<tr class="separator:a689cf929f3384f6ac4e47d3cfe89182e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a238b505478cb5f9948a8d67cdda39dfb"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html#a238b505478cb5f9948a8d67cdda39dfb">SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME</a>(PREV_PRE_SPIKE_EVENT_TIME_REQUIRED)&#160;&#160;&#160;virtual bool isPrevPreSpikeEventTimeRequired() const override{ return PREV_PRE_SPIKE_EVENT_TIME_REQUIRED; }</td></tr>
+<tr class="separator:a238b505478cb5f9948a8d67cdda39dfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="a611a9113f742a9d07d3def4298a0ea68"></a>
@@ -301,6 +314,24 @@ Macros</h2></td></tr>
 
 </div>
 </div>
+<a id="a2995c30cbb73046095285c669cdcaed6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2995c30cbb73046095285c669cdcaed6">&#9670;&nbsp;</a></span>SET_NEEDS_PRE_SPIKE_EVENT_TIME</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_NEEDS_PRE_SPIKE_EVENT_TIME</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">PRE_SPIKE_EVENT_TIME_REQUIRED</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual bool isPreSpikeEventTimeRequired() const override{ return PRE_SPIKE_EVENT_TIME_REQUIRED; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ad06378df00a5d9ffe4068ba2c01b09ab"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ad06378df00a5d9ffe4068ba2c01b09ab">&#9670;&nbsp;</a></span>SET_NEEDS_PRE_SPIKE_TIME</h2>
 
@@ -313,6 +344,78 @@ Macros</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname">PRE_SPIKE_TIME_REQUIRED</td><td>)</td>
           <td>&#160;&#160;&#160;virtual bool isPreSpikeTimeRequired() const override{ return PRE_SPIKE_TIME_REQUIRED; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a689cf929f3384f6ac4e47d3cfe89182e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a689cf929f3384f6ac4e47d3cfe89182e">&#9670;&nbsp;</a></span>SET_NEEDS_PREV_POST_SPIKE_TIME</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_NEEDS_PREV_POST_SPIKE_TIME</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">PREV_POST_SPIKE_TIME_REQUIRED</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual bool isPrevPostSpikeTimeRequired() const override{ return PREV_POST_SPIKE_TIME_REQUIRED; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a238b505478cb5f9948a8d67cdda39dfb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a238b505478cb5f9948a8d67cdda39dfb">&#9670;&nbsp;</a></span>SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_NEEDS_PREV_PRE_SPIKE_EVENT_TIME</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">PREV_PRE_SPIKE_EVENT_TIME_REQUIRED</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual bool isPrevPreSpikeEventTimeRequired() const override{ return PREV_PRE_SPIKE_EVENT_TIME_REQUIRED; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="abe55020d64a8ec4a28679655ef8c4eb1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe55020d64a8ec4a28679655ef8c4eb1">&#9670;&nbsp;</a></span>SET_NEEDS_PREV_PRE_SPIKE_TIME</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_NEEDS_PREV_PRE_SPIKE_TIME</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">PREV_PRE_SPIKE_TIME_REQUIRED</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual bool isPrevPreSpikeTimeRequired() const override{ return PREV_PRE_SPIKE_TIME_REQUIRED; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a52759a81ea3269567b96c7b07a430ea6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52759a81ea3269567b96c7b07a430ea6">&#9670;&nbsp;</a></span>SET_POST_DYNAMICS_CODE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_POST_DYNAMICS_CODE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">POST_DYNAMICS_CODE</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual std::string getPostDynamicsCode() const override{ return POST_DYNAMICS_CODE; }</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -349,6 +452,24 @@ Macros</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>...</em></td><td>)</td>
           <td>&#160;&#160;&#160;virtual VarVec getPostVars() const override{ return __VA_ARGS__; }</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ab7d8b101bdb0b7d593c9cc82f75a6853"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7d8b101bdb0b7d593c9cc82f75a6853">&#9670;&nbsp;</a></span>SET_PRE_DYNAMICS_CODE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define SET_PRE_DYNAMICS_CODE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">PRE_DYNAMICS_CODE</td><td>)</td>
+          <td>&#160;&#160;&#160;virtual std::string getPreDynamicsCode() const override{ return PRE_DYNAMICS_CODE; }</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -465,14 +586,20 @@ Macros</h2></td></tr>
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../dc/dab/weightUpdateModels_8h.html">weightUpdateModels.h</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:00 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:44 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

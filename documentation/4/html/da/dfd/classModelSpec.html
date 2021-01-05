@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -245,6 +246,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:ab666b8e3114b41107b936da9682389e3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#ab666b8e3114b41107b936da9682389e3">zeroCopyInUse</a> () const</td></tr>
 <tr class="memdesc:ab666b8e3114b41107b936da9682389e3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Are any variables in any populations in this model using zero-copy memory?  <a href="#ab666b8e3114b41107b936da9682389e3">More...</a><br /></td></tr>
 <tr class="separator:ab666b8e3114b41107b936da9682389e3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab08bc83824d4efbde2154b8b8985a1c2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#ab08bc83824d4efbde2154b8b8985a1c2">isRecordingInUse</a> () const</td></tr>
+<tr class="memdesc:ab08bc83824d4efbde2154b8b8985a1c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is recording enabled on any population in this model?  <a href="#ab08bc83824d4efbde2154b8b8985a1c2">More...</a><br /></td></tr>
+<tr class="separator:ab08bc83824d4efbde2154b8b8985a1c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15622cc92f6c37e56aee253e02ad923e"><td class="memItemLeft" align="right" valign="top">const std::map&lt; std::string, <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a15622cc92f6c37e56aee253e02ad923e">getNeuronGroups</a> () const</td></tr>
 <tr class="memdesc:a15622cc92f6c37e56aee253e02ad923e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get std::map containing local named <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> objects in model.  <a href="#a15622cc92f6c37e56aee253e02ad923e">More...</a><br /></td></tr>
 <tr class="separator:a15622cc92f6c37e56aee253e02ad923e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -411,7 +415,7 @@ template&lt;typename CurrentSourceModel &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>string containing unique name of current source. </td></tr>
+    <tr><td class="paramname">currentSourceName</td><td>string containing unique name of current source. </td></tr>
     <tr><td class="paramname">model</td><td>current source model to use for current source. </td></tr>
     <tr><td class="paramname">targetNeuronGroupName</td><td>string name of the target neuron group </td></tr>
     <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in CurrentSourceModel::ParamValues object. </td></tr>
@@ -480,7 +484,7 @@ template&lt;typename CurrentSourceModel &gt; </div>
 </dl>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">name</td><td>string containing unique name of current source. </td></tr>
+    <tr><td class="paramname">currentSourceName</td><td>string containing unique name of current source. </td></tr>
     <tr><td class="paramname">targetNeuronGroupName</td><td>string name of the target neuron group </td></tr>
     <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in CurrentSourceModel::ParamValues object. </td></tr>
     <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in CurrentSourceModel::VarValues object. </td></tr>
@@ -1517,6 +1521,33 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 
 </div>
 </div>
+<a id="ab08bc83824d4efbde2154b8b8985a1c2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab08bc83824d4efbde2154b8b8985a1c2">&#9670;&nbsp;</a></span>isRecordingInUse()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ModelSpec::isRecordingInUse </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Is recording enabled on any population in this model? </p>
+
+</div>
+</div>
 <a id="acadfb9fd83c86d18ccf678e43d08ac5d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acadfb9fd83c86d18ccf678e43d08ac5d">&#9670;&nbsp;</a></span>isTimingEnabled()</h2>
 
@@ -1936,14 +1967,20 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dfd/classModelSpec.html">ModelSpec</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:09 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

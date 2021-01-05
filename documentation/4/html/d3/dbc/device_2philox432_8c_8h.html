@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -154,9 +155,9 @@ Functions</h2></td></tr>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">\</div><div class="line">    fptype clrngPhilox432RandomU01_##fptype(<a class="code" href="../../db/dca/structclrngPhilox432Stream__.html">clrngPhilox432Stream</a>* stream) { \</div><div class="line">        return (clrngPhilox432NextState(&amp;stream-&gt;<a class="code" href="../../db/dca/structclrngPhilox432Stream__.html#a66b65d155008e9720d7f421276e38456">current</a>) + 0.5) * Philox432_NORM_##fptype; \</div><div class="line">    } \</div><div class="line">    \</div><div class="line">    cl_int clrngPhilox432RandomInteger_##fptype(<a class="code" href="../../db/dca/structclrngPhilox432Stream__.html">clrngPhilox432Stream</a>* stream, cl_int i, cl_int j) { \</div><div class="line">        return i + (cl_int)((j - i + 1) * clrngPhilox432RandomU01_##fptype(stream)); \</div><div class="line">    } \</div><div class="line">    \</div><div class="line">    clrngStatus clrngPhilox432RandomU01Array_##fptype(<a class="code" href="../../db/dca/structclrngPhilox432Stream__.html">clrngPhilox432Stream</a>* stream, <span class="keywordtype">size_t</span> count, fptype* buffer) { \</div><div class="line">        if (!stream) \</div><div class="line">            return <a class="code" href="../../d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">clrngSetErrorString</a>(<a class="code" href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6">CLRNG_INVALID_VALUE</a>); \</div><div class="line">        if (!buffer) \</div><div class="line">            return <a class="code" href="../../d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">clrngSetErrorString</a>(<a class="code" href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6">CLRNG_INVALID_VALUE</a>); \</div><div class="line">        for (<span class="keywordtype">size_t</span> i = 0; i &lt; count; i++)  \</div><div class="line">            buffer[i] = clrngPhilox432RandomU01_##fptype(stream); \</div><div class="line">        return <a class="code" href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44aded2eb833110b8ce55f4240ac32a2398">CLRNG_SUCCESS</a>; \</div><div class="line">    } \</div><div class="line">    \</div><div class="line">    clrngStatus clrngPhilox432RandomIntegerArray_##fptype(<a class="code" href="../../db/dca/structclrngPhilox432Stream__.html">clrngPhilox432Stream</a>* stream, cl_int i, cl_int j, <span class="keywordtype">size_t</span> count, cl_int* buffer) { \</div><div class="line">        if (!stream) \</div><div class="line">            return <a class="code" href="../../d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">clrngSetErrorString</a>(<a class="code" href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6">CLRNG_INVALID_VALUE</a>); \</div><div class="line">        if (!buffer) \</div><div class="line">            return <a class="code" href="../../d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">clrngSetErrorString</a>(<a class="code" href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6">CLRNG_INVALID_VALUE</a>); \</div><div class="line">        for (<span class="keywordtype">size_t</span> k = 0; k &lt; count; k++) \</div><div class="line">            buffer[k] = clrngPhilox432RandomInteger_##fptype(stream, i, j); \</div><div class="line">        return <a class="code" href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44aded2eb833110b8ce55f4240ac32a2398">CLRNG_SUCCESS</a>; \</div><div class="line">    }</div><div class="ttc" id="clRNG_8h_html_a9d12966a299e9d7764eab8cb9a164f44aded2eb833110b8ce55f4240ac32a2398"><div class="ttname"><a href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44aded2eb833110b8ce55f4240ac32a2398">CLRNG_SUCCESS</a></div><div class="ttdef"><b>Definition:</b> clRNG.h:343</div></div>
 <div class="ttc" id="private_8c_html_a5e083da05b8532206ab5b7e5dcf3dd46"><div class="ttname"><a href="../../d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">clrngSetErrorString</a></div><div class="ttdeci">clrngStatus clrngSetErrorString(cl_int err, const char *msg,...)</div><div class="ttdoc">Set the current error string. </div><div class="ttdef"><b>Definition:</b> private.c:57</div></div>
-<div class="ttc" id="structclrngPhilox432Stream___html_a66b65d155008e9720d7f421276e38456"><div class="ttname"><a href="../../db/dca/structclrngPhilox432Stream__.html#a66b65d155008e9720d7f421276e38456">clrngPhilox432Stream_::current</a></div><div class="ttdeci">clrngPhilox432StreamState current</div><div class="ttdef"><b>Definition:</b> philox432.h:75</div></div>
+<div class="ttc" id="structclrngPhilox432Stream___html_a66b65d155008e9720d7f421276e38456"><div class="ttname"><a href="../../db/dca/structclrngPhilox432Stream__.html#a66b65d155008e9720d7f421276e38456">clrngPhilox432Stream_::current</a></div><div class="ttdeci">clrngPhilox432StreamState current</div><div class="ttdef"><b>Definition:</b> philox432.h:76</div></div>
 <div class="ttc" id="clRNG_8h_html_a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6"><div class="ttname"><a href="../../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6">CLRNG_INVALID_VALUE</a></div><div class="ttdef"><b>Definition:</b> clRNG.h:345</div></div>
-<div class="ttc" id="structclrngPhilox432Stream___html"><div class="ttname"><a href="../../db/dca/structclrngPhilox432Stream__.html">clrngPhilox432Stream_</a></div><div class="ttdef"><b>Definition:</b> philox432.h:69</div></div>
+<div class="ttc" id="structclrngPhilox432Stream___html"><div class="ttname"><a href="../../db/dca/structclrngPhilox432Stream__.html">clrngPhilox432Stream_</a></div><div class="ttdef"><b>Definition:</b> philox432.h:70</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -464,14 +465,20 @@ Functions</h2></td></tr>
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_4d3be5bd6ef78564e8c4f17e25f05ae0.html">pygenn</a></li><li class="navelem"><a class="el" href="../../dir_bcfb3c7d8d96c445a78395f92dd61cd8.html">share</a></li><li class="navelem"><a class="el" href="../../dir_1bc86c07d2c2ce7a89d4a56b68283167.html">backends</a></li><li class="navelem"><a class="el" href="../../dir_877e6d4a2c4738e267c7baeb9f65dc84.html">opencl</a></li><li class="navelem"><a class="el" href="../../dir_dd3392ba531b9e2343b584c0afd58eb1.html">clRNG</a></li><li class="navelem"><a class="el" href="../../dir_385b196d2925716cb1287f374bb2848a.html">include</a></li><li class="navelem"><a class="el" href="../../dir_c0270c759f84048d0b93618299d5361d.html">clRNG</a></li><li class="navelem"><a class="el" href="../../dir_03b6d0047a52114b74b66b1ba097906a.html">private</a></li><li class="navelem"><a class="el" href="../../dir_3dfb8fbf22a7518810471061ecc29cf6.html">device</a></li><li class="navelem"><a class="el" href="../../d3/dbc/device_2philox432_8c_8h.html">philox432.c.h</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:34:59 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:43 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

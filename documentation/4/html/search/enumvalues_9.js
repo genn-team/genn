@@ -1,12 +1,12 @@
 var searchData=
 [
-  ['kernelinitialize',['KernelInitialize',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9acb34e35b42abc1f34588fdca07e991',1,'CodeGenerator::CUDA']]],
-  ['kernelinitializesparse',['KernelInitializeSparse',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a451ac73ef4b58ec26077ede94530d289',1,'CodeGenerator::CUDA']]],
-  ['kernelmax',['KernelMax',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a50aff7d81597c0195a06734c9fa4ada8',1,'CodeGenerator::CUDA']]],
-  ['kernelneuronupdate',['KernelNeuronUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4aaec9b086a2ef409550ce776d86aaa86a',1,'CodeGenerator::CUDA']]],
-  ['kernelpostsynapticupdate',['KernelPostsynapticUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9f45a6407688531cd48f2388bfafda5c',1,'CodeGenerator::CUDA']]],
-  ['kernelpreneuronreset',['KernelPreNeuronReset',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a49f1596096bf3331e674c7a7cab58ddb',1,'CodeGenerator::CUDA']]],
-  ['kernelpresynapsereset',['KernelPreSynapseReset',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a9c6a972a3c8a44df03be8a8d233adf46',1,'CodeGenerator::CUDA']]],
-  ['kernelpresynapticupdate',['KernelPresynapticUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4a04b623e2a4ab2808470363c22a79c7e7',1,'CodeGenerator::CUDA']]],
-  ['kernelsynapsedynamicsupdate',['KernelSynapseDynamicsUpdate',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a05381dc4178da4eb5cd21384a44dace4aa3a04c14a730249c086bb298983be99e',1,'CodeGenerator::CUDA']]]
+  ['kernelinitialize',['KernelInitialize',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61afede5c345b576112630109811e487421',1,'CodeGenerator']]],
+  ['kernelinitializesparse',['KernelInitializeSparse',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61ab713764c21bfb4a0140d76ff83e69be5',1,'CodeGenerator']]],
+  ['kernelmax',['KernelMax',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a708928276d7abefd4fdfe1c4a87de5e1',1,'CodeGenerator']]],
+  ['kernelneuronupdate',['KernelNeuronUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a96ed40792917df8ee39b88de05c89b79',1,'CodeGenerator']]],
+  ['kernelpostsynapticupdate',['KernelPostsynapticUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61ae803ef402f9ff18cca88ec26c3da5dfd',1,'CodeGenerator']]],
+  ['kernelpreneuronreset',['KernelPreNeuronReset',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61aeff3feeb86d470fffa271bdad959bb87',1,'CodeGenerator']]],
+  ['kernelpresynapsereset',['KernelPreSynapseReset',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a58b18f4dfe7c07727a094649f783e544',1,'CodeGenerator']]],
+  ['kernelpresynapticupdate',['KernelPresynapticUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a96a2afaff771ec9dce7c0ca089b3374e',1,'CodeGenerator']]],
+  ['kernelsynapsedynamicsupdate',['KernelSynapseDynamicsUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61acdac9bb82b722c225547348ade39bbc9',1,'CodeGenerator']]]
 ];

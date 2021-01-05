@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['kernelblocksize',['KernelBlockSize',['../d1/df6/namespaceCodeGenerator_1_1CUDA.html#a834e8ff4a9b37453a04e5bfa2743423b',1,'CodeGenerator::CUDA']]]
+  ['handler',['Handler',['../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5',1,'CodeGenerator::BackendBase']]],
+  ['hosthandler',['HostHandler',['../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549',1,'CodeGenerator::BackendBase']]]
 ];

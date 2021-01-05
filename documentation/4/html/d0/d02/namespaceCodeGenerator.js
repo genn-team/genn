@@ -1,13 +1,14 @@
 var namespaceCodeGenerator =
 [
     [ "CUDA", "d1/df6/namespaceCodeGenerator_1_1CUDA.html", "d1/df6/namespaceCodeGenerator_1_1CUDA" ],
+    [ "OpenCL", "d8/de5/namespaceCodeGenerator_1_1OpenCL.html", "d8/de5/namespaceCodeGenerator_1_1OpenCL" ],
+    [ "PresynapticUpdateStrategySIMT", "d1/d45/namespaceCodeGenerator_1_1PresynapticUpdateStrategySIMT.html", "d1/d45/namespaceCodeGenerator_1_1PresynapticUpdateStrategySIMT" ],
     [ "SingleThreadedCPU", "db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU.html", "db/d8c/namespaceCodeGenerator_1_1SingleThreadedCPU" ],
     [ "BackendBase", "d3/d15/classCodeGenerator_1_1BackendBase.html", "d3/d15/classCodeGenerator_1_1BackendBase" ],
+    [ "BackendSIMT", "d1/de3/classCodeGenerator_1_1BackendSIMT.html", "d1/de3/classCodeGenerator_1_1BackendSIMT" ],
     [ "CodeStream", "d9/df8/classCodeGenerator_1_1CodeStream.html", "d9/df8/classCodeGenerator_1_1CodeStream" ],
     [ "GroupMerged", "df/dfd/classCodeGenerator_1_1GroupMerged.html", "df/dfd/classCodeGenerator_1_1GroupMerged" ],
     [ "MemAlloc", "d2/d06/classCodeGenerator_1_1MemAlloc.html", "d2/d06/classCodeGenerator_1_1MemAlloc" ],
-    [ "MergedStructData", "d2/dbe/classCodeGenerator_1_1MergedStructData.html", "d2/dbe/classCodeGenerator_1_1MergedStructData" ],
-    [ "MergedStructGenerator", "dc/d85/classCodeGenerator_1_1MergedStructGenerator.html", "dc/d85/classCodeGenerator_1_1MergedStructGenerator" ],
     [ "ModelSpecMerged", "de/d52/classCodeGenerator_1_1ModelSpecMerged.html", "de/d52/classCodeGenerator_1_1ModelSpecMerged" ],
     [ "NeuronGroupMergedBase", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase" ],
     [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged" ],

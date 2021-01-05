@@ -9,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -107,6 +108,13 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
 </li>
 <li>manualDeviceID
 : <a class="el" href="da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a3b75fa868ca95ea3c644efcaaff3308d">CodeGenerator::CUDA::Preferences</a>
+, <a class="el" href="dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a5f78c233a2266b78038dd9524964004a">CodeGenerator::OpenCL::Preferences</a>
+</li>
+<li>manualPlatformID
+: <a class="el" href="dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a06c1062749976c742475a4a5485276ef">CodeGenerator::OpenCL::Preferences</a>
+</li>
+<li>manualWorkGroupSizes
+: <a class="el" href="dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a9bac4cb7a430ffeac28f36abd4abb055">CodeGenerator::OpenCL::Preferences</a>
 </li>
 <li>matrix_type()
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a8a83848fea29eb821b094759b7448891">pygenn.genn_groups.SynapseGroup</a>
@@ -118,16 +126,16 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">CodeGenerator::BackendBase</a>
 </li>
 <li>MergedEGP()
-: <a class="el" href="db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#abbedf96de0fe4fda0d283e2417fcd147">CodeGenerator::MergedStructData::MergedEGP</a>
+: <a class="el" href="d7/d41/structCodeGenerator_1_1ModelSpecMerged_1_1MergedEGP.html#a22b63321c12f58334082135490b3925f">CodeGenerator::ModelSpecMerged::MergedEGP</a>
+</li>
+<li>MergedEGPDestinations
+: <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#aff0fb872d1ce857fa20c30f459be122a">CodeGenerator::ModelSpecMerged</a>
 </li>
 <li>MergedEGPMap
-: <a class="el" href="d2/dbe/classCodeGenerator_1_1MergedStructData.html#a53f99576377339aa0da8ff61a3be5d70">CodeGenerator::MergedStructData</a>
+: <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a03fb003abd64002e14091ba866f0182a">CodeGenerator::ModelSpecMerged</a>
 </li>
 <li>mergedGroupIndex
-: <a class="el" href="db/da8/structCodeGenerator_1_1MergedStructData_1_1MergedEGP.html#af786ee25acd8b4ad7cbbc0aede30e875">CodeGenerator::MergedStructData::MergedEGP</a>
-</li>
-<li>MergedStructGenerator()
-: <a class="el" href="dc/d85/classCodeGenerator_1_1MergedStructGenerator.html#a1c464d5290ce5a6442e0fadc92976fde">CodeGenerator::MergedStructGenerator&lt; T &gt;</a>
+: <a class="el" href="dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html#a35e07c9b5c2c307749cac5c6a6fa4f29">CodeGenerator::ModelSpecMerged::EGPField</a>
 </li>
 <li>mergeIncomingPSM()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a78122b3ec7116cd38cbb3ad9fca04fbf">NeuronGroup</a>
@@ -150,13 +158,19 @@ $(document).ready(function(){initNavTree('functions_m.html','');});
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:51 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:30:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

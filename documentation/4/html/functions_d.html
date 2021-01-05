@@ -9,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -109,7 +110,9 @@ $(document).ready(function(){initNavTree('functions_d.html','');});
 : <a class="el" href="d6/d5a/structclrngPhilox432StreamState.html#a5e29c990f969d75fd0310b26e52f1c08">clrngPhilox432StreamState</a>
 </li>
 <li>DECLARE_SNIPPET()
-: <a class="el" href="db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html#a9bafbd2585c9c91ce880b5e08289db4c">InitSparseConnectivitySnippet::FixedNumberPostWithReplacement</a>
+: <a class="el" href="d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#afbf4bb51b3fb8fe2d6e9e0317770dc87">InitSparseConnectivitySnippet::Conv2D</a>
+, <a class="el" href="db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html#a9bafbd2585c9c91ce880b5e08289db4c">InitSparseConnectivitySnippet::FixedNumberPostWithReplacement</a>
+, <a class="el" href="d1/d59/classInitSparseConnectivitySnippet_1_1FixedNumberPreWithReplacement.html#a43d142ac7ae3bee10ec0aab2b0b756a6">InitSparseConnectivitySnippet::FixedNumberPreWithReplacement</a>
 , <a class="el" href="da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#aa6c0a2e7d4e42942d3f8330100c2b375">InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement</a>
 , <a class="el" href="df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html#ad89b5fc9427cffbcca1624a0186b520d">InitSparseConnectivitySnippet::FixedProbability</a>
 , <a class="el" href="d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html#ac42e7c24944c9492ec3c1ede705f9f35">InitSparseConnectivitySnippet::FixedProbabilityNoAutapse</a>
@@ -131,10 +134,10 @@ $(document).ready(function(){initNavTree('functions_d.html','');});
 , <a class="el" href="d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html#ab1606d6b47bb765ce6eab2f00752b8aa">WeightUpdateModels::StaticPulseDendriticDelay</a>
 </li>
 <li>default_sparse_connectivity_location()
-: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a623389c1d66d61f0ccce2870c2a3b946">pygenn.genn_model.GeNNModel</a>
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a08c1d0a533cc7b2a6bb41e421d57b888">pygenn.genn_model.GeNNModel</a>
 </li>
-<li>default_var_location
-: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab76469f3e0329c1bc7827b6b98d276b3">pygenn.genn_model.GeNNModel</a>
+<li>default_var_location()
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6fb04c026cd6daf493fb160b939d81a1">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>delay_slots()
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0e0da2c47058822597a9a802380e762f">pygenn.genn_groups.NeuronGroup</a>
@@ -147,9 +150,10 @@ $(document).ready(function(){initNavTree('functions_d.html','');});
 </li>
 <li>deviceSelectMethod
 : <a class="el" href="da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e">CodeGenerator::CUDA::Preferences</a>
+, <a class="el" href="dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#adf4a869222d34d4d398f36ef47b2f92f">CodeGenerator::OpenCL::Preferences</a>
 </li>
-<li>doublePrecisionTemplate
-: <a class="el" href="d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html#a103c95b60b38f098e83208ae30df3881">CodeGenerator::Substitutions::FunctionTemplate</a>
+<li>disableAMDFlush
+: <a class="el" href="dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a36922fc4cf845e1f2e40bed0cd97b090">CodeGenerator::OpenCL::Preferences</a>
 </li>
 <li>dT()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a487dbad5a2661672d5fea901f1eb71f3">pygenn.genn_model.GeNNModel</a>
@@ -157,13 +161,19 @@ $(document).ready(function(){initNavTree('functions_d.html','');});
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:51 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:30:00 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

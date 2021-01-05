@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -100,6 +101,9 @@ $(document).ready(function(){initNavTree('d0/d17/namespacepygenn_1_1model__prepr
 <div class="title">pygenn.model_preprocessor Namespace Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p>This module provides functions for model validation, parameter type conversions and defines class <a class="el" href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html" title="Class holding information about GeNN variables. ">Variable</a>.  
+<a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
@@ -137,7 +141,9 @@ Functions</h2></td></tr>
 <tr class="memdesc:a5d924093505fd70d9261b35a0f9c6a6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_space dict to PostVarValues.  <a href="#a5d924093505fd70d9261b35a0f9c6a6d">More...</a><br /></td></tr>
 <tr class="separator:a5d924093505fd70d9261b35a0f9c6a6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Function Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p>This module provides functions for model validation, parameter type conversions and defines class <a class="el" href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html" title="Class holding information about GeNN variables. ">Variable</a>. </p>
+</div><h2 class="groupheader">Function Documentation</h2>
 <a id="a8394727291320f68735c9ad636362853"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a8394727291320f68735c9ad636362853">&#9670;&nbsp;</a></span>is_model_valid()</h2>
 
@@ -388,13 +394,13 @@ Functions</h2></td></tr>
 <p>Prepare a model by checking its validity and extracting information about variables and parameters. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">model</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.NeuronModels.Custom</code> or <code>pygenn.genn_wrapper.WeightUpdateModels.Custom</code> or <code>pygenn.genn_wrapper.CurrentSourceModels.Custom</code> </td></tr>
+    <tr><td class="paramname">model</td><td>string or instance of a class derived from pygenn.genn_wrapper.NeuronModels.Custom or pygenn.genn_wrapper.WeightUpdateModels.Custom or pygenn.genn_wrapper.CurrentSourceModels.Custom </td></tr>
     <tr><td class="paramname">group</td><td>group model will belong to </td></tr>
     <tr><td class="paramname">param_space</td><td>dict with model parameters </td></tr>
     <tr><td class="paramname">var_space</td><td>dict with model variables </td></tr>
     <tr><td class="paramname">pre_var_space</td><td>optional dict with (weight update) model presynaptic variables </td></tr>
     <tr><td class="paramname">post_var_space</td><td>optional dict with (weight update) model postsynaptic variables </td></tr>
-    <tr><td class="paramname">model_family</td><td><code>pygenn.genn_wrapper.NeuronModels</code> or <code>pygenn.genn_wrapper.WeightUpdateModels</code> or <code>pygenn.genn_wrapper.CurrentSourceModels</code></td></tr>
+    <tr><td class="paramname">model_family</td><td>pygenn.genn_wrapper.NeuronModels or pygenn.genn_wrapper.WeightUpdateModels or pygenn.genn_wrapper.CurrentSourceModels</td></tr>
   </table>
   </dd>
 </dl>
@@ -437,9 +443,9 @@ Functions</h2></td></tr>
 <p>Prepare a snippet by checking its validity and extracting information about parameters. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">snippet</td><td>string or instance of a class derived from <code>pygenn.genn_wrapper.InitVarSnippet.Custom</code> or <code>pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom</code> </td></tr>
+    <tr><td class="paramname">snippet</td><td>string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom or pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom </td></tr>
     <tr><td class="paramname">param_space</td><td>dict with model parameters </td></tr>
-    <tr><td class="paramname">snippet_family</td><td><code>pygenn.genn_wrapper.InitVarSnippet</code> or <code>pygenn.genn_wrapper.InitSparseConnectivitySnippet</code></td></tr>
+    <tr><td class="paramname">snippet_family</td><td>pygenn.genn_wrapper.InitVarSnippet or pygenn.genn_wrapper.InitSparseConnectivitySnippet</td></tr>
   </table>
   </dd>
 </dl>
@@ -487,14 +493,20 @@ Functions</h2></td></tr>
 </div>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html">model_preprocessor</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:37 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

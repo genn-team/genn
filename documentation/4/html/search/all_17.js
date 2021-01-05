@@ -4,7 +4,7 @@ var searchData=
   ['uint64_5fc',['UINT64_C',['../d2/dfd/openclfeatures_8h.html#a134ae84400d184ed2570e3270d5472c2',1,'openclfeatures.h']]],
   ['uniform',['Uniform',['../dd/da0/classInitVarSnippet_1_1Uniform.html',1,'InitVarSnippet']]],
   ['uniformdistribution',['UniformDistribution',['../de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html',1,'SpineMLSimulator::ModelProperty::UniformDistribution'],['../de/d2c/classSpineMLSimulator_1_1ModelProperty_1_1UniformDistribution.html#abe69f03807ed5a3534c61bff08cff453',1,'SpineMLSimulator::ModelProperty::UniformDistribution::UniformDistribution()']]],
-  ['uninitialised',['Uninitialised',['../d9/db6/classInitVarSnippet_1_1Uninitialised.html',1,'InitVarSnippet::Uninitialised'],['../d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html',1,'InitSparseConnectivitySnippet::Uninitialised']]],
+  ['uninitialised',['Uninitialised',['../d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html',1,'InitSparseConnectivitySnippet::Uninitialised'],['../d9/db6/classInitVarSnippet_1_1Uninitialised.html',1,'InitVarSnippet::Uninitialised']]],
   ['uninitialisedconnectivity',['uninitialisedConnectivity',['../dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073',1,'modelSpec.h']]],
   ['uninitialisedvar',['uninitialisedVar',['../dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043',1,'modelSpec.h']]],
   ['update',['update',['../d1/d5e/classSpineMLSimulator_1_1InputValue_1_1Base.html#ab34a685520fefef48bf0b6b734988ee4',1,'SpineMLSimulator::InputValue::Base::update()'],['../d8/d0c/classSpineMLSimulator_1_1InputValue_1_1Constant.html#a80769e09d4d4fd07ea1d89dcd546d718',1,'SpineMLSimulator::InputValue::Constant::update()'],['../dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html#a41151dd94c5139c84aec159754391243',1,'SpineMLSimulator::InputValue::ConstantArray::update()'],['../d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html#a85388131ce7f7812530073be3d1ef62e',1,'SpineMLSimulator::InputValue::TimeVarying::update()'],['../d9/d04/classSpineMLSimulator_1_1InputValue_1_1TimeVaryingArray.html#ac02d1380efb8e4bd7283a8051d9fa1d6',1,'SpineMLSimulator::InputValue::TimeVaryingArray::update()'],['../df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html#a8339d56a63860d1c9dd562f13126bb28',1,'SpineMLSimulator::InputValue::External::update()']]],
@@ -18,6 +18,5 @@ var searchData=
   ['user_20manual',['User Manual',['../dc/d05/UserManual.html',1,'']]],
   ['usernvccflags',['userNvccFlags',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa370bc1e7c48d0928ace7bf4baaa7e73',1,'CodeGenerator::CUDA::Preferences']]],
   ['usernvccflagsgnu',['userNvccFlagsGNU',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#acad9c31842a33378f83f524093f6011c',1,'CodeGenerator::PreferencesBase']]],
-  ['utils',['Utils',['../d4/d3d/namespaceUtils.html',1,'']]],
-  ['utils_2eh',['utils.h',['../d5/d60/utils_8h.html',1,'']]]
+  ['utils',['Utils',['../d4/d3d/namespaceUtils.html',1,'']]]
 ];

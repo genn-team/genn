@@ -2,7 +2,7 @@ var classpygenn_1_1genn__groups_1_1CurrentSource =
 [
     [ "__init__", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a6b4821b3cf9a0ba4d66b408c6e5d7238", null ],
     [ "add_extra_global_param", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ae6e20b0ea58f3e85341b835b07f5126c", null ],
-    [ "add_to", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ac48d2951f6388fd03df83f80bb8e1b97", null ],
+    [ "add_to", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#aa6a687f8f29b0e6496142f66d0161b64", null ],
     [ "load", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a01b8cc7d8e4d14a98d8b1720c8d7fac6", null ],
     [ "load_init_egps", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a28b72d69157594137437a255e0636989", null ],
     [ "reinitialise", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#afa9d5db2fa981e746ad33e7e32f43794", null ],

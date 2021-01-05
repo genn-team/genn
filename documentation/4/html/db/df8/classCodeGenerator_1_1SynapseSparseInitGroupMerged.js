@@ -1,5 +1,5 @@
 var classCodeGenerator_1_1SynapseSparseInitGroupMerged =
 [
-    [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#ab97bfa21a282fc3e2fe203079f0b3102", null ],
-    [ "generate", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#a41ca8e853b5449a423a07e67a059c8f7", null ]
+    [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#a504739846b13d6cf5af27ad71aa395d5", null ],
+    [ "generateRunner", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#aa3ee46fe0776e38cce20b80fd9e0dc8f", null ]
 ];

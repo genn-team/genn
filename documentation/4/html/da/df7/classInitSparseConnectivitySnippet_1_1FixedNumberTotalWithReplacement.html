@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -137,6 +138,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ac2bab66afe84325ad9d1752910d08981 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af9419211b940a9c51fbd6450747e1fc5 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48">ParamValVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#af9419211b940a9c51fbd6450747e1fc5">getRowBuildStateVars</a> () const</td></tr>
 <tr class="separator:af9419211b940a9c51fbd6450747e1fc5 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4a948a6ba451b8bca5a02cb6793571fa inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a4a948a6ba451b8bca5a02cb6793571fa">getColBuildCode</a> () const</td></tr>
+<tr class="separator:a4a948a6ba451b8bca5a02cb6793571fa inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79abaeecc67921128862995dcedf599d inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a0156727ddf8f9c9cbcbc0d3d913b6b48">ParamValVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a79abaeecc67921128862995dcedf599d">getColBuildStateVars</a> () const</td></tr>
+<tr class="separator:a79abaeecc67921128862995dcedf599d inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad4684e7647110810a647bcbccbcaaa83 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ad4684e7647110810a647bcbccbcaaa83">getHostInitCode</a> () const</td></tr>
 <tr class="separator:ad4684e7647110810a647bcbccbcaaa83 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7cf7c23440db65582ddac36f903fcd5e inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7719c85cf11d180023fa955ec86a4204">CalcMaxLengthFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7cf7c23440db65582ddac36f903fcd5e">getCalcMaxRowLengthFunc</a> () const</td></tr>
@@ -145,8 +150,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0e4f6cb6d90ae7ce97f8c6792c16d32d inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7719c85cf11d180023fa955ec86a4204">CalcMaxLengthFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a0e4f6cb6d90ae7ce97f8c6792c16d32d">getCalcMaxColLengthFunc</a> () const</td></tr>
 <tr class="memdesc:a0e4f6cb6d90ae7ce97f8c6792c16d32d inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get function to calculate the maximum column length of this connector based on the parameters and the size of the pre and postsynaptic population.  <a href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a0e4f6cb6d90ae7ce97f8c6792c16d32d">More...</a><br /></td></tr>
 <tr class="separator:a0e4f6cb6d90ae7ce97f8c6792c16d32d inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3814bd7aa3006cbdc4c8d80e656a0e6 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a5b924d2ef2001967702e892322b135e1">CalcKernelSizeFunc</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ae3814bd7aa3006cbdc4c8d80e656a0e6">getCalcKernelSizeFunc</a> () const</td></tr>
+<tr class="memdesc:ae3814bd7aa3006cbdc4c8d80e656a0e6 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get function to calculate kernel size required for this conenctor based on its parameters.  <a href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ae3814bd7aa3006cbdc4c8d80e656a0e6">More...</a><br /></td></tr>
+<tr class="separator:ae3814bd7aa3006cbdc4c8d80e656a0e6 inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7fe11eb235160f7ea8da66ac1486df5c inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7fe11eb235160f7ea8da66ac1486df5c">canBeMerged</a> (const <a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html">Base</a> *other) const</td></tr>
-<tr class="memdesc:a7fe11eb235160f7ea8da66ac1486df5c inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this neuron model be merged with other? i.e. can they be simulated using same generated code.  <a href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7fe11eb235160f7ea8da66ac1486df5c">More...</a><br /></td></tr>
+<tr class="memdesc:a7fe11eb235160f7ea8da66ac1486df5c inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this sparse connectivity init snippet be merged with other? i.e. can they be simulated using same generated code.  <a href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7fe11eb235160f7ea8da66ac1486df5c">More...</a><br /></td></tr>
 <tr class="separator:a7fe11eb235160f7ea8da66ac1486df5c inherit pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a17a9ca158277401f2c190afb1e791d1f inherit pub_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a17a9ca158277401f2c190afb1e791d1f">~Base</a> ()</td></tr>
@@ -162,6 +170,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classInitSparseConnectivitySnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classInitSparseConnectivitySnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html">InitSparseConnectivitySnippet::Base</a></td></tr>
 <tr class="memitem:a7719c85cf11d180023fa955ec86a4204 inherit pub_types_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; unsigned int(unsigned int, unsigned int, const std::vector&lt; double &gt; &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7719c85cf11d180023fa955ec86a4204">CalcMaxLengthFunc</a></td></tr>
 <tr class="separator:a7719c85cf11d180023fa955ec86a4204 inherit pub_types_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b924d2ef2001967702e892322b135e1 inherit pub_types_classInitSparseConnectivitySnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; std::vector&lt; unsigned int &gt;const std::vector&lt; double &gt; &amp;)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a5b924d2ef2001967702e892322b135e1">CalcKernelSizeFunc</a></td></tr>
+<tr class="separator:a5b924d2ef2001967702e892322b135e1 inherit pub_types_classInitSparseConnectivitySnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
 <tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -361,14 +371,20 @@ Additional Inherited Members</h2></td></tr>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html">InitSparseConnectivitySnippet</a></li><li class="navelem"><a class="el" href="../../da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html">FixedNumberTotalWithReplacement</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:23 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:50 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

@@ -9,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -109,16 +110,17 @@ $(document).ready(function(){initNavTree('functions_func_p.html','');});
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6d02ddf4868933a92ece0ac81d1d8afc">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>PostsynapticUpdateGroupMerged()
-: <a class="el" href="dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html#a2013a92c2bb2c55203cef3116d4ecd79">CodeGenerator::PostsynapticUpdateGroupMerged</a>
+: <a class="el" href="dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html#aa6394b5dbffadb00949d58b5ccc4c2f0">CodeGenerator::PostsynapticUpdateGroupMerged</a>
 </li>
 <li>Preferences()
 : <a class="el" href="da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a81d2f28e0431fcbb375e6c0c547a879d">CodeGenerator::CUDA::Preferences</a>
+, <a class="el" href="dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a1ba45d8b97bd73fdd1201d6cbf1b2557">CodeGenerator::OpenCL::Preferences</a>
 </li>
 <li>presynaptic_update_time()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa372735033902cad5342e96d1c29b71">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>PresynapticUpdateGroupMerged()
-: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#a7190074c6e70dee01dce94e9577f3946">CodeGenerator::PresynapticUpdateGroupMerged</a>
+: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#aa38c8730ae8e9005936e79c0feefe049">CodeGenerator::PresynapticUpdateGroupMerged</a>
 </li>
 <li>pull()
 : <a class="el" href="dc/db2/classSpineMLSimulator_1_1StateVar.html#acbf04da234254ca52b3d3854a24d400a">SpineMLSimulator::StateVar&lt; T &gt;</a>
@@ -134,6 +136,9 @@ $(document).ready(function(){initNavTree('functions_func_p.html','');});
 <li>pull_extra_global_param_from_device()
 : <a class="el" href="d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a5f675fb5d704334c8277bd01d3e698fd">pygenn.genn_groups.Group</a>
 , <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a414b34f9e91be639135b4b37658ebbf5">pygenn.genn_model.GeNNModel</a>
+</li>
+<li>pull_recording_buffers_from_device()
+: <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9c5fc9394f573e6e464fa3a6add748f0">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>pull_spikes_from_device()
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a663d93bc0412391b5b349ce1ddb7495e">pygenn.genn_groups.NeuronGroup</a>
@@ -161,6 +166,9 @@ $(document).ready(function(){initNavTree('functions_func_p.html','');});
 </li>
 <li>pullModelPropertyFromDevice()
 : <a class="el" href="d2/d8b/classSpineMLSimulator_1_1LogOutput_1_1AnalogueBase.html#a39663b19aeb4e63e8e9d01306bece125">SpineMLSimulator::LogOutput::AnalogueBase</a>
+</li>
+<li>pullRecordingBuffersFromDevice()
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#aced5b47a73c1aaed7e7981106184739f">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pullSpikesFromDevice()
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#a3a511a379b48ef2dd185846047d3210f">SharedLibraryModel&lt; scalar &gt;</a>
@@ -205,7 +213,7 @@ $(document).ready(function(){initNavTree('functions_func_p.html','');});
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#a554acb235be4a8267b80108c8e673b4e">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pushExtraGlobalParam()
-: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a54daca8dbff14e01c1bfd76510de5f44">SharedLibraryModel&lt; scalar &gt;</a>
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#ade6903395fd342e4b3b1e47c43f44f5f">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pushSpikesToDevice()
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#a38b5f014414ec355b06d60349797df22">SharedLibraryModel&lt; scalar &gt;</a>
@@ -222,13 +230,19 @@ $(document).ready(function(){initNavTree('functions_func_p.html','');});
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:52 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:30:01 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

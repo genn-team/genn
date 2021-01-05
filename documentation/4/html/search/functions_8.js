@@ -6,5 +6,6 @@ var searchData=
   ['has_5fprocedural_5fweights',['has_procedural_weights',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad07bd66807e3f6ab59dbe9b014060ca1',1,'pygenn::genn_groups::SynapseGroup']]],
   ['hasvarsubstitution',['hasVarSubstitution',['../de/d22/classCodeGenerator_1_1Substitutions.html#aef723becd5e3a3d5d6dcc72ddce7dddb',1,'CodeGenerator::Substitutions']]],
   ['haveaesni',['haveAESNI',['../da/d49/sse_8h.html#a140ea54d2756d7fb027fb6e41f8b47c4',1,'sse.h']]],
-  ['host',['host',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a6f6fb900415ced795d5cb73eb09582c4',1,'CodeGenerator::MemAlloc']]]
+  ['host',['host',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#a6f6fb900415ced795d5cb73eb09582c4',1,'CodeGenerator::MemAlloc']]],
+  ['hostdevice',['hostDevice',['../d2/d06/classCodeGenerator_1_1MemAlloc.html#adba872f683603a66b0367734064c1bc1',1,'CodeGenerator::MemAlloc']]]
 ];

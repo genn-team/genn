@@ -9,5 +9,6 @@ var searchData=
   ['regexvarsubstitute',['regexVarSubstitute',['../d0/d02/namespaceCodeGenerator.html#a80838daf20cefe142f4af7ec2361bfd5',1,'CodeGenerator']]],
   ['regularspikerate',['RegularSpikeRate',['../d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html#af68c1a6596cfecec9afde2a78e8b7441',1,'SpineMLSimulator::Input::RegularSpikeRate']]],
   ['reinitialise',['reinitialise',['../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a0aff9793321ff449d330915d64f1da13',1,'pygenn.genn_groups.NeuronGroup.reinitialise()'],['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a32f140cac7c05bac242e956346553384',1,'pygenn.genn_groups.SynapseGroup.reinitialise()'],['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#afa9d5db2fa981e746ad33e7e32f43794',1,'pygenn.genn_groups.CurrentSource.reinitialise()'],['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a475a22c65205debb202eb98d4dc929f2',1,'pygenn.genn_model.GeNNModel.reinitialise()']]],
+  ['requireskernel',['requiresKernel',['../d3/d9e/classInitVarSnippet_1_1Base.html#a2b34b2f045ad9784e753f75927c5073a',1,'InitVarSnippet::Base']]],
   ['runtools',['runTools',['../d4/d40/classGenerateRunBase.html#a02db3a39c6c39f63724066a308cd7c8e',1,'GenerateRunBase']]]
 ];

@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -110,12 +111,13 @@ Inheritance diagram for CodeGenerator::SynapseGroupMergedBase:</div>
  <div class="center">
   <img src="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.png" usemap="#CodeGenerator::SynapseGroupMergedBase_map" alt=""/>
   <map id="CodeGenerator::SynapseGroupMergedBase_map" name="CodeGenerator::SynapseGroupMergedBase_map">
-<area href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html" alt="CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;" shape="rect" coords="688,0,1022,24"/>
+<area href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html" alt="CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;" shape="rect" coords="860,0,1194,24"/>
 <area href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html" alt="CodeGenerator::PostsynapticUpdateGroupMerged" shape="rect" coords="0,112,334,136"/>
 <area href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html" alt="CodeGenerator::PresynapticUpdateGroupMerged" shape="rect" coords="344,112,678,136"/>
-<area href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html" alt="CodeGenerator::SynapseDenseInitGroupMerged" shape="rect" coords="688,112,1022,136"/>
-<area href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html" alt="CodeGenerator::SynapseDynamicsGroupMerged" shape="rect" coords="1032,112,1366,136"/>
-<area href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html" alt="CodeGenerator::SynapseSparseInitGroupMerged" shape="rect" coords="1376,112,1710,136"/>
+<area href="../../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html" alt="CodeGenerator::SynapseConnectivityInitGroupMerged" shape="rect" coords="688,112,1022,136"/>
+<area href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html" alt="CodeGenerator::SynapseDenseInitGroupMerged" shape="rect" coords="1032,112,1366,136"/>
+<area href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html" alt="CodeGenerator::SynapseDynamicsGroupMerged" shape="rect" coords="1376,112,1710,136"/>
+<area href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html" alt="CodeGenerator::SynapseSparseInitGroupMerged" shape="rect" coords="1720,112,2054,136"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -123,8 +125,12 @@ Inheritance diagram for CodeGenerator::SynapseGroupMergedBase:</div>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:aa430e5e3711030a6d847f5953d82bbaf"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa430e5e3711030a6d847f5953d82bbaf">getPresynapticAxonalDelaySlot</a> () const</td></tr>
 <tr class="separator:aa430e5e3711030a6d847f5953d82bbaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa4f1e00fe8e8cd9597cc0194efaebbb3"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa4f1e00fe8e8cd9597cc0194efaebbb3">getPrevPresynapticSpikeTimeAxonalDelaySlot</a> () const</td></tr>
+<tr class="separator:aa4f1e00fe8e8cd9597cc0194efaebbb3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac7b26aca1d1e34b33b1acc418d313179"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ac7b26aca1d1e34b33b1acc418d313179">getPostsynapticBackPropDelaySlot</a> () const</td></tr>
 <tr class="separator:ac7b26aca1d1e34b33b1acc418d313179"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a257931800444f0bd5092b1ce19b83bb5"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a257931800444f0bd5092b1ce19b83bb5">getPrevPostsynapticSpikeTimeBackPropDelaySlot</a> () const</td></tr>
+<tr class="separator:a257931800444f0bd5092b1ce19b83bb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87657f7f20fdb2f4a3b9de99b58f01f0"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a87657f7f20fdb2f4a3b9de99b58f01f0">getDendriticDelayOffset</a> (const std::string &amp;offset=&quot;&quot;) const</td></tr>
 <tr class="separator:a87657f7f20fdb2f4a3b9de99b58f01f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae48ee8716ccc0d6b3890d78f0cd8f7d4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ae48ee8716ccc0d6b3890d78f0cd8f7d4">isWUParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
@@ -149,20 +155,23 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a64b68a2fe8acdba26d310992eb47f82c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the connectivity initialization parameter be implemented heterogeneously?  <a href="#a64b68a2fe8acdba26d310992eb47f82c">More...</a><br /></td></tr>
 <tr class="separator:a64b68a2fe8acdba26d310992eb47f82c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40701e3126aa7c540605e6d0c10634c9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a40701e3126aa7c540605e6d0c10634c9">isSrcNeuronParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
-<tr class="memdesc:a40701e3126aa7c540605e6d0c10634c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is presynaptic neuron parameter heterogeneous.  <a href="#a40701e3126aa7c540605e6d0c10634c9">More...</a><br /></td></tr>
+<tr class="memdesc:a40701e3126aa7c540605e6d0c10634c9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is presynaptic neuron parameter heterogeneous?  <a href="#a40701e3126aa7c540605e6d0c10634c9">More...</a><br /></td></tr>
 <tr class="separator:a40701e3126aa7c540605e6d0c10634c9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a274851dfb372fbf44548d06a4b892062"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a274851dfb372fbf44548d06a4b892062">isSrcNeuronDerivedParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
-<tr class="memdesc:a274851dfb372fbf44548d06a4b892062"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is presynaptic neuron derived parameter heterogeneous.  <a href="#a274851dfb372fbf44548d06a4b892062">More...</a><br /></td></tr>
+<tr class="memdesc:a274851dfb372fbf44548d06a4b892062"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is presynaptic neuron derived parameter heterogeneous?  <a href="#a274851dfb372fbf44548d06a4b892062">More...</a><br /></td></tr>
 <tr class="separator:a274851dfb372fbf44548d06a4b892062"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac92359d9c9af40f897afe6321d709c37"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ac92359d9c9af40f897afe6321d709c37">isTrgNeuronParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
-<tr class="memdesc:ac92359d9c9af40f897afe6321d709c37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is postsynaptic neuron parameter heterogeneous.  <a href="#ac92359d9c9af40f897afe6321d709c37">More...</a><br /></td></tr>
+<tr class="memdesc:ac92359d9c9af40f897afe6321d709c37"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is postsynaptic neuron parameter heterogeneous?  <a href="#ac92359d9c9af40f897afe6321d709c37">More...</a><br /></td></tr>
 <tr class="separator:ac92359d9c9af40f897afe6321d709c37"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6dc2104156a5a844a989ec30aa5d8a06"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a6dc2104156a5a844a989ec30aa5d8a06">isTrgNeuronDerivedParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
-<tr class="memdesc:a6dc2104156a5a844a989ec30aa5d8a06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is postsynaptic neuron derived parameter heterogeneous.  <a href="#a6dc2104156a5a844a989ec30aa5d8a06">More...</a><br /></td></tr>
+<tr class="memdesc:a6dc2104156a5a844a989ec30aa5d8a06"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is postsynaptic neuron derived parameter heterogeneous?  <a href="#a6dc2104156a5a844a989ec30aa5d8a06">More...</a><br /></td></tr>
 <tr class="separator:a6dc2104156a5a844a989ec30aa5d8a06"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53f111c14e9195e36275600aded4c1bb"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a53f111c14e9195e36275600aded4c1bb">isKernelSizeHeterogeneous</a> (size_t dimensionIndex) const</td></tr>
+<tr class="memdesc:a53f111c14e9195e36275600aded4c1bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is kernel size heterogeneous in this dimension?  <a href="#a53f111c14e9195e36275600aded4c1bb">More...</a><br /></td></tr>
+<tr class="separator:a53f111c14e9195e36275600aded4c1bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classCodeGenerator_1_1GroupMerged"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classCodeGenerator_1_1GroupMerged')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;</a></td></tr>
-<tr class="memitem:a8b12d7ab1f2e3314ea59060dd8db0275 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a8b12d7ab1f2e3314ea59060dd8db0275">GroupMerged</a> (size_t index, const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &gt;&gt; groups)</td></tr>
-<tr class="separator:a8b12d7ab1f2e3314ea59060dd8db0275 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e7e24c877ed71443ddba4ef3625fdd9 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a2e7e24c877ed71443ddba4ef3625fdd9">GroupMerged</a> (size_t index, const std::string &amp;precision, const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &gt;&gt; groups)</td></tr>
+<tr class="separator:a2e7e24c877ed71443ddba4ef3625fdd9 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3301e1ebcc1341522444549d8bc863b inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ab3301e1ebcc1341522444549d8bc863b">getIndex</a> () const</td></tr>
 <tr class="separator:ab3301e1ebcc1341522444549d8bc863b inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a37df4b84d064002b92f5478cfc71e18d inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a37df4b84d064002b92f5478cfc71e18d">getArchetype</a> () const</td></tr>
@@ -171,6 +180,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a26f1cfd1cea50675f49e6163bff47ee1 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a26f1cfd1cea50675f49e6163bff47ee1">getGroups</a> () const</td></tr>
 <tr class="memdesc:a26f1cfd1cea50675f49e6163bff47ee1 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets access to underlying vector of neuron groups which have been merged.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a26f1cfd1cea50675f49e6163bff47ee1">More...</a><br /></td></tr>
 <tr class="separator:a26f1cfd1cea50675f49e6163bff47ee1 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3054484f053ed6d1dd6924c5a91c4eb inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a000907849151fa694df561fc014fe602">Field</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ad3054484f053ed6d1dd6924c5a91c4eb">getFields</a> () const</td></tr>
+<tr class="memdesc:ad3054484f053ed6d1dd6924c5a91c4eb inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get group fields.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ad3054484f053ed6d1dd6924c5a91c4eb">More...</a><br /></td></tr>
+<tr class="separator:ad3054484f053ed6d1dd6924c5a91c4eb inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbc43d1b9ce4c99ce6c9720db09f4d31 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a000907849151fa694df561fc014fe602">Field</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#afbc43d1b9ce4c99ce6c9720db09f4d31">getSortedFields</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
+<tr class="memdesc:afbc43d1b9ce4c99ce6c9720db09f4d31 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get group fields, sorted into order they will appear in struct.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#afbc43d1b9ce4c99ce6c9720db09f4d31">More...</a><br /></td></tr>
+<tr class="separator:afbc43d1b9ce4c99ce6c9720db09f4d31 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adcc2b080bdcbd7c6d3d8d8b16fa609c4 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#adcc2b080bdcbd7c6d3d8d8b16fa609c4">generateStruct</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, const std::string &amp;name, bool host=false) const</td></tr>
+<tr class="memdesc:adcc2b080bdcbd7c6d3d8d8b16fa609c4 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate declaration of struct to hold this merged group.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#adcc2b080bdcbd7c6d3d8d8b16fa609c4">More...</a><br /></td></tr>
+<tr class="separator:adcc2b080bdcbd7c6d3d8d8b16fa609c4 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aae68697044f258f736cca9c753bcedfb inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#aae68697044f258f736cca9c753bcedfb">generateStructFieldArgumentDefinitions</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
+<tr class="separator:aae68697044f258f736cca9c753bcedfb inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9736f70187bdb4b9def628a4c9adc570 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a9736f70187bdb4b9def628a4c9adc570">getStructArraySize</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
+<tr class="separator:a9736f70187bdb4b9def628a4c9adc570 inherit pub_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
 Protected Types</h2></td></tr>
@@ -180,19 +202,18 @@ Protected Types</h2></td></tr>
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a6e619cecc4afcb5a30233e1768c0fb3d">Role::SynapseDynamics</a>, 
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758">Role::DenseInit</a>, 
 <br />
-&#160;&#160;<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8">Role::SparseInit</a>
+&#160;&#160;<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8">Role::SparseInit</a>, 
+<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8">Role::ConnectivityInit</a>
 <br />
  }</td></tr>
 <tr class="separator:aa46d3df803bad1c0d293faa1dd5edea1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a26fba1cc1dc4a38319bf59e556e4057d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a26fba1cc1dc4a38319bf59e556e4057d">SynapseGroupMergedBase</a> (size_t index, const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &gt;&gt; &amp;groups)</td></tr>
-<tr class="separator:a26fba1cc1dc4a38319bf59e556e4057d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8a8be97b502b7213b644ed702fce0615"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a8a8be97b502b7213b644ed702fce0615">getArchetypeCode</a> () const</td></tr>
-<tr class="separator:a8a8be97b502b7213b644ed702fce0615"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae61118696c0d11be2a56431792ba322d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ae61118696c0d11be2a56431792ba322d">generate</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalFunc, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalVar, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerVarDecl, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerMergedStructAlloc, <a class="el" href="../../d2/dbe/classCodeGenerator_1_1MergedStructData.html">MergedStructData</a> &amp;mergedStructData, const std::string &amp;precision, const std::string &amp;timePrecision, const std::string &amp;name, <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1">Role</a> role) const</td></tr>
-<tr class="separator:ae61118696c0d11be2a56431792ba322d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac959e1d6818bd62b70769e0683c0239c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ac959e1d6818bd62b70769e0683c0239c">SynapseGroupMergedBase</a> (size_t index, const std::string &amp;precision, const std::string &amp;timePrecision, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1">Role</a> role, const std::string &amp;archetypeCode, const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &gt;&gt; &amp;groups)</td></tr>
+<tr class="separator:ac959e1d6818bd62b70769e0683c0239c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab01b4adf06c19b2aa56e6064ca9b8e7f"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab01b4adf06c19b2aa56e6064ca9b8e7f">getArchetypeCode</a> () const</td></tr>
+<tr class="separator:ab01b4adf06c19b2aa56e6064ca9b8e7f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classCodeGenerator_1_1GroupMerged"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classCodeGenerator_1_1GroupMerged')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;</a></td></tr>
 <tr class="memitem:ab81dc8060e3208107a635b805ea75798 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ab81dc8060e3208107a635b805ea75798">isParamValueHeterogeneous</a> (size_t index, P getParamValuesFn) const</td></tr>
 <tr class="memdesc:ab81dc8060e3208107a635b805ea75798 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to test whether parameter values are heterogeneous within merged group.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ab81dc8060e3208107a635b805ea75798">More...</a><br /></td></tr>
@@ -200,12 +221,38 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a6c4acb65e6fc248a9a3302ee0785f189 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a6c4acb65e6fc248a9a3302ee0785f189">isParamValueHeterogeneous</a> (const std::vector&lt; std::string &gt; &amp;codeStrings, const std::string &amp;paramName, size_t index, P getParamValuesFn) const</td></tr>
 <tr class="memdesc:a6c4acb65e6fc248a9a3302ee0785f189 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to test whether parameter values are heterogeneous within merged group.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a6c4acb65e6fc248a9a3302ee0785f189">More...</a><br /></td></tr>
 <tr class="separator:a6c4acb65e6fc248a9a3302ee0785f189 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aac65000c419542a6ba724132ee1cefc7 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#aac65000c419542a6ba724132ee1cefc7">addField</a> (const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">GetFieldValueFunc</a> getFieldValue, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aef">FieldType</a> fieldType=FieldType::Standard)</td></tr>
+<tr class="separator:aac65000c419542a6ba724132ee1cefc7 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb64eb31f8ecb21a5fdebf31b8df918e inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#afb64eb31f8ecb21a5fdebf31b8df918e">addScalarField</a> (const std::string &amp;name, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">GetFieldValueFunc</a> getFieldValue, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aef">FieldType</a> fieldType=FieldType::Standard)</td></tr>
+<tr class="separator:afb64eb31f8ecb21a5fdebf31b8df918e inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a13180928229e33ec72a6b0896f132c2f inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a13180928229e33ec72a6b0896f132c2f">addPointerField</a> (const std::string &amp;type, const std::string &amp;name, const std::string &amp;prefix)</td></tr>
+<tr class="separator:a13180928229e33ec72a6b0896f132c2f inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af0f0a4dba7b2fdd7244227385bcc6954 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#af0f0a4dba7b2fdd7244227385bcc6954">addVars</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;vars, const std::string &amp;arrayPrefix)</td></tr>
+<tr class="separator:af0f0a4dba7b2fdd7244227385bcc6954 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0cc9b236456bcdd0c56d743481cf0592 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a0cc9b236456bcdd0c56d743481cf0592">addEGPs</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6">Snippet::Base::EGPVec</a> &amp;egps, const std::string &amp;arrayPrefix, const std::string &amp;varName=&quot;&quot;)</td></tr>
+<tr class="separator:a0cc9b236456bcdd0c56d743481cf0592 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafb3f01bc3e45d60454dc1ed6f045849 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#aafb3f01bc3e45d60454dc1ed6f045849">addHeterogeneousParams</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">Snippet::Base::StringVec</a> &amp;paramNames, const std::string &amp;suffix, P getParamValues, H isHeterogeneous)</td></tr>
+<tr class="separator:aafb3f01bc3e45d60454dc1ed6f045849 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a41afd2fe742b3335de40142a454be52a inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a41afd2fe742b3335de40142a454be52a">addHeterogeneousDerivedParams</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#ad14217cebf11eddffa751a4d5c4792cb">Snippet::Base::DerivedParamVec</a> &amp;derivedParams, const std::string &amp;suffix, D getDerivedParamValues, H isHeterogeneous)</td></tr>
+<tr class="separator:a41afd2fe742b3335de40142a454be52a inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abc11e3da7c939eba195df820c015d555 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#abc11e3da7c939eba195df820c015d555">addHeterogeneousVarInitParams</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;vars, V getVarInitialisers, H isHeterogeneous)</td></tr>
+<tr class="separator:abc11e3da7c939eba195df820c015d555 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc2261f0481b557368c2f52a089a5dce inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#adc2261f0481b557368c2f52a089a5dce">addHeterogeneousVarInitDerivedParams</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;vars, V getVarInitialisers, H isHeterogeneous)</td></tr>
+<tr class="separator:adc2261f0481b557368c2f52a089a5dce inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac77f91d8484a2c12b56e94dc23d89003 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac77f91d8484a2c12b56e94dc23d89003">generateRunnerBase</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalFunc, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalVar, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerVarDecl, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerMergedStructAlloc, const std::string &amp;name, bool host=false) const</td></tr>
+<tr class="separator:ac77f91d8484a2c12b56e94dc23d89003 inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classCodeGenerator_1_1GroupMerged"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classCodeGenerator_1_1GroupMerged')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;</a></td></tr>
+<tr class="memitem:a27527a1a96384cc16c281cfdbc031aef inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aef">FieldType</a> </td></tr>
+<tr class="separator:a27527a1a96384cc16c281cfdbc031aef inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac1a0699268480acddd635f2dac745c0b inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a></td></tr>
 <tr class="separator:ac1a0699268480acddd635f2dac745c0b inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac4a09a15d5da285569e09c010399f2f0 inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; std::string(const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;, size_t)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">GetFieldValueFunc</a></td></tr>
+<tr class="separator:ac4a09a15d5da285569e09c010399f2f0 inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a000907849151fa694df561fc014fe602 inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">typedef std::tuple&lt; std::string, std::string, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">GetFieldValueFunc</a>, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aef">FieldType</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a000907849151fa694df561fc014fe602">Field</a></td></tr>
+<tr class="separator:a000907849151fa694df561fc014fe602 inherit pub_types_classCodeGenerator_1_1GroupMerged"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="aa46d3df803bad1c0d293faa1dd5edea1"></a>
@@ -233,13 +280,14 @@ Additional Inherited Members</h2></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a6e619cecc4afcb5a30233e1768c0fb3d"></a>SynapseDynamics&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758"></a>DenseInit&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8"></a>SparseInit&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8"></a>ConnectivityInit&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
 </div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a id="a26fba1cc1dc4a38319bf59e556e4057d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a26fba1cc1dc4a38319bf59e556e4057d">&#9670;&nbsp;</a></span>SynapseGroupMergedBase()</h2>
+<a id="ac959e1d6818bd62b70769e0683c0239c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac959e1d6818bd62b70769e0683c0239c">&#9670;&nbsp;</a></span>SynapseGroupMergedBase()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -256,79 +304,6 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &gt;&gt; &amp;&#160;</td>
-          <td class="paramname"><em>groups</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
-<h2 class="groupheader">Member Function Documentation</h2>
-<a id="ae61118696c0d11be2a56431792ba322d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae61118696c0d11be2a56431792ba322d">&#9670;&nbsp;</a></span>generate()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void CodeGenerator::SynapseGroupMergedBase::generate </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
-          <td class="paramname"><em>backend</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
-          <td class="paramname"><em>definitionsInternal</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
-          <td class="paramname"><em>definitionsInternalFunc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
-          <td class="paramname"><em>definitionsInternalVar</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
-          <td class="paramname"><em>runnerVarDecl</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
-          <td class="paramname"><em>runnerMergedStructAlloc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d2/dbe/classCodeGenerator_1_1MergedStructData.html">MergedStructData</a> &amp;&#160;</td>
-          <td class="paramname"><em>mergedStructData</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>precision</em>, </td>
         </tr>
@@ -341,19 +316,31 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
+          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
+          <td class="paramname"><em>backend</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1">Role</a>&#160;</td>
-          <td class="paramname"><em>role</em>&#160;</td>
+          <td class="paramname"><em>role</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>archetypeCode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &gt;&gt; &amp;&#160;</td>
+          <td class="paramname"><em>groups</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td> const</td>
+          <td></td><td></td>
         </tr>
       </table>
   </td>
@@ -365,8 +352,9 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a8a8be97b502b7213b644ed702fce0615"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8a8be97b502b7213b644ed702fce0615">&#9670;&nbsp;</a></span>getArchetypeCode()</h2>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab01b4adf06c19b2aa56e6064ca9b8e7f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab01b4adf06c19b2aa56e6064ca9b8e7f">&#9670;&nbsp;</a></span>getArchetypeCode()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -375,7 +363,7 @@ Additional Inherited Members</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">virtual std::string CodeGenerator::SynapseGroupMergedBase::getArchetypeCode </td>
+          <td class="memname">const std::string&amp; CodeGenerator::SynapseGroupMergedBase::getArchetypeCode </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -383,12 +371,10 @@ Additional Inherited Members</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span><span class="mlabel">virtual</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
-
-<p>Reimplemented in <a class="el" href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html#a1ddcd6025f14807a856bd04270342a30">CodeGenerator::SynapseDynamicsGroupMerged</a>, <a class="el" href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html#aac9d5bfc10f95de67cd85d4e0bf67186">CodeGenerator::PostsynapticUpdateGroupMerged</a>, and <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#affac7964df451fad125ce5c1194d4a6a">CodeGenerator::PresynapticUpdateGroupMerged</a>.</p>
 
 </div>
 </div>
@@ -446,6 +432,42 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a257931800444f0bd5092b1ce19b83bb5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a257931800444f0bd5092b1ce19b83bb5">&#9670;&nbsp;</a></span>getPrevPostsynapticSpikeTimeBackPropDelaySlot()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::SynapseGroupMergedBase::getPrevPostsynapticSpikeTimeBackPropDelaySlot </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Get the expression to calculate the delay slot for accessing previous postsynaptic neuron spike times, taking into account back propagation delay </p>
+
+</div>
+</div>
+<a id="aa4f1e00fe8e8cd9597cc0194efaebbb3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa4f1e00fe8e8cd9597cc0194efaebbb3">&#9670;&nbsp;</a></span>getPrevPresynapticSpikeTimeAxonalDelaySlot()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::SynapseGroupMergedBase::getPrevPresynapticSpikeTimeAxonalDelaySlot </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Get the expression to calculate the delay slot for accessing previous presynaptic neuron spike times, taking into account axonal delay </p>
+
+</div>
+</div>
 <a id="a64b68a2fe8acdba26d310992eb47f82c"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a64b68a2fe8acdba26d310992eb47f82c">&#9670;&nbsp;</a></span>isConnectivityInitDerivedParamHeterogeneous()</h2>
 
@@ -486,6 +508,26 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="a53f111c14e9195e36275600aded4c1bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53f111c14e9195e36275600aded4c1bb">&#9670;&nbsp;</a></span>isKernelSizeHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Is kernel size heterogeneous in this dimension? </p>
+
+</div>
+</div>
 <a id="a274851dfb372fbf44548d06a4b892062"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a274851dfb372fbf44548d06a4b892062">&#9670;&nbsp;</a></span>isSrcNeuronDerivedParamHeterogeneous()</h2>
 
@@ -502,7 +544,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Is presynaptic neuron derived parameter heterogeneous. </p>
+<p>Is presynaptic neuron derived parameter heterogeneous? </p>
 
 </div>
 </div>
@@ -522,7 +564,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Is presynaptic neuron parameter heterogeneous. </p>
+<p>Is presynaptic neuron parameter heterogeneous? </p>
 
 </div>
 </div>
@@ -542,7 +584,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Is postsynaptic neuron derived parameter heterogeneous. </p>
+<p>Is postsynaptic neuron derived parameter heterogeneous? </p>
 
 </div>
 </div>
@@ -562,7 +604,7 @@ Additional Inherited Members</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Is postsynaptic neuron parameter heterogeneous. </p>
+<p>Is postsynaptic neuron parameter heterogeneous? </p>
 
 </div>
 </div>
@@ -692,14 +734,20 @@ Additional Inherited Members</h2></td></tr>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:17 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:48 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

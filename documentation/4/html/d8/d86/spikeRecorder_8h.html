@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -94,7 +95,8 @@ $(document).ready(function(){initNavTree('d8/d86/spikeRecorder_8h.html','../../'
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">spikeRecorder.h File Reference</div>  </div>
 </div><!--header-->
@@ -103,8 +105,11 @@ $(document).ready(function(){initNavTree('d8/d86/spikeRecorder_8h.html','../../'
 <code>#include &lt;fstream&gt;</code><br />
 <code>#include &lt;iterator&gt;</code><br />
 <code>#include &lt;list&gt;</code><br />
+<code>#include &lt;string&gt;</code><br />
 <code>#include &lt;tuple&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
+<code>#include &lt;cassert&gt;</code><br />
+<code>#include &lt;cstdint&gt;</code><br />
 </div>
 <p><a href="../../d8/d86/spikeRecorder_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -119,17 +124,219 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d9b/classSpikeRecorder.html">SpikeRecorder&lt; Writer &gt;</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class to read spikes from neuron groups.  <a href="../../dd/d9b/classSpikeRecorder.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a7a75a9dcce1dbfc4f42fe6180a3c6a6d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d86/spikeRecorder_8h.html#a7a75a9dcce1dbfc4f42fe6180a3c6a6d">writeBinarySpikeRecording</a> (const std::string &amp;filename, const uint32_t *spkRecord, unsigned int popSize, unsigned int numTimesteps, bool append=false)</td></tr>
+<tr class="memdesc:a7a75a9dcce1dbfc4f42fe6180a3c6a6d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Writes spikes recorded using GeNN's spike timing sytem directly to binary file.  <a href="#a7a75a9dcce1dbfc4f42fe6180a3c6a6d">More...</a><br /></td></tr>
+<tr class="separator:a7a75a9dcce1dbfc4f42fe6180a3c6a6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a158428fbb7cc6952e86619ec1c27740f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d86/spikeRecorder_8h.html#a158428fbb7cc6952e86619ec1c27740f">_clz</a> (unsigned int value)</td></tr>
+<tr class="separator:a158428fbb7cc6952e86619ec1c27740f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6739ef4f0b3b6300bf68f4c8f27e456"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456">writeTextSpikeRecording</a> (const std::string &amp;filename, const uint32_t *spkRecord, unsigned int popSize, unsigned int numTimesteps, double dt=1.0, const std::string &amp;delimiter=&quot; &quot;, bool header=false, bool append=false, double startTime=0.0)</td></tr>
+<tr class="separator:af6739ef4f0b3b6300bf68f4c8f27e456"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a158428fbb7cc6952e86619ec1c27740f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a158428fbb7cc6952e86619ec1c27740f">&#9670;&nbsp;</a></span>_clz()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">int _clz </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>value</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7a75a9dcce1dbfc4f42fe6180a3c6a6d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7a75a9dcce1dbfc4f42fe6180a3c6a6d">&#9670;&nbsp;</a></span>writeBinarySpikeRecording()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void writeBinarySpikeRecording </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>filename</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint32_t *&#160;</td>
+          <td class="paramname"><em>spkRecord</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>popSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>numTimesteps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>append</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Writes spikes recorded using GeNN's spike timing sytem directly to binary file. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>string containing filename to write to. </td></tr>
+    <tr><td class="paramname">spkRecord</td><td>pointer to spike recording data to write (accessable via <code>recordSpk&lt;neuron group name&gt;</code> or <code>recordSpkEvent&lt;neuron group name&gt;</code>). </td></tr>
+    <tr><td class="paramname">popSize</td><td>number of neurons in population </td></tr>
+    <tr><td class="paramname">numTimesteps</td><td>how many timesteps were recorded (should match the value passed to <code>allocateRecordingBuffers</code>). </td></tr>
+    <tr><td class="paramname">append</td><td>boolean specifying whether to overwrite or append to any existing file called filename. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="af6739ef4f0b3b6300bf68f4c8f27e456"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6739ef4f0b3b6300bf68f4c8f27e456">&#9670;&nbsp;</a></span>writeTextSpikeRecording()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void writeTextSpikeRecording </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>filename</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const uint32_t *&#160;</td>
+          <td class="paramname"><em>spkRecord</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>popSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>numTimesteps</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>dt</em> = <code>1.0</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>delimiter</em> = <code>&quot;&#160;&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>header</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>append</em> = <code>false</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">double&#160;</td>
+          <td class="paramname"><em>startTime</em> = <code>0.0</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Writes spikes recorded using GeNN's spike timing sytem directly to text file with one column containing spike times in ms and one neuron ids</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filename</td><td>string containing filename to write to. </td></tr>
+    <tr><td class="paramname">spkRecord</td><td>pointer to spike recording data to write (accessable via <code>recordSpk&lt;neuron group name&gt;</code> or <code>recordSpkEvent&lt;neuron group name&gt;</code>). </td></tr>
+    <tr><td class="paramname">popSize</td><td>number of neurons in population </td></tr>
+    <tr><td class="paramname">numTimesteps</td><td>number of timesteps recorded </td></tr>
+    <tr><td class="paramname">dt</td><td>double precision number specifying size of each timestep </td></tr>
+    <tr><td class="paramname">delimiter</td><td>string specifying character(s) which should appear between columns in text file </td></tr>
+    <tr><td class="paramname">header</td><td>boolean specifying whether to write a header row at start of text file or not </td></tr>
+    <tr><td class="paramname">append</td><td>boolean specifying whether to overwrite or append to any existing file called filename. </td></tr>
+    <tr><td class="paramname">startTime</td><td>double precision number specifying start time of current data. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_66fc3ae5585a02e310a487b6a12e9e11.html">userproject</a></li><li class="navelem"><a class="el" href="../../dir_9222b5078f0808679094f1464c7a7eaf.html">include</a></li><li class="navelem"><a class="el" href="../../d8/d86/spikeRecorder_8h.html">spikeRecorder.h</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:34:59 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:43 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

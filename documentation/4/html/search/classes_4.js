@@ -1,6 +1,7 @@
 var searchData=
 [
   ['egp',['EGP',['../dd/d5d/structSnippet_1_1Base_1_1EGP.html',1,'Snippet::Base']]],
+  ['egpfield',['EGPField',['../dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html',1,'CodeGenerator::ModelSpecMerged']]],
   ['event',['Event',['../d8/d43/classSpineMLSimulator_1_1LogOutput_1_1Event.html',1,'SpineMLSimulator::LogOutput']]],
   ['expcond',['ExpCond',['../d5/d27/classPostsynapticModels_1_1ExpCond.html',1,'PostsynapticModels']]],
   ['expcurr',['ExpCurr',['../d5/d1e/classPostsynapticModels_1_1ExpCurr.html',1,'PostsynapticModels']]],

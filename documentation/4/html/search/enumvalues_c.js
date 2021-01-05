@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['pointeregp',['PointerEGP',['../dc/d85/classCodeGenerator_1_1MergedStructGenerator.html#a82bc346debe9d8a1e3ea085a70943096a7c9a173774ebd104538ae8785ba5a971',1,'CodeGenerator::MergedStructGenerator']]],
+  ['pointeregp',['PointerEGP',['../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aefa7c9a173774ebd104538ae8785ba5a971',1,'CodeGenerator::GroupMerged']]],
   ['postsynaptic',['POSTSYNAPTIC',['../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2a39711e1ac5d5263471a6184f362dc02f',1,'SynapseGroup']]],
   ['postsynapticupdate',['PostsynapticUpdate',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a0c518ae62358fa911c59c2b73a27aefb',1,'CodeGenerator::SynapseGroupMergedBase']]],
   ['presynaptic',['PRESYNAPTIC',['../dc/dfa/classSynapseGroup.html#a3da23a0e726b05a12e95c3d58645b1a2ac583511247567bdc79915d057babba12',1,'SynapseGroup']]],

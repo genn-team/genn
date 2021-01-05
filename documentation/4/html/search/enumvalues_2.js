@@ -10,5 +10,6 @@ var searchData=
   ['clrng_5finvalid_5fstream_5fcreator',['CLRNG_INVALID_STREAM_CREATOR',['../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44a24d77050c551ef75b9a4bff6a57674f2',1,'clRNG.h']]],
   ['clrng_5finvalid_5fvalue',['CLRNG_INVALID_VALUE',['../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44ae81b2b1c61c68b628b535907769036e6',1,'clRNG.h']]],
   ['clrng_5fout_5fof_5fresources',['CLRNG_OUT_OF_RESOURCES',['../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44a1dd90911ce36e5b03962ba786bcf21eb',1,'clRNG.h']]],
-  ['clrng_5fsuccess',['CLRNG_SUCCESS',['../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44aded2eb833110b8ce55f4240ac32a2398',1,'clRNG.h']]]
+  ['clrng_5fsuccess',['CLRNG_SUCCESS',['../d0/dc6/clRNG_8h.html#a9d12966a299e9d7764eab8cb9a164f44aded2eb833110b8ce55f4240ac32a2398',1,'clRNG.h']]],
+  ['connectivityinit',['ConnectivityInit',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8',1,'CodeGenerator::SynapseGroupMergedBase']]]
 ];

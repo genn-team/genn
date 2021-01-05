@@ -8,14 +8,20 @@ var UserManual =
     ] ],
     [ "Neuron models", "de/ded/sectNeuronModels.html", [
       [ "Defining your own neuron type", "de/ded/sectNeuronModels.html#sect_own", [
+        [ "Derived Parameters", "de/ded/sectNeuronModels.html#neuron_derived_params", null ],
         [ "Support code", "de/ded/sectNeuronModels.html#neuron_support_code", null ],
         [ "Extra global parameters", "de/ded/sectNeuronModels.html#neuron_extra_global_param", null ],
         [ "Additional input variables", "de/ded/sectNeuronModels.html#neuron_additional_input", null ],
         [ "Random number generation", "de/ded/sectNeuronModels.html#neuron_rng", null ]
-      ] ]
+      ] ],
+      [ "Creating neuron populations with your own neuron type", "de/ded/sectNeuronModels.html#neuron_pop_own_type", null ]
     ] ],
     [ "Weight update models", "d5/d24/sectSynapseModels.html", [
-      [ "Defining a new weight update model", "d5/d24/sectSynapseModels.html#sect34", null ]
+      [ "Defining a new weight update model", "d5/d24/sectSynapseModels.html#sect34", [
+        [ "Pre and postsynaptic dynamics", "d5/d24/sectSynapseModels.html#wum_pre_post_dynamics", null ],
+        [ "Synapse dynamics", "d5/d24/sectSynapseModels.html#wum_synapse_dynamics", null ],
+        [ "Spike-like events", "d5/d24/sectSynapseModels.html#wum_spike_like_events", null ]
+      ] ]
     ] ],
     [ "Postsynaptic integration methods", "dd/de4/sect_postsyn.html", [
       [ "Defining a new postsynaptic model", "dd/de4/sect_postsyn.html#sect_new_postsynaptic", null ]
@@ -30,6 +36,7 @@ var UserManual =
     ] ],
     [ "Sparse connectivity initialisation", "d5/dd4/sectSparseConnectivityInitialisation.html", [
       [ "Defining a new sparse connectivity snippet", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_new_sparse_connect", null ],
+      [ "Kernel-based connectivity", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_kernel", null ],
       [ "Sparse connectivity locations", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_connect_init_modes", null ]
     ] ]
 ];

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['timeprecision',['TimePrecision',['../dc/de1/modelSpec_8h.html#a71ece086a364ee04c7ffc3f626218b8f',1,'modelSpec.h']]]
+  ['role',['Role',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1',1,'CodeGenerator::SynapseGroupMergedBase']]]
 ];

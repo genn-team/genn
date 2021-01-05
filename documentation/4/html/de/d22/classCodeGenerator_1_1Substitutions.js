@@ -2,7 +2,7 @@ var classCodeGenerator_1_1Substitutions =
 [
     [ "FunctionTemplate", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate" ],
     [ "Substitutions", "de/d22/classCodeGenerator_1_1Substitutions.html#a7fe0822b5faffcadce98ffe3b8e10197", null ],
-    [ "Substitutions", "de/d22/classCodeGenerator_1_1Substitutions.html#a6e7c057f59d2af8be75d7bd4f81165b7", null ],
+    [ "Substitutions", "de/d22/classCodeGenerator_1_1Substitutions.html#a6444a1bddee4aa79de970f284587238e", null ],
     [ "addFuncSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#a61c71d0dc4863950a652ecce2fa1b843", null ],
     [ "addParamValueSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#a6e00e02a190497748561fed0e4c937b0", null ],
     [ "addParamValueSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#aff0168fcb07187481c05db1ae01455bd", null ],

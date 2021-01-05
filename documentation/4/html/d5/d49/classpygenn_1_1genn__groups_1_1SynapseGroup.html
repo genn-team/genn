@@ -9,6 +9,7 @@
 <link href="../../tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="../../jquery.js"></script>
 <script type="text/javascript" src="../../dynsections.js"></script>
+<script type="text/javascript" src="../../multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -184,9 +185,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6d22f60a1997a803c8fe4de2ee59d926"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a6d22f60a1997a803c8fe4de2ee59d926">set_connected_populations</a> (self, source, target)</td></tr>
 <tr class="memdesc:a6d22f60a1997a803c8fe4de2ee59d926"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set two groups of neurons connected by this <a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html" title="Class representing synaptic connection between two groups of neurons. ">SynapseGroup</a>.  <a href="#a6d22f60a1997a803c8fe4de2ee59d926">More...</a><br /></td></tr>
 <tr class="separator:a6d22f60a1997a803c8fe4de2ee59d926"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7661170e06a9fbc945f697599618a285"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a7661170e06a9fbc945f697599618a285">add_to</a> (self, model_spec, delay_steps)</td></tr>
-<tr class="memdesc:a7661170e06a9fbc945f697599618a285"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add this <a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html" title="Class representing synaptic connection between two groups of neurons. ">SynapseGroup</a> to the a model.  <a href="#a7661170e06a9fbc945f697599618a285">More...</a><br /></td></tr>
-<tr class="separator:a7661170e06a9fbc945f697599618a285"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaba1d5e1be34233a72ee11ad29232882"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aaba1d5e1be34233a72ee11ad29232882">add_to</a> (self, delay_steps)</td></tr>
+<tr class="memdesc:aaba1d5e1be34233a72ee11ad29232882"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add this <a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html" title="Class representing synaptic connection between two groups of neurons. ">SynapseGroup</a> to the a model.  <a href="#aaba1d5e1be34233a72ee11ad29232882">More...</a><br /></td></tr>
+<tr class="separator:aaba1d5e1be34233a72ee11ad29232882"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac5806934aaf2a806aa7d5e6199f07335"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac5806934aaf2a806aa7d5e6199f07335">add_extra_global_param</a> (self, param_name, param_values)</td></tr>
 <tr class="memdesc:ac5806934aaf2a806aa7d5e6199f07335"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set extra global parameter.  <a href="#ac5806934aaf2a806aa7d5e6199f07335">More...</a><br /></td></tr>
 <tr class="separator:ac5806934aaf2a806aa7d5e6199f07335"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -325,6 +326,8 @@ Public Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">name</td><td>string name of the group </td></tr>
+    <tr><td class="paramname">model</td><td><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html" title="GeNNModel class This class helps to define, build and run a GeNN model from python. ">pygenn.genn_model.GeNNModel</a> this synapse group is part of </td></tr>
+    <tr><td class="paramname">weight_sharing_master</td><td><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html" title="Class representing synaptic connection between two groups of neurons. ">SynapseGroup</a> this synapse group is a slave of </td></tr>
   </table>
   </dd>
 </dl>
@@ -375,8 +378,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a7661170e06a9fbc945f697599618a285"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7661170e06a9fbc945f697599618a285">&#9670;&nbsp;</a></span>add_to()</h2>
+<a id="aaba1d5e1be34233a72ee11ad29232882"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaba1d5e1be34233a72ee11ad29232882">&#9670;&nbsp;</a></span>add_to()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -386,12 +389,6 @@ Public Attributes</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>model_spec</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -410,7 +407,6 @@ Public Attributes</h2></td></tr>
 <p>Add this <a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html" title="Class representing synaptic connection between two groups of neurons. ">SynapseGroup</a> to the a model. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">model_spec</td><td><code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html" title="GeNNModel class This class helps to define, build and run a GeNN model from python. ">pygenn.genn_model.GeNNModel</a></code> to add to </td></tr>
     <tr><td class="paramname">delay_steps</td><td>number of axonal delay timesteps to simulate for this synapse group </td></tr>
   </table>
   </dd>
@@ -1536,14 +1532,20 @@ Public Attributes</h2></td></tr>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d5/da5/namespacepygenn_1_1genn__groups.html">genn_groups</a></li><li class="navelem"><a class="el" href="../../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html">SynapseGroup</a></li>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:36 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

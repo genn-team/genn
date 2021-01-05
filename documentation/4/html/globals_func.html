@@ -9,6 +9,7 @@
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
+<script type="text/javascript" src="multi-language-utils.js"></script>
 <!--This is Google Analytics Tracking Code-->
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -41,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.3.3</span>
+   &#160;<span id="projectnumber">4.4.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -96,11 +97,14 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 &#160;
 
 <h3><a id="index__"></a>- _ -</h3><ul>
+<li>_clz()
+: <a class="el" href="d8/d86/spikeRecorder_8h.html#a158428fbb7cc6952e86619ec1c27740f">spikeRecorder.h</a>
+</li>
 <li>_philoxNxW_tpl()
 : <a class="el" href="d1/d4c/philox_8h.html#a6eaff388869b544536c55b7b7bc46cfe">philox.h</a>
 </li>
 <li>_r123array_tpl()
-: <a class="el" href="db/d63/array_8h.html#a2fafa023a8d53c8158471beed465ee83">array.h</a>
+: <a class="el" href="db/d63/array_8h.html#aec805441b354e405cbd66e127a23f583">array.h</a>
 </li>
 </ul>
 
@@ -119,16 +123,16 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 , <a class="el" href="d0/dc6/clRNG_8h.html#a0283fe97d519a98e0aa1164c019a02a9">clRNG.h</a>
 </li>
 <li>clrngGetLibraryDeviceIncludes()
-: <a class="el" href="d0/dc6/clRNG_8h.html#ab057cf9b6b0b56b163e8e92bc6ba2b4a">clRNG.h</a>
-, <a class="el" href="d3/d1a/clRNG_8c.html#a50c748264576533e4c2c955a8ab0d45a">clRNG.c</a>
+: <a class="el" href="d3/d1a/clRNG_8c.html#a50c748264576533e4c2c955a8ab0d45a">clRNG.c</a>
+, <a class="el" href="d0/dc6/clRNG_8h.html#ab057cf9b6b0b56b163e8e92bc6ba2b4a">clRNG.h</a>
 </li>
 <li>clrngGetLibraryRoot()
 : <a class="el" href="d3/d1a/clRNG_8c.html#af0e159dca94a22efa6f0df8966af6084">clRNG.c</a>
 , <a class="el" href="d0/dc6/clRNG_8h.html#af32335c44e9cf2a71a82dc10ffba9b66">clRNG.h</a>
 </li>
 <li>clrngLfsr113AdvanceStreams()
-: <a class="el" href="df/dcc/lfsr113_8c.html#a843edb6adca0b23bae5696b3b405032a">lfsr113.c</a>
-, <a class="el" href="d7/d63/lfsr113_8h.html#a34b58ddb893ab30ba7caa08fb392ab9a">lfsr113.h</a>
+: <a class="el" href="d7/d63/lfsr113_8h.html#a34b58ddb893ab30ba7caa08fb392ab9a">lfsr113.h</a>
+, <a class="el" href="df/dcc/lfsr113_8c.html#a843edb6adca0b23bae5696b3b405032a">lfsr113.c</a>
 </li>
 <li>clrngLfsr113AllocStreams()
 : <a class="el" href="d7/d63/lfsr113_8h.html#aee8eee4aa112d38122fecc3c49379f7f">lfsr113.h</a>
@@ -172,9 +176,9 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 , <a class="el" href="df/dcc/lfsr113_8c.html#a1dfff0c94049d6b1b7f38bdcb106e7a6">lfsr113.c</a>
 </li>
 <li>clrngLfsr113ForwardToNextSubstreams()
-: <a class="el" href="d0/d7f/lfsr113_8c_8h.html#af3e8f4ab5c4b539425a4b91877d11a7b">lfsr113.c.h</a>
+: <a class="el" href="dd/d32/device_2lfsr113_8c_8h.html#af3e8f4ab5c4b539425a4b91877d11a7b">device/lfsr113.c.h</a>
+, <a class="el" href="d0/d7f/lfsr113_8c_8h.html#af3e8f4ab5c4b539425a4b91877d11a7b">lfsr113.c.h</a>
 , <a class="el" href="d7/d63/lfsr113_8h.html#a070697e066490c5e0fdcca574eaeaeb1">lfsr113.h</a>
-, <a class="el" href="dd/d32/device_2lfsr113_8c_8h.html#af3e8f4ab5c4b539425a4b91877d11a7b">device/lfsr113.c.h</a>
 </li>
 <li>clrngLfsr113MakeOverSubstreams()
 : <a class="el" href="d7/d63/lfsr113_8h.html#a4bb012e262a1e0b92e0869a3a0a48d8c">lfsr113.h</a>
@@ -263,9 +267,9 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 , <a class="el" href="d5/d38/philox432_8c.html#a5b06ab87ded784174985e1330b603b51">philox432.c</a>
 </li>
 <li>clrngPhilox432CopyOverStreams()
-: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">device/philox432.c.h</a>
-, <a class="el" href="d8/d57/philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">philox432.c.h</a>
+: <a class="el" href="d8/d57/philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">philox432.c.h</a>
 , <a class="el" href="df/d0d/philox432_8h.html#a8555f40846124e0dd0e50146cb6ec7e3">philox432.h</a>
+, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a7febbbbaa3064ec79863773237d70fa7">device/philox432.c.h</a>
 </li>
 <li>clrngPhilox432CopyStreamCreator()
 : <a class="el" href="df/d0d/philox432_8h.html#a221e7cce4556745dcd30656d828e32bd">philox432.h</a>
@@ -296,22 +300,22 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 , <a class="el" href="d5/d38/philox432_8c.html#ac80fce0c1eb1300d1a8c97093306b9cb">philox432.c</a>
 </li>
 <li>clrngPhilox432ForwardToNextSubstreams()
-: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">device/philox432.c.h</a>
-, <a class="el" href="d8/d57/philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">philox432.c.h</a>
+: <a class="el" href="d8/d57/philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">philox432.c.h</a>
 , <a class="el" href="df/d0d/philox432_8h.html#ae2adbd3cf979ab4e63eb4a467ad071cb">philox432.h</a>
+, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae0ea96ac2e34092e5c4e245d44b7789d">device/philox432.c.h</a>
 </li>
 <li>clrngPhilox432GenerateDeck()
-: <a class="el" href="d8/d57/philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">philox432.c.h</a>
-, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">device/philox432.c.h</a>
+: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">device/philox432.c.h</a>
+, <a class="el" href="d8/d57/philox432_8c_8h.html#ab106e64c70fc44ce489ab73284fad70c">philox432.c.h</a>
 </li>
 <li>clrngPhilox432MakeOverSubstreams()
-: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae197f36be28e67e584e3cd4d7b1129ab">device/philox432.c.h</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a3b74873fd51d15fe214bb47d3402a6ae">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a3b74873fd51d15fe214bb47d3402a6ae">philox432.h</a>
+, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#ae197f36be28e67e584e3cd4d7b1129ab">device/philox432.c.h</a>
 , <a class="el" href="d8/d57/philox432_8c_8h.html#ae197f36be28e67e584e3cd4d7b1129ab">philox432.c.h</a>
 </li>
 <li>clrngPhilox432MakeSubstreams()
-: <a class="el" href="d5/d38/philox432_8c.html#a7007a745824df1da23d839d4f97ba585">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a0a4d55299082ee308aa487a7573e4108">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a0a4d55299082ee308aa487a7573e4108">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a7007a745824df1da23d839d4f97ba585">philox432.c</a>
 </li>
 <li>clrngPhilox432RandomInteger()
 : <a class="el" href="df/d0d/philox432_8h.html#ae28fa4a30e2b7313139240feb2e718ed">philox432.h</a>
@@ -354,14 +358,14 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 , <a class="el" href="d5/d38/philox432_8c.html#abdd528ddef4a20ade1415ee3de571791">philox432.c</a>
 </li>
 <li>clrngPhilox432RewindStreams()
-: <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a1266f671e20da4840bd7a6950cb9131d">device/philox432.c.h</a>
-, <a class="el" href="df/d0d/philox432_8h.html#ad23e2f87c50d0db58b43fdc2b27affaa">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#ad23e2f87c50d0db58b43fdc2b27affaa">philox432.h</a>
+, <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#a1266f671e20da4840bd7a6950cb9131d">device/philox432.c.h</a>
 , <a class="el" href="d8/d57/philox432_8c_8h.html#a1266f671e20da4840bd7a6950cb9131d">philox432.c.h</a>
 </li>
 <li>clrngPhilox432RewindSubstreams()
 : <a class="el" href="df/d0d/philox432_8h.html#a2e7fb97a09ee3e77a97d76c7bd0481ed">philox432.h</a>
-, <a class="el" href="d8/d57/philox432_8c_8h.html#af0e47568041b9f81e2a3798b8a967347">philox432.c.h</a>
 , <a class="el" href="d3/dbc/device_2philox432_8c_8h.html#af0e47568041b9f81e2a3798b8a967347">device/philox432.c.h</a>
+, <a class="el" href="d8/d57/philox432_8c_8h.html#af0e47568041b9f81e2a3798b8a967347">philox432.c.h</a>
 </li>
 <li>clrngPhilox432SetBaseCreatorState()
 : <a class="el" href="df/d0d/philox432_8h.html#a3666ecbe81a9b721be7f01ac21eda557">philox432.h</a>
@@ -372,12 +376,12 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 , <a class="el" href="d8/d57/philox432_8c_8h.html#a630971c69601bb2427f1fbd0172ba08c">philox432.c.h</a>
 </li>
 <li>clrngPhilox432WriteStreamInfo()
-: <a class="el" href="d5/d38/philox432_8c.html#a6773b59c1eddaedbde95f9c79c554eaa">philox432.c</a>
-, <a class="el" href="df/d0d/philox432_8h.html#a2603b07cc1961be786d6ac1b6b97c52b">philox432.h</a>
+: <a class="el" href="df/d0d/philox432_8h.html#a2603b07cc1961be786d6ac1b6b97c52b">philox432.h</a>
+, <a class="el" href="d5/d38/philox432_8c.html#a6773b59c1eddaedbde95f9c79c554eaa">philox432.c</a>
 </li>
 <li>clrngSetErrorString()
-: <a class="el" href="d3/d2e/private_8h.html#a5e083da05b8532206ab5b7e5dcf3dd46">private.h</a>
-, <a class="el" href="d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">private.c</a>
+: <a class="el" href="d7/d07/private_8c.html#a5e083da05b8532206ab5b7e5dcf3dd46">private.c</a>
+, <a class="el" href="d3/d2e/private_8h.html#a5e083da05b8532206ab5b7e5dcf3dd46">private.h</a>
 </li>
 </ul>
 
@@ -402,30 +406,35 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 <h3><a id="index_i"></a>- i -</h3><ul>
 <li>IMPLEMENT_MODEL()
 : <a class="el" href="d4/d8a/currentSourceModels_8cc.html#ad28bb16799cdcf4400f2d702bcde6389">currentSourceModels.cc</a>
-, <a class="el" href="dc/dbc/neuronModels_8cc.html#ac9fe1db3a169c8c942fcb3c6a0cbcc16">neuronModels.cc</a>
-, <a class="el" href="d4/daf/postsynapticModels_8cc.html#a32ac219544f81912245195b3c0903f70">postsynapticModels.cc</a>
-, <a class="el" href="dc/dbc/neuronModels_8cc.html#a943c4c53d69a36e283e6a186900de0e7">neuronModels.cc</a>
-, <a class="el" href="da/dd6/weightUpdateModels_8cc.html#a8585d1760d612f8f34340bf9f1844e57">weightUpdateModels.cc</a>
-, <a class="el" href="dc/dbc/neuronModels_8cc.html#ae940eaf40dc68ce1aa073d87565b2803">neuronModels.cc</a>
-, <a class="el" href="da/dd6/weightUpdateModels_8cc.html#aa4ff35ee64f6d2d0ea710d59f1b95844">weightUpdateModels.cc</a>
+, <a class="el" href="dc/dbc/neuronModels_8cc.html#a823115a255f34581c09556fb1c08708b">neuronModels.cc</a>
+, <a class="el" href="d4/daf/postsynapticModels_8cc.html#ab9d461044dfa49678cbee9035439fe76">postsynapticModels.cc</a>
 , <a class="el" href="dc/dbc/neuronModels_8cc.html#a1e7caf0e70f0aff1e5fa627f661a3005">neuronModels.cc</a>
 , <a class="el" href="d4/d8a/currentSourceModels_8cc.html#a1b6ea8b94db1ecfa6b27470f3b68fe6c">currentSourceModels.cc</a>
 , <a class="el" href="da/dd6/weightUpdateModels_8cc.html#acfcb39f9706f364995282b012975c089">weightUpdateModels.cc</a>
+, <a class="el" href="dc/dbc/neuronModels_8cc.html#aed4e9357c669217aab6daf1d8888af16">neuronModels.cc</a>
+, <a class="el" href="da/dd6/weightUpdateModels_8cc.html#a8585d1760d612f8f34340bf9f1844e57">weightUpdateModels.cc</a>
 , <a class="el" href="dc/dbc/neuronModels_8cc.html#a697478b8a22fab92c55b3fefac4d116b">neuronModels.cc</a>
+, <a class="el" href="d4/daf/postsynapticModels_8cc.html#a32ac219544f81912245195b3c0903f70">postsynapticModels.cc</a>
+, <a class="el" href="dc/dbc/neuronModels_8cc.html#a20647d3178dce2bead89883dde2d5ab2">neuronModels.cc</a>
+, <a class="el" href="d4/daf/postsynapticModels_8cc.html#a451d8d82aee63e3c83b6e102ab7fb410">postsynapticModels.cc</a>
+, <a class="el" href="da/dd6/weightUpdateModels_8cc.html#aa4ff35ee64f6d2d0ea710d59f1b95844">weightUpdateModels.cc</a>
 </li>
 <li>IMPLEMENT_SNIPPET()
-: <a class="el" href="d4/d88/initSparseConnectivitySnippet_8cc.html#a8045e5c545ae5dfa704e797c0824a8a2">initSparseConnectivitySnippet.cc</a>
-, <a class="el" href="d1/dfe/initVarSnippet_8cc.html#aad038fa8923543756ade94af9e29f8dd">initVarSnippet.cc</a>
+: <a class="el" href="d1/dfe/initVarSnippet_8cc.html#a9957e616103e28b0b547d94507069604">initVarSnippet.cc</a>
 , <a class="el" href="d4/d88/initSparseConnectivitySnippet_8cc.html#a56b9be5e9520c151901f060a9ae67611">initSparseConnectivitySnippet.cc</a>
-, <a class="el" href="d1/dfe/initVarSnippet_8cc.html#aa57c95d20fa803d69ebbae1b630c044e">initVarSnippet.cc</a>
-, <a class="el" href="d4/d88/initSparseConnectivitySnippet_8cc.html#a1a187fda342c51fc1b81e11c98c2245b">initSparseConnectivitySnippet.cc</a>
 , <a class="el" href="d1/dfe/initVarSnippet_8cc.html#a288a2d0aa49f2f5cf28872c040961634">initVarSnippet.cc</a>
+, <a class="el" href="d4/d88/initSparseConnectivitySnippet_8cc.html#a7290c3f8480ed9016c54a90d2a42af82">initSparseConnectivitySnippet.cc</a>
+, <a class="el" href="d1/dfe/initVarSnippet_8cc.html#a5c93e9ea4a7f09a76b4cf43fa7156705">initVarSnippet.cc</a>
+, <a class="el" href="d4/d88/initSparseConnectivitySnippet_8cc.html#a7db5eaf210c9c78951b2eff2eb567ae5">initSparseConnectivitySnippet.cc</a>
+, <a class="el" href="d1/dfe/initVarSnippet_8cc.html#a2a5aa401f7bc4b8dda156a52b18866f2">initVarSnippet.cc</a>
+, <a class="el" href="d4/d88/initSparseConnectivitySnippet_8cc.html#a1a187fda342c51fc1b81e11c98c2245b">initSparseConnectivitySnippet.cc</a>
+, <a class="el" href="d1/dfe/initVarSnippet_8cc.html#ae7c0cf81eb4d77df84fcf0ef5c0c0b0d">initVarSnippet.cc</a>
 </li>
 <li>initConnectivity()
-: <a class="el" href="dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0">modelSpec.h</a>
+: <a class="el" href="dc/de1/modelSpec_8h.html#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2">modelSpec.h</a>
 </li>
 <li>initVar()
-: <a class="el" href="dc/de1/modelSpec_8h.html#ae71c7ad7d12a64c251ea45c5e3ff8af8">modelSpec.h</a>
+: <a class="el" href="dc/de1/modelSpec_8h.html#a82512da3fc2cd603ff00f8f5b7f2f1ce">modelSpec.h</a>
 </li>
 </ul>
 
@@ -435,8 +444,8 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 : <a class="el" href="df/dcc/lfsr113_8c.html#aea17c6e5b191df0169c79788ab494e76">lfsr113.c</a>
 </li>
 <li>lfsr113ResetNextSubStream()
-: <a class="el" href="d0/d7f/lfsr113_8c_8h.html#a31c8b16ed58a89f2d28cc45cb63c2147">lfsr113.c.h</a>
-, <a class="el" href="dd/d32/device_2lfsr113_8c_8h.html#a31c8b16ed58a89f2d28cc45cb63c2147">device/lfsr113.c.h</a>
+: <a class="el" href="dd/d32/device_2lfsr113_8c_8h.html#a31c8b16ed58a89f2d28cc45cb63c2147">device/lfsr113.c.h</a>
+, <a class="el" href="d0/d7f/lfsr113_8c_8h.html#a31c8b16ed58a89f2d28cc45cb63c2147">lfsr113.c.h</a>
 </li>
 </ul>
 
@@ -499,15 +508,31 @@ $(document).ready(function(){initNavTree('globals_func.html','');});
 : <a class="el" href="dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043">modelSpec.h</a>
 </li>
 </ul>
+
+
+<h3><a id="index_w"></a>- w -</h3><ul>
+<li>writeBinarySpikeRecording()
+: <a class="el" href="d8/d86/spikeRecorder_8h.html#a7a75a9dcce1dbfc4f42fe6180a3c6a6d">spikeRecorder.h</a>
+</li>
+<li>writeTextSpikeRecording()
+: <a class="el" href="d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456">spikeRecorder.h</a>
+</li>
+</ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
+<!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Sep 10 2020 13:35:53 for GeNN by
+    <li class="footer">Generated on Tue Jan 5 2021 09:30:03 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
 </div>
+<script type="text/javascript">
+//<![CDATA[
+addLanguageToggleButtons();
+//]]>
+</script>
 </body>
 </html>

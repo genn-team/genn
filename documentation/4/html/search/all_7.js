@@ -1,7 +1,7 @@
 var searchData=
 [
   ['egp',['EGP',['../dd/d5d/structSnippet_1_1Base_1_1EGP.html',1,'Snippet::Base']]],
-  ['egpinthresholdcode',['egpInThresholdCode',['../d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html#a400b04059df19534b62527695cf9298c',1,'NeuronGroup::SpikeEventThreshold']]],
+  ['egpfield',['EGPField',['../dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html',1,'CodeGenerator::ModelSpecMerged::EGPField'],['../dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html#a235bf72444fc40a2a73eb763f857d87d',1,'CodeGenerator::ModelSpecMerged::EGPField::EGPField()']]],
   ['egpvec',['EGPVec',['../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6',1,'Snippet::Base']]],
   ['enablebitmaskoptimisations',['enableBitmaskOptimisations',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8',1,'CodeGenerator::PreferencesBase']]],
   ['end',['end',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a06269039e7798cafe00f637e5df88410',1,'pygenn::genn_model::GeNNModel']]],
