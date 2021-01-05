@@ -1529,12 +1529,30 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
         }
         else {
+            // Copy the spike count for each batch
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikeCntPrefix << ng.getName();
             os << ", " << spikeCntPrefix << ng.getName();
-            os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
-            os << ", " << spikePrefix << ng.getName();
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            os << ", " << batchSize << " * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+
+            // If there's only a single batch, copy spikes
+            if(batchSize == 1) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << spikePrefix << ng.getName();
+                os << ", " << spikePrefix << ng.getName();
+                os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+            }
+            // Otherwise, loop through batches and launch asynchronous memcpys to copy spikes from each one
+            else {
+                os << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpyAsync(d_" << spikePrefix << ng.getName() << " + (b * " << ng.getNumNeurons() << ")";
+                    os << ", " << spikePrefix << ng.getName() << " + (b * " << ng.getNumNeurons() << ")";
+                    os << ", " << spikeCntPrefix << ng.getName() << "[b] * sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+                }
+
+                // Wait until queued copies have completed
+                os << "CHECK_CUDA_ERRORS(cudaStreamSynchronize(0));" << std::endl;
+            }
         }
     }
 }
@@ -1560,12 +1578,30 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
             os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << "] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
+            // Copy the spike count for each batch
             os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikeCntPrefix << ng.getName();
             os << ", d_" << spikeCntPrefix << ng.getName();
-            os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
-            os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
-            os << ", d_" << spikePrefix << ng.getName();
-            os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+            os << ", " << batchSize << " * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+
+            // If there's only a single batch, copy spikes
+            if(batchSize == 1) {
+                os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << spikePrefix << ng.getName();
+                os << ", d_" << spikePrefix << ng.getName();
+                os << ", " << spikeCntPrefix << ng.getName() << "[0] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+            }
+            // Otherwise, loop through batches and launch asynchronous memcpys to copy spikes from each one
+            else {
+                os << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "CHECK_CUDA_ERRORS(cudaMemcpyAsync(" << spikePrefix << ng.getName() << " + (b * " << ng.getNumNeurons() << ")";
+                    os << ", d_" << spikePrefix << ng.getName() << " + (b * " << ng.getNumNeurons() << ")";
+                    os << ", " << spikeCntPrefix << ng.getName() << "[b] * sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+                }
+
+                // Wait until queued copies have completed
+                os << "CHECK_CUDA_ERRORS(cudaStreamSynchronize(0));" << std::endl;
+            }
         }
     }
 }
