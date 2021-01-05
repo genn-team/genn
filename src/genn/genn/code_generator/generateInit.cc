@@ -18,15 +18,55 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
+void genVariableFill(CodeStream &os, const Substitutions &subs, const std::string &fieldName, const std::string &value,
+                     VarAccess varAccess, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+{
+    // Determine number of values to fill in each thread
+    const unsigned int numValues = ((varAccess == VarAccess::READ_ONLY) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+
+    // If there's only one, don't generate a loop
+    if(numValues == 1) {
+        os << "group->" << fieldName << "[" << subs["id"] << "] = " << value << ";" << std::endl;
+    }
+    // Otherwise
+    else {
+        os << "for(unsigned int d = 0; d < " << numValues << "; d++)";
+        {
+            CodeStream::Scope b(os);
+            os << "group->" << fieldName << "[(d * group->numNeurons) + " << subs["id"] << "] = " << value << ";" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void genScalarFill(CodeStream &os, const std::string &fieldName, const std::string &value,
+                     VarAccess varAccess, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+{
+    // Determine number of values to fill in each thread
+    const unsigned int numValues = ((varAccess == VarAccess::READ_ONLY) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+
+    // If there's only one, don't generate a loop
+    if(numValues == 1) {
+        os << "group->" << fieldName << "[0] = " << value << ";" << std::endl;
+    }
+    // Otherwise
+    else {
+        os << "for(unsigned int d = 0; d < " << numValues << "; d++)";
+        {
+            CodeStream::Scope b(os);
+            os << "group->" << fieldName << "[d] = " << value << ";" << std::endl;
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
-                       const NeuronInitGroupMerged &ng, bool spikeEvent)
+                       const NeuronInitGroupMerged &ng, bool spikeEvent, unsigned int batchSize)
 {
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
         // Generate variable initialisation code
         backend.genPopVariableInit(os, popSubs,
-            [&ng, spikeEvent] (CodeStream &os, Substitutions &)
+            [&ng, batchSize, spikeEvent] (CodeStream &os, Substitutions &)
             {
                 // Get variable name
                 const char *spikeCntName = spikeEvent ? "spkCntEvnt" : "spkCnt";
@@ -36,30 +76,22 @@ void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substit
                     ng.getArchetype().isDelayRequired() :
                     (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
-                if(delayRequired) {
-                    os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "group->" << spikeCntName << "[d] = 0;" << std::endl;
-                    }
-                }
-                else {
-                    os << "group->" << spikeCntName << "[0] = 0;" << std::endl;
-                }
+                // Zero across all delay slots and batches
+                genScalarFill(os, spikeCntName, "0", VarAccess::READ_WRITE, batchSize, delayRequired, ng.getArchetype().getNumDelaySlots());
             });
     }
 
 }
 //--------------------------------------------------------------------------
 void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
-                   const NeuronInitGroupMerged &ng, bool spikeEvent)
+                   const NeuronInitGroupMerged &ng, bool spikeEvent, unsigned int batchSize)
 {
     // Is initialisation required at all
     const bool initRequired = spikeEvent ? ng.getArchetype().isSpikeEventRequired() : true;
     if(initRequired) {
         // Generate variable initialisation code
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-            [&ng, spikeEvent] (CodeStream &os, Substitutions &varSubs)
+            [&ng, batchSize, spikeEvent] (CodeStream &os, Substitutions &varSubs)
             {
                 // Get variable name
                 const char *spikeName = spikeEvent ? "spkEvnt" : "spk";
@@ -69,45 +101,30 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutio
                     ng.getArchetype().isDelayRequired() :
                     (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
-                if(delayRequired) {
-                    os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
-                    {
-                        CodeStream::Scope b(os);
-                        os << "group->" << spikeName << "[(d * group->numNeurons) + " + varSubs["id"] + "] = 0;" << std::endl;
-                    }
-                }
-                else {
-                    os << "group->" << spikeName << "[" << varSubs["id"] << "] = 0;" << std::endl;
-                }
+                // Zero across all delay slots and batches
+                genVariableFill(os, varSubs, spikeName, "0", VarAccess::READ_WRITE, batchSize, 
+                                delayRequired, ng.getArchetype().getNumDelaySlots());
             });
     }
 }
 //------------------------------------------------------------------------
 void genInitSpikeTime(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
-                      const NeuronInitGroupMerged &ng, const std::string &varName)
+                      const NeuronInitGroupMerged &ng, const std::string &varName, unsigned int batchSize)
 {
     // Generate variable initialisation code
     backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-        [varName, &ng] (CodeStream &os, Substitutions &varSubs)
+        [batchSize, varName, &ng] (CodeStream &os, Substitutions &varSubs)
         {
-            // Is delay required
-            if(ng.getArchetype().isDelayRequired()) {
-                os << "for (unsigned int d = 0; d < " << ng.getArchetype().getNumDelaySlots() << "; d++)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "group->" << varName << "[(d * group->numNeurons) + " + varSubs["id"] + "] = -TIME_MAX;" << std::endl;
-                }
-            }
-            else {
-                os << "group->" << varName << "[" << varSubs["id"] << "] = -TIME_MAX;" << std::endl;
-            }
+            genVariableFill(os, varSubs, varName, "-TIME_MAX", VarAccess::READ_WRITE, batchSize,
+                            ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+            
         });
 }
 //------------------------------------------------------------------------
 template<typename I, typename Q, typename P, typename D>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
-                          size_t numDelaySlots, const size_t groupIndex, const std::string &ftype,
+                          size_t numDelaySlots, const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
                           I getVarInitialiser, Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
     const std::string count = "group->" + countMember;
@@ -120,7 +137,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&vars, &varInit, &fieldSuffix, &ftype, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
+                [&vars, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     // Substitute in parameters and derived parameters for initialising variables
@@ -133,33 +150,17 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                     varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
                                                    "", "group->", vars[k].name + fieldSuffix);
 
-                    // If variable requires a queue
-                    if (isVarQueueRequired(k)) {
-                        // Generate initial value into temporary variable
-                        os << vars[k].type << " initVal;" << std::endl;
-                        varSubs.addVarSubstitution("value", "initVal");
-
-
-                        std::string code = varInit.getSnippet()->getCode();
-                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
-                        code = ensureFtype(code, ftype);
-                        os << code << std::endl;
-
-                        // Copy this into all delay slots
-                        os << "for (unsigned int d = 0; d < " << numDelaySlots << "; d++)";
-                        {
-                            CodeStream::Scope b(os);
-                            os << "group->" + vars[k].name << fieldSuffix << "[(d * " << count << ") + " + varSubs["id"] + "] = initVal;" << std::endl;
-                        }
-                    }
-                    else {
-                        varSubs.addVarSubstitution("value", "group->" + vars[k].name + fieldSuffix + "[" + varSubs["id"] + "]");
-
-                        std::string code = varInit.getSnippet()->getCode();
-                        varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
-                        code = ensureFtype(code, ftype);
-                        os << code << std::endl;
-                    }
+                    // Generate initial value into temporary variable
+                    os << vars[k].type << " initVal;" << std::endl;
+                    varSubs.addVarSubstitution("value", "initVal");
+                    std::string code = varInit.getSnippet()->getCode();
+                    varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
+                    code = ensureFtype(code, ftype);
+                    os << code << std::endl;
+                    
+                    // Fill value across all delay slots and batches
+                    genVariableFill(os, varSubs, vars[k].name + fieldSuffix, "initVal", vars[k].access, batchSize,
+                                    isVarQueueRequired(k), numDelaySlots);
                 });
         }
     }
@@ -168,10 +169,10 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 template<typename I, typename P, typename D>
 void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                           const Models::Base::VarVec &vars, const std::string &fieldSuffix, const std::string &countMember, 
-                          const size_t groupIndex, const std::string &ftype, 
+                          const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
                           I getVarInitialiser, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
-    genInitNeuronVarCode(os, backend, popSubs, vars, fieldSuffix, countMember, 0, groupIndex, ftype,
+    genInitNeuronVarCode(os, backend, popSubs, vars, fieldSuffix, countMember, 0, groupIndex, ftype, batchSize,
                          getVarInitialiser,
                          [](size_t){ return false; }, 
                          isParamHeterogeneousFn,
@@ -280,31 +281,31 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         [&backend, &model](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             // Initialise spike counts
-            genInitSpikeCount(os, backend, popSubs, ng, false);
-            genInitSpikeCount(os, backend, popSubs, ng, true);
+            genInitSpikeCount(os, backend, popSubs, ng, false, model.getBatchSize());
+            genInitSpikeCount(os, backend, popSubs, ng, true, model.getBatchSize());
 
             // Initialise spikes
-            genInitSpikes(os, backend, popSubs, ng, false);
-            genInitSpikes(os, backend, popSubs, ng, true);
+            genInitSpikes(os, backend, popSubs, ng, false,  model.getBatchSize());
+            genInitSpikes(os, backend, popSubs, ng, true,  model.getBatchSize());
 
             // Initialize spike times
             if(ng.getArchetype().isSpikeTimeRequired()) {
-                genInitSpikeTime(os, backend, popSubs, ng, "sT");
+                genInitSpikeTime(os, backend, popSubs, ng, "sT",  model.getBatchSize());
             }
 
             // Initialize previous spike times
             if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-                genInitSpikeTime(os, backend, popSubs, ng, "prevST");
+                genInitSpikeTime(os, backend, popSubs, ng, "prevST",  model.getBatchSize());
             }
                
             // Initialize spike-like-event times
             if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                genInitSpikeTime(os, backend, popSubs, ng, "seT");
+                genInitSpikeTime(os, backend, popSubs, ng, "seT",  model.getBatchSize());
             }
 
             // Initialize previous spike-like-event times
             if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-                genInitSpikeTime(os, backend, popSubs, ng, "prevSET");
+                genInitSpikeTime(os, backend, popSubs, ng, "prevSET",  model.getBatchSize());
             }
        
             // If neuron group requires delays, zero spike queue pointer
@@ -318,7 +319,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
             // Initialise neuron variables
             genInitNeuronVarCode(os, backend, popSubs, ng.getArchetype().getNeuronModel()->getVars(), "", "numNeurons",
-                                 ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(),
+                                 ng.getArchetype().getNumDelaySlots(), ng.getIndex(), model.getPrecision(), model.getBatchSize(),
                                  [&ng](size_t i){ return ng.getArchetype().getVarInitialisers().at(i); },
                                  [&ng](size_t i){ return ng.getArchetype().isVarQueueRequired(i); },
                                  [&ng](size_t v, size_t p) { return ng.isVarInitParamHeterogeneous(v, p); },
@@ -363,7 +364,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), 
                                          "InSyn" + std::to_string(i), "numNeurons",
-                                         i, model.getPrecision(),
+                                         i, model.getPrecision(),  model.getBatchSize(),
                                          [sg](size_t i){ return sg->getPSVarInitialisers().at(i); },
                                          [&ng, i](size_t v, size_t p) { return ng.isPSMVarInitParamHeterogeneous(i, v, p); },
                                          [&ng, i](size_t v, size_t p) { return ng.isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
@@ -377,7 +378,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 const auto *sg = inSynWithPostVars.at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(),
                                      "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
-                                     i, model.getPrecision(),
+                                     i, model.getPrecision(),  model.getBatchSize(),
                                      [&sg](size_t i){ return sg->getWUPostVarInitialisers().at(i); },
                                      [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); },
                                      [&ng, i](size_t v, size_t p) { return ng.isInSynWUMVarInitParamHeterogeneous(i, v, p); },
@@ -391,7 +392,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 const auto *sg = outSynWithPostVars.at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(),
                                      "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
-                                     i, model.getPrecision(),
+                                     i, model.getPrecision(),  model.getBatchSize(),
                                      [&sg](size_t i){ return sg->getWUPreVarInitialisers().at(i); },
                                      [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); },
                                      [&ng, i](size_t v, size_t p) { return ng.isOutSynWUMVarInitParamHeterogeneous(i, v, p); },
@@ -405,7 +406,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), 
                                      "CS" + std::to_string(i), "numNeurons",
-                                     i, model.getPrecision(),
+                                     i, model.getPrecision(),  model.getBatchSize(),
                                      [cs](size_t i){ return cs->getVarInitialisers().at(i); },
                                      [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitParamHeterogeneous(i, v, p); },
                                      [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitDerivedParamHeterogeneous(i, v, p); });

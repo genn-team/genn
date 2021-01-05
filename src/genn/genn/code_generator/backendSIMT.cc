@@ -391,23 +391,35 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate)); },
         [batchSize, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
-            // If batch size is greater than 1, calculate ID into batched arrays and add to substitutions
+            // If batching is enabled, calculate batch offset
             if(batchSize > 1) {
                 os << "const unsigned int batchID = (group->numNeurons * batch) + " << popSubs["id"] << ";" << std::endl;
                 popSubs.addVarSubstitution("batch_id", "batchID");
             }
-            else {
-                popSubs.addVarSubstitution("batch_id", popSubs["id"]);
-            }
-
+            
             // If axonal delays are required
             if(ng.getArchetype().isDelayRequired()) {
-                assert(batchSize == 1);
+
                 // We should READ from delay slot before spkQuePtr
-                os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset() << ";" << std::endl;
+                os << "const unsigned int readDelayID = " << ng.getPrevQueueOffset() << " + " << popSubs["id"] << ";" << std::endl;
+                popSubs.addVarSubstitution("read_delay_id", "readDelayID");
 
                 // And we should WRITE to delay slot pointed to be spkQuePtr
-                os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset() << ";" << std::endl;
+                os << "const unsigned int writeDelayID = " << ng.getCurrentQueueOffset() << " + " << popSubs["id"] << ";" << std::endl;
+                popSubs.addVarSubstitution("write_delay_id", "writeDelayID");
+
+                // If batching is also enabled
+                if(batchSize > 1) {
+                    // Calculate current batch offset
+                    os << "const unsigned int batchDelayOffset = batchOffset * " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
+
+                    // Calculate offsets to include delay and batch
+                    os << "const unsigned int readDelayBatchID = readDelayID + batchDelayOffset;" << std::endl;
+                    popSubs.addVarSubstitution("read_delay_batch_id", "readDelayBatchID");
+
+                    os << "const unsigned int writeDelayBatchID = writeDelayID + batchDelayOffset;" << std::endl;
+                    popSubs.addVarSubstitution("write_delay_batch_id", "writeDelayBatchID");
+                }
             }
             os << std::endl;
 
@@ -863,18 +875,10 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             {
                 CodeStream::Scope b(os);
 
-                // If batch size is greater than 1, calculate ID into batched arrays and add to substitutions
-                if(modelMerged.getModel().getBatchSize() > 1) {
-                    os << "const unsigned int batchID = (group->numNeurons * batch) + " << popSubs["id"] << ";" << std::endl;
-                    popSubs.addVarSubstitution("batch_id", "batchID");
-                }
-                else {
-                    popSubs.addVarSubstitution("batch_id", popSubs["id"]);
-                }
-
                 // If population RNGs are initialised on device and this neuron is going to require one, 
                 // Initialise RNG using GLOBAL thread id for sequence
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
+                    assert(modelMerged.getModel().getBatchSize() == 1);
                     genPopulationRNGInit(os, "group->rng[" + popSubs["batch_id"] + "]", "deviceRNGSeed", "id");
                 }
 

@@ -68,6 +68,16 @@ public:
         }
     }
 
+    template<typename T, typename S>
+    void addVarNameSubstitution(const std::vector<T> &variables, const std::string &sourceSuffix,
+                                const std::string &destPrefix, S getDestSuffixFn)
+    {
+        for(const auto &v : variables) {
+            addVarSubstitution(v.name + sourceSuffix,
+                               destPrefix + v.name + getDestSuffixFn(v.access));
+        }
+    }
+
     template<typename T>
     void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
                                  const std::string &sourceSuffix = "")
