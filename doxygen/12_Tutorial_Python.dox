@@ -18,7 +18,7 @@ from pygenn.genn_model import GeNNModel
 \endcode
 Two standard elements to the model definition are setting the simulation step size, the name of the model and the precision to simulate with:
 \code
-model = GeNNModel("float", "tennHH")
+model = GeNNModel("float", "tenHH")
 model.dT = 0.1
 \endcode
 \note 
@@ -64,7 +64,7 @@ This completes the model definition in this example. The complete `tenHH.py` fil
 \code
 from pygenn.genn_model import GeNNModel
 
-model = GeNNModel("float", "tennHH")
+model = GeNNModel("float", "tenHH")
 model.dT = 0.1
 
 p = {"gNa": 7.15,   # Na conductance in [muS]
@@ -115,7 +115,7 @@ This completes the first version of the script. The complete `tenHH.py` file sho
 \code
 from pygenn.genn_model import GeNNModel
 
-model = GeNNModel("float", "tennHH")
+model = GeNNModel("float", "tenHH")
 model.dT = 0.1
 
 p = {"gNa": 7.15,   # Na conductance in [muS]

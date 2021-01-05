@@ -20,7 +20,7 @@ Bug fixes:
 ----
 1. Fixed support for CUDA 8 and older.
 2. Replaced deprecated ``__linux`` macro with ``__linux__`` making GeNN compatible with compiler on POWER9 Linux.
-
+3. Fixed bug where the initialisation of neuron groups which are identical apart from one needing an RNG could be incorrectly merged.
 
 Release Notes for GeNN v4.3.3 (PyGeNN 0.4.3)
 ====

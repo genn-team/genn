@@ -11,7 +11,7 @@ First, copy the files from Tutorial 1 into a new directory and rename the ``tenH
 \endcode
 Finally, to reduce confusion we should rename the model itself. Open `tenHHRing.py`, change the model name inside,
 \code
-model = GeNNModel("float", "tennHHRing")
+model = GeNNModel("float", "tenHHRing")
 \endcode
 You will also need to import some additional PyGeNN functions and constants:
 \code
@@ -21,7 +21,7 @@ from pygenn.genn_wrapper import NO_DELAY
 \endcode
 
 \section SynapseMatrix Defining the Detailed Synaptic Connections
-We want to connect our ten neurons into a ring where each neuron connects to its neighbours. In order to initialise this connectivity we need to add a sparse connectivity initialisation snippet at the top of ``tennHHRing.cc``:
+We want to connect our ten neurons into a ring where each neuron connects to its neighbours. In order to initialise this connectivity we need to add a sparse connectivity initialisation snippet at the top of ``tenHHRing.cc``:
 \code
 ring_model = create_custom_sparse_connect_init_snippet_class(
     "ring",
@@ -93,7 +93,7 @@ ring_model = create_custom_sparse_connect_init_snippet_class(
     calc_max_row_len_func=create_cmlf_class(
         lambda num_pre, num_post, pars: 1)())
 
-model = GeNNModel("float", "tennHHRing")
+model = GeNNModel("float", "tenHHRing")
 model.dT = 0.1
 
 p = {"gNa": 7.15,   # Na conductance in [muS]
@@ -183,7 +183,7 @@ ring_model = create_custom_sparse_connect_init_snippet_class(
     calc_max_row_len_func=create_cmlf_class(
         lambda num_pre, num_post, pars: 1)())
 
-model = GeNNModel("float", "tennHHRing")
+model = GeNNModel("float", "tenHHRing")
 model.dT = 0.1
 
 p = {"gNa": 7.15,   # Na conductance in [muS]

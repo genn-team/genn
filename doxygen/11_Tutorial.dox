@@ -186,9 +186,9 @@ int main()
 \section BuildingSimUnix Building the simulator (Linux or Mac)
 On Linux and Mac, GeNN simulations are typically built using a simple Makefile which can be generated with the following command:
 \code
->> genn-create-user-project.sh tennHHModel tenHHSimulation.cc
+>> genn-create-user-project.sh tenHHModel tenHHSimulation.cc
 \endcode
-This defines that the model is named tennHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
+This defines that the model is named tenHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
 Now type
 \code
 >> make
@@ -198,22 +198,22 @@ Now type
 So that projects can be easily debugged within the Visual Studio IDE (see section \ref Debugging for more details), Windows projects are built using an MSBuild script typically with the same title as the final executable.
 A suitable solution and project can be generated automatically with the following command:
 \code
->> genn-create-user-project.bat tennHHModel tenHHSimulation.cc
+>> genn-create-user-project.bat tenHHModel tenHHSimulation.cc
 \endcode
-his defines that the model is named tennHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
+his defines that the model is named tenHHModel and the simulation code is given in the file `tenHHSimulation.cc` that we completed above.
 Now type
 \code
->> msbuild tennHHModel.sln /p:Configuration=Release
+>> msbuild tenHHModel.sln /p:Configuration=Release
 \endcode
 
 \section RunningSim Running the Simulation
 You can now execute your newly-built simulator on Linux or Mac with
 \code
->> ./tennHHModel
+>> ./tenHHModel
 \endcode
 Or on Windows with
 \code
->> tennHHModel_Release
+>> tenHHModel_Release
 \endcode
 The output you obtain should look like
 \code
