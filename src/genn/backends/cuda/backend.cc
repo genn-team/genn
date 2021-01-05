@@ -565,9 +565,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        if(model.getBatchSize() > 1) {
-            os << "const unsigned int batch = blockIdx.y;" << std::endl;
-        }
         genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, sgDenseInitHandler, 
                             sgSparseRowConnectHandler, sgSparseColConnectHandler,
                             sgKernelInitHandler, idInitStart);
@@ -585,9 +582,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            if(model.getBatchSize() > 1) {
-                os << "const unsigned int batch = blockIdx.y;" << std::endl;
-            }
             genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
         }
     }
@@ -661,7 +655,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             {
                 Timer t(os, "init", model.isTimingEnabled(), true);
 
-                genKernelDimensions(os, KernelInitialize, idInitStart, model.getBatchSize());
+                genKernelDimensions(os, KernelInitialize, idInitStart, 1);
                 os << KernelNames[KernelInitialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
@@ -687,7 +681,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             {
                 Timer t(os, "initSparse", model.isTimingEnabled(), true);
 
-                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart, model.getBatchSize());
+                genKernelDimensions(os, KernelInitializeSparse, idSparseInitStart, 1);
                 os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
