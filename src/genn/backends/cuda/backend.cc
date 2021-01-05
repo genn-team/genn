@@ -1230,7 +1230,8 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1247,7 +1248,8 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1483,7 +1485,7 @@ std::string Backend::getNVCCFlags() const
     return nvccFlags;
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1516,7 +1518,7 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
 {
     if(!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required

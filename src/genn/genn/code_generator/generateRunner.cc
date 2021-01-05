@@ -664,7 +664,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    const size_t batchSize = model.getBatchSize();
+    const unsigned int batchSize = model.getBatchSize();
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
     std::vector<std::string> statePushPullFunctions;
@@ -697,8 +697,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                             backend.getPreferences().automaticCopy, n.first + "CurrentSpikes", currentSpikePullFunctions,
                             [&]()
                             {
-                                backend.genCurrentTrueSpikePush(runnerPushFunc, n.second);
-                                backend.genCurrentTrueSpikePull(runnerPullFunc, n.second);
+                                backend.genCurrentTrueSpikePush(runnerPushFunc, n.second, batchSize);
+                                backend.genCurrentTrueSpikePull(runnerPullFunc, n.second, batchSize);
                             });
 
         // Current true spike getter functions
@@ -740,8 +740,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                 backend.getPreferences().automaticCopy, n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
                                 [&]()
                                 {
-                                    backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second);
-                                    backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second);
+                                    backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second, batchSize);
+                                    backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second, batchSize);
                                 });
 
             // Current true spike getter functions
@@ -841,7 +841,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         std::vector<std::string> neuronStatePushPullFunctions;
         for(size_t i = 0; i < vars.size(); i++) {
             const auto *varInitSnippet = n.second.getVarInitialisers()[i].getSnippet();
-            const size_t numCopies = (vars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
+            const unsigned int numCopies = (vars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
             const size_t count = n.second.isVarQueueRequired(i) ? numCopies * n.second.getNumNeurons() * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -854,7 +854,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                                 [&]()
                                 {
                                     backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
-                                                                       vars[i].name, n.second.getVarLocation(i));
+                                                                       vars[i].name, n.second.getVarLocation(i), numCopies);
                                 });
 
             // Write getter to get access to correct pointer
