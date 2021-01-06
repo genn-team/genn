@@ -47,6 +47,7 @@ inline bool operator & (VarAccessDuplication a, VarAccessDuplication b)
 //----------------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------------
+// **THINK** these are kinda nasty as they can return things that aren't actually in the bit enums i.e. ORd together things
 inline VarAccessMode getVarAccessMode(VarAccess type)
 {
     return static_cast<VarAccessMode>(static_cast<unsigned int>(type) & 0x5);

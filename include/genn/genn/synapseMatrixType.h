@@ -59,6 +59,7 @@ inline SynapseMatrixType operator | (SynapseMatrixWeight weightType, SynapseMatr
 //----------------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------------
+// **THINK** these are kinda nasty as they can return things that aren't actually in the bit enums i.e. ORd together things
 inline SynapseMatrixConnectivity getSynapseMatrixConnectivity(SynapseMatrixType type)
 {
     return static_cast<SynapseMatrixConnectivity>(static_cast<unsigned int>(type) & 0x15);
