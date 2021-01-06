@@ -13,6 +13,16 @@ using namespace CodeGenerator;
 //-----------------------------------------------------------------------
 namespace
 {
+std::string getWriteOffset(bool delay, unsigned int batchSize)
+{
+    if(batchSize == 1) {
+        return delay ? "writeDelayOffset + " : "";
+    }
+    else {
+        return delay ? "writeDelayID + batchDelayOffset + " : "batchOffset + ";
+    }
+}
+//-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
 {
@@ -393,7 +403,8 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         {
             // If batching is enabled, calculate batch offset
             if(batchSize > 1) {
-                os << "const unsigned int batchID = (group->numNeurons * batch) + " << popSubs["id"] << ";" << std::endl;
+                os << "const unsigned int batchOffset = group->numNeurons * batch;" << std::endl;
+                os << "const unsigned int batchID = batchOffset + " << popSubs["id"] << ";" << std::endl;
                 popSubs.addVarSubstitution("batch_id", "batchID");
             }
             
@@ -405,7 +416,8 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                 popSubs.addVarSubstitution("read_delay_id", "readDelayID");
 
                 // And we should WRITE to delay slot pointed to be spkQuePtr
-                os << "const unsigned int writeDelayID = " << ng.getCurrentQueueOffset() << " + " << popSubs["id"] << ";" << std::endl;
+                os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset() << ";" << std::endl;
+                os << "const unsigned int writeDelayID = writeDelayOffset + " << popSubs["id"] << ";" << std::endl;
                 popSubs.addVarSubstitution("write_delay_id", "writeDelayID");
 
                 // If batching is also enabled
@@ -462,6 +474,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&group->spkCntEvnt";
                         if(ng.getArchetype().isDelayRequired()) {
+                            assert(batchSize == 1);
                             os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
                         }
                         else {
@@ -481,6 +494,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         os << "shPosSpk = " << getAtomic("unsigned int") << "(&group->spkCnt";
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
+                            assert(batchSize == 1);
                             os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
                         }
                         else {
@@ -491,7 +505,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                 genSharedMemBarrier(os);
             }
 
-            const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
+            const std::string queueOffset = getWriteOffset(ng.getArchetype().isDelayRequired(), batchSize);
             if(ng.getArchetype().isSpikeEventRequired()) {
                 os << "if(" << getThreadID() << " < shSpkEvntCount)";
                 {
@@ -506,7 +520,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
             }
 
             if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                const std::string queueOffsetTrueSpk = ng.getArchetype().isTrueSpikeRequired() ? queueOffset : "";
+                const std::string queueOffsetTrueSpk = getWriteOffset(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), batchSize);
 
                 os << "if(" << getThreadID() << " < shSpkCount)";
                 {
