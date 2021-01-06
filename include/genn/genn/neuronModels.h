@@ -282,7 +282,7 @@ public:
         "$(startSpike) != $(endSpike) && "
         "$(t) >= $(spikeTimes)[$(startSpike)]" );
     SET_RESET_CODE( "$(startSpike)++;\n" );
-    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY}} );
+    SET_VARS( {{"startSpike", "unsigned int"}, {"endSpike", "unsigned int", VarAccess::READ_ONLY_DUPLICATE}} );
     SET_EXTRA_GLOBAL_PARAMS( {{"spikeTimes", "scalar*"}} );
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
