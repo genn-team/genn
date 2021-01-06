@@ -8,6 +8,7 @@
 // GeNN includes
 #include "snippet.h"
 #include "initVarSnippet.h"
+#include "varAccess.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -21,16 +22,6 @@
 #define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
 
 #define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
-
-//----------------------------------------------------------------------------
-// VarAccess
-//----------------------------------------------------------------------------
-//! How is this variable accessed by model?
-enum class VarAccess
-{
-    READ_WRITE = 0, //! This variable is both read and written by the model
-    READ_ONLY,      //! This variable is only read by the model
-};
 
 //----------------------------------------------------------------------------
 // Models::VarInit
