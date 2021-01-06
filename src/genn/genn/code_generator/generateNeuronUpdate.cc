@@ -23,28 +23,28 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-std::string getVarIndex(const Substitutions &subs, unsigned int batchSize, VarAccess varAccess)
+std::string getVarIndex(const Substitutions &subs, unsigned int batchSize, VarAccessDuplication varDuplication)
 {
-    return subs[(varAccess == VarAccess::READ_ONLY || batchSize == 1) ? "id" : "batch_id"];
+    return subs[(varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "id" : "batch_id"];
 }
 //--------------------------------------------------------------------------
-std::string getReadVarIndex(const Substitutions &subs, bool delay, unsigned int batchSize, VarAccess varAccess)
+std::string getReadVarIndex(const Substitutions &subs, bool delay, unsigned int batchSize, VarAccessDuplication varDuplication)
 {
     if(delay) {
-        return subs[(varAccess == VarAccess::READ_ONLY || batchSize == 1) ? "read_delay_id" : "read_delay_batch_id"];
+        return subs[(varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "read_delay_id" : "read_delay_batch_id"];
     }
     else {
-        return getVarIndex(subs, batchSize, varAccess);
+        return getVarIndex(subs, batchSize, varDuplication);
     }
 }
 //--------------------------------------------------------------------------
-std::string getWriteVarIndex(const Substitutions &subs, bool delay, unsigned int batchSize, VarAccess varAccess)
+std::string getWriteVarIndex(const Substitutions &subs, bool delay, unsigned int batchSize, VarAccessDuplication varDuplication)
 {
     if(delay) {
-        return subs[(varAccess == VarAccess::READ_ONLY || batchSize == 1) ? "write_delay_id" : "write_delay_batch_id"];
+        return subs[(varDuplication & VarAccessDuplication::SHARED  || batchSize == 1) ? "write_delay_id" : "write_delay_batch_id"];
     }
     else {
-        return getVarIndex(subs, batchSize, varAccess);
+        return getVarIndex(subs, batchSize, varDuplication);
     }
 }
 //--------------------------------------------------------------------------
@@ -90,11 +90,11 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
             const auto vars = (sg->getWUModel()->*getVars)();
             const bool delayed = ((sg->*getDelaySteps)() != NO_DELAY);
             for(const auto &v : vars) {
-                if(v.access == VarAccess::READ_ONLY) {
+                if(v.access & VarAccessMode::READ_ONLY) {
                     os << "const ";
                 }
                 os << v.type << " l" << v.name << " = group->" << v.name << fieldPrefixStem << i << "[";
-                os << getReadVarIndex(subs, delayed, batchSize, v.access) << "];" << std::endl;
+                os << getReadVarIndex(subs, delayed, batchSize, getVarAccessDuplication(v.access)) << "];" << std::endl;
             }
 
             subs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
@@ -121,9 +121,9 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
                 // If state variables is read/write - meaning that it may have been updated - or it is delayed -
                 // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                 // back to global state variables dd_V etc
-                if((v.access == VarAccess::READ_WRITE) || delayed) {
+                if((v.access & VarAccessMode::READ_WRITE) || delayed) {
                     os << "group->" << v.name << fieldPrefixStem << i << "[";
-                    os << getWriteVarIndex(subs, delayed, batchSize, v.access) << "] = l" << v.name << ";" << std::endl;
+                    os << getWriteVarIndex(subs, delayed, batchSize, getVarAccessDuplication(v.access)) << "] = l" << v.name << ";" << std::endl;
                 }
             }
         }
@@ -163,29 +163,30 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             // Generate code to copy neuron state into local variable
             for(const auto &v : nm->getVars()) {
-                if(v.access == VarAccess::READ_ONLY) {
+                if(v.access & VarAccessMode::READ_ONLY) {
                     os << "const ";
                 }
                 os << v.type << " l" << v.name << " = group->" << v.name << "[";
-                os << getReadVarIndex(popSubs, ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired(), batchSize, v.access) << "];" << std::endl;
+                const bool delayed = (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired());
+                os << getReadVarIndex(popSubs, delayed, batchSize, getVarAccessDuplication(v.access)) << "];" << std::endl;
             }
     
             // Also read spike and spike-like-event times into local variables if required
             if(ng.getArchetype().isSpikeTimeRequired()) {
                 os << "const " << model.getTimePrecision() << " lsT = group->sT[";
-                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccess::READ_WRITE) << "];" << std::endl;
+                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE) << "];" << std::endl;
             }
             if(ng.getArchetype().isPrevSpikeTimeRequired()) {
                 os << "const " << model.getTimePrecision() << " lprevST = group->prevST[";
-                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccess::READ_WRITE) << "];" << std::endl;
+                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE) << "];" << std::endl;
             }
             if(ng.getArchetype().isSpikeEventTimeRequired()) {
                 os << "const " << model.getTimePrecision() << " lseT = group->seT[";
-                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccess::READ_WRITE) << "];" << std::endl;
+                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE) << "];" << std::endl;
             }
             if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
                 os <<  "const " << model.getTimePrecision() << " lprevSET = group->prevSET[";
-                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccess::READ_WRITE) << "];" << std::endl;
+                os << getReadVarIndex(popSubs, ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE) << "];" << std::endl;
             }
             os << std::endl;
 
@@ -238,14 +239,14 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
                 os << model.getPrecision() << " linSyn = group->inSynInSyn" << i << "[";
-                os << getVarIndex(popSubs, batchSize, VarAccess::READ_WRITE) << "];" << std::endl;
+                os << getVarIndex(popSubs, batchSize, VarAccessDuplication::DUPLICATE) << "];" << std::endl;
 
                 // If dendritic delay is required
                 if (sg->isDendriticDelayRequired()) {
                     // Get reference to dendritic delay buffer input for this timestep
                     os << backend.getPointerPrefix() << model.getPrecision() << " *denDelayFront = ";
                     os << "&group->denDelayInSyn" << i << "[(*group->denDelayPtrInSyn" << i << " * group->numNeurons) + ";
-                    os << getVarIndex(popSubs, batchSize, VarAccess::READ_WRITE) << "];" << std::endl;
+                    os << getVarIndex(popSubs, batchSize, VarAccessDuplication::DUPLICATE) << "];" << std::endl;
 
                     // Add delayed input from buffer into inSyn
                     os << "linSyn += *denDelayFront;" << std::endl;
@@ -258,11 +259,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     // **TODO** base behaviour from Models::Base
                     for (const auto &v : psm->getVars()) {
-                        if(v.access == VarAccess::READ_ONLY) {
+                        if(v.access & VarAccessMode::READ_ONLY) {
                             os << "const ";
                         }
                         os << v.type << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
-                        os << getVarIndex(neuronSubs, batchSize, v.access) << "];" << std::endl;
+                        os << getVarIndex(neuronSubs, batchSize, getVarAccessDuplication(v.access)) << "];" << std::endl;
                     }
                 }
 
@@ -314,12 +315,13 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                 // Write back linSyn
                 os << "group->inSynInSyn" << i << "[";
-                os << getVarIndex(inSynSubs, batchSize, VarAccess::READ_WRITE) << "] = linSyn;" << std::endl;
+                os << getVarIndex(inSynSubs, batchSize, VarAccessDuplication::DUPLICATE) << "] = linSyn;" << std::endl;
 
                 // Copy any non-readonly postsynaptic model variables back to global state variables dd_V etc
                 for (const auto &v : psm->getVars()) {
-                    if(v.access == VarAccess::READ_WRITE) {
-                        os << "group->" << v.name << "InSyn" << i << "[" << getVarIndex(inSynSubs, batchSize, v.access) << "]" << " = lps" << v.name << ";" << std::endl;
+                    if(v.access & VarAccessMode::READ_WRITE) {
+                        os << "group->" << v.name << "InSyn" << i << "[";
+                        os << getVarIndex(inSynSubs, batchSize, getVarAccessDuplication(v.access)) << "]" << " = lps" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -335,11 +337,11 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                 // Read current source variables into registers
                 for(const auto &v : csm->getVars()) {
-                    if(v.access == VarAccess::READ_ONLY) {
+                    if(v.access & VarAccessMode::READ_ONLY) {
                         os << "const ";
                     }
                     os << v.type << " lcs" << v.name << " = " << "group->" << v.name << "CS" << i << "[";
-                    os << getVarIndex(popSubs, batchSize, v.access) << "];" << std::endl;
+                    os << getVarIndex(popSubs, batchSize, getVarAccessDuplication(v.access)) << "];" << std::endl;
                 }
 
                 Substitutions currSourceSubs(&popSubs);
@@ -360,9 +362,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                 // Write read/write variables back to global memory
                 for(const auto &v : csm->getVars()) {
-                    if(v.access == VarAccess::READ_WRITE) {
+                    if(v.access & VarAccessMode::READ_WRITE) {
                         os << "group->" << v.name << "CS" << i << "[";
-                        os << getVarIndex(currSourceSubs, batchSize, v.access) << "] = lcs" << v.name << ";" << std::endl;
+                        os << getVarIndex(currSourceSubs, batchSize, getVarAccessDuplication(v.access)) << "] = lcs" << v.name << ";" << std::endl;
                     }
                 }
             }
@@ -441,7 +443,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                         spkEventCondSubs.addVarNameSubstitution(spkEventCond.synapseGroup->getWUModel()->getPreVars(), "", "group->",
                                                                 [&popSubs, batchSize, delayed, i](VarAccess a) 
                                                                 { 
-                                                                    return "EventThresh" + std::to_string(i) + "[" + getReadVarIndex(popSubs, delayed, batchSize, a) + "]";
+                                                                    return "EventThresh" + std::to_string(i) + "[" + getReadVarIndex(popSubs, delayed, batchSize, getVarAccessDuplication(a)) + "]";
                                                                 });
                         i++;
                     }
@@ -484,10 +486,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     CodeStream::Scope b(os);
 
                     if(ng.getArchetype().isSpikeEventTimeRequired()) {
-                        os << "group->seT[" << getWriteVarIndex(popSubs, true, batchSize, VarAccess::READ_WRITE) << "] = lseT;" << std::endl;
+                        os << "group->seT[" << getWriteVarIndex(popSubs, true, batchSize, VarAccessDuplication::DUPLICATE) << "] = lseT;" << std::endl;
                     }
                     if(ng.getArchetype().isPrevSpikeEventTimeRequired()) {
-                        os << "group->prevSET[" << getWriteVarIndex(popSubs, true, batchSize, VarAccess::READ_WRITE) << "] = lprevSET;" << std::endl;
+                        os << "group->prevSET[" << getWriteVarIndex(popSubs, true, batchSize, VarAccessDuplication::DUPLICATE) << "] = lprevSET;" << std::endl;
                     }
                 }
             }
@@ -550,12 +552,12 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                         // If spike times are required, copy times from register
                         if(ng.getArchetype().isSpikeTimeRequired()) {
-                            os << "group->sT[" << getWriteVarIndex(popSubs, true, batchSize, VarAccess::READ_WRITE) << "] = lsT;" << std::endl;
+                            os << "group->sT[" << getWriteVarIndex(popSubs, true, batchSize, VarAccessDuplication::DUPLICATE) << "] = lsT;" << std::endl;
                         }
 
                         // If previous spike times are required, copy times from register
                         if(ng.getArchetype().isPrevSpikeTimeRequired()) {
-                            os << "group->prevST[" << getWriteVarIndex(popSubs, true, batchSize, VarAccess::READ_WRITE) << "] = lprevST;" << std::endl;
+                            os << "group->prevST[" << getWriteVarIndex(popSubs, true, batchSize, VarAccessDuplication::DUPLICATE) << "] = lprevST;" << std::endl;
                         }
 
                         // Loop through outgoing synapse groups with some sort of presynaptic code
@@ -565,9 +567,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                             if(sg->getDelaySteps() != NO_DELAY && sg->getWUModel()->getPreDynamicsCode().empty()) {
                                 // Loop through variables and copy between read and write delay slots
                                 for(const auto &v : sg->getWUModel()->getPreVars()) {
-                                    if(v.access == VarAccess::READ_WRITE) {
-                                        os << "group->" << v.name << "WUPre" << i << "[" << getWriteVarIndex(popSubs, true, batchSize, v.access) << "] = ";
-                                        os << "group->" << v.name << "WUPre" << i << "[" << getWriteVarIndex(popSubs, true, batchSize, v.access) << "];" << std::endl;
+                                    if(v.access & VarAccessMode::READ_WRITE) {
+                                        os << "group->" << v.name << "WUPre" << i << "[" << getWriteVarIndex(popSubs, true, batchSize, getVarAccessDuplication(v.access)) << "] = ";
+                                        os << "group->" << v.name << "WUPre" << i << "[" << getReadVarIndex(popSubs, true, batchSize, getVarAccessDuplication(v.access)) << "];" << std::endl;
                                     }
                                 }
                             }
@@ -580,9 +582,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                             if(sg->getBackPropDelaySteps() != NO_DELAY && sg->getWUModel()->getPostDynamicsCode().empty()) {
                                 // Loop through variables and copy between read and write delay slots
                                 for(const auto &v : sg->getWUModel()->getPostVars()) {
-                                    if(v.access == VarAccess::READ_WRITE) {
-                                        os << "group->" << v.name << "WUPost" << i << "[" << getWriteVarIndex(popSubs, true, batchSize, v.access) << "] = ";
-                                        os << "group->" << v.name << "WUPost" << i << "[" << getWriteVarIndex(popSubs, true, batchSize, v.access) << "];" << std::endl;
+                                    if(v.access & VarAccessMode::READ_WRITE) {
+                                        os << "group->" << v.name << "WUPost" << i << "[" << getWriteVarIndex(popSubs, true, batchSize, getVarAccessDuplication(v.access)) << "] = ";
+                                        os << "group->" << v.name << "WUPost" << i << "[" << getReadVarIndex(popSubs, true, batchSize, getVarAccessDuplication(v.access)) << "];" << std::endl;
                                     }
                                 }
                             }
@@ -597,9 +599,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                 // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
                 // back to global state variables dd_V etc  
                 const bool delayed = (ng.getArchetype().isVarQueueRequired(v.name) && ng.getArchetype().isDelayRequired());
-                if((v.access == VarAccess::READ_WRITE) || delayed) {
+                if((v.access & VarAccessMode::READ_WRITE) || delayed) {
                     os << "group->" << v.name << "[";
-                    os << getWriteVarIndex(popSubs, delayed, batchSize, v.access) << "] = l" << v.name << ";" << std::endl;
+                    os << getWriteVarIndex(popSubs, delayed, batchSize, getVarAccessDuplication(v.access)) << "] = l" << v.name << ";" << std::endl;
                 }
             }
         },

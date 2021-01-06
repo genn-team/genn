@@ -19,10 +19,10 @@ using namespace CodeGenerator;
 namespace
 {
 void genVariableFill(CodeStream &os, const Substitutions &subs, const std::string &fieldName, const std::string &value,
-                     VarAccess varAccess, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+                     VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varAccess == VarAccess::READ_ONLY) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDuplication & VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -39,10 +39,10 @@ void genVariableFill(CodeStream &os, const Substitutions &subs, const std::strin
 }
 //--------------------------------------------------------------------------
 void genScalarFill(CodeStream &os, const std::string &fieldName, const std::string &value,
-                     VarAccess varAccess, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
+                   VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varAccess == VarAccess::READ_ONLY) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDuplication & VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -77,7 +77,7 @@ void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substit
                     (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genScalarFill(os, spikeCntName, "0", VarAccess::READ_WRITE, batchSize, delayRequired, ng.getArchetype().getNumDelaySlots());
+                genScalarFill(os, spikeCntName, "0", VarAccessDuplication::DUPLICATE, batchSize, delayRequired, ng.getArchetype().getNumDelaySlots());
             });
     }
 
@@ -102,7 +102,7 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutio
                     (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genVariableFill(os, varSubs, spikeName, "0", VarAccess::READ_WRITE, batchSize, 
+                genVariableFill(os, varSubs, spikeName, "0", VarAccessDuplication::DUPLICATE, batchSize, 
                                 delayRequired, ng.getArchetype().getNumDelaySlots());
             });
     }
@@ -115,7 +115,7 @@ void genInitSpikeTime(CodeStream &os, const BackendBase &backend, const Substitu
     backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
         [batchSize, varName, &ng] (CodeStream &os, Substitutions &varSubs)
         {
-            genVariableFill(os, varSubs, varName, "-TIME_MAX", VarAccess::READ_WRITE, batchSize,
+            genVariableFill(os, varSubs, varName, "-TIME_MAX", VarAccessDuplication::DUPLICATE, batchSize,
                             ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
             
         });
@@ -159,8 +159,8 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                     os << code << std::endl;
                     
                     // Fill value across all delay slots and batches
-                    genVariableFill(os, varSubs, vars[k].name + fieldSuffix, "initVal", vars[k].access, batchSize,
-                                    isVarQueueRequired(k), numDelaySlots);
+                    genVariableFill(os, varSubs, vars[k].name + fieldSuffix, "initVal", getVarAccessDuplication(vars[k].access), 
+                                    batchSize, isVarQueueRequired(k), numDelaySlots);
                 });
         }
     }

@@ -24,6 +24,11 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
+unsigned int getNumCopies(VarAccess varAccess, unsigned int batchSize)
+{
+    return (varAccess & VarAccessDuplication::SHARED) ? 1 : batchSize;
+}
+//--------------------------------------------------------------------------
 void genSpikeMacros(CodeStream &os, const NeuronGroupInternal &ng, bool trueSpike)
 {
     const bool delayRequired = trueSpike
@@ -841,7 +846,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         std::vector<std::string> neuronStatePushPullFunctions;
         for(size_t i = 0; i < vars.size(); i++) {
             const auto *varInitSnippet = n.second.getVarInitialisers()[i].getSnippet();
-            const unsigned int numCopies = (vars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
+            const unsigned int numCopies = getNumCopies(vars[i].access, batchSize);
             const size_t count = n.second.isVarQueueRequired(i) ? numCopies * n.second.getNumNeurons() * n.second.getNumDelaySlots() : numCopies * n.second.getNumNeurons();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -907,10 +912,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             for(size_t i = 0; i < csVars.size(); i++) {
                 const auto *varInitSnippet = cs->getVarInitialisers()[i].getSnippet();
                 const bool autoInitialized = !varInitSnippet->getCode().empty();
-                const size_t numCopies = (csVars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
                 mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                   runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(),
-                                   cs->getVarLocation(i), autoInitialized, numCopies * n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
+                                   runnerPushFunc, runnerPullFunc, csVars[i].type, csVars[i].name + cs->getName(), cs->getVarLocation(i), 
+                                   autoInitialized, getNumCopies(csVars[i].access, batchSize) * n.second.getNumNeurons(), currentSourceStatePushPullFunctions);
 
                 // Loop through EGPs required to initialize current source variable
                 const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
@@ -962,10 +966,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 const auto psmVars = sg->getPSModel()->getVars();
                 for(size_t v = 0; v < psmVars.size(); v++) {
-                    const size_t numCopies = (psmVars[v].access == VarAccess::READ_ONLY) ? 1 : batchSize;
                     mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                             psmVars[v].type, psmVars[v].name + sg->getPSModelTargetName(), sg->getPSVarLocation(v),
-                                            sg->getTrgNeuronGroup()->getNumNeurons() * numCopies);
+                                            sg->getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVars[v].access, batchSize));
 
                     // Loop through EGPs required to initialize PSM variable
                     const auto extraGlobalParams = sg->getPSVarInitialisers()[v].getSnippet()->getExtraGlobalParams();
@@ -1079,11 +1082,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             for(size_t i = 0; i < wuVars.size(); i++) {
                 const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
                 if(individualWeights) {
-                    const size_t numCopies = (wuVars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
                     const bool autoInitialized = !varInitSnippet->getCode().empty();
                     mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                       runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(),
-                                       s.second.getWUVarLocation(i), autoInitialized, size * numCopies, synapseGroupStatePushPullFunctions);
+                                       runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
+                                       autoInitialized, size * getNumCopies(wuVars[i].access, batchSize), synapseGroupStatePushPullFunctions);
                 }
 
                 // Loop through EGPs required to initialize WUM variable
@@ -1105,10 +1107,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         for(size_t i = 0; i < wuPreVars.size(); i++) {
             const auto *varInitSnippet = s.second.getWUPreVarInitialisers()[i].getSnippet();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
-            const size_t numCopies = (wuPreVars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                            runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(),
-                            s.second.getWUPreVarLocation(i), autoInitialized, preSize * numCopies, synapseGroupStatePushPullFunctions);
+                               runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(),
+                               s.second.getWUPreVarLocation(i), autoInitialized, preSize * getNumCopies(wuPreVars[i].access, batchSize), synapseGroupStatePushPullFunctions);
 
             // Loop through EGPs required to initialize WUM variable
             const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
@@ -1128,10 +1129,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         for(size_t i = 0; i < wuPostVars.size(); i++) {
             const auto *varInitSnippet = s.second.getWUPostVarInitialisers()[i].getSnippet();
             const bool autoInitialized = !varInitSnippet->getCode().empty();
-            const size_t numCopies = (wuPostVars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                               runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(),
-                               s.second.getWUPostVarLocation(i), autoInitialized, postSize * numCopies, synapseGroupStatePushPullFunctions);
+                               runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(), s.second.getWUPostVarLocation(i),
+                               autoInitialized, postSize * getNumCopies(wuPostVars[i].access, batchSize), synapseGroupStatePushPullFunctions);
 
             // Loop through EGPs required to initialize WUM variable
             const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
@@ -1159,14 +1159,13 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
             if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 const auto psmVars = psm->getVars();
                 for(size_t i = 0; i < psmVars.size(); i++) {
-                    const size_t numCopies = (psmVars[i].access == VarAccess::READ_ONLY) ? 1 : batchSize;
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
                     genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
                                         backend.getPreferences().automaticCopy, psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
                                         [&]()
                                         {
                                             backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
-                                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons() * numCopies);
+                                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVars[i].access, batchSize));
                                         });
                 }
             }
