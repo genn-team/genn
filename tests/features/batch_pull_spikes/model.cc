@@ -28,5 +28,6 @@ void modelDefinition(ModelSpec &model)
         uninitialisedVar(),     // startSpike
         uninitialisedVar());    // endSpike
 
-    model.addNeuronPopulation<NeuronModels::SpikeSourceArray>("Pop", 10, {}, init);
+    auto *pop = model.addNeuronPopulation<NeuronModels::SpikeSourceArray>("Pop", 10, {}, init);
+    pop->setSpikeRecordingEnabled(true);
 }

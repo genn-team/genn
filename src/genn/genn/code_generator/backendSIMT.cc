@@ -551,11 +551,14 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                 {
                     CodeStream::Scope b(os);
 
-                    // Calculate number of words which will be used to record this population's spikes
+                    // Calculate number of words which will be used to record this population's spikes in each batch
                     os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
 
                     // Build global index
-                    const std::string globalIndex = "(recordingTimestep * numRecordingWords) + (" + popSubs["id"] + " / 32) + " + getThreadID();
+                    std::string globalIndex = "(recordingTimestep * numRecordingWords * " + std::to_string(batchSize) + ") + (" + popSubs["id"] + " / 32) + " + getThreadID();
+                    if(batchSize > 1) {
+                        globalIndex += " + (batch * numRecordingWords)";
+                    }
 
                     // If we are recording spikes, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeRecordingEnabled()) {

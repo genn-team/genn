@@ -46,6 +46,9 @@ class SimTest : public SimulationTest
 public:
     virtual void Init() override
     {
+        // Allocate spike recording buffer
+        allocateRecordingBuffers(100);
+        
         // Allocate spike times
         allocatespikeTimesPop(100);
         
@@ -84,6 +87,27 @@ TEST_F(SimTest, BatchPullSpikes)
         // Download current spikes from device
         pullPopCurrentSpikesFromDevice();
         checkSpikes();
+    }
+    
+    // Download spike recording data
+    pullRecordingBuffersFromDevice();
+    
+    for(unsigned int t = 0; t < 100; t++) {
+        const unsigned int correctSpikeBatch = t / 10;
+        const unsigned int correctSpikeNeuron = t % 10;
+        for(unsigned int b = 0; b < 10; b++) {
+            const uint32_t word = recordSpkPop[(t * 1 * 10) + (b * 1)];
+            
+            // If there should be a spike in this batch
+            if(b == correctSpikeBatch) {
+                ASSERT_EQ(word, 1 << correctSpikeNeuron);
+            }
+            // Otherwise, assert that there are no spikes
+            else {
+                ASSERT_EQ(word, 0);
+            }
+            
+        }
     }
 }
 
