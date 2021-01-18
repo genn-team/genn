@@ -893,10 +893,21 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 CodeStream::Scope b(os);
 
                 // If population RNGs are initialised on device and this neuron is going to require one, 
-                // Initialise RNG using GLOBAL thread id for sequence
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
-                    assert(modelMerged.getModel().getBatchSize() == 1);
-                    genPopulationRNGInit(os, "group->rng[" + popSubs["batch_id"] + "]", "deviceRNGSeed", "id");
+                    // If batch size is 1, initialise single RNG using GLOBAL thread id for sequence
+                    if(modelMerged.getModel().getBatchSize() == 1) {
+                        genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
+                    }
+                    // Otherwise, loop through batches and initialise independent RNGs using GLOBAL thread id as basis of sequence
+                    else {
+                        os << "for(unsigned int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                        {
+                            CodeStream::Scope b(os);
+                            genPopulationRNGInit(os, "group->rng[(b * group->numNeurons) + " + popSubs["id"] + "]", "deviceRNGSeed", 
+                                                 "(b * " + std::to_string(getNumInitialisationRNGStreams(modelMerged)) + ") + id");
+                        }
+                    }
+                    
                 }
 
                 // If this neuron requires an RNG for initialisation,

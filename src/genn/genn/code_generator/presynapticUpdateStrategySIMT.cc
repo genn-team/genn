@@ -559,7 +559,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             else {
                 skipAhead << "preInd";
             }
-            skipAhead << " + " << connSubs["group_start_id"] << " + " << backend.getNumInitialisationRNGStreams(modelMerged);
+            skipAhead << " + " << connSubs["group_start_id"] << " + " << (backend.getNumInitialisationRNGStreams(modelMerged) * model.getBatchSize());
 
             // **NOTE** add RNG to synSubs so it can be correctly referenced in presynapticUpdateSubs below
             backend.genGlobalRNGSkipAhead(os, synSubs, skipAhead.str());
