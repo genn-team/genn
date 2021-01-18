@@ -106,11 +106,10 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
 
     os << "if (spike < ";
     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        assert(modelMerged.getModel().getBatchSize() == 1);
         os << "group->srcSpkCnt" << eventSuffix << "[preReadDelaySlot])";
     }
     else {
-        os << "group->srcSpkCnt" << eventSuffix << "[batch])";
+        os << "group->srcSpkCnt" << eventSuffix << "[0])";
     }
     {
         CodeStream::Scope b(os);
@@ -257,20 +256,13 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
 
     os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix;
     if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        assert(model.getBatchSize() == 1);
         os << "[preReadDelaySlot];" << std::endl;
     }
     else {
-        os << "["<< ((model.getBatchSize() > 1) ? "batch" : "0") << "];" << std::endl;
+        os << "[0];" << std::endl;
     }
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
-    if(model.getBatchSize() > 1) {
-        os << "const unsigned int preBatchOffset = batch * group->numSrcNeurons;" << std::endl;
-        os << "const unsigned int postBatchOffset = batch * group->numTrgNeurons;" << std::endl;
 
-        // **THINK** 64-bit
-        os << "const unsigned int synBatchOffset = preBatchOffset * group->rowStride;" << std::endl;
-    }
     const auto *wu = sg.getArchetype().getWUModel();
     os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
     {
@@ -282,10 +274,8 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
         {
             CodeStream::Scope b(os);
             const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            const std::string batchOffset = (model.getBatchSize() > 1) ? "preBatchOffset + " : "";
-
             os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[";
-            os << queueOffset << batchOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + " << backend.getThreadID() << "];" << std::endl;
+            os << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + " << backend.getThreadID() << "];" << std::endl;
             os << "shSpk" << eventSuffix << "[" << backend.getThreadID() << "] = spk;" << std::endl;
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[" << backend.getThreadID() << "] = group->rowLength[spk];" << std::endl;
@@ -345,9 +335,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
 
                 Substitutions synSubs(&popSubs);
                 synSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
-                synSubs.addVarSubstitution("id_pre_batch", (model.getBatchSize() > 1) ? "(" + synSubs["id_pre"] + " + preOffset)" : synSubs["id_pre"]);
                 synSubs.addVarSubstitution("id_syn", "synAddress");
-                synSubs.addVarSubstitution("id_syn_batch", (model.getBatchSize() > 1) ? "(synBatchOffset + batchOffset)" : "synAddress");
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << "const unsigned int npost = shRowLength[j];" << std::endl;
@@ -360,7 +348,6 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                 else { // DENSE
                     synSubs.addVarSubstitution("id_post", popSubs["id"]);
                 }
-                synSubs.addVarSubstitution("id_post_batch", (model.getBatchSize() > 1) ? "(" + synSubs["id_post"] + " + postBatchOffset)" : synSubs["id_post"]);
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.getArchetype().isDendriticDelayRequired()) {
@@ -379,7 +366,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     }
                     // Otherwise, use global memory atomic
                     else {
-                        synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + synSubs["id_post_batch"] + "], $(0))");
+                        synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + synSubs["id_post"] + "], $(0))");
                     }
                 }
 
@@ -410,8 +397,7 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
         os << "if (" << popSubs["id"] << " < group->numTrgNeurons)";
         {
             CodeStream::Scope b(os);
-            const std::string inSynIndex = (model.getBatchSize() > 1) ? ("(batch * group->numTrgNeurons) + " + popSubs["id"]) : popSubs["id"];
-            const std::string inSyn = "group->inSyn[" + inSynIndex + "]";
+            const std::string inSyn = "group->inSyn[" + popSubs["id"] + "]";
             if(sg.getArchetype().isPSModelMerged()) {
                 os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
             }
@@ -426,8 +412,7 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
         os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
         {
             CodeGenerator::CodeStream::Scope b(os);
-            const std::string inSynIndex = (model.getBatchSize() > 1) ? ("(batch * group->numTrgNeurons) + " + backend.getThreadID()) : backend.getThreadID();
-            os << backend.getAtomic(model.getPrecision()) << "(&group->inSyn[" << inSynIndex << "], ";
+            os << backend.getAtomic(model.getPrecision()) << "(&group->inSyn[" << backend.getThreadID() << "], ";
             os << "shLg[" << backend.getThreadID() << "]); " << std::endl;
         }
     }
