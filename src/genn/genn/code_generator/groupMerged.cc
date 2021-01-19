@@ -577,18 +577,6 @@ CodeGenerator::NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, co
 
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentQueueOffset() const
-{
-    assert(getArchetype().isDelayRequired());
-    return "(*group->spkQuePtr * group->numNeurons)";
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getPrevQueueOffset() const
-{
-    assert(getArchetype().isDelayRequired());
-    return "(((*group->spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group->numNeurons)";
-}
-//----------------------------------------------------------------------------
 bool CodeGenerator::NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
@@ -624,6 +612,31 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneou
     return isChildParamValueHeterogeneous({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
 }
+ std::string CodeGenerator::NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    if(delay) {
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset" : "readBatchDelayOffset") + index;
+    }
+    else {
+        return getVarIndex(batchSize, varDuplication, index);
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    if(delay) {
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset" : "writeBatchDelayOffset") + index;
+    }
+    else {
+        return getVarIndex(batchSize, varDuplication, index);
+    }
+}
+
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const std::string &fieldPrefixStem, 
                                                            const std::vector<SynapseGroupInternal *> &archetypeSyn,
@@ -1076,6 +1089,82 @@ bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dim
                        {
                            return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
                        });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(bool delay, unsigned int batchSize)
+{
+    if(delay) {
+        assert(batchSize == 1);
+        return "preDelaySlot";
+    }
+    else {
+        return (batchSize == 1) ? "0" : "batch";
+    }
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostSlot(bool delay, unsigned int batchSize)
+{
+    if(delay) {
+        assert(batchSize == 1);
+        return "postDelaySlot";
+    }
+    else {
+        return (batchSize == 1) ? "0" : "batch";
+    }
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    if(delay) {
+        return (singleBatch ? "preDelayOffset + " : "preBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "preBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    if(delay) {
+        return (singleBatch ? "postDelayOffset + " : "postBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "postBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+   
+    if(delay) {
+        assert(singleBatch);
+        return (singleBatch ? "prePrevSpikeTimeDelayOffset + " : "prePrevSpikeTimeBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "preBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+   
+    if(delay) {
+        assert(singleBatch);
+        return (singleBatch ? "postPrevSpikeTimeDelayOffset + " : "postPrevSpikeTimeBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "postBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    return (singleBatch ? "" : "synBatchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,

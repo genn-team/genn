@@ -137,7 +137,7 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    // !Get total number of RNG streams potentially used to initialise model
+    //! Get total number of RNG streams potentially used to initialise model
     /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
     size_t getNumInitialisationRNGStreams(const ModelSpecMerged & modelMerged) const;
 
@@ -288,6 +288,8 @@ private:
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
+
+    void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const

@@ -4,6 +4,9 @@
 #include "gennUtils.h"
 #include "logging.h"
 
+// GeNN code generator includes
+#include "code_generator/groupMerged.h"
+
 // Macro for simplifying defining type sizes
 #define TYPE(T) {#T, sizeof(T)}
 
@@ -46,4 +49,17 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
             return typeSize->second;
         }
     }
+}
+//--------------------------------------------------------------------------
+bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
+{
+    // Loop through merged groups and calculate maximum number of synapses
+    size_t maxSynapses = 0;
+    for(const auto &g : sg.getGroups()) {
+        const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(g.get());
+        maxSynapses = std::max(maxSynapses, numSynapses);
+    }
+
+    // Return true if any high bits are set
+    return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
 }

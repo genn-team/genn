@@ -160,6 +160,8 @@ private:
 
     void genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, const Substitutions &subs, bool trueSpike, bool recordingEnabled) const;
 
+    void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg) const;
+
     template<typename T>
     void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {

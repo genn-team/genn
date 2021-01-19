@@ -428,6 +428,8 @@ public:
         return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
     }
 
+    bool areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const;
+
     const PreferencesBase &getPreferences() const { return m_Preferences; }
 
     template<typename T>
