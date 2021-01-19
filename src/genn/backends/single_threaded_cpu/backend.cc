@@ -84,6 +84,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
+    if(model.getBatchSize() != 1) {
+        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+    }
 
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
@@ -168,7 +171,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
 
                 // Generate spike count reset
-                n.genMergedGroupSpikeCountReset(os);
+                n.genMergedGroupSpikeCountReset(os, 1);
             }
             
         }
@@ -248,6 +251,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
 {
+    const ModelSpecInternal &model = modelMerged.getModel();
+    if(model.getBatchSize() != 1) {
+        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+    }
+
     // Generate struct definitions
     // **YUCK** dendritic delay update structs not actually required
     modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
@@ -264,8 +272,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // Generate preamble
     preambleHandler(os);
-
-    const ModelSpecInternal &model = modelMerged.getModel();
+    
     os << "void updateSynapses(" << model.getTimePrecision() << " t)";
     {
         CodeStream::Scope b(os);
@@ -444,6 +451,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                       HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
+    if(model.getBatchSize() != 1) {
+        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+    }
 
     // Generate struct definitions
     modelMerged.genMergedNeuronInitGroupStructs(os, *this);
@@ -744,6 +754,9 @@ size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
+    if(model.getBatchSize() != 1) {
+        throw std::runtime_error("The single-threaded CPU backend only supports simulations with a batch size of 1");
+    }
 
     os << "// Standard C++ includes" << std::endl;
     os << "#include <algorithm>" << std::endl;
@@ -953,32 +966,32 @@ void Backend::genVariablePull(CodeStream&, const std::string&, const std::string
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
+void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation) const
+void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&) const
+void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&) const
+void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&) const
+void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&) const
+void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&, unsigned int) const
 {
     assert(!getPreferences().automaticCopy);
 }
