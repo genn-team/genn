@@ -1244,10 +1244,10 @@ void BackendSIMT::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupM
 
         // Calculate batch offsets into synapse arrays, using 64-bit arithmetic if necessary
         if(areSixtyFourBitSynapseIndicesRequired(sg)) {
-            os << "const uint64_t synBatchOffset = (uint64_t)group->numSrcNeurons * (uint64_t)group->rowStride * (uint64_t)batch;" << std::endl;
+            os << "const uint64_t synBatchOffset = (uint64_t)preBatchOffset * (uint64_t)group->rowStride;" << std::endl;
         }
         else {
-            os << "const unsigned int synBatchOffset = group->numSrcNeurons * group->rowStride * batch;" << std::endl;
+            os << "const unsigned int synBatchOffset = preBatchOffset * group->rowStride;" << std::endl;
         }
     }
 
