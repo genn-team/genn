@@ -1542,8 +1542,10 @@ void Backend::genVariablePull(CodeStream &os, const std::string &type, const std
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
+    assert(batchSize == 1);
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
@@ -1559,8 +1561,10 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
 {
+    assert(batchSize == 1);
     // If this variable requires queuing and isn't zero-copy
     if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Generate memcpy to copy only current timestep's data
@@ -1771,8 +1775,9 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     return {};
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
 {
+    assert(batchSize == 1);
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
         const bool delayRequired = spikeEvent ?
@@ -1819,8 +1824,9 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const
+void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
 {
+    assert(batchSize == 1);
     if (!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required
         const bool delayRequired = spikeEvent ?
