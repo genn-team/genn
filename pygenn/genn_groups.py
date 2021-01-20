@@ -278,9 +278,16 @@ class NeuronGroup(Group):
     @property
     def current_spikes(self):
         """Current spikes from GeNN"""
-        offset = self.spike_que_ptr[0] * self.size
-        return self.spikes[
-            offset:offset + self.spike_count[self.spike_que_ptr[0]]]
+        # Get current spike queue pointer
+        d = self.spike_que_ptr[0]
+        
+        # If batch size is zero, return single slice of spikes
+        if self._model.batch_size == 1:
+            return self.spikes[0, d, 0:self.spike_count[0, d]]
+        # Otherwise, return list of slices
+        else:
+            return [self.spikes[b, d, 0:self.spike_count[b, d]]
+                    for b in range(self._model.batch_size)]
 
     @property
     def spike_recording_data(self):
@@ -402,19 +409,26 @@ class NeuronGroup(Group):
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
         # If spike data is present on the host
+        batch_size = self._model.batch_size
         if (self.pop.get_spike_location() & VarLocation_HOST) != 0:
-            self.spikes = self._assign_ext_ptr_array("glbSpk", 
-                                                    self.size * self.delay_slots,
-                                                    "unsigned int")
-            self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
-                                                        self.delay_slots, 
-                                                        "unsigned int")
+            self.spikes = self._assign_ext_ptr_array(
+                "glbSpk", self.size * self.delay_slots * batch_size,
+                "unsigned int")
+            self.spike_count = self._assign_ext_ptr_array(
+                "glbSpkCnt", self.delay_slots * batch_size, "unsigned int")
+
+            # Reshape to expose delay slots and batches
+            self.spikes = np.reshape(self.spikes, (batch_size, 
+                                                   self.delay_slots, 
+                                                   self.size))
+            self.spike_count = np.reshape(self.spike_count, (batch_size,
+                                                             self.delay_slots))
 
         # If spike recording is enabled
         if self.spike_recording_enabled:
             # Calculate spike recording words
             recording_words = (self._spike_recording_words * num_recording_timesteps 
-                               * self._model.batch_size)
+                               * batch_size)
 
             # Assign pointer to recording data
             self._spike_recording_data = self._assign_ext_ptr_array("recordSpk",
