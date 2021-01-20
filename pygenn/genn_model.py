@@ -209,7 +209,7 @@ class GeNNModel(object):
     @timing_enabled.setter
     def timing_enabled(self, timing):
         self._model.set_timing(timing)
-    
+
     @property
     def batch_size(self):
         return self._model.get_batch_size()
@@ -217,7 +217,7 @@ class GeNNModel(object):
     @batch_size.setter
     def batch_size(self, batch_size):
         self._model.set_batch_size(batch_size)
-        
+
     @property
     def default_var_location(self):
         """Default variable location - defines
