@@ -286,29 +286,38 @@ class NeuronGroup(Group):
     def spike_recording_data(self):
         # Get byte view of data
         data_bytes = self._spike_recording_data.view(dtype=np.uint8)
-        
-        # Reshape view so there's a row per timestep and a column per byte
-        data_bytes = np.reshape(data_bytes, (-1, self._spike_recording_words * 4))
 
-        # Unpack data (results in one byte per bit)
-        # **THINK** is there a way to avoid this step?
-        data_unpack = np.unpackbits(data_bytes, axis=1, 
-                                    count=self.size,
-                                    bitorder="little")
-
-        # Calculate indices where there are spikes
-        spikes = np.where(data_unpack == 1)
+        # Reshape view into a tensor with time, batches and recording bytes
+        spike_recording_bytes = self._spike_recording_words * 4
+        data_bytes = np.reshape(data_bytes, (-1, self._model.batch_size, 
+                                                spike_recording_bytes))
 
         # Calculate start time of recording
         start_time_ms = (self._model.timestep - data_bytes.shape[0]) * self._model.dT
         if start_time_ms < 0.0:
             raise Exception("spike_recording_data can only be "
                             "accessed once buffer is full.")
-        
-        # Convert spike times to ms
-        spike_times = start_time_ms + (spikes[0] * self._model.dT)
 
-        return spike_times, spikes[1]
+        # Unpack data (results in one byte per bit)
+        # **THINK** is there a way to avoid this step?
+        data_unpack = np.unpackbits(data_bytes, axis=2, 
+                                    count=self.size,
+                                    bitorder="little")
+
+        # Loop through batches
+        spike_data = []
+        for b in range(self._model.batch_size):
+            # Calculate indices where there are spikes
+            spikes = np.where(data_unpack[:,b,:] == 1)
+
+            # Convert spike times to ms
+            spike_times = start_time_ms + (spikes[0] * self._model.dT)
+
+            # Add to list
+            spike_data.append((spike_times, spikes[1]))
+
+        # If batch size is 1, return 1st population's spikes otherwise list
+        return spike_data[0] if self._model.batch_size == 1 else spike_data
 
     @property
     def delay_slots(self):
@@ -322,7 +331,7 @@ class NeuronGroup(Group):
     @property
     def spike_recording_enabled(self):
         return self.pop.is_spike_recording_enabled()
-    
+
     @spike_recording_enabled.setter
     def spike_recording_enabled(self, enabled):
         return self.pop.set_spike_recording_enabled(enabled)
@@ -404,7 +413,8 @@ class NeuronGroup(Group):
         # If spike recording is enabled
         if self.spike_recording_enabled:
             # Calculate spike recording words
-            recording_words = self._spike_recording_words * num_recording_timesteps
+            recording_words = (self._spike_recording_words * num_recording_timesteps 
+                               * self._model.batch_size)
 
             # Assign pointer to recording data
             self._spike_recording_data = self._assign_ext_ptr_array("recordSpk",
