@@ -121,7 +121,7 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
     }
     else {
         for(const auto &v : nm->getVars()) {
-            const std::string varIdx = getVarIndexFn(archetypeNG->isVarQueueRequired(v.name),
+            const std::string varIdx = getVarIndexFn(delay && archetypeNG->isVarQueueRequired(v.name),
                                                      getVarAccessDuplication(v.access));
 
             substitutions.addVarSubstitution(v.name + sourceSuffix,
