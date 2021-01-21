@@ -620,7 +620,7 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneou
 std::string CodeGenerator::NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     if(delay) {
-        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset" : "readBatchDelayOffset") + index;
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset + " : "readBatchDelayOffset + ") + index;
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
@@ -630,13 +630,12 @@ std::string CodeGenerator::NeuronUpdateGroupMerged::getReadVarIndex(bool delay, 
 std::string CodeGenerator::NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     if(delay) {
-        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset" : "writeBatchDelayOffset") + index;
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset + " : "writeBatchDelayOffset + ") + index;
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
     }
 }
-
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const std::string &fieldPrefixStem, 
                                                            const std::vector<SynapseGroupInternal *> &archetypeSyn,
