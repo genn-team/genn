@@ -18,7 +18,7 @@ public:
     DECLARE_MODEL(PreNeuron, 0, 1);
     
     SET_SIM_CODE(
-        "const unsigned int timestep = int(round($(t)));\n"
+        "const unsigned int timestep = (unsigned int)round($(t));\n"
         "$(x)= (float)((timestep * 100) + ($(batch) * 10) + $(id));\n");
     
     SET_VARS({{"x", "scalar"}});
