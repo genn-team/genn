@@ -105,7 +105,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
     }
 
-    os << "if (spike < group->srcSpkCnt[" << sg.getPreSlot(batchSize) << "])";
+    os << "if (spike < group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "])";
     {
         CodeStream::Scope b(os);
 
