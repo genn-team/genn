@@ -1606,7 +1606,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBufferRect(d_" << name << ng.getName();
             os << ", CL_TRUE";
             os << ", {0, spkQuePtr" << ng.getName() << ", 0}, {0, spkQuePtr" << ng.getName() << ", 0}";
-            os << ", {" << ng.getNumNeurons() << " * sizeof(" << type << "), 1, " << batchSize;
+            os << ", {" << ng.getNumNeurons() << " * sizeof(" << type << "), 1, " << batchSize << "}";
             os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
             os << ", " << ng.getNumDelaySlots() << " * sizeof(" << type << ")";
             os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
