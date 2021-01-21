@@ -920,6 +920,16 @@ public:
         return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
     }
 
+    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varDuplication, index);
+    }
+    
+    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDuplication, index);
+    }
+
     std::string getPrePrevSpikeTimeIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
     {
         return getPrePrevSpikeTimeIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);

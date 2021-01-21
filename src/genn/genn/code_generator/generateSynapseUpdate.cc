@@ -41,13 +41,13 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group->", 
                                        [&sg, &synapseSubs, batchSize](VarAccess a) 
                                        { 
-                                           return "[" + sg.getPreVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_pre"]) + "]";
+                                           return "[" + sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_pre"]) + "]";
                                        });
 
     synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "group->",
                                        [&sg, &synapseSubs, batchSize](VarAccess a) 
                                        { 
-                                           return "[" + sg.getPostVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
+                                           return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
                                        });
 
     // If weights are individual, substitute variables for values stored in global memory
