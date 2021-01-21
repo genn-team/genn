@@ -462,7 +462,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         // Launch pre-synapse reset kernel if required
         if(idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, model.getBatchSize());
+            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, 1);
             os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }

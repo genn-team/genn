@@ -408,7 +408,7 @@ private:
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
 
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const;
 
     void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const;
 

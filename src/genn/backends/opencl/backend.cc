@@ -294,7 +294,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(neuronUpdateKernels);
 
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
+        if(model.getBatchSize() > 1) {
+            neuronUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+        }
         Substitutions kernelSubs(openclLFSRFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
@@ -316,7 +318,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     {
         CodeStream::Scope b(neuronUpdateKernels);
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-
+        if(model.getBatchSize() > 1) {
+            neuronUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+        }
         Substitutions kernelSubs(openclLFSRFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
@@ -390,7 +394,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if (idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreNeuronReset] << ".setArg(" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << ", t));" << std::endl;
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset);
+            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             genPostKernelFlush(os);
             os << std::endl;
@@ -402,7 +406,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << modelMerged.getMergedNeuronUpdateGroups().size() + 1 << ", recordingTimestep));" << std::endl;
             }
             os << std::endl;
-            genKernelDimensions(os, KernelNeuronUpdate, idStart);
+            genKernelDimensions(os, KernelNeuronUpdate, idStart, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &neuronUpdateEvent";
@@ -510,6 +514,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(synapseUpdateKernels);
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
+            if(model.getBatchSize() > 1) {
+                synapseUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+            }
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
             genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, wumThreshHandler, 
@@ -526,9 +533,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
+            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
+            if(model.getBatchSize() > 1) {
+                synapseUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+            }
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
-            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
         }
     }
@@ -541,10 +551,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
+            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
+            if(model.getBatchSize() > 1) {
+                synapseUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+            }
             Substitutions kernelSubs(openclLFSRFunctions);
             kernelSubs.addVarSubstitution("t", "t");
-
-            synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             genSynapseDynamicsKernel(synapseUpdateKernels, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
         }
     }
@@ -626,7 +638,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         // Launch pre-synapse reset kernel if required
         if (idPreSynapseReset > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset);
+            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, 1);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             genPostKernelFlush(os);
         }
@@ -636,7 +648,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << modelMerged.getMergedSynapseDynamicsGroups().size() << ", t));" << std::endl;
             os << std::endl;
-            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart);
+            genKernelDimensions(os, KernelSynapseDynamicsUpdate, idSynapseDynamicsStart, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDynamicsUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &synapseDynamicsEvent";
@@ -650,7 +662,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() << ", t));" << std::endl;
             os << std::endl;
-            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart);
+            genKernelDimensions(os, KernelPresynapticUpdate, idPresynapticStart, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPresynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &presynapticUpdateEvent";
@@ -664,7 +676,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << modelMerged.getMergedPostsynapticUpdateGroups().size() << ", t));" << std::endl;
             os << std::endl;
-            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart);
+            genKernelDimensions(os, KernelPostsynapticUpdate, idPostsynapticStart, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPostsynapticUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize";
             if(model.isTimingEnabled()) {
                 os << ", nullptr, &postsynapticUpdateEvent";
@@ -1902,11 +1914,11 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const
 {
     // Calculate global and local work size
     const size_t numOfWorkGroups = ceilDivide(numThreads, getKernelBlockSize(kernel));
-    os << "const cl::NDRange globalWorkSize(" << (getKernelBlockSize(kernel) * numOfWorkGroups) << ", 1);" << std::endl;
+    os << "const cl::NDRange globalWorkSize(" << (getKernelBlockSize(kernel) * numOfWorkGroups) << ", " << batchSize << ");" << std::endl;
     os << "const cl::NDRange localWorkSize(" << getKernelBlockSize(kernel) << ", 1);" << std::endl;
 }
 //--------------------------------------------------------------------------
