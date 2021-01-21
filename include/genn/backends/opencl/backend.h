@@ -405,8 +405,17 @@ private:
 
     void genAtomicAddFloat(CodeStream &os, const std::string &memoryType) const;
 
-    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
-    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
+    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
+    {
+        genCurrentSpikePushPull(os, ng, batchSize, spikeEvent, true);
+    }
+
+    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
+    {
+        genCurrentSpikePushPull(os, ng, batchSize, spikeEvent, false);
+    }
+
+    void genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const;
 
