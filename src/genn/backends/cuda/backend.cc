@@ -288,9 +288,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        if(model.getBatchSize() > 1) {
-            os << "const unsigned int batch = blockIdx.y;" << std::endl;
-        }
 
         Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
         kernelSubs.addVarSubstitution("t", "t");
@@ -331,7 +328,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         if(idPreNeuronReset > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, model.getBatchSize());
+            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, 1);
             os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>(t);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }

@@ -316,16 +316,16 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 os << getPointerPrefix() << "struct MergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << " *group = &d_mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[id - " << idStart << "]; " << std::endl;
 
                 if(n.getArchetype().isDelayRequired()) { // with delay
-                    if(batchSize > 1) {
-                        os << "if(batch == 0)" << CodeStream::OB(1);
-                    }
                     os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
-                    
-                    if(batchSize > 1) {
-                        os << CodeStream::CB(1);
-                    }
+                }
+
+                if(batchSize > 1) {
+                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
                 }
                 n.genMergedGroupSpikeCountReset(os, batchSize);
+                if(batchSize > 1) {
+                    os << CodeStream::CB(1);
+                }
             }
             idStart += n.getGroups().size();
         }
