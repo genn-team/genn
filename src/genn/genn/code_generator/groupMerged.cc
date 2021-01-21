@@ -52,23 +52,27 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const
 {
-    if(getArchetype().isDelayRequired()) { // with delay
-        assert(batchSize == 1);
-
-        if(getArchetype().isSpikeEventRequired()) {
-            os << "group->spkCntEvnt[*group->spkQuePtr] = 0;" << std::endl;
-        }
-        if(getArchetype().isTrueSpikeRequired()) {
-            os << "group->spkCnt[*group->spkQuePtr] = 0;" << std::endl;
+    if(getArchetype().isSpikeEventRequired()) {
+        if(getArchetype().isDelayRequired()) {
+            os << "group->spkCntEvnt[*group->spkQuePtr";
+            if(batchSize > 1) {
+                os << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+            }
+            os << "] = 0; " << std::endl;
         }
         else {
-            os << "group->spkCnt[0] = 0;" << std::endl;
-        }
-    }
-    else { // no delay
-        if(getArchetype().isSpikeEventRequired()) {
             os << "group->spkCntEvnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
         }
+    }
+
+    if(getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired()) {
+        os << "group->spkCnt[*group->spkQuePtr";
+        if(batchSize > 1) {
+            os << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+        }
+        os << "] = 0; " << std::endl;
+    }
+    else {
         os << "group->spkCnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
     }
 }
@@ -612,7 +616,8 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneou
     return isChildParamValueHeterogeneous({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
 }
- std::string CodeGenerator::NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+//--------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
 }
@@ -1093,8 +1098,7 @@ bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dim
 std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(bool delay, unsigned int batchSize)
 {
     if(delay) {
-        assert(batchSize == 1);
-        return "preDelaySlot";
+        return  (batchSize == 1) ? "preDelaySlot" : "preBatchDelaySlot";
     }
     else {
         return (batchSize == 1) ? "0" : "batch";
@@ -1104,8 +1108,7 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(bool delay, unsign
 std::string CodeGenerator::SynapseGroupMergedBase::getPostSlot(bool delay, unsigned int batchSize)
 {
     if(delay) {
-        assert(batchSize == 1);
-        return "postDelaySlot";
+        return  (batchSize == 1) ? "postDelaySlot" : "postBatchDelaySlot";
     }
     else {
         return (batchSize == 1) ? "0" : "batch";
@@ -1139,7 +1142,6 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool
     const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
    
     if(delay) {
-        assert(singleBatch);
         return (singleBatch ? "prePrevSpikeTimeDelayOffset + " : "prePrevSpikeTimeBatchDelayOffset + ") + index;
     }
     else {
@@ -1152,7 +1154,6 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(boo
     const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
    
     if(delay) {
-        assert(singleBatch);
         return (singleBatch ? "postPrevSpikeTimeDelayOffset + " : "postPrevSpikeTimeBatchDelayOffset + ") + index;
     }
     else {

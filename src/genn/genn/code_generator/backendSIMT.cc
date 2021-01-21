@@ -411,7 +411,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                     // Calculate further offsets to include delay and batch
                     os << "const unsigned int readBatchDelayOffset = readDelayOffset + batchDelayOffset;" << std::endl;
-                    os << "const unsigned int writeBatchDelayID = writeDelayOffset + batchDelayOffset;" << std::endl;
+                    os << "const unsigned int writeBatchDelayOffset = writeDelayOffset + batchDelayOffset;" << std::endl;
                 }
             }
             os << std::endl;
@@ -455,8 +455,11 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&group->spkCntEvnt";
                         if(ng.getArchetype().isDelayRequired()) {
-                            assert(batchSize == 1);
-                            os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
+                            os << "[*group->spkQuePtr";
+                            if(batchSize > 1) {
+                                os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            }
+                            os << "], shSpkEvntCount);" << std::endl;
                         }
                         else {
                             os << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkEvntCount);" << std::endl;
@@ -475,8 +478,11 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         os << "shPosSpk = " << getAtomic("unsigned int") << "(&group->spkCnt";
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                            assert(batchSize == 1);
-                            os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
+                            os << "[*group->spkQuePtr";
+                            if(batchSize > 1) {
+                                os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            }
+                            os << "], shSpkCount);" << std::endl;
                         }
                         else {
                             os << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkCount);" << std::endl;
@@ -1257,11 +1263,16 @@ void BackendSIMT::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupM
         os << "const unsigned int preDelayOffset = preDelaySlot * group->numSrcNeurons;" << std::endl;
 
         if(batchSize > 1) {
+            os << "const unsigned int preBatchDelaySlot = preDelaySlot + (batch * " << sg.getArchetype().getSrcNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
             os << "const unsigned int preBatchDelayOffset = preDelayOffset + (preBatchOffset * " << sg.getArchetype().getSrcNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
 
         if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
             os << "const unsigned int prePrevSpikeTimeDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
+
+            if(batchSize > 1) {
+                os << "const unsigned int prePrevSpikeTimeBatchDelayOffset = prePrevSpikeTimeDelayOffset + (preBatchOffset * " << sg.getArchetype().getSrcNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
+            }
         }
     }
 
@@ -1271,11 +1282,17 @@ void BackendSIMT::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupM
         os << "const unsigned int postDelayOffset = postDelaySlot * group->numTrgNeurons;" << std::endl;
 
         if(batchSize > 1) {
+            os << "const unsigned int postBatchDelaySlot = postDelaySlot + (batch * " << sg.getArchetype().getTrgNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
             os << "const unsigned int postBatchDelayOffset = postDelayOffset + (postBatchOffset * " << sg.getArchetype().getTrgNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
 
         if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
             os << "const unsigned int postPrevSpikeTimeDelayOffset = " << sg.getPrevPostsynapticSpikeTimeBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
+            
+            if(batchSize > 1) {
+                os << "const unsigned int postPrevSpikeTimeBatchDelayOffset = postPrevSpikeTimeDelayOffset + (postBatchOffset * " << sg.getArchetype().getTrgNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
+            }
+
         }
     }
 }
