@@ -1537,9 +1537,9 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
                 // Copy spike count for current timestep  from each batch using 2D memcpy
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
                 os << ", " << ng.getNumDelaySlots() << " * sizeof(unsigned int)";
-                os <<  spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+                os << ", " << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
                 os << ", " << ng.getNumDelaySlots() << " * sizeof(unsigned int)";
-                os << ", sizeof(unsigned int), cudaMemcpyHostToDevice));" << std::endl;
+                os << ", sizeof(unsigned int), " << batchSize << ", cudaMemcpyHostToDevice));" << std::endl;
 
                 // Loop through batches and launch asynchronous memcpys to copy spikes from each one
                 os << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
@@ -1613,9 +1613,9 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
                 // Copy spike count for current timestep  from each batch using 2D memcpy
                 os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
                 os << ", " << ng.getNumDelaySlots() << " * sizeof(unsigned int)";
-                os << "d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
+                os << ", d_" << spikeCntPrefix << ng.getName() << " + spkQuePtr" << ng.getName();
                 os << ", " << ng.getNumDelaySlots() << " * sizeof(unsigned int)";
-                os << ", sizeof(unsigned int), cudaMemcpyDeviceToHost));" << std::endl;
+                os << ", sizeof(unsigned int), " << batchSize << ", cudaMemcpyDeviceToHost));" << std::endl;
 
                 // Loop through batches and launch asynchronous memcpys to copy spikes from each one
                 os << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
