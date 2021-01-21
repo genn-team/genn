@@ -315,13 +315,18 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << ")" << std::endl;
     {
         CodeStream::Scope b(neuronUpdateKernels);
-        neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-        if(model.getBatchSize() > 1) {
-            neuronUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
-        }
+
         Substitutions kernelSubs(openclLFSRFunctions);
         kernelSubs.addVarSubstitution("t", "t");
 
+        neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
+        if(model.getBatchSize() > 1) {
+            neuronUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+            kernelSubs.addVarSubstitution("batch", "batch");
+        }
+        else {
+            kernelSubs.addVarSubstitution("batch", "0");
+        }
         genNeuronUpdateKernel(neuronUpdateKernels, kernelSubs, modelMerged, 
                               simHandler, wuVarUpdateHandler, idStart);
         
@@ -511,12 +516,18 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
+
+            Substitutions kernelSubs(openclLFSRFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             if(model.getBatchSize() > 1) {
                 synapseUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
             }
-            Substitutions kernelSubs(openclLFSRFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
+            }
             genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, wumThreshHandler, 
                                        wumSimHandler, wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
         }
@@ -531,12 +542,18 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
+
+            Substitutions kernelSubs(openclLFSRFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             if(model.getBatchSize() > 1) {
                 synapseUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
             }
-            Substitutions kernelSubs(openclLFSRFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
+            }
             genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
         }
     }
@@ -549,12 +566,18 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t)";
         {
             CodeStream::Scope b(synapseUpdateKernels);
+
+            Substitutions kernelSubs(openclLFSRFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
             if(model.getBatchSize() > 1) {
                 synapseUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
             }
-            Substitutions kernelSubs(openclLFSRFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
+            }
             genSynapseDynamicsKernel(synapseUpdateKernels, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
         }
     }

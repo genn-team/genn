@@ -304,14 +304,18 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << ")" << std::endl;
     {
         CodeStream::Scope b(os);
-        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-        if(model.getBatchSize() > 1) {
-            os << "const unsigned int batch = blockIdx.y;" << std::endl;
-        }
 
         Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
         kernelSubs.addVarSubstitution("t", "t");
 
+        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+        if(model.getBatchSize() > 1) {
+            os << "const unsigned int batch = blockIdx.y;" << std::endl;
+            kernelSubs.addVarSubstitution("batch", "batch");
+        }
+        else {
+            kernelSubs.addVarSubstitution("batch", "0");
+        }
         genNeuronUpdateKernel(os, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
     }
 
@@ -409,6 +413,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "const unsigned int id = " << getKernelBlockSize(KernelPresynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 os << "const unsigned int batch = blockIdx.y;" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
+            }
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
             }
             genPresynapticUpdateKernel(os, kernelSubs, modelMerged, wumThreshHandler, wumSimHandler, 
                                        wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
@@ -428,6 +436,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "const unsigned int id = " << getKernelBlockSize(KernelPostsynapticUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
             if(model.getBatchSize() > 1) {
                 os << "const unsigned int batch = blockIdx.y;" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
+            }
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
             }
             genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
         }
@@ -438,13 +450,18 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDynamicsUpdate] << "(" << model.getTimePrecision() << " t)" << std::endl; // end of synapse kernel header
         {
             CodeStream::Scope b(os);
-            os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            if(model.getBatchSize() > 1) {
-                os << "const unsigned int batch = threadIdx.x;" << std::endl;
-            }
+
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
             kernelSubs.addVarSubstitution("t", "t");
 
+            os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDynamicsUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = blockIdx.y;" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
+            }
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
+            }
             genSynapseDynamicsKernel(os, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
         }
     }
