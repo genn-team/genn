@@ -449,6 +449,10 @@ protected:
         m_PointerBytes = pointerBytes;
     }
 
+    void genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const;
+
+    void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
+
 private:
     //--------------------------------------------------------------------------
     // Members

@@ -201,14 +201,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         os << "std::fill_n(&group->recordSpkEvent[recordingTimestep * numRecordingWords], numRecordingWords, 0);" << std::endl;
                     }
                 }
-                // If axonal delays are required
-                if(n.getArchetype().isDelayRequired()) {
-                    // We should READ from delay slot before spkQuePtr
-                    os << "const unsigned int readDelayOffset = (((*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ") * group->numNeurons);" << std::endl;
 
-                    // And we should WRITE to delay slot pointed to be spkQuePtr
-                    os << "const unsigned int writeDelayOffset = (*group->spkQuePtr * group->numNeurons);" << std::endl;
-                }
+                genNeuronIndexCalculation(os, n, 1);
                 os << std::endl;
 
                 os << "for(unsigned int i = 0; i < group->numNeurons; i++)";
@@ -296,7 +290,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     // Get reference to group
                     os << "const auto *group = &mergedSynapseDynamicsGroup" << s.getIndex() << "[g]; " << std::endl;
 
-                    genSynapseIndexCalculation(os, s);
+                    genSynapseIndexCalculation(os, s, 1);
 
                     // Loop through presynaptic neurons
                     os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
@@ -334,10 +328,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                             // Add correct functions for apply synaptic input
                             if(s.getArchetype().isDendriticDelayRequired()) {
-                                synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + s.getDendriticDelayOffset("$(1)") + "j] += $(0)");
+                                synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + s.getPostDenDelayIndex(1, "j", "$(1)") + "] += $(0)");
                             }
                             else {
-                                synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[j] += $(0)");
+                                synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + s.getPostISynIndex(1, "j") + "] += $(0)");
                             }
 
                             // Call synapse dynamics handler
@@ -361,7 +355,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     // Get reference to group
                     os << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
 
-                    genSynapseIndexCalculation(os, s);
+                    genSynapseIndexCalculation(os, s, 1);
 
                     // generate the code for processing spike-like events
                     if (s.getArchetype().isSpikeEventRequired()) {
@@ -390,7 +384,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     // Get reference to group
                     os << "const auto *group = &mergedPostsynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
 
-                    genSynapseIndexCalculation(os, s);
+                    genSynapseIndexCalculation(os, s, 1);
 
                     // Get number of postsynaptic spikes
                     if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
@@ -1176,10 +1170,10 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         synSubs.addVarSubstitution("id_syn", "synAddress");
 
         if(sg.getArchetype().isDendriticDelayRequired()) {
-            synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + "ipost] += $(0)");
+            synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + sg.getPostDenDelayIndex(1, "ipost", "$(1)") + "] += $(0)");
         }
         else {
-            synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[ipost] += $(0)");
+            synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "ipost") + "] += $(0)");
         }
 
         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1296,29 +1290,6 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, co
         const std::string recordSuffix = trueSpike ? "" : "Event";
         os << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << subs["id"] << " / 32)]";
         os << " |= (1 << (" << subs["id"] << " % 32));" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg) const
-{
-    // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "const unsigned int preDelaySlot = " << sg.getPresynapticAxonalDelaySlot() << ";" << std::endl;
-        os << "const unsigned int preDelayOffset = preDelaySlot * group->numSrcNeurons;" << std::endl;
-
-        if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
-            os << "const unsigned int prePrevSpikeTimeDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-        }
-    }
-
-    // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-    if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-        os << "const unsigned int postDelaySlot = " << sg.getPostsynapticBackPropDelaySlot() << ";" << std::endl;
-        os << "const unsigned int postDelayOffset = postDelaySlot * group->numTrgNeurons;" << std::endl;
-                        
-        if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-            os << "const unsigned int postPrevSpikeTimeDelayOffset = " << sg.getPrevPostsynapticSpikeTimeBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-        }
     }
 }
 }   // namespace SingleThreadedCPU

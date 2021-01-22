@@ -289,8 +289,6 @@ private:
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
 
-    void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
-
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
     {

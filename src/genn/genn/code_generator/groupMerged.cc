@@ -899,66 +899,6 @@ bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitDe
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot() const
-{
-    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
-
-    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
-    if(numDelaySteps == 0) {
-        return "(*group->srcSpkQuePtr)";
-    }
-    else {
-        const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-        return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps) + ") % " + std::to_string(numSrcDelaySlots) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPrevPresynapticSpikeTimeAxonalDelaySlot() const
-{
-    // Always read from previous delay slot
-    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
-
-    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
-    const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-    return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ")";
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot() const
-{
-    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
-
-    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
-    if(numBackPropDelaySteps == 0) {
-        return "(*group->trgSpkQuePtr)";
-    }
-    else {
-        const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-        return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPrevPostsynapticSpikeTimeBackPropDelaySlot() const
-{
-    // Always read from previous delay slot
-    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
-
-    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
-    const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-    return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ")";
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const std::string &offset) const
-{
-    assert(getArchetype().isDendriticDelayRequired());
-
-    if(offset.empty()) {
-        return "(*group->denDelayPtr * group->numTrgNeurons) + ";
-    }
-    else {
-        return "(((*group->denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group->numTrgNeurons) + ";
-    }
-}
-//----------------------------------------------------------------------------
 bool CodeGenerator::SynapseGroupMergedBase::isWUParamHeterogeneous(size_t paramIndex) const
 {
     const auto *wum = getArchetype().getWUModel();
@@ -1095,9 +1035,9 @@ bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dim
                        });
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(bool delay, unsigned int batchSize)
+std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
-    if(delay) {
+    if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
         return  (batchSize == 1) ? "preDelaySlot" : "preBatchDelaySlot";
     }
     else {
@@ -1105,13 +1045,27 @@ std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(bool delay, unsign
     }
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPostSlot(bool delay, unsigned int batchSize)
+std::string CodeGenerator::SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
 {
-    if(delay) {
+    if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
         return  (batchSize == 1) ? "postDelaySlot" : "postBatchDelaySlot";
     }
     else {
         return (batchSize == 1) ? "0" : "batch";
+    }
+}
+//----------------------------------------------------------------------------
+ std::string CodeGenerator::SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
+{
+    assert(getArchetype().isDendriticDelayRequired());
+
+    const std::string batchID = ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
+
+    if(offset.empty()) {
+        return "(*group->denDelayPtr * group->numTrgNeurons) + " + batchID;
+    }
+    else {
+        return "(((*group->denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group->numTrgNeurons) + " + batchID;
     }
 }
 //----------------------------------------------------------------------------
