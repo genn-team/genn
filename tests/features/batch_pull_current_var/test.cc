@@ -17,11 +17,6 @@ suite of minimal models with known analytic outcomes that are used for continuou
 
 void checkVar()
 {
-    // Determine which batch spike SHOULD be in
-    // **NOTE** iT was advanced after simulation step
-    const unsigned int correctSpikeBatch = (iT - 1)/ 10;
-    const unsigned int correctSpikeNeuron = (iT - 1) % 10;
-    
     // Loop through batches
     for(unsigned int b = 0; b < 10; b++) {
         const scalar *xPop = getCurrentxPop(b);
