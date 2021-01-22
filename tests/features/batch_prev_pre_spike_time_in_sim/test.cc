@@ -24,22 +24,20 @@ class SimTest : public SimulationTest
 public:
     void Simulate()
     {
-        while(t < 800.0f) {
+        while(t < 400.0f) {
             StepGeNN();
             
-            printf("%f: ", t);
             // Ignore first timestep as no postsynaptic events will be processed so wsyn is in it's initial state
             if(t > DT) {
                 // Loop through neurons
                 for(unsigned int i = 0; i < 20; i++) {
                     // Calculate time of spikes we SHOULD be reading
-                    // **NOTE** we delay by 11 timesteps because:
+                    // **NOTE** we delay by 1 timesteps because:
                     // 1) delay = 20
-                    // 2) PREVIOUS spike occurred 10 timesteps before
+                    // 2) PREVIOUS spike occurred (-)20 timesteps before
                     // 3) t is incremented one timestep at the end of StepGeNN
-                    const float delayedLastSpikeTime = (scalar)i + 11.0f + (20.0f * std::floor((t - 22.0f - (scalar)i) / 20.0f));
+                    const float delayedLastSpikeTime = (scalar)i + 1.0f + (20.0f * std::floor((t - 22.0f - (scalar)i) / 20.0f));
                     
-                    printf("%0.0f (%0.0f),", (wsyn[i] < -1.0E6) ? -1.0f : wsyn[i], delayedLastSpikeTime);
                     // If, theoretically, spike would have arrived before delay it's impossible so time should be a very large negative number
                     if(delayedLastSpikeTime < 21.0f) {
                         ASSERT_LT(wsyn[i], -1.0E6);
@@ -49,7 +47,6 @@ public:
                     }
                 }
             }
-            printf("\n");
         }
     }
 };
