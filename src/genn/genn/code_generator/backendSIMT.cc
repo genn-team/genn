@@ -217,7 +217,6 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
         
         // If group requires previous spike or spike-like-event times resetting here i.e. each group requires multiple threads
         if(n.getArchetype().isPrevSpikeTimeRequired() || n.getArchetype().isPrevSpikeEventTimeRequired()) {
-            assert(batchSize == 1);
             // Sum padded sizes of each group within merged group
             const size_t paddedSize = std::accumulate(
                     n.getGroups().cbegin(), n.getGroups().cend(), size_t{0},
@@ -240,14 +239,26 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 Substitutions popSubs(&kernelSubs);
                 genGroupMergedSearch(os, popSubs, n, idStart);
 
+                // Loop through batches
+                // **THINK** we need to do spike queue updating at the end in same thread that spkQuePtr is advanced in but this update COULD be done in parallel
+                if(batchSize > 1) {
+                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                }
+
                 // If neuron group requires delays
                 if(n.getArchetype().isDelayRequired()) {
-                    os << "const unsigned int lastTimestepDelayOffset = *group->spkQuePtr * group->numNeurons;" << std::endl;
+                    if(batchSize == 1) {
+                        os << "const unsigned int lastTimestepDelaySlot = *group->spkQuePtr;" << std::endl;
+                    }
+                    else {
+                        os << "const unsigned int lastTimestepDelaySlot = *group->spkQuePtr  + (batch *  " << n.getArchetype().getNumDelaySlots() << ");" << std::endl;
+                    }
+                    os << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
 
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         // If there is a spike for this thread, set previous spike time to time of last timestep
                         // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCnt[*group->spkQuePtr])";
+                        os << "if(" << popSubs["id"] << " < group->spkCnt[lastTimestepDelaySlot])";
                         {
                             CodeStream::Scope b(os);
                             os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + " << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
@@ -256,7 +267,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
                         // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[*group->spkQuePtr])";
+                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[lastTimestepDelaySlot])";
                         {
                             CodeStream::Scope b(os);
                             os << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + " << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
@@ -265,38 +276,55 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 }
                 // Otherwise
                 else {
+                    if(batchSize >= 1) {
+                        os << "const unsigned int batchOffset = group->numNeurons * batch;" << std::endl;
+                    }
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         // If there is a spike for this thread, set previous spike time to time of last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCnt[0])";
+                        os << "if(" << popSubs["id"] << " < group->spkCnt[" << ((batchSize == 1) ? "0" : "batch") << "])";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->prevST[group->spk[" << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                            os << "group->prevST[group->spk[";
+                            if(batchSize > 1) {
+                                os << "batchOffset + ";
+                            }
+                            os << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
                         }
                     }
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[0])";
+                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[" << ((batchSize == 1) ? "0" : "batch") << "])";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->prevSET[group->spkEvnt[" << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                            os << "group->prevSET[group->spkEvnt[";
+                            if(batchSize > 1) {
+                                os << "batchOffset + ";
+                            }
+                            os << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
                         }
                     }
+                }
+                if(batchSize > 1) {
+                    os << CodeStream::CB(1);
                 }
                 os << std::endl;
 
                 // Use first thread to update spike queue pointer and reset spike counts
-                os << "if(" << popSubs["id"] << " == 0";
-                if(batchSize > 1) {
-                    os << " && batch == 0";
-                }
-                os << ")";
+                os << "if(" << popSubs["id"] << " == 0)";
                 {
                     CodeStream::Scope b(os);
 
+                    // **THINK** there is still a memory ordering issue here - spkQuePtr will potentially be advanced before other threads use it above
                     if(n.getArchetype().isDelayRequired()) { // with delay
                         os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
                     }
+                    if(batchSize > 1) {
+                        os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                    }
                     n.genMergedGroupSpikeCountReset(os, batchSize);
+                    if(batchSize > 1) {
+                        os << CodeStream::CB(1);
+                    }
                 }
             }
             idStart += paddedSize;
