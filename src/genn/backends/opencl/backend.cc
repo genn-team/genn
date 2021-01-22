@@ -1597,15 +1597,15 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
             os << ", {0, spkQuePtr" << ng.getName() << ", 0}, {0, spkQuePtr" << ng.getName() << ", 0}";
             os << ", {" << ng.getNumNeurons() << " * sizeof(" << type << "), 1, " << batchSize << "}";
             os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumDelaySlots() << " * sizeof(" << type << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
             os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumDelaySlots() << " * sizeof(" << type << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
             os << ", " << name << ng.getName() << "));" << std::endl;
         }
     }
     // Otherwise, generate standard push
     else {
-        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons());
+        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons() * batchSize);
     }
 }
 //--------------------------------------------------------------------------
@@ -1631,15 +1631,15 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
             os << ", {0, spkQuePtr" << ng.getName() << ", 0}, {0, spkQuePtr" << ng.getName() << ", 0}";
             os << ", {" << ng.getNumNeurons() << " * sizeof(" << type << "), 1, " << batchSize << "}";
             os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumDelaySlots() << " * sizeof(" << type << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
             os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumDelaySlots() << " * sizeof(" << type << ")";
+            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
             os << ", " << name << ng.getName() << "));" << std::endl;
         }
     }
     // Otherwise, generate standard push
     else {
-        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons());
+        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons() * batchSize);
     }
 }
 //--------------------------------------------------------------------------
