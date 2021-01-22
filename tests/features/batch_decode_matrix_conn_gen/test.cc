@@ -28,15 +28,15 @@ TEST_F(SimTest, BatchDecodeMatrixConnGen)
 {
     for (int i = 0; i < (int)(10.0f / DT); i++) {
         // What value should neurons be representing this time step?
-        const unsigned int inValue1 = (i / 10) + 1;
-        const unsigned int inValue2 = 10 - (i / 10);
+        const unsigned int inValue[2] = {(i / 10) + 1,
+                                         10 - (i / 10)};
 
-        // Input spike representing value
+        // Input spike representing value in each batch
         // **NOTE** neurons start from zero
-        glbSpkCntPre[0] = 1;
-        glbSpkCntPre[1] = 1;
-        glbSpkPre[0] = (inValue1 - 1);
-        glbSpkPre[10] = (inValue2 - 1);
+        for(unsigned int b = 0; b < 2; b++) {
+            glbSpkCntPre[b] = 1;
+            glbSpkPre[b * 10] = (inValue[b] - 1);
+        }
 
         // Push spikes to device
         pushPreSpikesToDevice();
@@ -44,23 +44,35 @@ TEST_F(SimTest, BatchDecodeMatrixConnGen)
         // Step GeNN
         StepGeNN();
 
-        // Loop through output neurons
-        unsigned int outValue1 = 0;
-        unsigned int outValue2 = 0;
-        for(unsigned int j = 0; j < 4; j++) {
-            // If this neuron is representing 1 add value it represents to output
-            if(std::fabs(xPost[j] - 1.0f) < 1E-5) {
-                outValue1 += (1 << j);
+        // Loop through batches
+        for(unsigned int b = 0; b < 2; b++) {
+            // Loop through output neurons
+            unsigned int outDense = 0;
+            unsigned int outSparse = 0;
+            unsigned int outProcedural = 0;
+            unsigned int outBitmask = 0;
+            for(unsigned int j = 0; j < 4; j++) {
+                // If this neuron is representing 1 add value it represents to output
+                if(std::fabs(xPostDense[j + (b * 4)] - 1.0f) < 1E-5) {
+                    outDense += (1 << j);
+                }
+                if(std::fabs(xPostSparse[j + (b * 4)] - 1.0f) < 1E-5) {
+                    outSparse += (1 << j);
+                }
+                if(std::fabs(xPostProcedural[j + (b * 4)] - 1.0f) < 1E-5) {
+                    outProcedural += (1 << j);
+                }
+                if(std::fabs(xPostBitmask[j + (b * 4)] - 1.0f) < 1E-5) {
+                    outBitmask += (1 << j);
+                }
             }
             
-            // If this neuron is representing 1 add value it represents to output
-            if(std::fabs(xPost[j + 4] - 1.0f) < 1E-5) {
-                outValue2 += (1 << j);
-            }
+            // If input value isn't correctly decoded, return false
+            EXPECT_EQ(outDense, inValue[b]);
+            EXPECT_EQ(outSparse, inValue[b]);
+            EXPECT_EQ(outProcedural, inValue[b]);
+            EXPECT_EQ(outBitmask, inValue[b]);
         }
-
-        // If input value isn't correctly decoded, return false
-        EXPECT_EQ(outValue1, inValue1);
-        EXPECT_EQ(outValue2, inValue2);
+        
     }    
 }
