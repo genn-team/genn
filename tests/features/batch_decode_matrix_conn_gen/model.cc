@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file batch_decode_matrix_individualg_dense/model.cc
+/*! \file batch_decode_matrix_conn_gen/model.cc
 
 \brief model definition file that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -51,7 +51,7 @@ void modelDefinition(ModelSpec &model)
     }
 #endif
     model.setDT(0.1);
-    model.setName("batch_decode_matrix_conn_gen_individualg_dense");
+    model.setName("batch_decode_matrix_conn_gen");
     model.setBatchSize(2);
 
     // Static synapse parameters

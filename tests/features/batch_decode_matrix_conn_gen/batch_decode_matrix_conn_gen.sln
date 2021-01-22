@@ -2,12 +2,12 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "batch_decode_matrix_conn_gen_individualg_dense", "batch_decode_matrix_conn_gen_individualg_dense.vcxproj", "{B5C3210A-8699-42BF-8D90-B263FB439594}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "batch_decode_matrix_conn_gen", "batch_decode_matrix_conn_gen.vcxproj", "{B5C3210A-8699-42BF-8D90-B263FB439594}"
 	ProjectSection(ProjectDependencies) = postProject
 		{57EA3514-FADC-4418-942F-38499EC1D8F1} = {57EA3514-FADC-4418-942F-38499EC1D8F1}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "batch_decode_matrix_conn_gen_individualg_dense_CODE\runner.vcxproj", "{57EA3514-FADC-4418-942F-38499EC1D8F1}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "batch_decode_matrix_conn_gen_CODE\runner.vcxproj", "{57EA3514-FADC-4418-942F-38499EC1D8F1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
