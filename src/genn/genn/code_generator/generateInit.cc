@@ -18,7 +18,7 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-void genVariableFill(CodeStream &os, const Substitutions &subs, const std::string &fieldName, const std::string &value,
+void genVariableFill(CodeStream &os, const std::string &fieldName, const std::string &value, const std::string &idx, const std::string &stride,
                      VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
@@ -26,14 +26,14 @@ void genVariableFill(CodeStream &os, const Substitutions &subs, const std::strin
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
-        os << "group->" << fieldName << "[" << subs["id"] << "] = " << value << ";" << std::endl;
+        os << "group->" << fieldName << "[" << idx << "] = " << value << ";" << std::endl;
     }
     // Otherwise
     else {
         os << "for(unsigned int d = 0; d < " << numValues << "; d++)";
         {
             CodeStream::Scope b(os);
-            os << "group->" << fieldName << "[(d * group->numNeurons) + " << subs["id"] << "] = " << value << ";" << std::endl;
+            os << "group->" << fieldName << "[(d * " << stride << ") + " << idx << "] = " << value << ";" << std::endl;
         }
     }
 }
@@ -102,8 +102,8 @@ void genInitSpikes(CodeStream &os, const BackendBase &backend, const Substitutio
                     (ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired());
 
                 // Zero across all delay slots and batches
-                genVariableFill(os, varSubs, spikeName, "0", VarAccessDuplication::DUPLICATE, batchSize, 
-                                delayRequired, ng.getArchetype().getNumDelaySlots());
+                genVariableFill(os, spikeName, "0", varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, 
+                                batchSize, delayRequired, ng.getArchetype().getNumDelaySlots());
             });
     }
 }
@@ -115,8 +115,8 @@ void genInitSpikeTime(CodeStream &os, const BackendBase &backend, const Substitu
     backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
         [batchSize, varName, &ng] (CodeStream &os, Substitutions &varSubs)
         {
-            genVariableFill(os, varSubs, varName, "-TIME_MAX", VarAccessDuplication::DUPLICATE, batchSize,
-                            ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
+            genVariableFill(os, varName, "-TIME_MAX", varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, 
+                            batchSize, ng.getArchetype().isDelayRequired(), ng.getArchetype().getNumDelaySlots());
             
         });
 }
@@ -159,8 +159,8 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                     os << code << std::endl;
                     
                     // Fill value across all delay slots and batches
-                    genVariableFill(os, varSubs, vars[k].name + fieldSuffix, "initVal", getVarAccessDuplication(vars[k].access), 
-                                    batchSize, isVarQueueRequired(k), numDelaySlots);
+                    genVariableFill(os,  vars[k].name + fieldSuffix, "initVal", varSubs["id"], "group->numNeurons", 
+                                    getVarAccessDuplication(vars[k].access), batchSize, isVarQueueRequired(k), numDelaySlots);
                 });
         }
     }
@@ -181,7 +181,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 void genInitWUVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
-                      const SynapseGroupMergedBase &sg, const std::string &ftype)
+                      const SynapseGroupMergedBase &sg, const std::string &ftype, unsigned int batchSize)
 {
     const auto vars = sg.getArchetype().getWUModel()->getVars();
     for (size_t k = 0; k < vars.size(); k++) {
@@ -193,9 +193,8 @@ void genInitWUVarCode(CodeStream &os, const BackendBase &backend, const Substitu
 
             // Generate target-specific code to initialise variable
             backend.genSynapseVariableRowInit(os, sg, popSubs,
-                [&vars, &varInit, &sg, &ftype, k](CodeStream &os, Substitutions &varSubs)
+                [&vars, &varInit, &sg, &ftype, batchSize, k](CodeStream &os, Substitutions &varSubs)
                 {
-                    varSubs.addVarSubstitution("value", "group->" + vars[k].name + "[" + varSubs["id_syn"] +  "]");
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
                                                       "", "group->", vars[k].name);
@@ -205,10 +204,17 @@ void genInitWUVarCode(CodeStream &os, const BackendBase &backend, const Substitu
                     varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
                                                    "", "group->", vars[k].name);
 
+                    // Generate initial value into temporary variable
+                    os << vars[k].type << " initVal;" << std::endl;
+                    varSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
                     code = ensureFtype(code, ftype);
                     os << code << std::endl;
+
+                    // Fill value across all batches
+                    genVariableFill(os,  vars[k].name, "initVal", varSubs["id_syn"], "group->numSrcNeurons * group->rowStride", 
+                                    getVarAccessDuplication(vars[k].access), batchSize);
                 });
         }
     }
@@ -420,7 +426,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             {
                 CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");
-                genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
+                genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision(), model.getBatchSize());
 
             }
         },
@@ -451,7 +457,6 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 if(varInit.getSnippet()->requiresKernel()) {
                     CodeStream::Scope b(os);
 
-                    popSubs.addVarSubstitution("value", "group->" + vars[k].name + "[" + popSubs["id_syn"] + "]");
                     popSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
                                                       [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
                                                       "", "group->", vars[k].name);
@@ -461,18 +466,24 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                     popSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
                                                     "", "group->", vars[k].name);
 
+                    // Generate initial value into temporary variable
+                    os << vars[k].type << " initVal;" << std::endl;
+                    popSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     //popSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
-                    popSubs.apply(code);
                     code = ensureFtype(code, model.getPrecision());
                     os << code << std::endl;
+
+                    // Fill value across all batches
+                    genVariableFill(os,  vars[k].name, "initVal", popSubs["id_syn"], "group->numSrcNeurons * group->rowStride", 
+                                    getVarAccessDuplication(vars[k].access), model.getBatchSize());
                 }
             }
         },
         // Sparse synaptic matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
         {
-            genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision());
+            genInitWUVarCode(os, backend, popSubs, sg, model.getPrecision(), model.getBatchSize());
         },
         // Initialise push EGP handler
         [&backend, &modelMerged](CodeStream &os)
