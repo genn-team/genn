@@ -1890,12 +1890,17 @@ void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal 
                 os << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "const unsigned int spikeOffset = (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ") + (b * " << (ng.getNumNeurons() * ng.getNumDelaySlots()) << ");" << std::endl;
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueue" << function << "Buffer(d_" << spikePrefix << ng.getName();
-                    os << ", CL_FALSE";
-                    os << ", spikeOffset * sizeof(unsigned int)";
-                    os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " + (b * " << ng.getNumDelaySlots() << ")] * sizeof(unsigned int)";
-                    os << ", " << spikePrefix << ng.getName() << " + spikeOffset));" << std::endl;
+                    os << "const unsigned int spikeCount = " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " + (b * " << ng.getNumDelaySlots() << ")];" << std::endl;
+                    os << "if(spikeCount > 0)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "const unsigned int spikeOffset = (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ") + (b * " << (ng.getNumNeurons() * ng.getNumDelaySlots()) << ");" << std::endl;
+                        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueue" << function << "Buffer(d_" << spikePrefix << ng.getName();
+                        os << ", CL_FALSE";
+                        os << ", spikeOffset * sizeof(unsigned int)";
+                        os << ", spikeCount * sizeof(unsigned int)";
+                        os << ", " << spikePrefix << ng.getName() << " + spikeOffset));" << std::endl;
+                    }
                 }
 
                  // Wait until queued copies have completed
@@ -1926,11 +1931,15 @@ void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal 
                 os << "for(unsigned int b = 0; b < " << batchSize << "; b++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.enqueue" << function << "Buffer(d_" << spikePrefix << ng.getName();
-                    os << ", CL_FALSE";
-                    os << ", b * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
-                    os << ", " << spikeCntPrefix << ng.getName() << "[b] * sizeof(unsigned int)";
-                    os << ", " << spikePrefix << ng.getName() << " + (b * " << ng.getNumNeurons() << ")));" << std::endl;
+                    os << "if(" << spikeCntPrefix << ng.getName() << "[b] > 0)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueue" << function << "Buffer(d_" << spikePrefix << ng.getName();
+                        os << ", CL_FALSE";
+                        os << ", b * " << ng.getNumNeurons() << " * sizeof(unsigned int)";
+                        os << ", " << spikeCntPrefix << ng.getName() << "[b] * sizeof(unsigned int)";
+                        os << ", " << spikePrefix << ng.getName() << " + (b * " << ng.getNumNeurons() << ")));" << std::endl;
+                    }
                 }
 
                 // Wait until queued copies have completed
