@@ -46,6 +46,7 @@
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
+    <ClCompile Include="varReference.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>
@@ -94,6 +95,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\synapseMatrixType.h" />
     <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
     <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varReference.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
