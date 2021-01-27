@@ -80,6 +80,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customUpdateInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />

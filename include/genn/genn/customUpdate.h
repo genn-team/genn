@@ -43,6 +43,9 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     const std::string &getName() const{ return m_Name; }
+    const std::string &getUpdateGroupName() const { return m_Name; }
+
+    const Operation getOperation() const { return m_Operation; }
 
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
@@ -67,12 +70,12 @@ public:
 
 
 protected:
-    CustomUpdate(const std::string &name, const CustomUpdateModels::Base *customUpdateModel,
-                 const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                 const std::vector<Models::VarReference> &varReferences, VarLocation defaultVarLocation, 
-                 VarLocation defaultExtraGlobalParamLocation)
-    :   m_Name(name), m_CustomUpdateModel(customUpdateModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarReferences(varReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    CustomUpdate(const std::string &name, const std::string &updateGroupName, Operation operation, 
+                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
+                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+    :   m_Name(name), m_UpdateGroupName(updateGroupName), m_Operation(operation), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+        m_VarInitialisers(varInitialisers), m_VarReferences(varReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
     {
     }
@@ -102,7 +105,9 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    std::string m_Name;
+    const std::string m_Name;
+    const std::string m_UpdateGroupName;
+    const Operation m_Operation;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
     std::vector<double> m_Params;
