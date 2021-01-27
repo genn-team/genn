@@ -52,24 +52,25 @@ public:
 */
 class AdamOptimizer : public Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(AdamOptimizer, 4, 2, 1);
+    DECLARE_CUSTOM_UPDATE_MODEL(AdamOptimizer, 4, 2, 2);
 
     SET_UPDATE_CODE(
-        "// Calculate moments **TODO** optimize\n"
+        "// Calculate moments **TODO** optimize out of loop\n"
         "const scalar firstMomentScale = 1.0 / (1.0 - pow($(beta1), $(t) + 1));\n"
         "const scalar secondMomentScale = 1.0 / (1.0 - pow($(beta2), $(t) + 1));\n"
         "// Update biased first moment estimate\n"
         "const scalar mT = (m_Beta1 * $(m)) + ((1.0 - $(beta1)) * $(gradient));\n"
         "// Update biased second moment estimate\n"
         "const scalar vT = (m_Beta2 * $(v)) + ((1.0 - $(beta2)) * $(gradient) * $(gradient));\n"
-        "// Add gradient to parameter, scaled by learning rate\n"
-        "param -= ($(alpha) * mT * firstMomentScale) / (sqrt(vT * secondMomentScale) + $(epsilon));\n"
+        "// Add gradient to variable, scaled by learning rate\n"
+        "$(variable) -= ($(alpha) * mT * firstMomentScale) / (sqrt(vT * secondMomentScale) + $(epsilon));\n"
         "// Zero gradient\n"
         "$(gradient) = 0.0;\n");
 
     SET_PARAM_NAMES({"alpha", "beta1", "beta2", "epsilon"});
     SET_VARS({{"m", "scalar"}, {"v", "scalar"}});
-    SET_VAR_REFS({{"gradient", "scalar", VarAccessMode::READ_WRITE}});
+    SET_VAR_REFS({{"gradient", "scalar", VarAccessMode::READ_WRITE}, 
+                  {"variable", "scalar", VarAccessMode::READ_WRITE}});
 };
 }   // CustomUpdateModels
 

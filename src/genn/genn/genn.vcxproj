@@ -38,7 +38,8 @@
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
-    <ClCompile Include="customUpdateModel.cc" />
+    <ClCompile Include="customUpdate.cc" />
+    <ClCompile Include="customUpdateModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="logging.cc" />
@@ -78,7 +79,8 @@
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\customUpdateModel.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
