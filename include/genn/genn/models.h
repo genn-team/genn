@@ -48,80 +48,8 @@ public:
 //----------------------------------------------------------------------------
 // Models::VarInitContainerBase
 //----------------------------------------------------------------------------
-//! Wrapper to ensure at compile time that correct number of value initialisers
-//! are used when specifying the values of a model's initial state.
 template<size_t NumVars>
-class VarInitContainerBase
-{
-private:
-    //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef std::vector<VarInit> InitialiserArray;
-
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<VarInit, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    VarInitContainerBase(T&&... initialisers) : m_Initialisers(InitialiserArray{{std::forward<const VarInit>(initialisers)...}})
-    {
-        static_assert(sizeof...(initialisers) == NumVars, "Wrong number of initialisers");
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets initialisers as a vector of Values
-    const std::vector<VarInit> &getInitialisers() const
-    {
-        return m_Initialisers;
-    }
-
-    //----------------------------------------------------------------------------
-    // Operators
-    //----------------------------------------------------------------------------
-    const VarInit &operator[](size_t pos) const
-    {
-        return m_Initialisers[pos];
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    InitialiserArray m_Initialisers;
-};
-
-//----------------------------------------------------------------------------
-// Models::VarInitContainerBase<0>
-//----------------------------------------------------------------------------
-//! Template specialisation of ValueInitBase to avoid compiler warnings
-//! in the case when a model requires no variable initialisers
-template<>
-class VarInitContainerBase<0>
-{
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<VarInit, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    VarInitContainerBase(T&&... initialisers)
-    {
-        static_assert(sizeof...(initialisers) == 0, "Wrong number of initialisers");
-    }
-
-    VarInitContainerBase(const Snippet::ValueBase<0> &)
-    {
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets initialisers as a vector of Values
-    std::vector<VarInit> getInitialisers() const
-    {
-        return {};
-    }
-};
+using VarInitContainerBase = Snippet::InitialiserContainerBase<VarInit, NumVars>;
 
 //----------------------------------------------------------------------------
 // Models::Base
@@ -156,10 +84,30 @@ public:
         VarAccess access;
     };
 
+    struct VarRef
+    {
+        VarRef(const std::string &n, const std::string &t, VarAccessMode a) : name(n), type(t), access(a)
+        {}
+        VarRef(const std::string &n, const std::string &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
+        {}
+        VarRef() : VarRef("", "", VarAccessMode::READ_WRITE)
+        {}
+
+        bool operator == (const VarRef &other) const
+        {
+            return ((name == other.name) && (type == other.type) && (access == other.access));
+        }
+
+        std::string name;
+        std::string type;
+        VarAccessMode access;
+    };
+
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
     typedef std::vector<Var> VarVec;
+    typedef std::vector<VarRef> VarRefVec;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
