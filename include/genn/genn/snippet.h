@@ -217,7 +217,10 @@ protected:
     {
         auto iter = std::find_if(vec.begin(), vec.end(),
             [name](const T &v){ return (v.name == name); });
-        assert(iter != vec.end());
+
+        if(iter == vec.end()) {
+            throw std::runtime_error("Cannot find variable '" + name + "'");
+        }
 
         // Return 'distance' between first entry in vector and iterator i.e. index
         return distance(vec.begin(), iter);
