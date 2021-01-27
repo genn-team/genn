@@ -38,6 +38,7 @@
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customUpdateModel.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="logging.cc" />
