@@ -35,6 +35,23 @@ VarLocation CustomUpdate::getExtraGlobalParamLocation(const std::string &varName
     return m_ExtraGlobalParamLocation[getCustomUpdateModel()->getExtraGlobalParamIndex(varName)];
 }
 //----------------------------------------------------------------------------
+CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName, Operation operation, 
+                           const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
+                           const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
+                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_UpdateGroupName(updateGroupName), m_Operation(operation), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+    m_VarInitialisers(varInitialisers), m_VarReferences(varReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+{
+    // Loop through all variable references and check types
+    // **THINK** due to GeNN's current string-based type system this is rather conservative
+    for(size_t i = 0; i < varReferences.size(); i++) {
+        if(m_VarReferences.at(i).getVar().type != getCustomUpdateModel()->getVarRefs().at(i).type) {
+            throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
+        }
+    }
+}
+//----------------------------------------------------------------------------
 void CustomUpdate::initDerivedParams(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();

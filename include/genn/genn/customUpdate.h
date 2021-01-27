@@ -70,15 +70,10 @@ public:
 
 
 protected:
-    CustomUpdate(const std::string &name, const std::string &updateGroupName, Operation operation, 
-                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
-                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   m_Name(name), m_UpdateGroupName(updateGroupName), m_Operation(operation), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
-        m_VarInitialisers(varInitialisers), m_VarReferences(varReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
-    {
-    }
+    CustomUpdate(const std::string &name, const std::string &updateGroupName, Operation operation,
+                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -110,10 +105,10 @@ private:
     const Operation m_Operation;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    std::vector<double> m_Params;
+    const std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
-    std::vector<Models::VarReference> m_VarReferences;
+    const std::vector<Models::VarReference> m_VarReferences;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
