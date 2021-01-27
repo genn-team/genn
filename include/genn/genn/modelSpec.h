@@ -34,7 +34,6 @@ Part of the code generation and generated code sections.
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "varReference.h"
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -61,7 +60,7 @@ enum class TimePrecision
 template<typename S>
 inline Models::VarInit initVar(const typename S::ParamValues &params)
 {
-    return Models::VarInit(S::getInstance(), params.getValues());
+    return Models::VarInit(S::getInstance(), params.getInitialisers());
 }
 
 //! Initialise a variable using an initialisation snippet with no parameters
@@ -88,7 +87,7 @@ inline Models::VarInit uninitialisedVar()
 template<typename S>
 inline InitSparseConnectivitySnippet::Init initConnectivity(const typename S::ParamValues &params)
 {
-    return InitSparseConnectivitySnippet::Init(S::getInstance(), params.getValues());
+    return InitSparseConnectivitySnippet::Init(S::getInstance(), params.getInitialisers());
 }
 
 //! Initialise connectivity using a sparse connectivity snippet with no parameters
@@ -212,7 +211,7 @@ public:
         auto result = m_LocalNeuronGroups.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, size, model,
-                                  paramValues.getValues(), varInitialisers.getInitialisers(), 
+                                  paramValues.getInitialisers(), varInitialisers.getInitialisers(), 
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {
@@ -278,8 +277,8 @@ public:
             std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, nullptr, mtype, delaySteps,
-                                  wum, weightParamValues.getValues(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
-                                  psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
+                                  wum, weightParamValues.getInitialisers(), weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
+                                  psm, postsynapticParamValues.getInitialisers(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp,
                                   connectivityInitialiser, m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
                                   m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
@@ -410,7 +409,7 @@ public:
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, masterGrp, masterGrp->getMatrixType(), delaySteps,
                                   wum, masterGrp->getWUParams(), masterGrp->getWUVarInitialisers(), masterGrp->getWUPreVarInitialisers(), masterGrp->getWUPostVarInitialisers(),
-                                  psm, postsynapticParamValues.getValues(), postsynapticVarInitialisers.getInitialisers(),
+                                  psm, postsynapticParamValues.getInitialisers(), postsynapticVarInitialisers.getInitialisers(),
                                   srcNeuronGrp, trgNeuronGrp, masterGrp->getConnectivityInitialiser(), 
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation, m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
 
@@ -464,7 +463,7 @@ public:
         // Add current source to map
         auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
             std::forward_as_tuple(currentSourceName),
-            std::forward_as_tuple(currentSourceName, model, paramValues.getValues(),
+            std::forward_as_tuple(currentSourceName, model, paramValues.getInitialisers(),
                                   varInitialisers.getInitialisers(), targetGroup, 
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 

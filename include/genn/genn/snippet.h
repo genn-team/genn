@@ -60,7 +60,7 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets values as a vector
-    const std::vector<V> &getValues() const
+    const std::vector<V> &getInitialisers() const
     {
         return m_Values;
     }
@@ -101,7 +101,7 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets values as a vector of doubles
-    std::vector<V> getValues() const
+    std::vector<V> getInitialisers() const
     {
         return {};
     }
