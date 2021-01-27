@@ -60,6 +60,9 @@ VarReference VarReference::create(const CurrentSource *cs, const std::string &va
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSM(const SynapseGroup *sg, const std::string &varName)
 {
+    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
+        throw std::runtime_error("Cannot get reference to optimised out postsynaptic model variable");
+    }
     const auto *psm = sg->getPSModel();
     const size_t varIdx = psm->getVarIndex(varName);
     return VarReference(sg, psm->getVars().at(varIdx), Type::PSM);
@@ -67,6 +70,9 @@ VarReference VarReference::createPSM(const SynapseGroup *sg, const std::string &
 //----------------------------------------------------------------------------
 VarReference VarReference::createWU(const SynapseGroup *sg, const std::string &varName)
 {
+    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+        throw std::runtime_error("Cannot get reference to optimised out weight update model variable");
+    }
     const auto *wum = sg->getWUModel();
     const size_t varIdx = wum->getVarIndex(varName);
     return VarReference(sg, wum->getVars().at(varIdx), Type::WU);
