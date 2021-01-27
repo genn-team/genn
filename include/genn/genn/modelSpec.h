@@ -31,6 +31,7 @@ Part of the code generation and generated code sections.
 
 // GeNN includes
 #include "currentSourceInternal.h"
+#include "customUpdateInternal.h"
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
@@ -492,6 +493,56 @@ public:
                                 targetNeuronGroupName, paramValues, varInitialisers);
     }
 
+    //! Adds a new custom update to the model using a custom update model managed by the user
+    /*! \tparam CustomUpdateModel type of neuron model (derived from CustomUpdateModels::Base).
+        \param name string containing unique name of custom update
+        \param updateGroupName string containing name of group to add this custom update to
+        \param operation CustomUpdate::Operation specifying operation update should be performed within
+        \param model custom update model to use for custom update.
+        \param paramValues parameters for model wrapped in CustomUpdateModel::ParamValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
+        \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
+        \return pointer to newly created CustomUpdate */
+    template<typename CustomUpdateModel>
+    CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, 
+                                  CustomUpdate::Operation operation, const CustomUpdateModel *model,
+                                  const typename CustomUpdateModel::ParamValues &paramValues,
+                                  const typename CustomUpdateModel::VarValues &varInitialisers,
+                                  const typename CustomUpdateModel::VarReferences &varReferences)
+    {
+        // Add neuron group to map
+        auto result = m_CustomUpdates.emplace(std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, updateGroupName, operation, model,
+                                  paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+        if(!result.second) {
+            throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+        }
+        else {
+            return &result.first->second;
+        }
+    }
+
+    //! Adds a new custom update to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
+    /*! \tparam CustomUpdateModel type of neuron model (derived from CustomUpdateModels::Base).
+        \param name string containing unique name of custom update
+        \param updateGroupName string containing name of group to add this custom update to
+        \param operation CustomUpdate::Operation specifying operation update should be performed within
+        \param paramValues parameters for model wrapped in CustomUpdateModel::ParamValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
+        \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
+        \return pointer to newly created CustomUpdate */
+    template<typename CustomUpdateModel>
+    CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, CustomUpdate::Operation operation,
+                                  const typename CustomUpdateModel::ParamValues &paramValues,
+                                  const typename CustomUpdateModel::VarValues &varInitialisers,
+                                  const typename CustomUpdateModel::VarReferences &varReferences)
+    {
+        return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, operation, CustomUpdateModel::getInstance(),
+                                                  paramValues, varInitialisers, varReferences);
+    }
 protected:
     //--------------------------------------------------------------------------
     // Protected methods
@@ -520,6 +571,8 @@ protected:
     //! Get std::map containing local named CurrentSource objects in model
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
+    //! Get std::map containing named CustomUpdate objects in model
+    const std::map<std::string, CustomUpdateInternal> &getCustomUpdates() const{ return m_CustomUpdates; }
 
 private:
     //--------------------------------------------------------------------------
@@ -542,6 +595,9 @@ private:
 
     //! Named local current sources
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
+
+    //! Named custom updates
+    std::map<std::string, CustomUpdateInternal> m_CustomUpdates;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;
