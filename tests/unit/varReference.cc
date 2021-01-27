@@ -4,9 +4,11 @@
 // GeNN includes
 #include "modelSpecInternal.h"
 
-// (Single-threaded CPU) backend includes
-#include "backend.h"
-
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
 class AlphaCurr : public PostsynapticModels::Base
 {
 public:
@@ -19,15 +21,15 @@ public:
     SET_CURRENT_CONVERTER_CODE("$(x)");
 
     SET_PARAM_NAMES({"tau"});
-    
+
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
-        {"init", [](const std::vector<double> &pars, double){ return (std::exp(1) / pars[0]); }}});
+        {"expDecay", [](const std::vector<double> &pars, double dt) { return std::exp(-dt / pars[0]); }},
+        {"init", [](const std::vector<double> &pars, double) { return (std::exp(1) / pars[0]); }}});
 };
 IMPLEMENT_MODEL(AlphaCurr);
-
+}
 
 //--------------------------------------------------------------------------
 // Tests
@@ -44,17 +46,11 @@ TEST(VarReference, Neuron)
     // Finalize model
     model.finalize();
 
-    // Create a backend
-    CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
-
-    auto neuronVoltage = VarReference::create(ng, "V");
-    ASSERT_EQ(neuronVoltage.getVarSize(backend), 10);
-    ASSERT_EQ(neuronVoltage.getType(), VarReference::Type::Neuron);
-    ASSERT_EQ(neuronVoltage.getVarName(), "VNeurons0");
+    auto neuronVoltage = varReference(ng, "V");
+    ASSERT_EQ(neuronVoltage.getType(), Models::VarReference::Type::Neuron);
 
     try {
-        auto neuronMagic = VarReference::create(ng, "Magic");
+        auto neuronMagic = varReference(ng, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -79,17 +75,11 @@ TEST(VarReference, CurrentSource)
     // Finalize model
     model.finalize();
 
-    // Create a backend
-    CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
-
-    auto csCurrent = VarReference::create(cs0, "current");
-    ASSERT_EQ(csCurrent.getVarSize(backend), 10);
-    ASSERT_EQ(csCurrent.getType(), VarReference::Type::CurrentSource);
-    ASSERT_EQ(csCurrent.getVarName(), "currentCS0");
+    auto csCurrent = varReference(cs0, "current");
+    ASSERT_EQ(csCurrent.getType(), Models::VarReference::Type::CurrentSource);
 
     try {
-        auto csMagic = VarReference::create(cs0, "Magic");
+        auto csMagic = varReference(cs0, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -120,24 +110,20 @@ TEST(VarReference, PSM)
     // Finalize model
     model.finalize();
 
-    // Create a backend
-    CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    auto psmX = psVarReference(sg1, "x");
+    ASSERT_EQ(psmX.getType(), Models::VarReference::Type::PSM);
 
-    auto psmX = VarReference::createPSM(sg1, "x");
-    ASSERT_EQ(psmX.getVarSize(backend), 25);
-    ASSERT_EQ(psmX.getType(), VarReference::Type::PSM);
-    ASSERT_EQ(psmX.getVarName(), "xSynapses1");
-
+    // Test error if variable doesn't exist
     try {
-        auto psmMagic = VarReference::createPSM(sg1, "Magic");
+        auto psmMagic = psVarReference(sg1, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
     }
 
+    // Test error if GLOBALG
     try {
-        auto psmMagic = VarReference::createPSM(sg2, "x");
+        auto psmMagic = psVarReference(sg2, "x");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -158,30 +144,28 @@ TEST(VarReference, WUM)
                                                                                        "Pre", "Post",
                                                                                        {}, {1.0},
                                                                                        {5.0}, {0.0});
-    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses2", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+
+    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses2", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
                                                                                        "Pre", "Post",
                                                                                        {}, {1.0},
-                                                                                       {5.0}, {0.0},
-                                                                                       initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
+                                                                                       {5.0}, {0.0});
     // Finalize model
     model.finalize();
 
-    // Create a backend
-    CodeGenerator::SingleThreadedCPU::Preferences preferences;
-    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+    auto wuG1 = wuVarReference(sg1, "g");
+    ASSERT_EQ(wuG1.getType(), Models::VarReference::Type::WU);
 
-    auto wuG1 = VarReference::createWU(sg1, "g");
-    ASSERT_EQ(wuG1.getVarSize(backend), 10 * 25);
-    ASSERT_EQ(wuG1.getType(), VarReference::Type::WU);
-    ASSERT_EQ(wuG1.getVarName(), "gSynapses1");
-
-    auto wuG2 = VarReference::createWU(sg2, "g");
-    ASSERT_EQ(wuG2.getVarSize(backend), 10 * InitSparseConnectivitySnippet::OneToOne::getInstance()->getCalcMaxRowLengthFunc()(10, 25, {}));
-    ASSERT_EQ(wuG2.getType(), VarReference::Type::WU);
-    ASSERT_EQ(wuG2.getVarName(), "gSynapses2");
-
+    // Test error if variable doesn't exist
     try {
-        auto wuMagic = VarReference::createWU(sg1, "Magic");
+        auto wuMagic = wuVarReference(sg1, "Magic");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Test error if GLOBALG
+    try {
+        auto wuG2 = wuVarReference(sg2, "x");
         FAIL();
     }
     catch(const std::runtime_error &) {
