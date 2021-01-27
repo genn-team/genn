@@ -109,6 +109,42 @@ inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
     return InitSparseConnectivitySnippet::Init(InitSparseConnectivitySnippet::Uninitialised::getInstance(), {});
 }
 
+//! Creates a reference to a neuron variable
+inline Models::VarReference varReference(const NeuronGroup *ng, const std::string &varName)
+{
+    return Models::VarReference(ng, varName);
+}
+
+//! Creates a reference to a current source  variable
+inline Models::VarReference varReference(const CurrentSource *cs, const std::string &varName)
+{
+    return Models::VarReference(cs, varName);
+}
+
+//! Creates a reference to a postsynpatic model variable
+inline Models::VarReference psVarReference(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference(sg, varName, Models::VarReference::Type::PSM);
+}
+
+//! Creates a reference to a weight update model variable
+inline Models::VarReference wuVarReference(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference(sg, varName, Models::VarReference::Type::WU);
+}
+
+//! Creates a reference to a weight update model presynaptic variable
+inline Models::VarReference wuPreVarReference(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference(sg, varName, Models::VarReference::Type::WUPre);
+}
+
+//! Creates a reference to a weight update model postsynaptic variable
+inline Models::VarReference wuPostVarReference(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference(sg, varName, Models::VarReference::Type::WUPost);
+}
+
 //----------------------------------------------------------------------------
 // ModelSpec
 //----------------------------------------------------------------------------

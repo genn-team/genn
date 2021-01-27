@@ -12,7 +12,48 @@
 //----------------------------------------------------------------------------
 // Models::VarReference
 //----------------------------------------------------------------------------
-std::string Models::VarReference::getVarName() const
+Models::VarReference::VarReference(const NeuronGroup *ng, const std::string &varName)
+:   m_Type(Type::Neuron), m_NG(ng), m_SG(nullptr), m_CS(nullptr)
+{
+    const auto *nm = ng->getNeuronModel();
+    const size_t varIdx = nm->getVarIndex(varName);
+    m_Var = nm->getVars().at(varIdx);
+}
+//----------------------------------------------------------------------------
+Models::VarReference::VarReference(const CurrentSource *cs, const std::string &varName)
+:    m_Type(Type::CurrentSource), m_NG(nullptr), m_SG(nullptr), m_CS(cs)
+{
+    const auto *csm = cs->getCurrentSourceModel();
+    const size_t varIdx = csm->getVarIndex(varName);
+    m_Var = csm->getVars().at(varIdx);
+}
+//----------------------------------------------------------------------------
+Models::VarReference::VarReference(const SynapseGroup *sg, const std::string &varName, Type type)
+:   m_Type(type), m_NG(nullptr), m_SG(sg), m_CS(nullptr)
+{
+    assert(m_Type != Type::Neuron && m_Type != Type::CurrentSource);
+
+    if(m_Type == Type::PSM) {
+        const auto *psm = sg->getPSModel();
+        m_Var = psm->getVars().at(psm->getVarIndex(varName));
+    }
+    else {
+        const auto *wum = sg->getWUModel();
+
+        if(m_Type == Type::WU) {
+            m_Var = wum->getVars().at(wum->getVarIndex(varName));
+        }
+        else if(m_Type == Type::WUPre) {
+            m_Var = wum->getPreVars().at(wum->getPreVarIndex(varName));
+        }
+        else {
+            assert(m_Type == Type::WUPost);
+            m_Var = wum->getPostVars().at(wum->getPostVarIndex(varName));
+        }
+    }
+}
+//----------------------------------------------------------------------------
+/*std::string Models::VarReference::getVarName() const
 {
     switch(m_Type) {
     case Type::Neuron:
@@ -43,64 +84,22 @@ size_t Models::VarReference::getVarSize(const CodeGenerator::BackendBase &backen
     case Type::WUPre:
         return m_SG->getSrcNeuronGroup()->getNumNeurons();
     }
-}
+}*/
 //----------------------------------------------------------------------------
-Models::VarReference Models::VarReference::create(const NeuronGroup *ng, const std::string &varName)
+const NeuronGroup *Models::VarReference::getNeuronGroup() const
 {
-    const auto *nm = ng->getNeuronModel();
-    const size_t varIdx = nm->getVarIndex(varName);
-    return VarReference(ng, nm->getVars().at(varIdx), Type::Neuron);
+    assert(m_Type == Type::Neuron);
+    return m_NG;
 }
 //----------------------------------------------------------------------------
-Models::VarReference Models::VarReference::create(const CurrentSource *cs, const std::string &varName)
+const SynapseGroup *Models::VarReference::getSynapseGroup() const
 {
-    const auto *csm = cs->getCurrentSourceModel();
-    const size_t varIdx = csm->getVarIndex(varName);
-    return VarReference(cs, csm->getVars().at(varIdx), Type::CurrentSource);
+    assert(m_Type != Type::Neuron && m_Type != Type::CurrentSource);
+    return m_SG;
 }
 //----------------------------------------------------------------------------
-Models::VarReference Models::VarReference::createPSM(const SynapseGroup *sg, const std::string &varName)
+const CurrentSource *Models::VarReference::getCurrentSource() const
 {
-    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
-        throw std::runtime_error("Cannot get reference to optimised out postsynaptic model variable");
-    }
-    const auto *psm = sg->getPSModel();
-    const size_t varIdx = psm->getVarIndex(varName);
-    return VarReference(sg, psm->getVars().at(varIdx), Type::PSM);
+    assert(m_Type == Type::CurrentSource);
+    return m_CS;
 }
-//----------------------------------------------------------------------------
-Models::VarReference Models::VarReference::createWU(const SynapseGroup *sg, const std::string &varName)
-{
-    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-        throw std::runtime_error("Cannot get reference to optimised out weight update model variable");
-    }
-    const auto *wum = sg->getWUModel();
-    const size_t varIdx = wum->getVarIndex(varName);
-    return VarReference(sg, wum->getVars().at(varIdx), Type::WU);
-}
-//----------------------------------------------------------------------------
-Models::VarReference Models::VarReference::createWUPre(const SynapseGroup *sg, const std::string &varName)
-{
-    const auto *wum = sg->getWUModel();
-    const size_t varIdx = wum->getPreVarIndex(varName);
-    return VarReference(sg, wum->getPreVars().at(varIdx), Type::WUPre);
-}
-//----------------------------------------------------------------------------
-Models::VarReference Models::VarReference::createWUPost(const SynapseGroup *sg, const std::string &varName)
-{
-    const auto *wum = sg->getWUModel();
-    const size_t varIdx = wum->getPostVarIndex(varName);
-    return VarReference(sg, wum->getPostVars().at(varIdx), Type::WUPost);
-}
-//----------------------------------------------------------------------------
-Models::VarReference::VarReference(const NeuronGroup *ng, Models::Base::Var var, Type type)
-:   m_NG(ng), m_SG(nullptr), m_CS(nullptr), m_Var(var), m_Type(type)
-{}
-//----------------------------------------------------------------------------
-Models::VarReference::VarReference(const SynapseGroup *sg, Models::Base::Var var, Type type)
-:   m_NG(nullptr), m_SG(static_cast<const SynapseGroupInternal*>(sg)), m_CS(nullptr), m_Var(var), m_Type(type)
-{}
-//----------------------------------------------------------------------------
-Models::VarReference::VarReference(const CurrentSource *cs, Models::Base::Var var, Type type)
-:   m_NG(nullptr), m_SG(nullptr), m_CS(static_cast<const CurrentSourceInternal*>(cs)), m_Var(var), m_Type(type)
-{}

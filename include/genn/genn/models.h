@@ -14,8 +14,6 @@
 class NeuronGroup;
 class CurrentSource;
 class SynapseGroup;
-class CurrentSourceInternal;
-class SynapseGroupInternal;
 
 namespace CodeGenerator
 {
@@ -169,41 +167,29 @@ public:
         WUPost,
     };
 
+    VarReference(const NeuronGroup *ng, const std::string &varName);
+    VarReference(const CurrentSource *cs, const std::string &varName);
+    VarReference(const SynapseGroup *sg, const std::string &varName, Type type);
+
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    // **TODO** resolving these should probably be moved into code generator somewhere
-    std::string getVarName() const;
-    size_t getVarSize(const CodeGenerator::BackendBase &backend) const;
-    Type getType() const
-    {
-        return m_Type;
-    }
-
-    //------------------------------------------------------------------------
-    // Static API
-    //------------------------------------------------------------------------
-    static VarReference create(const NeuronGroup *ng, const std::string &varName);
-    static VarReference create(const CurrentSource *cs, const std::string &varName);
-    static VarReference createPSM(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWU(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPre(const SynapseGroup *sg, const std::string &varName);
-    static VarReference createWUPost(const SynapseGroup *sg, const std::string &varName);
+    const Base::Var &getVar() const { return m_Var; }
+    Type getType() const{ return m_Type; }
+    const NeuronGroup *getNeuronGroup() const;
+    const SynapseGroup *getSynapseGroup() const;
+    const CurrentSource *getCurrentSource() const;
 
 private:
-    VarReference(const NeuronGroup *ng, Base::Var var, Type type);
-    VarReference(const SynapseGroup *sg, Base::Var var, Type type);
-    VarReference(const CurrentSource *cs, Base::Var var, Type type);
-    
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const Base::Var m_Var;
+    Base::Var m_Var;
     const Type m_Type;
     
     const NeuronGroup *m_NG;
-    const SynapseGroupInternal *m_SG;
-    const CurrentSourceInternal *m_CS;
+    const SynapseGroup *m_SG;
+    const CurrentSource *m_CS;
 };
 
 //----------------------------------------------------------------------------
