@@ -464,8 +464,8 @@ public:
         // Add current source to map
         auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
             std::forward_as_tuple(currentSourceName),
-            std::forward_as_tuple(currentSourceName, model,
-                                  paramValues.getValues(), varInitialisers.getInitialisers(),
+            std::forward_as_tuple(currentSourceName, model, paramValues.getValues(),
+                                  varInitialisers.getInitialisers(), targetGroup, 
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {

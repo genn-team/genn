@@ -10,6 +10,7 @@
 class NeuronGroup;
 class SynapseGroup;
 class CurrentSource;
+class CurrentSourceInternal;
 class SynapseGroupInternal;
 namespace CodeGenerator
 {
@@ -68,5 +69,5 @@ private:
     
     const NeuronGroup *m_NG;
     const SynapseGroupInternal *m_SG;
-    const CurrentSource *m_CS;
+    const CurrentSourceInternal *m_CS;
 };

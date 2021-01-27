@@ -33,7 +33,7 @@ size_t VarReference::getVarSize(const CodeGenerator::BackendBase &backend) const
     case Type::Neuron:
         return m_NG->getNumNeurons();
     case Type::CurrentSource:
-        throw std::runtime_error("Not implemented");
+        return m_CS->getTrgNeuronGroup()->getNumNeurons();
     case Type::PSM:
     case Type::WUPost:
         return m_SG->getTrgNeuronGroup()->getNumNeurons();
@@ -95,5 +95,5 @@ VarReference::VarReference(const SynapseGroup *sg, Models::Base::Var var, Type t
 {}
 //----------------------------------------------------------------------------
 VarReference::VarReference(const CurrentSource *cs, Models::Base::Var var, Type type)
-:   m_NG(nullptr), m_SG(nullptr), m_CS(cs), m_Var(var), m_Type(type)
+:   m_NG(nullptr), m_SG(nullptr), m_CS(static_cast<const CurrentSourceInternal*>(cs)), m_Var(var), m_Type(type)
 {}
