@@ -156,6 +156,8 @@ public:
     //=======================
     typedef std::map<std::string, NeuronGroupInternal>::value_type NeuronGroupValueType;
     typedef std::map<std::string, SynapseGroupInternal>::value_type SynapseGroupValueType;
+    typedef std::map<std::string, CurrentSourceInternal>::value_type CurrentSourceValueType;
+    typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
 
     ModelSpec();
     ModelSpec(const ModelSpec&) = delete;

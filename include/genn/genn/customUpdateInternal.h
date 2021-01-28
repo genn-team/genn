@@ -21,6 +21,7 @@ public:
     using CustomUpdate::initDerivedParams;
     using CustomUpdate::getDerivedParams;
     using CustomUpdate::isInitRNGRequired;
+    using CustomUpdate::isZeroCopyEnabled;
     using CustomUpdate::canBeMerged;
     using CustomUpdate::canInitBeMerged;
 };

@@ -50,6 +50,16 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
             throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
         }
     }
+
+    // If this is a transpose operation
+    if(m_Operation == Operation::UPDATE_TRANSPOSE) {
+        // Give error if any of the variable references aren't to weight update variables
+        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [](const Models::VarReference &v) { return v.getType() != Models::VarReference::Type::WU; }))
+        {
+            throw std::runtime_error("Custom updates that perform a transpose operation can only operate on weight update model variables.");
+        }
+    }
 }
 //----------------------------------------------------------------------------
 void CustomUpdate::initDerivedParams(double dt)
@@ -78,6 +88,13 @@ bool CustomUpdate::isInitRNGRequired() const
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+bool CustomUpdate::isZeroCopyEnabled() const
+{
+    // If there are any variables implemented in zero-copy mode return true
+    return std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
+                       [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
 }
 //----------------------------------------------------------------------------
 bool CustomUpdate::canBeMerged(const CustomUpdate &other) const

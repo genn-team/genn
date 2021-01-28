@@ -72,6 +72,13 @@ bool CurrentSource::isInitRNGRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool CurrentSource::isZeroCopyEnabled() const
+{
+    // If there are any variables implemented in zero-copy mode return true
+    return std::any_of(m_VarLocation.begin(), m_VarLocation.end(),
+                       [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
+}
+//----------------------------------------------------------------------------
 bool CurrentSource::canBeMerged(const CurrentSource &other) const
 {
     return getCurrentSourceModel()->canBeMerged(other.getCurrentSourceModel());

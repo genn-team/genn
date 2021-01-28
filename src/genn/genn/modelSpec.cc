@@ -229,15 +229,29 @@ std::string ModelSpec::scalarExpr(double val) const
 bool ModelSpec::zeroCopyInUse() const
 {
     // If any neuron groups use zero copy return true
-    if(any_of(begin(m_LocalNeuronGroups), end(m_LocalNeuronGroups),
-              [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
+    if(std::any_of(std::begin(m_LocalNeuronGroups), std::end(m_LocalNeuronGroups),
+                   [](const NeuronGroupValueType &n){ return n.second.isZeroCopyEnabled(); }))
+    {
+        return true;
+    }
+
+    // If any current sources use zero copy return true
+    if(std::any_of(std::begin(m_LocalCurrentSources), std::end(m_LocalCurrentSources),
+                   [](const CurrentSourceValueType &c){ return c.second.isZeroCopyEnabled(); }))
     {
         return true;
     }
 
     // If any synapse groups use zero copy return true
-    if(any_of(begin(m_LocalSynapseGroups), end(m_LocalSynapseGroups),
-              [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
+    if(std::any_of(std::begin(m_LocalSynapseGroups), std::end(m_LocalSynapseGroups),
+                   [](const SynapseGroupValueType &s){ return s.second.isZeroCopyEnabled(); }))
+    {
+        return true;
+    }
+
+     // If any custom updates use zero copy return true
+    if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
+                   [](const CustomUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
     {
         return true;
     }

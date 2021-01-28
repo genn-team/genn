@@ -23,6 +23,7 @@ public:
     using CurrentSource::getDerivedParams;
     using CurrentSource::isSimRNGRequired;
     using CurrentSource::isInitRNGRequired;
+    using CurrentSource::isZeroCopyEnabled;
     using CurrentSource::canBeMerged;
     using CurrentSource::canInitBeMerged;
 };
