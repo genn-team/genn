@@ -8,24 +8,16 @@
 #include "gennExport.h"
 #include "customUpdateModels.h"
 #include "variableMode.h"
+#include "varReference.h"
 
 //------------------------------------------------------------------------
-// CustomUpdate
+// CustomUpdateBase
 //------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdate
+class GENN_EXPORT CustomUpdateBase
 {
 public:
-    CustomUpdate(const CustomUpdate &) = delete;
-    CustomUpdate() = delete;
-
-    //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    enum class Operation
-    {
-        UPDATE,
-        UPDATE_TRANSPOSE,
-    };
+    CustomUpdateBase(const CustomUpdateBase &) = delete;
+    CustomUpdateBase() = delete;
 
     //------------------------------------------------------------------------
     // Public methods
@@ -45,14 +37,11 @@ public:
     const std::string &getName() const{ return m_Name; }
     const std::string &getUpdateGroupName() const { return m_Name; }
 
-    const Operation getOperation() const { return m_Operation; }
-
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
     const std::vector<double> &getParams() const{ return m_Params; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
-    const std::vector<Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
 
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -70,10 +59,15 @@ public:
 
 
 protected:
-    CustomUpdate(const std::string &name, const std::string &updateGroupName, Operation operation,
+    CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+                 const std::vector<Models::VarInit> &varInitialisers,
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+    :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
+        m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+    {
+    }
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -92,11 +86,11 @@ protected:
 
     //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const CustomUpdate &other) const;
+    bool canBeMerged(const CustomUpdateBase &other) const;
 
     //! Can the initialisation of these custom update be merged together? i.e. can they be initialised using same generated code
     /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const CustomUpdate &other) const;
+    bool canInitBeMerged(const CustomUpdateBase &other) const;
 
 private:
     //------------------------------------------------------------------------
@@ -104,17 +98,97 @@ private:
     //------------------------------------------------------------------------
     const std::string m_Name;
     const std::string m_UpdateGroupName;
-    const Operation m_Operation;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
     const std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
-    const std::vector<Models::VarReference> m_VarReferences;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+};
+
+//------------------------------------------------------------------------
+// CustomUpdate
+//------------------------------------------------------------------------
+template<typename V>
+class CustomUpdate : public CustomUpdateBase
+{
+public:
+    //------------------------------------------------------------------------
+    // Public const methods
+    //------------------------------------------------------------------------
+    const std::vector<V> &getVarReferences() const{ return m_VarReferences;  }
+
+protected:
+    CustomUpdate(const std::string &name, const std::string &updateGroupName,
+                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
+                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<V> &varReferences, 
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+    :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+        m_VarReferences(varReferences)
+    {
+        // Loop through all variable references
+        const auto varRefs = getCustomUpdateModel()->getVarRefs();
+        for(size_t i = 0; i < varReferences.size(); i++) {
+            const auto varRef = m_VarReferences.at(i);
+
+            // Check types of variable references against those specified in model
+            // **THINK** due to GeNN's current string-based type system this is rather conservative
+            if(varRef.getVar().type != varRefs.at(i).type) {
+                throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
+            }
+        }
+
+        // Give error if any sizes differ
+        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [this](const V &v) { return v.getSize() != m_VarReferences.front().getSize(); }))
+        {
+            throw std::runtime_error("All referenced variables must have the same size.");
+        }
+    }
+private:
+     //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::vector<V> m_VarReferences;
+};
+
+//------------------------------------------------------------------------
+// CustomUpdateWU
+//------------------------------------------------------------------------
+class CustomUpdateWU : public CustomUpdateBase
+{
+public:
+    //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    enum class Operation
+    {
+        UPDATE,
+        UPDATE_TRANSPOSE,
+    };
+
+    //------------------------------------------------------------------------
+    // Public const methods
+    //------------------------------------------------------------------------
+    Operation getOperation() const { return m_Operation; }
+
+    const std::vector<WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
+
+protected:
+    CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
+                   const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                   const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
+                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const Operation m_Operation;
+    const std::vector<WUVarReference> m_VarReferences;
 };

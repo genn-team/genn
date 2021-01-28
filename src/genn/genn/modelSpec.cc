@@ -250,11 +250,11 @@ bool ModelSpec::zeroCopyInUse() const
     }
 
      // If any custom updates use zero copy return true
-    if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
+     /*if(std::any_of(std::begin(m_CustomUpdates), std::end(m_CustomUpdates),
                    [](const CustomUpdateValueType &c){ return c.second.isZeroCopyEnabled(); }))
     {
         return true;
-    }
+    }*/
 
     return false;
 }
