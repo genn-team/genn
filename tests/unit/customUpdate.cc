@@ -42,14 +42,14 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
 
     
     Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences1(wuVarReference(sg1, "g"), wuVarReference(sg1, "g"));
-    Sum::VarReferences sumVarReferences2(wuVarReference(sg1, "g"), wuVarReference(sg1, "d"));
+    Sum::VarReferences<WUVarReference> sumVarReferences1(WUVarReference(sg1, "g"), WUVarReference(sg1, "g"));
+    Sum::VarReferences<WUVarReference> sumVarReferences2(WUVarReference(sg1, "g"), WUVarReference(sg1, "d"));
 
-    model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate", CustomUpdate::Operation::UPDATE,
+    model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate", CustomUpdateWU::Operation::UPDATE,
                                {}, sumVarValues, sumVarReferences1);
     
     try {
-        model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate", CustomUpdate::Operation::UPDATE,
+        model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate", CustomUpdateWU::Operation::UPDATE,
                                    {}, sumVarValues, sumVarReferences2);
         FAIL();
     }

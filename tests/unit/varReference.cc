@@ -46,11 +46,11 @@ TEST(VarReference, Neuron)
     // Finalize model
     model.finalize();
 
-    auto neuronVoltage = varReference(ng, "V");
-    ASSERT_EQ(neuronVoltage.getType(), Models::VarReference::Type::Neuron);
+    auto neuronVoltage = NeuronVarReference(ng, "V");
+    ASSERT_EQ(neuronVoltage.getSize(), 10);
 
     try {
-        auto neuronMagic = varReference(ng, "Magic");
+        auto neuronMagic = NeuronVarReference(ng, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -75,11 +75,11 @@ TEST(VarReference, CurrentSource)
     // Finalize model
     model.finalize();
 
-    auto csCurrent = varReference(cs0, "current");
-    ASSERT_EQ(csCurrent.getType(), Models::VarReference::Type::CurrentSource);
+    auto csCurrent = CurrentSourceVarReference(cs0, "current");
+    ASSERT_EQ(csCurrent.getSize(), 10);
 
     try {
-        auto csMagic = varReference(cs0, "Magic");
+        auto csMagic = CurrentSourceVarReference(cs0, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -110,12 +110,12 @@ TEST(VarReference, PSM)
     // Finalize model
     model.finalize();
 
-    auto psmX = psVarReference(sg1, "x");
-    ASSERT_EQ(psmX.getType(), Models::VarReference::Type::PSM);
+    auto psmX = PSMVarReference(sg1, "x");
+    ASSERT_EQ(psmX.getSize(), 25);
 
     // Test error if variable doesn't exist
     try {
-        auto psmMagic = psVarReference(sg1, "Magic");
+        auto psmMagic = PSMVarReference(sg1, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -123,7 +123,7 @@ TEST(VarReference, PSM)
 
     // Test error if GLOBALG
     try {
-        auto psmMagic = psVarReference(sg2, "x");
+        auto psmMagic = PSMVarReference(sg2, "x");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -152,12 +152,12 @@ TEST(VarReference, WUM)
     // Finalize model
     model.finalize();
 
-    auto wuG1 = wuVarReference(sg1, "g");
-    ASSERT_EQ(wuG1.getType(), Models::VarReference::Type::WU);
+    auto wuG1 = WUVarReference(sg1, "g");
+    ASSERT_EQ(wuG1.getPreSize(), 10);
 
     // Test error if variable doesn't exist
     try {
-        auto wuMagic = wuVarReference(sg1, "Magic");
+        auto wuMagic = WUVarReference(sg1, "Magic");
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -165,7 +165,7 @@ TEST(VarReference, WUM)
 
     // Test error if GLOBALG
     try {
-        auto wuG2 = wuVarReference(sg2, "x");
+        auto wuG2 = WUVarReference(sg2, "x");
         FAIL();
     }
     catch(const std::runtime_error &) {
