@@ -118,6 +118,18 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         }
     }
 
+    // Give error if var references point to synapse groups with different connectivity
+    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                   [this](const WUVarReference &v)
+                   {
+                       const bool vSparse = (v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+                       const bool firstSparse = (m_VarReferences.front().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
+                       return (vSparse != firstSparse);
+                   }))
+    {
+        throw std::runtime_error("Variable references to weight update model variables must all be to populations with the same connectivity type.");
+    }
+
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                     [this](const WUVarReference &v) 
