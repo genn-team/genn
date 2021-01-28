@@ -102,18 +102,8 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_Operation(operation), m_VarReferences(varReferences)
 {
-    // Loop through all variable references
-    // **TODO** move to helper function
-    const auto varRefs = getCustomUpdateModel()->getVarRefs();
-    for(size_t i = 0; i < varReferences.size(); i++) {
-        const auto varRef = m_VarReferences.at(i);
-
-        // Check types of variable references against those specified in model
-        // **THINK** due to GeNN's current string-based type system this is rather conservative
-        if(varRef.getVar().type != varRefs.at(i).type) {
-            throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
-        }
-    }
+    // Check variable reference types
+    checkVarReferenceTypes(m_VarReferences);
 
     // If there are any variable references
     /*if(!m_VarReferences.empty()) {

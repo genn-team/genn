@@ -92,6 +92,23 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     bool canInitBeMerged(const CustomUpdateBase &other) const;
 
+    //! Helper function to check if variable reference types match those specified in model
+    template<typename V>
+    void checkVarReferenceTypes(const std::vector<V> &varReferences) const
+    {
+        // Loop through all variable references
+        const auto varRefs = getCustomUpdateModel()->getVarRefs();
+        for(size_t i = 0; i < varReferences.size(); i++) {
+            const auto varRef = varReferences.at(i);
+
+            // Check types of variable references against those specified in model
+            // **THINK** due to GeNN's current string-based type system this is rather conservative
+            if(varRef.getVar().type != varRefs.at(i).type) {
+                throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
+            }
+        }
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -131,17 +148,8 @@ protected:
     :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
         m_VarReferences(varReferences)
     {
-        // Loop through all variable references
-        const auto varRefs = getCustomUpdateModel()->getVarRefs();
-        for(size_t i = 0; i < varReferences.size(); i++) {
-            const auto varRef = m_VarReferences.at(i);
-
-            // Check types of variable references against those specified in model
-            // **THINK** due to GeNN's current string-based type system this is rather conservative
-            if(varRef.getVar().type != varRefs.at(i).type) {
-                throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
-            }
-        }
+        // Check variable reference types
+        checkVarReferenceTypes(m_VarReferences);
 
         // Give error if any sizes differ
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
