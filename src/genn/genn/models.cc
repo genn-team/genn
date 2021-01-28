@@ -35,7 +35,7 @@ Models::VarReference::VarReference(const SynapseGroup *sg, const std::string &va
 
     if(m_Type == Type::PSM) {
         if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
-            throw std::runtime_error("Cannot get reference to optimised out postsynaptic model variable");
+            throw std::runtime_error("Only individual postsynaptic model variables can be referenced.");
         }
         const auto *psm = sg->getPSModel();
         m_VarIndex = psm->getVarIndex(varName);
@@ -46,7 +46,7 @@ Models::VarReference::VarReference(const SynapseGroup *sg, const std::string &va
 
         if(m_Type == Type::WU) {
             if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-                throw std::runtime_error("Cannot get reference to optimised out weight update model variable");
+                throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
             }
             m_VarIndex = wum->getVarIndex(varName);
             m_Var = wum->getVars().at(m_VarIndex);
