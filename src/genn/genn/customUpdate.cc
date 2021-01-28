@@ -96,53 +96,36 @@ bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
 
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
-                   const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                   const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
-                   VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                               const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                               const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
+                               VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_Operation(operation), m_VarReferences(varReferences)
 {
     // Check variable reference types
     checkVarReferenceTypes(m_VarReferences);
 
-    // If there are any variable references
-    /*if(!m_VarReferences.empty()) {
-        // If this is a weight update variable custom update
-        if(wuCustomUpdate) {
-            const SynapseGroupInternal *firstSG = static_cast<const SynapseGroupInternal *>(m_VarReferences.front().getSynapseGroup());
-            const size_t preSize = firstSG->getSrcNeuronGroup()->getNumNeurons();
-            const size_t maxRowLength = firstSG->getMaxConnections();
-            const bool sparse = (firstSG->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-
-            for(const auto &v : m_VarReferences) {
-                // Check that connectivity types match
-                const SynapseGroupInternal *sg =  static_cast<const SynapseGroupInternal*>(v.getSynapseGroup());
-                if((sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) != sparse) {
-                    throw std::runtime_error("Variable references to weight update model variables must all be to populations with the same connectivity type.");
-                }
-                
-                // Check that presynaptic population size and maximum row lengths match
-                if(sg->getSrcNeuronGroup()->getNumNeurons() != preSize || sg->getMaxConnections() != maxRowLength) {
-                    throw std::runtime_error("Variable references must all be to populations of the same size.");
-                }
-
-                // Check that, if connectivity is sparse, all referenced variables belong to the same population
-                // **NOTE** this is because sparse connectivity on two differnt populations 
-                // might have the same max row length but totally different connectivity
-                if(sparse && firstSG != sg) {
-                    throw std::runtime_error("Variable references to sparse weight update model variables must all be in the same synapse group.");
-                }
-            }
-        }
-    }*/
-
     // If this is a transpose operation
     if(m_Operation == Operation::UPDATE_TRANSPOSE) {
         // Give error if any of the variable references aren't dense
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [](const WUVarReference &v) { return !(v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); }))
+                       [](const WUVarReference &v) 
+                       {
+                           return !(v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
+                       }))
         {
             throw std::runtime_error("Custom updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
         }
+    }
+
+    // Give error if any sizes differ
+    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                    [this](const WUVarReference &v) 
+                    { 
+                        return ((v.getPreSize() != m_VarReferences.front().getPreSize())
+                                || (v.getMaxRowLength() != m_VarReferences.front().getMaxRowLength())); 
+                    }))
+    {
+        throw std::runtime_error("All referenced variables must have the same size.");
     }
 }
