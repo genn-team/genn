@@ -17,6 +17,7 @@
     <ClCompile Include="codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="neuronGroup.cc" />

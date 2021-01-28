@@ -174,16 +174,28 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
+    size_t getVarIndex() const { return m_VarIndex; }
     const Base::Var &getVar() const { return m_Var; }
     Type getType() const{ return m_Type; }
     const NeuronGroup *getNeuronGroup() const;
     const SynapseGroup *getSynapseGroup() const;
     const CurrentSource *getCurrentSource() const;
 
+    //------------------------------------------------------------------------
+    // Operator
+    //------------------------------------------------------------------------
+    //! Equality operator returns true if references point to the same variable
+    bool operator == (const VarReference &other) const
+    {
+        return ((m_VarIndex == other.m_VarIndex) && (m_Type == other.m_Type) 
+                && (m_NG == other.m_NG) && (m_SG == other.m_SG) && (m_CS == other.m_CS));
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
+    size_t m_VarIndex;
     Base::Var m_Var;
     const Type m_Type;
     

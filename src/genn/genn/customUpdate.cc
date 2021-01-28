@@ -43,7 +43,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     m_VarInitialisers(varInitialisers), m_VarReferences(varReferences), m_VarLocation(varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
 {
-    // Loop through all variable references and check types
+    // Loop through all variable references and check types of variable references against those specified in model
     // **THINK** due to GeNN's current string-based type system this is rather conservative
     for(size_t i = 0; i < varReferences.size(); i++) {
         if(m_VarReferences.at(i).getVar().type != getCustomUpdateModel()->getVarRefs().at(i).type) {

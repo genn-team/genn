@@ -16,16 +16,16 @@ Models::VarReference::VarReference(const NeuronGroup *ng, const std::string &var
 :   m_Type(Type::Neuron), m_NG(ng), m_SG(nullptr), m_CS(nullptr)
 {
     const auto *nm = ng->getNeuronModel();
-    const size_t varIdx = nm->getVarIndex(varName);
-    m_Var = nm->getVars().at(varIdx);
+    m_VarIndex = nm->getVarIndex(varName);
+    m_Var = nm->getVars().at(m_VarIndex);
 }
 //----------------------------------------------------------------------------
 Models::VarReference::VarReference(const CurrentSource *cs, const std::string &varName)
 :    m_Type(Type::CurrentSource), m_NG(nullptr), m_SG(nullptr), m_CS(cs)
 {
     const auto *csm = cs->getCurrentSourceModel();
-    const size_t varIdx = csm->getVarIndex(varName);
-    m_Var = csm->getVars().at(varIdx);
+    m_VarIndex = csm->getVarIndex(varName);
+    m_Var = csm->getVars().at(m_VarIndex);
 }
 //----------------------------------------------------------------------------
 Models::VarReference::VarReference(const SynapseGroup *sg, const std::string &varName, Type type)
@@ -38,7 +38,8 @@ Models::VarReference::VarReference(const SynapseGroup *sg, const std::string &va
             throw std::runtime_error("Cannot get reference to optimised out postsynaptic model variable");
         }
         const auto *psm = sg->getPSModel();
-        m_Var = psm->getVars().at(psm->getVarIndex(varName));
+        m_VarIndex = psm->getVarIndex(varName);
+        m_Var = psm->getVars().at(m_VarIndex);
     }
     else {
         const auto *wum = sg->getWUModel();
@@ -47,14 +48,17 @@ Models::VarReference::VarReference(const SynapseGroup *sg, const std::string &va
             if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
                 throw std::runtime_error("Cannot get reference to optimised out weight update model variable");
             }
-            m_Var = wum->getVars().at(wum->getVarIndex(varName));
+            m_VarIndex = wum->getVarIndex(varName);
+            m_Var = wum->getVars().at(m_VarIndex);
         }
         else if(m_Type == Type::WUPre) {
-            m_Var = wum->getPreVars().at(wum->getPreVarIndex(varName));
+            m_VarIndex = wum->getPreVarIndex(varName);
+            m_Var = wum->getPreVars().at(m_VarIndex);
         }
         else {
             assert(m_Type == Type::WUPost);
-            m_Var = wum->getPostVars().at(wum->getPostVarIndex(varName));
+            m_VarIndex = wum->getPostVarIndex(varName);
+            m_Var = wum->getPostVars().at(m_VarIndex);
         }
     }
 }
