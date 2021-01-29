@@ -513,6 +513,25 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                              HostHandler preambleHandler, CustomUpdateGroupMergedHandler<NeuronVarReference> customNeuronUpdateHandler,
+                              HostHandler pushEGPHandler) const
+{
+    // Generate struct definitions
+    modelMerged.genMergedCustomNeuronUpdateStructs(os, *this);
+    
+    // Generate arrays of merged structs and functions to push them
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomNeuronUpdateGroups(), memorySpaces);
+    
+    // Generate preamble
+    preambleHandler(os);
+
+    // Generate data structure for accessing merged groups
+    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
+    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomNeuronUpdate), totalConstMem, modelMerged.getMergedCustomNeuronUpdateGroups(),
+                                  [this](const CustomUpdateInternal<NeuronVarReference> &cg){ return cg.getSize(); });
+}
+//--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,

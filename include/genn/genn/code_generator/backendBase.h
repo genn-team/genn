@@ -17,6 +17,7 @@
 #include "codeStream.h"
 #include "gennExport.h"
 #include "variableMode.h"
+#include "varReference.h"
 
 // Forward declarations
 class NeuronGroupInternal;
@@ -35,6 +36,9 @@ namespace CodeGenerator
     class SynapseConnectivityInitGroupMerged;
     class SynapseDenseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
+
+    template<typename V>
+    class CustomUpdateGroupMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -148,6 +152,8 @@ public:
     typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
+    template<typename V>
+    using CustomUpdateGroupMergedHandler = GroupHandler<CustomUpdateGroupMerged<V>>;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
@@ -201,6 +207,17 @@ public:
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
+
+    //! Generate platform-specific functions to perform custom updates
+    /*! \param os                           CodeStream to write function to
+        \param modelMerged                  merged model to generate code for
+        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
+        \param preambleHandler              callback to write functions for pushing extra-global parameters
+      
+        \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
+                                 HostHandler preambleHandler, CustomUpdateGroupMergedHandler<NeuronVarReference> customNeuronUpdateHandler,
+                                 HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to

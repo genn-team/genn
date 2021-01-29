@@ -30,6 +30,7 @@ enum Kernel
     KernelInitializeSparse,
     KernelPreNeuronReset,
     KernelPreSynapseReset,
+    KernelCustomNeuronUpdate,
     KernelMax
 };
 

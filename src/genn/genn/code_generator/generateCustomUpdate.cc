@@ -25,6 +25,25 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
-
     os << std::endl;
+
+    // Neuron update kernel
+    backend.genCustomUpdate(os, modelMerged, memorySpaces,
+                            // Preamble handler
+                            [&modelMerged, &backend](CodeStream &os)
+                            {
+                                // Generate functions to push merged neuron group structures
+                                modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomNeuronUpdateGroups(), backend);
+                            },
+                            // Custom neuron update handler
+                            [&modelMerged](CodeStream &os, const CustomUpdateGroupMerged<NeuronVarReference> &cg, Substitutions &popSubs)
+                            {
+
+                            },
+                            // Push EGP handler
+                            // **TODO** this needs to be per-update group
+                            [&backend, &modelMerged](CodeStream &os)
+                            {
+                                modelMerged.genScalarEGPPush(os, "NeuronCustomUpdate", backend);
+                            });
 }
