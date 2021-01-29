@@ -557,7 +557,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// Custom neuron variable updates" << std::endl;
-            genCustomUpdateKernel(os, kernelSubs, modelMerged.getMergedCustomNeuronUpdateGroups(), customNeuronUpdateHandler, idCustomUpdateStart);
+            genCustomUpdateKernel(os, kernelSubs, g, modelMerged.getMergedCustomNeuronUpdateGroups(), 
+                                  customNeuronUpdateHandler, idCustomUpdateStart);
         }
 
         os << "void update" << g << "()";
