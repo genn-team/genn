@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <random>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -1598,6 +1599,19 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
 
+    // Build set containing union of all custom update groupsnames
+    std::set<std::string> customUpdateGroups;
+    std::transform(model.getCustomNeuronUpdates().cbegin(), model.getCustomNeuronUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>>::value_type &v) { return v.first; });
+    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.first; });
+    
+    // Generate function definitions for each custom update
+    for(const auto &g : customUpdateGroups) {
+        definitions << "EXPORT_FUNC void update" << g << "();" << std::endl;
+    }
 #ifdef MPI_ENABLE
     definitions << "// MPI functions" << std::endl;
     definitions << "EXPORT_FUNC void generateMPI();" << std::endl;
