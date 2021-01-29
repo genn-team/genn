@@ -46,9 +46,9 @@ public:
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                 const std::vector<Models::VarInit> &varInitialisers,
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                     const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                     const std::vector<Models::VarInit> &varInitialisers,
+                     VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
         m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
