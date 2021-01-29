@@ -726,6 +726,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                         runnerVarDecl, runnerMergedStructAlloc);
     }
+    
+    // Loop through neuron variable custom update groups
+    for(const auto &m : modelMerged.getMergedCustomNeuronUpdateGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                        runnerVarDecl, runnerMergedStructAlloc);
+    }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
