@@ -22,6 +22,11 @@ unsigned int NeuronVarReference::getSize() const
     return m_NG->getNumNeurons();
 }
 //----------------------------------------------------------------------------
+const std::string &NeuronVarReference::getTargetName() const
+{
+    return m_NG->getName();
+}
+//----------------------------------------------------------------------------
 const NeuronGroup *NeuronVarReference::getNeuronGroup() const 
 { 
     return m_NG; 
@@ -42,6 +47,11 @@ CurrentSourceVarReference::CurrentSourceVarReference(const CurrentSource *cs, co
 unsigned int CurrentSourceVarReference::getSize() const
 {
     return m_CS->getTrgNeuronGroup()->getNumNeurons();
+}
+//----------------------------------------------------------------------------
+const std::string &CurrentSourceVarReference::getTargetName() const
+{
+    return m_CS->getName();
 }
 //----------------------------------------------------------------------------
 const CurrentSource *CurrentSourceVarReference::getCurrentSource() const
@@ -68,6 +78,11 @@ PSMVarReference::PSMVarReference(const SynapseGroup *sg, const std::string &varN
 unsigned int PSMVarReference::getSize() const
 {
     return m_SG->getTrgNeuronGroup()->getNumNeurons();
+}
+//----------------------------------------------------------------------------
+const std::string &PSMVarReference::getTargetName() const
+{
+    return m_SG->getPSModelTargetName();
 }
 //----------------------------------------------------------------------------
 const SynapseGroup *PSMVarReference::getSynapseGroup() const 
@@ -110,6 +125,11 @@ size_t WUPreVarReference::getSize() const
     return m_SG->getSrcNeuronGroup()->getNumNeurons();
 }
 //----------------------------------------------------------------------------
+const std::string &WUPreVarReference::getTargetName() const
+{
+    return m_SG->getName();
+}
+//----------------------------------------------------------------------------
 const SynapseGroup *WUPreVarReference::getSynapseGroup() const 
 { 
     return m_SG; 
@@ -130,6 +150,11 @@ WUPostVarReference::WUPostVarReference(const SynapseGroup *sg, const std::string
 size_t WUPostVarReference::getSize() const
 {
     return m_SG->getSrcNeuronGroup()->getNumNeurons();
+}
+//----------------------------------------------------------------------------
+const std::string &WUPostVarReference::getTargetName() const
+{
+    return m_SG->getName();
 }
 //----------------------------------------------------------------------------
 const SynapseGroup *WUPostVarReference::getSynapseGroup() const 

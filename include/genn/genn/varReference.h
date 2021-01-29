@@ -58,12 +58,14 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const;
+    const std::string &getTargetName() const;
     const NeuronGroup *getNeuronGroup() const;
 
     //------------------------------------------------------------------------
     // Constants
     //------------------------------------------------------------------------
     static const std::string name;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -83,12 +85,14 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const;
+    const std::string &getTargetName() const;
     const CurrentSource *getCurrentSource() const;
 
     //------------------------------------------------------------------------
     // Constants
     //------------------------------------------------------------------------
     static const std::string name;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -108,12 +112,14 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const;
+    const std::string &getTargetName() const;
     const SynapseGroup *getSynapseGroup() const;
 
     //------------------------------------------------------------------------
     // Constants
     //------------------------------------------------------------------------
     static const std::string name;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -154,12 +160,14 @@ public:
     // Public API
     //------------------------------------------------------------------------
     size_t getSize() const;
+    const std::string &getTargetName() const;
     const SynapseGroup *getSynapseGroup() const;
 
     //------------------------------------------------------------------------
     // Constants
     //------------------------------------------------------------------------
     static const std::string name;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -179,12 +187,14 @@ public:
     // Public API
     //------------------------------------------------------------------------
     size_t getSize() const;
+    const std::string &getTargetName() const;
     const SynapseGroup *getSynapseGroup() const;
 
     //------------------------------------------------------------------------
     // Constants
     //------------------------------------------------------------------------
     static const std::string name;
+
 private:
     //------------------------------------------------------------------------
     // Members

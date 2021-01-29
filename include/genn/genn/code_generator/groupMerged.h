@@ -223,6 +223,20 @@ protected:
         }
     }
 
+    template<typename V>
+    void addVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
+    {
+        // Loop through variables
+        for(size_t v = 0; v < varReferences.size(); v++) {
+            addField(varReferences[v].type + "*", varReferences[v].name, 
+                     [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
+                     { 
+                         const auto varRef = getVarRefFn(g).at(v);
+                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                     });
+        }
+    }
+
     void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
@@ -1142,8 +1156,12 @@ public:
             [](const CustomUpdateInternal<V> &cg) { return cg.getDerivedParams(); },
             &CustomUpdateGroupMerged<V>::isDerivedParamHeterogeneous);
 
-        // Add pre and postsynaptic variables to struct
+        // Add variables to struct
         this->addVars(cm->getVars(), backend.getDeviceVarPrefix());
+
+        // Add variable references to struct
+        this->addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
+                               [](const CustomUpdateInternal<V> &cg) { return cg.getVarReferences(); });
 
         // Add EGPs to struct
         this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
