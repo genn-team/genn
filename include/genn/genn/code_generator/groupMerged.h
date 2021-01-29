@@ -9,6 +9,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "currentSourceInternal.h"
+#include "customUpdateInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
@@ -1113,4 +1114,68 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
+
+// ----------------------------------------------------------------------------
+// CustomUpdateGroupMerged
+//----------------------------------------------------------------------------
+template<typename V>
+class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal<V>>
+{
+public:
+    CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
+                            const std::vector<std::reference_wrapper<const CustomUpdateInternal<V>>> &groups)
+    :   GroupMerged<CustomUpdateInternal<V>>(index, precision, groups)
+    {
+        this->addField("unsigned int", "size",
+                       [](const CustomUpdateInternal<V> &c, size_t) { return std::to_string(c.getSize()); });
+
+        // Add heterogeneous custom update model parameters
+        const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
+        this->template addHeterogeneousParams<CustomUpdateGroupMerged<V>>(
+            cm->getParamNames(), "",
+            [](const CustomUpdateInternal<V> &cg) { return cg.getParams(); },
+            &CustomUpdateGroupMerged<V>::isParamHeterogeneous);
+
+        // Add heterogeneous weight update model derived parameters
+        this->template addHeterogeneousDerivedParams<CustomUpdateGroupMerged<V>>(
+            cm->getDerivedParams(), "",
+            [](const CustomUpdateInternal<V> &cg) { return cg.getDerivedParams(); },
+            &CustomUpdateGroupMerged<V>::isDerivedParamHeterogeneous);
+
+        // Add pre and postsynaptic variables to struct
+        this->addVars(cm->getVars(), backend.getDeviceVarPrefix());
+
+        // Add EGPs to struct
+        this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    bool isParamHeterogeneous(size_t index) const
+    {
+        return this->isParamValueHeterogeneous(index, [](const CustomUpdateInternal<V> &cg) { return cg.getParams(); });
+    }
+    
+    bool isDerivedParamHeterogeneous(size_t index) const
+    {
+        return this->isParamValueHeterogeneous(index, [](const CustomUpdateInternal<V> &cg) { return cg.getDerivedParams(); });
+    }
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        this->generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                                 runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+template<typename V>
+const std::string CustomUpdateGroupMerged<V>::name = V::name + "CustomUpdate";
 }   // namespace CodeGenerator

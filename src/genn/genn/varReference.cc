@@ -8,6 +8,8 @@
 //----------------------------------------------------------------------------
 // NeuronVarReference
 //----------------------------------------------------------------------------
+const std::string NeuronVarReference::name = "Neuron";
+//----------------------------------------------------------------------------
 NeuronVarReference::NeuronVarReference(const NeuronGroup *ng, const std::string &varName) 
 : m_NG(static_cast<const NeuronGroupInternal*>(ng))
 {
@@ -28,6 +30,8 @@ const NeuronGroup *NeuronVarReference::getNeuronGroup() const
 //----------------------------------------------------------------------------
 // CurrentSourceVarReference
 //----------------------------------------------------------------------------
+const std::string CurrentSourceVarReference::name = "CurrentSource";
+//----------------------------------------------------------------------------
 CurrentSourceVarReference::CurrentSourceVarReference(const CurrentSource *cs, const std::string &varName)
 : m_CS(static_cast<const CurrentSourceInternal*>(cs))
 {
@@ -47,6 +51,8 @@ const CurrentSource *CurrentSourceVarReference::getCurrentSource() const
 
 //----------------------------------------------------------------------------
 // PSMVarReference
+//----------------------------------------------------------------------------
+const std::string PSMVarReference::name = "PSM";
 //----------------------------------------------------------------------------
 PSMVarReference::PSMVarReference(const SynapseGroup *sg, const std::string &varName)
 : m_SG(static_cast<const SynapseGroupInternal*>(sg))
@@ -90,6 +96,8 @@ const SynapseGroup *WUVarReference::getSynapseGroup() const
 //----------------------------------------------------------------------------
 // WUPreVarReference
 //----------------------------------------------------------------------------
+const std::string WUPreVarReference::name = "WUPre";
+//----------------------------------------------------------------------------
 WUPreVarReference::WUPreVarReference(const SynapseGroup *sg, const std::string &varName)
 : m_SG(static_cast<const SynapseGroupInternal*>(sg))
 {
@@ -109,6 +117,8 @@ const SynapseGroup *WUPreVarReference::getSynapseGroup() const
 
 //----------------------------------------------------------------------------
 // WUPostVarReference
+//----------------------------------------------------------------------------
+const std::string WUPostVarReference::name = "WUPost";
 //----------------------------------------------------------------------------
 WUPostVarReference::WUPostVarReference(const SynapseGroup *sg, const std::string &varName)
 : m_SG(static_cast<const SynapseGroupInternal*>(sg))

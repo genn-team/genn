@@ -105,6 +105,13 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                            return a.canConnectivityHostInitBeMerged(b); 
                        });
 
+    LOGD_CODE_GEN << "Merging custom neuron update groups:";
+    for(const auto &g : model.getCustomNeuronUpdates()) {
+        createMergedGroups(model, backend, g.second, m_MergedCustomNeuronUpdateGroups,
+                           [](const CustomUpdateInternal<NeuronVarReference> &) { return true; },
+                           [](const CustomUpdateInternal<NeuronVarReference> &a, const CustomUpdateInternal<NeuronVarReference> &b) { return a.canBeMerged(b); });
+    }
+
     // Loop through merged neuron groups
     for(const auto &ng : m_MergedNeuronUpdateGroups) {
         // Add neuron support code
