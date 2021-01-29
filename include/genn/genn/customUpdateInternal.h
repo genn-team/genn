@@ -48,4 +48,5 @@ public:
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::canBeMerged;
     using CustomUpdateBase::canInitBeMerged;
+    using CustomUpdateWU::getSynapseGroup;
 };

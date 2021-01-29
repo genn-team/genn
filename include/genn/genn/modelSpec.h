@@ -122,6 +122,10 @@ public:
     typedef std::map<std::string, NeuronGroupInternal>::value_type NeuronGroupValueType;
     typedef std::map<std::string, SynapseGroupInternal>::value_type SynapseGroupValueType;
     typedef std::map<std::string, CurrentSourceInternal>::value_type CurrentSourceValueType;
+    
+    template<typename V>
+    using CustomUpdateMap = std::map<std::string, std::map<std::string, V>>;
+
     //typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
 
     ModelSpec();
@@ -532,7 +536,7 @@ public:
                                       const typename CustomUpdateModel::template VarReferences<WUVarReference> &varReferences)
     {
         // Add neuron group to map
-        auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
+        auto result = m_CustomWUUpdates[updateGroupName].emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, operation, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
@@ -615,8 +619,8 @@ protected:
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
     //! Get std::map containing named CustomUpdate objects in model
-    const std::map<std::string, CustomUpdateInternal<NeuronVarReference>> &getCustomNeuronUpdates() const { return m_CustomNeuronUpdates; }
-    const std::map<std::string, CustomUpdateWUInternal> & getCustomWUUpdates() const { return m_CustomWUUpdates; }
+    const CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>> &getCustomNeuronUpdates() const { return m_CustomNeuronUpdates; }
+    const CustomUpdateMap<CustomUpdateWUInternal> & getCustomWUUpdates() const { return m_CustomWUUpdates; }
 
 private:
     //--------------------------------------------------------------------------
@@ -630,7 +634,7 @@ private:
                                       std::map<std::string, CustomUpdateInternal<VarRef>> &container)
     {
         // Add neuron group to map
-        auto result = container.emplace(std::piecewise_construct,
+        auto result = container[updateGroupName].emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
@@ -662,9 +666,9 @@ private:
     //! Named local current sources
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
 
-    //! Named custom updates
-    std::map<std::string, CustomUpdateInternal<NeuronVarReference>> m_CustomNeuronUpdates;
-    std::map<std::string, CustomUpdateWUInternal> m_CustomWUUpdates;
+    //! Grouped named custom updates
+    CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>> m_CustomNeuronUpdates;
+    CustomUpdateMap<CustomUpdateWUInternal> m_CustomWUUpdates;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;

@@ -18,24 +18,11 @@ void CustomUpdateBase::setVarLocation(const std::string &varName, VarLocation lo
     m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
-void CustomUpdateBase::setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
-{
-    const size_t extraGlobalParamIndex = getCustomUpdateModel()->getExtraGlobalParamIndex(paramName);
-    if(!Utils::isTypePointer(getCustomUpdateModel()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
-        throw std::runtime_error("Only extra global parameters with a pointer type have a location");
-    }
-    m_ExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
-}
-//----------------------------------------------------------------------------
 VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
 {
     return m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)];
 }
 //----------------------------------------------------------------------------
-VarLocation CustomUpdateBase::getExtraGlobalParamLocation(const std::string &varName) const
-{
-    return m_ExtraGlobalParamLocation[getCustomUpdateModel()->getExtraGlobalParamIndex(varName)];
-}
 void CustomUpdateBase::initDerivedParams(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();
@@ -100,10 +87,24 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
                                const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_Operation(operation), m_VarReferences(varReferences)
+    m_VarReferences(varReferences), m_Operation(operation), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.front().getSynapseGroup()))
 {
+    if(varReferences.empty()) {
+        throw std::runtime_error("Custom update models must reference variables.");
+    }
+
     // Check variable reference types
     checkVarReferenceTypes(m_VarReferences);
+
+    // Give error if references point to different synapse groups
+    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                    [this](const WUVarReference &v) 
+                    { 
+                        return (v.getSynapseGroup() != m_VarReferences.front().getSynapseGroup()); 
+                    }))
+    {
+        throw std::runtime_error("All referenced variables must belong to the same synapse group.");
+    }
 
     // If this is a transpose operation
     if(m_Operation == Operation::UPDATE_TRANSPOSE) {
@@ -116,28 +117,5 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         {
             throw std::runtime_error("Custom updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
         }
-    }
-
-    // Give error if var references point to synapse groups with different connectivity
-    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                   [this](const WUVarReference &v)
-                   {
-                       const bool vSparse = (v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-                       const bool firstSparse = (m_VarReferences.front().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE);
-                       return (vSparse != firstSparse);
-                   }))
-    {
-        throw std::runtime_error("Variable references to weight update model variables must all be to populations with the same connectivity type.");
-    }
-
-    // Give error if any sizes differ
-    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                    [this](const WUVarReference &v) 
-                    { 
-                        return ((v.getPreSize() != m_VarReferences.front().getPreSize())
-                                || (v.getMaxRowLength() != m_VarReferences.front().getMaxRowLength())); 
-                    }))
-    {
-        throw std::runtime_error("All referenced variables must have the same size.");
     }
 }

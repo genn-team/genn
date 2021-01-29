@@ -120,8 +120,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    unsigned int getPreSize() const;
-    unsigned int getMaxRowLength() const;
     const SynapseGroup *getSynapseGroup() const;
 
 private:

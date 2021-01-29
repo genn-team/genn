@@ -26,11 +26,6 @@ public:
     /*! This is ignored for simulations on hardware with a single memory space */
     void setVarLocation(const std::string &varName, VarLocation loc);
 
-    //! Set location of extra global parameter
-    /*! This is ignored for simulations on hardware with a single memory space
-        and only applies to extra global parameters which are pointers. */
-    void setExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
-
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
@@ -48,15 +43,6 @@ public:
 
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(size_t index) const{ return m_VarLocation.at(index); }
-
-    //! Get location of custom update model extra global parameter by name
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(const std::string &paramName) const;
-
-    //! Get location of custom update model extra global parameter by omdex
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getExtraGlobalParamLocation(size_t index) const{ return m_ExtraGlobalParamLocation.at(index); }
-
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
@@ -139,6 +125,7 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     const std::vector<V> &getVarReferences() const{ return m_VarReferences;  }
+    unsigned int getSize() const { return m_Size; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
@@ -146,23 +133,29 @@ protected:
                  const std::vector<Models::VarInit> &varInitialisers, const std::vector<V> &varReferences, 
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-        m_VarReferences(varReferences)
+        m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize())
     {
+        if(varReferences.empty()) {
+            throw std::runtime_error("Custom update models must reference variables.");
+        }
+
         // Check variable reference types
         checkVarReferenceTypes(m_VarReferences);
 
         // Give error if any sizes differ
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [this](const V &v) { return v.getSize() != m_VarReferences.front().getSize(); }))
+                       [this](const V &v) { return v.getSize() != m_Size; }))
         {
             throw std::runtime_error("All referenced variables must have the same size.");
         }
     }
+
 private:
-     //------------------------------------------------------------------------
+    //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     const std::vector<V> m_VarReferences;
+    const unsigned int m_Size;
 };
 
 //------------------------------------------------------------------------
@@ -184,7 +177,6 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     Operation getOperation() const { return m_Operation; }
-
     const std::vector<WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
 
 protected:
@@ -193,10 +185,16 @@ protected:
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
+    //------------------------------------------------------------------------
+    // Protected const methods
+    //------------------------------------------------------------------------
+    const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
+
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const Operation m_Operation;
     const std::vector<WUVarReference> m_VarReferences;
+    const Operation m_Operation;
+    const SynapseGroupInternal *m_SynapseGroup;
 };

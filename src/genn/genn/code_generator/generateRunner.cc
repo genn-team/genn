@@ -418,6 +418,56 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
 
     }
 }
+//-------------------------------------------------------------------------
+template<typename V, typename S>
+void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                     CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
+                     CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerExtraGlobalParamFunc,
+                     CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const ModelSpec::CustomUpdateMap<V> &customUpdates,
+                     MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
+{
+    // Loop through update groups
+    for(const auto &g : customUpdates) {
+        // Loop through customupdates
+        for(const auto &c : g.second) {
+            const auto cuModel = c.second.getCustomUpdateModel();
+            const auto cuVars = cuModel->getVars();
+
+            std::vector<std::string> customUpdateStatePushPullFunctions;
+            for(size_t i = 0; i < cuVars.size(); i++) {
+                const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
+                const bool autoInitialized = !varInitSnippet->getCode().empty();
+                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                   runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),
+                                   autoInitialized, getSizeFn(c.second), customUpdateStatePushPullFunctions);
+
+                // Loop through EGPs required to initialize custom update variable
+                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerExtraGlobalParamFunc,
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + cuVars[i].name + c.first,
+                                        true, VarLocation::HOST_DEVICE);
+                }
+            }
+
+            // Add helper function to push and pull entire custom update state
+            if(!backend.getPreferences().automaticCopy) {
+                genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                                 c.first, backend.getPreferences().generateEmptyStatePushPull,
+                                 customUpdateStatePushPullFunctions, statePushPullFunctions);
+            }
+
+            const auto csExtraGlobalParams = cuModel->getExtraGlobalParams();
+            for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
+                genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                    runnerVarDecl, runnerExtraGlobalParamFunc,
+                                    csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + c.first,
+                                    true, VarLocation::HOST_DEVICE);
+            }
+        }
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -967,6 +1017,26 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    allVarStreams << "// custom update variables" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    genCustomUpdate(modelMerged, backend,
+                    definitionsVar, definitionsFunc, definitionsInternalVar,
+                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                    runnerPushFunc, runnerPullFunc, model.getCustomNeuronUpdates(),
+                    mem, statePushPullFunctions, [](const CustomUpdateInternal<NeuronVarReference> &c) { return c.getSize(); });
+
+    genCustomUpdate(modelMerged, backend,
+                    definitionsVar, definitionsFunc, definitionsInternalVar,
+                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                    runnerPushFunc, runnerPullFunc, model.getCustomWUUpdates(),
+                    mem, statePushPullFunctions, 
+                    [&backend](const CustomUpdateWUInternal &c) 
+                    { 
+                        return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*c.getSynapseGroup()); 
+                    });
+    allVarStreams << std::endl;
+
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// postsynaptic variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
@@ -1098,7 +1168,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         const bool proceduralWeights = (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         std::vector<std::string> synapseGroupStatePushPullFunctions;
         if (!s.second.isWeightSharingSlave() && (individualWeights || proceduralWeights)) {
-            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
+            const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
 
             const auto wuVars = wu->getVars();
             for(size_t i = 0; i < wuVars.size(); i++) {

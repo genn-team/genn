@@ -82,16 +82,6 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
     setVar(wum->getVarIndex(varName), wum->getVars());
 }
 //----------------------------------------------------------------------------
-unsigned int WUVarReference::getPreSize() const
-{
-    return m_SG->getSrcNeuronGroup()->getNumNeurons();
-}
-//----------------------------------------------------------------------------
-unsigned int WUVarReference::getMaxRowLength() const
-{
-    return m_SG->getMaxConnections();
-}
-//----------------------------------------------------------------------------
 const SynapseGroup *WUVarReference::getSynapseGroup() const 
 { 
     return m_SG; 
