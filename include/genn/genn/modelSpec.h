@@ -124,7 +124,7 @@ public:
     typedef std::map<std::string, CurrentSourceInternal>::value_type CurrentSourceValueType;
     
     template<typename V>
-    using CustomUpdateMap = std::map<std::string, std::map<std::string, V>>;
+    using CustomUpdateMap = std::map<std::string, V>;
 
     //typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
 
@@ -536,7 +536,7 @@ public:
                                       const typename CustomUpdateModel::template VarReferences<WUVarReference> &varReferences)
     {
         // Add neuron group to map
-        auto result = m_CustomWUUpdates[updateGroupName].emplace(std::piecewise_construct,
+        auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, operation, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
@@ -634,7 +634,7 @@ private:
                                       std::map<std::string, CustomUpdateInternal<VarRef>> &container)
     {
         // Add neuron group to map
-        auto result = container[updateGroupName].emplace(std::piecewise_construct,
+        auto result = container.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),

@@ -427,45 +427,42 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
                      CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const ModelSpec::CustomUpdateMap<V> &customUpdates,
                      MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
 {
-    // Loop through update groups
-    for(const auto &g : customUpdates) {
-        // Loop through customupdates
-        for(const auto &c : g.second) {
-            const auto cuModel = c.second.getCustomUpdateModel();
-            const auto cuVars = cuModel->getVars();
+    // Loop through customupdates
+    for(const auto &c : customUpdates) {
+        const auto cuModel = c.second.getCustomUpdateModel();
+        const auto cuVars = cuModel->getVars();
 
-            std::vector<std::string> customUpdateStatePushPullFunctions;
-            for(size_t i = 0; i < cuVars.size(); i++) {
-                const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
-                const bool autoInitialized = !varInitSnippet->getCode().empty();
-                mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                   runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),
-                                   autoInitialized, getSizeFn(c.second), customUpdateStatePushPullFunctions);
+        std::vector<std::string> customUpdateStatePushPullFunctions;
+        for(size_t i = 0; i < cuVars.size(); i++) {
+            const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
+            const bool autoInitialized = !varInitSnippet->getCode().empty();
+            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),
+                                autoInitialized, getSizeFn(c.second), customUpdateStatePushPullFunctions);
 
-                // Loop through EGPs required to initialize custom update variable
-                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                        runnerVarDecl, runnerExtraGlobalParamFunc,
-                                        extraGlobalParams[e].type, extraGlobalParams[e].name + cuVars[i].name + c.first,
-                                        true, VarLocation::HOST_DEVICE);
-                }
-            }
-
-            // Add helper function to push and pull entire custom update state
-            if(!backend.getPreferences().automaticCopy) {
-                genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
-                                 c.first, backend.getPreferences().generateEmptyStatePushPull,
-                                 customUpdateStatePushPullFunctions, statePushPullFunctions);
-            }
-
-            const auto csExtraGlobalParams = cuModel->getExtraGlobalParams();
-            for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
+            // Loop through EGPs required to initialize custom update variable
+            const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+            for(size_t e = 0; e < extraGlobalParams.size(); e++) {
                 genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                     runnerVarDecl, runnerExtraGlobalParamFunc,
-                                    csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + c.first,
+                                    extraGlobalParams[e].type, extraGlobalParams[e].name + cuVars[i].name + c.first,
                                     true, VarLocation::HOST_DEVICE);
             }
+        }
+
+        // Add helper function to push and pull entire custom update state
+        if(!backend.getPreferences().automaticCopy) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                                c.first, backend.getPreferences().generateEmptyStatePushPull,
+                                customUpdateStatePushPullFunctions, statePushPullFunctions);
+        }
+
+        const auto csExtraGlobalParams = cuModel->getExtraGlobalParams();
+        for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                runnerVarDecl, runnerExtraGlobalParamFunc,
+                                csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + c.first,
+                                true, VarLocation::HOST_DEVICE);
         }
     }
 }
@@ -1603,10 +1600,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     std::set<std::string> customUpdateGroups;
     std::transform(model.getCustomNeuronUpdates().cbegin(), model.getCustomNeuronUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>>::value_type &v) { return v.first; });
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>>::value_type &v) { return v.second.getUpdateGroupName(); });
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.first; });
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
     
     // Generate function definitions for each custom update
     for(const auto &g : customUpdateGroups) {

@@ -30,7 +30,7 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     const std::string &getName() const{ return m_Name; }
-    const std::string &getUpdateGroupName() const { return m_Name; }
+    const std::string &getUpdateGroupName() const { return m_UpdateGroupName; }
 
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
