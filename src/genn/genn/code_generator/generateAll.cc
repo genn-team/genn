@@ -16,6 +16,7 @@
 
 // Code generator includes
 #include "code_generator/codeStream.h"
+#include "code_generator/generateCustomUpdate.h"
 #include "code_generator/generateInit.h"
 #include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateSupportCode.h"
@@ -63,6 +64,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Open output file streams for generated code files
     std::ofstream definitionsStream((outputPath / "definitions.h").str());
     std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
+    std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
     std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
     std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
     std::ofstream initStream((outputPath / "init.cc").str());
@@ -71,6 +73,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Wrap output file streams in CodeStreams for formatting
     CodeStream definitions(definitionsStream);
     CodeStream definitionsInternal(definitionsInternalStream);
+    CodeStream customUpdate(customUpdateStream);
     CodeStream neuronUpdate(neuronUpdateStream);
     CodeStream synapseUpdate(synapseUpdateStream);
     CodeStream init(initStream);
@@ -85,6 +88,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
     generateSynapseUpdate(synapseUpdate, memorySpaces, modelMerged, backend);
     generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
+    generateCustomUpdate(customUpdate, memorySpaces, modelMerged, backend);
     generateInit(init, memorySpaces, modelMerged, backend);
 
     // Generate support code module if the backend supports namespaces
@@ -103,7 +107,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     }
 
     // Create basic list of modules
-    std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};
+    std::vector<std::string> modules = {"customUpdate", "neuronUpdate", "synapseUpdate", "init"};
 
     // If we aren't building standalone modules
     if(!standaloneModules) {

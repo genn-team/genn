@@ -24,6 +24,7 @@
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\generateAll.cc" />
+    <ClCompile Include="code_generator\generateCustomUpdate.cc" />
     <ClCompile Include="code_generator\generateInit.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
@@ -63,6 +64,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateAll.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateCustomUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateInit.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
