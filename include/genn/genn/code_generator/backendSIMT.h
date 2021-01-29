@@ -30,7 +30,7 @@ enum Kernel
     KernelInitializeSparse,
     KernelPreNeuronReset,
     KernelPreSynapseReset,
-    KernelCustomNeuronUpdate,
+    KernelCustomUpdate,
     KernelMax
 };
 
@@ -177,6 +177,26 @@ protected:
                                      PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const;
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                   SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
+
+    template<typename V>
+    void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs,
+                               const std::vector<CustomUpdateGroupMerged<V>> &groups, 
+                               CustomUpdateGroupMergedHandler<V> &customUpdateHandler, size_t &idStart) const
+    {
+        genParallelGroup<CustomUpdateGroupMerged<V>>(
+            os, kernelSubs, groups, idStart,
+            [this](const CustomUpdateInternal<V> &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
+            [this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged<V> &cg, Substitutions &popSubs)
+            {
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << popSubs["id"] << " < group->size)";
+                {
+                    CodeStream::Scope b(os);
+
+                    customUpdateHandler(os, cg, popSubs);
+                }
+            });
+    }
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,

@@ -517,6 +517,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                               HostHandler preambleHandler, CustomUpdateGroupMergedHandler<NeuronVarReference> customNeuronUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
+    const ModelSpecInternal &model = modelMerged.getModel();
+
     // Generate struct definitions
     modelMerged.genMergedCustomNeuronUpdateStructs(os, *this);
     
@@ -528,8 +530,52 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     // Generate data structure for accessing merged groups
     size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomNeuronUpdate), totalConstMem, modelMerged.getMergedCustomNeuronUpdateGroups(),
+    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomNeuronUpdateGroups(),
                                   [this](const CustomUpdateInternal<NeuronVarReference> &cg){ return cg.getSize(); });
+
+    // Build set containing union of all custom update groupsnames
+    std::set<std::string> customUpdateGroups;
+    std::transform(model.getCustomNeuronUpdates().cbegin(), model.getCustomNeuronUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>>::value_type &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
+
+    // Loop through custom update groups
+    for(const auto &g : customUpdateGroups) {
+        // Generate kernel
+        size_t idCustomUpdateStart = 0;
+        os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
+            os << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+           
+            os << "// ------------------------------------------------------------------------" << std::endl;
+            os << "// Custom neuron variable updates" << std::endl;
+            genCustomUpdateKernel(os, kernelSubs, modelMerged.getMergedCustomNeuronUpdateGroups(), customNeuronUpdateHandler, idCustomUpdateStart);
+        }
+
+        os << "void update" << g << "()";
+        {
+            CodeStream::Scope b(os);
+
+            // Push any required EGPs
+            pushEGPHandler(os);
+
+            // Launch custom update kernel if required
+            if(idCustomUpdateStart > 0) {
+                CodeStream::Scope b(os);
+                genKernelDimensions(os, KernelCustomUpdate, idCustomUpdateStart, 1);
+                os << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+    }
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,

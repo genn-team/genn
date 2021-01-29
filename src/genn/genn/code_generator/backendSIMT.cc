@@ -43,8 +43,8 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "initializeKernel",
     "initializeSparseKernel",
     "preNeuronResetKernel",
-    "preSynapseResetKernel"
-    "updateCustomNeuron"};
+    "preSynapseResetKernel",
+    "updateCustom"};
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategySIMT::PreSpan,
