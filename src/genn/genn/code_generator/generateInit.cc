@@ -471,6 +471,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                     popSubs.addVarSubstitution("value", "initVal");
                     std::string code = varInit.getSnippet()->getCode();
                     //popSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
+                    popSubs.apply(code);
                     code = ensureFtype(code, model.getPrecision());
                     os << code << std::endl;
 
