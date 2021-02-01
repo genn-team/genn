@@ -75,16 +75,51 @@ VarReference::VarReference(GetTargetNameFn getTargetNameFn, unsigned int size,
 //----------------------------------------------------------------------------
 // WUVarReference
 //----------------------------------------------------------------------------
-WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varName)
+WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varName,
+                               const SynapseGroup *transposeSG, const std::string &transposeVarName)
 :   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), [sg]() { return sg->getName(); }),
-    m_SG(static_cast<const SynapseGroupInternal*>(sg))
+    m_SG(static_cast<const SynapseGroupInternal*>(sg)), m_TransposeSG(static_cast<const SynapseGroupInternal*>(transposeSG)),
+    m_TransposeVarIndex((transposeSG == nullptr) ? 0 : transposeSG->getWUModel()->getVarIndex(transposeVarName)),
+    m_TransposeVar((transposeSG == nullptr) ? Models::Base::Var() : transposeSG->getWUModel()->getVars().at(m_TransposeVarIndex)),
+    m_GetTransposeTargetName((transposeSG == nullptr) ? GetTargetNameFn() : [transposeSG]() { return transposeSG->getName(); })
 {
     if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
         throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
+    }
+
+    // If a transpose synapse group is specified
+    if(m_TransposeSG != nullptr) {
+        // Check that tranpose group also has individual variables
+        if(!(m_TransposeSG->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+            throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
+        }
+
+        // Check that both the tranpose and main synapse groups have dense connectivity
+        if(!(m_TransposeSG->getMatrixType() & SynapseMatrixConnectivity::DENSE) || !(m_SG->getMatrixType() & SynapseMatrixConnectivity::DENSE)) {
+            throw std::runtime_error("Tranpose updates can only be performed on DENSE weight update model variables.");
+        }
+
+        // Check that sizes of transpose and main synapse groups match
+        if((m_TransposeSG->getSrcNeuronGroup()->getNumNeurons() != m_SG->getTrgNeuronGroup()->getNumNeurons())
+           || (m_TransposeSG->getTrgNeuronGroup()->getNumNeurons() != m_SG->getSrcNeuronGroup()->getNumNeurons()))
+        {
+            throw std::runtime_error("Transpose updates can only be performed on connections between appropriately sized neuron groups.");
+        }
+
+        // Check types
+        if(getVar().type != getTransposeVar().type) {
+            throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
+        }
+
     }
 }
 //----------------------------------------------------------------------------
 const SynapseGroup *WUVarReference::getSynapseGroup() const 
 { 
     return m_SG; 
+}
+//----------------------------------------------------------------------------
+const SynapseGroup *WUVarReference::getTransposeSynapseGroup() const 
+{ 
+    return m_TransposeSG; 
 }

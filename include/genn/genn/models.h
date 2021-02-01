@@ -227,18 +227,28 @@ using VarReferenceContainerBase = Snippet::InitialiserContainerBase<VarReference
 class WUVarReference : public VarReferenceBase
 {
 public:
-    WUVarReference(const SynapseGroup *sg, const std::string &varName);
+    WUVarReference(const SynapseGroup *sg, const std::string &varName,
+                   const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     const SynapseGroup *getSynapseGroup() const;
+    
+    const SynapseGroup *getTransposeSynapseGroup() const;
+    const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
+    size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
+    std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     const SynapseGroupInternal *m_SG;
+    const SynapseGroupInternal *m_TransposeSG;
+    const size_t m_TransposeVarIndex;
+    const Models::Base::Var m_TransposeVar;
+    GetTargetNameFn m_GetTransposeTargetName;
 };
 
 //----------------------------------------------------------------------------

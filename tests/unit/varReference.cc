@@ -29,6 +29,16 @@ public:
         {"init", [](const std::vector<double> &pars, double) { return (std::exp(1) / pars[0]); }}});
 };
 IMPLEMENT_MODEL(AlphaCurr);
+
+class StaticPulseUInt : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+
+    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+};
 }
 
 //--------------------------------------------------------------------------
@@ -165,6 +175,84 @@ TEST(VarReference, WUM)
     // Test error if GLOBALG
     try {
         auto wuG2 = createWUVarRef(sg2, "x");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(VarReference, WUMTranspose)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+
+    auto *sgForward = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0},
+        {}, {});
+
+    auto *sgBackwardIndividualG = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Post", "Pre",
+        {}, {1.0},
+        {}, {});
+
+    auto *sgBackwardGlobalG = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses3", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+        "Post", "Pre",
+        {}, {1.0},
+        {}, {});
+    
+    auto *sgBackwardBadShape = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses4", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Pre",
+        {}, {1.0},
+        {}, {});
+    
+    auto *sgBackwardSparse = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses5", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+        "Post", "Pre",
+        {}, {1.0},
+        {}, {});
+
+    // Finalize model
+    model.finalize();
+
+    auto wuG1 = createWUVarRef(sgForward, "g", sgBackwardIndividualG, "g");
+
+    // Test error if transpose varaible doesn't exist
+    try {
+        auto wuMagic = createWUVarRef(sgForward, "g", sgBackwardIndividualG, "Magic");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Test error if GLOBALG
+    try {
+        auto wuG2 = createWUVarRef(sgForward, "g", sgBackwardGlobalG, "g");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Test error if shapes don't match
+    try {
+        auto wuG2 = createWUVarRef(sgForward, "g", sgBackwardBadShape, "g");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Test error if transpose is sparse
+    try {
+        auto wuG2 = createWUVarRef(sgForward, "g", sgBackwardSparse, "g");
         FAIL();
     }
     catch(const std::runtime_error &) {
