@@ -153,7 +153,6 @@ TEST(VarReference, WUM)
     model.finalize();
 
     auto wuG1 = createWUVarRef(sg1, "g");
-    ASSERT_EQ(wuG1.getPreSize(), 10);
 
     // Test error if variable doesn't exist
     try {
