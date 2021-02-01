@@ -117,6 +117,12 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         groupSizes[KernelCustomUpdate].push_back(c.second.getSize());
     }
 
+     // Loop through custom updates
+    for(const auto &c : model.getCustomWUUpdates()) {
+        // Add size of custom update to vector of custom neuron update kernels
+        groupSizes[KernelCustomUpdateWU].push_back(Backend::getNumCustomUpdateWUThreads(c.second));
+    }
+
     // Loop through synapse groups
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
@@ -528,6 +534,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
         // **HACK**
         cudaBlockSize[KernelCustomUpdate] = 32;
+        cudaBlockSize[KernelCustomUpdateWU] = 32;
 
         // Create backend
         return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
@@ -551,6 +558,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
             // **HACK**
             cudaBlockSize[KernelCustomUpdate] = 32;
+            cudaBlockSize[KernelCustomUpdateWU] = 32;
 
             // Create backend
             return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
