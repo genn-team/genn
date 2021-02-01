@@ -23,8 +23,9 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
+template<typename C>
 void addCustomUpdateSubstitutions(CodeStream &os, Substitutions &baseSubs, 
-                                  const CustomUpdateGroupMerged &cg, const ModelSpecMerged &modelMerged)
+                                  const C &cg, const ModelSpecMerged &modelMerged)
 {
     Substitutions updateSubs(&baseSubs);
 
@@ -63,8 +64,13 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
             // Generate functions to push merged neuron group structures
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
         },
-        // Custom neuron update handler
+        // Custom update handler
         [&modelMerged](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+        {
+            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged);
+        },
+        // Custom weight update handler
+        [&modelMerged](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
             addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged);
         },

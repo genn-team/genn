@@ -105,10 +105,15 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                            return a.canConnectivityHostInitBeMerged(b); 
                        });
 
-    LOGD_CODE_GEN << "Merging custom neuron update groups:";
+    LOGD_CODE_GEN << "Merging custom update groups:";
     createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
                         [](const CustomUpdateInternal &) { return true; },
                         [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canBeMerged(b); });
+
+    LOGD_CODE_GEN << "Merging custom weight update update groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
+                       [](const CustomUpdateWUInternal &) { return true; },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });
 
     // Loop through merged neuron groups
     for(const auto &ng : m_MergedNeuronUpdateGroups) {

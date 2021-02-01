@@ -1533,3 +1533,68 @@ bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
 {
     return isParamValueHeterogeneous(index, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
+
+// ----------------------------------------------------------------------------
+// CodeGenerator::CustomUpdateWUGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
+//----------------------------------------------------------------------------
+CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                     const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+:   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
+{
+    addField("unsigned int", "rowStride",
+             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             { 
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
+             });
+    
+
+    addField("unsigned int", "numSrcNeurons",
+             [](const CustomUpdateWUInternal &cg, size_t) 
+             {
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
+             });
+
+    addField("unsigned int", "numTrgNeurons",
+             [](const CustomUpdateWUInternal &cg, size_t)
+             { 
+                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                 return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+             });
+
+    // Add heterogeneous custom update model parameters
+    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    addHeterogeneousParams<CustomUpdateWUGroupMerged>(
+        cm->getParamNames(), "",
+        [](const CustomUpdateWUInternal &cg) { return cg.getParams(); },
+        &CustomUpdateWUGroupMerged::isParamHeterogeneous);
+
+    // Add heterogeneous weight update model derived parameters
+    addHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
+        cm->getDerivedParams(), "",
+        [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); },
+        &CustomUpdateWUGroupMerged::isDerivedParamHeterogeneous);
+
+    // Add variables to struct
+    addVars(cm->getVars(), backend.getDeviceVarPrefix());
+
+    // Add variable references to struct
+    addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
+                    [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
+
+    // Add EGPs to struct
+    this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateWUGroupMerged::isParamHeterogeneous(size_t index) const
+{
+    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateWUGroupMerged::isDerivedParamHeterogeneous(size_t index) const
+{
+    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
+}

@@ -19,6 +19,8 @@
 #include "variableMode.h"
 
 // Forward declarations
+class CustomUpdateInternal;
+class CustomUpdateWUInternal;
 class NeuronGroupInternal;
 class SynapseGroupInternal;
 
@@ -36,6 +38,7 @@ namespace CodeGenerator
     class SynapseDenseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
     class CustomUpdateGroupMerged;
+    class CustomUpdateWUGroupMerged;
 }
 
 //--------------------------------------------------------------------------
@@ -149,7 +152,8 @@ public:
     typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
-    using CustomUpdateGroupMergedHandler = GroupHandler<CustomUpdateGroupMerged>;
+    typedef GroupHandler<CustomUpdateGroupMerged> CustomUpdateGroupMergedHandler;
+    typedef GroupHandler<CustomUpdateWUGroupMerged> CustomUpdateWUGroupMergedHandler;
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
@@ -213,7 +217,7 @@ public:
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
     virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                  HostHandler preambleHandler, CustomUpdateGroupMergedHandler customNeuronUpdateHandler,
-                                 HostHandler pushEGPHandler) const = 0;
+                                 CustomUpdateWUGroupMergedHandler customWUDenseUpdateHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to

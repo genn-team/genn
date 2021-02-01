@@ -124,10 +124,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     checkVarReferenceTypes(m_VarReferences);
 
     // Give error if references point to different synapse groups
+    // **NOTE** this could be relaxed for dense
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                     [this](const Models::WUVarReference &v) 
                     { 
-                        return (v.getSynapseGroup() != m_VarReferences.front().getSynapseGroup()); 
+                        return (v.getSynapseGroup() != m_SynapseGroup); 
                     }))
     {
         throw std::runtime_error("All referenced variables must belong to the same synapse group.");
@@ -136,6 +137,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     // If this is a transpose operation
     if(m_Operation == Operation::UPDATE_TRANSPOSE) {
         // Give error if any of the variable references aren't dense
+        // **NOTE** there's no reason NOT to implement sparse transpose
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                        [](const Models::WUVarReference &v) 
                        {
@@ -145,4 +147,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
             throw std::runtime_error("Custom updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
         }
     }
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
+{
+    return (CustomUpdateBase::canBeMerged(other)
+            && (getOperation() == other.getOperation())
+            && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType())));
 }

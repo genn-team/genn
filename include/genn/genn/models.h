@@ -162,10 +162,16 @@ public:
     //------------------------------------------------------------------------
     const Models::Base::Var &getVar() const { return m_Var; }
     size_t getVarIndex() const { return m_VarIndex; }
+    std::string getTargetName() const { return m_GetTargetName(); }
 
 protected:
-    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec)
-    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex))
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef std::function<std::string(void)> GetTargetNameFn;
+
+    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetName)
+    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex)), m_GetTargetName(getTargetName)
     {}
 
 private:
@@ -174,6 +180,7 @@ private:
     //------------------------------------------------------------------------
     const size_t m_VarIndex;
     const Models::Base::Var m_Var;
+    GetTargetNameFn m_GetTargetName;
 };
 
 //----------------------------------------------------------------------------
@@ -186,8 +193,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
-    std::string getTargetName() const { return m_GetTargetNameFn(); }
-
+    
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
@@ -198,11 +204,6 @@ public:
     static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
     
 private:
-    //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    typedef std::function<std::string(void)> GetTargetNameFn;
-
     VarReference(const NeuronGroupInternal *ng, const std::string &varName);
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
     VarReference(GetTargetNameFn getTargetNameFn, unsigned int size, 
@@ -212,7 +213,6 @@ private:
     // Members
     //------------------------------------------------------------------------
     const unsigned int m_Size;
-    GetTargetNameFn m_GetTargetNameFn;
 };
 
 //----------------------------------------------------------------------------

@@ -126,8 +126,11 @@ public:
     //! Merged synapse groups which require host code to initialise their synaptic connectivity
     const std::vector<SynapseConnectivityHostInitGroupMerged> &getMergedSynapseConnectivityHostInitGroups() const{ return m_MergedSynapseConnectivityHostInitGroups; }
 
-    //! Merged custom updates of neuron variables
+    //! Merged custom updates of variables
     const std::vector<CustomUpdateGroupMerged> &getMergedCustomUpdateGroups() const { return m_MergedCustomUpdateGroups; }
+
+    //! Merged custom updates of weight update model variables
+    const std::vector<CustomUpdateWUGroupMerged> &getMergedCustomUpdateWUGroups() const { return m_MergedCustomUpdateWUGroups; }
 
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
     void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }
@@ -141,6 +144,7 @@ public:
     void genMergedSynapseDendriticDelayUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDendriticDelayUpdateGroups); }
     void genMergedSynapseConnectivityHostInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityHostInitGroups); }
     void genMergedCustomUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateGroups); }
+    void genMergedCustomUpdateWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateWUGroups); }
 
     void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
 
@@ -356,6 +360,9 @@ private:
 
     //! Merged custom update
     std::vector<CustomUpdateGroupMerged> m_MergedCustomUpdateGroups;
+
+    //! Merged custom weight update
+    std::vector<CustomUpdateWUGroupMerged> m_MergedCustomUpdateWUGroups;
 
     //! Unique support code strings for neuron update
     SupportCodeMerged m_NeuronUpdateSupportCode;

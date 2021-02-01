@@ -515,23 +515,33 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 //--------------------------------------------------------------------------
 void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                               HostHandler preambleHandler, CustomUpdateGroupMergedHandler customUpdateHandler,
-                              HostHandler pushEGPHandler) const
+                              CustomUpdateWUGroupMergedHandler customWUDenseUpdateHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
+    modelMerged.genMergedCustomUpdateWUStructs(os, *this);
     
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups(), memorySpaces);
     
     // Generate preamble
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
-    size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
+    // **NOTE** constant cache is preferentially given to neuron and synapse groups as, typically, they are launched more often 
+    // than custom update kernels so subtract constant memory requirements of synapse group start ids from total constant memory
+    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
                                   [this](const CustomUpdateInternal &cg){ return cg.getSize(); });
+    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdateWU), totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
+                                  [this](const CustomUpdateWUInternal &cg){ return getNumCustomUpdateWUThreads(cg); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
@@ -556,8 +566,12 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
            
             os << "// ------------------------------------------------------------------------" << std::endl;
-            os << "// Custom neuron variable updates" << std::endl;
+            os << "// Custom updates" << std::endl;
             genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
+
+            os << "// ------------------------------------------------------------------------" << std::endl;
+            os << "// Custom dense WU updates" << std::endl;
+            genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUDenseUpdateHandler, idCustomUpdateStart);
         }
 
         os << "void update" << g << "()";

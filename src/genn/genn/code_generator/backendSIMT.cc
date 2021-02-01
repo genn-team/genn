@@ -44,7 +44,8 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "initializeSparseKernel",
     "preNeuronResetKernel",
     "preSynapseResetKernel",
-    "updateCustom"};
+    "customUpdate"
+    "customUpdateWU"};
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategySIMT::PreSpan,
@@ -183,6 +184,19 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
     }
     else {
         return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg)
+{
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(cg.getSynapseGroup());
+
+    if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        assert(false);
+        return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections();
+    }
+    else {
+        return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
     }
 }
 //--------------------------------------------------------------------------
@@ -838,7 +852,52 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     customUpdateHandler(os, cg, popSubs);
                 }
             });
-    }
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                          const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const
+{
+    genParallelGroup<CustomUpdateWUGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateWUThreads(cg), getKernelBlockSize(KernelCustomUpdateWU)); },
+        [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
+        {
+            const SynapseGroup *archetypeSG = cg.getArchetype().getSynapseGroup();
+
+            // Generate index calculation code
+            // **TODO** batch offsets
+            //const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            //genSynapseIndexCalculation(os, cg, 1/*batchSize*/);
+
+            Substitutions synSubs(&popSubs);
+
+            if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                os << "if (" << popSubs["id"] << " < group->synRemap[0])";
+            }
+            else {
+                os << "if (" << popSubs["id"] << " < (group->numSrcNeurons * group->numTrgNeurons))";
+            }
+            {
+                CodeStream::Scope b(os);
+                if(archetypeSG->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                    // Determine synapse and presynaptic indices for this thread
+                    os << "const unsigned int s = group->synRemap[1 + " << popSubs["id"] << "];" << std::endl;
+
+                    synSubs.addVarSubstitution("id_pre", "(s / group->rowStride)");
+                    synSubs.addVarSubstitution("id_post", "group->ind[s]");
+                    synSubs.addVarSubstitution("id_syn", "s");
+                }
+                else {
+                    // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
+                    synSubs.addVarSubstitution("id_pre", "(" + popSubs["id"] + " / group->rowStride)");
+                    synSubs.addVarSubstitution("id_post", "(" + popSubs["id"] + " % group->rowStride)");
+                    synSubs.addVarSubstitution("id_syn", popSubs["id"]);
+                }
+
+                customUpdateWUHandler(os, cg, synSubs);
+            }
+        });
+}
 //--------------------------------------------------------------------------
 void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                       NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,

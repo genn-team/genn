@@ -171,6 +171,10 @@ protected:
     //------------------------------------------------------------------------
     const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
+    //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canBeMerged(const CustomUpdateWU &other) const;
+
 private:
     //------------------------------------------------------------------------
     // Members

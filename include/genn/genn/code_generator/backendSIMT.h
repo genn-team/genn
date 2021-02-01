@@ -31,6 +31,7 @@ enum Kernel
     KernelPreNeuronReset,
     KernelPreSynapseReset,
     KernelCustomUpdate,
+    KernelCustomUpdateWU,
     KernelMax
 };
 
@@ -150,6 +151,7 @@ public:
     static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
+    static size_t getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg);
     static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
 
     //! Register a new presynaptic update strategy
@@ -180,6 +182,9 @@ protected:
 
     void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const;
+
+    void genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                 const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const;
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,

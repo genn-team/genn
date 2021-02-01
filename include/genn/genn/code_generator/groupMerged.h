@@ -1158,4 +1158,33 @@ public:
     static const std::string name;
 };
 
+// ----------------------------------------------------------------------------
+// CustomUpdateWUGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomUpdateWUGroupMerged : public GroupMerged<CustomUpdateWUInternal>
+{
+public:
+    CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    bool isParamHeterogeneous(size_t index) const;
+    bool isDerivedParamHeterogeneous(size_t index) const;
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
 }   // namespace CodeGenerator
