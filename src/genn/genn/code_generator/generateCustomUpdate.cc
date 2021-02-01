@@ -63,6 +63,7 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
         {
             // Generate functions to push merged neuron group structures
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
         },
         // Custom update handler
         [&modelMerged](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
@@ -78,6 +79,7 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
         // **TODO** this needs to be per-update group
         [&backend, &modelMerged](CodeStream &os)
         {
-            modelMerged.genScalarEGPPush(os, "NeuronCustomUpdate", backend);
+            modelMerged.genScalarEGPPush(os, "CustomUpdate", backend);
+            modelMerged.genScalarEGPPush(os, "CustomUpdateWU", backend);
         });
 }
