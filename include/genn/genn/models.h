@@ -186,7 +186,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
-    const std::string &getTargetName() const { return m_GetTargetNameFn(); }
+    std::string getTargetName() const { return m_GetTargetNameFn(); }
 
     //------------------------------------------------------------------------
     // Static API
@@ -201,7 +201,7 @@ private:
     //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
-    typedef std::function<const std::string &(void)> GetTargetNameFn;
+    typedef std::function<std::string(void)> GetTargetNameFn;
 
     VarReference(const NeuronGroupInternal *ng, const std::string &varName);
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
