@@ -514,30 +514,30 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 }
 //--------------------------------------------------------------------------
 void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                              HostHandler preambleHandler, CustomUpdateGroupMergedHandler<NeuronVarReference> customNeuronUpdateHandler,
+                              HostHandler preambleHandler, CustomUpdateGroupMergedHandler customUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
-    modelMerged.genMergedCustomNeuronUpdateStructs(os, *this);
+    modelMerged.genMergedCustomUpdateStructs(os, *this);
     
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomNeuronUpdateGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups(), memorySpaces);
     
     // Generate preamble
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
     size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomNeuronUpdateGroups(),
-                                  [this](const CustomUpdateInternal<NeuronVarReference> &cg){ return cg.getSize(); });
+    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
+                                  [this](const CustomUpdateInternal &cg){ return cg.getSize(); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
-    std::transform(model.getCustomNeuronUpdates().cbegin(), model.getCustomNeuronUpdates().cend(),
+    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>>::value_type &v) { return v.second.getUpdateGroupName(); });
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
                    [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
@@ -557,8 +557,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// Custom neuron variable updates" << std::endl;
-            genCustomUpdateKernel(os, kernelSubs, g, modelMerged.getMergedCustomNeuronUpdateGroups(), 
-                                  customNeuronUpdateHandler, idCustomUpdateStart);
+            genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
         }
 
         os << "void update" << g << "()";

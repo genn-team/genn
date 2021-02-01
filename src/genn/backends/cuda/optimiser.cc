@@ -111,8 +111,8 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         }
     }
 
-    // Loop through custom neuron updates
-    for(const auto &c : model.getCustomNeuronUpdates()) {
+    // Loop through custom updates
+    for(const auto &c : model.getCustomUpdates()) {
         // Add size of custom update to vector of custom neuron update kernels
         groupSizes[KernelCustomUpdate].push_back(c.second.getSize());
     }

@@ -500,22 +500,34 @@ public:
                                 targetNeuronGroupName, paramValues, varInitialisers);
     }
 
-    //! Adds a new custom update with references to neuron variables to the model using a custom update model managed by the user
+    //! Adds a new custom update with references to the model using a custom update model managed by the user
     /*! \tparam CustomUpdateModel type of custom update model (derived from CustomUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in CustomUpdateModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
-        \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
+        \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model,
                                       const typename CustomUpdateModel::ParamValues &paramValues,
                                       const typename CustomUpdateModel::VarValues &varInitialisers,
-                                      const typename CustomUpdateModel::template VarReferences<NeuronVarReference> &varReferences)
+                                      const typename CustomUpdateModel::VarReferences &varReferences)
     {
-        return addCustomUpdate(name, updateGroupName, model, paramValues, varInitialisers, varReferences, m_CustomNeuronUpdates);
+         // Add neuron group to map
+        auto result = m_CustomUpdates.emplace(std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, updateGroupName, model,
+                                  paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+        if(!result.second) {
+            throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+        }
+        else {
+            return &result.first->second;
+        }
     }
 
     //! Adds a new custom update with references to weight update model variable to the 
@@ -527,13 +539,13 @@ public:
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in CustomUpdateModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
-        \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
+        \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName, CustomUpdateWU::Operation operation,
                                       const CustomUpdateModel *model, const typename CustomUpdateModel::ParamValues &paramValues,
                                       const typename CustomUpdateModel::VarValues &varInitialisers,
-                                      const typename CustomUpdateModel::template VarReferences<WUVarReference> &varReferences)
+                                      const typename CustomUpdateModel::WUVarReferences &varReferences)
     {
         // Add neuron group to map
         auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
@@ -552,18 +564,18 @@ public:
 
     //! Adds a new custom update to the model using a singleton custom update model 
     //! created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
-    /*! \tparam CustomUpdateModel type of neuron model (derived from CustomUpdateModels::Base).
+    /*! \tparam CustomUpdateModel type of custom update model (derived from CustomUpdateModels::Base).
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
         \param paramValues parameters for model wrapped in CustomUpdateModel::ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
         \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
-    template<typename CustomUpdateModel, typename VarRef>
+    template<typename CustomUpdateModel>
     CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                       const typename CustomUpdateModel::ParamValues &paramValues,
                                       const typename CustomUpdateModel::VarValues &varInitialisers,
-                                      const typename CustomUpdateModel::template VarReferences<VarRef> &varReferences)
+                                      const typename CustomUpdateModel::VarReferences &varReferences)
     {
         return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
                                                   paramValues, varInitialisers, varReferences);
@@ -584,7 +596,7 @@ public:
     CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName, CustomUpdateWU::Operation operation,
                                       const typename CustomUpdateModel::ParamValues &paramValues,
                                       const typename CustomUpdateModel::VarValues &varInitialisers,
-                                      const typename CustomUpdateModel::template VarReferences<WUVarReference> &varReferences)
+                                      const typename CustomUpdateModel::WUVarReferences &varReferences)
     {
         return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, operation, CustomUpdateModel::getInstance(),
                                                   paramValues, varInitialisers, varReferences);
@@ -619,35 +631,13 @@ protected:
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
     //! Get std::map containing named CustomUpdate objects in model
-    const CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>> &getCustomNeuronUpdates() const { return m_CustomNeuronUpdates; }
-    const CustomUpdateMap<CustomUpdateWUInternal> & getCustomWUUpdates() const { return m_CustomWUUpdates; }
+    const CustomUpdateMap<CustomUpdateInternal> &getCustomUpdates() const { return m_CustomUpdates; }
+    const CustomUpdateMap<CustomUpdateWUInternal> &getCustomWUUpdates() const { return m_CustomWUUpdates; }
 
 private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    template<typename CustomUpdateModel, typename VarRef>
-    CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model,
-                                      const typename CustomUpdateModel::ParamValues &paramValues,
-                                      const typename CustomUpdateModel::VarValues &varInitialisers,
-                                      const typename CustomUpdateModel::template VarReferences<VarRef> &varReferences,
-                                      std::map<std::string, CustomUpdateInternal<VarRef>> &container)
-    {
-        // Add neuron group to map
-        auto result = container.emplace(std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, updateGroupName, model,
-                                  paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
-
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
-        }
-        else {
-            return &result.first->second;
-        }
-    }
-
     //! Find a neuron group by name
     NeuronGroupInternal *findNeuronGroupInternal(const std::string &name);
     
@@ -667,7 +657,7 @@ private:
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
 
     //! Grouped named custom updates
-    CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>> m_CustomNeuronUpdates;
+    CustomUpdateMap<CustomUpdateInternal> m_CustomUpdates;
     CustomUpdateMap<CustomUpdateWUInternal> m_CustomWUUpdates;
 
     //! Name of the neuronal newtwork model

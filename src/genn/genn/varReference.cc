@@ -6,158 +6,78 @@
 #include "synapseGroupInternal.h"
 
 //----------------------------------------------------------------------------
-// NeuronVarReference
+// VarReference
 //----------------------------------------------------------------------------
-const std::string NeuronVarReference::name = "Neuron";
-//----------------------------------------------------------------------------
-NeuronVarReference::NeuronVarReference(const NeuronGroup *ng, const std::string &varName) 
-: m_NG(static_cast<const NeuronGroupInternal*>(ng))
+VarReference VarReference::createNeuronVarRef(const NeuronGroup *ng, const std::string &varName)
 {
-    const auto *nm = ng->getNeuronModel();
-    setVar(nm->getVarIndex(varName), nm->getVars());
+    return VarReference(static_cast<const NeuronGroupInternal *>(ng), varName);
 }
 //----------------------------------------------------------------------------
-unsigned int NeuronVarReference::getSize() const
+VarReference VarReference::createCurrentSourceVarRef(const CurrentSource *cs, const std::string &varName)
 {
-    return m_NG->getNumNeurons();
+    return VarReference(static_cast<const CurrentSourceInternal *>(cs), varName);
 }
 //----------------------------------------------------------------------------
-const std::string &NeuronVarReference::getTargetName() const
+VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
 {
-    return m_NG->getName();
-}
-//----------------------------------------------------------------------------
-const NeuronGroup *NeuronVarReference::getNeuronGroup() const 
-{ 
-    return m_NG; 
-}
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
+    const auto *psm = sgInternal->getPSModel();
+    return VarReference([sgInternal]() { return sgInternal->getPSModelTargetName(); },
+                        sgInternal->getTrgNeuronGroup()->getNumNeurons(), 
+                        psm->getVarIndex(varName), psm->getVars());
 
-//----------------------------------------------------------------------------
-// CurrentSourceVarReference
-//----------------------------------------------------------------------------
-const std::string CurrentSourceVarReference::name = "CurrentSource";
-//----------------------------------------------------------------------------
-CurrentSourceVarReference::CurrentSourceVarReference(const CurrentSource *cs, const std::string &varName)
-: m_CS(static_cast<const CurrentSourceInternal*>(cs))
-{
-    const auto *csm = cs->getCurrentSourceModel();
-    setVar(csm->getVarIndex(varName), csm->getVars());
 }
 //----------------------------------------------------------------------------
-unsigned int CurrentSourceVarReference::getSize() const
+VarReference VarReference::createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
 {
-    return m_CS->getTrgNeuronGroup()->getNumNeurons();
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
+    const auto *wum = sgInternal->getWUModel();
+    return VarReference([sgInternal]() { return sgInternal->getName(); },
+                        sgInternal->getSrcNeuronGroup()->getNumNeurons(), 
+                        wum->getPreVarIndex(varName), wum->getPreVars());
 }
 //----------------------------------------------------------------------------
-const std::string &CurrentSourceVarReference::getTargetName() const
+VarReference VarReference::createWUPostVarRef(const SynapseGroup *sg, const std::string &varName)
 {
-    return m_CS->getName();
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
+    const auto *wum = sgInternal->getWUModel();
+    return VarReference([sgInternal]() { return sgInternal->getName(); },
+                        sgInternal->getTrgNeuronGroup()->getNumNeurons(), 
+                        wum->getPostVarIndex(varName), wum->getPostVars());
 }
 //----------------------------------------------------------------------------
-const CurrentSource *CurrentSourceVarReference::getCurrentSource() const
+VarReference::VarReference(const NeuronGroupInternal *ng, const std::string &varName)
+:   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars()),
+    m_Size(ng->getNumNeurons()), m_GetTargetNameFn([ng]() { return ng->getName(); })
 {
-    return m_CS; 
-}
 
+}
 //----------------------------------------------------------------------------
-// PSMVarReference
-//----------------------------------------------------------------------------
-const std::string PSMVarReference::name = "PSM";
-//----------------------------------------------------------------------------
-PSMVarReference::PSMVarReference(const SynapseGroup *sg, const std::string &varName)
-: m_SG(static_cast<const SynapseGroupInternal*>(sg))
+VarReference::VarReference(const CurrentSourceInternal *cs, const std::string &varName)
+:   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars()),
+    m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_GetTargetNameFn([cs]() { return cs->getName(); })
 {
-    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
-        throw std::runtime_error("Only individual postsynaptic model variables can be referenced.");
-    }
 
-    const auto *psm = sg->getPSModel();
-    setVar(psm->getVarIndex(varName), psm->getVars());
 }
 //----------------------------------------------------------------------------
-unsigned int PSMVarReference::getSize() const
-{
-    return m_SG->getTrgNeuronGroup()->getNumNeurons();
-}
-//----------------------------------------------------------------------------
-const std::string &PSMVarReference::getTargetName() const
-{
-    return m_SG->getPSModelTargetName();
-}
-//----------------------------------------------------------------------------
-const SynapseGroup *PSMVarReference::getSynapseGroup() const 
-{ 
-    return m_SG; 
-}
+VarReference::VarReference(GetTargetNameFn getTargetNameFn, unsigned int size, 
+                           size_t varIndex, const Models::Base::VarVec &varVec)
+:   VarReferenceBase(varIndex, varVec), m_Size(size), m_GetTargetNameFn(getTargetNameFn)
+{}
 
 //----------------------------------------------------------------------------
 // WUVarReference
 //----------------------------------------------------------------------------
 WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varName)
-: m_SG(static_cast<const SynapseGroupInternal*>(sg))
+:   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars()),
+    m_SG(static_cast<const SynapseGroupInternal*>(sg))
 {
     if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
         throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
     }
-    const auto *wum = sg->getWUModel();
-    setVar(wum->getVarIndex(varName), wum->getVars());
 }
 //----------------------------------------------------------------------------
 const SynapseGroup *WUVarReference::getSynapseGroup() const 
-{ 
-    return m_SG; 
-}
-
-//----------------------------------------------------------------------------
-// WUPreVarReference
-//----------------------------------------------------------------------------
-const std::string WUPreVarReference::name = "WUPre";
-//----------------------------------------------------------------------------
-WUPreVarReference::WUPreVarReference(const SynapseGroup *sg, const std::string &varName)
-: m_SG(static_cast<const SynapseGroupInternal*>(sg))
-{
-    const auto *wum = sg->getWUModel();
-    setVar(wum->getPreVarIndex(varName), wum->getPreVars());
-}
-//----------------------------------------------------------------------------
-size_t WUPreVarReference::getSize() const
-{
-    return m_SG->getSrcNeuronGroup()->getNumNeurons();
-}
-//----------------------------------------------------------------------------
-const std::string &WUPreVarReference::getTargetName() const
-{
-    return m_SG->getName();
-}
-//----------------------------------------------------------------------------
-const SynapseGroup *WUPreVarReference::getSynapseGroup() const 
-{ 
-    return m_SG; 
-}
-
-//----------------------------------------------------------------------------
-// WUPostVarReference
-//----------------------------------------------------------------------------
-const std::string WUPostVarReference::name = "WUPost";
-//----------------------------------------------------------------------------
-WUPostVarReference::WUPostVarReference(const SynapseGroup *sg, const std::string &varName)
-: m_SG(static_cast<const SynapseGroupInternal*>(sg))
-{
-    const auto *wum = sg->getWUModel();
-    setVar(wum->getPostVarIndex(varName), wum->getPostVars());
-}
-//----------------------------------------------------------------------------
-size_t WUPostVarReference::getSize() const
-{
-    return m_SG->getSrcNeuronGroup()->getNumNeurons();
-}
-//----------------------------------------------------------------------------
-const std::string &WUPostVarReference::getTargetName() const
-{
-    return m_SG->getName();
-}
-//----------------------------------------------------------------------------
-const SynapseGroup *WUPostVarReference::getSynapseGroup() const 
 { 
     return m_SG; 
 }

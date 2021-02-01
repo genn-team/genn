@@ -117,44 +117,26 @@ private:
 //------------------------------------------------------------------------
 // CustomUpdate
 //------------------------------------------------------------------------
-template<typename V>
 class CustomUpdate : public CustomUpdateBase
 {
 public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<V> &getVarReferences() const{ return m_VarReferences;  }
+    const std::vector<VarReference> &getVarReferences() const{ return m_VarReferences;  }
     unsigned int getSize() const { return m_Size; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
-                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<V> &varReferences, 
-                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-        m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize())
-    {
-        if(varReferences.empty()) {
-            throw std::runtime_error("Custom update models must reference variables.");
-        }
-
-        // Check variable reference types
-        checkVarReferenceTypes(m_VarReferences);
-
-        // Give error if any sizes differ
-        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [this](const V &v) { return v.getSize() != m_Size; }))
-        {
-            throw std::runtime_error("All referenced variables must have the same size.");
-        }
-    }
+                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<VarReference> &varReferences,
+                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<V> m_VarReferences;
+    const std::vector<VarReference> m_VarReferences;
     const unsigned int m_Size;
 };
 

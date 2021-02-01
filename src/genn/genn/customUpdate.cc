@@ -81,7 +81,33 @@ bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
         return false;
     }
 }
+//----------------------------------------------------------------------------
+// CustomUpdate
+//----------------------------------------------------------------------------
+CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
+                           const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
+                           const std::vector<Models::VarInit> &varInitialisers, const std::vector<VarReference> &varReferences, 
+                           VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize())
+{
+    if(varReferences.empty()) {
+        throw std::runtime_error("Custom update models must reference variables.");
+    }
 
+    // Check variable reference types
+    checkVarReferenceTypes(m_VarReferences);
+
+    // Give error if any sizes differ
+    if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                    [this](const VarReference &v) { return v.getSize() != m_Size; }))
+    {
+        throw std::runtime_error("All referenced variables must have the same size.");
+    }
+}
+
+//----------------------------------------------------------------------------
+// CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
                                const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,

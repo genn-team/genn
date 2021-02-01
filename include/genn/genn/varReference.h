@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <functional>
 #include <string>
 
 // GeNN includes
@@ -27,104 +28,55 @@ public:
     size_t getVarIndex() const { return m_VarIndex; }
 
 protected:
-    VarReferenceBase() = default;
-
-    //------------------------------------------------------------------------
-    // Protected API
-    //------------------------------------------------------------------------
-    void setVar(size_t varIndex, const Models::Base::VarVec &varVec)
-    {
-        m_VarIndex = varIndex;
-        m_Var = varVec.at(varIndex);
-    }
+    VarReferenceBase(size_t varIndex, const Models::Base::VarVec &varVec)
+    : m_VarIndex(varIndex), m_Var(varVec.at(varIndex))
+    {}
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    size_t m_VarIndex;
-    Models::Base::Var m_Var;
+    const size_t m_VarIndex;
+    const Models::Base::Var m_Var;
 };
 
 //----------------------------------------------------------------------------
-// NeuronVarReference
+// VarReference
 //----------------------------------------------------------------------------
-class NeuronVarReference : public VarReferenceBase
+class VarReference : public VarReferenceBase
 {
 public:
-    NeuronVarReference(const NeuronGroup *ng, const std::string &varName);
-
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    unsigned int getSize() const;
-    const std::string &getTargetName() const;
-    const NeuronGroup *getNeuronGroup() const;
+    unsigned int getSize() const { return m_Size; }
+    const std::string &getTargetName() const { return m_GetTargetNameFn(); }
 
     //------------------------------------------------------------------------
-    // Constants
+    // Static API
     //------------------------------------------------------------------------
-    static const std::string name;
-
+    static VarReference createNeuronVarRef(const NeuronGroup *ng, const std::string &varName);
+    static VarReference createCurrentSourceVarRef(const CurrentSource *cs, const std::string &varName);
+    static VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName);
+    static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
+    
 private:
+    //------------------------------------------------------------------------
+    // Enumerations
+    //------------------------------------------------------------------------
+    typedef std::function<const std::string &(void)> GetTargetNameFn;
+
+    VarReference(const NeuronGroupInternal *ng, const std::string &varName);
+    VarReference(const CurrentSourceInternal *cs, const std::string &varName);
+    VarReference(GetTargetNameFn getTargetNameFn, unsigned int size, 
+                 size_t varIndex, const Models::Base::VarVec &varVec);
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const NeuronGroupInternal *m_NG;
-};
-
-//----------------------------------------------------------------------------
-// CurrentSourceVarReference
-//----------------------------------------------------------------------------
-class CurrentSourceVarReference : public VarReferenceBase
-{
-public:
-    CurrentSourceVarReference(const CurrentSource *cs, const std::string &varName);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    unsigned int getSize() const;
-    const std::string &getTargetName() const;
-    const CurrentSource *getCurrentSource() const;
-
-    //------------------------------------------------------------------------
-    // Constants
-    //------------------------------------------------------------------------
-    static const std::string name;
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const CurrentSourceInternal *m_CS;
-};
-
-//----------------------------------------------------------------------------
-// PSMVarReference
-//----------------------------------------------------------------------------
-class PSMVarReference : public VarReferenceBase
-{
-public:
-    PSMVarReference(const SynapseGroup *sg, const std::string &varName);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    unsigned int getSize() const;
-    const std::string &getTargetName() const;
-    const SynapseGroup *getSynapseGroup() const;
-
-    //------------------------------------------------------------------------
-    // Constants
-    //------------------------------------------------------------------------
-    static const std::string name;
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const SynapseGroupInternal *m_SG;
+    const unsigned int m_Size;
+    GetTargetNameFn m_GetTargetNameFn;
 };
 
 //----------------------------------------------------------------------------
@@ -139,61 +91,6 @@ public:
     // Public API
     //------------------------------------------------------------------------
     const SynapseGroup *getSynapseGroup() const;
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const SynapseGroupInternal *m_SG;
-};
-
-
-//----------------------------------------------------------------------------
-// WUPreVarReference
-//----------------------------------------------------------------------------
-class WUPreVarReference : public VarReferenceBase
-{
-public:
-    WUPreVarReference(const SynapseGroup *sg, const std::string &varName);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    size_t getSize() const;
-    const std::string &getTargetName() const;
-    const SynapseGroup *getSynapseGroup() const;
-
-    //------------------------------------------------------------------------
-    // Constants
-    //------------------------------------------------------------------------
-    static const std::string name;
-
-private:
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    const SynapseGroupInternal *m_SG;
-};
-
-//----------------------------------------------------------------------------
-// WUPostVarReference
-//----------------------------------------------------------------------------
-class WUPostVarReference : public VarReferenceBase
-{
-public:
-    WUPostVarReference(const SynapseGroup *sg, const std::string &varName);
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    size_t getSize() const;
-    const std::string &getTargetName() const;
-    const SynapseGroup *getSynapseGroup() const;
-
-    //------------------------------------------------------------------------
-    // Constants
-    //------------------------------------------------------------------------
-    static const std::string name;
 
 private:
     //------------------------------------------------------------------------

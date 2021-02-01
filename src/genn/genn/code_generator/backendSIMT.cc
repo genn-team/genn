@@ -821,6 +821,25 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
         });
 }
 //--------------------------------------------------------------------------
+void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, 
+                                        const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const
+{
+    genParallelGroup<CustomUpdateGroupMerged>(
+            os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
+            [this](const CustomUpdateInternal &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
+            [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
+            [this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+            {
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << popSubs["id"] << " < group->size)";
+                {
+                    CodeStream::Scope b(os);
+
+                    customUpdateHandler(os, cg, popSubs);
+                }
+            });
+    }
+//--------------------------------------------------------------------------
 void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                       NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
                                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 

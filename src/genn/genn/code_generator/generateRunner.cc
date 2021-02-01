@@ -728,9 +728,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     }
     
     // Loop through neuron variable custom update groups
-    for(const auto &m : modelMerged.getMergedCustomNeuronUpdateGroups()) {
+    for(const auto &m : modelMerged.getMergedCustomUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                        runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedStructAlloc);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -1026,8 +1026,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     genCustomUpdate(modelMerged, backend,
                     definitionsVar, definitionsFunc, definitionsInternalVar,
                     runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
-                    runnerPushFunc, runnerPullFunc, model.getCustomNeuronUpdates(),
-                    mem, statePushPullFunctions, [](const CustomUpdateInternal<NeuronVarReference> &c) { return c.getSize(); });
+                    runnerPushFunc, runnerPullFunc, model.getCustomUpdates(),
+                    mem, statePushPullFunctions, [](const CustomUpdateInternal &c) { return c.getSize(); });
 
     genCustomUpdate(modelMerged, backend,
                     definitionsVar, definitionsFunc, definitionsInternalVar,
@@ -1604,9 +1604,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
-    std::transform(model.getCustomNeuronUpdates().cbegin(), model.getCustomNeuronUpdates().cend(),
+    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal<NeuronVarReference>>::value_type &v) { return v.second.getUpdateGroupName(); });
+                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
                    [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.second.getUpdateGroupName(); });

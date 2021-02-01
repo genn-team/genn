@@ -6,16 +6,15 @@
 //------------------------------------------------------------------------
 // CustomUpdateInternal
 //------------------------------------------------------------------------
-template<typename V>
-class CustomUpdateInternal : public CustomUpdate<V>
+class CustomUpdateInternal : public CustomUpdate
 {
 public:
     CustomUpdateInternal(const std::string &name, const std::string &updateGroupName,
                          const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
-                         const std::vector<Models::VarInit> &varInitialisers, const std::vector<V> &varReferences, 
+                         const std::vector<Models::VarInit> &varInitialisers, const std::vector<VarReference> &varReferences, 
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   CustomUpdate<V>(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
-                        defaultVarLocation, defaultExtraGlobalParamLocation)
+    :   CustomUpdate(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
+                     defaultVarLocation, defaultExtraGlobalParamLocation)
     {
     }
 

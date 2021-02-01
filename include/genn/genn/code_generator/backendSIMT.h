@@ -178,26 +178,8 @@ protected:
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                   SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 
-    template<typename V>
-    void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const std::string &updateGroup,
-                               const std::vector<CustomUpdateGroupMerged<V>> &groups, 
-                               CustomUpdateGroupMergedHandler<V> &customUpdateHandler, size_t &idStart) const
-    {
-        genParallelGroup<CustomUpdateGroupMerged<V>>(
-            os, kernelSubs, groups, idStart,
-            [this](const CustomUpdateInternal<V> &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
-            [&updateGroup](const CustomUpdateGroupMerged<V> &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-            [this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged<V> &cg, Substitutions &popSubs)
-            {
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->size)";
-                {
-                    CodeStream::Scope b(os);
-
-                    customUpdateHandler(os, cg, popSubs);
-                }
-            });
-    }
+    void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                               const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const;
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,

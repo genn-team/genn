@@ -3,15 +3,16 @@
 // GeNN includes
 #include "gennExport.h"
 #include "models.h"
+#include "varReference.h"
 
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_CUSTOM_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS)   \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                          \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                   \
-    template<typename V>                                                        \
-    using VarReferences = Snippet::InitialiserContainerBase<V, NUM_VAR_REFS>
+#define DECLARE_CUSTOM_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS)                   \
+    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                                          \
+    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                                   \
+    typedef Snippet::InitialiserContainerBase<WUVarReference, NUM_VAR_REFS> WUVarReferences;    \
+    typedef Snippet::InitialiserContainerBase<VarReference, NUM_VAR_REFS> VarReferences;
 
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_UPDATE_CODE(UPDATE_CODE) virtual std::string getUpdateCode() const override{ return UPDATE_CODE; }

@@ -16,7 +16,7 @@ public:
     using ModelSpec::getNeuronGroups;
     using ModelSpec::getSynapseGroups;
     using ModelSpec::getLocalCurrentSources;
-    using ModelSpec::getCustomNeuronUpdates;
+    using ModelSpec::getCustomUpdates;
     using ModelSpec::getCustomWUUpdates;
 
     using ModelSpec::finalize;

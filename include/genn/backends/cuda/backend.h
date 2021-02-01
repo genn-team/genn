@@ -159,7 +159,7 @@ public:
                                   HostHandler pushEGPHandler) const override;
 
     virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                 HostHandler preambleHandler, CustomUpdateGroupMergedHandler<NeuronVarReference> customNeuronUpdateHandler,
+                                 HostHandler preambleHandler, CustomUpdateGroupMergedHandler customNeuronUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
