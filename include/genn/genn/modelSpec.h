@@ -35,7 +35,6 @@ Part of the code generation and generated code sections.
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "varReference.h"
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 
@@ -108,6 +107,42 @@ inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::Va
 inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
 {
     return InitSparseConnectivitySnippet::Init(InitSparseConnectivitySnippet::Uninitialised::getInstance(), {});
+}
+
+//! Creates a reference to a neuron group variable
+inline Models::VarReference createVarRef(const NeuronGroup *ng, const std::string &varName)
+{
+    return Models::VarReference::createVarRef(ng, varName);
+}
+
+//! Creates a reference to a current source variable
+inline Models::VarReference createVarRef(const CurrentSource *cs, const std::string &varName)
+{
+    return Models::VarReference::createVarRef(cs, varName);
+}
+
+//! Creates a reference to a postsynaptic model variable
+inline Models::VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference::createPSMVarRef(sg, varName);
+}
+
+//! Creates a reference to a weight update model presynaptic variable
+inline Models::VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference::createWUPreVarRef(sg, varName);
+}
+
+//! Creates a reference to a weight update model postsynapticvariable
+inline Models::VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::VarReference::createWUPostVarRef(sg, varName);
+}
+
+//! Creates a reference to a weight update model variable
+inline Models::WUVarReference createWUVarRef(const SynapseGroup *sg, const std::string &varName)
+{
+    return Models::WUVarReference(sg, varName);
 }
 
 //----------------------------------------------------------------------------

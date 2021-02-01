@@ -8,7 +8,6 @@
 #include "gennExport.h"
 #include "customUpdateModels.h"
 #include "variableMode.h"
-#include "varReference.h"
 
 //------------------------------------------------------------------------
 // CustomUpdateBase
@@ -123,20 +122,20 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<VarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::vector<Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
     unsigned int getSize() const { return m_Size; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<VarReference> &varReferences,
+                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<VarReference> m_VarReferences;
+    const std::vector<Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
 };
 
@@ -159,12 +158,12 @@ public:
     // Public const methods
     //------------------------------------------------------------------------
     Operation getOperation() const { return m_Operation; }
-    const std::vector<WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::vector<Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
                    const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                   const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
+                   const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -176,7 +175,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<WUVarReference> m_VarReferences;
+    const std::vector<Models::WUVarReference> m_VarReferences;
     const Operation m_Operation;
     const SynapseGroupInternal *m_SynapseGroup;
 };

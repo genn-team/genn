@@ -17,7 +17,6 @@
 #include "codeStream.h"
 #include "gennExport.h"
 #include "variableMode.h"
-#include "varReference.h"
 
 // Forward declarations
 class NeuronGroupInternal;

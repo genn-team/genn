@@ -86,7 +86,7 @@ bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
-                           const std::vector<Models::VarInit> &varInitialisers, const std::vector<VarReference> &varReferences, 
+                           const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize())
@@ -100,7 +100,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                    [this](const VarReference &v) { return v.getSize() != m_Size; }))
+                    [this](const Models::VarReference &v) { return v.getSize() != m_Size; }))
     {
         throw std::runtime_error("All referenced variables must have the same size.");
     }
@@ -111,7 +111,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
                                const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                               const std::vector<Models::VarInit> &varInitialisers, const std::vector<WUVarReference> &varReferences,
+                               const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_Operation(operation), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.front().getSynapseGroup()))
@@ -125,7 +125,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 
     // Give error if references point to different synapse groups
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                    [this](const WUVarReference &v) 
+                    [this](const Models::WUVarReference &v) 
                     { 
                         return (v.getSynapseGroup() != m_VarReferences.front().getSynapseGroup()); 
                     }))
@@ -137,7 +137,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     if(m_Operation == Operation::UPDATE_TRANSPOSE) {
         // Give error if any of the variable references aren't dense
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [](const WUVarReference &v) 
+                       [](const Models::WUVarReference &v) 
                        {
                            return !(v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
                        }))

@@ -1,19 +1,22 @@
-#include "varReference.h"
+#include "models.h"
+
 
 // GeNN includes
 #include "currentSourceInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
+using namespace Models;
+
 //----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
-VarReference VarReference::createNeuronVarRef(const NeuronGroup *ng, const std::string &varName)
+VarReference VarReference::createVarRef(const NeuronGroup *ng, const std::string &varName)
 {
     return VarReference(static_cast<const NeuronGroupInternal *>(ng), varName);
 }
 //----------------------------------------------------------------------------
-VarReference VarReference::createCurrentSourceVarRef(const CurrentSource *cs, const std::string &varName)
+VarReference VarReference::createVarRef(const CurrentSource *cs, const std::string &varName)
 {
     return VarReference(static_cast<const CurrentSourceInternal *>(cs), varName);
 }
