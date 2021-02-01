@@ -1565,6 +1565,15 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
                  return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
              });
 
+    // If backend requires synaptic remapping and matrix type is sparse, add field
+    if(backend.isSynRemapRequired() && (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)) {
+        addField("unsigned int*", "synRemap", 
+                 [&backend](const CustomUpdateWUInternal &g, size_t) 
+                 { 
+                     return backend.getDeviceVarPrefix() + "synRemap" + g.getSynapseGroup()->getName(); 
+                 });
+    }
+
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
     addHeterogeneousParams<CustomUpdateWUGroupMerged>(

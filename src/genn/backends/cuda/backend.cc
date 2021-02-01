@@ -547,10 +547,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     std::set<std::string> customUpdateGroups;
     std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
+                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
+                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
 
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {

@@ -179,6 +179,7 @@ size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &
 size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 {
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        // **THINK** this isn't really correct but correct value is inaccesible
         return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getMaxConnections();
     }
     else {
@@ -191,7 +192,7 @@ size_t BackendSIMT::getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(cg.getSynapseGroup());
 
     if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        assert(false);
+        // **THINK** this isn't really correct but correct value is inaccesible
         return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections();
     }
     else {

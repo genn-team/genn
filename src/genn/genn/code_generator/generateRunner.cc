@@ -424,7 +424,7 @@ template<typename V, typename S>
 void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
                      CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
                      CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerExtraGlobalParamFunc,
-                     CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const ModelSpec::CustomUpdateMap<V> &customUpdates,
+                     CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const std::map<std::string, V> &customUpdates,
                      MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
 {
     // Loop through customupdates
@@ -1121,8 +1121,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                         s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size);
 
+                // Determine whether any custom weight updates target this synapse group
+                const bool anyCustomUpdate = std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                                                         [&s](const ModelSpec::CustomUpdateWUValueType &cg) { return (cg.second.getSynapseGroup() == &s.second); });
                 // **TODO** remap is not always required
-                if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
+                if(backend.isSynRemapRequired() && (!s.second.getWUModel()->getSynapseDynamicsCode().empty() || anyCustomUpdate)) {
                     // Allocate synRemap
                     // **THINK** this is over-allocating
                     mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
@@ -1606,10 +1609,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     std::set<std::string> customUpdateGroups;
     std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
+                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
     std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
                    std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateMap<CustomUpdateWUInternal>::value_type &v) { return v.second.getUpdateGroupName(); });
+                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
     
     // Generate function definitions for each custom update
     for(const auto &g : customUpdateGroups) {

@@ -157,9 +157,8 @@ public:
     typedef std::map<std::string, NeuronGroupInternal>::value_type NeuronGroupValueType;
     typedef std::map<std::string, SynapseGroupInternal>::value_type SynapseGroupValueType;
     typedef std::map<std::string, CurrentSourceInternal>::value_type CurrentSourceValueType;
-    
-    template<typename V>
-    using CustomUpdateMap = std::map<std::string, V>;
+    typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
+    typedef std::map<std::string, CustomUpdateWUInternal>::value_type CustomUpdateWUValueType;
 
     //typedef std::map<std::string, CustomUpdateInternal>::value_type CustomUpdateValueType;
 
@@ -666,8 +665,8 @@ protected:
     const std::map<std::string, CurrentSourceInternal> &getLocalCurrentSources() const{ return m_LocalCurrentSources; }
 
     //! Get std::map containing named CustomUpdate objects in model
-    const CustomUpdateMap<CustomUpdateInternal> &getCustomUpdates() const { return m_CustomUpdates; }
-    const CustomUpdateMap<CustomUpdateWUInternal> &getCustomWUUpdates() const { return m_CustomWUUpdates; }
+    const std::map<std::string, CustomUpdateInternal> &getCustomUpdates() const { return m_CustomUpdates; }
+    const std::map<std::string, CustomUpdateWUInternal> &getCustomWUUpdates() const { return m_CustomWUUpdates; }
 
 private:
     //--------------------------------------------------------------------------
@@ -692,8 +691,8 @@ private:
     std::map<std::string, CurrentSourceInternal> m_LocalCurrentSources;
 
     //! Grouped named custom updates
-    CustomUpdateMap<CustomUpdateInternal> m_CustomUpdates;
-    CustomUpdateMap<CustomUpdateWUInternal> m_CustomWUUpdates;
+    std::map<std::string, CustomUpdateInternal> m_CustomUpdates;
+    std::map<std::string, CustomUpdateWUInternal> m_CustomWUUpdates;
 
     //! Name of the neuronal newtwork model
     std::string m_Name;
