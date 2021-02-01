@@ -31,7 +31,6 @@ enum Kernel
     KernelPreNeuronReset,
     KernelPreSynapseReset,
     KernelCustomUpdate,
-    KernelCustomUpdateWU,
     KernelMax
 };
 

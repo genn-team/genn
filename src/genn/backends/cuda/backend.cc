@@ -540,7 +540,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
                                   [this](const CustomUpdateInternal &cg){ return cg.getSize(); });
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdateWU), totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
+    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
                                   [this](const CustomUpdateWUInternal &cg){ return getNumCustomUpdateWUThreads(cg); });
 
     // Build set containing union of all custom update groupsnames

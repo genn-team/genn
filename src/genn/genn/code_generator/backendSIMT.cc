@@ -44,8 +44,7 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "initializeSparseKernel",
     "preNeuronResetKernel",
     "preSynapseResetKernel",
-    "customUpdate"
-    "customUpdateWU"};
+    "customUpdate"};
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategySIMT::PreSpan,
@@ -859,7 +858,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 {
     genParallelGroup<CustomUpdateWUGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
-        [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateWUThreads(cg), getKernelBlockSize(KernelCustomUpdateWU)); },
+        [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateWUThreads(cg), getKernelBlockSize(KernelCustomUpdate)); },
         [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
             const SynapseGroup *archetypeSG = cg.getArchetype().getSynapseGroup();
