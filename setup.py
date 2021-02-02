@@ -10,6 +10,10 @@ from setuptools.command.build_ext import build_ext
 from shutil import copytree, rmtree
 from generate_swig_interfaces import generateConfigs
 
+# Determine is this is a debug build
+# **YUCK** this is not a great test
+debug_build = "--debug" in sys.argv
+
 # Get CUDA path from environment variable - setting this up is a required CUDA post-install step
 cuda_path = os.environ.get("CUDA_PATH")
 
@@ -25,6 +29,12 @@ opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 windows = system() == "Windows"
+
+# Determine correct suffix for GeNN libraries
+if windows:
+    genn_lib_suffix = "_Debug" if debug_build else "_Release"
+else:
+    genn_lib_suffix = "_dynamic_debug" if debug_build else "_dynamic"
 
 genn_path = os.path.dirname(os.path.abspath(__file__))
 numpy_path = os.path.join(os.path.dirname(np.__file__))
@@ -59,11 +69,12 @@ extension_kwargs = {
     "extra_link_args": []}
 
 # Always package LibGeNN
-package_data = ["genn_wrapper/genn_Release_DLL.*"] if windows else ["genn_wrapper/libgenn_dynamic.*"]
+package_data = ["genn_wrapper/genn" + genn_lib_suffix + ".*"] if windows else ["genn_wrapper/libgenn" + genn_lib_suffix + ".*"]
 
 # Copy dictionary and add libGeNN to apply to all modules that link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
-genn_extension_kwargs["libraries"] =  ["genn_Release_DLL"] if windows else ["genn_dynamic"]
+genn_extension_kwargs["libraries"] =  ["genn" + genn_lib_suffix] if windows else ["genn" + genn_lib_suffix]
+
 genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
 genn_extension_kwargs["swig_opts"].extend(["-I" + genn_include, "-I" + genn_third_party_include])
 genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
@@ -151,11 +162,11 @@ for filename, namespace, kwargs in backends:
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
     if windows:
-        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend_Release_DLL")
-        package_data.append("genn_wrapper/genn_" + filename + "_backend_Release_DLL.*")
+        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend" + genn_lib_suffix)
+        package_data.append("genn_wrapper/genn_" + filename + "_backend" + genn_lib_suffix + ".*")
     else:
-        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend_dynamic")
-        package_data.append("genn_wrapper/libgenn_" + filename + "_backend_dynamic.*")
+        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend" + genn_lib_suffix)
+        package_data.append("genn_wrapper/libgenn_" + filename + "_backend" + genn_lib_suffix + ".*")
 
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", filename)
