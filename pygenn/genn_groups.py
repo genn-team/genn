@@ -904,49 +904,50 @@ class SynapseGroup(Group):
                 raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables
-        for v in self.w_update.get_vars():
-            # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
+        if self.weight_sharing_master is None:
+            for v in self.w_update.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
 
-            # If population has individual synapse variables
-            if self.has_individual_synapse_vars:
-                # If variable is located on host
-                var_loc = self.pop.get_wuvar_location(v.name) 
-                if (var_loc & VarLocation_HOST) != 0:
-                    # Determine how many copies of this variable are present
-                    num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
-                                  else self._model.batch_size)
-                    # Get view
-                    var_data.view = self._assign_ext_ptr_array(
-                        v.name, self.weight_update_var_size * num_copies, 
-                        var_data.type)
+                # If population has individual synapse variables
+                if self.has_individual_synapse_vars:
+                    # If variable is located on host
+                    var_loc = self.pop.get_wuvar_location(v.name) 
+                    if (var_loc & VarLocation_HOST) != 0:
+                        # Determine how many copies of this variable are present
+                        num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                                      else self._model.batch_size)
+                        # Get view
+                        var_data.view = self._assign_ext_ptr_array(
+                            v.name, self.weight_update_var_size * num_copies, 
+                            var_data.type)
 
-                    # If there is more than one copy, reshape view to 2D
-                    if num_copies > 1:
-                        var_data.view = np.reshape(var_data.view, 
-                                                   (num_copies, -1))
+                        # If there is more than one copy, reshape view to 2D
+                        if num_copies > 1:
+                            var_data.view = np.reshape(var_data.view, 
+                                                       (num_copies, -1))
 
-                    # Initialise variable if necessary
-                    self._init_wum_var(var_data, num_copies)
-                else:
-                    assert not var_data.init_required
-                    var_data.view = None
+                        # Initialise variable if necessary
+                        self._init_wum_var(var_data, num_copies)
+                    else:
+                        assert not var_data.init_required
+                        var_data.view = None
 
-            # Load any var initialisation egps associated with this variable
-            self._load_egp(var_data.extra_global_params, v.name)
+                # Load any var initialisation egps associated with this variable
+                self._load_egp(var_data.extra_global_params, v.name)
 
-        # Load weight update model presynaptic variables
-        self._load_vars(self.w_update.get_pre_vars(), self.src.size,
-                        self.pre_vars, self.pop.get_wupre_var_location)
+            # Load weight update model presynaptic variables
+            self._load_vars(self.w_update.get_pre_vars(), self.src.size,
+                            self.pre_vars, self.pop.get_wupre_var_location)
 
-        # Load weight update model postsynaptic variables
-        self._load_vars(self.w_update.get_post_vars(), self.trg.size, 
-                        self.post_vars, self.pop.get_wupost_var_location)
+            # Load weight update model postsynaptic variables
+            self._load_vars(self.w_update.get_post_vars(), self.trg.size, 
+                            self.post_vars, self.pop.get_wupost_var_location)
 
-        # Load postsynaptic update model variables
-        if self.has_individual_postsynaptic_vars:
-            self._load_vars(self.postsyn.get_vars(), self.trg.size, self.psm_vars,
-                            self.pop.get_psvar_location)
+            # Load postsynaptic update model variables
+            if self.has_individual_postsynaptic_vars:
+                self._load_vars(self.postsyn.get_vars(), self.trg.size, self.psm_vars,
+                                self.pop.get_psvar_location)
 
         # Load extra global parameters
         self._load_egp()
