@@ -1067,7 +1067,7 @@ void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocati
         }
 
         // If this variable wasn't allocated in zero-copy mode, free it
-        if(loc & VarLocation::DEVICE) {
+        if((loc & VarLocation::DEVICE) && !(loc & VarLocation::ZERO_COPY)) {
             os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
         }
     }
