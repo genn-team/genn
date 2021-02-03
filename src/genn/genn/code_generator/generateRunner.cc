@@ -592,6 +592,15 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << "// timers" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
 
+    // Build set containing union of all custom update groupsnames
+    std::set<std::string> customUpdateGroups;
+    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
+
     // Generate variables to store total elapsed time
     // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
     genHostScalar(definitionsVar, runnerVarDecl, "double", "initTime", "0.0");
@@ -601,6 +610,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     genHostScalar(definitionsVar, runnerVarDecl, "double", "postsynapticUpdateTime", "0.0");
     genHostScalar(definitionsVar, runnerVarDecl, "double", "synapseDynamicsTime", "0.0");
 
+    // Generate variables to store total elapsed time for each custom update group
+    for(const auto &g : customUpdateGroups) {
+        genHostScalar(definitionsVar, runnerVarDecl, "double", "update" + g + "Time", "0.0");
+    }
     
     // If timing is actually enabled
     if(model.isTimingEnabled()) {
@@ -624,6 +637,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "synapseDynamics", true);
+        }
+
+        // Add timers for each custom update group
+        for(const auto &g : customUpdateGroups) {
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "update" + g, false);
         }
 
         // Create init timer
@@ -1604,15 +1623,6 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     definitions << "EXPORT_FUNC void updateSynapses(" << model.getTimePrecision() << " t);" << std::endl;
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
-
-    // Build set containing union of all custom update groupsnames
-    std::set<std::string> customUpdateGroups;
-    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
-    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
-                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
     
     // Generate function definitions for each custom update
     for(const auto &g : customUpdateGroups) {

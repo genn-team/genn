@@ -585,6 +585,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             if(idCustomUpdateStart > 0) {
                 CodeStream::Scope b(os);
                 genKernelDimensions(os, KernelCustomUpdate, idCustomUpdateStart, 1);
+                Timer t(os, "update" + g, model.isTimingEnabled(), true);
                 os << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
