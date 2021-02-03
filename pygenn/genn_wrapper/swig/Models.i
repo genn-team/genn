@@ -46,7 +46,7 @@
 %template(VarVector) std::vector<Models::Base::Var>;
 
 %include "models.h"
-
+%include "varAccess.h"
 
 %nodefaultctor CustomValues::VarValues;
 %include "customVarValues.h"

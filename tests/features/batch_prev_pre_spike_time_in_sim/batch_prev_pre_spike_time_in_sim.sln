@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "batch_prev_pre_spike_time_in_sim", "batch_prev_pre_spike_time_in_sim.vcxproj", "{6FC73531-5782-4A59-A38D-9873D989786B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{9A82CFA0-3CA5-412A-B0A6-3361C75BFD47} = {9A82CFA0-3CA5-412A-B0A6-3361C75BFD47}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "batch_prev_pre_spike_time_in_sim_CODE\runner.vcxproj", "{9A82CFA0-3CA5-412A-B0A6-3361C75BFD47}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6FC73531-5782-4A59-A38D-9873D989786B}.Debug|x64.ActiveCfg = Debug|x64
+		{6FC73531-5782-4A59-A38D-9873D989786B}.Debug|x64.Build.0 = Debug|x64
+		{6FC73531-5782-4A59-A38D-9873D989786B}.Release|x64.ActiveCfg = Release|x64
+		{6FC73531-5782-4A59-A38D-9873D989786B}.Release|x64.Build.0 = Release|x64
+		{9A82CFA0-3CA5-412A-B0A6-3361C75BFD47}.Debug|x64.ActiveCfg = Debug|x64
+		{9A82CFA0-3CA5-412A-B0A6-3361C75BFD47}.Debug|x64.Build.0 = Debug|x64
+		{9A82CFA0-3CA5-412A-B0A6-3361C75BFD47}.Release|x64.ActiveCfg = Release|x64
+		{9A82CFA0-3CA5-412A-B0A6-3361C75BFD47}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

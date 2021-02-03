@@ -137,7 +137,7 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    // !Get total number of RNG streams potentially used to initialise model
+    //! Get total number of RNG streams potentially used to initialise model
     /*! **NOTE** because RNG supports 2^64 streams, we are overly conservative */
     size_t getNumInitialisationRNGStreams(const ModelSpecMerged & modelMerged) const;
 

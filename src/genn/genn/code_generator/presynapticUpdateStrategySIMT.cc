@@ -92,6 +92,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
+    const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getArchetype().getWUModel();
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
@@ -104,13 +105,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
     }
 
-    os << "if (spike < ";
-    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "group->srcSpkCnt" << eventSuffix << "[preReadDelaySlot])";
-    }
-    else {
-        os << "group->srcSpkCnt" << eventSuffix << "[0])";
-    }
+    os << "if (spike < group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "])";
     {
         CodeStream::Scope b(os);
 
@@ -118,13 +113,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
             os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
         }
 
-        os << "const unsigned int preInd = group->srcSpk" << eventSuffix;
-        if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            os << "[(preReadDelaySlot * group->numSrcNeurons) + spike];" << std::endl;
-        }
-        else {
-            os << "[spike];" << std::endl;
-        }
+        os << "const unsigned int preInd = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
 
         if(numThreadsPerSpike > 1) {
             os << "unsigned int synAddress = (preInd * group->rowStride) + thread;" << std::endl;
@@ -169,11 +158,13 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
 
             // If dendritic delay is required, use atomic operation to update dendritic delay buffer
             if(sg.getArchetype().isDendriticDelayRequired()) {
-                synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + "ipost], $(0))");
+                synSubs.addFuncSubstitution("addToInSynDelay", 2, 
+                                            backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "ipost", "$(1)") + "], $(0))");
             }
             // Otherwise, substitute global memory array for $(inSyn)
             else {
-                synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[ipost], $(0))");
+                synSubs.addFuncSubstitution("addToInSyn", 1, 
+                                            backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
             }
 
             wumSimHandler(os, sg, synSubs);
@@ -252,15 +243,10 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
+    const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
-    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix;
-    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "[preReadDelaySlot];" << std::endl;
-    }
-    else {
-        os << "[0];" << std::endl;
-    }
+    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
     const auto *wu = sg.getArchetype().getWUModel();
@@ -273,9 +259,8 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
         os << "if (" << backend.getThreadID() << " < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
-            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[";
-            os << queueOffset << "(r * " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ") + " << backend.getThreadID() << "];" << std::endl;
+            const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
+            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
             os << "shSpk" << eventSuffix << "[" << backend.getThreadID() << "] = spk;" << std::endl;
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[" << backend.getThreadID() << "] = group->rowLength[spk];" << std::endl;
@@ -292,14 +277,8 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
             {
                 CodeStream::Scope b(os);
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    // Get maximum number of synapses anywhere in merged group
-                    size_t maxSynapses = 0;
-                    for(const auto &s : sg.getGroups()) {
-                        maxSynapses = std::max(maxSynapses, (size_t)s.get().getTrgNeuronGroup()->getNumNeurons() * (size_t)s.get().getSrcNeuronGroup()->getNumNeurons());
-                    }
-
                     // If this can only be represented using a 64-bit number
-                    if((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) {
+                    if(backend.areSixtyFourBitSynapseIndicesRequired(sg)) {
                         os << "const uint64_t gid = (shSpk" << eventSuffix << "[j] * (uint64_t)group->rowStride) + " << popSubs["id"] << ";" << std::endl;
                     }
                     else {
@@ -351,7 +330,8 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
                 if(sg.getArchetype().isDendriticDelayRequired()) {
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, 
+                                                backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, synSubs["id_post"], "$(1)") + "], $(0))");
                 }
                 // Otherwise
                 else {
@@ -366,7 +346,8 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     }
                     // Otherwise, use global memory atomic
                     else {
-                        synSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + synSubs["id_post"] + "], $(0))");
+                        synSubs.addFuncSubstitution("addToInSyn", 1, 
+                                                    backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
                     }
                 }
 
@@ -392,12 +373,13 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
 {
     // If we should accumulate output directly into register
     const ModelSpecInternal &model = modelMerged.getModel();
+    const unsigned int batchSize = model.getBatchSize();
     if(shouldAccumulateInRegister(sg)) {
         os << "// only do this for existing neurons" << std::endl;
         os << "if (" << popSubs["id"] << " < group->numTrgNeurons)";
         {
             CodeStream::Scope b(os);
-            const std::string inSyn = "group->inSyn[" + popSubs["id"] + "]";
+            const std::string inSyn = "group->inSyn[" + sg.getPostISynIndex(batchSize, popSubs["id"]) + "]";
             if(sg.getArchetype().isPSModelMerged()) {
                 os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
             }
@@ -412,7 +394,7 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
         os << "if(" << backend.getThreadID() << " < group->numTrgNeurons)";
         {
             CodeGenerator::CodeStream::Scope b(os);
-            os << backend.getAtomic(model.getPrecision()) << "(&group->inSyn[" << backend.getThreadID() << "], ";
+            os << backend.getAtomic(model.getPrecision()) << "(&group->inSyn[" << sg.getPostISynIndex(batchSize, backend.getThreadID()) << "], ";
             os << "shLg[" << backend.getThreadID() << "]); " << std::endl;
         }
     }
@@ -467,6 +449,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
+    const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getArchetype().getWUModel();
     const size_t numThreadsPerSpike = sg.getArchetype().getNumThreadsPerSpike();
@@ -487,25 +470,12 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
     }
 
     // If there is a spike for this thread to process
-    os << "if (spike < group->srcSpkCnt" << eventSuffix;
-    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "[preReadDelaySlot])";
-    }
-    else {
-        os << "[0])";
-    }
+    os << "if (spike < group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "])";
     {
         CodeStream::Scope b(os);
 
         // Determine the index of the presynaptic neuron this thread is responsible for
-        os << "const unsigned int preInd = group->srcSpk" << eventSuffix;
-        if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-
-            os << "[(preReadDelaySlot * group->numSrcNeurons) + spike];" << std::endl;
-        }
-        else {
-            os << "[spike];" << std::endl;
-        }
+        os << "const unsigned int preInd = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
 
         // Create substitution stack and add presynaptic index
         Substitutions synSubs(&popSubs);
@@ -544,7 +514,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             else {
                 skipAhead << "preInd";
             }
-            skipAhead << " + " << connSubs["group_start_id"] << " + " << backend.getNumInitialisationRNGStreams(modelMerged);
+            skipAhead << " + " << connSubs["group_start_id"] << " + " << (backend.getNumInitialisationRNGStreams(modelMerged) * model.getBatchSize());
 
             // **NOTE** add RNG to synSubs so it can be correctly referenced in presynapticUpdateSubs below
             backend.genGlobalRNGSkipAhead(os, synSubs, skipAhead.str());
@@ -582,11 +552,13 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
 
         // If dendritic delay is required, use atomic operation to update dendritic delay buffer
         if(sg.getArchetype().isDendriticDelayRequired()) {
-            presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + "$(id_post)], $(0))");
+            presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, 
+                                                      backend.getAtomic(model.getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, "$(id_post)", "$(1)") + "], $(0))");
         }
         // Otherwise, substitute global memory array for $(inSyn)
         else {
-            presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, backend.getAtomic(model.getPrecision()) + "(&group->inSyn[$(id_post)], $(0))");
+            presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, 
+                                                      backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
 
         // Generate presynaptic simulation code into new stringstream-backed code stream
@@ -661,18 +633,13 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                                 BackendBase::PresynapticUpdateGroupMergedHandler) const
 {
     // Get suffix based on type of events
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
     // Get blocksize
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
 
-    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix;
-    if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "[preReadDelaySlot];" << std::endl;
-    }
-    else {
-        os << "[0];" << std::endl;
-    }
+    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
 
 
@@ -687,8 +654,8 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
         os << "if (" << backend.getThreadID() << " < numSpikesInBlock)";
         {
             CodeStream::Scope b(os);
-            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[" << queueOffset << "(r * " << blockSize << ") + " << backend.getThreadID() << "];" << std::endl;
+            const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
+            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
             os << "shSpk" << eventSuffix << "[" << backend.getThreadID() << "] = spk;" << std::endl;
         }
         backend.genSharedMemBarrier(os);
@@ -776,7 +743,7 @@ void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelM
         os << "for(;shIdx < endShIdx && glbIdx < group->numTrgNeurons; shIdx++, glbIdx += 32)";
         {
             CodeStream::Scope b(os);
-            const std::string inSyn = "group->inSyn[glbIdx]";
+            const std::string inSyn = "group->inSyn[" + sg.getPostISynIndex(modelMerged.getModel().getBatchSize(), "glbIdx") +"]";
             if(sg.getArchetype().isPSModelMerged()) {
                 os << backend.getAtomic(modelMerged.getModel().getPrecision()) << "(&" << inSyn << ", shLg[shIdx]);" << std::endl;
             }

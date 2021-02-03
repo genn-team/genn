@@ -198,24 +198,26 @@ public:
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
 
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
+    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
 
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng) const override
+    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePush(os, ng, false);
+        genCurrentSpikePush(os, ng, batchSize, false);
     }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng) const override
+    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePull(os, ng, false);
+        genCurrentSpikePull(os, ng, batchSize, false);
     }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng) const override
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePush(os, ng, true);
+        genCurrentSpikePush(os, ng, batchSize, true);
     }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng) const override
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePull(os, ng, true);
+        genCurrentSpikePull(os, ng, batchSize, true);
     }
     
     virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
@@ -324,10 +326,10 @@ private:
         return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
-    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
-    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, bool spikeEvent) const;
+    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
+    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
 
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads) const;
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const;
 
     //--------------------------------------------------------------------------
     // Members

@@ -122,7 +122,7 @@ class GeNNModel(object):
             raise ValueError(
                 "Supported time precisions are float and double, "
                 "but '{1}' was given".format(time_precision))
-        
+
         # Store precision in class and determine GeNN scalar type
         self._scalar = precision
         if precision == "float":
@@ -133,7 +133,7 @@ class GeNNModel(object):
             raise ValueError(
                 "Supported precisions are float and double, "
                 "but '{1}' was given".format(precision))
-                
+
         # Initialise GeNN logging
         genn_wrapper.init_logging(genn_log_level, code_gen_log_level)
 
@@ -151,7 +151,7 @@ class GeNNModel(object):
         self.synapse_populations = {}
         self.current_sources = {}
         self.dT = 0.1
-        
+
         # Build dictionary containing conversions between GeNN C++ types and numpy types
         self.genn_types = {
             "float":            GeNNType(np.float32, self._slm.assign_external_pointer_array_f, self._slm.assign_external_pointer_single_f),
@@ -170,7 +170,7 @@ class GeNNModel(object):
             "int16_t":          GeNNType(np.int16, self._slm.assign_external_pointer_array_s, self._slm.assign_external_pointer_single_s),
             "uint8_t":          GeNNType(np.uint8, self._slm.assign_external_pointer_array_uc, self._slm.assign_external_pointer_single_uc),
             "int8_t":           GeNNType(np.int8, self._slm.assign_external_pointer_array_sc, self._slm.assign_external_pointer_single_sc)}
-        
+
         # Add "scalar" type to genn_types - pointing at float or double as appropriate
         if precision == "float":
             self.genn_types["scalar"] = self.genn_types["float"]
@@ -209,7 +209,15 @@ class GeNNModel(object):
     @timing_enabled.setter
     def timing_enabled(self, timing):
         self._model.set_timing(timing)
-    
+
+    @property
+    def batch_size(self):
+        return self._model.get_batch_size()
+
+    @batch_size.setter
+    def batch_size(self, batch_size):
+        self._model.set_batch_size(batch_size)
+
     @property
     def default_var_location(self):
         """Default variable location - defines
@@ -285,15 +293,15 @@ class GeNNModel(object):
     @property
     def neuron_update_time(self):
         return self._slm.get_neuron_update_time()
-    
+
     @property
     def init_time(self):
         return self._slm.get_init_time()
-        
+
     @property
     def presynaptic_update_time(self):
         return self._slm.get_presynaptic_update_time()
-    
+
     @property
     def postsynaptic_update_time(self):
         return self._slm.get_postsynaptic_update_time()
@@ -384,7 +392,7 @@ class GeNNModel(object):
         # Validate source and target groups
         source = self._validate_neuron_group(source, "source")
         target = self._validate_neuron_group(target, "target")
-        
+
         s_group = SynapseGroup(pop_name, self)
         s_group.matrix_type = matrix_type
         s_group.set_connected_populations(source, target)
@@ -397,7 +405,7 @@ class GeNNModel(object):
         self.synapse_populations[pop_name] = s_group
 
         return s_group
-    
+
     def add_slave_synapse_population(self, pop_name, master_pop, delay_steps,
                                      source, target, postsyn_model,
                                      ps_param_space, ps_var_space):
@@ -427,13 +435,13 @@ class GeNNModel(object):
         if pop_name in self.synapse_populations:
             raise ValueError("synapse population '{0}' "
                              "already exists".format(pop_name))
-        
+
         # Validate source and target groups
         source = self._validate_neuron_group(source, "source")
         target = self._validate_neuron_group(target, "target")
-        
+
         master_pop = self._validate_synapse_group(master_pop, "master_pop")
-        
+
         s_group = SynapseGroup(pop_name, self, master_pop)
         s_group.set_connected_populations(source, target)
         s_group.set_post_syn(postsyn_model, ps_param_space, ps_var_space)
@@ -470,7 +478,7 @@ class GeNNModel(object):
 
         # Validate population
         pop = self._validate_neuron_group(pop, "pop")
-        
+
         c_source = CurrentSource(cs_name, self)
         c_source.set_current_source_model(current_source_model,
                                           param_space, var_space)
@@ -544,7 +552,7 @@ class GeNNModel(object):
             if num_recording_timesteps is None:
                 raise Exception("Cannot use recording system without passing "
                                 "number of recording timesteps to GeNNModel.load")
-            
+
             # Allocate recording buffers
             self._slm.allocate_recording_buffers(num_recording_timesteps)
 
@@ -702,10 +710,10 @@ class GeNNModel(object):
         """Pull recording buffers from device"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling recording buffers")
-        
+
         if not self._model.is_recording_in_use():
             raise Exception("Cannot pull recording buffer if recording system is not in use")
-            
+
         # Pull recording buffers from device
         self._slm.pull_recording_buffers_from_device()
 

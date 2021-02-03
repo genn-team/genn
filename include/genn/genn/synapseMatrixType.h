@@ -3,7 +3,7 @@
 //----------------------------------------------------------------------------
 // Enumerations
 //----------------------------------------------------------------------------
-//!< Flags defining differnet types of synaptic matrix connectivity
+//! Flags defining differnet types of synaptic matrix connectivity
 enum class SynapseMatrixConnectivity : unsigned int
 {
     DENSE       = (1 << 0),
@@ -12,7 +12,7 @@ enum class SynapseMatrixConnectivity : unsigned int
     PROCEDURAL  = (1 << 3),
 };
 
-//!< Flags defining different types of synaptic matrix connectivity
+//! Flags defining different types of synaptic matrix connectivity
 enum class SynapseMatrixWeight : unsigned int
 {
     GLOBAL          = (1 << 5),
@@ -21,7 +21,7 @@ enum class SynapseMatrixWeight : unsigned int
     INDIVIDUAL_PSM  = (1 << 8),
 };
 
-//!< Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
+//! Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
 enum class SynapseMatrixType : unsigned int
 {
     DENSE_GLOBALG                       = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
@@ -59,6 +59,7 @@ inline SynapseMatrixType operator | (SynapseMatrixWeight weightType, SynapseMatr
 //----------------------------------------------------------------------------
 // Helpers
 //----------------------------------------------------------------------------
+// **THINK** these are kinda nasty as they can return things that aren't actually in the bit enums i.e. ORd together things
 inline SynapseMatrixConnectivity getSynapseMatrixConnectivity(SynapseMatrixType type)
 {
     return static_cast<SynapseMatrixConnectivity>(static_cast<unsigned int>(type) & 0x15);
@@ -66,5 +67,5 @@ inline SynapseMatrixConnectivity getSynapseMatrixConnectivity(SynapseMatrixType 
 
 inline SynapseMatrixWeight getSynapseMatrixWeight(SynapseMatrixType type)
 {
-    return static_cast<SynapseMatrixWeight>(static_cast<unsigned int>(type) >> 5);
+    return static_cast<SynapseMatrixWeight>(static_cast<unsigned int>(type) & ~0x15);
 }

@@ -151,7 +151,7 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
                                                });
 
     // Finally, add on total number of threads used for sparse synapse initialisation
-    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseDenseInitGroups(),
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseSparseInitGroups(),
                                                [this](const SynapseGroupInternal &sg)
                                                {
                                                    return padSize(sg.getMaxConnections(), getKernelBlockSize(Kernel::KernelInitializeSparse));
@@ -208,6 +208,8 @@ void BackendSIMT::addPresynapticUpdateStrategy(PresynapticUpdateStrategySIMT::Ba
 //--------------------------------------------------------------------------
 void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+
     // Loop through local neuron groups
     idStart = 0;
     for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
@@ -237,14 +239,26 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 Substitutions popSubs(&kernelSubs);
                 genGroupMergedSearch(os, popSubs, n, idStart);
 
+                // Loop through batches
+                // **THINK** we need to do spike queue updating at the end in same thread that spkQuePtr is advanced in but this update COULD be done in parallel
+                if(batchSize > 1) {
+                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                }
+
                 // If neuron group requires delays
                 if(n.getArchetype().isDelayRequired()) {
-                    os << "const unsigned int lastTimestepDelayOffset = *group->spkQuePtr * group->numNeurons;" << std::endl;
+                    if(batchSize == 1) {
+                        os << "const unsigned int lastTimestepDelaySlot = *group->spkQuePtr;" << std::endl;
+                    }
+                    else {
+                        os << "const unsigned int lastTimestepDelaySlot = *group->spkQuePtr  + (batch *  " << n.getArchetype().getNumDelaySlots() << ");" << std::endl;
+                    }
+                    os << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
 
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         // If there is a spike for this thread, set previous spike time to time of last timestep
                         // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCnt[*group->spkQuePtr])";
+                        os << "if(" << popSubs["id"] << " < group->spkCnt[lastTimestepDelaySlot])";
                         {
                             CodeStream::Scope b(os);
                             os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + " << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
@@ -253,7 +267,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
                         // **NOTE** spkQuePtr is updated below so this already points to last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[*group->spkQuePtr])";
+                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[lastTimestepDelaySlot])";
                         {
                             CodeStream::Scope b(os);
                             os << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + " << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
@@ -262,22 +276,36 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 }
                 // Otherwise
                 else {
+                    if(batchSize >= 1) {
+                        os << "const unsigned int batchOffset = group->numNeurons * batch;" << std::endl;
+                    }
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
                         // If there is a spike for this thread, set previous spike time to time of last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCnt[0])";
+                        os << "if(" << popSubs["id"] << " < group->spkCnt[" << ((batchSize == 1) ? "0" : "batch") << "])";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->prevST[group->spk[" << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                            os << "group->prevST[group->spk[";
+                            if(batchSize > 1) {
+                                os << "batchOffset + ";
+                            }
+                            os << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
                         }
                     }
                     if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
                         // If there is a spike-like-event for this thread, set previous spike-like-event time to time of last timestep
-                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[0])";
+                        os << "if(" << popSubs["id"] << " < group->spkCntEvnt[" << ((batchSize == 1) ? "0" : "batch") << "])";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->prevSET[group->spkEvnt[" << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
+                            os << "group->prevSET[group->spkEvnt[";
+                            if(batchSize > 1) {
+                                os << "batchOffset + ";
+                            }
+                            os << popSubs["id"] << "]] = " << popSubs["t"] << " - DT;" << std::endl;
                         }
                     }
+                }
+                if(batchSize > 1) {
+                    os << CodeStream::CB(1);
                 }
                 os << std::endl;
 
@@ -286,10 +314,17 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 {
                     CodeStream::Scope b(os);
 
+                    // **THINK** there is still a memory ordering issue here - spkQuePtr will potentially be advanced before other threads use it above
                     if(n.getArchetype().isDelayRequired()) { // with delay
                         os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
                     }
-                    n.genMergedGroupSpikeCountReset(os);
+                    if(batchSize > 1) {
+                        os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                    }
+                    n.genMergedGroupSpikeCountReset(os, batchSize);
+                    if(batchSize > 1) {
+                        os << CodeStream::CB(1);
+                    }
                 }
             }
             idStart += paddedSize;
@@ -311,7 +346,14 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 if(n.getArchetype().isDelayRequired()) { // with delay
                     os << "*group->spkQuePtr  = (*group->spkQuePtr + 1) % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
                 }
-                n.genMergedGroupSpikeCountReset(os);
+
+                if(batchSize > 1) {
+                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)" << CodeStream::OB(1);
+                }
+                n.genMergedGroupSpikeCountReset(os, batchSize);
+                if(batchSize > 1) {
+                    os << CodeStream::CB(1);
+                }
             }
             idStart += n.getGroups().size();
         }
@@ -321,6 +363,8 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
 void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                         NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const
 {
+    const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+
     // If any neuron groups emit spike events
     if(std::any_of(modelMerged.getMergedNeuronUpdateGroups().cbegin(), modelMerged.getMergedNeuronUpdateGroups().cend(),
                    [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
@@ -373,16 +417,9 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     genParallelGroup<NeuronUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelNeuronUpdate)); },
-        [simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
+        [batchSize, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
-            // If axonal delays are required
-            if(ng.getArchetype().isDelayRequired()) {
-                // We should READ from delay slot before spkQuePtr
-                os << "const unsigned int readDelayOffset = " << ng.getPrevQueueOffset() << ";" << std::endl;
-
-                // And we should WRITE to delay slot pointed to be spkQuePtr
-                os << "const unsigned int writeDelayOffset = " << ng.getCurrentQueueOffset() << ";" << std::endl;
-            }
+            genNeuronIndexCalculation(os, ng, batchSize);
             os << std::endl;
 
             // Call handler to generate generic neuron code
@@ -392,7 +429,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy global RNG stream to local and use pointer to this for rng
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + popSubs["id"] + "]");
+                    genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) + "]");
                 }
 
                 simHandler(os, ng, popSubs,
@@ -409,7 +446,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
                 // Copy local stream back to local
                 if(ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGPostamble(os, "group->rng[" + popSubs["id"] + "]");
+                    genPopulationRNGPostamble(os, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) + "]");
                 }
             }
 
@@ -424,10 +461,14 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         os << "shPosSpkEvnt = " << getAtomic("unsigned int") << "(&group->spkCntEvnt";
                         if(ng.getArchetype().isDelayRequired()) {
-                            os << "[*group->spkQuePtr], shSpkEvntCount);" << std::endl;
+                            os << "[*group->spkQuePtr";
+                            if(batchSize > 1) {
+                                os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            }
+                            os << "], shSpkEvntCount);" << std::endl;
                         }
                         else {
-                            os << "[0], shSpkEvntCount);" << std::endl;
+                            os << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkEvntCount);" << std::endl;
                         }
                     }
                 } 
@@ -443,17 +484,21 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         os << "shPosSpk = " << getAtomic("unsigned int") << "(&group->spkCnt";
                         if(ng.getArchetype().isDelayRequired() && ng.getArchetype().isTrueSpikeRequired()) {
-                            os << "[*group->spkQuePtr], shSpkCount);" << std::endl;
+                            os << "[*group->spkQuePtr";
+                            if(batchSize > 1) {
+                                os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            }
+                            os << "], shSpkCount);" << std::endl;
                         }
                         else {
-                            os << "[0], shSpkCount);" << std::endl;
+                            os << "[" << ((batchSize > 1) ? "batch" : "0") << "], shSpkCount);" << std::endl;
                         }
                     }
                 } 
                 genSharedMemBarrier(os);
             }
 
-            const std::string queueOffset = ng.getArchetype().isDelayRequired() ? "writeDelayOffset + " : "";
+            const std::string queueOffset = ng.getWriteVarIndex(ng.getArchetype().isDelayRequired(), batchSize, VarAccessDuplication::DUPLICATE, "");
             if(ng.getArchetype().isSpikeEventRequired()) {
                 os << "if(" << getThreadID() << " < shSpkEvntCount)";
                 {
@@ -468,7 +513,8 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
             }
 
             if(!ng.getArchetype().getNeuronModel()->getThresholdConditionCode().empty()) {
-                const std::string queueOffsetTrueSpk = ng.getArchetype().isTrueSpikeRequired() ? queueOffset : "";
+                const std::string queueOffsetTrueSpk = ng.getWriteVarIndex(ng.getArchetype().isTrueSpikeRequired() && ng.getArchetype().isDelayRequired(), 
+                                                                           batchSize, VarAccessDuplication::DUPLICATE, "");
 
                 os << "if(" << getThreadID() << " < shSpkCount)";
                 {
@@ -499,11 +545,14 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                 {
                     CodeStream::Scope b(os);
 
-                    // Calculate number of words which will be used to record this population's spikes
+                    // Calculate number of words which will be used to record this population's spikes in each batch
                     os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
 
                     // Build global index
-                    const std::string globalIndex = "(recordingTimestep * numRecordingWords) + (" + popSubs["id"] + " / 32) + " + getThreadID();
+                    std::string globalIndex = "(recordingTimestep * numRecordingWords * " + std::to_string(batchSize) + ") + (" + popSubs["id"] + " / 32) + " + getThreadID();
+                    if(batchSize > 1) {
+                        globalIndex += " + (batch * numRecordingWords)";
+                    }
 
                     // If we are recording spikes, copy word to correct location in global memory
                     if(ng.getArchetype().isSpikeRecordingEnabled()) {
@@ -606,24 +655,8 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
             const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
             LOGD_BACKEND << "Using '" << typeid(*presynapticUpdateStrategy).name() << "' presynaptic update strategy for merged synapse group '" << sg.getIndex() << "'";
 
-            // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-            if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int preReadDelaySlot = " << sg.getPresynapticAxonalDelaySlot() << ";" << std::endl;
-                os << "const unsigned int preReadDelayOffset = preReadDelaySlot * group->numSrcNeurons;" << std::endl;
-
-                if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
-                    os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-                }
-            }
-
-            // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-            if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-
-                if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-                    os << "const unsigned int prevPostSpikeTimeReadDelayOffset = " << sg.getPrevPostsynapticSpikeTimeBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-                }
-            }
+            // Generate index calculation code
+            genSynapseIndexCalculation(os, sg, modelMerged.getModel().getBatchSize());
 
             // Generate preamble
             presynapticUpdateStrategy->genPreamble(os, modelMerged, sg, popSubs, *this);
@@ -666,33 +699,14 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
     idStart = 0;
     genParallelGroup<PostsynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padSize(getNumPostsynapticUpdateThreads(sg), getKernelBlockSize(KernelPostsynapticUpdate)); },
-        [postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
+        [&modelMerged, postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
         {
-            // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-            if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
+            // Generate index calculation code
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            genSynapseIndexCalculation(os, sg, batchSize);
 
-                if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
-                    os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-                }
-            }
-
-            // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-            if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int postReadDelaySlot = " << sg.getPostsynapticBackPropDelaySlot() << ";" << std::endl;
-                os << "const unsigned int postReadDelayOffset = postReadDelaySlot * group->numTrgNeurons;" << std::endl;
-
-                if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-                    os << "const unsigned int prevPostSpikeTimeReadDelayOffset = " << sg.getPrevPostsynapticSpikeTimeBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-                }
-            }
-
-            if (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int numSpikes = group->trgSpkCnt[postReadDelaySlot];" << std::endl;
-            }
-            else {
-                os << "const unsigned int numSpikes = group->trgSpkCnt[0];" << std::endl;
-            }
+            os << "const unsigned int numSpikes = group->trgSpkCnt[" << sg.getPostSlot(batchSize) << "];" << std::endl;
+            
 
             os << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
             os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
@@ -703,8 +717,8 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                 os << "if (" << getThreadID() << " < numSpikesInBlock)";
                 {
                     CodeStream::Scope b(os);
-                    const std::string offsetTrueSpkPost = (sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "postReadDelayOffset + " : "";
-                    os << "const unsigned int spk = group->trgSpk[" << offsetTrueSpkPost << "(r * " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + " << getThreadID() << "];" << std::endl;
+                    const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
+                    os << "const unsigned int spk = group->trgSpk[" << sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
                     os << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -761,23 +775,9 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
         [this](const SynapseGroupInternal &sg) { return padSize(getNumSynapseDynamicsThreads(sg), getKernelBlockSize(KernelSynapseDynamicsUpdate)); },
         [synapseDynamicsHandler, &modelMerged, this](CodeStream &os, const SynapseDynamicsGroupMerged &sg, Substitutions &popSubs)
         {
-            // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
-            if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int preReadDelayOffset = " << sg.getPresynapticAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-
-                if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
-                    os << "const unsigned int prevPreSpikeTimeReadDelayOffset = " << sg.getPrevPresynapticSpikeTimeAxonalDelaySlot() << " * group->numSrcNeurons;" << std::endl;
-                }
-            }
-
-            // If postsynaptic neuron group has variable queues, calculate offset to read from its variables at current time
-            if(sg.getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
-                os << "const unsigned int postReadDelayOffset = " << sg.getPostsynapticBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-
-                if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-                    os << "const unsigned int prevPostSpikeTimeReadDelayOffset = " << sg.getPrevPostsynapticSpikeTimeBackPropDelaySlot() << " * group->numTrgNeurons;" << std::endl;
-                }
-            }
+            // Generate index calculation code
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            genSynapseIndexCalculation(os, sg, batchSize);
 
             Substitutions synSubs(&popSubs);
 
@@ -806,12 +806,13 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
                 }
 
                 // If dendritic delay is required, always use atomic operation to update dendritic delay buffer
+                // **TODO** once synapse dynamics gets refactored into update strategy classes, move the index building code elsewhere
                 if(sg.getArchetype().isDendriticDelayRequired()) {
-                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->denDelay[" + sg.getDendriticDelayOffset("$(1)") + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSynDelay", 2, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->denDelay[" + sg.getPostDenDelayIndex(batchSize, synSubs["id_post"], "$(1)") + "], $(0))");
                 }
                 // Otherwise
                 else {
-                    synSubs.addFuncSubstitution("addToInSyn", 1, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + synSubs["id_post"] + "], $(0))");
+                    synSubs.addFuncSubstitution("addToInSyn", 1, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
                 }
 
                 synapseDynamicsHandler(os, sg, synSubs);
@@ -830,7 +831,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     genParallelGroup<NeuronInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padSize(ng.getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
-        [this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
+        [&modelMerged, this, neuronInitHandler](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
@@ -838,9 +839,21 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 CodeStream::Scope b(os);
 
                 // If population RNGs are initialised on device and this neuron is going to require one, 
-                // Initialise RNG using GLOBAL thread id for sequence
                 if(isPopulationRNGInitialisedOnDevice() && ng.getArchetype().isSimRNGRequired()) {
-                    genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
+                    // If batch size is 1, initialise single RNG using GLOBAL thread id for sequence
+                    if(modelMerged.getModel().getBatchSize() == 1) {
+                        genPopulationRNGInit(os, "group->rng[" + popSubs["id"] + "]", "deviceRNGSeed", "id");
+                    }
+                    // Otherwise, loop through batches and initialise independent RNGs using GLOBAL thread id as basis of sequence
+                    else {
+                        os << "for(unsigned int b = 0; b < " << modelMerged.getModel().getBatchSize() << "; b++)";
+                        {
+                            CodeStream::Scope b(os);
+                            genPopulationRNGInit(os, "group->rng[(b * group->numNeurons) + " + popSubs["id"] + "]", "deviceRNGSeed", 
+                                                 "(b * " + std::to_string(getNumInitialisationRNGStreams(modelMerged)) + ") + id");
+                        }
+                    }
+                    
                 }
 
                 // If this neuron requires an RNG for initialisation,
@@ -978,15 +991,8 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                     }
                     // Otherwise, if it's bitmask
                     else {
-                        // Calculate the maximum number of synapses in any groups
-                        size_t maxSynapses = 0;
-                        for(const auto &g : sg.getGroups()) {
-                            const size_t numSynapses = (size_t)g.get().getSrcNeuronGroup()->getNumNeurons() * (size_t)getSynapticMatrixRowStride(g.get());
-                            maxSynapses = std::max(maxSynapses, numSynapses);
-                        }
-
                         // Figure out required type for indexing into bitmask
-                        const std::string indexType = ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0) ? "uint64_t" : "unsigned int";
+                        const std::string indexType = areSixtyFourBitSynapseIndicesRequired(sg) ? "uint64_t" : "unsigned int";
 
                         // If there is row-building code in this snippet
                         if(!snippet->getRowBuildCode().empty()) {

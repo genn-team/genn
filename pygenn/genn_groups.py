@@ -21,7 +21,7 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
-
+from .genn_wrapper.Models import VarAccessDuplication_SHARED
 
 class Group(object):
 
@@ -161,7 +161,7 @@ class Group(object):
         return self._model.genn_types[var_type].assign_ext_ptr_single(
             internal_var_name)
 
-    def _load_vars(self, size=None, var_dict=None, get_location_fn=None):
+    def _load_vars(self, vars, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
         if size is None:
             size = self.size
@@ -175,13 +175,24 @@ class Group(object):
             get_location_fn = self.pop.get_var_location
 
         # Loop through variables
-        for var_name, var_data in iteritems(var_dict):
+        for v in vars:
+            # Get corresponding data from dictionary
+            var_data = self.vars[v.name]
+
             # If variable is located on host
-            var_loc = get_location_fn(var_name) 
+            var_loc = get_location_fn(v.name) 
             if (var_loc & VarLocation_HOST) != 0:
+                # Determine how many copies of this variable are present
+                num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                              else self._model.batch_size)
+
                 # Get view
-                var_data.view = self._assign_ext_ptr_array(var_name, size,
+                var_data.view = self._assign_ext_ptr_array(v.name, size * num_copies,
                                                            var_data.type)
+
+                # If there is more than one copy, reshape view to 2D
+                if num_copies > 1:
+                    var_data.view = np.reshape(var_data.view, (num_copies, -1))
 
                 # If manual initialisation is required, copy over variables
                 if var_data.init_required:
@@ -267,37 +278,53 @@ class NeuronGroup(Group):
     @property
     def current_spikes(self):
         """Current spikes from GeNN"""
-        offset = self.spike_que_ptr[0] * self.size
-        return self.spikes[
-            offset:offset + self.spike_count[self.spike_que_ptr[0]]]
+        # Get current spike queue pointer
+        d = self.spike_que_ptr[0]
+        
+        # If batch size is zero, return single slice of spikes
+        if self._model.batch_size == 1:
+            return self.spikes[0, d, 0:self.spike_count[0, d]]
+        # Otherwise, return list of slices
+        else:
+            return [self.spikes[b, d, 0:self.spike_count[b, d]]
+                    for b in range(self._model.batch_size)]
 
     @property
     def spike_recording_data(self):
         # Get byte view of data
         data_bytes = self._spike_recording_data.view(dtype=np.uint8)
-        
-        # Reshape view so there's a row per timestep and a column per byte
-        data_bytes = np.reshape(data_bytes, (-1, self._spike_recording_words * 4))
 
-        # Unpack data (results in one byte per bit)
-        # **THINK** is there a way to avoid this step?
-        data_unpack = np.unpackbits(data_bytes, axis=1, 
-                                    count=self.size,
-                                    bitorder="little")
-
-        # Calculate indices where there are spikes
-        spikes = np.where(data_unpack == 1)
+        # Reshape view into a tensor with time, batches and recording bytes
+        spike_recording_bytes = self._spike_recording_words * 4
+        data_bytes = np.reshape(data_bytes, (-1, self._model.batch_size, 
+                                                spike_recording_bytes))
 
         # Calculate start time of recording
         start_time_ms = (self._model.timestep - data_bytes.shape[0]) * self._model.dT
         if start_time_ms < 0.0:
             raise Exception("spike_recording_data can only be "
                             "accessed once buffer is full.")
-        
-        # Convert spike times to ms
-        spike_times = start_time_ms + (spikes[0] * self._model.dT)
 
-        return spike_times, spikes[1]
+        # Unpack data (results in one byte per bit)
+        # **THINK** is there a way to avoid this step?
+        data_unpack = np.unpackbits(data_bytes, axis=2, 
+                                    count=self.size,
+                                    bitorder="little")
+
+        # Loop through batches
+        spike_data = []
+        for b in range(self._model.batch_size):
+            # Calculate indices where there are spikes
+            spikes = np.where(data_unpack[:,b,:] == 1)
+
+            # Convert spike times to ms
+            spike_times = start_time_ms + (spikes[0] * self._model.dT)
+
+            # Add to list
+            spike_data.append((spike_times, spikes[1]))
+
+        # If batch size is 1, return 1st population's spikes otherwise list
+        return spike_data[0] if self._model.batch_size == 1 else spike_data
 
     @property
     def delay_slots(self):
@@ -311,7 +338,7 @@ class NeuronGroup(Group):
     @property
     def spike_recording_enabled(self):
         return self.pop.is_spike_recording_enabled()
-    
+
     @spike_recording_enabled.setter
     def spike_recording_enabled(self, enabled):
         return self.pop.set_spike_recording_enabled(enabled)
@@ -382,18 +409,26 @@ class NeuronGroup(Group):
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
         # If spike data is present on the host
+        batch_size = self._model.batch_size
         if (self.pop.get_spike_location() & VarLocation_HOST) != 0:
-            self.spikes = self._assign_ext_ptr_array("glbSpk", 
-                                                    self.size * self.delay_slots,
-                                                    "unsigned int")
-            self.spike_count = self._assign_ext_ptr_array("glbSpkCnt", 
-                                                        self.delay_slots, 
-                                                        "unsigned int")
+            self.spikes = self._assign_ext_ptr_array(
+                "glbSpk", self.size * self.delay_slots * batch_size,
+                "unsigned int")
+            self.spike_count = self._assign_ext_ptr_array(
+                "glbSpkCnt", self.delay_slots * batch_size, "unsigned int")
+
+            # Reshape to expose delay slots and batches
+            self.spikes = np.reshape(self.spikes, (batch_size, 
+                                                   self.delay_slots, 
+                                                   self.size))
+            self.spike_count = np.reshape(self.spike_count, (batch_size,
+                                                             self.delay_slots))
 
         # If spike recording is enabled
         if self.spike_recording_enabled:
             # Calculate spike recording words
-            recording_words = self._spike_recording_words * num_recording_timesteps
+            recording_words = (self._spike_recording_words * num_recording_timesteps 
+                               * batch_size)
 
             # Assign pointer to recording data
             self._spike_recording_data = self._assign_ext_ptr_array("recordSpk",
@@ -404,7 +439,7 @@ class NeuronGroup(Group):
                 "spkQuePtr" + self.name)
 
         # Load neuron state variables
-        self._load_vars()
+        self._load_vars(self.neuron.get_vars())
 
         # Load neuron extra global params
         self._load_egp()
@@ -869,37 +904,50 @@ class SynapseGroup(Group):
                 raise Exception("Matrix format not supported")
 
         # Loop through weight update model state variables
-        for var_name, var_data in iteritems(self.vars):
-            # If population has individual synapse variables
-            if self.has_individual_synapse_vars:
-                # If variable is located on host
-                var_loc = self.pop.get_wuvar_location(var_name) 
-                if (var_loc & VarLocation_HOST) != 0:
-                    # Get view
-                    var_data.view = self._assign_ext_ptr_array(
-                        var_name, self.weight_update_var_size, var_data.type)
+        if self.weight_sharing_master is None:
+            for v in self.w_update.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
 
-                    # Initialise variable if necessary
-                    self._init_wum_var(var_data)
-                else:
-                    assert not var_data.init_required
-                    var_data.view = None
+                # If population has individual synapse variables
+                if self.has_individual_synapse_vars:
+                    # If variable is located on host
+                    var_loc = self.pop.get_wuvar_location(v.name) 
+                    if (var_loc & VarLocation_HOST) != 0:
+                        # Determine how many copies of this variable are present
+                        num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                                      else self._model.batch_size)
+                        # Get view
+                        var_data.view = self._assign_ext_ptr_array(
+                            v.name, self.weight_update_var_size * num_copies, 
+                            var_data.type)
 
-            # Load any var initialisation egps associated with this variable
-            self._load_egp(var_data.extra_global_params, var_name)
+                        # If there is more than one copy, reshape view to 2D
+                        if num_copies > 1:
+                            var_data.view = np.reshape(var_data.view, 
+                                                       (num_copies, -1))
 
-        # Load weight update model presynaptic variables
-        self._load_vars(self.src.size, self.pre_vars,
-                        self.pop.get_wupre_var_location)
+                        # Initialise variable if necessary
+                        self._init_wum_var(var_data, num_copies)
+                    else:
+                        assert not var_data.init_required
+                        var_data.view = None
 
-        # Load weight update model postsynaptic variables
-        self._load_vars(self.trg.size, self.post_vars,
-                        self.pop.get_wupost_var_location)
+                # Load any var initialisation egps associated with this variable
+                self._load_egp(var_data.extra_global_params, v.name)
 
-        # Load postsynaptic update model variables
-        if self.has_individual_postsynaptic_vars:
-            self._load_vars(self.trg.size, self.psm_vars,
-                            self.pop.get_psvar_location)
+            # Load weight update model presynaptic variables
+            self._load_vars(self.w_update.get_pre_vars(), self.src.size,
+                            self.pre_vars, self.pop.get_wupre_var_location)
+
+            # Load weight update model postsynaptic variables
+            self._load_vars(self.w_update.get_post_vars(), self.trg.size, 
+                            self.post_vars, self.pop.get_wupost_var_location)
+
+            # Load postsynaptic update model variables
+            if self.has_individual_postsynaptic_vars:
+                self._load_vars(self.postsyn.get_vars(), self.trg.size, self.psm_vars,
+                                self.pop.get_psvar_location)
 
         # Load extra global parameters
         self._load_egp()
@@ -910,14 +958,14 @@ class SynapseGroup(Group):
         if self.weight_sharing_master is None:
             # Load any egps used for connectivity initialisation
             self._load_egp(self.connectivity_extra_global_params)
-            
+
             # Load any egps used for variable initialisation
             self._load_var_init_egps()
 
         # Load any egps used for postsynaptic model variable initialisation
         if self.has_individual_postsynaptic_vars:
             self._load_var_init_egps(self.psm_vars)
-        
+
         # Load any egps used for pre and postsynaptic variable initialisation
         self._load_var_init_egps(self.pre_vars)
         self._load_var_init_egps(self.post_vars)
@@ -927,9 +975,19 @@ class SynapseGroup(Group):
         # If population has individual synapse variables
         if self.has_individual_synapse_vars:
             # Loop through weight update model state variables
-            # and initialise if necessary
-            for var_name, var_data in iteritems(self.vars):
-                self._init_wum_var(var_data)
+            for v in self.w_update.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_wuvar_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                                  else self._model.batch_size)
+
+                    # Initialise
+                    self._init_wum_var(var_data, num_copies)
 
         # Reinitialise weight update model presynaptic variables
         self._reinitialise_vars(self.src.size, self.pre_vars)
@@ -941,7 +999,7 @@ class SynapseGroup(Group):
         if self.has_individual_postsynaptic_vars:
             self._reinitialise_vars(self.trg.size, self.psm_vars)
 
-    def _init_wum_var(self, var_data):
+    def _init_wum_var(self, var_data, num_copies):
         # If initialisation is required
         if var_data.init_required:
             # If connectivity is dense,
@@ -962,7 +1020,10 @@ class SynapseGroup(Group):
                 syn = 0
                 for i, r in zip(row_start_idx, self.row_lengths):
                     # Copy row from non-padded indices into correct location
-                    var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                    if num_copies == 1:
+                        var_data.view[i:i + r] = sorted_var[syn:syn + r]
+                    else:
+                        var_data.view[i:i + r,:] = sorted_var[syn:syn + r,:]
                     syn += r
             else:
                 raise Exception("Matrix format not supported")
@@ -1042,7 +1103,7 @@ class CurrentSource(Group):
 
     def load(self):
         # Load current source variables
-        self._load_vars()
+        self._load_vars(self.current_source_model.get_vars())
 
         # Load current source extra global parameters
         self._load_egp()

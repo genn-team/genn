@@ -421,7 +421,7 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void genMergedGroupSpikeCountReset(CodeStream &os) const;
+    void genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -673,12 +673,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get the expression to calculate the queue offset for accessing state of variables this timestep
-    std::string getCurrentQueueOffset() const;
-
-    //! Get the expression to calculate the queue offset for accessing state of variables in previous timestep
-    std::string getPrevQueueOffset() const;
-
     //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
     bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
@@ -699,6 +693,13 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
     
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -845,24 +846,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Get the expression to calculate the delay slot for accessing
-    //! Presynaptic neuron state variables, taking into account axonal delay
-    std::string getPresynapticAxonalDelaySlot() const;
-
-    //! Get the expression to calculate the delay slot for accessing previous
-    //! presynaptic neuron spike times, taking into account axonal delay
-    std::string getPrevPresynapticSpikeTimeAxonalDelaySlot() const;
-
-    //! Get the expression to calculate the delay slot for accessing
-    //! Postsynaptic neuron state variables, taking into account back propagation delay
-    std::string getPostsynapticBackPropDelaySlot() const;
-
-    //! Get the expression to calculate the delay slot for accessing previous
-    //! postsynaptic neuron spike times, taking into account back propagation delay
-    std::string getPrevPostsynapticSpikeTimeBackPropDelaySlot() const;
-
-    std::string getDendriticDelayOffset(const std::string &offset = "") const;
-
     //! Should the weight update model parameter be implemented heterogeneously?
     bool isWUParamHeterogeneous(size_t paramIndex) const;
 
@@ -899,6 +882,47 @@ public:
     //! Is kernel size heterogeneous in this dimension?
     bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
 
+    std::string getPreSlot(unsigned int batchSize) const;
+    std::string getPostSlot(unsigned int batchSize) const;
+
+    std::string getPreVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPreVarIndex(getArchetype().getSrcNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
+    }
+    
+    std::string getPostVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPostVarIndex(getArchetype().getTrgNeuronGroup()->isDelayRequired(), batchSize, varDuplication, index);
+    }
+
+    std::string getPreWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPreVarIndex(getArchetype().getDelaySteps() != 0, batchSize, varDuplication, index);
+    }
+    
+    std::string getPostWUVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+    {
+        return getPostVarIndex(getArchetype().getBackPropDelaySteps() != 0, batchSize, varDuplication, index);
+    }
+
+    std::string getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const;
+
+    //------------------------------------------------------------------------
+    // Static API
+    //------------------------------------------------------------------------
+    static std::string getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+
+    static std::string getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    
+    static std::string getPostISynIndex(unsigned int batchSize, const std::string &index)
+    {
+        return ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
+    }
+
+    static std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    
 protected:
     //----------------------------------------------------------------------------
     // Enumerations

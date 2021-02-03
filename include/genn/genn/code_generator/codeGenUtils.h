@@ -92,25 +92,27 @@ GENN_EXPORT std::string disambiguateNamespaceFunction(const std::string supportC
   \brief Function for performing the code and value substitutions necessary to insert neuron related variables, parameters, and extraGlobal parameters into synaptic code.
 */
 //-------------------------------------------------------------------------
-template<typename P, typename D>
+template<typename P, typename D, typename V, typename S>
 void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutions, const NeuronGroupInternal *archetypeNG, 
-                                       const std::string &offset, const std::string &prevSpikeTimeOffset, const std::string &delayOffset,
-                                       const std::string &idx, const std::string &sourceSuffix, const std::string &destSuffix, 
+                                       const std::string &delayOffset, const std::string &sourceSuffix, const std::string &destSuffix, 
                                        const std::string &varPrefix, const std::string &varSuffix, bool useLocalNeuronVars,
-                                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+                                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn, V getVarIndexFn, S getPrevSpikeTimeIndexFn)
 {
 
     // Substitute spike times
+    const bool delay = archetypeNG->isDelayRequired();
+    const std::string spikeTimeVarIndex = getVarIndexFn(delay, VarAccessDuplication::DUPLICATE);
+    const std::string prevSpikeTimeVarIndex = getPrevSpikeTimeIndexFn(delay, VarAccessDuplication::DUPLICATE);
     substitutions.addVarSubstitution("sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+                                     "(" + delayOffset + varPrefix + "group->sT" + destSuffix + "[" + spikeTimeVarIndex + "]" + varSuffix + ")");
     substitutions.addVarSubstitution("prev_sT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->prevST" + destSuffix + "[" + prevSpikeTimeOffset + idx + "]" + varSuffix + ")");
+                                     "(" + delayOffset + varPrefix + "group->prevST" + destSuffix + "[" + prevSpikeTimeVarIndex + "]" + varSuffix + ")");
 
     // Substitute spike-like-event times
     substitutions.addVarSubstitution("seT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->seT" + destSuffix + "[" + offset + idx + "]" + varSuffix + ")");
+                                     "(" + delayOffset + varPrefix + "group->seT" + destSuffix + "[" + spikeTimeVarIndex + "]" + varSuffix + ")");
     substitutions.addVarSubstitution("prev_seT" + sourceSuffix,
-                                     "(" + delayOffset + varPrefix + "group->prevSET" + destSuffix + "[" + prevSpikeTimeOffset + idx + "]" + varSuffix + ")");
+                                     "(" + delayOffset + varPrefix + "group->prevSET" + destSuffix + "[" + prevSpikeTimeVarIndex + "]" + varSuffix + ")");
 
     // Substitute neuron variables
     const auto *nm = archetypeNG->getNeuronModel();
@@ -119,10 +121,11 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
     }
     else {
         for(const auto &v : nm->getVars()) {
-            const std::string varIdx = archetypeNG->isVarQueueRequired(v.name) ? offset + idx : idx;
+            const std::string varIdx = getVarIndexFn(delay && archetypeNG->isVarQueueRequired(v.name),
+                                                     getVarAccessDuplication(v.access));
 
             substitutions.addVarSubstitution(v.name + sourceSuffix,
-                                            varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
+                                             varPrefix + "group->" + v.name + destSuffix + "[" + varIdx + "]" + varSuffix);
         }
     }
 

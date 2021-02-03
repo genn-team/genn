@@ -23,6 +23,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
                                const ModelSpecMerged &modelMerged, const bool backendSupportsNamespace)
 {
     const ModelSpecInternal &model = modelMerged.getModel();
+    const unsigned int batchSize = model.getBatchSize();
     const auto *wu = sg.getArchetype().getWUModel();
 
     Substitutions synapseSubs(&baseSubs);
@@ -37,18 +38,25 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "group->");
 
     // Substitute names of pre and postsynaptic weight update variables
-    const std::string delayedPreIdx = (sg.getArchetype().getDelaySteps() == NO_DELAY) ? synapseSubs["id_pre"] : "preReadDelayOffset + " + baseSubs["id_pre"];
-    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group->",
-                                       "[" + delayedPreIdx + "]");
+    synapseSubs.addVarNameSubstitution(wu->getPreVars(), "", "group->", 
+                                       [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                       { 
+                                           return "[" + sg.getPreWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_pre"]) + "]";
+                                       });
 
-    const std::string delayedPostIdx = (sg.getArchetype().getBackPropDelaySteps() == NO_DELAY) ? synapseSubs["id_post"] : "postReadDelayOffset + " + baseSubs["id_post"];
     synapseSubs.addVarNameSubstitution(wu->getPostVars(), "", "group->",
-                                       "[" + delayedPostIdx + "]");
+                                       [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                       { 
+                                           return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
+                                       });
 
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->",
-                                           "[" + synapseSubs["id_syn"] + "]");
+                                           [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                           { 
+                                               return "[" + sg.getSynVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_syn"]) + "]";
+                                           });
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
@@ -106,22 +114,34 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
     // Make presynaptic neuron substitutions
     const std::string axonalDelayOffset = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getDelaySteps() + 1u)) + " + ";
-    const std::string preOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-    const std::string prevPreSpikeOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "prevPreSpikeTimeReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(),
-                                      preOffset, prevPreSpikeOffset, axonalDelayOffset, synapseSubs["id_pre"], "_pre", "Pre", "", "", false,
+                                      axonalDelayOffset, "_pre", "Pre", "", "", false,
                                       [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
-                                      [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+                                      [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); },
+                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
+                                      {
+                                          return sg.getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
+                                      },
+                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
+                                      { 
+                                          return sg.getPrePrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
+                                      });
 
 
     // Make postsynaptic neuron substitutions
     const std::string backPropDelayMs = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u)) + " + ";
-    const std::string postOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "postReadDelayOffset + " : "";
-    const std::string prevPostSpikeOffset = sg.getArchetype().getTrgNeuronGroup()->isDelayRequired() ? "prevPostSpikeTimeReadDelayOffset + " : "";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getTrgNeuronGroup(),
-                                      postOffset, prevPostSpikeOffset, backPropDelayMs, synapseSubs["id_post"], "_post", "Post", "", "", false,
+                                      backPropDelayMs, "_post", "Post", "", "", false,
                                       [&sg](size_t paramIndex) { return sg.isTrgNeuronParamHeterogeneous(paramIndex); },
-                                      [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+                                      [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); },
+                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
+                                      {
+                                          return sg.getPostVarIndex(delay, batchSize, varDuplication, synapseSubs["id_post"]); 
+                                      },
+                                      [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
+                                      { 
+                                          return sg.getPostPrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_post"]); 
+                                      });
 
     // If the backend does not support namespaces then we substitute all support code functions with namepsace as prefix
     if (!backendSupportsNamespace) {
@@ -182,12 +202,19 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                                                 "", "group->");
             synapseSubs.addVarNameSubstitution(sg.getArchetype().getWUModel()->getExtraGlobalParams(), "", "group->");
 
-            // Get read offset if required and substitute in presynaptic neuron properties
-            const std::string offset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preReadDelayOffset + " : "";
-            const std::string prevPreSpikeOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "prevPreSpikeTimeReadDelayOffset + " : "";
-            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), offset, prevPreSpikeOffset, "", baseSubs["id_pre"], "_pre", "Pre", "", "", false,
+            // Substitute in presynaptic neuron properties
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(), "", "_pre", "Pre", "", "", false,
                                               [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
-                                              [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); });
+                                              [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); },
+                                              [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
+                                              {
+                                                  return sg.getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
+                                              },
+                                              [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
+                                              { 
+                                                  return sg.getPrePrevSpikeTimeIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
+                                              });
             
             const auto* wum = sg.getArchetype().getWUModel();
 

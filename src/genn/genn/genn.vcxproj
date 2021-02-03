@@ -92,6 +92,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseMatrixType.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\varAccess.h" />
     <ClInclude Include="..\..\..\include\genn\genn\variableMode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\weightUpdateModels.h" />
   </ItemGroup>
@@ -130,8 +131,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\..\include\genn\genn;..\..\..\include\genn\third_party</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">NOMINMAX;BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" !$(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions Condition=" $(Configuration.Contains('DLL')) ">WIN32_LEAN_AND_MEAN;NOMINMAX;BUILDING_GENN_DLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings Condition=" $(Configuration.Contains('DLL')) ">4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>

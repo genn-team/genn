@@ -164,6 +164,8 @@ public:
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
 
+    void setBatchSize(unsigned int batchSize) { m_BatchSize = batchSize;  }
+
     //! Gets the name of the neuronal network model
     const std::string &getName() const{ return m_Name; }
 
@@ -181,6 +183,8 @@ public:
 
     //! Are timers and timing commands enabled
     bool isTimingEnabled() const{ return m_TimingEnabled; }
+
+    unsigned int getBatchSize() const { return m_BatchSize;  }
 
     // PUBLIC NEURON FUNCTIONS
     //========================
@@ -572,6 +576,9 @@ private:
     //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     bool m_ShouldMergePostsynapticModels; 
+
+    //! Batch size of this model - efficiently duplicates model
+    unsigned int m_BatchSize;
 };
 
 // Typedefine NNmodel for backward compatibility

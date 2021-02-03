@@ -55,7 +55,7 @@ extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
     "library_dirs": [genn_wrapper_path],
-    "extra_compile_args" : ["/wd\"4251\""] if windows else ["-std=c++11"],
+    "extra_compile_args" : ["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"] if windows else ["-std=c++11"],
     "extra_link_args": []}
 
 # Always package LibGeNN

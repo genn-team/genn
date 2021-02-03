@@ -50,24 +50,30 @@ CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMer
     }
 }
 //----------------------------------------------------------------------------
-void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os) const
+void CodeGenerator::NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const
 {
-    if(getArchetype().isDelayRequired()) { // with delay
-        if(getArchetype().isSpikeEventRequired()) {
-            os << "group->spkCntEvnt[*group->spkQuePtr] = 0;" << std::endl;
-        }
-        if(getArchetype().isTrueSpikeRequired()) {
-            os << "group->spkCnt[*group->spkQuePtr] = 0;" << std::endl;
+    if(getArchetype().isSpikeEventRequired()) {
+        if(getArchetype().isDelayRequired()) {
+            os << "group->spkCntEvnt[*group->spkQuePtr";
+            if(batchSize > 1) {
+                os << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
+            }
+            os << "] = 0; " << std::endl;
         }
         else {
-            os << "group->spkCnt[0] = 0;" << std::endl;
+            os << "group->spkCntEvnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
         }
     }
-    else { // no delay
-        if(getArchetype().isSpikeEventRequired()) {
-            os << "group->spkCntEvnt[0] = 0;" << std::endl;
+
+    if(getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired()) {
+        os << "group->spkCnt[*group->spkQuePtr";
+        if(batchSize > 1) {
+            os << " + (batch * " << getArchetype().getNumDelaySlots() << ")";
         }
-        os << "group->spkCnt[0] = 0;" << std::endl;
+        os << "] = 0; " << std::endl;
+    }
+    else {
+        os << "group->spkCnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
     }
 }
 
@@ -575,18 +581,6 @@ CodeGenerator::NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, co
 
 }
 //----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getCurrentQueueOffset() const
-{
-    assert(getArchetype().isDelayRequired());
-    return "(*group->spkQuePtr * group->numNeurons)";
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::NeuronUpdateGroupMerged::getPrevQueueOffset() const
-{
-    assert(getArchetype().isDelayRequired());
-    return "(((*group->spkQuePtr + " + std::to_string(getArchetype().getNumDelaySlots() - 1) + ") % " + std::to_string(getArchetype().getNumDelaySlots()) + ") * group->numNeurons)";
-}
-//----------------------------------------------------------------------------
 bool CodeGenerator::NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
@@ -621,6 +615,31 @@ bool CodeGenerator::NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneou
     const std::string derivedParamName = wum->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    if(delay) {
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset + " : "readBatchDelayOffset + ") + index;
+    }
+    else {
+        return getVarIndex(batchSize, varDuplication, index);
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    if(delay) {
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset + " : "writeBatchDelayOffset + ") + index;
+    }
+    else {
+        return getVarIndex(batchSize, varDuplication, index);
+    }
 }
 //----------------------------------------------------------------------------
 void CodeGenerator::NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const std::string &fieldPrefixStem, 
@@ -880,66 +899,6 @@ bool CodeGenerator::SynapseConnectivityHostInitGroupMerged::isConnectivityInitDe
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPresynapticAxonalDelaySlot() const
-{
-    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
-
-    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
-    if(numDelaySteps == 0) {
-        return "(*group->srcSpkQuePtr)";
-    }
-    else {
-        const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-        return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps) + ") % " + std::to_string(numSrcDelaySlots) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPrevPresynapticSpikeTimeAxonalDelaySlot() const
-{
-    // Always read from previous delay slot
-    assert(getArchetype().getSrcNeuronGroup()->isDelayRequired());
-
-    const unsigned int numDelaySteps = getArchetype().getDelaySteps();
-    const unsigned int numSrcDelaySlots = getArchetype().getSrcNeuronGroup()->getNumDelaySlots();
-    return "((*group->srcSpkQuePtr + " + std::to_string(numSrcDelaySlots - numDelaySteps - 1) + ") % " + std::to_string(numSrcDelaySlots) + ")";
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPostsynapticBackPropDelaySlot() const
-{
-    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
-
-    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
-    if(numBackPropDelaySteps == 0) {
-        return "(*group->trgSpkQuePtr)";
-    }
-    else {
-        const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-        return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps) + ") % " + std::to_string(numTrgDelaySlots) + ")";
-    }
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getPrevPostsynapticSpikeTimeBackPropDelaySlot() const
-{
-    // Always read from previous delay slot
-    assert(getArchetype().getTrgNeuronGroup()->isDelayRequired());
-
-    const unsigned int numBackPropDelaySteps = getArchetype().getBackPropDelaySteps();
-    const unsigned int numTrgDelaySlots = getArchetype().getTrgNeuronGroup()->getNumDelaySlots();
-    return "((*group->trgSpkQuePtr + " + std::to_string(numTrgDelaySlots - numBackPropDelaySteps - 1) + ") % " + std::to_string(numTrgDelaySlots) + ")";
-}
-//----------------------------------------------------------------------------
-std::string CodeGenerator::SynapseGroupMergedBase::getDendriticDelayOffset(const std::string &offset) const
-{
-    assert(getArchetype().isDendriticDelayRequired());
-
-    if(offset.empty()) {
-        return "(*group->denDelayPtr * group->numTrgNeurons) + ";
-    }
-    else {
-        return "(((*group->denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group->numTrgNeurons) + ";
-    }
-}
-//----------------------------------------------------------------------------
 bool CodeGenerator::SynapseGroupMergedBase::isWUParamHeterogeneous(size_t paramIndex) const
 {
     const auto *wum = getArchetype().getWUModel();
@@ -1074,6 +1033,92 @@ bool CodeGenerator::SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dim
                        {
                            return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
                        });
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
+{
+    if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+        return  (batchSize == 1) ? "preDelaySlot" : "preBatchDelaySlot";
+    }
+    else {
+        return (batchSize == 1) ? "0" : "batch";
+    }
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostSlot(unsigned int batchSize) const
+{
+    if(getArchetype().getTrgNeuronGroup()->isDelayRequired()) {
+        return  (batchSize == 1) ? "postDelaySlot" : "postBatchDelaySlot";
+    }
+    else {
+        return (batchSize == 1) ? "0" : "batch";
+    }
+}
+//----------------------------------------------------------------------------
+ std::string CodeGenerator::SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize, const std::string &index, const std::string &offset) const
+{
+    assert(getArchetype().isDendriticDelayRequired());
+
+    const std::string batchID = ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
+
+    if(offset.empty()) {
+        return "(*group->denDelayPtr * group->numTrgNeurons) + " + batchID;
+    }
+    else {
+        return "(((*group->denDelayPtr + " + offset + ") % " + std::to_string(getArchetype().getMaxDendriticDelayTimesteps()) + ") * group->numTrgNeurons) + " + batchID;
+    }
+}
+//----------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    if(delay) {
+        return (singleBatch ? "preDelayOffset + " : "preBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "preBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    if(delay) {
+        return (singleBatch ? "postDelayOffset + " : "postBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "postBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+   
+    if(delay) {
+        return (singleBatch ? "prePrevSpikeTimeDelayOffset + " : "prePrevSpikeTimeBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "preBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+   
+    if(delay) {
+        return (singleBatch ? "postPrevSpikeTimeDelayOffset + " : "postPrevSpikeTimeBatchDelayOffset + ") + index;
+    }
+    else {
+        return (singleBatch ? "" : "postBatchOffset + ") + index;
+    }
+}
+//--------------------------------------------------------------------------
+std::string CodeGenerator::SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    return (singleBatch ? "" : "synBatchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 CodeGenerator::SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
