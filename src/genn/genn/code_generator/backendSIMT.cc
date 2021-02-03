@@ -152,7 +152,7 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
                                                });
 
     // Finally, add on total number of threads used for sparse synapse initialisation
-    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseDenseInitGroups(),
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseSparseInitGroups(),
                                                [this](const SynapseGroupInternal &sg)
                                                {
                                                    return padSize(sg.getMaxConnections(), getKernelBlockSize(Kernel::KernelInitializeSparse));
