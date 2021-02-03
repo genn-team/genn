@@ -161,6 +161,10 @@ void ModelSpec::finalize()
             s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
             s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
         }
+
+        // Set flag specifying whether any of this synapse groups variables are referenced by a custom update
+        s.second.setWUVarReferencedByCustomUpdate(std::any_of(getCustomWUUpdates().cbegin(), getCustomWUUpdates().cend(),
+                                                              [&s](const CustomUpdateWUValueType &cg) { return (cg.second.getSynapseGroup() == &s.second); }));
     }
 
     // CURRENT SOURCES

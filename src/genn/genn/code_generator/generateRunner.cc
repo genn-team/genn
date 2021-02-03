@@ -1140,13 +1140,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                         s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size);
 
-                // Determine whether any custom weight updates target this synapse group
-                const bool anyCustomUpdate = std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
-                                                         [&s](const ModelSpec::CustomUpdateWUValueType &cg) { return (cg.second.getSynapseGroup() == &s.second); });
-                // **TODO** remap is not always required
-                if(backend.isSynRemapRequired() && (!s.second.getWUModel()->getSynapseDynamicsCode().empty() || anyCustomUpdate)) {
-                    // Allocate synRemap
-                    // **THINK** this is over-allocating
+                
+                // If synapse remap structure is required, allocate synRemap
+                // **THINK** this is over-allocating
+                if(backend.isSynRemapRequired(s.second)) {
                     mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                             "unsigned int", "synRemap" + s.second.getName(), VarLocation::DEVICE, size + 1);
                 }

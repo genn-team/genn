@@ -127,6 +127,13 @@ bool BackendSIMT::isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) 
     return false;
 }
 //--------------------------------------------------------------------------
+bool BackendSIMT::isSynRemapRequired(const SynapseGroupInternal &sg) const
+{
+    // This synapse group required synRemap if it's sparse and either has synapse dynamics or is targetted by any custom update
+    return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) &&
+            (!sg.getWUModel()->getSynapseDynamicsCode().empty() || sg.areWUVarReferencedByCustomUpdate()));
+}
+//--------------------------------------------------------------------------
 size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelMerged) const
 {
     // Calculate total number of threads used for neuron initialisation group

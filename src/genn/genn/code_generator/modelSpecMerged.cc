@@ -61,7 +61,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                    (sg.isWUVarInitRequired()
-                                    || (backend.isSynRemapRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty())
+                                    || backend.isSynRemapRequired(sg)
                                     || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                        },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });

@@ -1304,9 +1304,9 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             addWeightSharingPointerField("unsigned int", "remap", backend.getDeviceVarPrefix() + "remap");
         }
 
-        // Add additional structure for synapse dynamics access
-        if(backend.isSynRemapRequired() && !wum->getSynapseDynamicsCode().empty()
-           && (role == Role::SynapseDynamics || role == Role::SparseInit))
+        // Add additional structure for synapse dynamics access if required
+        if((role == Role::SynapseDynamics || role == Role::SparseInit) &&
+           backend.isSynRemapRequired(getArchetype()))
         {
             addWeightSharingPointerField("unsigned int", "synRemap", backend.getDeviceVarPrefix() + "synRemap");
         }
@@ -1565,8 +1565,8 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
                  return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
              });
 
-    // If backend requires synaptic remapping and matrix type is sparse, add field
-    if(backend.isSynRemapRequired() && (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE)) {
+    // If the referenced synapse group requires synaptic remapping and matrix type is sparse, add field
+    if(backend.isSynRemapRequired(*getArchetype().getSynapseGroup())) {
         addField("unsigned int*", "synRemap", 
                  [&backend](const CustomUpdateWUInternal &g, size_t) 
                  { 
