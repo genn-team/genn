@@ -5,7 +5,7 @@
 #include "modelSpecInternal.h"
 
 //--------------------------------------------------------------------------
-// Tests
+// Anonymous namespace
 //--------------------------------------------------------------------------
 namespace
 {
@@ -45,11 +45,11 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
     Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"));
 
-    model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate", CustomUpdateWU::Operation::UPDATE,
+    model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
     
     try {
-        model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate", CustomUpdateWU::Operation::UPDATE,
+        model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate",
                                    {}, sumVarValues, sumVarReferences2);
         FAIL();
     }
@@ -113,11 +113,11 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
     Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg2, "d"));
 
-    model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate", CustomUpdateWU::Operation::UPDATE,
+    model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
     
     try {
-        model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate", CustomUpdateWU::Operation::UPDATE,
+        model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate",
                                    {}, sumVarValues, sumVarReferences2);
         FAIL();
     }

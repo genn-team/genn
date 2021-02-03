@@ -33,12 +33,13 @@ IMPLEMENT_MODEL(AlphaCurr);
 class StaticPulseUInt : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseUInt, 0, 1, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
     SET_SIM_CODE("$(addToInSyn, $(g));\n");
 };
+IMPLEMENT_MODEL(StaticPulseUInt);
 }
 
 //--------------------------------------------------------------------------
