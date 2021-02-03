@@ -32,11 +32,11 @@ public:
 class CustomUpdateWUInternal : public CustomUpdateWU
 {
 public:
-    CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName, Operation operation,
+    CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
                            const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences, 
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-    :   CustomUpdateWU(name, updateGroupName, operation, customUpdateModel, params, varInitialisers, varReferences, 
+    :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
                        defaultVarLocation, defaultExtraGlobalParamLocation)
     {
     }
@@ -47,5 +47,6 @@ public:
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::canBeMerged;
     using CustomUpdateBase::canInitBeMerged;
+    using CustomUpdateWU::isTransposeOperation;
     using CustomUpdateWU::getSynapseGroup;
 };

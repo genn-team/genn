@@ -109,12 +109,12 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 //----------------------------------------------------------------------------
 // CustomUpdateWU
 //----------------------------------------------------------------------------
-CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
+CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                                const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Operation(operation), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.front().getSynapseGroup()))
+    m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.front().getSynapseGroup()))
 {
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
@@ -135,7 +135,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 
     // If this is a transpose operation
-    if(m_Operation == Operation::UPDATE_TRANSPOSE) {
+    if(isTransposeOperation()) {
         // Give error if any of the variable references aren't dense
         // **NOTE** there's no reason NOT to implement sparse transpose
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -149,9 +149,16 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 }
 //----------------------------------------------------------------------------
+bool CustomUpdateWU::isTransposeOperation() const
+{
+    // Transpose opetation is required if any variable references have a transpose
+    return std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [](const Models::WUVarReference &v) { return (v.getTransposeSynapseGroup() != nullptr); });
+}
+//----------------------------------------------------------------------------
 bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
 {
     return (CustomUpdateBase::canBeMerged(other)
-            && (getOperation() == other.getOperation())
+            && (isTransposeOperation() == other.isTransposeOperation())
             && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType())));
 }

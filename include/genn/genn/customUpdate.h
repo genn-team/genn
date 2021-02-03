@@ -146,22 +146,12 @@ class CustomUpdateWU : public CustomUpdateBase
 {
 public:
     //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    enum class Operation
-    {
-        UPDATE,
-        UPDATE_TRANSPOSE,
-    };
-
-    //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    Operation getOperation() const { return m_Operation; }
     const std::vector<Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
 
 protected:
-    CustomUpdateWU(const std::string &name, const std::string &updateGroupName, Operation operation,
+    CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                    const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
@@ -169,6 +159,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
+    bool isTransposeOperation() const;
+
     const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
     //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
@@ -180,6 +172,5 @@ private:
     // Members
     //------------------------------------------------------------------------
     const std::vector<Models::WUVarReference> m_VarReferences;
-    const Operation m_Operation;
     const SynapseGroupInternal *m_SynapseGroup;
 };

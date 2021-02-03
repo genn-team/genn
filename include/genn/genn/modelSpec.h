@@ -577,7 +577,7 @@ public:
         \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
-    CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName, CustomUpdateWU::Operation operation,
+    CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                       const CustomUpdateModel *model, const typename CustomUpdateModel::ParamValues &paramValues,
                                       const typename CustomUpdateModel::VarValues &varInitialisers,
                                       const typename CustomUpdateModel::WUVarReferences &varReferences)
@@ -585,7 +585,7 @@ public:
         // Add neuron group to map
         auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, updateGroupName, operation, model,
+            std::forward_as_tuple(name, updateGroupName, model,
                                   paramValues.getInitialisers(), varInitialisers.getInitialisers(), varReferences.getInitialisers(),
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
@@ -628,12 +628,12 @@ public:
         \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
-    CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName, CustomUpdateWU::Operation operation,
+    CustomUpdateBase *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                       const typename CustomUpdateModel::ParamValues &paramValues,
                                       const typename CustomUpdateModel::VarValues &varInitialisers,
                                       const typename CustomUpdateModel::WUVarReferences &varReferences)
     {
-        return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, operation, CustomUpdateModel::getInstance(),
+        return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
                                                   paramValues, varInitialisers, varReferences);
     }
 
