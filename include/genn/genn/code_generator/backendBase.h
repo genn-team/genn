@@ -37,6 +37,7 @@ namespace CodeGenerator
     class CustomUpdateWUGroupMerged;
     class NeuronInitGroupMerged;
     class CustomUpdateInitGroupMerged;
+    class CustomWUUpdateDenseInitGroupMerged;
     class SynapseConnectivityInitGroupMerged;
     class SynapseDenseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
@@ -154,6 +155,7 @@ public:
     typedef GroupHandler<CustomUpdateWUGroupMerged> CustomUpdateWUGroupMergedHandler;
     typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
     typedef GroupHandler<CustomUpdateInitGroupMerged> CustomUpdateInitGroupMergedHandler;
+    typedef GroupHandler<CustomWUUpdateDenseInitGroupMerged> CustomWUUpdateDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
@@ -243,9 +245,10 @@ public:
         \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                         SynapseDenseInitGroupMergedHandler sgDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
-                         SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+                         CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
+                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
+                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
@@ -295,8 +298,8 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
-                                           const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;

@@ -121,8 +121,15 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
-                                           const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
+    {
+        genSynapseVariableRowInit(os, kernelSubs, handler);
+    }
+
+    virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
+    {
+        genSynapseVariableRowInit(os, kernelSubs, handler);
+    }
 
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
@@ -187,8 +194,8 @@ protected:
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 
-                             SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
-                             SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                             CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, 
+                             SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                              SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
@@ -306,6 +313,8 @@ private:
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
+
+    void genSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const

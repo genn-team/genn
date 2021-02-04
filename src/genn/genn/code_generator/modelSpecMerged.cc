@@ -47,6 +47,11 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
                        [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canInitBeMerged(b); });
 
+    LOGD_CODE_GEN << "Merging custom dense weight update initialization groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateDenseInitGroups,
+                       [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) && cg.isVarInitRequired(); },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canInitBeMerged(b); });
+
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
     createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
                        [](const SynapseGroupInternal &sg)

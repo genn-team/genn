@@ -595,9 +595,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 //--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                       HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                      SynapseDenseInitGroupMergedHandler sgDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
-                      SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
+                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
+                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -607,6 +608,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // Generate struct definitions
     modelMerged.genMergedNeuronInitGroupStructs(os, *this);
     modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
+    modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
@@ -614,6 +616,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), memorySpaces);
@@ -628,6 +631,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelInitialize), totalConstMem,
                                   modelMerged.getMergedNeuronInitGroups(), [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
                                   modelMerged.getMergedCustomUpdateInitGroups(), [](const CustomUpdateInternal &cg) { return cg.getSize(); },
+                                  modelMerged.getMergedCustomWUUpdateDenseInitGroups(), [](const CustomUpdateWUInternal &cg){ return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(); },
                                   modelMerged.getMergedSynapseDenseInitGroups(), [](const SynapseGroupInternal &sg){ return sg.getTrgNeuronGroup()->getNumNeurons(); },
                                   modelMerged.getMergedSynapseConnectivityInitGroups(), [](const SynapseGroupInternal &sg){ return getNumConnectivityInitThreads(sg); });
 
@@ -662,8 +666,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, cuHandler, sgDenseInitHandler, 
-                            sgSparseRowConnectHandler, sgSparseColConnectHandler,
+        genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, cuHandler, cuDenseHandler,
+                            sgDenseInitHandler, sgSparseRowConnectHandler, sgSparseColConnectHandler,
                             sgKernelInitHandler, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;

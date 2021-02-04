@@ -932,27 +932,28 @@ void Backend::genVariableInit(CodeStream &os, const std::string &count, const st
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg, 
-                                        const Substitutions &kernelSubs, Handler handler) const
+void Backend::genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
 {
-    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        os << "for (unsigned j = 0; j < group->rowLength[" << kernelSubs["id_pre"] << "]; j++)";
-    }
-    else {
-        os << "for (unsigned j = 0; j < group->numTrgNeurons; j++)";
-    }
+    os << "for (unsigned j = 0; j < group->rowLength[" << kernelSubs["id_pre"] << "]; j++)";
     {
         CodeStream::Scope b(os);
 
         Substitutions varSubs(&kernelSubs);
-        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + j");
-            varSubs.addVarSubstitution("id_post", "group->ind[(" + kernelSubs["id_pre"] + " * group->rowStride) + j]");
-        }
-        else {
-            varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + j");
-            varSubs.addVarSubstitution("id_post", "j");
-        }
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + j");
+        varSubs.addVarSubstitution("id_post", "group->ind[(" + kernelSubs["id_pre"] + " * group->rowStride) + j]");
+        handler(os, varSubs);
+     }
+}
+//--------------------------------------------------------------------------
+void Backend::genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const
+{
+    os << "for (unsigned j = 0; j < group->numTrgNeurons; j++)";
+    {
+        CodeStream::Scope b(os);
+
+        Substitutions varSubs(&kernelSubs);
+        varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + j");
+        varSubs.addVarSubstitution("id_post", "j");
         handler(os, varSubs);
     }
 }

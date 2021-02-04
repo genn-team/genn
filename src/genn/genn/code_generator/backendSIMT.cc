@@ -80,18 +80,6 @@ void BackendSIMT::genVariableInit(CodeStream &os, const std::string &, const std
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &,
-                                            const Substitutions &kernelSubs, Handler handler) const
-{
-    // Pre and postsynaptic ID should already be provided via parallelism
-    assert(kernelSubs.hasVarSubstitution("id_pre"));
-    assert(kernelSubs.hasVarSubstitution("id_post"));
-
-    Substitutions varSubs(&kernelSubs);
-    varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + " + kernelSubs["id"]);
-    handler(os, varSubs);
-}
-//--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
 {
     // Host RNG is required if any synapse groups require a host initialization RNG
@@ -914,8 +902,9 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 //--------------------------------------------------------------------------
 void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                       NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 
-                                      SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
-                                      SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const
+                                      CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, 
+                                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const
 {
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Local neuron groups" << std::endl;
@@ -980,6 +969,30 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 }
 
                 cuHandler(os, cg, popSubs);
+            }
+        });
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Custom WU update groups with dense connectivity" << std::endl;
+    genParallelGroup<CustomWUUpdateDenseInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), getKernelBlockSize(KernelInitialize)); },
+        [&modelMerged, this, cuDenseHandler](CodeStream &os, const CustomWUUpdateDenseInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing postsynaptic neurons" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
+            {
+                CodeStream::Scope b(os);
+                // If this post synapse requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(cg.getArchetype().isInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+
+                popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                cuDenseHandler(os, cg, popSubs);
             }
         });
     os << std::endl;
@@ -1345,6 +1358,17 @@ void BackendSIMT::genRecordingSharedMemInit(CodeStream &os, const std::string &s
             os << "shSpk" << suffix << "Record[" << getThreadID() << "] = 0;" << std::endl;
         }
     }
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genSynapseVariableRowInit(CodeStream &os,  const Substitutions &kernelSubs, Handler handler) const
+{
+    // Pre and postsynaptic ID should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution("id_pre"));
+    assert(kernelSubs.hasVarSubstitution("id_post"));
+
+    Substitutions varSubs(&kernelSubs);
+    varSubs.addVarSubstitution("id_syn", "(" + kernelSubs["id_pre"] + " * group->rowStride) + " + kernelSubs["id"]);
+    handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
 const PresynapticUpdateStrategySIMT::Base *BackendSIMT::getPresynapticUpdateStrategy(const SynapseGroupInternal &sg,

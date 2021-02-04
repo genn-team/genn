@@ -108,8 +108,11 @@ public:
     //! Get merged neuron groups which require initialisation
     const std::vector<NeuronInitGroupMerged> &getMergedNeuronInitGroups() const{ return m_MergedNeuronInitGroups; }
 
-    //! Get merged custom updategroups with dense connectivity which require initialisation
+    //! Get merged custom update groups which require initialisation
     const std::vector<CustomUpdateInitGroupMerged> &getMergedCustomUpdateInitGroups() const { return m_MergedCustomUpdateInitGroups; }
+
+    //! Get merged custom updategroups with dense connectivity which require initialisation
+    const std::vector<CustomWUUpdateDenseInitGroupMerged> &getMergedCustomWUUpdateDenseInitGroups() const { return m_MergedCustomWUUpdateDenseInitGroups; }
 
     //! Get merged synapse groups with dense connectivity which require initialisation
     const std::vector<SynapseDenseInitGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
@@ -141,6 +144,7 @@ public:
     void genMergedSynapseDynamicsGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDynamicsGroups); }
     void genMergedNeuronInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronInitGroups); }
     void genMergedCustomUpdateInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateInitGroups); }
+    void genMergedCustomWUUpdateDenseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateDenseInitGroups); }
     void genMergedSynapseDenseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDenseInitGroups); }
     void genMergedSynapseConnectivityInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityInitGroups); }
     void genMergedSynapseSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseSparseInitGroups); }
@@ -344,8 +348,11 @@ private:
     //! Merged neuron groups which require initialisation
     std::vector<NeuronInitGroupMerged> m_MergedNeuronInitGroups;
 
-    //! Merged custom updategroups with dense connectivity which require initialisation
+    //! Merged custom updategroups which require initialisation
     std::vector<CustomUpdateInitGroupMerged> m_MergedCustomUpdateInitGroups;
+
+    //! Merged custom updategroups with dense connectivity which require initialisation
+    std::vector<CustomWUUpdateDenseInitGroupMerged> m_MergedCustomWUUpdateDenseInitGroups;
 
     //! Merged synapse groups with dense connectivity which require initialisation
     std::vector<SynapseDenseInitGroupMerged> m_MergedSynapseDenseInitGroups;
