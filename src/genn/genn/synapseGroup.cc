@@ -482,6 +482,13 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG or SPARSE_INDIVIDUALG connectivity.");
     }
 
+    // If connectivity is dense and there is connectivity initialiser code, give error
+    if((m_MatrixType & SynapseMatrixConnectivity::DENSE) 
+       && (!m_ConnectivityInitialiser.getSnippet()->getRowBuildCode().empty() || !m_ConnectivityInitialiser.getSnippet()->getColBuildCode().empty())) 
+    {
+        throw std::runtime_error("Cannot use DENSE connectivity with connectivity initialisation snippet.");
+    }
+
     // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
     if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
