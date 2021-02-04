@@ -531,15 +531,15 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         // Initialise push EGP handler
         [&backend, &modelMerged](CodeStream &os)
         {
-            modelMerged.genScalarEGPPush(os, "NeuronInit", backend);
-            modelMerged.genScalarEGPPush(os, "CustomUpdateInit", backend);
-            modelMerged.genScalarEGPPush(os, "CustomWUUpdateDenseInit", backend);
-            modelMerged.genScalarEGPPush(os, "SynapseDenseInit", backend);
-            modelMerged.genScalarEGPPush(os, "SynapseConnectivityInit", backend);
+            modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomWUUpdateDenseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseDenseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
         },
         // Initialise sparse push EGP handler
         [&backend, &modelMerged](CodeStream &os)
         {
-            modelMerged.genScalarEGPPush(os, "SynapseSparseInit", backend);
+            modelMerged.genScalarEGPPush<SynapseSparseInitGroupMerged>(os, backend);
         });
 }

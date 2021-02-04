@@ -181,8 +181,24 @@ public:
     }
 
     //! Generate calls to update all target merged groups
-    //! **DEPRECATE** 'scalar' EGPs are innefficient and should be replaced by 'mutable parameters' which can be explicitely set in merged structures
-    void genScalarEGPPush(CodeStream &os, const std::string &suffix, const BackendBase &backend) const;
+    template<typename T>
+    void genScalarEGPPush(CodeStream &os, const BackendBase &backend) const
+    {
+        // Loop through all merged EGPs
+        for(const auto &e : m_MergedEGPs) {
+            // Loop through all destination structures with this suffix
+            const auto groupEGPs = e.second.equal_range(T::name);
+            for(auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
+                // If EGP is scalar, generate code to copy
+                if(!Utils::isTypePointer(g->second.type)) {
+                    backend.genMergedExtraGlobalParamPush(os, T::name, g->second.mergedGroupIndex,
+                                                          std::to_string(g->second.groupIndex),
+                                                          g->second.fieldName, e.first);
+                }
+
+            }
+        }
+    }
 
     // Get set of unique fields referenced in a merged group
     template<typename T>

@@ -151,21 +151,3 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
         m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
     }
 }
-//----------------------------------------------------------------------------
-void CodeGenerator::ModelSpecMerged::genScalarEGPPush(CodeStream &os, const std::string &suffix, const BackendBase &backend) const
-{
-    // Loop through all merged EGPs
-    for(const auto &e : m_MergedEGPs) {
-        // Loop through all destination structures with this suffix
-        const auto groupEGPs = e.second.equal_range(suffix);
-        for(auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-            // If EGP is scalar, generate code to copy
-            if(!Utils::isTypePointer(g->second.type)) {
-                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex,
-                                                      std::to_string(g->second.groupIndex),
-                                                      g->second.fieldName, e.first);
-            }
-
-        }
-    }
-}

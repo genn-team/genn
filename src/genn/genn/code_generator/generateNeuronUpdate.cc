@@ -609,6 +609,6 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
         // Push EGP handler
         [&backend, &modelMerged](CodeStream &os)
         {
-            modelMerged.genScalarEGPPush(os, "NeuronUpdate", backend);
+            modelMerged.genScalarEGPPush<NeuronUpdateGroupMerged>(os, backend);
         });
 }

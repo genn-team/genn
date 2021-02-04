@@ -79,7 +79,7 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
         // **TODO** this needs to be per-update group
         [&backend, &modelMerged](CodeStream &os)
         {
-            modelMerged.genScalarEGPPush(os, "CustomUpdate", backend);
-            modelMerged.genScalarEGPPush(os, "CustomUpdateWU", backend);
+            modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
         });
 }

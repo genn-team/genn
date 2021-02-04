@@ -305,8 +305,8 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
         // Push EGP handler
         [&backend, &modelMerged](CodeStream &os)
         {
-            modelMerged.genScalarEGPPush(os, "PresynapticUpdate", backend);
-            modelMerged.genScalarEGPPush(os, "PostsynapticUpdate", backend);
-            modelMerged.genScalarEGPPush(os, "SynapseDynamics", backend);
+            modelMerged.genScalarEGPPush<PresynapticUpdateGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<PostsynapticUpdateGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseDynamicsGroupMerged>(os, backend);
         });
 }
