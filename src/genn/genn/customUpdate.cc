@@ -23,6 +23,12 @@ VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
     return m_VarLocation[getCustomUpdateModel()->getVarIndex(varName)];
 }
 //----------------------------------------------------------------------------
+bool CustomUpdateBase::isVarInitRequired() const
+{
+    return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
+                        [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+}
+//----------------------------------------------------------------------------
 void CustomUpdateBase::initDerivedParams(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();

@@ -44,7 +44,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 
     LOGD_CODE_GEN << "Merging custom update initialization groups:";
     createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
-                       [](const CustomUpdateInternal &cg) { return !cg.getCustomUpdateModel()->getVars().empty(); },
+                       [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
                        [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
