@@ -1187,10 +1187,77 @@ public:
     static const std::string name;
 };
 
+//----------------------------------------------------------------------------
+// CustomUpdateInitGroupMergedBase
+//----------------------------------------------------------------------------
+template<typename G>
+class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
+{
+public:
+     //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+     //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
+        return this->isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
+                                               [varIndex](const G &cg)
+                                               {
+                                                   return cg.getVarInitialisers().at(varIndex).getParams();
+                                               });
+    }
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
+        return this->isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
+                                               [varIndex](const G &cg)
+                                               {
+                                                   return cg.getVarInitialisers().at(varIndex).getDerivedParams();
+                                               });
+    }
+
+protected:
+    CustomUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+                                    const std::vector<std::reference_wrapper<const G>> &groups)
+    :   GroupMerged<G>(index, precision, groups)
+    {
+         // Loop through variables
+        const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
+        const auto vars = cm->getVars();
+        const auto &varInit = this->getArchetype().getVarInitialisers();
+        assert(vars.size() == varInit.size());
+        for(size_t v = 0; v < vars.size(); v++) {
+            // If we're not initialising or if there is initialization code for this variable
+            const auto var = vars[v];
+            if(!varInit[v].getSnippet()->getCode().empty()) {
+                this->addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
+            }
+
+            // Add any var init EGPs to structure
+            this->addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+        }
+
+        this->template  addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G>>(
+            vars, &G::getVarInitialisers,
+            &CustomUpdateInitGroupMergedBase<G>::isVarInitParamHeterogeneous);
+
+        this->template addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMergedBase<G>>(
+            vars, &G::getVarInitialisers,
+            &CustomUpdateInitGroupMergedBase<G>::isVarInitDerivedParamHeterogeneous);
+    }
+};
+
 // ----------------------------------------------------------------------------
 // CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateInitGroupMerged : public GroupMerged<CustomUpdateInternal>
+class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal>
 {
 public:
     CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -1199,12 +1266,33 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-     //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
 
-    //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
 
+
+// ----------------------------------------------------------------------------
+// CustomWUUpdateDenseInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomWUUpdateDenseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>
+{
+public:
+    CustomWUUpdateDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                       const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
