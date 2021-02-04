@@ -27,18 +27,20 @@ class SynapseGroupInternal;
 namespace CodeGenerator
 {
     class ModelSpecMerged;
-    class NeuronInitGroupMerged;
     class NeuronUpdateGroupMerged;
     class Substitutions;
     class SynapseGroupMergedBase;
     class PresynapticUpdateGroupMerged;
     class PostsynapticUpdateGroupMerged;
     class SynapseDynamicsGroupMerged;
+    class CustomUpdateGroupMerged;
+    class CustomUpdateWUGroupMerged;
+    class NeuronInitGroupMerged;
+    class CustomUpdateInitGroupMerged;
     class SynapseConnectivityInitGroupMerged;
     class SynapseDenseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
-    class CustomUpdateGroupMerged;
-    class CustomUpdateWUGroupMerged;
+    
 }
 
 //--------------------------------------------------------------------------
@@ -144,16 +146,18 @@ public:
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
-    typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
     typedef GroupHandler<NeuronUpdateGroupMerged> NeuronUpdateGroupMergedHandler;
     typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
     typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
     typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
+    typedef GroupHandler<CustomUpdateGroupMerged> CustomUpdateGroupMergedHandler;
+    typedef GroupHandler<CustomUpdateWUGroupMerged> CustomUpdateWUGroupMergedHandler;
+    typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
+    typedef GroupHandler<CustomUpdateInitGroupMerged> CustomUpdateInitGroupMergedHandler;
     typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateGroupMerged> CustomUpdateGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateWUGroupMerged> CustomUpdateWUGroupMergedHandler;
+    
 
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
@@ -238,10 +242,10 @@ public:
         \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
         \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
-                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+                         SynapseDenseInitGroupMergedHandler sgDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
+                         SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, 
+                         SynapseSparseInitGroupMergedHandler sgSparseInitHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;

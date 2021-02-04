@@ -143,6 +143,12 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
                                                          return padSize(ng.getNumNeurons(), getKernelBlockSize(Kernel::KernelInitialize));
                                                      });
 
+    // Add on total number of threads used for custom update initialisation
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedCustomUpdateInitGroups(),
+                                               [this](const CustomUpdateInternal &cg)
+                                               {
+                                                   return padSize(cg.getSize(), getKernelBlockSize(Kernel::KernelInitialize));
+                                               });
 
     // Add on total number of threads used for dense synapse initialisation
     numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseDenseInitGroups(),
@@ -907,9 +913,9 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                      NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const
+                                      NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 
+                                      SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
+                                      SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const
 {
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Local neuron groups" << std::endl;
@@ -950,6 +956,30 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 }
 
                 neuronInitHandler(os, ng, popSubs);
+            }
+        });
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Custom update groups" << std::endl;
+    genParallelGroup<CustomUpdateInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomUpdateInitGroups(), idStart,
+        [this](const CustomUpdateInternal &cg) { return padSize(cg.getSize(), getKernelBlockSize(KernelInitialize)); },
+        [&modelMerged, this, cuHandler](CodeStream &os, const CustomUpdateInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing variables" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->size)";
+            {
+                CodeStream::Scope b(os);
+
+                // If this custom update requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(cg.getArchetype().isInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+
+                cuHandler(os, cg, popSubs);
             }
         });
     os << std::endl;

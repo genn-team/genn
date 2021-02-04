@@ -42,6 +42,11 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
 
+    LOGD_CODE_GEN << "Merging custom update initialization groups:";
+    createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
+                       [](const CustomUpdateInternal &cg) { return !cg.getCustomUpdateModel()->getVars().empty(); },
+                       [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canInitBeMerged(b); });
+
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
     createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
                        [](const SynapseGroupInternal &sg)

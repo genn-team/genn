@@ -279,6 +279,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         [&modelMerged, &backend](CodeStream &os)
         {
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
@@ -418,6 +419,16 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                      [&ng, i](size_t v, size_t p) { return ng.isCurrentSourceVarInitDerivedParamHeterogeneous(i, v, p); });
             }
         },
+        // Custom update group initialisation
+        [&backend, &model](CodeStream &os, const CustomUpdateInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            // Initialise custom update variables
+            genInitNeuronVarCode(os, backend, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(), "", "size",
+                                cg.getIndex(), model.getPrecision(),  model.getBatchSize(),
+                                [&cg](size_t i){ return cg.getArchetype().getVarInitialisers().at(i); },
+                                [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
+                                [&cg](size_t v, size_t p) { return cg.isVarInitDerivedParamHeterogeneous(v, p); });
+        },
         // Dense syanptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
@@ -490,6 +501,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         [&backend, &modelMerged](CodeStream &os)
         {
             modelMerged.genScalarEGPPush(os, "NeuronInit", backend);
+            modelMerged.genScalarEGPPush(os, "CustomUpdateInit", backend);
             modelMerged.genScalarEGPPush(os, "SynapseDenseInit", backend);
             modelMerged.genScalarEGPPush(os, "SynapseConnectivityInit", backend);
         },

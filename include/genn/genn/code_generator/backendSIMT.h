@@ -186,8 +186,9 @@ protected:
                                  const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const;
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                             NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                             SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                             NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 
+                             SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, 
+                             SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                              SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,

@@ -1607,3 +1607,65 @@ bool CustomUpdateWUGroupMerged::isDerivedParamHeterogeneous(size_t index) const
 {
     return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
 }
+
+// ----------------------------------------------------------------------------
+// CustomUpdateInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
+//----------------------------------------------------------------------------
+CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                         const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
+:   GroupMerged<CustomUpdateInternal>(index, precision, groups)
+{
+    addField("unsigned int", "size",
+             [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
+
+    // Loop through variables
+    const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
+    const auto vars = cm->getVars();
+    const auto &varInit = getArchetype().getVarInitialisers();
+    assert(vars.size() == varInit.size());
+    for(size_t v = 0; v < vars.size(); v++) {
+        // If we're not initialising or if there is initialization code for this variable
+        const auto var = vars[v];
+        if(!varInit[v].getSnippet()->getCode().empty()) {
+            addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
+        }
+
+        // Add any var init EGPs to structure
+        addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+    }
+
+     // Add heterogeneous var init parameters
+    addHeterogeneousVarInitParams<CustomUpdateInitGroupMerged>(
+        vars, &CustomUpdateInternal::getVarInitialisers,
+        &CustomUpdateInitGroupMerged::isVarInitParamHeterogeneous);
+
+    addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMerged>(
+        vars, &CustomUpdateInternal::getVarInitialisers,
+        &CustomUpdateInitGroupMerged::isVarInitDerivedParamHeterogeneous);
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateInitGroupMerged::isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+{
+    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+    const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+    const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
+    return isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
+                                     [varIndex](const CustomUpdateInternal &sg)
+                                     {
+                                         return sg.getVarInitialisers().at(varIndex).getParams();
+                                     });
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateInitGroupMerged::isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+{
+    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+    const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+    const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
+    return isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
+                                     [varIndex](const CustomUpdateInternal &sg)
+                                     {
+                                         return sg.getVarInitialisers().at(varIndex).getDerivedParams();
+                                     });
+}

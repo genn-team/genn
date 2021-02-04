@@ -1187,4 +1187,35 @@ public:
     static const std::string name;
 };
 
+// ----------------------------------------------------------------------------
+// CustomUpdateInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomUpdateInitGroupMerged : public GroupMerged<CustomUpdateInternal>
+{
+public:
+    CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+     //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
 }   // namespace CodeGenerator

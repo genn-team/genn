@@ -692,6 +692,13 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
+
+    // Generate merged custom update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
