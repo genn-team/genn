@@ -9,14 +9,44 @@ suite of minimal models with known analytic outcomes that are used for continuou
 
 #include "modelSpec.h"
 
-class Neuron : public NeuronModels::Base
+class TestNeuron : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(Neuron, 0, 1);
+    DECLARE_MODEL(TestNeuron, 0, 1);
 
     SET_VARS({{"V","scalar"}});
 };
-IMPLEMENT_MODEL(Neuron);
+IMPLEMENT_MODEL(TestNeuron);
+
+class TestCurrentSource : public CurrentSourceModels::Base
+{
+    DECLARE_MODEL(TestCurrentSource, 0, 1);
+
+    SET_VARS({{"C", "scalar"}});
+};
+IMPLEMENT_MODEL(TestCurrentSource);
+
+class TestPSM : public PostsynapticModels::Base
+{
+public:
+    DECLARE_MODEL(TestPSM, 0, 1);
+
+    SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
+    SET_VARS({{"P", "scalar"}});
+};
+IMPLEMENT_MODEL(TestPSM);
+
+class TestWUM : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(TestWUM, 0, 1, 1, 1);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+    SET_PRE_VARS({{"Pre", "scalar"}});
+    SET_POST_VARS({{"Post", "scalar"}});
+    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+};
+IMPLEMENT_MODEL(TestWUM);
 
 class SetTime : public CustomUpdateModels::Base
 {
@@ -46,45 +76,49 @@ void modelDefinition(ModelSpec &model)
     model.setDT(1.0);
     model.setName("custom_update");
 
-
-    /*WeightUpdateModels::StaticPulse::VarValues staticSynapseInit(0);
-                                
-    InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement::ParamValues fixedNumTotalParams(1000);
-    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues fixedNumPostParams(10);
-    InitSparseConnectivitySnippet::FixedNumberPreWithReplacement::ParamValues fixedNumPreParams(10);*/
-    
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
-    auto *ng = model.addNeuronPopulation<Neuron>("Neuron", 100, {}, {0.0});
+    auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 100, {}, {0.0});
+    auto *cs = model.addCurrentSource<TestCurrentSource>("CurrentSource", "Neuron", {}, {0.0});
+    auto *denseSG = model.addSynapsePopulation<TestWUM, TestPSM>(
+        "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, {0.0}, {0.0}, {0.0},
+        {}, {0.0});
+    auto *sparseSG = model.addSynapsePopulation<TestWUM, TestPSM>(
+        "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, {0}, {0.0}, {0.0},
+        {}, {0},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
     
-    // Fixed number total connectivity
-    /*model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "FixedNumberTotal", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "LIF",
-        {}, staticSynapseInit, {}, {},
-        {}, {},
-        initConnectivity<InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement>(fixedNumTotalParams));
-    
-    // Fixed number post connectivity
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "FixedNumberPost", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "LIF",
-        {}, staticSynapseInit, {}, {},
-        {}, {},
-        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumPostParams));
-    
-    // Fixed number pre connectivity
-    model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "FixedNumberPre", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
-        "SpikeSource", "LIF",
-        {}, staticSynapseInit, {}, {},
-        {}, {},
-        initConnec*/
-        
     //---------------------------------------------------------------------------
     // Custom updates
     //---------------------------------------------------------------------------
     SetTime::VarReferences neuronVarReferences(createVarRef(ng, "V")); // R
     model.addCustomUpdate<SetTime>("NeuronSetTime", "Test",
                                    {}, {0.0}, neuronVarReferences);
-
+    
+    SetTime::VarReferences csVarReferences(createVarRef(cs, "C")); // R
+    model.addCustomUpdate<SetTime>("CurrentSourceSetTime", "Test",
+                                   {}, {0.0}, csVarReferences);
+                                   
+    SetTime::VarReferences psmVarReferences(createPSMVarRef(denseSG, "P")); // R
+    model.addCustomUpdate<SetTime>("PSMSetTime", "Test",
+                                   {}, {0.0}, psmVarReferences);
+                               
+    SetTime::VarReferences wuPreVarReferences(createWUPreVarRef(denseSG, "Pre")); // R
+    model.addCustomUpdate<SetTime>("WUPreSetTime", "Test",
+                                   {}, {0.0}, wuPreVarReferences);
+                               
+    SetTime::VarReferences wuPostVarReferences(createWUPostVarRef(sparseSG, "Post")); // R
+    model.addCustomUpdate<SetTime>("WUPostSetTime", "Test",
+                                   {}, {0.0}, wuPostVarReferences);
+                                   
+    SetTime::WUVarReferences wuDenseVarReferences(createWUVarRef(denseSG, "g")); // R
+    model.addCustomUpdate<SetTime>("WUDenseSetTime", "Test",
+                                   {}, {0.0}, wuDenseVarReferences);
+                                   
+    SetTime::WUVarReferences wuSparseVarReferences(createWUVarRef(sparseSG, "g")); // R
+    model.addCustomUpdate<SetTime>("WUSparseSetTime", "Test",
+                                   {}, {0.0}, wuSparseVarReferences);
 }
