@@ -10,7 +10,7 @@
     DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                          \
     typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                   \
     typedef Models::VarReferenceContainerBase<NUM_VAR_REFS> VarReferences;      \
-    typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> WUVarReferences;
+    typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> WUVarReferences
     
 
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
