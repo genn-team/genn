@@ -882,7 +882,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 os << "if (" << popSubs["id"] << " < group->synRemap[0])";
             }
             else {
-                os << "if (" << popSubs["id"] << " < (group->numSrcNeurons * group->numTrgNeurons))";
+                os << "if (" << popSubs["id"] << " < (group->numSrcNeurons * group->rowStride))";
             }
             {
                 CodeStream::Scope b(os);
@@ -1139,7 +1139,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
     // **TODO** check actually required
     os << getSharedPrefix() << "unsigned int shRowLength[" << getKernelBlockSize(KernelInitializeSparse) << "];" << std::endl;
     if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cend(),
-                   [](const ModelSpec::SynapseGroupValueType &s) { return (s.second.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && !s.second.getWUModel()->getSynapseDynamicsCode().empty(); }))
+                   [this](const ModelSpec::SynapseGroupValueType &s) { return isSynRemapRequired(s.second); }))
     {
         os << getSharedPrefix() << "unsigned int shRowStart[" << getKernelBlockSize(KernelInitializeSparse) + 1 << "];" << std::endl;
     }
@@ -1181,7 +1181,7 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
                 }
 
                 // If this synapse group has synapse dynamics
-                if(!sg.getArchetype().getWUModel()->getSynapseDynamicsCode().empty()) {
+                if(isSynRemapRequired(sg.getArchetype())) {
                     genSharedMemBarrier(os);
 
                     // Use first thread to generate cumulative sum
@@ -1252,8 +1252,8 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
                             os << "group->remap[colMajorIndex] = idx;" << std::endl;
                         }
 
-                        // If synapse dynamics are required, copy idx into syn remap structure
-                        if(!sg.getArchetype().getWUModel()->getSynapseDynamicsCode().empty()) {
+                        // If synapse remap is required, copy idx into first entry of syn remap structure
+                        if(isSynRemapRequired(sg.getArchetype())) {
                             CodeStream::Scope b(os);
                             os << "group->synRemap[shRowStart[i] + " + popSubs["id"] + " + 1] = idx;" << std::endl;
                         }

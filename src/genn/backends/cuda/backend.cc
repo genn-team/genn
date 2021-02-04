@@ -570,7 +570,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
 
             os << "// ------------------------------------------------------------------------" << std::endl;
-            os << "// Custom dense WU updates" << std::endl;
+            os << "// Custom WU updates" << std::endl;
             genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUDenseUpdateHandler, idCustomUpdateStart);
         }
 

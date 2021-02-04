@@ -45,8 +45,9 @@ public:
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
-    using CustomUpdateBase::canBeMerged;
-    using CustomUpdateBase::canInitBeMerged;
-    using CustomUpdateWU::isTransposeOperation;
+    
+    using CustomUpdateWU::canBeMerged;
+    using CustomUpdateWU::canInitBeMerged;
     using CustomUpdateWU::getSynapseGroup;
+    using CustomUpdateWU::isTransposeOperation;
 };

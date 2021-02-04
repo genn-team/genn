@@ -24,14 +24,14 @@ using namespace CodeGenerator;
 namespace
 {
 template<typename C>
-void addCustomUpdateSubstitutions(CodeStream &os, Substitutions &baseSubs, 
-                                  const C &cg, const ModelSpecMerged &modelMerged)
+void addCustomUpdateSubstitutions(CodeStream &os, Substitutions &baseSubs, const C &cg, 
+                                  const ModelSpecMerged &modelMerged, const std::string &index)
 {
     Substitutions updateSubs(&baseSubs);
 
     const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
-    updateSubs.addVarNameSubstitution(cm->getVars(), "", "group->", "[" + updateSubs["id"] + "]");
-    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs["id"] + "]");
+    updateSubs.addVarNameSubstitution(cm->getVars(), "", "group->", "[" + updateSubs[index] + "]");
+    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs[index] + "]");
     updateSubs.addParamValueSubstitution(cm->getParamNames(), cg.getArchetype().getParams(),
                                          [&cg](size_t i) { return cg.isParamHeterogeneous(i);  },
                                          "", "group->");
@@ -68,12 +68,12 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
         // Custom update handler
         [&modelMerged](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
-            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged);
+            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged, "id");
         },
         // Custom weight update handler
         [&modelMerged](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
-            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged);
+            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged, "id_syn");
         },
         // Push EGP handler
         // **TODO** this needs to be per-update group
