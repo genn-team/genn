@@ -259,3 +259,38 @@ TEST(VarReference, WUMTranspose)
     catch(const std::runtime_error &) {
     }
 }
+//--------------------------------------------------------------------------
+TEST(VarReference, WUMSlave)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post1", 25, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post2", 25, paramVals, varVals);
+
+    auto *sgMaster = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "SynapseMaster", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post1",
+        {}, {1.0},
+        {}, {});
+    auto *sgSlave = model.addSlaveSynapsePopulation<PostsynapticModels::DeltaCurr>(
+        "SynapseSlave", "SynapseMaster", NO_DELAY,
+        "Pre", "Post2",
+        {}, {});
+
+    // Finalize model
+    model.finalize();
+
+    auto wuMaster = createWUVarRef(sgMaster, "g");
+
+    // Test error if referencing slave group
+    try {
+        auto wuSlave = createWUVarRef(sgSlave, "g");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
