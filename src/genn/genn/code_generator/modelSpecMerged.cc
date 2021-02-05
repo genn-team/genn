@@ -76,6 +76,11 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
 
+    LOGD_CODE_GEN << "Merging custom dparse weight update initialization groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
+                       [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canInitBeMerged(b); });
+
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                        [](const NeuronGroupInternal &){ return true; },

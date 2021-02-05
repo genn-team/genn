@@ -598,7 +598,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                       CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
-                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -612,7 +612,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
-    
+    modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
+
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups(), memorySpaces);
@@ -620,6 +621,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), memorySpaces);
 
     // Generate preamble
     preambleHandler(os);
@@ -637,7 +639,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelInitializeSparse), totalConstMem,
-                                  modelMerged.getMergedSynapseSparseInitGroups(), [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
+                                  modelMerged.getMergedSynapseSparseInitGroups(), [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); },
+                                  modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [](const CustomUpdateWUInternal &cg) { return cg.getSynapseGroup()->getMaxConnections(); });
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
@@ -683,7 +686,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
+            genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, cuSparseHandler, numStaticInitThreads, idSparseInitStart);
         }
     }
 

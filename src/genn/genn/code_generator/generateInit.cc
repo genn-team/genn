@@ -445,7 +445,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
             }
         },
-        // Dense syanptic matrix variable initialisation
+        // Dense synaptic matrix variable initialisation
         [&backend, &model](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
         {
             // Loop through rows
@@ -519,14 +519,27 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         [&backend, &model](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, sg.getArchetype().getWUModel()->getVars(),
-                                 sg.getArchetype().getWUVarInitialisers(), sg.getIndex(),
-                                 model.getPrecision(), model.getBatchSize(),
-                                 [&sg](size_t v, size_t p) { return sg.isWUVarInitParamHeterogeneous(v, p); },
-                                 [&sg](size_t v, size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(v, p); },
-                                 [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
-                                 {
-                                     return backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
-                                 });
+                             sg.getArchetype().getWUVarInitialisers(), sg.getIndex(),
+                             model.getPrecision(), model.getBatchSize(),
+                             [&sg](size_t v, size_t p) { return sg.isWUVarInitParamHeterogeneous(v, p); },
+                             [&sg](size_t v, size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(v, p); },
+                             [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                             {
+                                 return backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
+                             });
+        },
+        // Custom WU update dense variable initialisation
+        [&backend, &model](CodeStream &os, const CustomWUUpdateSparseInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            genInitWUVarCode(os, backend, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
+                             cg.getArchetype().getVarInitialisers(), cg.getIndex(),
+                             model.getPrecision(), model.getBatchSize(),
+                             [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
+                             [&cg](size_t v, size_t p) { return cg.isVarInitDerivedParamHeterogeneous(v, p); },
+                             [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                             {
+                                 return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                             });
         },
         // Initialise push EGP handler
         [&backend, &modelMerged](CodeStream &os)
@@ -541,5 +554,6 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         [&backend, &modelMerged](CodeStream &os)
         {
             modelMerged.genScalarEGPPush<SynapseSparseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomWUUpdateSparseInitGroupMerged>(os, backend);
         });
 }

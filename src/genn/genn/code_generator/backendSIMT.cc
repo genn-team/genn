@@ -1175,7 +1175,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                            SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
+                                            SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler,
                                             size_t numInitializeThreads, size_t &idStart) const
 {
     // Shared memory array so row lengths don't have to be read by EVERY postsynaptic thread
@@ -1300,6 +1300,66 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
                             CodeStream::Scope b(os);
                             os << "group->synRemap[shRowStart[i] + " + popSubs["id"] + " + 1] = idx;" << std::endl;
                         }
+                    }
+
+                    // If matrix is ragged, advance index to next row by adding stride
+                    os << "idx += group->rowStride;" << std::endl;
+                }
+            }
+        });
+
+    // Initialise weight update variables for synapse groups with sparse connectivity
+    genParallelGroup<CustomWUUpdateSparseInitGroupMerged>(os, kernelSubs, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padSize(cg.getSynapseGroup()->getMaxConnections(), getKernelBlockSize(KernelInitializeSparse)); },
+        [this, cuSparseHandler, numInitializeThreads](CodeStream &os, const CustomWUUpdateSparseInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            // If this custom update requires an RNG for initialisation,
+            // make copy of global phillox RNG and skip ahead by thread id
+            // **NOTE** not LOCAL id
+            if(cg.getArchetype().isInitRNGRequired()) {
+                genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
+            }
+
+            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
+            os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
+
+            os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
+
+            // Loop through blocks
+            os << "for(unsigned int r = 0; r < numBlocks; r++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Calculate number of rows to process in this block
+                os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
+                os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
+                os << " : " << blockSize << ";" << std::endl;
+
+                // Use threads to copy block of sparse structure into shared memory
+                genSharedMemBarrier(os);
+                os << "if (" << getThreadID() << " < numRowsInBlock)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
+                }
+
+                genSharedMemBarrier(os);
+
+                // Loop through rows
+                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // If there is a synapse for this thread to initialise
+                    os << "if(" << popSubs["id"] << " < shRowLength[i])";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Generate sparse initialisation code
+                        popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
+                        popSubs.addVarSubstitution("id_post", "group->ind[idx]");
+                        cuSparseHandler(os, cg, popSubs);
                     }
 
                     // If matrix is ragged, advance index to next row by adding stride
