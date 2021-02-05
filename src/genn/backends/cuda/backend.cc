@@ -589,7 +589,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
-    }
+        }
     }
 }
 //--------------------------------------------------------------------------
