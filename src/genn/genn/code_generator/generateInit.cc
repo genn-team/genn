@@ -525,10 +525,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                              [&sg](size_t v, size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(v, p); },
                              [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                              {
-                                 return backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
+                                 return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
                              });
         },
-        // Custom WU update dense variable initialisation
+        // Custom WU update sparse variable initialisation
         [&backend, &model](CodeStream &os, const CustomWUUpdateSparseInitGroupMerged &cg, Substitutions &popSubs)
         {
             genInitWUVarCode(os, backend, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
