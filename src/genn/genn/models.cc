@@ -77,7 +77,8 @@ VarReference::VarReference(GetTargetNameFn getTargetNameFn, unsigned int size,
 //----------------------------------------------------------------------------
 WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varName,
                                const SynapseGroup *transposeSG, const std::string &transposeVarName)
-:   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), [sg]() { return sg->getName(); }),
+:   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), 
+    sg->getWUModel()->getVars(), [sg]() { return (sg->isWeightSharingSlave() ? static_cast<const SynapseGroupInternal*>(sg)->getWeightSharingMaster()->getName() : sg->getName()); }),
     m_SG(static_cast<const SynapseGroupInternal*>(sg)), m_TransposeSG(static_cast<const SynapseGroupInternal*>(transposeSG)),
     m_TransposeVarIndex((transposeSG == nullptr) ? 0 : transposeSG->getWUModel()->getVarIndex(transposeVarName)),
     m_TransposeVar((transposeSG == nullptr) ? Models::Base::Var() : transposeSG->getWUModel()->getVars().at(m_TransposeVarIndex)),

@@ -1447,15 +1447,15 @@ void SynapseGroupMergedBase::addWeightSharingPointerField(const std::string &typ
 {
     assert(!Utils::isTypePointer(type));
     addField(type + "*", name, 
-                   [prefix](const SynapseGroupInternal &sg, size_t)
-                   { 
-                       if(sg.isWeightSharingSlave()) {
-                           return prefix + sg.getWeightSharingMaster()->getName();
-                       }
-                       else {
-                           return prefix + sg.getName();
-                       }
-                   });
+             [prefix](const SynapseGroupInternal &sg, size_t)
+             { 
+                 if(sg.isWeightSharingSlave()) {
+                     return prefix + sg.getWeightSharingMaster()->getName();
+                 }
+                 else {
+                     return prefix + sg.getName();
+                 }
+             });
 }
 
 //----------------------------------------------------------------------------
@@ -1568,10 +1568,16 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
     // If the referenced synapse group requires synaptic remapping and matrix type is sparse, add field
     if(backend.isSynRemapRequired(*getArchetype().getSynapseGroup())) {
         addField("unsigned int*", "synRemap", 
-                 [&backend](const CustomUpdateWUInternal &g, size_t) 
-                 { 
-                     return backend.getDeviceVarPrefix() + "synRemap" + g.getSynapseGroup()->getName(); 
-                 });
+             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             { 
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 if(sg->isWeightSharingSlave()) {
+                     return backend.getDeviceVarPrefix() + "synRemap" + sg->getWeightSharingMaster()->getName();
+                 }
+                 else {
+                     return backend.getDeviceVarPrefix() + "synRemap" + sg->getName();
+                 }
+             });
     }
 
     // Add heterogeneous custom update model parameters
@@ -1638,4 +1644,46 @@ CustomWUUpdateDenseInitGroupMerged::CustomWUUpdateDenseInitGroupMerged(size_t in
              [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
              [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+}
+
+// ----------------------------------------------------------------------------
+// CustomWUUpdateSparseInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSparseInit";
+//----------------------------------------------------------------------------
+CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                         const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+{
+    addField("unsigned int", "rowStride",
+             [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+  
+    addField("unsigned int", "numSrcNeurons",
+             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "numTrgNeurons",
+             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+
+    addField("unsigned int*", "rowLength", 
+             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             { 
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 if(sg->isWeightSharingSlave()) {
+                     return backend.getDeviceVarPrefix() + "rowLength" + sg->getWeightSharingMaster()->getName();
+                 }
+                 else {
+                     return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
+                 }
+             });
+    
+    addField("unsigned int*", "ind", 
+             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             { 
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 if(sg->isWeightSharingSlave()) {
+                     return backend.getDeviceVarPrefix() + "ind" + sg->getWeightSharingMaster()->getName();
+                 }
+                 else {
+                     return backend.getDeviceVarPrefix() + "ind" + sg->getName();
+                 }
+             });
 }
