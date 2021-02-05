@@ -1573,6 +1573,19 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
                      return backend.getDeviceVarPrefix() + "synRemap" + cg.getSynapseGroup()->getName(); 
                  });
     }
+    // Otherwise, if synapse group has sparse connectivity, add row length and ind
+    else if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        addField("unsigned int*", "rowLength",
+                 [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                 { 
+                     return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                 });
+        addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
+                 [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                 { 
+                     return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
+                 });
+    }
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
