@@ -840,19 +840,19 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                                         const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const
 {
     genParallelGroup<CustomUpdateGroupMerged>(
-            os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
-            [this](const CustomUpdateInternal &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
-            [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-            [this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+        os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
+        [this](const CustomUpdateInternal &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
+        [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
+        [this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing neurons" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->size)";
             {
-                os << "// only do this for existing neurons" << std::endl;
-                os << "if(" << popSubs["id"] << " < group->size)";
-                {
-                    CodeStream::Scope b(os);
+                CodeStream::Scope b(os);
 
-                    customUpdateHandler(os, cg, popSubs);
-                }
-            });
+                customUpdateHandler(os, cg, popSubs);
+            }
+        });
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
@@ -861,6 +861,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
     genParallelGroup<CustomUpdateWUGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
         [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateWUThreads(cg), getKernelBlockSize(KernelCustomUpdate)); },
+        [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
             const SynapseGroup *archetypeSG = cg.getArchetype().getSynapseGroup();
