@@ -181,7 +181,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 //------------------------------------------------------------------------
 // Initialise one row of weight update model variables
 template<typename P, typename D, typename G>
-void genInitWUVarCode(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs, 
+void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs, 
                       const Models::Base::VarVec &vars, const std::vector<Models::VarInit> &varInitialisers, 
                       const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn, G genSynapseVariableRowInitFn)
@@ -433,7 +433,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             {
                 CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");
-                genInitWUVarCode(os, backend, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
+                genInitWUVarCode(os, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
                                  cg.getArchetype().getVarInitialisers(), cg.getIndex(),
                                  model.getPrecision(), model.getBatchSize(),
                                  [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
@@ -453,7 +453,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
             {
                 CodeStream::Scope b(os);
                 popSubs.addVarSubstitution("id_pre", "i");
-                genInitWUVarCode(os, backend, popSubs, sg.getArchetype().getWUModel()->getVars(),
+                genInitWUVarCode(os, popSubs, sg.getArchetype().getWUModel()->getVars(),
                                  sg.getArchetype().getWUVarInitialisers(), sg.getIndex(),
                                  model.getPrecision(), model.getBatchSize(),
                                  [&sg](size_t v, size_t p) { return sg.isWUVarInitParamHeterogeneous(v, p); },
@@ -518,7 +518,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         // Sparse synaptic matrix var initialisation
         [&backend, &model](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions &popSubs)
         {
-            genInitWUVarCode(os, backend, popSubs, sg.getArchetype().getWUModel()->getVars(),
+            genInitWUVarCode(os, popSubs, sg.getArchetype().getWUModel()->getVars(),
                              sg.getArchetype().getWUVarInitialisers(), sg.getIndex(),
                              model.getPrecision(), model.getBatchSize(),
                              [&sg](size_t v, size_t p) { return sg.isWUVarInitParamHeterogeneous(v, p); },
@@ -531,7 +531,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         // Custom WU update sparse variable initialisation
         [&backend, &model](CodeStream &os, const CustomWUUpdateSparseInitGroupMerged &cg, Substitutions &popSubs)
         {
-            genInitWUVarCode(os, backend, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
+            genInitWUVarCode(os, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
                              cg.getArchetype().getVarInitialisers(), cg.getIndex(),
                              model.getPrecision(), model.getBatchSize(),
                              [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
