@@ -152,6 +152,14 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         {
             throw std::runtime_error("Custom updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
         }
+
+        // If there's more than one variable with a transpose give error
+        // **NOTE** there's no reason NOT to allow multiple transposes, it just gets a little tricky with shared memory allocations
+        if(std::count_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                        [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }) > 1)
+        {
+            throw std::runtime_error("Each custom update can only calculate the tranpose of a single variable,");
+        }
     }
 }
 //----------------------------------------------------------------------------
@@ -164,7 +172,17 @@ bool CustomUpdateWU::isTransposeOperation() const
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
 {
-    return (CustomUpdateBase::canBeMerged(other)
-            && (isTransposeOperation() == other.isTransposeOperation())
-            && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType())));
+    // If the two groups' models can be merged and their connectivity is the same
+    if(CustomUpdateBase::canBeMerged(other)
+       && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType())))
+    {
+        // Return whether the variables with transposes match
+        return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
+                          [](const Models::WUVarReference &a, const Models::WUVarReference &b)
+                          {
+                              return ((a.getTransposeSynapseGroup() == nullptr) == (b.getTransposeSynapseGroup() != nullptr));
+                          });
+    }
+
+    return false;
 }

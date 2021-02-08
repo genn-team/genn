@@ -776,6 +776,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
+    // Loop through custom WU transpose variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;

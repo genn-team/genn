@@ -532,7 +532,8 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
         // **HACK**
         cudaBlockSize[KernelCustomUpdate] = 32;
-        
+        cudaBlockSize[KernelCustomTransposeUpdate] = 32;
+
         // Create backend
         return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
     }
@@ -555,6 +556,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
             // **HACK**
             cudaBlockSize[KernelCustomUpdate] = 32;
+            cudaBlockSize[KernelCustomTransposeUpdate] = 32;
             
             // Create backend
             return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);

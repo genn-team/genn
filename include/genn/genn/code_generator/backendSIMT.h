@@ -31,6 +31,7 @@ enum Kernel
     KernelPreNeuronReset,
     KernelPreSynapseReset,
     KernelCustomUpdate,
+    KernelCustomTransposeUpdate,
     KernelMax
 };
 
@@ -80,10 +81,10 @@ public:
     virtual std::string getSharedPrefix() const = 0;
 
     //! Get the ID of the current thread within the threadblock
-    virtual std::string getThreadID() const = 0;
+    virtual std::string getThreadID(unsigned int axis = 0) const = 0;
 
     //! Get the ID of the current thread block
-    virtual std::string getBlockID() const = 0;
+    virtual std::string getBlockID(unsigned int axis = 0) const = 0;
 
     //! Get the name of the count-leading-zeros function
     virtual std::string getCLZ() const = 0;
@@ -158,6 +159,7 @@ public:
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
     static size_t getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg);
+    static size_t getNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg);
     static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
 
     //! Register a new presynaptic update strategy
@@ -191,6 +193,9 @@ protected:
 
     void genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                  const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const;
+    
+    void genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                          const std::string &updateGroup, CustomUpdateTransposeWUGroupMergedHandler &customWUTransposeUpdateHandler, size_t &idStart) const;
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 

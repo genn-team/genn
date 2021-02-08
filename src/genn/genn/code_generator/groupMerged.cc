@@ -1616,9 +1616,21 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     addVars(cm->getVars(), backend.getDeviceVarPrefix());
 
     // Add variable references to struct
-    addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
+    const auto varRefs = cm->getVarRefs();
+    addVarReferences(varRefs, backend.getDeviceVarPrefix(),
                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
 
+     // Loop through variables
+    for(size_t v = 0; v < varRefs.size(); v++) {
+        if(getArchetype().getVarReferences().at(v).getTransposeSynapseGroup() != nullptr) {
+            addField(varRefs[v].type + "*", varRefs[v].name + "Transpose",
+                     [&backend, v](const CustomUpdateWUInternal &g, size_t)
+                     {
+                         const auto varRef = g.getVarReferences().at(v);
+                         return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName();
+                     });
+            }
+    }
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }

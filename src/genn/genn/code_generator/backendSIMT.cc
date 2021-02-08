@@ -44,7 +44,8 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "initializeSparseKernel",
     "preNeuronResetKernel",
     "preSynapseResetKernel",
-    "customUpdate"};
+    "customUpdate",
+    "customTransposeUpdate"};
 //--------------------------------------------------------------------------
 std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpdateStrategies = {
     new PresynapticUpdateStrategySIMT::PreSpan,
@@ -190,7 +191,7 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg)
 {
-    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(cg.getSynapseGroup());
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
 
     if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         // **THINK** this isn't really correct but correct value is inaccesible
@@ -199,6 +200,15 @@ size_t BackendSIMT::getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg
     else {
         return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
     }
+}
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg)
+{
+    assert(cg.isTransposeOperation());
+    assert(cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE);
+    
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+    return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
@@ -897,6 +907,89 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 customUpdateWUHandler(os, cg, synSubs);
+            }
+        });
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                                   const std::string &updateGroup, CustomUpdateTransposeWUGroupMergedHandler &customWUTransposeUpdateHandler, size_t &idStart) const
+{
+    // Generate 2D array
+    const unsigned int blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
+    os << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
+
+    genParallelGroup<CustomUpdateTransposeWUGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomUpdateTransposeWUGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateTransposeWUThreads(cg), getKernelBlockSize(KernelCustomTransposeUpdate)); },
+        [&updateGroup](const CustomUpdateTransposeWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
+        [customWUTransposeUpdateHandler, &modelMerged, this](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
+        {
+            // Get index of variable being transposed
+            const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
+                                                         std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
+                                                                      [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
+            const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+
+
+            os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (getKernelBlockSize(KernelCustomTransposeUpdate) - 1) << ") / " << getKernelBlockSize(KernelCustomTransposeUpdate) << ";" << std::endl;
+            os << "const unsigned int blockX = (" << getBlockID(0) << " % numXBlocks);" << std::endl;
+            os << "const unsigned int blockY = (" << getBlockID(0) << " / numXBlocks);" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "// Calculate coordinate of thread in input matrix" << std::endl;
+                os << "const unsigned int x = (blockX * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(0) << ";" << std::endl;
+                os << "const unsigned int y = (blockY * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(1) << ";" << std::endl;
+
+                os << "// If thread isn't off the 'right' edge of the input matrix" << std::endl;
+                os << "if(x < group->numTrgNeurons)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "// Loop through input rows " << std::endl;
+                    os << "for (unsigned int j = 0; j < " << getKernelBlockSize(KernelCustomTransposeUpdate) << "; j += 8)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "// If thread isn't off the 'bottom' edge of the input matrix" << std::endl;
+                        os << "if((y + j) < group->numSrcNeurons)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "// Read forward weight from global memory" << std::endl;
+                            os << "const unsigned int idx = ((y + j) * group->numTrgNeurons) + x;" << std::endl;
+
+                            Substitutions synSubs(&popSubs);
+                            synSubs.addVarSubstitution("id_pre", "y");
+                            synSubs.addVarSubstitution("id_post", "x");
+                            synSubs.addVarSubstitution("id_syn", "idx");
+                            customWUTransposeUpdateHandler(os, cg, synSubs);
+
+                            // Write forward weight to shared memory
+                            os << "shTile[" << getThreadID(1) << "+ j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
+                        }
+                    }
+                }
+            }
+            genSharedMemBarrier(os);
+            {
+                CodeStream::Scope b(os);
+                os << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
+                os << "const unsigned int x = (blockY * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(0) << ";" << std::endl;
+                os << "const unsigned int y = (blockX * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(1) << ";" << std::endl;
+
+                os << "// If thread isn't off the 'right' edge of the output matrix" << std::endl;
+                os << "if(x < group->numSrcNeurons)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "// Loop through output rows" << std::endl;
+                    os <<  "for(unsigned int j = 0; j < " << getKernelBlockSize(KernelCustomTransposeUpdate) << "; j += 8)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "// If thread isn't off the 'bottom' edge of the output matrix" << std::endl;
+                        os << "if((y + j) < group->numTrgNeurons)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "group->" << transposeVarName << "Transpose[((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;
+                        }
+                    }
+                }
             }
         });
 }

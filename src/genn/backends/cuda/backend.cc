@@ -202,6 +202,34 @@ bool Backend::areSharedMemAtomicsSlow() const
     return (getChosenCUDADevice().major < 5);
 }
 //--------------------------------------------------------------------------
+std::string Backend::getThreadID(unsigned int axis) const
+{
+    switch(axis) {
+    case 0:
+        return "threadIdx.x"; 
+    case 1:
+        return "threadIdx.y"; 
+    case 2:
+        return "threadIdx.z"; 
+    default:
+        assert(false);
+    }
+}
+//--------------------------------------------------------------------------
+std::string Backend::getBlockID(unsigned int axis) const
+{
+    switch(axis) {
+    case 0:
+        return "blockIdx.x"; 
+    case 1:
+        return "blockIdx.y"; 
+    case 2:
+        return "blockIdx.z"; 
+    default:
+        assert(false);
+    }
+}
+//--------------------------------------------------------------------------
 std::string Backend::getAtomic(const std::string &type, AtomicOperation op, AtomicMemSpace) const
 {
     // If operation is an atomic add
@@ -513,19 +541,21 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                              HostHandler preambleHandler, CustomUpdateGroupMergedHandler customUpdateHandler,
-                              CustomUpdateWUGroupMergedHandler customWUDenseUpdateHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,HostHandler preambleHandler, 
+                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
+                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    
+    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
+
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), memorySpaces);
     
     // Generate preamble
     preambleHandler(os);
@@ -542,6 +572,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                   [this](const CustomUpdateInternal &cg){ return cg.getSize(); });
     genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomUpdate), totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
                                   [this](const CustomUpdateWUInternal &cg){ return getNumCustomUpdateWUThreads(cg); });
+    genMergedKernelDataStructures(os, getKernelBlockSize(KernelCustomTransposeUpdate), totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                                  [this](const CustomUpdateWUInternal &cg){ return getNumCustomUpdateTransposeWUThreads(cg); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
@@ -555,6 +587,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
         // Generate kernel
+        // **TODO** filter non-existant
         size_t idCustomUpdateStart = 0;
         os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
         {
@@ -571,7 +604,23 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// Custom WU updates" << std::endl;
-            genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUDenseUpdateHandler, idCustomUpdateStart);
+            genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
+        }
+
+        // **TODO** filter non-existant
+        size_t idCustomTransposeUpdateStart = 0;
+        os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+
+            os << "const unsigned int id = " << getKernelBlockSize(KernelCustomTransposeUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+            os << "// ------------------------------------------------------------------------" << std::endl;
+            os << "// Custom WU transpose updates" << std::endl;
+            genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUTransposeUpdateHandler, idCustomTransposeUpdateStart);
         }
 
         os << "void update" << g << "()";
@@ -587,6 +636,16 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 genKernelDimensions(os, KernelCustomUpdate, idCustomUpdateStart, 1);
                 Timer t(os, "update" + g, model.isTimingEnabled(), true);
                 os << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // Launch custom transpose update kernel if required
+            if(idCustomTransposeUpdateStart > 0) {
+                CodeStream::Scope b(os);
+                // **TODO** make block height parameterizable
+                genKernelDimensions(os, KernelCustomUpdate, idCustomTransposeUpdateStart, 1, 8);
+                //Timer t(os, "updateTranspose" + g, model.isTimingEnabled(), true);
+                os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
         }
@@ -1765,21 +1824,14 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize, size_t numThreadsY) const
 {
     // Calculate grid size
     const size_t gridSize = ceilDivide(numThreads, getKernelBlockSize(kernel));
-    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", 1);" << std::endl;
-
-    if (gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]) {
-        os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
-    }
-    else {
-        // **TODO** this needs to be implemented in genParallelGroup
-        assert(false);
-        const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
-        os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
-    }
+    assert(gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]);
+    
+    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numThreadsY << ");" << std::endl;
+    os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
 }
 }   // namespace CUDA
 }   // namespace CodeGenerator

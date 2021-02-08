@@ -35,6 +35,7 @@ namespace CodeGenerator
     class SynapseDynamicsGroupMerged;
     class CustomUpdateGroupMerged;
     class CustomUpdateWUGroupMerged;
+    class CustomUpdateTransposeWUGroupMerged;
     class NeuronInitGroupMerged;
     class CustomUpdateInitGroupMerged;
     class CustomWUUpdateDenseInitGroupMerged;
@@ -154,6 +155,7 @@ public:
     typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
     typedef GroupHandler<CustomUpdateGroupMerged> CustomUpdateGroupMergedHandler;
     typedef GroupHandler<CustomUpdateWUGroupMerged> CustomUpdateWUGroupMergedHandler;
+    typedef GroupHandler<CustomUpdateTransposeWUGroupMerged> CustomUpdateTransposeWUGroupMergedHandler;
     typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
     typedef GroupHandler<CustomUpdateInitGroupMerged> CustomUpdateInitGroupMergedHandler;
     typedef GroupHandler<CustomWUUpdateDenseInitGroupMerged> CustomWUUpdateDenseInitGroupMergedHandler;
@@ -162,7 +164,6 @@ public:
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
     
-
     //! Callback function type for generation neuron group simulation code
     /*! Provides additional callbacks to insert code to emit spikes */
     typedef std::function <void(CodeStream &, const NeuronUpdateGroupMerged &, Substitutions&,
@@ -223,9 +224,9 @@ public:
         \param preambleHandler              callback to write functions for pushing extra-global parameters
       
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                 HostHandler preambleHandler, CustomUpdateGroupMergedHandler customNeuronUpdateHandler,
-                                 CustomUpdateWUGroupMergedHandler customWUDenseUpdateHandler, HostHandler pushEGPHandler) const = 0;
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler, 
+                                 CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
+                                 CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to

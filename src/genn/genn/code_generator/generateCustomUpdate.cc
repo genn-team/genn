@@ -24,14 +24,31 @@ using namespace CodeGenerator;
 namespace
 {
 template<typename C>
-void addCustomUpdateSubstitutions(CodeStream &os, Substitutions &baseSubs, const C &cg, 
+void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, 
                                   const ModelSpecMerged &modelMerged, const std::string &index)
 {
     Substitutions updateSubs(&baseSubs);
 
     const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
-    updateSubs.addVarNameSubstitution(cm->getVars(), "", "group->", "[" + updateSubs[index] + "]");
-    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "group->", "[" + updateSubs[index] + "]");
+
+    // Read variables into registers
+    for(const auto &v : cm->getVars()) {
+        if(v.access & VarAccessMode::READ_ONLY) {
+            os << "const ";
+        }
+        os << v.type << " l" << v.name << " = " << "group->" << v.name << "[" << updateSubs[index] << "];" << std::endl;
+    }
+
+    // Read variables references into registers
+    for(const auto &v : cm->getVarRefs()) {
+        if(v.access == VarAccessMode::READ_ONLY) {
+            os << "const ";
+        }
+        os << v.type << " l" << v.name << " = " << "group->" << v.name << "[" << updateSubs[index] << "];" << std::endl;
+    }
+    
+    updateSubs.addVarNameSubstitution(cm->getVars(), "", "l");
+    updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "l");
     updateSubs.addParamValueSubstitution(cm->getParamNames(), cg.getArchetype().getParams(),
                                          [&cg](size_t i) { return cg.isParamHeterogeneous(i);  },
                                          "", "group->");
@@ -44,6 +61,20 @@ void addCustomUpdateSubstitutions(CodeStream &os, Substitutions &baseSubs, const
     updateSubs.applyCheckUnreplaced(code, "custom update : merged" + cg.getIndex());
     code = ensureFtype(code, modelMerged.getModel().getPrecision());
     os << code;
+
+    // Write read/write variables back to global memory
+    for(const auto &v : cm->getVars()) {
+        if(v.access & VarAccessMode::READ_WRITE) {
+            os << "group->" << v.name << "["  << updateSubs[index] << "] = l" << v.name << ";" << std::endl;
+        }
+    }
+
+    // Write read/write variable references back to global memory
+    for(const auto &v : cm->getVarRefs()) {
+        if(v.access == VarAccessMode::READ_WRITE) {
+            os << "group->" << v.name << "["  << updateSubs[index] << "] = l" << v.name << ";" << std::endl;
+        }
+    }
 }
 }   // Anonymous namespace
 
@@ -64,16 +95,22 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
             // Generate functions to push merged neuron group structures
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
         },
         // Custom update handler
         [&modelMerged](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
-            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged, "id");
+            genCustomUpdate(os, popSubs, cg, modelMerged, "id");
         },
         // Custom weight update handler
         [&modelMerged](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
-            addCustomUpdateSubstitutions(os, popSubs, cg, modelMerged, "id_syn");
+            genCustomUpdate(os, popSubs, cg, modelMerged, "id_syn");
+        },
+        // Custom transpose weight update handler
+        [&modelMerged](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
+        {
+            genCustomUpdate(os, popSubs, cg, modelMerged, "id_syn");
         },
         // Push EGP handler
         // **TODO** this needs to be per-update group
@@ -81,5 +118,6 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
         {
             modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
         });
 }
