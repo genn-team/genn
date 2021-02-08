@@ -1159,20 +1159,66 @@ public:
 };
 
 // ----------------------------------------------------------------------------
-// CustomUpdateWUGroupMerged
+// CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateWUGroupMerged : public GroupMerged<CustomUpdateWUInternal>
+class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateWUInternal>
 {
 public:
-    CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
-
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     bool isParamHeterogeneous(size_t index) const;
     bool isDerivedParamHeterogeneous(size_t index) const;
 
+protected:
+    CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                  const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+};
+
+// ----------------------------------------------------------------------------
+// CustomUpdateWUGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomUpdateWUGroupMerged : public CustomUpdateWUGroupMergedBase
+{
+public:
+    CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+    :   CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
+    {
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+// ----------------------------------------------------------------------------
+// CustomUpdateTransposeWUGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomUpdateTransposeWUGroupMerged : public CustomUpdateWUGroupMergedBase
+{
+public:
+    CustomUpdateTransposeWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                       const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+    :   CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
+    {
+    }
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const

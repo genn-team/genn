@@ -1535,12 +1535,20 @@ bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
 }
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomUpdateWUGroupMerged
+// CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
-const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
+bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(size_t index) const
+{
+    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
+}
 //----------------------------------------------------------------------------
-CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                                     const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(size_t index) const
+{
+    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                             const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
 {
     addField("unsigned int", "rowStride",
@@ -1588,7 +1596,6 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
                      { 
                          return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
                      });
-        
         }
     }
 
@@ -1597,13 +1604,13 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
     addHeterogeneousParams<CustomUpdateWUGroupMerged>(
         cm->getParamNames(), "",
         [](const CustomUpdateWUInternal &cg) { return cg.getParams(); },
-        &CustomUpdateWUGroupMerged::isParamHeterogeneous);
+        &CustomUpdateWUGroupMergedBase::isParamHeterogeneous);
 
     // Add heterogeneous weight update model derived parameters
     addHeterogeneousDerivedParams<CustomUpdateWUGroupMerged>(
         cm->getDerivedParams(), "",
         [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); },
-        &CustomUpdateWUGroupMerged::isDerivedParamHeterogeneous);
+        &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
 
     // Add variables to struct
     addVars(cm->getVars(), backend.getDeviceVarPrefix());
@@ -1615,16 +1622,15 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
+// ----------------------------------------------------------------------------
+// CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMerged::isParamHeterogeneous(size_t index) const
-{
-    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
-}
+const std::string CustomUpdateWUGroupMerged::name = "CustomUpdateWU";
+
 //----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMerged::isDerivedParamHeterogeneous(size_t index) const
-{
-    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
-}
+// CustomUpdateTransposeWUGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomUpdateTransposeWUGroupMerged::name = "CustomUpdateTransposeWU";
 
 // ----------------------------------------------------------------------------
 // CustomUpdateInitGroupMerged
@@ -1637,7 +1643,6 @@ CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
-
 }
 
 // ----------------------------------------------------------------------------
