@@ -1565,26 +1565,31 @@ CustomUpdateWUGroupMerged::CustomUpdateWUGroupMerged(size_t index, const std::st
                  return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
              });
 
-    // If the referenced synapse group requires synaptic remapping and matrix type is sparse, add field
-    if(backend.isSynRemapRequired(*getArchetype().getSynapseGroup())) {
-        addField("unsigned int*", "synRemap", 
-                 [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                 { 
-                     return backend.getDeviceVarPrefix() + "synRemap" + cg.getSynapseGroup()->getName(); 
-                 });
-    }
-    // Otherwise, if synapse group has sparse connectivity, add row length and ind
-    else if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addField("unsigned int*", "rowLength",
-                 [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                 { 
-                     return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                 });
+    // If synapse group has sparse connectivity
+    if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
                  [&backend](const CustomUpdateWUInternal &cg, size_t) 
                  { 
                      return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
                  });
+
+        // If the referenced synapse group requires synaptic remapping and matrix type is sparse, add field
+        if(backend.isSynRemapRequired(*getArchetype().getSynapseGroup())) {
+            addField("unsigned int*", "synRemap", 
+                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                     { 
+                         return backend.getDeviceVarPrefix() + "synRemap" + cg.getSynapseGroup()->getName(); 
+                     });
+        }
+        // Otherwise, add row length
+        else {
+            addField("unsigned int*", "rowLength",
+                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                     { 
+                         return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                     });
+        
+        }
     }
 
     // Add heterogeneous custom update model parameters
