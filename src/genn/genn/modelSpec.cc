@@ -131,6 +131,16 @@ void ModelSpec::finalize()
         n.second.initDerivedParams(m_DT);
     }
 
+    // Custom update groups
+    for(auto &c : m_CustomUpdates) {
+        c.second.initDerivedParams(m_DT);
+    }
+
+    // Custom WUM update groups
+    for(auto &c : m_CustomWUUpdates) {
+        c.second.initDerivedParams(m_DT);
+    }
+
     // SYNAPSE groups
     for(auto &s : m_LocalSynapseGroups) {
         const auto *wu = s.second.getWUModel();
