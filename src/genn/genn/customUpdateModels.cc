@@ -3,6 +3,7 @@
 
 // Implement models
 IMPLEMENT_MODEL(CustomUpdateModels::AdamOptimizer);
+IMPLEMENT_MODEL(CustomUpdateModels::Transpose);
 
 //----------------------------------------------------------------------------
 // CustomUpdateModels::Base

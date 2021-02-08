@@ -122,17 +122,18 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 
     LOGD_CODE_GEN << "Merging custom update groups:";
     createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
-                        [](const CustomUpdateInternal &cg) { return !cg.getCustomUpdateModel()->getUpdateCode().empty(); },
+                        [](const CustomUpdateInternal &cg) { return true; },
                         [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging custom weight update groups:";
     createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
-                       [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation() && !cg.getCustomUpdateModel()->getUpdateCode().empty();; },
+                       [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
                        [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
+    // **NOTE** while other sorts of update with 
     createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
-                       [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation() && !cg.getCustomUpdateModel()->getUpdateCode().empty();; },
+                       [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
                        [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });
 
     // Loop through merged neuron groups

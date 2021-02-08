@@ -72,5 +72,16 @@ class AdamOptimizer : public Base
     SET_VAR_REFS({{"gradient", "scalar", VarAccessMode::READ_WRITE}, 
                   {"variable", "scalar", VarAccessMode::READ_WRITE}});
 };
+
+//----------------------------------------------------------------------------
+// CustomUpdateModels::Transpose
+//----------------------------------------------------------------------------
+//! Minimal custom update model for calculating tranpose
+class Transpose : public Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Transpose, 0, 0, 1);
+
+    SET_VAR_REFS({{"variable", "scalar", VarAccessMode::READ_WRITE}});
+};
 }   // CustomUpdateModels
 
