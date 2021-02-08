@@ -57,11 +57,11 @@ class AdamOptimizer : public Base
 
     SET_UPDATE_CODE(
         "// Update biased first moment estimate\n"
-        "const scalar mT = ($(beta1) * $(m)) + ((1.0 - $(beta1)) * $(gradient));\n"
+        "$(m) = ($(beta1) * $(m)) + ((1.0 - $(beta1)) * $(gradient));\n"
         "// Update biased second moment estimate\n"
-        "const scalar vT = ($(beta2) * $(v)) + ((1.0 - $(beta2)) * $(gradient) * $(gradient));\n"
+        "$(v) = ($(beta2) * $(v)) + ((1.0 - $(beta2)) * $(gradient) * $(gradient));\n"
         "// Add gradient to variable, scaled by learning rate\n"
-        "$(variable) -= ($(alpha) * mT * $(firstMomentScale)) / (sqrt(vT * $(secondMomentScale)) + $(epsilon));\n"
+        "$(variable) -= ($(alpha) * $(m) * $(firstMomentScale)) / (sqrt($(v) * $(secondMomentScale)) + $(epsilon));\n"
         "// Zero gradient\n"
         "$(gradient) = 0.0;\n");
 
