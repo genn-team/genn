@@ -1622,12 +1622,14 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
      // Loop through variables
     for(size_t v = 0; v < varRefs.size(); v++) {
+        // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v).getTransposeSynapseGroup() != nullptr) {
+            // Add field with transpose suffix, pointing to transpose var
             addField(varRefs[v].type + "*", varRefs[v].name + "Transpose",
                      [&backend, v](const CustomUpdateWUInternal &g, size_t)
                      {
                          const auto varRef = g.getVarReferences().at(v);
-                         return backend.getDeviceVarPrefix() + varRef.getVar().name + varRef.getTargetName();
+                         return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
                      });
             }
     }
