@@ -222,6 +222,12 @@ TEST(VarReference, WUMTranspose)
         {}, {1.0},
         {}, {});
 
+    auto *sgBackwardBadType = model.addSynapsePopulation<StaticPulseUInt, PostsynapticModels::DeltaCurr>(
+        "Synapses6", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+        "Post", "Pre",
+        {}, {1.0},
+        {}, {});
+
     // Finalize model
     model.finalize();
 
@@ -254,6 +260,14 @@ TEST(VarReference, WUMTranspose)
     // Test error if transpose is sparse
     try {
         auto wuG2 = createWUVarRef(sgForward, "g", sgBackwardSparse, "g");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    // Test error if transpose is different type
+    try {
+        auto wuG2 = createWUVarRef(sgForward, "g", sgBackwardBadType, "g");
         FAIL();
     }
     catch(const std::runtime_error &) {
