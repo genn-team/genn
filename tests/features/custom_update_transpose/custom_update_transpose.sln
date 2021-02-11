@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "custom_update_transpose", "custom_update_transpose.vcxproj", "{B55666CB-2B69-45C9-843B-35C5961EDE89}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EB32444F-68C9-4451-8B92-771B85C76725} = {EB32444F-68C9-4451-8B92-771B85C76725}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "custom_update_transpose_CODE\runner.vcxproj", "{EB32444F-68C9-4451-8B92-771B85C76725}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B55666CB-2B69-45C9-843B-35C5961EDE89}.Debug|x64.ActiveCfg = Debug|x64
+		{B55666CB-2B69-45C9-843B-35C5961EDE89}.Debug|x64.Build.0 = Debug|x64
+		{B55666CB-2B69-45C9-843B-35C5961EDE89}.Release|x64.ActiveCfg = Release|x64
+		{B55666CB-2B69-45C9-843B-35C5961EDE89}.Release|x64.Build.0 = Release|x64
+		{EB32444F-68C9-4451-8B92-771B85C76725}.Debug|x64.ActiveCfg = Debug|x64
+		{EB32444F-68C9-4451-8B92-771B85C76725}.Debug|x64.Build.0 = Debug|x64
+		{EB32444F-68C9-4451-8B92-771B85C76725}.Release|x64.ActiveCfg = Release|x64
+		{EB32444F-68C9-4451-8B92-771B85C76725}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
