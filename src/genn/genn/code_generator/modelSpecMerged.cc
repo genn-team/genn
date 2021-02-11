@@ -122,7 +122,7 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
 
     LOGD_CODE_GEN << "Merging custom update groups:";
     createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
-                        [](const CustomUpdateInternal &cg) { return true; },
+                        [](const CustomUpdateInternal &) { return true; },
                         [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging custom weight update groups:";
