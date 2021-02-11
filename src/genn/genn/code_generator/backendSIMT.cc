@@ -930,7 +930,6 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                                                                       [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
             const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
 
-
             os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (getKernelBlockSize(KernelCustomTransposeUpdate) - 1) << ") / " << getKernelBlockSize(KernelCustomTransposeUpdate) << ";" << std::endl;
             os << "const unsigned int blockX = (" << getBlockID(0) << " % numXBlocks);" << std::endl;
             os << "const unsigned int blockY = (" << getBlockID(0) << " / numXBlocks);" << std::endl;

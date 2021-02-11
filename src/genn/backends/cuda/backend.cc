@@ -597,7 +597,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             kernelSubs.addVarSubstitution("t", "t");
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
-           
+
             os << "// ------------------------------------------------------------------------" << std::endl;
             os << "// Custom updates" << std::endl;
             genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
