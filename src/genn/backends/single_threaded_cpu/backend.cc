@@ -438,19 +438,21 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                              HostHandler preambleHandler, CustomUpdateGroupMergedHandler customUpdateHandler,
-                              CustomUpdateWUGroupMergedHandler customUpdateWUHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &, HostHandler preambleHandler,
+                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
+                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
-    
+
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
+    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -486,7 +488,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
 
                 CodeStream::Scope b(os);
-                os << "// merged neuron update group " << c.getIndex() << std::endl;
+                os << "// merged custom update group " << c.getIndex() << std::endl;
                 os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                 {
                     CodeStream::Scope b(os);
@@ -507,7 +509,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
             }
 
-             // Loop through merged custom update groups
+            // Loop through merged custom WU update groups
             for(const auto &c : modelMerged.getMergedCustomUpdateWUGroups()) {
                 // If this update group isn't for current group, skip
                 if(c.getArchetype().getUpdateGroupName() != g) {
@@ -515,7 +517,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 }
 
                 CodeStream::Scope b(os);
-                os << "// merged neuron update group " << c.getIndex() << std::endl;
+                os << "// merged custom WU update group " << c.getIndex() << std::endl;
                 os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                 {
                     CodeStream::Scope b(os);
@@ -558,9 +560,58 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             synSubs.addVarSubstitution("id_post", "j");
 
                             // Call custom update handler
-                            customUpdateWUHandler(os, c, synSubs);
+                            customWUUpdateHandler(os, c, synSubs);
                         }
                     }
+                }
+            }
+            // Loop through merged custom WU transpose update groups
+            for(const auto &c : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
+                // If this update group isn't for current group, skip
+                if(c.getArchetype().getUpdateGroupName() != g) {
+                    continue;
+                }
+
+                CodeStream::Scope b(os);
+                os << "// merged custom WU transpose update group " << c.getIndex() << std::endl;
+                os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Get reference to group
+                    os << "const auto *group = &mergedCustomUpdateTransposeWUGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                    // Get index of variable being transposed
+                    const size_t transposeVarIdx = std::distance(c.getArchetype().getVarReferences().cbegin(),
+                                                                 std::find_if(c.getArchetype().getVarReferences().cbegin(), c.getArchetype().getVarReferences().cend(),
+                                                                              [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
+                    const std::string transposeVarName = c.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+
+                    // Loop through presynaptic neurons
+                    os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Loop through each postsynaptic neuron
+                        os << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
+                        {
+                            CodeStream::Scope b(os);
+
+                            Substitutions synSubs(&funcSubs);
+                            synSubs.addVarSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
+
+                            // Add pre and postsynaptic indices to substitutions
+                            synSubs.addVarSubstitution("id_pre", "i");
+                            synSubs.addVarSubstitution("id_post", "j");
+
+                            // Call custom update handler
+                            customWUTransposeUpdateHandler(os, c, synSubs);
+
+                            // Update transpose variable
+                            os << "group->" << transposeVarName << "Transpose[(j * group->numSrcNeurons) + i] = l" << transposeVarName << ";" << std::endl;
+                        }
+                    }
+
                 }
             }
         }
