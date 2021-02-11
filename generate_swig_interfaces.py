@@ -164,7 +164,7 @@ class SwigModuleGenerator( object ):
         self.addSwigRename( '""', '"%s"', '// unignore all' )
 
     def addSwigEnableUnderCaseConvert( self ):
-        self.addSwigRename('""', '"%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="assignExternalPointer[a-zA-Z]*"', '// Enable conversion to under_case')
+        self.addSwigRename('""', '"%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="addCustomUpdate", notregexmatch$name="assignExternalPointer[a-zA-Z]*"', '// Enable conversion to under_case')
 
     def addSwigTemplate( self, tSpec, newName ):
         '''Adds a template specification tSpec and renames it as newName'''
