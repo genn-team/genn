@@ -587,7 +587,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Loop through custom update groups
     for(const auto &g : customUpdateGroups) {
         // Generate kernel
-        // **TODO** filter non-existant
         size_t idCustomUpdateStart = 0;
         os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
         {
@@ -607,7 +606,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
         }
 
-        // **TODO** filter non-existant
         size_t idCustomTransposeUpdateStart = 0;
         os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
         {
