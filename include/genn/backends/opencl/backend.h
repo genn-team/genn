@@ -108,10 +108,10 @@ public:
     virtual std::string getSharedPrefix() const override { return "__local "; }
 
     //! Get the ID of the current thread within the threadblock
-    virtual std::string getThreadID() const override { return "get_local_id(0)"; }
+    virtual std::string getThreadID(unsigned int axis = 0) const override{ return "get_local_id(" + std::to_string(axis) + ")"; }
 
     //! Get the ID of the current thread block
-    virtual std::string getBlockID() const override { return "get_group_id(0)"; }
+    virtual std::string getBlockID(unsigned int axis = 0) const override{ return "get_group_id(" + std::to_string(axis) + ")"; }
 
     //! Get the name of the count-leading-zeros function
     virtual std::string getCLZ() const override { return "clz"; }
@@ -149,9 +149,9 @@ public:
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                 HostHandler preambleHandler, CustomUpdateGroupMergedHandler customNeuronUpdateHandler,
-                                 CustomUpdateWUGroupMergedHandler customWUDenseUpdateHandler, HostHandler pushEGPHandler) const override;
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler,
+                                 CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
+                                 CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const override;
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                          HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
@@ -422,7 +422,7 @@ private:
 
     void genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const;
 
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const;
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize, size_t numThreadsY = 1) const;
 
     void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const;
 
