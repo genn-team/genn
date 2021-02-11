@@ -334,7 +334,7 @@ private:
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
     void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
 
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize, size_t numThreadsY = 1) const;
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 
     //--------------------------------------------------------------------------
     // Members

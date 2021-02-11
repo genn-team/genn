@@ -1822,14 +1822,22 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize, size_t numThreadsY) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY) const
 {
     // Calculate grid size
-    const size_t gridSize = ceilDivide(numThreads, getKernelBlockSize(kernel));
+    const size_t gridSize = ceilDivide(numThreadsX, getKernelBlockSize(kernel));
     assert(gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]);
-    
-    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numThreadsY << ");" << std::endl;
-    os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
+    assert(numBlockThreadsY < (size_t)getChosenCUDADevice().maxThreadsDim[0]);
+
+    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numBlockThreadsY << ");" << std::endl;
+    if(numBlockThreadsY > 1) {
+        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[2]);
+        os << "const dim3 grid(" << gridSize << ", 1, " << batchSize << ");" << std::endl;
+    }
+    else {
+        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[1]);
+        os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
+    }
 }
 }   // namespace CUDA
 }   // namespace CodeGenerator

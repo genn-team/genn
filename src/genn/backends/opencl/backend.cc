@@ -2215,12 +2215,22 @@ void Backend::genAtomicAddFloat(CodeStream &os, const std::string &memoryType) c
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize, size_t numThreadsY) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY) const
 {
     // Calculate global and local work size
-    const size_t numOfWorkGroups = ceilDivide(numThreads, getKernelBlockSize(kernel));
-    os << "const cl::NDRange globalWorkSize(" << (getKernelBlockSize(kernel) * numOfWorkGroups) << ", " << numThreadsY << ", " << batchSize << ");" << std::endl;
-    os << "const cl::NDRange localWorkSize(" << getKernelBlockSize(kernel) << ", " << numThreadsY << ");" << std::endl;
+    const auto maxWorkItemDims = m_ChosenDevice.getInfo<CL_DEVICE_MAX_WORK_ITEM_SIZES>();
+    const size_t numWorkGroups = ceilDivide(numThreadsX, getKernelBlockSize(kernel));
+    assert(numBlockThreadsY < maxWorkItemDims[0]);
+
+    os << "const cl::NDRange localWorkSize(" << getKernelBlockSize(kernel) << ", " << numBlockThreadsY << ");" << std::endl;
+    if(numBlockThreadsY > 1) {
+        assert(batchSize < (size_t)maxWorkItemDims[2]);
+        os << "const cl::NDRange globalWorkSize(" << (getKernelBlockSize(kernel) * numWorkGroups) << ", " << numBlockThreadsY << ", " << batchSize << ");" << std::endl;
+    }
+    else {
+        assert(batchSize < (size_t)maxWorkItemDims[1]);
+        os << "const cl::NDRange globalWorkSize(" << (getKernelBlockSize(kernel) * numWorkGroups) << ", " << batchSize << ");" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
