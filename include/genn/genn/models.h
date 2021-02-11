@@ -154,7 +154,7 @@ using VarInitContainerBase = Snippet::InitialiserContainerBase<VarInit, NumVars>
 //----------------------------------------------------------------------------
 // Models::VarReferenceBase
 //----------------------------------------------------------------------------
-class VarReferenceBase
+class GENN_EXPORT VarReferenceBase
 {
 public:
     //------------------------------------------------------------------------
@@ -186,7 +186,7 @@ private:
 //----------------------------------------------------------------------------
 // Models::VarReference
 //----------------------------------------------------------------------------
-class VarReference : public VarReferenceBase
+class GENN_EXPORT VarReference : public VarReferenceBase
 {
 public:
     //------------------------------------------------------------------------
@@ -224,7 +224,7 @@ using VarReferenceContainerBase = Snippet::InitialiserContainerBase<VarReference
 //----------------------------------------------------------------------------
 // Models::WUVarReference
 //----------------------------------------------------------------------------
-class WUVarReference : public VarReferenceBase
+class GENN_EXPORT WUVarReference : public VarReferenceBase
 {
 public:
     WUVarReference(const SynapseGroup *sg, const std::string &varName,
