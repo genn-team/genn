@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file custom_init/test.cc
+/*! \file custom_update/test.cc
 
 \brief Main test code that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -26,7 +26,7 @@ class SimTest : public SimulationTest
 {
 };
 
-TEST_F(SimTest, CustomInit)
+TEST_F(SimTest, CustomUpdate)
 {
     while(iT < 1000) {
         StepGeNN();
