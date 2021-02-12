@@ -178,8 +178,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const size_t m_VarIndex;
-    const Models::Base::Var m_Var;
+    size_t m_VarIndex;
+    Models::Base::Var m_Var;
     GetTargetNameFn m_GetTargetName;
 };
 
@@ -193,7 +193,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
-    
+
     //------------------------------------------------------------------------
     // Static API
     //------------------------------------------------------------------------
@@ -212,7 +212,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const unsigned int m_Size;
+    unsigned int m_Size;
 };
 
 //----------------------------------------------------------------------------
@@ -246,8 +246,8 @@ private:
     //------------------------------------------------------------------------
     const SynapseGroupInternal *m_SG;
     const SynapseGroupInternal *m_TransposeSG;
-    const size_t m_TransposeVarIndex;
-    const Models::Base::Var m_TransposeVar;
+    size_t m_TransposeVarIndex;
+    Models::Base::Var m_TransposeVar;
     GetTargetNameFn m_GetTransposeTargetName;
 };
 
