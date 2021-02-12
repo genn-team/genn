@@ -192,10 +192,11 @@ def writeValueMakerFunc( modelName, valueName, numValues, mg ):
     
     if 'VarValues' in valueName:
         paramType = 'Models::VarInit'
+    elif 'WUVarReference' in valueName:
+        paramType = 'Models::WUVarReference'
+    # **YUCK** note this has to be tested AFTER WUVarReference because this is a substring
     elif 'VarReference' in valueName:
         paramType = 'Models::VarReference'
-    elif 'WUVarReference' in valueName:
-        paramType = 'Models.WUVarReference'
     else:
         paramType = 'double'
     mg.write( 'static {0}::{1}::{2}* make{2}( const std::vector<{3}> & {4} )'.format(
@@ -252,7 +253,7 @@ def generateCustomClassDeclaration( nSpace, initVarSnippet=False, weightUpdateMo
         {
             return new CustomValues::VarReferences(varRefs);
         }
-        static CustomValues::WUVarReferences* makeWUWUVarReferences(const std::vector<Models::WUVarReference> &varRefs)
+        static CustomValues::WUVarReferences* makeWUVarReferences(const std::vector<Models::WUVarReference> &varRefs)
         {
             return new CustomValues::WUVarReferences(varRefs);
         }'''
@@ -650,7 +651,7 @@ def generateConfigs(gennPath, backends):
 
                     mg.models.append( model_name )
 
-                    # add a helper function to create Param- and VarVarlues to each model
+                    # add a helper function to create Param- and VarValues to each model
                     with SwigExtendScope( mg, mg.name + '::' + model_name ):
                         writeValueMakerFunc( model_name, 'ParamValues', int(num_params), mg )
                         if not is_snippet:
