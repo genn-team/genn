@@ -119,7 +119,7 @@ private:
 //------------------------------------------------------------------------
 // CustomUpdate
 //------------------------------------------------------------------------
-class CustomUpdate : public CustomUpdateBase
+class GENN_EXPORT CustomUpdate : public CustomUpdateBase
 {
 public:
     //------------------------------------------------------------------------
@@ -145,7 +145,7 @@ private:
 //------------------------------------------------------------------------
 // CustomUpdateWU
 //------------------------------------------------------------------------
-class CustomUpdateWU : public CustomUpdateBase
+class GENN_EXPORT CustomUpdateWU : public CustomUpdateBase
 {
 public:
     //------------------------------------------------------------------------
