@@ -63,7 +63,8 @@ from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
 from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf, make_cksf
 from .genn_wrapper.StlContainers import StringVector
 from .genn_wrapper import VarLocation_HOST_DEVICE
-from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
+from .genn_groups import (NeuronGroup, SynapseGroup, 
+                          CurrentSource, CustomUpdate)
 from .model_preprocessor import prepare_snippet
 
 # Loop through backends in preferential order

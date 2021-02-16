@@ -9,7 +9,7 @@ except NameError:  # Python 3
 
 from weakref import proxy
 from deprecated import deprecated
-from six import iteritems, iterkeys
+from six import iteritems, iterkeys, itervalues
 import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
@@ -555,7 +555,7 @@ class SynapseGroup(Group):
                 raise ValueError("Invalid presynaptic variable initializers "
                                  "for WeightUpdateModels")
             self.pre_vars = {
-                vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], group)
+                vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], self)
                 for vnt in self.w_update.get_pre_vars()}
 
             self.wu_post_var_names = [vnt.name for vnt in self.w_update.get_post_vars()]
@@ -563,7 +563,7 @@ class SynapseGroup(Group):
                 raise ValueError("Invalid postsynaptic variable initializers "
                                  "for WeightUpdateModels")
             self.post_vars = {
-                vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], group)
+                vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], self)
                 for vnt in self.w_update.get_post_vars()}
 
     def set_post_syn(self, model, param_space, var_space):
@@ -1160,14 +1160,14 @@ class CustomUpdate(Group):
                 genn_wrapper.CustomUpdateModels)
         
         # Check variable references
-        self.var_ref_names = [vnt.name for vnt in m_instance.get_var_refs()]
+        self.var_ref_names = [vnt.name for vnt in self.custom_update_model.get_var_refs()]
         if var_ref_space is not None and set(iterkeys(var_ref_space)) != set(self.var_ref_names):
             raise ValueError("Invalid variable reference initializers "
                              "for CustomUpdateModels")
         
         # Count wu var references in list
         num_wu_var_refs = sum(isinstance(v, WUVarReference)
-                              for v in iterkeys(var_ref_space))
+                              for v in itervalues(var_ref_space))
             
         # If there's a mixture of references to weight 
         # update  model and other variables, give error
@@ -1175,7 +1175,7 @@ class CustomUpdate(Group):
             raise ValueError("Custom updates cannot be created with "
                              "references pointing to a mixture of "
                              "weight update and other variables")
-        
+
         # Set flag 
         self.custom_wu_update = (num_wu_var_refs != 0)
         
@@ -1202,7 +1202,7 @@ class CustomUpdate(Group):
                 self.custom_update_model, self.var_refs)
             
         self.pop = add_fct(self.name, group_name, self.custom_update_model, 
-                           pop.name, self.params, var_ini, var_refs)
+                           self.params, var_ini, var_refs)
 
     def set_extra_global_param(self, param_name, param_values):
         """Set extra global parameter

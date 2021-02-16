@@ -9,7 +9,8 @@ import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
 from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
-                                  VarInitVector, VarRefVector)
+                                  VarInitVector, VarRefVector, 
+                                  VarReferenceVector, WUVarReferenceVector)
 from .genn_wrapper.StlContainers import DoubleVector
 
 def prepare_model(model, group, param_space, var_space, model_family):
@@ -156,7 +157,8 @@ def var_ref_space_to_var_refs(model, var_ref_space):
     native model's VarValues
     """
     return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name] for v in model.get_var_refs()]))
+        VarReferenceVector([var_ref_space[v.name] 
+                            for v in model.get_var_refs()]))
                                                 
 def var_ref_space_to_wu_var_refs(model, var_ref_space):
     """Convert a var_ref_space dict to WUVarReferences
@@ -169,7 +171,8 @@ def var_ref_space_to_wu_var_refs(model, var_ref_space):
     native model's VarValues
     """
     return model.make_wuvar_references(
-        WUVarReferenceVector([var_space[v.name] for vnt in model.get_var_refs()]))
+        WUVarReferenceVector([var_ref_space[v.name] 
+                              for v in model.get_var_refs()]))
 
 def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues
