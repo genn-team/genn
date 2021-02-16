@@ -177,7 +177,7 @@ class Group(object):
         # Loop through variables
         for v in vars:
             # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
+            var_data = var_dict[v.name]
 
             # If variable is located on host
             var_loc = get_location_fn(v.name) 
@@ -1216,7 +1216,8 @@ class CustomUpdate(Group):
 
     def load(self):
         # Load custom update variables
-        self._load_vars(self.custom_update_model.get_vars())
+        # **TODO**
+        #self._load_vars(self.custom_update_model.get_vars())
 
         # Load ustom update extra global parameters
         self._load_egp()
