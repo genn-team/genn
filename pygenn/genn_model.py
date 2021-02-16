@@ -667,12 +667,19 @@ class GeNNModel(object):
         self._slm.initialize_sparse()
 
     def step_time(self):
+        """Make one simulation step"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before stepping")
 
-        """Make one simulation step"""
         self._slm.step_time()
-
+    
+    def custom_update(self, name):
+        """Perform custom update"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before performing custom update")
+            
+        self._slm.custom_update(name)
+        
     def pull_state_from_device(self, pop_name):
         """Pull state from the device for a given population"""
         if not self._loaded:
@@ -1336,7 +1343,7 @@ def create_custom_custom_update_class(class_name, param_names=None,
     body = {}
 
     if update_code is not None:
-        body["update_code"] = lambda self: dedent(update_code)
+        body["get_update_code"] = lambda self: dedent(update_code)
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
