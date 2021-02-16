@@ -382,6 +382,19 @@ public:
         m_StepTime();
     }
     
+    void customUpdate(const std::string &name)
+    {
+        auto c = m_CustomUpdates.find(name);
+        if(c != m_CustomUpdates.cend()) {
+            c->second();
+        }
+        else {
+            auto customUpdateFn = (VoidFunction)getSymbol("update" + name);
+            m_CustomUpdates.emplace(name, customUpdateFn);
+            customUpdateFn();
+        }
+    }
+    
     void pullRecordingBuffersFromDevice()
     {
         if(m_PullRecordingBuffersFromDevice == nullptr) {
@@ -525,7 +538,7 @@ private:
 
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
-
+    std::unordered_map<std::string, VoidFunction> m_CustomUpdates;
     scalar *m_T;
     unsigned long long *m_Timestep;
 };
