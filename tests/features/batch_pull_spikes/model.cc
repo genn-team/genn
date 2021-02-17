@@ -44,7 +44,7 @@ void modelDefinition(ModelSpec &model)
     
     auto *pop = model.addNeuronPopulation<NeuronModels::SpikeSourceArray>("Pop", 10, {}, init);
     auto *popDelay = model.addNeuronPopulation<NeuronModels::SpikeSourceArray>("PopDelay", 10, {}, init);
-    auto *post = model.addNeuronPopulation<NeuronModels::LIF>("Post", 10, lifParams, lifInit);
+    model.addNeuronPopulation<NeuronModels::LIF>("Post", 10, lifParams, lifInit);
     
     pop->setSpikeRecordingEnabled(true);
     popDelay->setSpikeRecordingEnabled(true);

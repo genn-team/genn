@@ -159,7 +159,7 @@ void modelDefinition(ModelSpec &model)
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource2", 50000, {}, {});
     NeuronGroup *ng = model.addNeuronPopulation<Neuron>("Pop", 50000, {}, neuronInit);
-    CurrentSource *ns = model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
+    CurrentSource *cs = model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
 
     // Dense synapse populations
     SynapseGroup *sgDense = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
@@ -181,6 +181,10 @@ void modelDefinition(ModelSpec &model)
     model.addCustomUpdate<NopCustomUpdateModel>("NeuronCustomUpdate", "Test",
                                                {}, customUpdateInit, neuronVarReferences);
     
+    NopCustomUpdateModel::VarReferences currentSourceVarReferences(createVarRef(cs, "constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("CurrentSourceCustomUpdate", "Test",
+                                               {}, customUpdateInit, currentSourceVarReferences);
+                                               
     NopCustomUpdateModel::VarReferences psmVarReferences(createPSMVarRef(sgDense, "pconstant_val")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("PSMCustomUpdate", "Test",
                                                {}, customUpdateInit, neuronVarReferences);
