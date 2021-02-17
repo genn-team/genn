@@ -883,7 +883,7 @@ def create_var_ref(pop, var_name):
     pop         -- population, either a NeuronGroup or CurrentSource object
     var_name    -- name of variable in population to reference
     """
-    return genn_wrapper.create_var_ref(pop.pop, var_name)
+    return (genn_wrapper.create_var_ref(pop.pop, var_name), pop)
     
 def create_psm_var_ref(sg, var_name):
     """This helper function creates a Models::VarReference
@@ -892,10 +892,10 @@ def create_psm_var_ref(sg, var_name):
 
     Args:
     sg          -- SynapseGroup object
-    var_name    -- name of postsynaptic model variable 
+    var_name    -- name of postsynaptic model variable
                    in synapse group to reference
     """
-    return genn_wrapper.create_psmvar_ref(sg.pop, var_name)   
+    return (genn_wrapper.create_psmvar_ref(sg.pop, var_name), sg)
 
 def create_wu_pre_var_ref(sg, var_name):
     """This helper function creates a Models::VarReference
@@ -904,10 +904,10 @@ def create_wu_pre_var_ref(sg, var_name):
 
     Args:
     sg          -- SynapseGroup object
-    var_name    -- name of presynaptic weight update model  
+    var_name    -- name of presynaptic weight update model
                    variable in synapse group to reference
     """
-    return genn_wrapper.create_wupre_var_ref(sg.pop, var_name)   
+    return (genn_wrapper.create_wupre_var_ref(sg.pop, var_name), sg)
 
 def create_wu_post_var_ref(sg, var_name):
     """This helper function creates a Models::VarReference
@@ -919,29 +919,28 @@ def create_wu_post_var_ref(sg, var_name):
     var_name    -- name of postsynaptic weight update model  
                    variable in synapse group to reference
     """
-    return genn_wrapper.create_wupost_var_ref(sg.pop, var_name)   
+    return (genn_wrapper.create_wupost_var_ref(sg.pop, var_name), sg)
 
-def create_wu_var_ref(sg, var_name, transpose_sg=None, 
-                      transpose_var_name=None):
+def create_wu_var_ref(sg, var_name, tp_sg=None, tp_var_name=None):
     """This helper function creates a Models::WUVarReference
     pointing to a weight update model variable for 
     initialising variable references.
 
     Args:
-    sg                  -- SynapseGroup object
-    var_name            -- name of weight update model variable 
-                           in synapse group to reference
-    transpose_sg        -- (optional) SynapseGroup object to 
-                           copy transpose of variable to
-    transpose_var_name  -- (optional) name of weight update 
-                           model variable in tranpose synapse group
-                           to copy transpose to
+    sg          -- SynapseGroup object
+    var_name    -- name of weight update model variable 
+                   in synapse group to reference
+    tp_sg       -- (optional) SynapseGroup object to 
+                   copy transpose of variable to
+    tp_var_name -- (optional) name of weight update 
+                   model variable in tranpose synapse group
+                   to copy transpose to
     """
-    if transpose_sg is None:
-        return genn_wrapper.create_wuvar_ref(sg.pop, var_name)
+    if tp_sg is None:
+        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name), sg)
     else:
-        return genn_wrapper.create_wuvar_ref(sg.pop, var_name,
-                                             transpose_sg.pop, transpose_var_name)
+        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name,
+                                              tp_sg.pop, tp_var_name), sg)
     
 
 def create_custom_neuron_class(class_name, param_names=None,

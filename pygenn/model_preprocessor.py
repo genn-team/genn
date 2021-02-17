@@ -157,7 +157,7 @@ def var_ref_space_to_var_refs(model, var_ref_space):
     native model's VarValues
     """
     return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name] 
+        VarReferenceVector([var_ref_space[v.name][0]
                             for v in model.get_var_refs()]))
                                                 
 def var_ref_space_to_wu_var_refs(model, var_ref_space):
@@ -171,7 +171,7 @@ def var_ref_space_to_wu_var_refs(model, var_ref_space):
     native model's VarValues
     """
     return model.make_wuvar_references(
-        WUVarReferenceVector([var_ref_space[v.name] 
+        WUVarReferenceVector([var_ref_space[v.name][0]
                               for v in model.get_var_refs()]))
 
 def pre_var_space_to_vals(model, var_space):

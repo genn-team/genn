@@ -1166,7 +1166,7 @@ class CustomUpdate(Group):
                              "for CustomUpdateModels")
         
         # Count wu var references in list
-        num_wu_var_refs = sum(isinstance(v, WUVarReference)
+        num_wu_var_refs = sum(isinstance(v[0], WUVarReference)
                               for v in itervalues(var_ref_space))
             
         # If there's a mixture of references to weight 
@@ -1215,9 +1215,13 @@ class CustomUpdate(Group):
                                      self.custom_update_model)
 
     def load(self):
-        # Load custom update variables
-        # **TODO**
-        #self._load_vars(self.custom_update_model.get_vars())
+        # If this is a custom weight update
+        if self.custom_wu_update:
+            pass
+        # Otherwise, load variables 
+        else:
+            self._load_vars(self.custom_update_model.get_vars(),
+                            size=self.pop.get_size())
 
         # Load ustom update extra global parameters
         self._load_egp()
