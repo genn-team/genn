@@ -1217,13 +1217,43 @@ class CustomUpdate(Group):
     def load(self):
         # If this is a custom weight update
         if self.custom_wu_update:
-            pass
+            # Assert that population has individual synapse variables
+            assert self._synapse_group.has_individual_synapse_vars
+
+            # Loop through state variables
+            for v in self.custom_update_model.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_var_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    #              else self._model.batch_size)
+                    num_copies = 1
+
+                    # Get view
+                    size = self._synapse_group.weight_update_var_size * num_copies
+                    var_data.view = self._assign_ext_ptr_array(
+                        v.name, size, var_data.type)
+
+                    # If there is more than one copy, reshape view to 2D
+                    if num_copies > 1:
+                        var_data.view = np.reshape(var_data.view, 
+                                                   (num_copies, -1))
+
+                    # Initialise variable if necessary
+                    self._synapse_group._init_wum_var(var_data, num_copies)
+
+                # Load any var initialisation egps associated with this variable
+                self._load_egp(var_data.extra_global_params, v.name)
         # Otherwise, load variables 
         else:
             self._load_vars(self.custom_update_model.get_vars(),
                             size=self.pop.get_size())
 
-        # Load ustom update extra global parameters
+        # Load custom update extra global parameters
         self._load_egp()
 
     def load_init_egps(self):
@@ -1231,6 +1261,36 @@ class CustomUpdate(Group):
         self._load_var_init_egps()
 
     def reinitialise(self):
-        """Reinitialise current source"""
-        # Reinitialise current source state variables
-        self._reinitialise_vars()
+        """Reinitialise custom update"""
+        # If this is a custom weight update
+        if self.custom_wu_update:
+            # Assert that population has individual synapse variables
+            assert self._synapse_group.has_individual_synapse_vars
+
+            # Loop through custom update state variables
+            for v in self.custom_update_model.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_var_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    #              else self._model.batch_size)
+                    num_copies = 1
+                    
+                    # Initialise
+                    self._synapse_group._init_wum_var(var_data, num_copies)
+        # Otherwise, reinitialise current source state variables
+        else:
+            self._reinitialise_vars(size=self.pop.get_size())
+
+    @property
+    def _synapse_group(self):
+        """Get SynapseGroup associated with custom weight update"""
+        assert self.custom_wu_update
+
+        # Return Python synapse group reference from 
+        # first (arbitrarily) variable reference
+        return next(itervalues(self.var_refs))[1]
