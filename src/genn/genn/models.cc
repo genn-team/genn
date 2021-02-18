@@ -29,9 +29,9 @@ VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::st
 
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *psm = sgInternal->getPSModel();
-    return VarReference([sgInternal]() { return sgInternal->getPSModelTargetName(); },
-                        sgInternal->getTrgNeuronGroup()->getNumNeurons(), 
-                        psm->getVarIndex(varName), psm->getVars());
+    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), nullptr,
+                        psm->getVarIndex(varName), psm->getVars(),
+                        [sgInternal]() { return sgInternal->getPSModelTargetName(); });
 
 }
 //----------------------------------------------------------------------------
@@ -39,37 +39,39 @@ VarReference VarReference::createWUPreVarRef(const SynapseGroup *sg, const std::
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *wum = sgInternal->getWUModel();
-    return VarReference([sgInternal]() { return sgInternal->getName(); },
-                        sgInternal->getSrcNeuronGroup()->getNumNeurons(), 
-                        wum->getPreVarIndex(varName), wum->getPreVars());
+    const auto *delayNG = (sgInternal->getDelaySteps() > 0) ? sgInternal->getSrcNeuronGroup() : nullptr;
+    return VarReference(sgInternal->getSrcNeuronGroup()->getNumNeurons(), delayNG,
+                        wum->getPreVarIndex(varName), wum->getPreVars(),
+                        [sgInternal]() { return sgInternal->getName(); });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPostVarRef(const SynapseGroup *sg, const std::string &varName)
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *wum = sgInternal->getWUModel();
-    return VarReference([sgInternal]() { return sgInternal->getName(); },
-                        sgInternal->getTrgNeuronGroup()->getNumNeurons(), 
-                        wum->getPostVarIndex(varName), wum->getPostVars());
+    const auto *delayNG = (sgInternal->getBackPropDelaySteps() > 0) ? sgInternal->getTrgNeuronGroup() : nullptr;
+    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), delayNG,
+                        wum->getPostVarIndex(varName), wum->getPostVars(),
+                        [sgInternal]() { return sgInternal->getName(); });
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(const NeuronGroupInternal *ng, const std::string &varName)
 :   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(), [ng](){ return ng->getName(); }),
-    m_Size(ng->getNumNeurons())
+    m_Size(ng->getNumNeurons()), m_DelayNeuronGroup((ng->isDelayRequired() && ng->isVarQueueRequired(varName)) ? ng : nullptr)
 {
 
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(const CurrentSourceInternal *cs, const std::string &varName)
 :   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), [cs]() { return cs->getName(); }),
-    m_Size(cs->getTrgNeuronGroup()->getNumNeurons())
+    m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_DelayNeuronGroup(nullptr)
 {
 
 }
 //----------------------------------------------------------------------------
-VarReference::VarReference(GetTargetNameFn getTargetNameFn, unsigned int size, 
-                           size_t varIndex, const Models::Base::VarVec &varVec)
-:   VarReferenceBase(varIndex, varVec, getTargetNameFn), m_Size(size)
+VarReference::VarReference(unsigned int size, const NeuronGroup *delayNeuronGroup,
+                           size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn)
+:   VarReferenceBase(varIndex, varVec, getTargetNameFn), m_Size(size), m_DelayNeuronGroup(delayNeuronGroup)
 {}
 
 //----------------------------------------------------------------------------

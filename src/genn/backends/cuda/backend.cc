@@ -588,39 +588,48 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     for(const auto &g : customUpdateGroups) {
         // Generate kernel
         size_t idCustomUpdateStart = 0;
-        os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+        if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
+                       [&g](const CustomUpdateGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g); })
+           || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
+                       [&g](const CustomUpdateWUGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g); }))
         {
-            CodeStream::Scope b(os);
+            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+            {
+                CodeStream::Scope b(os);
 
-            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+                Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+                kernelSubs.addVarSubstitution("t", "t");
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+                os << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-            os << "// ------------------------------------------------------------------------" << std::endl;
-            os << "// Custom updates" << std::endl;
-            genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
+                os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom updates" << std::endl;
+                genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
 
-            os << "// ------------------------------------------------------------------------" << std::endl;
-            os << "// Custom WU updates" << std::endl;
-            genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
+                os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom WU updates" << std::endl;
+                genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
+            }
         }
 
         size_t idCustomTransposeUpdateStart = 0;
-        os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+        if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
+                       [&g](const CustomUpdateTransposeWUGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g); }))
         {
-            CodeStream::Scope b(os);
+            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+            {
+                CodeStream::Scope b(os);
 
-            Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+                    Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+                    kernelSubs.addVarSubstitution("t", "t");
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelCustomTransposeUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+                    os << "const unsigned int id = " << getKernelBlockSize(KernelCustomTransposeUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
 
-            os << "// ------------------------------------------------------------------------" << std::endl;
-            os << "// Custom WU transpose updates" << std::endl;
-            genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUTransposeUpdateHandler, idCustomTransposeUpdateStart);
+                    os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom WU transpose updates" << std::endl;
+                genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUTransposeUpdateHandler, idCustomTransposeUpdateStart);
+            }
         }
-
         os << "void update" << g << "()";
         {
             CodeStream::Scope b(os);

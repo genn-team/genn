@@ -767,43 +767,53 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     // Loop through custom update groups
     for(auto &g : customUpdateGroups) {
-        customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 1, 1)))" << std::endl;
-        customUpdateKernels << "__kernel void " << KernelNames[KernelCustomUpdate] << g.first << "(";
-        genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateGroups(), true);
-        genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateWUGroups(), true);
-        customUpdateKernels << model.getTimePrecision() << " t)";
+        if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
+                       [&g](const CustomUpdateGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g.first); })
+           || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
+                          [&g](const CustomUpdateWUGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
-            CodeStream::Scope b(customUpdateKernels);
+            customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 1, 1)))" << std::endl;
+            customUpdateKernels << "__kernel void " << KernelNames[KernelCustomUpdate] << g.first << "(";
+            genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateGroups(), true);
+            genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateWUGroups(), true);
+            customUpdateKernels << model.getTimePrecision() << " t)";
+            {
+                CodeStream::Scope b(customUpdateKernels);
 
-            Substitutions kernelSubs(openclLFSRFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+                Substitutions kernelSubs(openclLFSRFunctions);
+                kernelSubs.addVarSubstitution("t", "t");
 
-            customUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-            customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
-            customUpdateKernels << "// Custom updates" << std::endl;
-            genCustomUpdateKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customUpdateHandler, g.second.first);
+                customUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
+                customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
+                customUpdateKernels << "// Custom updates" << std::endl;
+                genCustomUpdateKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customUpdateHandler, g.second.first);
 
-            customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
-            customUpdateKernels << "// Custom WU updates" << std::endl;
-            genCustomUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customWUUpdateHandler, g.second.first);
+                customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
+                customUpdateKernels << "// Custom WU updates" << std::endl;
+                genCustomUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customWUUpdateHandler, g.second.first);
+            }
         }
 
-        customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 8, 1)))" << std::endl;
-        customUpdateKernels << "__kernel void " << KernelNames[KernelCustomTransposeUpdate] << g.first << "(";
-        genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateTransposeWUGroups(), true);
-        customUpdateKernels << model.getTimePrecision() << " t)";
+        if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
+                       [&g](const CustomUpdateTransposeWUGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
-            CodeStream::Scope b(customUpdateKernels);
+            customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 8, 1)))" << std::endl;
+            customUpdateKernels << "__kernel void " << KernelNames[KernelCustomTransposeUpdate] << g.first << "(";
+            genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateTransposeWUGroups(), true);
+            customUpdateKernels << model.getTimePrecision() << " t)";
+            {
+                CodeStream::Scope b(customUpdateKernels);
 
-            Substitutions kernelSubs(openclLFSRFunctions);
-            kernelSubs.addVarSubstitution("t", "t");
+                Substitutions kernelSubs(openclLFSRFunctions);
+                kernelSubs.addVarSubstitution("t", "t");
 
-            customUpdateKernels << "const unsigned int id = get_global_id(0); " << std::endl;
+                customUpdateKernels << "const unsigned int id = get_global_id(0); " << std::endl;
 
-            customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
+                customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
 
-            customUpdateKernels << "// Custom WU transpose updates" << std::endl;
-            genCustomTransposeUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customWUTransposeUpdateHandler, g.second.second);
+                customUpdateKernels << "// Custom WU transpose updates" << std::endl;
+                genCustomTransposeUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customWUTransposeUpdateHandler, g.second.second);
+            }
         }
 
         os << "void update" << g.first<< "()";

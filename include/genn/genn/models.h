@@ -193,6 +193,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
+    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
     //------------------------------------------------------------------------
     // Static API
@@ -206,13 +207,14 @@ public:
 private:
     VarReference(const NeuronGroupInternal *ng, const std::string &varName);
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
-    VarReference(GetTargetNameFn getTargetNameFn, unsigned int size, 
-                 size_t varIndex, const Models::Base::VarVec &varVec);
+    VarReference(unsigned int size, const NeuronGroup *delayNeuronGroup,
+                 size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     unsigned int m_Size;
+    const NeuronGroup *m_DelayNeuronGroup;
 };
 
 //----------------------------------------------------------------------------
