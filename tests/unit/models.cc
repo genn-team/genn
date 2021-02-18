@@ -45,7 +45,7 @@ IMPLEMENT_MODEL(StaticPulseUInt);
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
-TEST(VarReference, Neuron)
+TEST(Models, NeuronVarReference)
 {
     ModelSpecInternal model;
 
@@ -68,7 +68,7 @@ TEST(VarReference, Neuron)
     }
 }
 //--------------------------------------------------------------------------
-TEST(VarReference, CurrentSource)
+TEST(Models, CurrentSourceVarReference)
 {
     ModelSpecInternal model;
 
@@ -97,7 +97,7 @@ TEST(VarReference, CurrentSource)
     }
 }
 //--------------------------------------------------------------------------
-TEST(VarReference, PSM)
+TEST(Models, PSMVarReference)
 {
     ModelSpecInternal model;
 
@@ -141,7 +141,7 @@ TEST(VarReference, PSM)
     }
 }
 //--------------------------------------------------------------------------
-TEST(VarReference, WUM)
+TEST(Models, WUMVarReference)
 {
     ModelSpecInternal model;
 
@@ -182,7 +182,7 @@ TEST(VarReference, WUM)
     }
 }
 //--------------------------------------------------------------------------
-TEST(VarReference, WUMTranspose)
+TEST(Models, WUMTransposeVarReference)
 {
     ModelSpecInternal model;
 
@@ -274,7 +274,7 @@ TEST(VarReference, WUMTranspose)
     }
 }
 //--------------------------------------------------------------------------
-TEST(VarReference, WUMSlave)
+TEST(Models, WUMSlaveVarReference)
 {
     ModelSpecInternal model;
 
