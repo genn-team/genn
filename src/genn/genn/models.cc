@@ -32,15 +32,14 @@ VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::st
     return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), nullptr,
                         psm->getVarIndex(varName), psm->getVars(),
                         [sgInternal]() { return sgInternal->getPSModelTargetName(); });
-
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *wum = sgInternal->getWUModel();
-    const auto *delayNG = (sgInternal->getDelaySteps() > 0) ? sgInternal->getSrcNeuronGroup() : nullptr;
-    return VarReference(sgInternal->getSrcNeuronGroup()->getNumNeurons(), delayNG,
+    auto getDelayNG = [sgInternal]() { return (sgInternal->getDelaySteps() > 0) ? sgInternal->getSrcNeuronGroup() : nullptr; };
+    return VarReference(sgInternal->getSrcNeuronGroup()->getNumNeurons(), getDelayNG,
                         wum->getPreVarIndex(varName), wum->getPreVars(),
                         [sgInternal]() { return sgInternal->getName(); });
 }
@@ -49,29 +48,28 @@ VarReference VarReference::createWUPostVarRef(const SynapseGroup *sg, const std:
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *wum = sgInternal->getWUModel();
-    const auto *delayNG = (sgInternal->getBackPropDelaySteps() > 0) ? sgInternal->getTrgNeuronGroup() : nullptr;
-    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), delayNG,
+    auto getDelayNG = [sgInternal]() { return (sgInternal->getBackPropDelaySteps() > 0) ? sgInternal->getTrgNeuronGroup() : nullptr; };
+    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), getDelayNG,
                         wum->getPostVarIndex(varName), wum->getPostVars(),
                         [sgInternal]() { return sgInternal->getName(); });
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(const NeuronGroupInternal *ng, const std::string &varName)
 :   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(), [ng](){ return ng->getName(); }),
-    m_Size(ng->getNumNeurons()), m_DelayNeuronGroup((ng->isDelayRequired() && ng->isVarQueueRequired(varName)) ? ng : nullptr)
+    m_Size(ng->getNumNeurons()), m_GetDelayNeuronGroup([ng, varName]() { return (ng->isDelayRequired() && ng->isVarQueueRequired(varName)) ? ng : nullptr; })
 {
-
 }
 //----------------------------------------------------------------------------
 VarReference::VarReference(const CurrentSourceInternal *cs, const std::string &varName)
 :   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), [cs]() { return cs->getName(); }),
-    m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_DelayNeuronGroup(nullptr)
+    m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_GetDelayNeuronGroup([]() { return nullptr; })
 {
 
 }
 //----------------------------------------------------------------------------
-VarReference::VarReference(unsigned int size, const NeuronGroup *delayNeuronGroup,
+VarReference::VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
                            size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn)
-:   VarReferenceBase(varIndex, varVec, getTargetNameFn), m_Size(size), m_DelayNeuronGroup(delayNeuronGroup)
+:   VarReferenceBase(varIndex, varVec, getTargetNameFn), m_Size(size), m_GetDelayNeuronGroup(getDelayNeuronGroup)
 {}
 
 //----------------------------------------------------------------------------

@@ -193,7 +193,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     unsigned int getSize() const { return m_Size; }
-    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
+    const NeuronGroup *getDelayNeuronGroup() const { return m_GetDelayNeuronGroup(); }
 
     //------------------------------------------------------------------------
     // Static API
@@ -205,16 +205,21 @@ public:
     static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
     
 private:
+    //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef std::function<const NeuronGroup*(void)> GetDelayNeuronGroupFn;
+
     VarReference(const NeuronGroupInternal *ng, const std::string &varName);
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
-    VarReference(unsigned int size, const NeuronGroup *delayNeuronGroup,
+    VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
                  size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
 
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     unsigned int m_Size;
-    const NeuronGroup *m_DelayNeuronGroup;
+    GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
 };
 
 //----------------------------------------------------------------------------
