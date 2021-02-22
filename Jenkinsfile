@@ -8,26 +8,18 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
-    ["cuda10", "windows", "python3"] as Set,
-    ["cuda9", "windows", "python3"] as Set,
-    ["opencl", "windows", "python3"] as Set,
-    ["cpu_only", "windows", "python3"] as Set,
-    ["cuda10", "linux", "python27"] as Set,
-    ["cuda9", "linux", "python27"] as Set,
-    ["opencl", "linux", "python27"] as Set,
-    ["cpu_only", "linux", "python27"] as Set,
-    ["cuda10", "mac", "python27"] as Set,
-    ["cuda9", "mac", "python27"] as Set,
-    ["opencl", "mac", "python27"] as Set,
-    ["cpu_only", "mac", "python27"] as Set,
-    ["cuda10", "linux","python3"] as Set,
-    ["cuda9", "linux", "python3"] as Set,
-    ["cpu_only", "linux", "python3"] as Set,
-    ["opencl", "linux", "python3"] as Set,
-    ["cuda10", "mac", "python3"] as Set,
-    ["cuda9", "mac", "python3"] as Set,
-    ["cpu_only", "mac", "python3"] as Set,
-    ["opencl", "mac", "python3"] as Set]
+    ["cuda10", "windows"] as Set,
+    ["cuda9", "windows"] as Set,
+    ["opencl", "windows"] as Set,
+    ["cpu_only", "windows"] as Set,
+    ["cuda10", "linux"] as Set,
+    ["cuda9", "linux"] as Set,
+    ["cpu_only", "linux"] as Set,
+    ["opencl", "linux"] as Set,
+    ["cuda10", "mac"] as Set,
+    ["cuda9", "mac"] as Set,
+    ["cpu_only", "mac"] as Set,
+    ["opencl", "mac"] as Set]
 
 //--------------------------------------------------------------------------
 // Helper functions
@@ -98,7 +90,7 @@ for(b = 0; b < builderNodes.size(); b++) {
     builders[nodeName] = {
         node(nodeName) {
             def installationStageName =  "Installation (" + env.NODE_NAME + ")";
-            
+
             // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
             // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
             withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.8.1/googletest",
@@ -113,24 +105,24 @@ for(b = 0; b < builderNodes.size(); b++) {
                     else {
                         bat script:"rmdir /S /Q genn", returnStatus:true;
                     }
-                    
+
                     dir("genn") {
                         // Checkout GeNN into it
                         // **NOTE** because we're using multi-branch project URL is substituted here
                         checkout scm
                     }
-                    
+
                     // **NOTE** only try and set build status AFTER checkout
                     try {
                         setBuildStatus(installationStageName, "PENDING");
-                        
+
                         // If google test doesn't exist
                         if(!fileExists("googletest-release-1.8.1")) {
                             echo "Downloading google test framework";
-                            
+
                             // Download it
                             httpRequest url:"https://github.com/google/googletest/archive/release-1.8.1.zip", outputFile :"release-1.8.1.zip";
-                            
+
                             // Unarchive it
                             unzip "release-1.8.1.zip";
                         }
@@ -138,7 +130,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                         setBuildStatus(installationStageName, "FAILURE");
                     }
                 }
-                
+
                 buildStep("Running tests (" + env.NODE_NAME + ")") {
                     // Run automatic tests
                     def uniqueMsg = "msg_" + env.NODE_NAME + ".txt";
@@ -150,17 +142,17 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 echo "Enabling devtoolset 6 version of GCC";
                                 runTestArguments += " -d";
                             }
-                            
+
                             // If node has suitable CUDA, add -c option
                             if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
                                 runTestArguments += " -c";
                             }
-                            
+
                             // If node has OpenCL, add -l option
                             if(nodeLabel.contains("opencl")) {
                                 runTestArguments += " -l";
                             }
-                            
+
                             // Run tests
                             // **NOTE** uniqueMsg is in genn directory, NOT tests directory
                             def runTestsCommand = "./run_tests.sh" + runTestArguments + " 1>> \"../" + uniqueMsg + "\" 2>> \"../" + uniqueMsg + "\"";
@@ -170,7 +162,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
                             }
-                            
+
                         }
                         else {
                             // Run tests
@@ -180,7 +172,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL run_tests.bat >> "..\\${uniqueMsg}" 2>&1;
                             """;
                             def runTestsStatus = bat script:runTestsCommand, returnStatus:true;
-                            
+
                             // If tests failed, set failure status
                             if(runTestsStatus != 0) {
                                 setBuildStatus("Running tests (" + env.NODE_NAME + ")", "FAILURE");
@@ -188,14 +180,14 @@ for(b = 0; b < builderNodes.size(); b++) {
                         }
                     }
                 }
-                
+
                 buildStep("Gathering test results (" + env.NODE_NAME + ")") {
                     dir("genn/tests") {
                         // Process JUnit test output
                         junit "**/test_results*.xml";
                     }
                 }
-                
+
                 buildStep("Uploading coverage (" + env.NODE_NAME + ")") {
                     dir("genn/tests") {
                         if(isUnix()) {
@@ -232,10 +224,10 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating Python wheels";
                             script = """
                             rm -rf virtualenv
-                            virtualenv virtualenv
+                            virtualenv virtualenv --python=${env.PYTHON}
                             . virtualenv/bin/activate
 
-                            pip install "numpy>=1.10.0,!=1.16.*"
+                            pip install "numpy>=1.17"
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
@@ -254,7 +246,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             msbuild genn.sln /m /verbosity:minimal /p:Configuration=Release_DLL /t:single_threaded_cpu_backend >> "${uniqueMsg}" 2>&1
                             """;
-                            
+
                             // If node has suitable CUDA, also build CUDA backend
                             if("cuda8" in nodeLabel || "cuda9" in nodeLabel || "cuda10" in nodeLabel) {
                                 msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:cuda_backend >> \"${uniqueMsg}\" 2>&1";
@@ -263,7 +255,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if(nodeLabel.contains("opencl")) {
                                 msbuildCommand += "msbuild genn.sln /m /verbosity:minimal  /p:Configuration=Release_DLL /t:opencl_backend >> \"${uniqueMsg}\" 2>&1";
                             }
-                            
+
                             def msbuildStatusCode = bat script:msbuildCommand, returnStatus:true
                             if(msbuildStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
@@ -276,10 +268,10 @@ for(b = 0; b < builderNodes.size(); b++) {
                             script = """
                             CALL %VC_VARS_BAT%
                             CALL %ANACONDA_ACTIVATE_BAT%
-                            
+
                             CALL conda install -y swig
 
-                            virtualenv virtualenv
+                            virtualenv virtualenv --python=${env.PYTHON}
                             pushd virtualenv\\Scripts
                             call activate
                             popd
@@ -287,7 +279,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             pip install "numpy>1.6, < 1.15"
 
                             copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
-                            
+
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
