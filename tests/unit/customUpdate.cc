@@ -52,14 +52,13 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
         {}, {1.0, 4},
         {}, {});
 
-    
     Sum::VarValues sumVarValues(0.0);
     Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
     Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"));
 
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
-    
+
     try {
         model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate",
                                    {}, sumVarValues, sumVarReferences2);
@@ -114,9 +113,9 @@ TEST(CustomUpdates, VarDelayChecks)
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
-    auto *syn1 = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
-                                                                                10, "Pre1", "Post",
-                                                                                {}, {0.1}, {}, {});
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                    10, "Pre1", "Post",
+                                                                    {}, {0.1}, {}, {});
 
     Sum::VarValues sumVarValues(0.0);
     Sum::VarReferences sumVarReferences1(createVarRef(pre1, "V"), createVarRef(post, "V"));
@@ -136,15 +135,15 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
-    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
-    auto *syn1 = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
-                                                                                10, "Pre1", "Post",
-                                                                                {}, {0.1}, {}, {});
-    auto *syn2 = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
-                                                                                5, "Pre2", "Post",
-                                                                                {}, {0.1}, {}, {});
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                    10, "Pre1", "Post",
+                                                                    {}, {0.1}, {}, {});
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                    5, "Pre2", "Post",
+                                                                    {}, {0.1}, {}, {});
 
     Sum::VarValues sumVarValues(0.0);
     Sum::VarReferences sumVarReferences2(createVarRef(pre1, "V"), createVarRef(pre2, "V"));
@@ -181,14 +180,14 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
         {}, {1.0, 4},
         {}, {});
 
-    
+
     Sum::VarValues sumVarValues(0.0);
     Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
     Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg2, "d"));
 
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
-    
+
     try {
         model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate",
                                    {}, sumVarValues, sumVarReferences2);
