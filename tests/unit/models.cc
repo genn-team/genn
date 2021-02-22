@@ -107,10 +107,10 @@ TEST(Models, NeuronVarReferenceDelay)
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
-    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
-    auto *syn = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn", SynapseMatrixType::DENSE_INDIVIDUALG,
-                                                                                10, "Neurons0", "Neurons1",
-                                                                                {}, {0.1}, {}, {});
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+    model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                    10, "Neurons0", "Neurons1",
+                                                                    {}, {0.1}, {}, {});
     
     auto neuronV = createVarRef(pre, "V");
     auto neuronU = createVarRef(pre, "U");
@@ -197,7 +197,7 @@ TEST(Models, WUPreVarReference)
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<ContPrePost, PostsynapticModels::DeltaCurr>(
         "Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
@@ -237,7 +237,7 @@ TEST(Models, WUPostVarReference)
     // Add two neuron group to model
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<ContPrePost, PostsynapticModels::DeltaCurr>(
