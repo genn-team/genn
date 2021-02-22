@@ -91,11 +91,11 @@ bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
 // CustomUpdate
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params, 
-                           const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
+                           const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                           const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
-:   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize())
+    : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
+    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize()), m_DelayNeuronGroup(nullptr)
 {
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
@@ -106,10 +106,45 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                    [this](const Models::VarReference &v) { return v.getSize() != m_Size; }))
+                   [this](const Models::VarReference &v) { return v.getSize() != m_Size; }))
     {
         throw std::runtime_error("All referenced variables must have the same size.");
     }
+}
+//----------------------------------------------------------------------------
+void CustomUpdate::checkVarReferenceDelays()
+{
+    // If any variable references have delays
+    auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                                 [](const Models::VarReference &v) { return v.getDelayNeuronGroup() != nullptr; });
+    if(delayRef != m_VarReferences.cend()) {
+        // Set the delay neuron group 
+        m_DelayNeuronGroup = delayRef->getDelayNeuronGroup();
+
+        // If any of the variable references are delayed with a different group, give an error
+        if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
+                       [this](const Models::VarReference &v) { return (v.getDelayNeuronGroup() != nullptr) && (v.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
+        {
+            throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
+        }
+    }
+}
+//----------------------------------------------------------------------------
+bool CustomUpdate::canBeMerged(const CustomUpdate &other) const
+{
+    // If the two groups' models can be merged and they 
+    if(CustomUpdateBase::canBeMerged(other)
+       && ((getDelayNeuronGroup() == nullptr && other.getDelayNeuronGroup() == nullptr) || (getDelayNeuronGroup()->getNumDelaySlots() == other.getDelayNeuronGroup()->getNumDelaySlots())))
+    {
+        // Return whether the variables with delays match
+        return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
+                          [](const Models::VarReference &a, const Models::VarReference &b)
+                          {
+                              return ((a.getDelayNeuronGroup() == nullptr) == (b.getDelayNeuronGroup() != nullptr));
+                          });
+    }
+
+    return false;
 }
 
 //----------------------------------------------------------------------------

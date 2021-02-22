@@ -134,12 +134,30 @@ protected:
                  const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    //! Check that delays on variable references match
+    /*! Because which neuron variables are queued is only calculated during 
+        Modelspec::finalize, these checks cannot be performed in the constructor */
+    void checkVarReferenceDelays();
+
+    //------------------------------------------------------------------------
+    // Protected const methods
+    //------------------------------------------------------------------------
+    //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canBeMerged(const CustomUpdate &other) const;
+
+    const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
+
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     const std::vector<Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
+    const NeuronGroup *m_DelayNeuronGroup;
 };
 
 //------------------------------------------------------------------------

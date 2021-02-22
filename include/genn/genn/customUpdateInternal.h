@@ -22,8 +22,11 @@ public:
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
-    using CustomUpdateBase::canBeMerged;
     using CustomUpdateBase::canInitBeMerged;
+
+    using CustomUpdate::checkVarReferenceDelays;
+    using CustomUpdate::canBeMerged;
+    using CustomUpdate::getDelayNeuronGroup;
 };
 
 //------------------------------------------------------------------------
