@@ -29,7 +29,8 @@ VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::st
 
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *psm = sgInternal->getPSModel();
-    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(), nullptr,
+    return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(),
+                        []() { return nullptr; },
                         psm->getVarIndex(varName), psm->getVars(),
                         [sgInternal]() { return sgInternal->getPSModelTargetName(); });
 }
