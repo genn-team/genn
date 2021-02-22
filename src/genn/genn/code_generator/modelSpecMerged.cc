@@ -131,7 +131,6 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
-    // **NOTE** while other sorts of update with 
     createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
                        [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
                        [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });

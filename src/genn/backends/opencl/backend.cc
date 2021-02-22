@@ -767,10 +767,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
     // Loop through custom update groups
     for(auto &g : customUpdateGroups) {
+        // If there are any custom updates in this group, generate kernel
         if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
-                       [&g](const CustomUpdateGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g.first); })
+                       [&g](const CustomUpdateGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); })
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
-                          [&g](const CustomUpdateWUGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g.first); }))
+                          [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
             customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 1, 1)))" << std::endl;
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomUpdate] << g.first << "(";
@@ -794,8 +795,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             }
         }
 
+        // If there are any custom transpose weight updates in this group, generate kernel
         if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
-                       [&g](const CustomUpdateTransposeWUGroupMerged &c) {return (c.getArchetype().getUpdateGroupName() == g.first); }))
+                       [&g](const CustomUpdateTransposeWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
             customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 8, 1)))" << std::endl;
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomTransposeUpdate] << g.first << "(";
