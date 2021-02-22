@@ -20,6 +20,18 @@ class Sum : public CustomUpdateModels::Base
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_MODEL(Sum);
+
+class Cont : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(Cont, 0, 1, 0, 0);
+
+    SET_VARS({{"g", "scalar"}});
+
+    SET_SYNAPSE_DYNAMICS_CODE(
+        "$(addToInSyn, $(g) * $(V_pre));\n");
+};
+IMPLEMENT_MODEL(Cont);
 }
 //--------------------------------------------------------------------------
 // Tests
@@ -55,6 +67,8 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     }
     catch(const std::runtime_error &) {
     }
+
+    model.finalize();
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, VarSizeChecks)
@@ -81,6 +95,65 @@ TEST(CustomUpdates, VarSizeChecks)
     try {
         model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
                                    {}, sumVarValues, sumVarReferences3);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+
+    model.finalize();
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, VarDelayChecks)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
+    auto *syn1 = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                                10, "Pre1", "Post",
+                                                                                {}, {0.1}, {}, {});
+
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(pre1, "V"), createVarRef(post, "V"));
+
+    model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                               {}, sumVarValues, sumVarReferences1);
+
+    model.finalize();
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, VarMixedDelayChecks)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
+    auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
+    auto *syn1 = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                                10, "Pre1", "Post",
+                                                                                {}, {0.1}, {}, {});
+    auto *syn2 = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
+                                                                                5, "Pre2", "Post",
+                                                                                {}, {0.1}, {}, {});
+
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences2(createVarRef(pre1, "V"), createVarRef(pre2, "V"));
+
+    model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                               {}, sumVarValues, sumVarReferences2);
+
+    try {
+        model.finalize();
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -123,4 +196,6 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     }
     catch(const std::runtime_error &) {
     }
+
+    model.finalize();
 }
