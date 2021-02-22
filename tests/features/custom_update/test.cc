@@ -30,11 +30,11 @@ TEST_F(SimTest, CustomUpdate)
 {
     while(iT < 1000) {
         StepGeNN();
-        
+
         if((iT % 100) == 0) {
             // Perform custom update
             updateTest();
-            
+
             // Pull variables
             pullVNeuronSetTimeFromDevice();
             pullVNeuronFromDevice();
@@ -51,53 +51,53 @@ TEST_F(SimTest, CustomUpdate)
             pullVWUSparseSetTimeFromDevice();
             pullgSparseFromDevice();
             pullSparseConnectivityFromDevice();
-            
+
             // Check all values match time of update
             EXPECT_TRUE(std::all_of(&VNeuron[0], &VNeuron[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&VNeuronSetTime[0], &VNeuronSetTime[100],
                         [](scalar v) { return v == t; }));
-            
+
             EXPECT_TRUE(std::all_of(&VCurrentSourceSetTime[0], &VCurrentSourceSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&CCurrentSource[0], &CCurrentSource[100],
                         [](scalar v) { return v == t; }));
-                        
+
             EXPECT_TRUE(std::all_of(&VPSMSetTime[0], &VPSMSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PDense[0], &PDense[100],
                         [](scalar v) { return v == t; }));
-            
+
             EXPECT_TRUE(std::all_of(&VWUPreSetTime[0], &VWUPreSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PreDense[0], &PreDense[100],
                         [](scalar v) { return v == t; }));
-            
+
             EXPECT_TRUE(std::all_of(&VWUPostSetTime[0], &VWUPostSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PostSparse[0], &PostSparse[100],
                         [](scalar v) { return v == t; }));
-                        
+
             EXPECT_TRUE(std::all_of(&VPSMSetTime[0], &VPSMSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PDense[0], &PDense[100],
                         [](scalar v) { return v == t; }));
-                        
+
             EXPECT_TRUE(std::all_of(&VWUDenseSetTime[0], &VWUDenseSetTime[100 * 100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&gDense[0], &gDense[100 * 100],
                         [](scalar v) { return v == t; }));
-                        
+
             for(unsigned int i = 0; i < 100; i++) {
                 const unsigned int rowStartIdx = maxRowLengthSparse * i;
                 const unsigned int rowEndIdx = rowStartIdx + rowLengthSparse[i];
-                
+
                 EXPECT_TRUE(std::all_of(&VWUSparseSetTime[rowStartIdx], &VWUSparseSetTime[rowEndIdx],
                             [](scalar v) { return v == t; }));
                 EXPECT_TRUE(std::all_of(&gSparse[rowStartIdx], &gSparse[rowEndIdx],
                             [](scalar v) { return v == t; }));
             }
-                        
+
         }
     }
 }

@@ -34,7 +34,7 @@ TEST_F(SimTest, CustomUpdateTranspose)
 
     for(unsigned int i = 0; i < 100; i++) {
         for(unsigned int j = 0; j < 100; j++) {
-            EXPECT_FLOAT_EQ(gDense[(i * 100) + j], gTranspose[(j * 100) + i]);
+            ASSERT_FLOAT_EQ(gDense[(i * 100) + j], gTranspose[(j * 100) + i]);
         }
     }
 }
