@@ -224,7 +224,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             echo "Creating Python wheels";
                             script = """
                             rm -rf virtualenv
-                            virtualenv virtualenv --python=${env.PYTHON}
+                            ${env.PYTHON} -m venv virtualenv
                             . virtualenv/bin/activate
 
                             pip install "numpy>=1.17"
@@ -271,7 +271,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             CALL conda install -y swig
 
-                            virtualenv virtualenv --python=${env.PYTHON}
+                            ${env.PYTHON} -m venv virtualenv
                             pushd virtualenv\\Scripts
                             call activate
                             popd
