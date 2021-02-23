@@ -853,13 +853,14 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
         [this](const CustomUpdateInternal &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
             os << "if(" << popSubs["id"] << " < group->size)";
             {
                 CodeStream::Scope b(os);
 
+                genCustomUpdateIndexCalculation(os, cg, modelMerged.getModel().getBatchSize());
                 customUpdateHandler(os, cg, popSubs);
             }
         });
