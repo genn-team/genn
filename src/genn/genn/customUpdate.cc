@@ -132,9 +132,11 @@ void CustomUpdate::checkVarReferenceDelays()
 //----------------------------------------------------------------------------
 bool CustomUpdate::canBeMerged(const CustomUpdate &other) const
 {
-    // If the two groups' models can be merged and they 
+    // If the two groups' models can be merged and they either both have no delay neuron group
+    //  or their delay neuron groups have the same number of delay slots
     if(CustomUpdateBase::canBeMerged(other)
-       && ((getDelayNeuronGroup() == nullptr && other.getDelayNeuronGroup() == nullptr) || (getDelayNeuronGroup()->getNumDelaySlots() == other.getDelayNeuronGroup()->getNumDelaySlots())))
+       && ((getDelayNeuronGroup() == nullptr && other.getDelayNeuronGroup() == nullptr) |
+           | (getDelayNeuronGroup()->getNumDelaySlots() == other.getDelayNeuronGroup()->getNumDelaySlots())))
     {
         // Return whether the variables with delays match
         return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
