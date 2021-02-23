@@ -227,7 +227,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             ${env.PYTHON} -m venv virtualenv
                             . virtualenv/bin/activate
 
-                            pip install "numpy>=1.17"
+                            pip install wheel "numpy>=1.17"
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
@@ -276,7 +276,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             call activate
                             popd
 
-                            pip install "numpy>1.6, < 1.15"
+                            pip install wheel "numpy>=1.17"
 
                             copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
 
