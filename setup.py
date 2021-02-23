@@ -73,7 +73,7 @@ package_data = ["genn_wrapper/genn" + genn_lib_suffix + ".*"] if windows else ["
 
 # Copy dictionary and add libGeNN to apply to all modules that link against GeNN
 genn_extension_kwargs = deepcopy(extension_kwargs)
-genn_extension_kwargs["libraries"] =  ["genn" + genn_lib_suffix] if windows else ["genn" + genn_lib_suffix]
+genn_extension_kwargs["libraries"] = ["genn" + genn_lib_suffix]
 
 genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
 genn_extension_kwargs["swig_opts"].extend(["-I" + genn_include, "-I" + genn_third_party_include])
