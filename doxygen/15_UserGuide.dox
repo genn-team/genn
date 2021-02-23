@@ -192,8 +192,8 @@ Remaining GPU memory can then be allocated at runtime for spike recording by\add
 The data structures can then be copied from the GPU to the host using the \add_cpp_python_text{``pullRecordingBuffersFromDevice()`` function,pygenn.genn_model.GeNNModel.pull_recording_buffers_from_device method} and the spikes emitted by a population can be accessed \add_cpp_python_text{in bitmask form via the ``recordSpk<neuron name>`` variable,via the pygenn.genn_groups.NeuronGroup.spike_recording_data property}
 \add_cpp_text{Similarly, spike-like events emitted by a population can be accessed via the ``recordSpkEvent<neuron name>`` variable. To make decoding the bitmask data structure easier\, the ``::writeBinarySpikeRecording`` and ``::writeTextSpikeRecording`` helper functions can be used by including spikeRecorder.h in the user code.}
 
-\add_toggle_cpp
 \section Debugging Debugging suggestions
+\add_toggle_cpp
 In Linux, users can call `cuda-gdb` to debug on the GPU. Example projects in the `userproject` directory come with a flag to enable debugging (--debug). genn-buildmodel.sh has a debug flag (-d) to generate debugging data.
 If you are executing a project with debugging on, the code will be compiled with -g -G flags. In CPU mode the executable will be run in gdb,
 and in GPU mode it will be run in cuda-gdb in tui mode. 
@@ -206,6 +206,22 @@ On Mac, some versions of `clang` aren't supported by the CUDA toolkit. This is a
 On Windows models can also be debugged and developed by opening the sln file used to build the model in Visual Studio. From here files can be added to the project, build settings can be adjusted and the full suite of Visual Studio debugging and profiling tools can be used. 
 \note
 When opening the models in the `userproject` directory in Visual Studio, right-click on the project in the solution explorer, select 'Properties'. Then, making sure the desired configuration is selected, navigate to 'Debugging' under 'Configuration Properties', set the 'Working Directory' to '..' and the 'Command Arguments' to match those passed to genn-buildmodel e.g. 'outdir' to use an output directory called outdir.
+\end_toggle
+\add_toggle_python
+To build a debug version of PyGeNN, you first need to build debug dynamic libraries.
+On Linux, these can be built directly into the PyGeNN directory:
+\code
+ make DEBUG=1 DYNAMIC=1 LIBRARY_DIRECTORY=`pwd`/pygenn/genn_wrapper/
+\endcode
+On Windows, building these requires two steps:
+\code
+ msbuild genn.sln /t:Build /p:Configuration=Debug_DLL
+ copy /Y lib\genn*Debug_DLL.* pygenn\genn_wrapper
+\endcode
+Finally the debug Python extension can be built with setup tools using:
+\code
+ python setup.py build_ext --debug develop
+\endcode
 \end_toggle
 
 -----

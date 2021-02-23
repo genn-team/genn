@@ -135,7 +135,7 @@ Building PyGeNN is a little involved so we recommend installing a prebuilt binar
  - From this command prompt, install SWIG using the ``conda install swig`` command.
  - Navigate to the GeNN directory and build GeNN as a dll with:
  \code
- `msbuild genn.sln /t:Build /p:Configuration=Release_DLL
+ msbuild genn.sln /t:Build /p:Configuration=Release_DLL
  \endcode
  (if you don't have CUDA installed, building the CUDA backend will fail but it should still build the CPU backend).
  - Copy the newly built DLLs into pygenn using:
