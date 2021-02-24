@@ -68,7 +68,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     updateSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
 
     std::string code = cm->getUpdateCode();
-    updateSubs.applyCheckUnreplaced(code, "custom update : merged" + cg.getIndex());
+    updateSubs.applyCheckUnreplaced(code, "custom update : merged" + std::to_string(cg.getIndex()));
     code = ensureFtype(code, modelMerged.getModel().getPrecision());
     os << code;
 
