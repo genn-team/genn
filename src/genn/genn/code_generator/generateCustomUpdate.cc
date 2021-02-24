@@ -23,28 +23,38 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-template<typename C>
+template<typename C, typename R>
 void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg, 
-                                  const ModelSpecMerged &modelMerged, const std::string &index)
+                     const ModelSpecMerged &modelMerged, const std::string &index,
+                     R getVarRefIndex)
 {
     Substitutions updateSubs(&baseSubs);
 
     const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
+    const auto varRefs = cm->getVarRefs();
 
     // Read variables into registers
     for(const auto &v : cm->getVars()) {
         if(v.access & VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type << " l" << v.name << " = " << "group->" << v.name << "[" << updateSubs[index] << "];" << std::endl;
+        os << v.type << " l" << v.name << " = " << "group->" << v.name << "[";
+        os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
+                                 getVarAccessDuplication(v.access),
+                                 updateSubs[index]);
+        os << "];" << std::endl;
     }
 
     // Read variables references into registers
-    for(const auto &v : cm->getVarRefs()) {
-        if(v.access == VarAccessMode::READ_ONLY) {
+    for(size_t i = 0; i < varRefs.size(); i++) {
+        if(varRefs[i].access == VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type << " l" << v.name << " = " << "group->" << v.name << "[" << updateSubs[index] << "];" << std::endl;
+       
+        os << varRefs[i].type << " l" << varRefs[i].name << " = " << "group->" << varRefs[i].name << "[";
+        os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
+                             updateSubs[index]);
+        os << "];" << std::endl;
     }
     
     updateSubs.addVarNameSubstitution(cm->getVars(), "", "l");
@@ -65,14 +75,21 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     // Write read/write variables back to global memory
     for(const auto &v : cm->getVars()) {
         if(v.access & VarAccessMode::READ_WRITE) {
-            os << "group->" << v.name << "["  << updateSubs[index] << "] = l" << v.name << ";" << std::endl;
+            os << "group->" << v.name << "[";
+            os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
+                                 getVarAccessDuplication(v.access),
+                                 updateSubs[index]);
+            os << "] = l" << v.name << ";" << std::endl;
         }
     }
 
     // Write read/write variable references back to global memory
-    for(const auto &v : cm->getVarRefs()) {
-        if(v.access == VarAccessMode::READ_WRITE) {
-            os << "group->" << v.name << "["  << updateSubs[index] << "] = l" << v.name << ";" << std::endl;
+    for(size_t i = 0; i < varRefs.size(); i++) {
+        if(varRefs[i].access == VarAccessMode::READ_WRITE) {
+            os << "group->" << varRefs[i].name << "[";
+            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
+                                 updateSubs[index]);
+            os << "] = l" << varRefs[i].name << ";" << std::endl;
         }
     }
 }
@@ -100,17 +117,36 @@ void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpac
         // Custom update handler
         [&modelMerged](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
-            genCustomUpdate(os, popSubs, cg, modelMerged, "id");
+            genCustomUpdate(os, popSubs, cg, modelMerged, "id",
+                            [&cg, &modelMerged](const Models::VarReference &varRef, const std::string &index)
+                            {
+                                return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
+                                                         modelMerged.getModel().getBatchSize(),
+                                                         getVarAccessDuplication(varRef.getVar().access),
+                                                         index);
+                            });
         },
         // Custom weight update handler
         [&modelMerged](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
-            genCustomUpdate(os, popSubs, cg, modelMerged, "id_syn");
+            genCustomUpdate(os, popSubs, cg, modelMerged, "id_syn",
+                            [&cg, &modelMerged](const Models::WUVarReference &varRef, const std::string &index) 
+                            {  
+                                return cg.getVarRefIndex(modelMerged.getModel().getBatchSize(),
+                                                         getVarAccessDuplication(varRef.getVar().access),
+                                                         index);
+                            });
         },
         // Custom transpose weight update handler
         [&modelMerged](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
         {
-            genCustomUpdate(os, popSubs, cg, modelMerged, "id_syn");
+            genCustomUpdate(os, popSubs, cg, modelMerged, "id_syn",
+                            [&cg, &modelMerged](const Models::WUVarReference &varRef, const std::string &index) 
+                            {
+                                return cg.getVarRefIndex(modelMerged.getModel().getBatchSize(),
+                                                         getVarAccessDuplication(varRef.getVar().access),
+                                                         index);
+                            });
         },
         // Push EGP handler
         // **TODO** this needs to be per-update group

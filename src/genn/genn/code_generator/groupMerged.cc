@@ -621,6 +621,7 @@ bool NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous(size_t childI
 //--------------------------------------------------------------------------
 std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
     return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
 }
 //--------------------------------------------------------------------------
@@ -1499,6 +1500,15 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
+    
+    // If some variables are delayed, add delay pointer
+    if(getArchetype().getDelayNeuronGroup() != nullptr) {
+        addField("unsigned int*", "spkQuePtr", 
+                 [&backend](const CustomUpdateInternal &cg, size_t) 
+                 { 
+                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                 });
+    }
 
     // Add heterogeneous custom update model parameters
     const CustomUpdateModels::Base *cm = getArchetype().getCustomUpdateModel();
@@ -1533,6 +1543,23 @@ bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
 {
     return isParamValueHeterogeneous(index, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
+//----------------------------------------------------------------------------
+std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+}
+//----------------------------------------------------------------------------
+std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    if(delay) {
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "delayOffset + " : "batchDelayOffset + ") + index;
+    }
+    else {
+        return getVarIndex(batchSize, varDuplication, index);
+    }    
+}
 
 // ----------------------------------------------------------------------------
 // CodeGenerator::CustomUpdateWUGroupMergedBase
@@ -1545,6 +1572,18 @@ bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(size_t index) const
 bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(size_t index) const
 {
     return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
+}
+//----------------------------------------------------------------------------
+std::string CustomUpdateWUGroupMergedBase::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+}
+//----------------------------------------------------------------------------
+std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,

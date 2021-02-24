@@ -1153,6 +1153,12 @@ public:
     }
 
     //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+
+    //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
@@ -1169,6 +1175,12 @@ public:
     //----------------------------------------------------------------------------
     bool isParamHeterogeneous(size_t index) const;
     bool isDerivedParamHeterogeneous(size_t index) const;
+
+    //----------------------------------------------------------------------------
+    // Static API
+    //----------------------------------------------------------------------------
+    static std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
 
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
