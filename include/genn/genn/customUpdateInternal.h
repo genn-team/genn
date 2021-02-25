@@ -22,9 +22,10 @@ public:
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
+    using CustomUpdateBase::isBatched;
     using CustomUpdateBase::canInitBeMerged;
 
-    using CustomUpdate::checkVarReferenceDelays;
+    using CustomUpdate::finalize;
     using CustomUpdate::canBeMerged;
     using CustomUpdate::getDelayNeuronGroup;
 };
@@ -48,7 +49,9 @@ public:
     using CustomUpdateBase::getDerivedParams;
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
+    using CustomUpdateBase::isBatched;
     
+    using CustomUpdateWU::finalize;
     using CustomUpdateWU::canBeMerged;
     using CustomUpdateWU::canInitBeMerged;
     using CustomUpdateWU::getSynapseGroup;

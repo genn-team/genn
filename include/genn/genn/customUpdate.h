@@ -53,7 +53,8 @@ protected:
                      VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
         m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
-        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+        m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
+        m_Batched(false)
     {
     }
 
@@ -72,6 +73,9 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
+    //! Is this custom update batched i.e. run in parallel across model batches
+    bool isBatched() const { return m_Batched; }
+
     //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canBeMerged(const CustomUpdateBase &other) const;
@@ -79,6 +83,26 @@ protected:
     //! Can the initialisation of these custom update be merged together? i.e. can they be initialised using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canInitBeMerged(const CustomUpdateBase &other) const;
+
+    //! Helper function to determine whether a custom update should be batched
+    template<typename R>
+    void calcBatched(unsigned int batchSize, const std::vector<R> &varRefs)
+    {
+        // If model has batching at all, custom update should be batched if any variables 
+        // are duplicated or if targets of any variable references are duplicated
+        if(batchSize > 1) {
+            const auto vars = getCustomUpdateModel()->getVars();
+            m_Batched = (std::any_of(vars.cbegin(), vars.cend(),
+                                    [](const Models::Base::Var &v) { return (v.access & VarAccessDuplication::DUPLICATE); })
+                         || std::any_of(varRefs.cbegin(), varRefs.cend(),
+                                        [](const R &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); }));
+
+        }
+        // Otherwise, update should not be batched
+        else {
+            m_Batched = false;
+        }
+    }
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
@@ -114,6 +138,9 @@ private:
 
     //! Location of extra global parameters
     std::vector<VarLocation> m_ExtraGlobalParamLocation;
+
+    //! Is this custom update batched i.e. run in parallel across model batches
+    bool m_Batched;
 };
 
 //------------------------------------------------------------------------
@@ -137,10 +164,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    //! Check that delays on variable references match
-    /*! Because which neuron variables are queued is only calculated during 
-        Modelspec::finalize, these checks cannot be performed in the constructor */
-    void checkVarReferenceDelays();
+    void finalize(unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -176,6 +200,11 @@ protected:
                    const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
+
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    void finalize(unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods

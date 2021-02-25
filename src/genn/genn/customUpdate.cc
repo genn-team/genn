@@ -87,6 +87,7 @@ bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
         return false;
     }
 }
+
 //----------------------------------------------------------------------------
 // CustomUpdate
 //----------------------------------------------------------------------------
@@ -112,8 +113,12 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdate::checkVarReferenceDelays()
+void CustomUpdate::finalize(unsigned int batchSize)
 {
+    // Because batch size might be set at any point and which neuron 
+    // variables are queued is only calculated during Modelspec::finalize, 
+    // these checks cannot be performed in the constructor
+
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
                                  [](const Models::VarReference &v) { return v.getDelayNeuronGroup() != nullptr; });
@@ -128,6 +133,9 @@ void CustomUpdate::checkVarReferenceDelays()
             throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
         }
     }
+
+    // Determine whether custom update is batched
+    calcBatched(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdate::canBeMerged(const CustomUpdate &other) const
@@ -200,6 +208,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
             throw std::runtime_error("Each custom update can only calculate the tranpose of a single variable,");
         }
     }
+}
+//----------------------------------------------------------------------------
+void CustomUpdateWU::finalize(unsigned int batchSize)
+{
+    calcBatched(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const
