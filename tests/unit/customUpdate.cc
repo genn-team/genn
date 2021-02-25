@@ -21,6 +21,19 @@ class Sum : public CustomUpdateModels::Base
 };
 IMPLEMENT_MODEL(Sum);
 
+class Sum2 : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum2, 0, 1, 2);
+
+    SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
+
+    SET_VARS({{"mult", "scalar", VarAccess::READ_ONLY}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
+                  {"b", "scalar", VarAccessMode::READ_WRITE}});
+};
+IMPLEMENT_MODEL(Sum2);
+
+
 class Cont : public WeightUpdateModels::Base
 {
 public:
@@ -197,4 +210,41 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     }
 
     model.finalize();
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, BatchingVars)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+    
+
+    // Create update where variable is duplicated but references aren't
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences(createVarRef(pop, "a"), createVarRef(pop, "b"));
+
+    // Create updates where variable is shared and references vary
+    Sum2::VarValues sum2VarValues(1.0);
+    Sum2::VarReferences sum2VarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    Sum2::VarReferences sum2VarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
+    Sum2::VarReferences sum2VarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
+
+    auto *sum0 = model.addCustomUpdate<Sum>("Sum0", "CustomUpdate",
+                                            {}, sumVarValues, sumVarReferences);
+
+    auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                             {}, sum2VarValues, sum2VarReferences1);
+    auto *sum2 = model.addCustomUpdate<Sum2>("Sum2", "CustomUpdate",
+                                             {}, sum2VarValues, sum2VarReferences2);
+    auto *sum3 = model.addCustomUpdate<Sum2>("Sum3", "CustomUpdate",
+                                             {}, sum2VarValues, sum2VarReferences3);
+    model.finalize();
+
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum0)->isBatched());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
+    EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
+    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
 }
