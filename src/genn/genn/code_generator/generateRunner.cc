@@ -435,10 +435,11 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
         std::vector<std::string> customUpdateStatePushPullFunctions;
         for(size_t i = 0; i < cuVars.size(); i++) {
             const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
+            const unsigned int numCopies = getNumCopies(cuVars[i].access, modelMerged.getModel().getBatchSize());
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),
-                                autoInitialized, getSizeFn(c.second), customUpdateStatePushPullFunctions);
+                                autoInitialized, numCopies * getSizeFn(c.second), customUpdateStatePushPullFunctions);
 
             // Loop through EGPs required to initialize custom update variable
             const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
