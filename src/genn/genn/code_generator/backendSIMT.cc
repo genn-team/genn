@@ -923,7 +923,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
         os, kernelSubs, modelMerged.getMergedCustomUpdateTransposeWUGroups(), idStart,
         [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateTransposeWUThreads(cg), getKernelBlockSize(KernelCustomTransposeUpdate)); },
         [&updateGroup](const CustomUpdateTransposeWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [customWUTransposeUpdateHandler, &modelMerged, this](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
+        [customWUTransposeUpdateHandler, &modelMerged, this, blockSize](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
         {
             // Get index of variable being transposed
             const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
@@ -931,21 +931,22 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                                                                       [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
             const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
 
-            os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (getKernelBlockSize(KernelCustomTransposeUpdate) - 1) << ") / " << getKernelBlockSize(KernelCustomTransposeUpdate) << ";" << std::endl;
-            os << "const unsigned int blockX = (" << getBlockID(0) << " % numXBlocks);" << std::endl;
-            os << "const unsigned int blockY = (" << getBlockID(0) << " / numXBlocks);" << std::endl;
+            os << "const unsigned int blockStart = " << popSubs["group_start_id"] << " / " << blockSize << ";" << std::endl;
+            os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
+            os << "const unsigned int blockX = ((" << getBlockID(0) << " - blockStart) % numXBlocks);" << std::endl;
+            os << "const unsigned int blockY = ((" << getBlockID(0) << " - blockStart) / numXBlocks);" << std::endl;
             {
                 CodeStream::Scope b(os);
                 os << "// Calculate coordinate of thread in input matrix" << std::endl;
-                os << "const unsigned int x = (blockX * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(0) << ";" << std::endl;
-                os << "const unsigned int y = (blockY * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(1) << ";" << std::endl;
+                os << "const unsigned int x = (blockX * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
+                os << "const unsigned int y = (blockY * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
                 os << "// If thread isn't off the 'right' edge of the input matrix" << std::endl;
                 os << "if(x < group->numTrgNeurons)";
                 {
                     CodeStream::Scope b(os);
                     os << "// Loop through input rows " << std::endl;
-                    os << "for (unsigned int j = 0; j < " << getKernelBlockSize(KernelCustomTransposeUpdate) << "; j += 8)";
+                    os << "for (unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
                         CodeStream::Scope b(os);
                         os << "// If thread isn't off the 'bottom' edge of the input matrix" << std::endl;
@@ -971,15 +972,15 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             {
                 CodeStream::Scope b(os);
                 os << "// Calculate (transposed) coordinate of thread in output matrix" << std::endl;
-                os << "const unsigned int x = (blockY * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(0) << ";" << std::endl;
-                os << "const unsigned int y = (blockX * " << getKernelBlockSize(KernelCustomTransposeUpdate) << ") + " << getThreadID(1) << ";" << std::endl;
+                os << "const unsigned int x = (blockY * " << blockSize << ") + " << getThreadID(0) << ";" << std::endl;
+                os << "const unsigned int y = (blockX * " << blockSize << ") + " << getThreadID(1) << ";" << std::endl;
 
                 os << "// If thread isn't off the 'right' edge of the output matrix" << std::endl;
                 os << "if(x < group->numSrcNeurons)";
                 {
                     CodeStream::Scope b(os);
                     os << "// Loop through output rows" << std::endl;
-                    os <<  "for(unsigned int j = 0; j < " << getKernelBlockSize(KernelCustomTransposeUpdate) << "; j += 8)";
+                    os <<  "for(unsigned int j = 0; j < " << blockSize << "; j += 8)";
                     {
                         CodeStream::Scope b(os);
                         os << "// If thread isn't off the 'bottom' edge of the output matrix" << std::endl;
