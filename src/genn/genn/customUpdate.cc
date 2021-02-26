@@ -67,7 +67,8 @@ bool CustomUpdateBase::isZeroCopyEnabled() const
 bool CustomUpdateBase::canBeMerged(const CustomUpdateBase &other) const
 {
     return (getCustomUpdateModel()->canBeMerged(other.getCustomUpdateModel())
-            && (getUpdateGroupName() == other.getUpdateGroupName()));
+            && (getUpdateGroupName() == other.getUpdateGroupName())
+            && (isBatched() == other.isBatched()));
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
