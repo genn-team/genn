@@ -232,7 +232,7 @@ bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
         return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
                           [](const Models::WUVarReference &a, const Models::WUVarReference &b)
                           {
-                              return ((a.getTransposeSynapseGroup() == nullptr) == (b.getTransposeSynapseGroup() != nullptr));
+                              return ((a.getTransposeSynapseGroup() == nullptr) == (b.getTransposeSynapseGroup() == nullptr));
                           });
     }
 
