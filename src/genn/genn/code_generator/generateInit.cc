@@ -160,7 +160,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                     os << code << std::endl;
                     
                     // Fill value across all delay slots and batches
-                    genVariableFill(os,  vars[k].name + fieldSuffix, "initVal", varSubs["id"], "group->numNeurons", 
+                    genVariableFill(os,  vars[k].name + fieldSuffix, "initVal", varSubs["id"], count, 
                                     getVarAccessDuplication(vars[k].access), batchSize, isVarQueueRequired(k), numDelaySlots);
                 });
         }
