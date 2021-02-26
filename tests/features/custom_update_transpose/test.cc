@@ -29,12 +29,15 @@ class SimTest : public SimulationTest
 TEST_F(SimTest, CustomUpdateTranspose)
 {
     updateTest();
-    pullgDenseFromDevice();
-    pullgTransposeFromDevice();
+    pullgDense1FromDevice();
+    pullgDense2FromDevice();
+    pullgTranspose1FromDevice();
+    pullgTranspose2FromDevice();
 
     for(unsigned int i = 0; i < 100; i++) {
         for(unsigned int j = 0; j < 100; j++) {
-            ASSERT_FLOAT_EQ(gDense[(i * 100) + j], gTranspose[(j * 100) + i]);
+            ASSERT_FLOAT_EQ(gDense1[(i * 100) + j], gTranspose1[(j * 100) + i]);
+            ASSERT_FLOAT_EQ(gDense2[(i * 100) + j], gTranspose2[(j * 100) + i]);
         }
     }
 }

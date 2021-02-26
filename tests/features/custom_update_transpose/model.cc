@@ -49,13 +49,23 @@ void modelDefinition(ModelSpec &model)
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
     model.addNeuronPopulation<NeuronModels::LIF>("Neuron", 100, lifParams, lifInit);
-    auto *denseSG = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+    auto *denseSG1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Dense1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
         {}, staticSynapseVarInit,
         {}, {});
-    auto *transposeSG = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "Transpose", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+    auto *denseSG2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Dense2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, staticSynapseVarInit,
+        {}, {});
+    auto *transposeSG1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Transpose1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Neuron", "SpikeSource",
+        {}, {0.0},
+        {}, {});
+    auto *transposeSG2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Transpose2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Neuron", "SpikeSource",
         {}, {0.0},
         {}, {});
@@ -63,7 +73,10 @@ void modelDefinition(ModelSpec &model)
     //---------------------------------------------------------------------------
     // Custom updates
     //---------------------------------------------------------------------------
-    CustomUpdateModels::Transpose::WUVarReferences wuDenseVarReferences(createWUVarRef(denseSG, "g", transposeSG, "g")); // R
-    model.addCustomUpdate<CustomUpdateModels::Transpose>("WUDenseSetTime", "Test",
-                                   {}, {}, wuDenseVarReferences);
+    CustomUpdateModels::Transpose::WUVarReferences wuDenseVarReferences1(createWUVarRef(denseSG1, "g", transposeSG1, "g")); // R
+    model.addCustomUpdate<CustomUpdateModels::Transpose>("WUDenseTranspose1", "Test",
+                                                         {}, {}, wuDenseVarReferences1);
+    CustomUpdateModels::Transpose::WUVarReferences wuDenseVarReferences2(createWUVarRef(denseSG2, "g", transposeSG2, "g")); // R
+    model.addCustomUpdate<CustomUpdateModels::Transpose>("WUDenseTranspose2", "Test",
+                                                         {}, {}, wuDenseVarReferences2);
 }
