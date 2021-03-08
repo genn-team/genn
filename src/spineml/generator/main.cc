@@ -595,7 +595,7 @@ int main(int argc, char *argv[])
         }
 
         // Bin directory is therefore the parent path of executable
-        const filesystem::path binPath(executablePathRaw).parent_path();
+        const filesystem::path binPath = filesystem::path(executablePathRaw).parent_path();
 #elif defined(__APPLE__)
         // Get executable path
         char executablePathRaw[PATH_MAX];
