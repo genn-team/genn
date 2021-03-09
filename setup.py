@@ -32,7 +32,7 @@ windows = system() == "Windows"
 
 # Determine correct suffix for GeNN libraries
 if windows:
-    genn_lib_suffix = "_Debug" if debug_build else "_Release"
+    genn_lib_suffix = "_Debug_DLL" if debug_build else "_Release_DLL"
 else:
     genn_lib_suffix = "_dynamic_debug" if debug_build else "_dynamic"
 
@@ -162,14 +162,13 @@ for filename, namespace, kwargs in backends:
     # Add relocatable version of backend library to libraries
     # **NOTE** this is added BEFORE libGeNN as this library needs symbols FROM libGeNN
     if windows:
-        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend" + genn_lib_suffix)
         package_data.append("genn_wrapper/genn_" + filename + "_backend" + genn_lib_suffix + ".*")
     else:
-        backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend" + genn_lib_suffix)
         package_data.append("genn_wrapper/libgenn_" + filename + "_backend" + genn_lib_suffix + ".*")
 
     # Add backend include directory to both SWIG and C++ compiler options
     backend_include_dir = os.path.join(genn_path, "include", "genn", "backends", filename)
+    backend_extension_kwargs["libraries"].insert(0, "genn_" + filename + "_backend" + genn_lib_suffix)
     backend_extension_kwargs["include_dirs"].append(backend_include_dir)
     backend_extension_kwargs["swig_opts"].append("-I" + backend_include_dir)
 
