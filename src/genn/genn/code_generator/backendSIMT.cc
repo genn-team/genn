@@ -276,7 +276,7 @@ void BackendSIMT::genPreNeuronResetKernel(CodeStream &os, const Substitutions &k
                 }
                 // Otherwise
                 else {
-                    if(batchSize >= 1) {
+                    if(batchSize > 1) {
                         os << "const unsigned int batchOffset = group->numNeurons * batch;" << std::endl;
                     }
                     if(n.getArchetype().isPrevSpikeTimeRequired()) {
