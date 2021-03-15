@@ -40,8 +40,8 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
         }
         os << v.type << " l" << v.name << " = " << "group->" << v.name << "[";
         os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
-                                 getVarAccessDuplication(v.access),
-                                 updateSubs[index]);
+                             getVarAccessDuplication(v.access),
+                             updateSubs[index]);
         os << "];" << std::endl;
     }
 
