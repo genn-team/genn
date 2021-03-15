@@ -851,17 +851,42 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
 {
     genParallelGroup<CustomUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
-        [this](const CustomUpdateInternal &cu) { return padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); },
+        [&modelMerged, this](const CustomUpdateInternal &cu) 
+        {
+            const unsigned int numCopies = cu.isBatched() ? modelMerged.getModel().getBatchSize() : 1;
+            return numCopies * padSize(cu.getSize(), getKernelBlockSize(KernelCustomUpdate)); 
+        },
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [&modelMerged, this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
+
+            // If update is batched
+            Substitutions cuSubs(&popSubs);
+            if(cg.getArchetype().isBatched()) {
+                // Split ID into intra-batch ID and batch
+                // **TODO** fast-divide style optimisations here
+                os << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
+                os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
+                os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+
+                // Replace id in substitution with intra-batch ID and add batch
+                cuSubs.addVarSubstitution("id", "bid", true);
+                cuSubs.addVarSubstitution("batch", "batch");
+            }
+            // Otherwise, just substitute "batch" for 0
+            else {
+                cuSubs.addVarSubstitution("batch", "0");
+            }
+
             os << "// only do this for existing neurons" << std::endl;
-            os << "if(" << popSubs["id"] << " < group->size)";
+            os << "if(" << cuSubs["id"] << " < group->size)";
             {
                 CodeStream::Scope b(os);
 
-                genCustomUpdateIndexCalculation(os, cg, modelMerged.getModel().getBatchSize());
-                customUpdateHandler(os, cg, popSubs);
+                genCustomUpdateIndexCalculation(os, cg);
+                customUpdateHandler(os, cg, cuSubs);
             }
         });
 }
@@ -871,43 +896,69 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 {
     genParallelGroup<CustomUpdateWUGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
-        [this](const CustomUpdateWUInternal &cg) { return padSize(getNumCustomUpdateWUThreads(cg), getKernelBlockSize(KernelCustomUpdate)); },
+        [&modelMerged, this](const CustomUpdateWUInternal &cg) 
+        {
+            const unsigned int numCopies = cg.isBatched() ? modelMerged.getModel().getBatchSize() : 1;
+            return numCopies * padSize(getNumCustomUpdateWUThreads(cg), getKernelBlockSize(KernelCustomUpdate)); 
+        },
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
             const SynapseGroup *archetypeSG = cg.getArchetype().getSynapseGroup();
 
-            // Generate index calculation code
-            // **TODO** batch offsets
-            //const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-            //genSynapseIndexCalculation(os, cg, 1/*batchSize*/);
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+            const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
-            Substitutions synSubs(&popSubs);
+            // Calculate number of threads for update
+            os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
+
+            // If update is batched
+            Substitutions cuSubs(&popSubs);
+            if(cg.getArchetype().isBatched()) {
+                os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
+                
+                // Split ID into intra-batch ID and batch
+                // **TODO** fast-divide style optimisations here
+                os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
+                os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+
+                // Replace id in substitution with intra-batch ID and add batch
+                cuSubs.addVarSubstitution("id", "bid", true);
+                cuSubs.addVarSubstitution("batch", "batch");
+
+                // Calculate batch offset
+                os << "const unsigned int batchOffset = size * batch;" << std::endl;
+            }
+            // Otherwise, just substitute "batch" for 0
+            else {
+                cuSubs.addVarSubstitution("batch", "0");
+            }
 
             if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "if (" << popSubs["id"] << " < group->synRemap[0])";
+                os << "if (" << cuSubs["id"] << " < group->synRemap[0])";
             }
             else {
-                os << "if (" << popSubs["id"] << " < (group->numSrcNeurons * group->rowStride))";
+                os << "if (" << cuSubs["id"] << " < size)";
             }
             {
                 CodeStream::Scope b(os);
+
                 if(archetypeSG->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // Determine synapse and presynaptic indices for this thread
-                    os << "const unsigned int s = group->synRemap[1 + " << popSubs["id"] << "];" << std::endl;
+                    os << "const unsigned int s = group->synRemap[1 + " << cuSubs["id"] << "];" << std::endl;
 
-                    synSubs.addVarSubstitution("id_pre", "(s / group->rowStride)");
-                    synSubs.addVarSubstitution("id_post", "group->ind[s]");
-                    synSubs.addVarSubstitution("id_syn", "s");
+                    cuSubs.addVarSubstitution("id_pre", "(s / group->rowStride)");
+                    cuSubs.addVarSubstitution("id_post", "group->ind[s]");
+                    cuSubs.addVarSubstitution("id_syn", "s");
                 }
                 else {
                     // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    synSubs.addVarSubstitution("id_pre", "(" + popSubs["id"] + " / group->rowStride)");
-                    synSubs.addVarSubstitution("id_post", "(" + popSubs["id"] + " % group->rowStride)");
-                    synSubs.addVarSubstitution("id_syn", popSubs["id"]);
+                    cuSubs.addVarSubstitution("id_pre", "(" + cuSubs["id"] + " / group->rowStride)");
+                    cuSubs.addVarSubstitution("id_post", "(" + cuSubs["id"] + " % group->rowStride)");
+                    cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
                 }
 
-                customUpdateWUHandler(os, cg, synSubs);
+                customUpdateWUHandler(os, cg, cuSubs);
             }
         });
 }
@@ -916,7 +967,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                                                    const std::string &updateGroup, CustomUpdateTransposeWUGroupMergedHandler &customWUTransposeUpdateHandler, size_t &idStart) const
 {
     // Generate 2D array
-    const unsigned int blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
+    const size_t blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
     os << getSharedPrefix() << " float shTile[" << blockSize << "][" << (blockSize + 1) << "];" << std::endl;
 
     genParallelGroup<CustomUpdateTransposeWUGroupMerged>(
