@@ -18,6 +18,15 @@ public:
 };
 IMPLEMENT_MODEL(TestNeuron);
 
+class TestWUM : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(TestWUM, 0, 2, 0, 0);
+
+    SET_VARS({{"V","scalar"}, {"U", "scalar", VarAccess::READ_ONLY}});
+};
+IMPLEMENT_MODEL(TestWUM);
+
 class SetTimeBatch : public CustomUpdateModels::Base
 {
 public:
@@ -44,6 +53,7 @@ public:
     SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
 };
 IMPLEMENT_MODEL(SetTime);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -59,8 +69,19 @@ void modelDefinition(ModelSpec &model)
     model.setName("custom_update_batch");
     model.setBatchSize(5);
 
-    //model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 50, {}, {});
     auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 50, {}, {0.0, 0.0});
+    auto *denseSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+        "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, {0.0, 0.0},
+        {}, {});
+    auto *sparseSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+        "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, {0.0, 0.0},
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
     
     //---------------------------------------------------------------------------
     // Custom updates
@@ -72,4 +93,21 @@ void modelDefinition(ModelSpec &model)
     SetTime::VarReferences neuronSharedVarReferences(createVarRef(ng, "U")); // R
     model.addCustomUpdate<SetTime>("NeuronSharedSetTime", "Test",
                                    {}, {0.0}, neuronSharedVarReferences);
+    
+    SetTimeBatch::WUVarReferences wumDenseDuplicateVarReferences(createWUVarRef(denseSG, "V")); // R
+    model.addCustomUpdate<SetTimeBatch>("WUMDenseDuplicateSetTime", "Test",
+                                        {}, {0.0}, wumDenseDuplicateVarReferences);
+    
+    SetTime::WUVarReferences wumDenseSharedVarReferences(createWUVarRef(denseSG, "U")); // R
+    model.addCustomUpdate<SetTime>("WUMDenseSharedSetTime", "Test",
+                                   {}, {0.0}, wumDenseSharedVarReferences);
+   
+    SetTimeBatch::WUVarReferences wumSparseDuplicateVarReferences(createWUVarRef(sparseSG, "V")); // R
+    model.addCustomUpdate<SetTimeBatch>("WUMSparseDuplicateSetTime", "Test",
+                                        {}, {0.0}, wumSparseDuplicateVarReferences);
+    
+    SetTime::WUVarReferences wumSparseSharedVarReferences(createWUVarRef(sparseSG, "U")); // R
+    model.addCustomUpdate<SetTime>("WUMSparseSharedSetTime", "Test",
+                                   {}, {0.0}, wumSparseSharedVarReferences);
+
 }

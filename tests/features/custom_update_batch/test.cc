@@ -26,8 +26,20 @@ class SimTest : public SimulationTest
 {
 };
 
+template<typename Predicate>
+void checkSparseVar(scalar *var, Predicate predicate)
+{
+    for(unsigned int i = 0; i < 50; i++) {
+        const unsigned int rowStart = maxRowLengthSparse * i;
+        const unsigned int rowLength = rowLengthSparse[i];
+        ASSERT_TRUE(std::all_of(&var[rowStart], &var[rowStart + rowLength], predicate));
+    }
+}
+
 TEST_F(SimTest, CustomUpdateBatch)
 {
+    pullSparseConnectivityFromDevice();
+
     while(iT < 1000) {
         StepGeNN();
 
@@ -37,22 +49,48 @@ TEST_F(SimTest, CustomUpdateBatch)
 
             // Pull variables
             pullVNeuronDuplicateSetTimeFromDevice();
+            pullVWUMDenseDuplicateSetTimeFromDevice();
+            pullVWUMSparseDuplicateSetTimeFromDevice();
             pullVNeuronFromDevice();
             pullUNeuronFromDevice();
-           
+            pullVDenseFromDevice();
+            pullUDenseFromDevice();
+            pullVSparseFromDevice();
+            pullUSparseFromDevice();
 
-            // Check all values match time of update
-            EXPECT_TRUE(std::all_of(&UNeuron[0], &UNeuron[50],
+            // Check shared neuron and synapse variables match time
+            ASSERT_TRUE(std::all_of(&UNeuron[0], &UNeuron[50],
                         [](scalar v) { return v == t; }));
+            ASSERT_TRUE(std::all_of(&UDense[0], &UDense[50 * 50],
+                        [](scalar v) { return v == t; }));
+
+            checkSparseVar(USparse, [](scalar v){ return v == t; });
+    
             // Loop through batches
             for(unsigned int b = 0; b < 5; b++) {
-                const unsigned int startIdx = b * 50;
-                const unsigned int endIdx = startIdx + 50;
-                const float bOffset = b * 1000.0f;
-                EXPECT_TRUE(std::all_of(&VNeuronDuplicateSetTime[startIdx], &VNeuronDuplicateSetTime[endIdx],
-                            [bOffset](scalar v) { return v == (bOffset + t); }));
-                EXPECT_TRUE(std::all_of(&VNeuron[startIdx], &VNeuron[endIdx],
-                            [bOffset](scalar v) { return v == (bOffset + t); }));
+                const unsigned int startNeuronIdx = b * 50;
+                const unsigned int endNeuronIdx = startNeuronIdx + 50;
+                const unsigned int startDenseSynIdx = b * (50 * 50);
+                const unsigned int endDenseSynIdx = startDenseSynIdx + (50 * 50);
+                const unsigned int startSparseSynIdx = b * (50 * maxRowLengthSparse);
+                const float batchOffset = b * 1000.0f;
+                
+                // Check batched variables match expectations
+                ASSERT_TRUE(std::all_of(&VNeuronDuplicateSetTime[startNeuronIdx], &VNeuronDuplicateSetTime[endNeuronIdx],
+                            [batchOffset](scalar v) { return v == (batchOffset + t); }));
+                ASSERT_TRUE(std::all_of(&VNeuron[startNeuronIdx], &VNeuron[endNeuronIdx],
+                            [batchOffset](scalar v) { return v == (batchOffset + t); }));
+                
+                ASSERT_TRUE(std::all_of(&VWUMDenseDuplicateSetTime[startDenseSynIdx], &VWUMDenseDuplicateSetTime[endDenseSynIdx],
+                            [batchOffset](scalar v) { return v == (batchOffset + t); }));
+                ASSERT_TRUE(std::all_of(&VDense[startDenseSynIdx], &VDense[endDenseSynIdx],
+                            [batchOffset](scalar v) { return v == (batchOffset + t); }));
+                
+                checkSparseVar(&VSparse[startSparseSynIdx],
+                               [batchOffset](scalar v) { return v == (batchOffset + t); });
+               checkSparseVar(&VWUMSparseDuplicateSetTime[startSparseSynIdx],
+                              [batchOffset](scalar v) { return v == (batchOffset + t); });
+                
             }
         }
     }
