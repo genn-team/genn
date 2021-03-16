@@ -40,6 +40,27 @@ namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
 
+bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
+{
+    // If function is found
+    CUfunction kern;
+    CUresult res = cuModuleGetFunction(&kern, module, kernelName.c_str());
+    if(res == CUDA_SUCCESS) {
+        LOGD_BACKEND << "\tKernel '" << kernelName << "' found";
+
+        // Read function's shared memory size and register counand add blank entry to map of kernels to optimise
+        CHECK_CU_ERRORS(cuFuncGetAttribute(&sharedMemBytes, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
+        CHECK_CU_ERRORS(cuFuncGetAttribute(&numRegisters, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
+
+        LOGD_BACKEND << "\t\tShared memory bytes:" << sharedMemBytes;
+        LOGD_BACKEND << "\t\tNum registers:" << numRegisters;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//--------------------------------------------------------------------------
 void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &warpAllocGran, size_t &regAllocGran,
                                      size_t &smemAllocGran, size_t &maxBlocksPerSM)
 {
@@ -94,7 +115,8 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
 }
 //--------------------------------------------------------------------------
 void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInternal &model,
-                    std::vector<size_t> (&groupSizes)[KernelMax])
+                    std::vector<size_t> (&groupSizes)[KernelMax], std::set<std::string> &customUpdateKernels,
+                    std::set<std::string> &customTransposeUpdateKernels)
 {
     // Loop through neuron groups
     for(const auto &n : model.getNeuronGroups()) {
@@ -111,14 +133,22 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         }
     }
 
-    // Loop through custom updates and add size to vector of custom update groups
+    // Loop through custom updates, add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomUpdates()) {
         groupSizes[KernelCustomUpdate].push_back(c.second.getSize());
+        customUpdateKernels.insert(c.second.getUpdateGroupName());
     }
 
-     // Loop through custom updates and add size to vector of custom update groups
+     // Loop through custom updates add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomWUUpdates()) {
-        groupSizes[KernelCustomUpdate].push_back(Backend::getNumCustomUpdateWUThreads(c.second));
+        if(c.second.isTransposeOperation()) {
+            groupSizes[KernelCustomTransposeUpdate].push_back(Backend::getNumCustomUpdateTransposeWUThreads(c.second));
+            customTransposeUpdateKernels.insert(c.second.getUpdateGroupName());
+        }
+        else {
+            groupSizes[KernelCustomUpdate].push_back(Backend::getNumCustomUpdateWUThreads(c.second));
+            customUpdateKernels.insert(c.second.getUpdateGroupName());
+        }
     }
 
     // Loop through synapse groups
@@ -170,8 +200,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     cudaSetDevice(deviceID);
 
     // Calculate model group sizes
+    std::set<std::string> customUpdateKernels;
+    std::set<std::string> customTransposeUpdateKernels;
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(preferences, model, groupSizes);
+    calcGroupSizes(preferences, model, groupSizes, customUpdateKernels, customTransposeUpdateKernels);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
@@ -197,7 +229,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     else {
         throw std::runtime_error("CUDA_PATH environment variable not set - ");
     }
-    
+
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
@@ -239,23 +271,39 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
             // Loop through kernels
             for (unsigned int k = 0; k < KernelMax; k++) {
-                // If function is found
-                CUfunction kern;
-                CUresult res = cuModuleGetFunction(&kern, module, Backend::KernelNames[k]);
-                if (res == CUDA_SUCCESS) {
-                    LOGD_BACKEND << "\tKernel '" << Backend::KernelNames[k] << "' found";
+                // If this kernel is a custom update
+                // **YUCK** this mechanism is really not very nice but to fix it properly would require
+                // replacing the block sizes std::array with a std::map to handle different custom update kernels
+                //  which would break backward compatibility. For now just use worst case to pick block sizes
+                if(k == KernelCustomUpdate || k == KernelCustomTransposeUpdate) {
+                    // Initially zero shared memory size and register count
+                    krnlSharedSizeBytes[r][k] = 0;
+                    krnlNumRegs[r][k] = 0;
 
-                    // Read function's shared memory size and register counand add blank entry to map of kernels to optimise
-                    CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlSharedSizeBytes[r][k], CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
-                    CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlNumRegs[r][k], CU_FUNC_ATTRIBUTE_NUM_REGS , kern));
+                    // Loop through all kernels of this type
+                    const auto &kernels = (k == KernelCustomUpdate) ? customUpdateKernels : customTransposeUpdateKernels;
+                    for(const std::string &c : kernels) {
+                        // If kernel is found, update maximum shared memory size and register count
+                        int sharedSizeBytes = 0;
+                        int numRegisters = 0;
+                        if(getKernelResourceUsage(module, Backend::KernelNames[k] + c, sharedSizeBytes, numRegisters)) {
+                            krnlSharedSizeBytes[r][k] = std::max(krnlSharedSizeBytes[r][k], sharedSizeBytes);
+                            krnlNumRegs[r][k] = std::max(krnlNumRegs[r][k], numRegisters);
+                        }
+                    }
 
-                    //CHECK_CUDA_ERRORS(cudaFuncGetAttributes(&krnlAttr[r][k], kern));
+                    // If any kernels were found, add this type of custom update kernel to map
+                    if(krnlSharedSizeBytes[r][k] > 0 || krnlNumRegs[r][k] > 0) {
+                        kernelsToOptimise.emplace(std::piecewise_construct,
+                                                  std::forward_as_tuple(k),
+                                                  std::forward_as_tuple(false, 0));
+                    }
+                }
+                // Otherwise, if kernel is found, add to map of kernels to optimise
+                else if(getKernelResourceUsage(module, Backend::KernelNames[k], krnlSharedSizeBytes[r][k], krnlNumRegs[r][k])) {
                     kernelsToOptimise.emplace(std::piecewise_construct,
                                               std::forward_as_tuple(k),
                                               std::forward_as_tuple(false, 0));
-
-                    LOGD_BACKEND << "\t\tShared memory bytes:" << krnlSharedSizeBytes[r][k];
-                    LOGD_BACKEND << "\t\tNum registers:" << krnlNumRegs[r][k];
                 }
             }
 
@@ -554,10 +602,6 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
             optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences,
                               sharePath, outputPath);
 
-            // **HACK**
-            cudaBlockSize[KernelCustomUpdate] = 32;
-            cudaBlockSize[KernelCustomTransposeUpdate] = 32;
-            
             // Create backend
             return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
         }
