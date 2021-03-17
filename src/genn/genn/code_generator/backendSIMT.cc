@@ -859,7 +859,6 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [&modelMerged, this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
-            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
             // If update is batched
@@ -904,9 +903,6 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
-            const SynapseGroup *archetypeSG = cg.getArchetype().getSynapseGroup();
-
-            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
             // Calculate number of threads for update
@@ -943,7 +939,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             {
                 CodeStream::Scope b(os);
 
-                if(archetypeSG->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if(cg.getArchetype()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // Determine synapse and presynaptic indices for this thread
                     os << "const unsigned int s = group->synRemap[1 + " << cuSubs["id"] << "];" << std::endl;
 
