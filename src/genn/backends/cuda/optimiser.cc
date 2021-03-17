@@ -212,8 +212,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
     // Bitset to mark which kernels are present and array of their attributes for each repetition
-    int krnlSharedSizeBytes[2][KernelMax] = {0};
-    int krnlNumRegs[2][KernelMax] = {0};
+    int krnlSharedSizeBytes[2][KernelMax] = {};
+    int krnlNumRegs[2][KernelMax] = {};
 
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
