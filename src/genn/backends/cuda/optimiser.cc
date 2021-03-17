@@ -212,8 +212,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
     // Bitset to mark which kernels are present and array of their attributes for each repetition
-    int krnlSharedSizeBytes[2][KernelMax];
-    int krnlNumRegs[2][KernelMax];
+    int krnlSharedSizeBytes[2][KernelMax] = {0};
+    int krnlNumRegs[2][KernelMax] = {0};
 
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
@@ -276,10 +276,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                 // replacing the block sizes std::array with a std::map to handle different custom update kernels
                 //  which would break backward compatibility. For now just use worst case to pick block sizes
                 if(k == KernelCustomUpdate || k == KernelCustomTransposeUpdate) {
-                    // Initially zero shared memory size and register count
-                    krnlSharedSizeBytes[r][k] = 0;
-                    krnlNumRegs[r][k] = 0;
-
                     // Loop through all kernels of this type
                     const auto &kernels = (k == KernelCustomUpdate) ? customUpdateKernels : customTransposeUpdateKernels;
                     for(const std::string &c : kernels) {
