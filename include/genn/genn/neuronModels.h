@@ -171,6 +171,8 @@ public:
 
     SET_PARAM_NAMES({"a", "b", "c", "d"});
     SET_VARS({{"V","scalar"}, {"U", "scalar"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
 //----------------------------------------------------------------------------
