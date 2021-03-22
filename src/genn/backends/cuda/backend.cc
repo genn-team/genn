@@ -641,7 +641,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             if(idCustomUpdateStart > 0) {
                 CodeStream::Scope b(os);
                 genKernelDimensions(os, KernelCustomUpdate, idCustomUpdateStart, 1);
-                Timer t(os, "update" + g, model.isTimingEnabled(), true);
+                Timer t(os, "customUpdate" + g, model.isTimingEnabled());
                 os << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
@@ -651,9 +651,32 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 CodeStream::Scope b(os);
                 // **TODO** make block height parameterizable
                 genKernelDimensions(os, KernelCustomUpdate, idCustomTransposeUpdateStart, 1, 8);
-                //Timer t(os, "updateTranspose" + g, model.isTimingEnabled(), true);
+                Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // If timing is enabled
+            if(model.isTimingEnabled()) {
+                // Synchronise last event
+                os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(customUpdate" << g;
+                if(idCustomTransposeUpdateStart > 0) {
+                    os << "Transpose";
+                }
+                os << "Stop)); " << std::endl;
+
+                if(idCustomUpdateStart > 0) {
+                    CodeGenerator::CodeStream::Scope b(os);
+                    os << "float tmp;" << std::endl;
+                    os << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "Start, customUpdate" << g << "Stop));" << std::endl;
+                    os << "customUpdate" << g << "Time += tmp / 1000.0;" << std::endl;
+                }
+                if(idCustomTransposeUpdateStart > 0) {
+                    CodeGenerator::CodeStream::Scope b(os);
+                    os << "float tmp;" << std::endl;
+                    os << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
+                    os << "customUpdate" << g << "TransposeTime += tmp / 1000.0;" << std::endl;
+                }
             }
         }
     }
