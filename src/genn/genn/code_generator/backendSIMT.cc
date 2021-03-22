@@ -990,7 +990,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
 
             // Calculate what block this kernel starts at (because of kernel merging, it may not start at block 0)
             os << "const unsigned int blockStart = " << popSubs["group_start_id"] << " / " << blockSize << ";" << std::endl;
-            
+
             Substitutions synSubs(&popSubs);
             if(cg.getArchetype().isBatched()) {
                 // If there's multiple batches we also need to know how many Y blocks and hence total blocks there are
@@ -1004,7 +1004,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
 
                 // Finally, calculate batch offset into arrays etc
                 os << "const unsigned int batchOffset = batch * group->numSrcNeurons * group->numTrgNeurons;" << std::endl;
-                
+
                 // Add batch to substitutions
                 synSubs.addVarSubstitution("batch", "batch");
             }
@@ -1018,7 +1018,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             // **TODO** fast-divide style optimisations here
             os << "const unsigned int blockX = (block % numXBlocks);" << std::endl;
             os << "const unsigned int blockY = (block / numXBlocks);" << std::endl;
-            
+
             {
                 CodeStream::Scope b(os);
                 os << "// Calculate coordinate of thread in input matrix" << std::endl;
@@ -1070,7 +1070,11 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                         os << "if((y + j) < group->numTrgNeurons)";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->" << transposeVarName << "Transpose[((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;
+                            os << "group->" << transposeVarName << "Transpose[";
+                            if(cg.getArchetype().isBatched()) {
+                                os << "batchOffset + ";
+                            }
+                            os << "((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;
                         }
                     }
                 }
