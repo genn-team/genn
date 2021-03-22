@@ -567,7 +567,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
             // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
             if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                if(m_KernelBlockSizes[KernelNeuronUpdate] == 32u) {
+                if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
                     os << "if(" << getThreadID() << " == 0)";
                 }
                 else {
