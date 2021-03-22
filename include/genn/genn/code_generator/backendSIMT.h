@@ -159,7 +159,7 @@ public:
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
     static size_t getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg);
-    static size_t getNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg);
+    static size_t getNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, size_t blockSize);
     static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
 
     //! Register a new presynaptic update strategy
@@ -212,6 +212,9 @@ protected:
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
+    
+    //! Helper wrapper around padSize to pad size to a kernel size
+    size_t padKernelSize(size_t size, Kernel kernel) const;
 
 private:
     //--------------------------------------------------------------------------
