@@ -571,9 +571,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
                                   [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
-                                  [this](const CustomUpdateWUInternal &cg){ return padKernelSize(getNumCustomUpdateWUThreads(cg), KernelCustomUpdate); });
+                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
     genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
-                                  [this](const CustomUpdateWUInternal &cg){ return getNumCustomUpdateTransposeWUThreads(cg, getKernelBlockSize(KernelCustomTransposeUpdate)); });
+                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;

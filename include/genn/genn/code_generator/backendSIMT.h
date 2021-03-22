@@ -152,14 +152,15 @@ public:
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelBlockSizes.at(kernel); }
 
+    size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
+    size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
+    
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
     static size_t getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences);
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
-    static size_t getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg);
-    static size_t getNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, size_t blockSize);
     static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
 
     //! Register a new presynaptic update strategy

@@ -163,6 +163,33 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
     return numInitThreads;
 }
 //--------------------------------------------------------------------------
+size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
+{
+    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+    const size_t numCopies = cg.isBatched() ? batchSize : 1;
+
+    if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+        // **THINK** like for synapse dynamics kernels, this isn't really correct but correct value isn't known
+        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections(),
+                                         KernelCustomUpdate);
+    }
+    else {
+        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons(),
+                                         KernelCustomUpdate);
+    }
+}
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
+{
+    assert(cg.isTransposeOperation());
+    assert(cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE);
+    
+    const size_t paddedNumPre = padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomTransposeUpdate);
+	const size_t paddedNumPost = padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelCustomTransposeUpdate);
+    const size_t numCopies = cg.isBatched() ? batchSize : 1;
+	return numCopies * paddedNumPre * paddedNumPost;
+}
+//--------------------------------------------------------------------------
 size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences)
 {
     return getPresynapticUpdateStrategy(sg, preferences)->getNumThreads(sg);
@@ -187,29 +214,6 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
     else {
         return (size_t)sg.getSrcNeuronGroup()->getNumNeurons() * sg.getTrgNeuronGroup()->getNumNeurons();
     }
-}
-//--------------------------------------------------------------------------
-size_t BackendSIMT::getNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg)
-{
-    const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-
-    if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        // **THINK** this isn't really correct but correct value is inaccesible
-        return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections();
-    }
-    else {
-        return (size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
-    }
-}
-//--------------------------------------------------------------------------
-size_t BackendSIMT::getNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, size_t blockSize)
-{
-    assert(cg.isTransposeOperation());
-    assert(cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE);
-    
-    const size_t paddedNumPre = padSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), blockSize);
-	const size_t paddedNumPost = padSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), blockSize);
-	return paddedNumPre * paddedNumPost;
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
@@ -563,7 +567,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
             // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
             if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
+                if(m_KernelBlockSizes[KernelNeuronUpdate] == 32u) {
                     os << "if(" << getThreadID() << " == 0)";
                 }
                 else {
@@ -898,8 +902,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
         os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
         [&modelMerged, this](const CustomUpdateWUInternal &cg) 
         {
-            const unsigned int numCopies = cg.isBatched() ? modelMerged.getModel().getBatchSize() : 1;
-            return numCopies * padKernelSize(getNumCustomUpdateWUThreads(cg), KernelCustomUpdate); 
+            return getPaddedNumCustomUpdateWUThreads(cg, modelMerged.getModel().getBatchSize()); 
         },
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
@@ -971,8 +974,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
         os, kernelSubs, modelMerged.getMergedCustomUpdateTransposeWUGroups(), idStart,
         [&modelMerged, this](const CustomUpdateWUInternal &cg)
         {
-            const size_t numCopies = cg.isBatched() ? modelMerged.getModel().getBatchSize() : 1;
-            return numCopies * getNumCustomUpdateTransposeWUThreads(cg, getKernelBlockSize(KernelCustomTransposeUpdate)); 
+            return getPaddedNumCustomUpdateTransposeWUThreads(cg, modelMerged.getModel().getBatchSize()); 
         },
         [&updateGroup](const CustomUpdateTransposeWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [customWUTransposeUpdateHandler, &modelMerged, this, blockSize](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)

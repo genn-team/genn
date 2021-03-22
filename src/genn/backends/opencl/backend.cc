@@ -760,10 +760,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genMergedKernelDataStructures(
         customUpdateKernels, 
         modelMerged.getMergedCustomUpdateGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelCustomUpdate); },
-        modelMerged.getMergedCustomUpdateWUGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumCustomUpdateWUThreads(cg), KernelCustomUpdate); });
+        modelMerged.getMergedCustomUpdateWUGroups(), [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
     genMergedKernelDataStructures(
         customUpdateKernels,
-        modelMerged.getMergedCustomUpdateTransposeWUGroups(), [this](const CustomUpdateWUInternal &cg) { return getNumCustomUpdateTransposeWUThreads(cg, getKernelBlockSize(KernelCustomTransposeUpdate)); });
+        modelMerged.getMergedCustomUpdateTransposeWUGroups(), [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
     customUpdateKernels << std::endl;
 
     // Generate kernels used to populate merged structs
