@@ -839,15 +839,12 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomUpdate] << g.first << ".setArg(" << numCustomUpdateGroups << ", t));" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelCustomUpdate] << g.first << ", cl::NullRange, globalWorkSize, localWorkSize";
                 if(model.isTimingEnabled()) {
-                    os << ", nullptr, &update" + g.first + "Event";
+                    os << ", nullptr, &customUpdate" + g.first + "Event";
                 }
                 os << "));" << std::endl;
 
-                if(model.isTimingEnabled()) {
-                    os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-                    genReadEventTiming(os, "customUpdate");
-                }
-                else {
+                // If there is an additional kernel
+                if(g.second.second > 0) {
                     genPostKernelFlush(os);
                 }
             }
@@ -859,18 +856,26 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 const size_t numCustomTransposeUpdateGroups = modelMerged.getMergedCustomUpdateTransposeWUGroups().size();
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomTransposeUpdate] << g.first << ".setArg(" << numCustomTransposeUpdateGroups << ", t));" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelCustomTransposeUpdate] << g.first << ", cl::NullRange, globalWorkSize, localWorkSize";
-                //if(model.isTimingEnabled()) {
-                //    os << ", nullptr, &update" + g.first + "Event";
-                //}
+                if(model.isTimingEnabled()) {
+                    os << ", nullptr, &customUpdate" + g.first + "TransposeEvent";
+                }
                 os << "));" << std::endl;
+            }
 
-                //if(model.isTimingEnabled()) {
-                //    os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
-                //    genReadEventTiming(os, "customUpdate");
-                //}
-                //else {
-                    genPostKernelFlush(os);
-                //}
+            if(model.isTimingEnabled()) {
+                os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
+                if(g.second.first > 0) {
+                    CodeStream::Scope b(os);
+                    genReadEventTiming(os, "customUpdate" + g.first);
+                }
+                
+                if(g.second.second > 0) {
+                    CodeStream::Scope b(os);
+                    genReadEventTiming(os, "customUpdate" + g.first + "Transpose");
+                }   
+            }
+            else {
+                genPostKernelFlush(os);
             }
         }
 

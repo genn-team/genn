@@ -478,97 +478,102 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             // Push any required EGPs
             pushEGPHandler(os);
 
-            Timer t(os, "customUpdate" + g, model.isTimingEnabled());
+            {
+                Timer t(os, "customUpdate" + g, model.isTimingEnabled());
 
-            // Loop through merged custom update groups
-            for(const auto &c : modelMerged.getMergedCustomUpdateGroups()) {
-                // If this update group isn't for current group, skip
-                if(c.getArchetype().getUpdateGroupName() != g) {
-                    continue;
-                }
-
-                CodeStream::Scope b(os);
-                os << "// merged custom update group " << c.getIndex() << std::endl;
-                os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // Get reference to group
-                    os << "const auto *group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
-                    
-                    genCustomUpdateIndexCalculation(os, c);
-
-                    // Loop through group members
-                    os << "for(unsigned int i = 0; i < group->size; i++)";
-                    {
-                        CodeStream::Scope b(os);
-
-                        Substitutions popSubs(&funcSubs);
-                        popSubs.addVarSubstitution("id", "i");
-
-                        customUpdateHandler(os, c, popSubs);
+                // Loop through merged custom update groups
+                for(const auto &c : modelMerged.getMergedCustomUpdateGroups()) {
+                    // If this update group isn't for current group, skip
+                    if(c.getArchetype().getUpdateGroupName() != g) {
+                        continue;
                     }
-                }
-            }
 
-            // Loop through merged custom WU update groups
-            for(const auto &c : modelMerged.getMergedCustomUpdateWUGroups()) {
-                // If this update group isn't for current group, skip
-                if(c.getArchetype().getUpdateGroupName() != g) {
-                    continue;
-                }
-
-                CodeStream::Scope b(os);
-                os << "// merged custom WU update group " << c.getIndex() << std::endl;
-                os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
-                {
                     CodeStream::Scope b(os);
-
-                    // Get reference to group
-                    os << "const auto *group = &mergedCustomUpdateWUGroup" << c.getIndex() << "[g]; " << std::endl;
-
-                    // Loop through presynaptic neurons
-                    os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                    os << "// merged custom update group " << c.getIndex() << std::endl;
+                    os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
                     {
-                        // If this synapse group has sparse connectivity, loop through length of this row
                         CodeStream::Scope b(os);
-                        if(c.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            os << "for(unsigned int s = 0; s < group->rowLength[i]; s++)";
-                        }
-                        // Otherwise, if it's dense, loop through each postsynaptic neuron
-                        else if(c.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) {
-                            os << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
-                        }
-                        else {
-                            throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for custom updates");
-                        }
+
+                        // Get reference to group
+                        os << "const auto *group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                        genCustomUpdateIndexCalculation(os, c);
+
+                        // Loop through group members
+                        os << "for(unsigned int i = 0; i < group->size; i++)";
                         {
                             CodeStream::Scope b(os);
 
-                            Substitutions synSubs(&funcSubs);
-                            if(c.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                                // Calculate index of synapse and use it to look up postsynaptic index
-                                os << "const unsigned int n = (i * group->rowStride) + s;" << std::endl;
-                                os << "const unsigned int j = group->ind[n];" << std::endl;
+                            Substitutions popSubs(&funcSubs);
+                            popSubs.addVarSubstitution("id", "i");
 
-                                synSubs.addVarSubstitution("id_syn", "n");
+                            customUpdateHandler(os, c, popSubs);
+                        }
+                    }
+                }
+
+                // Loop through merged custom WU update groups
+                for(const auto &c : modelMerged.getMergedCustomUpdateWUGroups()) {
+                    // If this update group isn't for current group, skip
+                    if(c.getArchetype().getUpdateGroupName() != g) {
+                        continue;
+                    }
+
+                    CodeStream::Scope b(os);
+                    os << "// merged custom WU update group " << c.getIndex() << std::endl;
+                    os << "for(unsigned int g = 0; g < " << c.getGroups().size() << "; g++)";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Get reference to group
+                        os << "const auto *group = &mergedCustomUpdateWUGroup" << c.getIndex() << "[g]; " << std::endl;
+
+                        // Loop through presynaptic neurons
+                        os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+                        {
+                            // If this synapse group has sparse connectivity, loop through length of this row
+                            CodeStream::Scope b(os);
+                            if(c.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                os << "for(unsigned int s = 0; s < group->rowLength[i]; s++)";
+                            }
+                            // Otherwise, if it's dense, loop through each postsynaptic neuron
+                            else if(c.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) {
+                                os << "for (unsigned int j = 0; j < group->numTrgNeurons; j++)";
                             }
                             else {
-                                synSubs.addVarSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
+                                throw std::runtime_error("Only DENSE and SPARSE format connectivity can be used for custom updates");
                             }
+                            {
+                                CodeStream::Scope b(os);
 
-                            // Add pre and postsynaptic indices to substitutions
-                            synSubs.addVarSubstitution("id_pre", "i");
-                            synSubs.addVarSubstitution("id_post", "j");
+                                Substitutions synSubs(&funcSubs);
+                                if(c.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                    // Calculate index of synapse and use it to look up postsynaptic index
+                                    os << "const unsigned int n = (i * group->rowStride) + s;" << std::endl;
+                                    os << "const unsigned int j = group->ind[n];" << std::endl;
 
-                            // Call custom update handler
-                            customWUUpdateHandler(os, c, synSubs);
+                                    synSubs.addVarSubstitution("id_syn", "n");
+                                }
+                                else {
+                                    synSubs.addVarSubstitution("id_syn", "(i * group->numTrgNeurons) + j");
+                                }
+
+                                // Add pre and postsynaptic indices to substitutions
+                                synSubs.addVarSubstitution("id_pre", "i");
+                                synSubs.addVarSubstitution("id_post", "j");
+
+                                // Call custom update handler
+                                customWUUpdateHandler(os, c, synSubs);
+                            }
                         }
                     }
                 }
             }
+
             // Loop through merged custom WU transpose update groups
             for(const auto &c : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
+                Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
+
                 // If this update group isn't for current group, skip
                 if(c.getArchetype().getUpdateGroupName() != g) {
                     continue;

@@ -613,7 +613,8 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Generate variables to store total elapsed time for each custom update group
     for(const auto &g : customUpdateGroups) {
-        genHostScalar(definitionsVar, runnerVarDecl, "double", "update" + g + "Time", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, "double", "customUpdate" + g + "Time", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, "double", "customUpdate" + g + "TransposeTime", "0.0");
     }
     
     // If timing is actually enabled
@@ -643,7 +644,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         // Add timers for each custom update group
         for(const auto &g : customUpdateGroups) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             runnerStepTimeFinalise, "update" + g, false);
+                             runnerStepTimeFinalise, "customUpdate" + g, false);
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "customUpdate" + g + "Transpose", false);
         }
 
         // Create init timer
