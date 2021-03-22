@@ -121,7 +121,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     // Loop through neuron groups
     for(const auto &n : model.getNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
-        groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
+        groupSizes[KernelNeuronUpdate].push_back(model.getBatchSize() * n.second.getNumNeurons());
 
         // Add number of neurons to initialisation kernel (all neuron groups at least require spike counts initialising)
         groupSizes[KernelInitialize].push_back(n.second.getNumNeurons());
@@ -129,24 +129,28 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         // If neuron group requires previous spike or spike-like-event times to be reset after update 
         // i.e. in the pre-neuron reset kernel, add number of neurons to kernel
         if(n.second.isPrevSpikeTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
-            groupSizes[KernelPreNeuronReset].push_back(n.second.getNumNeurons());
+            groupSizes[KernelPreNeuronReset].push_back(model.getBatchSize() * n.second.getNumNeurons());
         }
     }
 
     // Loop through custom updates, add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomUpdates()) {
-        groupSizes[KernelCustomUpdate].push_back(c.second.getSize());
+        groupSizes[KernelCustomUpdate].push_back(c.second.isBatched() ? (model.getBatchSize() * c.second.getSize()) : c.second.getSize());
         customUpdateKernels.insert(c.second.getUpdateGroupName());
     }
 
      // Loop through custom updates add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomWUUpdates()) {
         if(c.second.isTransposeOperation()) {
-            groupSizes[KernelCustomTransposeUpdate].push_back(Backend::getNumCustomUpdateTransposeWUThreads(c.second));
+            const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(c.second.getSynapseGroup());
+            const size_t numCopies = c.second.isBatched() ? model.getBatchSize() : 1;
+            const size_t size = numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
+            groupSizes[KernelCustomTransposeUpdate].push_back(size);
             customTransposeUpdateKernels.insert(c.second.getUpdateGroupName());
         }
         else {
-            groupSizes[KernelCustomUpdate].push_back(Backend::getNumCustomUpdateWUThreads(c.second));
+            const size_t numThreads = Backend::getNumCustomUpdateWUThreads(c.second);
+            groupSizes[KernelCustomUpdate].push_back(c.second.isBatched() ? (model.getBatchSize() * numThreads) : numThreads);
             customUpdateKernels.insert(c.second.getUpdateGroupName());
         }
     }
@@ -155,15 +159,15 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
         if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
-            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, preferences));
+            groupSizes[KernelPresynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPresynapticUpdateThreads(s.second, preferences));
         }
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
+            groupSizes[KernelPostsynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
         if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-            groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
+            groupSizes[KernelSynapseDynamicsUpdate].push_back(model.getBatchSize() * Backend::getNumSynapseDynamicsThreads(s.second));
         }
 
         // If synapse group has individual weights and needs device initialisation
@@ -351,10 +355,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
             // Calculate number of blocks the groups used by this kernel will require
             const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), size_t{0},
-                                                        [blockThreads](size_t acc, size_t size)
-                                                        {
-                                                            return acc + ceilDivide(size, blockThreads);
-                                                        });
+                                                     [blockThreads](size_t acc, size_t size)
+                                                     {
+                                                         return acc + ceilDivide(size, blockThreads);
+                                                     });
             LOGD_BACKEND << "\t\tBlocks required (according to padded sum):" << reqBlocks;
 
             // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
