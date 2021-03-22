@@ -1046,7 +1046,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                             customWUTransposeUpdateHandler(os, cg, synSubs);
 
                             // Write forward weight to shared memory
-                            os << "shTile[" << getThreadID(1) << "+ j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
+                            os << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
                         }
                     }
                 }
