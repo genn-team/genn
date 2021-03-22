@@ -115,6 +115,10 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
             throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
         }
 
+        // Check duplicatedness of varibles
+        if((getVar().access & VarAccessDuplication::DUPLICATE) != (getTransposeVar().access & VarAccessDuplication::DUPLICATE)) {
+            throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
+        }
     }
 }
 //----------------------------------------------------------------------------
