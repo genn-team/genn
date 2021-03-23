@@ -36,14 +36,23 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
     m_instance, m_type = is_model_valid(model, model_family)
     param_names = list(m_instance.get_param_names())
     if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter values for {0}".format(
-            model_family.__name__))
+        raise ValueError("Invalid parameter values for {0}"
+                         "\n\tExpected\t{1}\n\tReceived\t{2}".format(
+                             model.__class__.__name__,
+                             list(iterkeys(param_space)),
+                             param_names
+                        )
+        )
     params = param_space_to_vals(m_instance, param_space)
 
     var_names = [vnt.name for vnt in m_instance.get_vars()]
     if set(iterkeys(var_space)) != set(var_names):
-        raise ValueError("Invalid variable initializers for {0}".format(
-            model_family.__name__))
+        raise ValueError("Invalid variable initializers for {0}"
+                         "\n\tExpected\t{1}\n\tReceived\t{2}".format(
+                             model.__class__.__name__,
+                             list(iterkeys(var_space)),
+                             var_names)
+        )
     var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
                 for vnt in m_instance.get_vars()}
 
@@ -52,7 +61,12 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
         pre_var_names = [vnt.name for vnt in m_instance.get_pre_vars()]
         if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(pre_var_names):
             raise ValueError("Invalid presynaptic variable initializers "
-                             "for {0}".format(model_family.__name__))
+                             "for {0}"
+                             "\n\tExpected\t{1}\n\tReceived\t{2}".format(
+                                 model.__class__.__name__,
+                                 list(iterkeys(pre_var_space)),
+                                 pre_var_names)
+            )
         pre_var_dict = {
             vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], group)
             for vnt in m_instance.get_pre_vars()}
@@ -60,7 +74,12 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
         post_var_names = [vnt.name for vnt in m_instance.get_post_vars()]
         if post_var_space is not None and set(iterkeys(post_var_space)) != set(post_var_names):
             raise ValueError("Invalid postsynaptic variable initializers "
-                            "for {0}".format(model_family.__name__))
+                            "for {0}"
+                             "\n\tExpected\t{1}\n\tReceived\t{2}".format(
+                                model.__class__.__name__,
+                                list(iterkeys(post_var_space)),
+                                post_var_names)
+            )
         post_var_dict = {
             vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], group)
             for vnt in m_instance.get_post_vars()}
