@@ -892,7 +892,7 @@ class SynapseGroup(Group):
                             ind[i:i + r] = self.ind[syn:syn + r]
                             syn += r
                     elif self.connectivity_initialiser is None:
-                        raise Exception("For sparse projections, the connections"
+                        raise Exception("For sparse projections, the connections "
                                         "must be set before loading a model")
                 # Otherwise, if connectivity isn't located on host, 
                 # give error if user tries to manually configure it
