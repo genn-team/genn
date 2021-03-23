@@ -429,6 +429,8 @@ public:
     double getPostsynapticUpdateTime() const{ return *(double*)getSymbol("postsynapticUpdateTime"); }
     double getSynapseDynamicsTime() const{ return *(double*)getSymbol("synapseDynamicsTime"); }
     double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
+    double getCustomUpdateTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
+    double getCustomUpdateTransposeTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
     
     void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr) const
     {

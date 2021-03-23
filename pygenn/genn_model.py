@@ -317,6 +317,12 @@ class GeNNModel(object):
     def init_sparse_time(self):
         return self._slm.get_init_sparse_time()
 
+    def get_custom_update_time(self, name):
+        return self._slm.get_custom_update_time(name)
+
+    def get_custom_update_transpose_time(self, name):
+        return self._slm.get_custom_update_transpose_time(name)
+
     def add_neuron_population(self, pop_name, num_neurons, neuron,
                               param_space, var_space):
         """Add a neuron population to the GeNN model
