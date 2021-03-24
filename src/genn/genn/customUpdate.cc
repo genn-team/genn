@@ -227,7 +227,8 @@ bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
 {
     // If the two groups' models can be merged and their connectivity is the same
     if(CustomUpdateBase::canBeMerged(other)
-       && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType())))
+       && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType()))
+       && (getSynapseGroup()->getSparseIndType() == other.getSynapseGroup()->getSparseIndType()))
     {
         // Return whether the variables with transposes match
         return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
@@ -238,4 +239,11 @@ bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+bool CustomUpdateWU::canInitBeMerged(const CustomUpdateWU &other) const
+{
+    return (CustomUpdateBase::canInitBeMerged(other)
+            && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType()))
+            && (getSynapseGroup()->getSparseIndType() == other.getSynapseGroup()->getSparseIndType()));
 }

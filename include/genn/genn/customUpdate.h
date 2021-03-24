@@ -217,6 +217,10 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     bool canBeMerged(const CustomUpdateWU &other) const;
 
+    //! Can the initialisation of these custom update be merged together? i.e. can they be initialised using same generated code
+    /*! NOTE: this can only be called after model is finalized */
+    bool canInitBeMerged(const CustomUpdateWU &other) const;
+
 private:
     //------------------------------------------------------------------------
     // Members
