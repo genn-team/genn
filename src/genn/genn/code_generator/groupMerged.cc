@@ -1739,7 +1739,7 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
              });
-    addField("unsigned int*", "ind", 
+    addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
              [&backend](const CustomUpdateWUInternal &cg, size_t) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
