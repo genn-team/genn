@@ -421,9 +421,9 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         {
             // Initialise custom update variables
             genInitNeuronVarCode(os, backend, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(), cg.getArchetype().getVarInitialisers(),
-                                 "", "size", cg.getIndex(), model.getPrecision(),  model.getBatchSize(),
-                                [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
-                                [&cg](size_t v, size_t p) { return cg.isVarInitDerivedParamHeterogeneous(v, p); });
+                                 "", "size", cg.getIndex(), model.getPrecision(), cg.getArchetype().isBatched() ? model.getBatchSize() : 1,
+                                 [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
+                                 [&cg](size_t v, size_t p) { return cg.isVarInitDerivedParamHeterogeneous(v, p); });
         },
         // Custom WU update dense variable initialisation
         [&backend, &model](CodeStream &os, const CustomWUUpdateDenseInitGroupMerged &cg, Substitutions &popSubs)
@@ -435,7 +435,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                 popSubs.addVarSubstitution("id_pre", "i");
                 genInitWUVarCode(os, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
                                  cg.getArchetype().getVarInitialisers(), cg.getIndex(),
-                                 model.getPrecision(), model.getBatchSize(),
+                                 model.getPrecision(), cg.getArchetype().isBatched() ? model.getBatchSize() : 1,
                                  [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
                                  [&cg](size_t v, size_t p) { return cg.isVarInitDerivedParamHeterogeneous(v, p); },
                                  [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
@@ -533,7 +533,7 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
         {
             genInitWUVarCode(os, popSubs, cg.getArchetype().getCustomUpdateModel()->getVars(),
                              cg.getArchetype().getVarInitialisers(), cg.getIndex(),
-                             model.getPrecision(), model.getBatchSize(),
+                             model.getPrecision(), cg.getArchetype().isBatched() ? model.getBatchSize() : 1,
                              [&cg](size_t v, size_t p) { return cg.isVarInitParamHeterogeneous(v, p); },
                              [&cg](size_t v, size_t p) { return cg.isVarInitDerivedParamHeterogeneous(v, p); },
                              [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)

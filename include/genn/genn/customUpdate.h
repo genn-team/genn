@@ -88,14 +88,11 @@ protected:
     template<typename R>
     void finalizeBatched(unsigned int batchSize, const std::vector<R> &varRefs)
     {
-        // If model has batching at all, custom update should be batched if any variables 
-        // are duplicated or if targets of any variable references are duplicated
+        // If model has batching at all, custom update should be batched 
+        // if targets of any variable references are duplicated
         if(batchSize > 1) {
-            const auto vars = getCustomUpdateModel()->getVars();
-            m_Batched = (std::any_of(vars.cbegin(), vars.cend(),
-                                    [](const Models::Base::Var &v) { return (v.access & VarAccessDuplication::DUPLICATE); })
-                         || std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                        [](const R &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); }));
+            m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
+                                    [](const R &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); });
             
             // If custom update is batched, check that any variable references to shared variables are read-only
             if(m_Batched) {

@@ -74,7 +74,8 @@ bool CustomUpdateBase::canBeMerged(const CustomUpdateBase &other) const
 bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
 {
      // If both groups have the same variables
-    if(getCustomUpdateModel()->getVars() == other.getCustomUpdateModel()->getVars()) {
+    if((getCustomUpdateModel()->getVars() == other.getCustomUpdateModel()->getVars())
+       && (isBatched() == other.isBatched())) {
         // if any of the variable's initialisers can't be merged, return false
         for(size_t i = 0; i < getVarInitialisers().size(); i++) {
             if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {

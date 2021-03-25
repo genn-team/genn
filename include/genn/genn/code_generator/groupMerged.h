@@ -1155,8 +1155,8 @@ public:
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
-    static std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
-    static std::string getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
 
     //----------------------------------------------------------------------------
     // Static constants

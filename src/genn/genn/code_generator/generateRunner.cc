@@ -435,7 +435,7 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
         std::vector<std::string> customUpdateStatePushPullFunctions;
         for(size_t i = 0; i < cuVars.size(); i++) {
             const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
-            const unsigned int numCopies = getNumCopies(cuVars[i].access, modelMerged.getModel().getBatchSize());
+            const unsigned int numCopies = c.second.isBatched() ? getNumCopies(cuVars[i].access, modelMerged.getModel().getBatchSize()) : 1;
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),

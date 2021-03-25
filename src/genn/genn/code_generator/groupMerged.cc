@@ -1544,17 +1544,17 @@ bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
     return isParamValueHeterogeneous(index, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
-    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+    // If variable is shared, the batch size is one or this custom update isn't batched, batch offset isn't required
+    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
-    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
-        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "delayOffset + " : "batchDelayOffset + ") + index;
+        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
