@@ -239,18 +239,11 @@ TEST(CustomUpdates, BatchingVars)
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
 
-    // Create update where variable is duplicated but references aren't
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences(createVarRef(pop, "a"), createVarRef(pop, "b"));
-
     // Create updates where variable is shared and references vary
     Sum2::VarValues sum2VarValues(1.0);
     Sum2::VarReferences sum2VarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
     Sum2::VarReferences sum2VarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
     Sum2::VarReferences sum2VarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
-
-    auto *sum0 = model.addCustomUpdate<Sum>("Sum0", "CustomUpdate",
-                                            {}, sumVarValues, sumVarReferences);
 
     auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                              {}, sum2VarValues, sum2VarReferences1);
@@ -260,7 +253,6 @@ TEST(CustomUpdates, BatchingVars)
                                              {}, sum2VarValues, sum2VarReferences3);
     model.finalize();
 
-    EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum0)->isBatched());
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
     EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
@@ -268,7 +260,6 @@ TEST(CustomUpdates, BatchingVars)
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingWriteShared)
 {
-    
     ModelSpecInternal model;
     model.setBatchSize(5);
 
@@ -439,6 +430,48 @@ TEST(CustomUpdates, CompareDifferentDelay)
     // **NOTE** delay groups don't matter for initialization
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 3);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 1);
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, CompareDifferentBatched)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Add one custom update which sums duplicated variables (v and u) and another which sums shared variables (a and b)
+    Sum::VarReferences sumVarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    Sum::VarReferences sumVarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
+    auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
+                                            {}, {0.0}, sumVarReferences1);
+    auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
+                                            {}, {0.0}, sumVarReferences2);
+
+    model.finalize();
+
+    // Check that sum1 is batched and sum is not
+    CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    ASSERT_TRUE(sum1Internal->isBatched());
+    ASSERT_FALSE(sum2Internal->isBatched());
+
+    // Check that this means they can't be merged
+    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
+    ASSERT_FALSE(sum1Internal->canInitBeMerged(*sum2));
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check correct groups are merged
+    // **NOTE** delay groups don't matter for initialization
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateInitGroups().size() == 2);
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, CompareDifferentWUTranspose)
