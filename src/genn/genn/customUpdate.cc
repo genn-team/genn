@@ -136,7 +136,7 @@ void CustomUpdate::finalize(unsigned int batchSize)
     }
 
     // Determine whether custom update is batched
-    calcBatched(batchSize, m_VarReferences);
+    finalizeBatched(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdate::canBeMerged(const CustomUpdate &other) const
@@ -213,7 +213,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 //----------------------------------------------------------------------------
 void CustomUpdateWU::finalize(unsigned int batchSize)
 {
-    calcBatched(batchSize, m_VarReferences);
+    finalizeBatched(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const

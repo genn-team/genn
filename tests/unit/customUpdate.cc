@@ -35,7 +35,7 @@ class Sum2 : public CustomUpdateModels::Base
 
     SET_VARS({{"mult", "scalar", VarAccess::READ_ONLY}});
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
-                  {"b", "scalar", VarAccessMode::READ_WRITE}});
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_MODEL(Sum2);
 
@@ -264,6 +264,30 @@ TEST(CustomUpdates, BatchingVars)
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum1)->isBatched());
     EXPECT_FALSE(static_cast<CustomUpdateInternal*>(sum2)->isBatched());
     EXPECT_TRUE(static_cast<CustomUpdateInternal*>(sum3)->isBatched());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, BatchingWriteShared)
+{
+    
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+    
+    // Create custom update which tries to create a read-write refernece to a (which isn't batched)
+    Sum2::VarValues sum2VarValues(1.0);
+    Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
+    auto *sum = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                            {}, sum2VarValues, sum2VarReferences);
+
+    try {
+        model.finalize();
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, CompareDifferentModel)
