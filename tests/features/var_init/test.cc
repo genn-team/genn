@@ -61,12 +61,15 @@ double getProb(scalar *data, unsigned int size, F cdf)
 TEST_F(SimTest, Vars)
 {
     // **NOTE**
-    // after considerable thought as to why these fail:
+    // After considerable thought as to why these fail:
     // * Each distribution is tested in 12 different contexts
     // * This test is run using 5 different RNGs (OpenCL, CUDA, MSVC standard library, Clang standard library, GCC standard library)
     // = 60 permutations
-    // we want less than 1.6% (0.016) of these tests to fail so we set p an order of magnitude less than this
-    const double p = 0.001;
+    // We want the probability that one or more of the 60 tests fail simply by chance 
+    // to be less than 2%; for significance level a the probability that none of the 
+    // tests fail is (1-a)^60 which we want to be 0.98, i.e. 98% of the time the test 
+    // passes if the algorithm is correct. Hence, a= 1- 0.98^(1/60) = 0.00034
+    const double p = 0.00034;
 
     // Pull vars back to host
     pullPopStateFromDevice();
@@ -77,7 +80,7 @@ TEST_F(SimTest, Vars)
     pullPSMCustomUpdateStateFromDevice();
     pullWUPreCustomUpdateStateFromDevice();
     pullWUPostCustomUpdateStateFromDevice();
-    
+
     // Test host-generated vars
     PROB_TEST(, Pop, 50000);
     PROB_TEST(, CurrSource, 50000);
