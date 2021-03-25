@@ -60,7 +60,13 @@ double getProb(scalar *data, unsigned int size, F cdf)
 
 TEST_F(SimTest, Vars)
 {
-    const double p = 0.02;
+    // **NOTE**
+    // after considerable thought as to why these fail:
+    // * Each distribution is tested in 12 different contexts
+    // * This test is run using 5 different RNGs (OpenCL, CUDA, MSVC standard library, Clang standard library, GCC standard library)
+    // = 60 permutations
+    // we want less than 1.6% (0.016) of these tests to fail so we set p an order of magnitude less than this
+    const double p = 0.001;
 
     // Pull vars back to host
     pullPopStateFromDevice();
