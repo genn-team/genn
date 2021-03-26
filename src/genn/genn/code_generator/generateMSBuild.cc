@@ -43,6 +43,7 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
     os << "\t\t<UseDebugLibraries Condition=\"'$(Configuration)'=='Debug'\">true</UseDebugLibraries>" << std::endl;
     os << "\t\t<CharacterSet>MultiByte</CharacterSet>" << std::endl;
     os << "\t\t<PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>" << std::endl;
+    os << "\t\t<PreferredToolArchitecture>x64</PreferredToolArchitecture>" << std::endl;
     backend.genMSBuildConfigProperties(os);
     os << "\t</PropertyGroup>" << std::endl;
     
