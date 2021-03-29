@@ -26,8 +26,10 @@
 - \subpage sectSynapseModels
 - \subpage sect_postsyn
 - \subpage sectCurrentSourceModels
+- \subpage sectCustomUpdate
 - \subpage subsect34
 - \subpage sectVariableInitialisation
+- \subpage sectVariableReferences
 - \subpage sectSparseConnectivityInitialisation
 
 \section sIntro Introduction
@@ -88,15 +90,18 @@ A network model is defined as follows:
    \endcode
    \end_toggle
 2. Neuron populations (at least one) must be added (see \ref subsect11).
-   The user may add as many neuron populations as they wish. If resources
-   run out, there will not be a warning but GeNN will fail. However,
+   The user may add as many neuron populations as they wish. However,
    before this breaking point is reached, GeNN will make all necessary
    efforts in terms of block size optimisation to accommodate the defined
    models. All populations must have a unique name.
 
-3. Synapse populations (zero or more) can be added (see \ref subsect12). Again,
-   the number of synaptic connection populations is unlimited other than
-   by resources.
+3. Synapse populations (zero or more) can be added (see \ref subsect12).
+
+4. Current sources (zero or more) can be added to neuron populations (see \ref defining_current_source).
+5. Custom updates (zero or more) can be added (see \ref defining_custom_updates). 
+
+\note
+If your model requires more memory than your GPU has available, there will be a warning but GeNN will not fail.
 
 \section subsect11 Defining neuron populations
 Neuron populations are added using the function
@@ -111,7 +116,7 @@ where the arguments are:
 \arg \add_cpp_python_text{`const string &name`,`pop_name`}: Unique name of the neuron population
 \arg \add_cpp_python_text{`unsigned int size`,`num_neurons`}: number of neurons in the population
 \arg \add_cpp_python_text{`NeuronModel::ParamValues paramValues`: Parameters, `param_space`: Dictionary containing parameters} of this neuron type
-\arg \add_cpp_python_text{`NeuronModel::VarValues varInitialisers`: Initial, `var_space`: Dictionary containing initial} values or initialisation snippets for variables of this neuron type 
+\arg \add_cpp_python_text{`NeuronModel::VarValues varInitialisers`: Initial, `var_space`: Dictionary containing initial} values or initialisation snippets for variables of this neuron type (see \ref sectVariableInitialisation)
 
 The user may add as many neuron populations as the model necessitates.
 They must all have unique names. The possible values for the arguments,
@@ -135,19 +140,19 @@ model.add_synapse_population(pop_name, matrix_type, delay_steps,
                              connectivity_initialiser
 \end_toggle_code
 where the arguments are
-\arg \add_cpp_python_text{`WeightUpdateModel`: Template parameter specifying the type of weight update model. These should be derived off WeightUpdateModels::Base and can either be one of the standard models or user-defined,`w_update_model`: The type of weight update model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_weight_update_class} (see \ref sectSynapseModels).
-\arg \add_cpp_python_text{`PostsynapticModel`: Template parameter specifying the type of postsynaptic integration model. These should be derived off PostsynapticModels::Base and can either be one of the standard models or user-defined,`postsyn_model`: The type of postsynaptic model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_postsynaptic_class} (see \ref sect_postsyn).
+\arg \add_cpp_python_text{`WeightUpdateModel`: Template parameter specifying the type of weight update model. These should be derived off WeightUpdateModels::Base and can either be one of the standard models or user-defined,`w_update_model`: The type of weight update model. This should either be a string containing the name of a built in model or user-defined weight update model returned by pygenn.genn_model.create_custom_weight_update_class} (see \ref sectSynapseModels).
+\arg \add_cpp_python_text{`PostsynapticModel`: Template parameter specifying the type of postsynaptic integration model. These should be derived off PostsynapticModels::Base and can either be one of the standard models or user-defined,`postsyn_model`: The type of postsynaptic model. This should either be a string containing the name of a built in model or user-defined postsynaptic model returned by pygenn.genn_model.create_custom_postsynaptic_class} (see \ref sect_postsyn).
 \arg \add_cpp_python_text{`const string &name`,`pop_name`}: The name of the synapse population
 \arg \add_cpp_python_text{`::SynapseMatrixType mType`: How,`matrix_type`: String specifying how} the synaptic matrix is stored. See \ref subsect34 for available options.
 \arg \add_cpp_python_text{`unsigned int delay`,`delay_steps`}: Homogeneous (axonal) delay for synapse population (in terms of the simulation time step `DT`). 
 \arg \add_cpp_python_text{`const string preName`: Name, `source`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) presynaptic neuron population.
 \arg \add_cpp_python_text{`const string postName`: Name, `target`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) postsynaptic neuron population.
 \arg \add_cpp_python_text{`WeightUpdateModel::ParamValues weightParamValues`: The, `wu_param_space`: Dictionary containing the} parameter values (common to all synapses of the population) for the weight update model. 
-\arg \add_cpp_python_text{``WeightUpdateModel::VarValues weightVarInitialisers`: The, `wu_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's state variables
-\arg \add_cpp_python_text{`WeightUpdateModel::PreVarValues weightPreVarInitialisers`: The, `wu_pre_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's presynaptic state variables
-\arg \add_cpp_python_text{`WeightUpdateModel::PostVarValues weightPostVarInitialisers`: The, `wu_post_var_space`: Dictionary containg the} initial values or initialisation snippets for the weight update model's postsynaptic state variables
+\arg \add_cpp_python_text{``WeightUpdateModel::VarValues weightVarInitialisers`: The, `wu_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's state variables (see \ref sectVariableInitialisation)
+\arg \add_cpp_python_text{`WeightUpdateModel::PreVarValues weightPreVarInitialisers`: The, `wu_pre_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's presynaptic state variables (see \ref sectVariableInitialisation)
+\arg \add_cpp_python_text{`WeightUpdateModel::PostVarValues weightPostVarInitialisers`: The, `wu_post_var_space`: Dictionary containg the} initial values or initialisation snippets for the weight update model's postsynaptic state variables (see \ref sectVariableInitialisation)
 \arg \add_cpp_python_text{`PostsynapticModel::ParamValues postsynapticParamValues`: The,`ps_param_space`: Dictionary containing the} parameter values (common to all postsynaptic neurons) for the postsynaptic model. 
-\arg \add_cpp_python_text{`PostsynapticModel::VarValues postsynapticVarInitialisers`: The, `ps_var_space`: Dictionary containing the} initial values or initialisation snippets for variables for the postsynaptic model's state variables
+\arg \add_cpp_python_text{`PostsynapticModel::VarValues postsynapticVarInitialisers`: The, `ps_var_space`: Dictionary containing the} initial values or initialisation snippets for variables for the postsynaptic model's state variables (see \ref sectVariableInitialisation)
 \arg \add_cpp_python_text{`InitSparseConnectivitySnippet::Init connectivityInitialiser`,`connectivity_initialiser`}: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
 The ModelSpec::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
@@ -163,6 +168,42 @@ If the synapse matrix uses one of the "GLOBALG" types then the global
 value of the synapse parameters are taken from the initial value provided
 in `weightVarInitialisers` therefore these must be constant rather than sampled from a distribution etc.
 
+\section defining_current_source Defining current sources
+Current sources are added with the function
+\add_toggle_code_cpp
+model.addCurrentSource<CurrentSourceModel>(currentSourceName, targetNeuronGroupName, 
+                                           paramValues, varInitialisers);
+\end_toggle_code
+\add_toggle_code_python
+model.add_current_source(cs_name, current_source_model, pop,
+                         param_space, var_space)
+\end_toggle_code
+where the arguments are
+\arg \add_cpp_python_text{`CurrentSourceModel`: Template parameter specifying the type of current source model. These should be derived off CurrentSourceModels::Base and can either be one of the standard models or user-defined,`current_source_model`: The type of current source model. This should either be a string containing the name of a built in model or user-defined current source model returned by pygenn.genn_model.create_custom_current_source_class} (see \ref sect_own_current_source).
+\arg \add_cpp_python_text{`const string &currentSourceName`,`cs_name`}: The name of the current source
+\arg \add_cpp_python_text{`const string &targetNeuronGroupName`: Name of the target neuron group,`pop`: Population into which the current source should be injected (either name or NeuronGroup object)}
+\arg \add_cpp_python_text{`CurrentSourceModel::ParamValues paramValues`: The, `param_space`: Dictionary containing the} parameter values (common to all current sources in the population) for the current source model. 
+\arg \add_cpp_python_text{``CurrentSourceModel::VarValues varInitialisers`: The, `var_space`: Dictionary containing the} initial values or initialisation snippets for the current source model's state variables (see \ref sectVariableInitialisation)
+\note
+The number of current sources in a population always equals the number of neurons in the population it injects current into.
+
+\section defining_custom_updates Defining custom updates
+Custom updates are added with the function
+\add_toggle_code_cpp
+model.addCustomUpdate<CustomUpdateModel>(name, updateGroupName,
+                                         paramValues, varInitialisers, varReferences)
+\end_toggle_code
+\add_toggle_code_python
+model.add_custom_update(cu_name, group_name, custom_update_model,
+                        param_space, var_space, var_ref_space)
+\end_toggle_code
+where the arguments are
+\arg \add_cpp_python_text{`CustomUpdateModel`: Template parameter specifying the type of custom update model. These should be derived off CustomUpdateModels::Base and can either be one of the standard models or user-defined,`custom_update_model`: The type of custom update model. This should either be a string containing the name of a built in model or user-defined custom update model returned by pygenn.genn_model.create_custom_custom_update_class} (see \ref sect_own_custom_update).
+\arg \add_cpp_python_text{`const string &name`,`cu_name`}: The name of the custom update
+\arg \add_cpp_python_text{`const string &updateGroupName`,`group_name`}: The name of the group this custom update belongs to. Updates in each group can be launched as described in \ref Simulate.
+\arg \add_cpp_python_text{`CustomUpdateModel::ParamValues paramValues`: The, `param_space`: Dictionary containing the} parameter values (common to all custom updates in the population) for the custom update model. 
+\arg \add_cpp_python_text{`CustomUpdateModel::VarValues varInitialisers`: The, `var_space`: Dictionary containing the} initial values or initialisation snippets for the custom update model's state variables (see \ref sectVariableInitialisation)
+\arg \add_cpp_python_text{`CustomUpdateModel::VarValues varReferences`: The, `var_ref_space`: Dictionary containing the} variable references for the custom update model (see \ref sectVariableReferences)
 
 
 -----
@@ -641,10 +682,10 @@ In Python, these models can be selected by their unqualified name e.g. "DC".
 
 In order to define a new current source type for use in a GeNN application,
 it is necessary to define a new class derived from CurrentSourceModels::Base. 
-For convenience the methods this class should implement can be implemented using macros:
-- \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS)\, SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_PARAM_NAMES()\, SET_VARS(), ``derived_params``\, ``param_names``\, ``var_name_types``} perform the same roles as they do in the neuron models discussed in \ref sect_own.
-- \add_cpp_python_text{SET_INJECTION_CODE(INJECTION_CODE),``injection_code=INJECTION_CODE``}: where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep.
-  The \$(injectCurrent, $(amp)) function is used to inject current.
+For convenience the methods this class should implement can be implemented using \add_cpp_python_text{macros, keyword arguments}:
+- \add_cpp_python_text{DECLARE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS)\, SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_VARS(), ``derived_params``\, ``param_names``\, ``var_name_types``} perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- \add_cpp_python_text{SET_INJECTION_CODE(INJECTION_CODE),``injection_code=INJECTION_CODE``}: where INJECTION_CODE contains the code for injecting current into the neuron every simulation timestep. The \$(injectCurrent, $(amp)) function is used to inject current.
+
 For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a uniformly distributed noisy current source:
 \add_toggle_code_cpp
 class UniformNoise : public CurrentSourceModels::Base
@@ -652,7 +693,7 @@ class UniformNoise : public CurrentSourceModels::Base
 public:
     DECLARE_MODEL(UniformNoise, 1, 0);
 
-    SET_SIM_CODE("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
+    SET_INJECTION_CODE("$(injectCurrent, $(gennrand_uniform) * $(magnitude));");
 
     SET_PARAM_NAMES({"magnitude"});
 };
@@ -666,7 +707,50 @@ uniform_noise_model = genn_model.create_custom_current_source_class(
 \end_toggle_code
 
 -----
-\link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
+\link sect_postsyn Previous\endlink | \link UserManual Top\endlink | \link sectCustomUpdate Next\endlink
+*/
+
+//----------------------------------------------------------------------------
+/*! 
+\page sectCustomUpdate Custom update models
+The neuron groups, synapse groups and current sources described in previous sections are all updated automatically every timestep. However, in many types of model, there are also processes that would benefit from GPU acceleration but only need to be triggered occasionally. For example, such updates could be used in a classifier to to reset the state of neurons after a stimuli has been presented or in a model which uses gradient-based learning to optimize network weights based on gradients accumulated over several timesteps.
+
+Custom updates allows such updates to be described as models, similar to the neuron and synapse models described in the preceding sections. The custom update system also provides functionality for efficiently calculating the tranpose of variables associated with synapse groups with SynapseMatrixType::DENSE_INDIVIDUALG connectivity. The predefined CustomUpdateModels::Transpose model can be used to do just this for a synapse group with a single variable.
+
+\section sect_own_custom_update Defining your own custom update model
+In order to define a new custom update model for use in a GeNN application,
+it is necessary to define a new class derived from CustomUpdateModels::Base. 
+For convenience the methods this class should implement can be implemented using \add_cpp_python_text{macros, keyword arguments}:
+- \add_cpp_python_text{SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_VARS(), ``derived_params``\, ``param_names``\, ``var_name_types``} perform the same roles as they do in the neuron models discussed in \ref sect_own.
+- \add_cpp_python_text{DECLARE_CUSTOM_UPDATE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS\, NUM_VAR_REFS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a custom update with variable references as well as variables and parameters,`class_name`: the name of the new model}.
+- \add_cpp_python_text{SET_VAR_REFS(),`var_refs`} defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
+    of the varaible references. The variables defined here as `NAME` can then be used in the syntax \$(NAME) in the update code string. Variable reference types must match those of the underlying variables. 
+- \add_cpp_python_text{SET_UPDATE_CODE(UPDATE_CODE),``update_code=UPDATE_CODE``}: where UPDATE_CODE contains the code for to perform the custom update.
+
+For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a custom update which will set a referenced variable to the value of a custom update model state variable:
+\add_toggle_code_cpp
+class Reset : public CurrentSourceModels::Base
+{
+public:
+    DECLARE_MODEL(Reset, 0, 1, 1);
+
+    SET_UPDATE_CODE("$(r) = $(v);");
+
+    SET_VARS({{"v", "scalar", VarAccess::READ_ONLY}});
+    SET_VAR_REFS({{"r", "scalar"}, 
+};
+\end_toggle_code
+\add_toggle_code_python
+reset_model = genn_model.create_custom_custom_update_class(
+    "reset",
+
+    var_name_types=[("v", "scalar", VarAccess_READ_ONLY)],
+    var_refs=[("r", "scalar")],
+    update_code="$(r) = $(v);")
+\end_toggle_code
+
+-----
+\link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
 */
 
 //----------------------------------------------------------------------------
@@ -719,7 +803,7 @@ In Python, these matrix types can be selected by their unqualified name e.g. "DE
 \end_toggle
 
 -----
-\link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
+\link sectCustomUpdate Previous\endlink | \link UserManual Top\endlink | \link sectVariableInitialisation Next\endlink
 */
 //----------------------------------------------------------------------------
 /*! 
@@ -843,7 +927,59 @@ These modes can be set as a model default using ``ModelSpec::setDefaultVarLocati
 
 
 -----
-\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
+\link subsect34 Previous\endlink | \link UserManual Top\endlink | \link sectVariableReferences Next\endlink
+*/
+//----------------------------------------------------------------------------
+/*! 
+\page sectVariableReferences Variable references
+As well as state variables, custom updates have variable references which are used to reference variables belonging to other neuron and synapse groups.
+
+\add_toggle_cpp
+The variable references required by a model called SetTime could be assigned to various types of variable using the following syntax:
+\code
+SetTime::VarReferences neuronVarReferences(createVarRef(ng, "V"));
+SetTime::VarReferences currentSourceVarReferences(createVarRef(cs, "V"));
+SetTime::VarReferences postsynapticModelVarReferences(createPSMVarRef(sg, "V"));
+SetTime::VarReferences wuPreVarReferences(createWUPreVarRef(sg, "Pre")); 
+SetTime::VarReferences wuPostVarReferences(createWUPostVarRef(sg, "Post")); 
+\endcode
+\end_toggle
+\add_toggle_python
+A variable reference called R could be assigned to various types of variable using the following syntax:
+\code
+neuron_var_ref =  {"R": genn_model.create_var_ref(ng, "V")}
+current_source_var_ref =  {"R": genn_model.create_var_ref(cs, "V")}
+postsynaptic_model_var_ref =  {"R": genn_model.create_psm_var_ref(sg, "V")}
+wu_pre_var_ref =  {"R": genn_model.create_wu_pre_var_ref(sg, "Pre")}
+wu_post_var_ref =  {"R": genn_model.create_wu_post_var_ref(sg, "Post")}
+\endcode
+\end_toggle
+where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.genn_groups.NeuronGroup (as returned by pygenn.genn_model.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.genn_groups.CurrentSource (as returned by pygenn.genn_model.GeNNModel.add_current_source)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.genn_groups.SynapseGroup (as returned by pygenn.genn_model.GeNNModel.add_synapse_population)}.
+
+While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
+\add_toggle_code_cpp
+SetTime::WUVarReferences wuVarReferences(createWUVarRef(sg, "g"));
+\end_toggle_code
+\add_toggle_code_python
+wu_var_ref = {"R": create_wu_var_ref(sg, "g")}
+\end_toggle_code
+
+These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
+\add_toggle_code_cpp
+SetTime::WUVarReferences wuTransposeVarReferences(createWUVarRef(sg, "g", backSG, "g"));
+\end_toggle_code
+\add_toggle_code_python
+wu_transpose_var_ref = {"R": create_wu_var_ref(sg, "g", back_sg, "g")}
+\end_toggle_code
+where \add_cpp_python_text{backSG is another SynapseGroup pointer,back_sg is another pygenn.genn_groups.SynapseGroup} with tranposed dimensions to sg i.e. its <i>postsynaptic</i> population has the same number of neurons as sg's <i>presynaptic</i> population and vice-versa.
+
+After the update has run, any updates made to the 'forward' variable will also be applied to the tranpose variable.
+\note 
+Tranposing is currently only possible on variables belonging to synapse groups with SynapseMatrixType::DENSE_INDIVIDUALG connectivity.
+
+
+-----
+\link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link sectSparseConnectivityInitialisation Next\endlink
 */
 //----------------------------------------------------------------------------
 /*! 
@@ -972,5 +1108,5 @@ Once you have defined <b>how</b> sparse connectivity is going to be initialised,
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
 
 -----
-\link sectVariableInitialisation Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+\link sectVariableReferences Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
 */
