@@ -270,8 +270,8 @@ TEST(CustomUpdates, BatchingWriteShared)
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     Sum2::VarValues sum2VarValues(1.0);
     Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
-    auto *sum = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                            {}, sum2VarValues, sum2VarReferences);
+    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                {}, sum2VarValues, sum2VarReferences);
 
     try {
         model.finalize();
@@ -480,7 +480,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
@@ -530,7 +530,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add a sparse and a dense synapse group
