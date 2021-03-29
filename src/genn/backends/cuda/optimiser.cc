@@ -48,7 +48,7 @@ bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int 
     if(res == CUDA_SUCCESS) {
         LOGD_BACKEND << "\tKernel '" << kernelName << "' found";
 
-        // Read function's shared memory size and register counand add blank entry to map of kernels to optimise
+        // Read function's shared memory size and register count and add blank entry to map of kernels to optimise
         CHECK_CU_ERRORS(cuFuncGetAttribute(&sharedMemBytes, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
         CHECK_CU_ERRORS(cuFuncGetAttribute(&numRegisters, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
 
