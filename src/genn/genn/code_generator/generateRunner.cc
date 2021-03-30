@@ -1,6 +1,7 @@
 #include "code_generator/generateRunner.h"
 
 // Standard C++ includes
+#include <numeric>
 #include <random>
 #include <set>
 #include <sstream>
@@ -1222,19 +1223,33 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         // If group isn't a weight sharing slave and per-synapse variables should be individual
         const bool individualWeights = (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+        const bool kernelWeights = (s.second.getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool proceduralWeights = (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         std::vector<std::string> synapseGroupStatePushPullFunctions;
-        if (!s.second.isWeightSharingSlave() && (individualWeights || proceduralWeights)) {
-            const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
-
+        if (!s.second.isWeightSharingSlave() && (individualWeights || proceduralWeights || kernelWeights)) {
             const auto wuVars = wu->getVars();
             for(size_t i = 0; i < wuVars.size(); i++) {
                 const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
                 if(individualWeights) {
+                    const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
                     const bool autoInitialized = !varInitSnippet->getCode().empty();
                     mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                        runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
                                        autoInitialized, size * getNumCopies(wuVars[i].access, batchSize), synapseGroupStatePushPullFunctions);
+                }
+                else if(kernelWeights) {
+                     // If there is a weight initializer
+                     if(!s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty()) {
+                         throw std::runtime_error("Kernel WUM variables must be manually initialised.");
+                     }
+
+                     // Calculate size of kernel
+                     const size_t size = std::accumulate(s.second.getKernelSize().cbegin(), s.second.getKernelSize().cend(), 
+                                                         1, std::multiplies<unsigned int>());
+                     // Generate variable
+                    mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                       runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
+                                       false, size * getNumCopies(wuVars[i].access, batchSize), synapseGroupStatePushPullFunctions);
                 }
 
                 // Loop through EGPs required to initialize WUM variable

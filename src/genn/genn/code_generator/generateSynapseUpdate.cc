@@ -50,6 +50,16 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
                                            return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
                                        });
 
+    if(!sg.getArchetype().getKernelSize().empty()) {
+        // Generate kernel index
+        os << "const unsigned int kernelInd = ";
+        genKernelIndex(os, synapseSubs, sg);
+        os << ";" << std::endl;
+
+        // Add substitution
+        synapseSubs.addVarSubstitution("id_kernel", "kernelInd");
+    }
+
     // If weights are individual, substitute variables for values stored in global memory
     if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
         synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->",
@@ -60,15 +70,6 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     }
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-        if(!sg.getArchetype().getKernelSize().empty()) {
-            // Generate kernel index
-            os << "const unsigned int kernelInd = ";
-            genKernelIndex(os, synapseSubs, sg);
-            os << ";" << std::endl;
-
-            // Add substitution
-            synapseSubs.addVarSubstitution("id_kernel", "kernelInd");
-        }
         const auto vars = wu->getVars();
         for(size_t k = 0; k < vars.size(); k++) {
             const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
@@ -104,6 +105,13 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
         // Substitute variables for newly-declared local variables
         synapseSubs.addVarNameSubstitution(vars, "", "l");
+    }
+    // Otherwise, if weights are kernels
+    else if(sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        assert(!sg.getArchetype().getKernelSize().empty());
+
+        // Use kernel index to index into variables
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", std::string{"[kernelInd]"});
     }
     // Otherwise, substitute variables for constant values
     else {

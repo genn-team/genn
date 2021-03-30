@@ -1359,11 +1359,12 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         const bool connectInitRole = (role == Role::ConnectivityInit);
         const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
+        const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
         // If synapse group has a kernel and we're either updating 
         // with procedural weights or initialising individual weights
-        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
+        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (kernelWeights && updateRole) || (connectInitRole && individualWeights))) {
             // Loop through kernel size dimensions
             for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
                 // If this dimension has a heterogeneous size, add it to struct
@@ -1399,7 +1400,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                                           || (varInitRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
 
             // If we're performing an update with individual weights; or this variable should be initialised
-            if((updateRole && individualWeights) || varInitRequired) {
+            if((updateRole && individualWeights) || (kernelWeights && updateRole) || varInitRequired) {
                 addWeightSharingPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
             }
 

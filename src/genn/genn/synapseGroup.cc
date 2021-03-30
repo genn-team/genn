@@ -477,9 +477,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 
     // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
     if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) 
-       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG)) 
+       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG) && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG) ) 
     {
-        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG or SPARSE_INDIVIDUALG connectivity.");
+        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG, PROCEDURAL_KERNELG or SPARSE_INDIVIDUALG connectivity.");
     }
 
     // If connectivity is dense and there is connectivity initialiser code, give error
@@ -492,8 +492,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
     if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
-       m_KernelSize.empty() &&  std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
-                                            [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
+       m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+                                           [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }
