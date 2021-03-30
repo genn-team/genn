@@ -421,10 +421,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                               PresynapticUpdateGroupMergedHandler wumEventHandler, PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, 
+                               PresynapticUpdateGroupMergedHandler sgSparseRowConnectHandler,  PostsynapticUpdateGroupMergedHandler sgSparseColConnectHandler,
                                HostHandler pushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
@@ -533,7 +533,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 kernelSubs.addVarSubstitution("batch", "0");
             }
             genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, wumThreshHandler, 
-                                       wumSimHandler, wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
+                                       wumSimHandler, wumEventHandler, sgSparseRowConnectHandler, idPresynapticStart);
         }
     }
 
@@ -558,7 +558,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
+            genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, 
+                                        postLearnHandler, sgSparseColConnectHandler, idPostsynapticStart);
         }
     }
  

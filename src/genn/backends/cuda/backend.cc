@@ -382,8 +382,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 //--------------------------------------------------------------------------
 void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                               PresynapticUpdateGroupMergedHandler wumEventHandler, PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, 
+                               PresynapticUpdateGroupMergedHandler sgSparseRowConnectHandler,  PostsynapticUpdateGroupMergedHandler sgSparseColConnectHandler,
                                HostHandler pushEGPHandler) const
 {
     // Generate struct definitions
@@ -447,7 +447,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 kernelSubs.addVarSubstitution("batch", "0");
             }
             genPresynapticUpdateKernel(os, kernelSubs, modelMerged, wumThreshHandler, wumSimHandler, 
-                                       wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
+                                       wumEventHandler, sgSparseRowConnectHandler, idPresynapticStart);
         }
     }
 
@@ -469,7 +469,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
+            genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, postLearnHandler, sgSparseColConnectHandler, idPostsynapticStart);
         }
     }
 

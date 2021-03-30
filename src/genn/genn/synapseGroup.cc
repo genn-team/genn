@@ -446,16 +446,6 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
             throw std::runtime_error("Cannot use procedural connectivity without specifying a connectivity initialisation snippet with row building code");
         }
 
-        // If there's column build code, give an error
-        if(!m_ConnectivityInitialiser.getSnippet()->getColBuildCode().empty()) {
-            throw std::runtime_error("Cannot use procedural connectivity with connectivity initialisation snippets with column building code");
-        }
-
-        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
-        if(!m_WUModel->getLearnPostCode().empty()) {
-            throw std::runtime_error("Procedural connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
-        }
-
         // If weight update model has code for continuous synapse dynamics, give error
         // **THINK** this would actually be pretty trivial to implement
         if (!m_WUModel->getSynapseDynamicsCode().empty()) {

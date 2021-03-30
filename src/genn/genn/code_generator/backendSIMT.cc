@@ -200,6 +200,10 @@ size_t BackendSIMT::getNumPostsynapticUpdateThreads(const SynapseGroupInternal &
     if(sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         return sg.getMaxSourceConnections();
     }
+    else if(sg.getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+    // Otherwise, if it's dense, we use presynaptic parallelism 
     else {
         return sg.getSrcNeuronGroup()->getNumNeurons();
     }
@@ -714,7 +718,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                              PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const
+                                              PostsynapticUpdateGroupMergedHandler postLearnHandler, PostsynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const
 {
     os << getSharedPrefix() << "unsigned int shSpk[" << getKernelBlockSize(KernelPostsynapticUpdate) << "];" << std::endl;
     if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cend(),
@@ -730,7 +734,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
     idStart = 0;
     genParallelGroup<PostsynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); },
-        [&modelMerged, postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
+        [&modelMerged, postLearnHandler, wumProceduralConnectHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
         {
             // Generate index calculation code
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -738,56 +742,126 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
 
             os << "const unsigned int numSpikes = group->trgSpkCnt[" << sg.getPostSlot(batchSize) << "];" << std::endl;
             
-
-            os << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
-            os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
-            {
-                CodeStream::Scope b(os);
-                os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + 1 : " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
-
-                os << "if (" << getThreadID() << " < numSpikesInBlock)";
+            // If matrix connectivity is procedural, we use simple postsynaptic parallelism
+            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+                os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
+        
+                // If there is a spike for this thread to process
+                os << "if (spike < group->trgSpkCnt[" << sg.getPostSlot(batchSize) << "])";
                 {
                     CodeStream::Scope b(os);
-                    const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
-                    os << "const unsigned int spk = group->trgSpk[" << sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
-                    os << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
-                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                        os << "shColLength[" << getThreadID() << "] = group->colLength[spk];" << std::endl;
+                    // Determine the index of the postsynaptic neuron this thread is responsible for
+                    os << "const unsigned int postInd = group->trgSpk[" << sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
+
+                    // Create substitution stack and add presynaptic index
+                    Substitutions synSubs(&popSubs);
+                    synSubs.addVarSubstitution("id_post", "postInd");
+
+                    if(supportsNamespace() && !sg.getArchetype().getWUModel()->getLearnPostSupportCode().empty()) {
+                        os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(sg.getArchetype().getWUModel()->getLearnPostSupportCode()) << ";" << std::endl;
                     }
-                }
 
-                genSharedMemBarrier(os);
-                os << "// only work on existing neurons" << std::endl;
-                os << "if (" << popSubs["id"] << " < group->colStride)";
+                    // Create substitution stack for generating procedural connectivity code
+                    Substitutions connSubs(&synSubs);
+                    connSubs.addVarSubstitution("num_threads", "1");
+
+                    // If this connectivity requires an RNG for initialisation,
+                    // make copy of connect Phillox RNG and skip ahead to id that would have been used to initialize any variables associated with it
+                    if(::Utils::isRNGRequired(sg.getArchetype().getConnectivityInitialiser().getSnippet()->getColBuildCode())
+                       || ((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) && ::Utils::isRNGRequired(sg.getArchetype().getWUVarInitialisers())))
+                    {
+                        // **NOTE** add RNG to synSubs so it can be correctly referenced in possynapticUpdateSubs below
+                        genGlobalRNGSkipAhead(os, synSubs,
+                                              "postInd + " + connSubs["group_start_id"] + " + " + std::to_string(getNumInitialisationRNGStreams(modelMerged) * modelMerged.getModel().getBatchSize()));
+                    }
+
+                    connSubs.addVarSubstitution("id_pre_begin", "0");
+                    connSubs.addVarSubstitution("id_thread", "0");
+                    connSubs.addVarSubstitution("num_post", "group->numTrgNeurons");
+                    connSubs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+
+                    // Create another substitution stack for generating presynaptic simulation code
+                    Substitutions postsynapticUpdateSubs(&synSubs);
+
+                    // Replace $(id_pre) with first 'function' parameter as simulation code is
+                    // going to be, in turn, substituted into procedural connectivity generation code
+                    postsynapticUpdateSubs.addVarSubstitution("id_pre", "$(0)");
+
+                    // If weights are provided by a kernel
+                    if(!sg.getArchetype().getKernelSize().empty()) {
+                        // Replace kernel indices with the subsequent 'function' parameters
+                        for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                            postsynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
+                                                                      "$(" + std::to_string(i + 1) + ")");
+                        }
+                    }
+
+
+                    // Generate presynaptic simulation code into new stringstream-backed code stream
+                    std::ostringstream postsynapticUpdateStream;
+                    CodeStream postsynapticUpdate(postsynapticUpdateStream);
+                    postLearnHandler(os, sg, postsynapticUpdateSubs);
+
+                    // When a synapse should be 'added', substitute in presynaptic update code
+                    connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), postsynapticUpdateStream.str());
+
+                    // Generate procedural connectivity code
+                    wumProceduralConnectHandler(os, sg, connSubs);
+                }
+            }
+            // Otherwise
+            else {
+                os << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
+                os << "for (unsigned int r = 0; r < numSpikeBlocks; r++)";
                 {
                     CodeStream::Scope b(os);
-                    os << "// loop through all incoming spikes for learning" << std::endl;
-                    os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
+                    os << "const unsigned int numSpikesInBlock = (r == numSpikeBlocks - 1) ? ((numSpikes - 1) % " << getKernelBlockSize(KernelPostsynapticUpdate) << ") + 1 : " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
+
+                    os << "if (" << getThreadID() << " < numSpikesInBlock)";
                     {
                         CodeStream::Scope b(os);
+                        const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
+                        os << "const unsigned int spk = group->trgSpk[" << sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
+                        os << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
-                        Substitutions synSubs(&popSubs);
-                        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            os << "if (" << synSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
-                            os << "const unsigned int synAddress = group->remap[(shSpk[j] * group->colStride) + " << popSubs["id"] << "];" << std::endl;
-
-                            // **OPTIMIZE** we can do a fast constant divide optimization here
-                            os << "const unsigned int ipre = synAddress / group->rowStride;" << std::endl;
-                            synSubs.addVarSubstitution("id_pre", "ipre");
+                        if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                            os << "shColLength[" << getThreadID() << "] = group->colLength[spk];" << std::endl;
                         }
-                        else {
-                            os << "const unsigned int synAddress = (" << synSubs["id"] << " * group->numTrgNeurons) + shSpk[j];" << std::endl;
-                            synSubs.addVarSubstitution("id_pre", synSubs["id"]);
-                        }
+                    }
 
-                        synSubs.addVarSubstitution("id_post", "shSpk[j]");
-                        synSubs.addVarSubstitution("id_syn", "synAddress");
+                    genSharedMemBarrier(os);
+                    os << "// only work on existing neurons" << std::endl;
+                    os << "if (" << popSubs["id"] << " < group->colStride)";
+                    {
+                        CodeStream::Scope b(os);
+                        os << "// loop through all incoming spikes for learning" << std::endl;
+                        os << "for (unsigned int j = 0; j < numSpikesInBlock; j++)";
+                        {
+                            CodeStream::Scope b(os);
 
-                        postLearnHandler(os, sg, synSubs);
+                            Substitutions synSubs(&popSubs);
+                            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                os << "if (" << synSubs["id"] << " < shColLength[j])" << CodeStream::OB(1540);
+                                os << "const unsigned int synAddress = group->remap[(shSpk[j] * group->colStride) + " << popSubs["id"] << "];" << std::endl;
 
-                        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                            os << CodeStream::CB(1540);
+                                // **OPTIMIZE** we can do a fast constant divide optimization here
+                                os << "const unsigned int ipre = synAddress / group->rowStride;" << std::endl;
+                                synSubs.addVarSubstitution("id_pre", "ipre");
+                            }
+                            else {
+                                os << "const unsigned int synAddress = (" << synSubs["id"] << " * group->numTrgNeurons) + shSpk[j];" << std::endl;
+                                synSubs.addVarSubstitution("id_pre", synSubs["id"]);
+                            }
+
+                            synSubs.addVarSubstitution("id_post", "shSpk[j]");
+                            synSubs.addVarSubstitution("id_syn", "synAddress");
+
+                            postLearnHandler(os, sg, synSubs);
+
+                            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                                os << CodeStream::CB(1540);
+                            }
                         }
                     }
                 }

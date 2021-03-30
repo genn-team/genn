@@ -185,7 +185,7 @@ protected:
                                     PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                     PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
     void genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                     PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const;
+                                     PostsynapticUpdateGroupMergedHandler postLearnHandler, PostsynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                   SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 

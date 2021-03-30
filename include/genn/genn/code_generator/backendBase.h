@@ -213,8 +213,8 @@ public:
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
                                   HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
+                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, 
+                                  PresynapticUpdateGroupMergedHandler sgSparseRowConnectHandler,  PostsynapticUpdateGroupMergedHandler sgSparseColConnectHandler,
                                   HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific functions to perform custom updates

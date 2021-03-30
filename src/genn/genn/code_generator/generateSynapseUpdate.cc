@@ -249,7 +249,29 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
             applySynapseSubstitutions(os, sg.getArchetype().getWUModel()->getEventCode(), "eventCode",
                                       sg, baseSubs, modelMerged, backend.supportsNamespace());
         },
-        // Procedural connectivity
+        // Postsynaptic learning code
+        [&modelMerged, &backend](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
+        {
+            const auto *wum = sg.getArchetype().getWUModel();
+            if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
+                os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
+            }
+
+            applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
+        },
+        // Synapse dynamics
+        [&modelMerged, &backend](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
+        {
+            const auto *wum = sg.getArchetype().getWUModel();
+            if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
+                os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
+            }
+
+            applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
+                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
+        },
+        // Row-wise procedural connectivity
         [&model](CodeStream &os, const PresynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
             const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
@@ -288,27 +310,44 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
                 os << pCode << std::endl;
             }
         },
-        // Postsynaptic learning code
-        [&modelMerged, &backend](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, const Substitutions &baseSubs)
+        // Column-wise procedural connectivity
+        [&model](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &baseSubs)
         {
-            const auto *wum = sg.getArchetype().getWUModel();
-            if (!wum->getLearnPostSupportCode().empty() && backend.supportsNamespace()) {
-                os << "using namespace " << modelMerged.getPostsynapticUpdateSupportCodeNamespace(wum->getLearnPostSupportCode()) <<  ";" << std::endl;
+            const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+
+            // Add substitutions
+            baseSubs.addFuncSubstitution("endCol", 0, "break");
+            baseSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                               [&sg](size_t i) { return sg.isConnectivityInitParamHeterogeneous(i);  },
+                                               "", "group->");
+            baseSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                             [&sg](size_t i) { return sg.isConnectivityInitDerivedParamHeterogeneous(i);  },
+                                             "", "group->");
+            baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
+
+            // Initialise row building state variables for procedural connectivity
+            for(const auto &a : connectInit.getSnippet()->getColBuildStateVars()) {
+                // Apply substitutions to value
+                std::string value = a.value;
+                baseSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity col build state var : merged" + std::to_string(sg.getIndex()));
+
+                os << a.type << " " << a.name << " = " << value << ";" << std::endl;
             }
 
-            applySynapseSubstitutions(os, wum->getLearnPostCode(), "learnPostCode",
-                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
-        },
-        // Synapse dynamics
-        [&modelMerged, &backend](CodeStream &os, const SynapseDynamicsGroupMerged &sg, const Substitutions &baseSubs)
-        {
-            const auto *wum = sg.getArchetype().getWUModel();
-            if (!wum->getSynapseDynamicsSuppportCode().empty() && backend.supportsNamespace()) {
-                os << "using namespace " << modelMerged.getSynapseDynamicsSupportCodeNamespace(wum->getSynapseDynamicsSuppportCode()) <<  ";" << std::endl;
-            }
+            // Loop through synapses in row
+            os << "while(true)";
+            {
+                CodeStream::Scope b(os);
 
-            applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
-                                      sg, baseSubs, modelMerged, backend.supportsNamespace());
+                // Apply substitutions to row building code
+                std::string pCode = connectInit.getSnippet()->getColBuildCode();
+                baseSubs.addVarNameSubstitution(connectInit.getSnippet()->getColBuildStateVars());
+                baseSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(sg.getIndex()));
+                pCode = ensureFtype(pCode, model.getPrecision());
+
+                // Write out code
+                os << pCode << std::endl;
+            }
         },
         // Push EGP handler
         [&backend, &modelMerged](CodeStream &os)
