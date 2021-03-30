@@ -2,7 +2,6 @@
 
 // Standard includes
 #include <map>
-#include <set>
 #include <string>
 #include <vector>
 
@@ -249,6 +248,9 @@ protected:
 
     void setEventThresholdReTestRequired(bool req){ m_EventThresholdReTestRequired = req; }
 
+    //! Set if any of this synapse group's weight update model variables referenced by a custom update
+    void setWUVarReferencedByCustomUpdate(bool ref) { m_WUVarReferencedByCustomUpdate = ref;  }
+
     void setPSModelMergeTarget(const std::string &targetName)
     {
         m_PSModelTargetName = targetName;
@@ -276,6 +278,9 @@ protected:
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
+
+    //! Are any of this synapse group's weight update model variables referenced by a custom update
+    bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
 
     //! Can weight update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
@@ -370,6 +375,9 @@ private:
 
     //! Should narrow i.e. less than 32-bit types be used for sparse matrix indices
     bool m_NarrowSparseIndEnabled;
+
+    //! Are any of this synapse group's weight update model variables referenced by a custom update
+    bool m_WUVarReferencedByCustomUpdate;
 
     //! Variable mode used for variables used to combine input from this synapse group
     VarLocation m_InSynLocation;

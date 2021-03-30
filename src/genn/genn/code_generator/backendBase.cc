@@ -165,3 +165,22 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
         }
     }
 }
+//-----------------------------------------------------------------------
+void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
+{
+    // If batching is enabled, calculate batch offset
+    if(cu.getArchetype().isBatched()) {
+        os << "const unsigned int batchOffset = group->size * batch;" << std::endl;
+    }
+            
+    // If axonal delays are required
+    if(cu.getArchetype().getDelayNeuronGroup() != nullptr) {
+        // We should read from delay slot pointed to be spkQuePtr
+        os << "const unsigned int delayOffset = (*group->spkQuePtr * group->size);" << std::endl;
+
+        // If batching is also enabled, calculate offset including delay and batch
+        if(cu.getArchetype().isBatched()) {
+            os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
+        }
+    }
+}

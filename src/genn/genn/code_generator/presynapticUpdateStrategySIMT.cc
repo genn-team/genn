@@ -567,7 +567,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         wumSimHandler(presynapticUpdate, sg, presynapticUpdateSubs);
 
         // When a synapse should be 'added', substitute in presynaptic update code
-        connSubs.addFuncSubstitution("addSynapse", 1 + sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
+        connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
         // Generate procedural connectivity code
         wumProceduralConnectHandler(os, sg, connSubs);

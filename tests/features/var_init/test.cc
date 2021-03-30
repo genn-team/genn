@@ -60,21 +60,39 @@ double getProb(scalar *data, unsigned int size, F cdf)
 
 TEST_F(SimTest, Vars)
 {
-    const double p = 0.02;
+    // **NOTE**
+    // After considerable thought as to why these fail:
+    // * Each distribution is tested in 12 different contexts
+    // * This test is run using 5 different RNGs (OpenCL, CUDA, MSVC standard library, Clang standard library, GCC standard library)
+    // = 60 permutations
+    // We want the probability that one or more of the 60 tests fail simply by chance 
+    // to be less than 2%; for significance level a the probability that none of the 
+    // tests fail is (1-a)^60 which we want to be 0.98, i.e. 98% of the time the test 
+    // passes if the algorithm is correct. Hence, a= 1- 0.98^(1/60) = 0.00034
+    const double p = 0.00034;
 
     // Pull vars back to host
     pullPopStateFromDevice();
     pullCurrSourceStateFromDevice();
     pullDenseStateFromDevice();
     pullSparseStateFromDevice();
+    pullNeuronCustomUpdateStateFromDevice();
+    pullPSMCustomUpdateStateFromDevice();
+    pullWUPreCustomUpdateStateFromDevice();
+    pullWUPostCustomUpdateStateFromDevice();
 
     // Test host-generated vars
-    PROB_TEST(, Pop, 20000)
-    PROB_TEST(, CurrSource, 20000)
-    PROB_TEST(p, Dense, 20000)
-    PROB_TEST(, Dense, 20000)
-    PROB_TEST(, Sparse, 20000)
-    PROB_TEST(pre_, Sparse, 20000)
-    PROB_TEST(post_, Sparse, 20000)
+    PROB_TEST(, Pop, 50000);
+    PROB_TEST(, CurrSource, 50000);
+    PROB_TEST(p, Dense, 50000);
+    PROB_TEST(, Dense, 50000);
+    PROB_TEST(, Sparse, 50000);
+    PROB_TEST(pre_, Sparse, 50000);
+    PROB_TEST(post_, Sparse, 50000);
+    PROB_TEST(, NeuronCustomUpdate, 50000);
+    PROB_TEST(, CurrentSourceCustomUpdate, 50000);
+    PROB_TEST(, PSMCustomUpdate, 50000);
+    PROB_TEST(, WUPreCustomUpdate, 50000);
+    PROB_TEST(, WUPostCustomUpdate, 50000);
 }
 

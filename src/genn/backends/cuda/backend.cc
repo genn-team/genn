@@ -83,13 +83,13 @@ private:
 
 
 //-----------------------------------------------------------------------
-void genGroupStartIDs(CodeStream &, size_t&, size_t&, size_t)
+void genGroupStartIDs(CodeStream &, size_t&, size_t&)
 {
 }
 //-----------------------------------------------------------------------
 template<typename T, typename G, typename ...Args>
-void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem, size_t blockSize,
-                      const std::vector<T> &mergedGroups, G getNumThreads,
+void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem, 
+                      const std::vector<T> &mergedGroups, G getPaddedNumThreads,
                       Args... args)
 {
     // Loop through merged groups
@@ -111,22 +111,22 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem, si
         os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
         for(const auto &ng : m.getGroups()) {
             os << idStart << ", ";
-            idStart += padSize(getNumThreads(ng.get()), blockSize);
+            idStart += getPaddedNumThreads(ng.get());
         }
         os << "};" << std::endl;
     }
 
     // Generate any remaining groups
-    genGroupStartIDs(os, idStart, totalConstMem, blockSize, args...);
+    genGroupStartIDs(os, idStart, totalConstMem, args...);
 }
 //-----------------------------------------------------------------------
 template<typename ...Args>
-void genMergedKernelDataStructures(CodeStream &os, size_t blockSize, size_t &totalConstMem,
+void genMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
                                    Args... args)
 {
     // Generate group start id arrays
     size_t idStart = 0;
-    genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), blockSize, args...);
+    genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
 }
 
 //-----------------------------------------------------------------------
@@ -200,6 +200,34 @@ bool Backend::areSharedMemAtomicsSlow() const
     // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
     return (getChosenCUDADevice().major < 5);
+}
+//--------------------------------------------------------------------------
+std::string Backend::getThreadID(unsigned int axis) const
+{
+    switch(axis) {
+    case 0:
+        return "threadIdx.x"; 
+    case 1:
+        return "threadIdx.y"; 
+    case 2:
+        return "threadIdx.z"; 
+    default:
+        assert(false);
+    }
+}
+//--------------------------------------------------------------------------
+std::string Backend::getBlockID(unsigned int axis) const
+{
+    switch(axis) {
+    case 0:
+        return "blockIdx.x"; 
+    case 1:
+        return "blockIdx.y"; 
+    case 2:
+        return "blockIdx.z"; 
+    default:
+        assert(false);
+    }
 }
 //--------------------------------------------------------------------------
 std::string Backend::getAtomic(const std::string &type, AtomicOperation op, AtomicMemSpace) const
@@ -276,9 +304,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelNeuronUpdate), totalConstMem,
+    genMergedKernelDataStructures(os, totalConstMem,
                                   modelMerged.getMergedNeuronUpdateGroups(),
-                                  [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); });
+                                  [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
     os << std::endl;
 
     // Generate reset kernel to be run before the neuron kernel
@@ -375,16 +403,16 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // Generate data structure for accessing merged groups
     size_t totalConstMem = getChosenDeviceSafeConstMemBytes();
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelPresynapticUpdate), totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPresynapticUpdateGroups(),
                                   [this](const SynapseGroupInternal &sg)
                                   {
-                                      return getNumPresynapticUpdateThreads(sg, getPreferences());
+                                      return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate);
                                   });
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelPostsynapticUpdate), totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
-                                  [](const SynapseGroupInternal &sg){ return getNumPostsynapticUpdateThreads(sg); });
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedPostsynapticUpdateGroups(),
+                                  [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); });
 
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelSynapseDynamicsUpdate), totalConstMem, modelMerged.getMergedSynapseDynamicsGroups(),
-                                  [](const SynapseGroupInternal &sg){ return getNumSynapseDynamicsThreads(sg); });
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedSynapseDynamicsGroups(),
+                                  [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumSynapseDynamicsThreads(sg), KernelSynapseDynamicsUpdate); });
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -513,11 +541,153 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,HostHandler preambleHandler, 
+                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
+                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
+{
+    const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Generate struct definitions
+    modelMerged.genMergedCustomUpdateStructs(os, *this);
+    modelMerged.genMergedCustomUpdateWUStructs(os, *this);
+    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to push them
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), memorySpaces);
+    
+    // Generate preamble
+    preambleHandler(os);
+
+    // Generate data structure for accessing merged groups
+    // **NOTE** constant cache is preferentially given to neuron and synapse groups as, typically, they are launched more often 
+    // than custom update kernels so subtract constant memory requirements of synapse group start ids from total constant memory
+    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
+                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); });
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
+                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
+
+    // Build set containing union of all custom update groupsnames
+    std::set<std::string> customUpdateGroups;
+    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
+
+    // Loop through custom update groups
+    for(const auto &g : customUpdateGroups) {
+        // Generate kernel
+        size_t idCustomUpdateStart = 0;
+        if(std::any_of(modelMerged.getMergedCustomUpdateGroups().cbegin(), modelMerged.getMergedCustomUpdateGroups().cend(),
+                       [&g](const CustomUpdateGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); })
+           || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
+                       [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
+        {
+            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+            {
+                CodeStream::Scope b(os);
+
+                Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+                kernelSubs.addVarSubstitution("t", "t");
+
+                os << "const unsigned int id = " << getKernelBlockSize(KernelCustomUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+                os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom updates" << std::endl;
+                genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
+
+                os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom WU updates" << std::endl;
+                genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
+            }
+        }
+
+        size_t idCustomTransposeUpdateStart = 0;
+        if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
+                       [&g](const CustomUpdateTransposeWUGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g); }))
+        {
+            os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
+            {
+                CodeStream::Scope b(os);
+
+                Substitutions kernelSubs((model.getPrecision() == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions);
+                kernelSubs.addVarSubstitution("t", "t");
+
+                os << "const unsigned int id = " << getKernelBlockSize(KernelCustomTransposeUpdate) << " * blockIdx.x + threadIdx.x; " << std::endl;
+
+                os << "// ------------------------------------------------------------------------" << std::endl;
+                os << "// Custom WU transpose updates" << std::endl;
+                genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUTransposeUpdateHandler, idCustomTransposeUpdateStart);
+            }
+        }
+        os << "void update" << g << "()";
+        {
+            CodeStream::Scope b(os);
+
+            // Push any required EGPs
+            pushEGPHandler(os);
+
+            // Launch custom update kernel if required
+            if(idCustomUpdateStart > 0) {
+                CodeStream::Scope b(os);
+                genKernelDimensions(os, KernelCustomUpdate, idCustomUpdateStart, 1);
+                Timer t(os, "customUpdate" + g, model.isTimingEnabled());
+                os << KernelNames[KernelCustomUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // Launch custom transpose update kernel if required
+            if(idCustomTransposeUpdateStart > 0) {
+                CodeStream::Scope b(os);
+                // **TODO** make block height parameterizable
+                genKernelDimensions(os, KernelCustomUpdate, idCustomTransposeUpdateStart, 1, 8);
+                Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
+                os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
+                os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // If timing is enabled
+            if(model.isTimingEnabled()) {
+                // Synchronise last event
+                os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(customUpdate" << g;
+                if(idCustomTransposeUpdateStart > 0) {
+                    os << "Transpose";
+                }
+                os << "Stop)); " << std::endl;
+
+                if(idCustomUpdateStart > 0) {
+                    CodeGenerator::CodeStream::Scope b(os);
+                    os << "float tmp;" << std::endl;
+                    os << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "Start, customUpdate" << g << "Stop));" << std::endl;
+                    os << "customUpdate" << g << "Time += tmp / 1000.0;" << std::endl;
+                }
+                if(idCustomTransposeUpdateStart > 0) {
+                    CodeGenerator::CodeStream::Scope b(os);
+                    os << "float tmp;" << std::endl;
+                    os << "CHECK_CUDA_ERRORS(cudaEventElapsedTime(&tmp, customUpdate" << g << "TransposeStart, customUpdate" << g << "TransposeStop));" << std::endl;
+                    os << "customUpdate" << g << "TransposeTime += tmp / 1000.0;" << std::endl;
+                }
+            }
+        }
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
-                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
-                      HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+                      CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
+                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
+                      CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -526,15 +696,21 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
     // Generate struct definitions
     modelMerged.genMergedNeuronInitGroupStructs(os, *this);
+    modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
+    modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
-    
+    modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
+
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), memorySpaces);
 
     // Generate preamble
     preambleHandler(os);
@@ -543,14 +719,19 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
     const ModelSpecInternal &model = modelMerged.getModel();
     size_t totalConstMem = 0;
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelInitialize), totalConstMem,
-                                  modelMerged.getMergedNeuronInitGroups(), [](const NeuronGroupInternal &ng){ return ng.getNumNeurons(); },
-                                  modelMerged.getMergedSynapseDenseInitGroups(), [](const SynapseGroupInternal &sg){ return sg.getTrgNeuronGroup()->getNumNeurons(); },
-                                  modelMerged.getMergedSynapseConnectivityInitGroups(), [](const SynapseGroupInternal &sg){ return getNumConnectivityInitThreads(sg); });
+    genMergedKernelDataStructures(
+        os, totalConstMem,
+        modelMerged.getMergedNeuronInitGroups(), [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
+        modelMerged.getMergedCustomWUUpdateDenseInitGroups(), [this](const CustomUpdateWUInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedSynapseDenseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(sg.getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
+        modelMerged.getMergedSynapseConnectivityInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); });
 
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
-    genMergedKernelDataStructures(os, getKernelBlockSize(KernelInitializeSparse), totalConstMem,
-                                  modelMerged.getMergedSynapseSparseInitGroups(), [](const SynapseGroupInternal &sg){ return sg.getMaxConnections(); });
+    genMergedKernelDataStructures(
+        os, totalConstMem,
+        modelMerged.getMergedSynapseSparseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(sg.getMaxConnections(), KernelInitializeSparse); },
+        modelMerged.getMergedCustomWUUpdateSparseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getMaxConnections(), KernelInitializeSparse); });
     os << std::endl;
 
     // If device RNG is required, generate kernel to initialise it
@@ -579,8 +760,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, sgDenseInitHandler, 
-                            sgSparseRowConnectHandler, sgSparseColConnectHandler,
+        genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, cuHandler, cuDenseHandler,
+                            sgDenseInitHandler, sgSparseRowConnectHandler, sgSparseColConnectHandler,
                             sgKernelInitHandler, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
@@ -596,7 +777,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, numStaticInitThreads, idSparseInitStart);
+            genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, cuSparseHandler, numStaticInitThreads, idSparseInitStart);
         }
     }
 
@@ -1675,20 +1856,21 @@ void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const
+void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY) const
 {
     // Calculate grid size
-    const size_t gridSize = ceilDivide(numThreads, getKernelBlockSize(kernel));
-    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", 1);" << std::endl;
+    const size_t gridSize = ceilDivide(numThreadsX, getKernelBlockSize(kernel));
+    assert(gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]);
+    assert(numBlockThreadsY < (size_t)getChosenCUDADevice().maxThreadsDim[0]);
 
-    if (gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]) {
-        os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
+    os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numBlockThreadsY << ");" << std::endl;
+    if(numBlockThreadsY > 1) {
+        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[2]);
+        os << "const dim3 grid(" << gridSize << ", 1, " << batchSize << ");" << std::endl;
     }
     else {
-        // **TODO** this needs to be implemented in genParallelGroup
-        assert(false);
-        const size_t squareGridSize = (size_t)std::ceil(std::sqrt(gridSize));
-        os << "const dim3 grid(" << squareGridSize << ", "<< squareGridSize <<");" << std::endl;
+        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[1]);
+        os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }
 }   // namespace CUDA

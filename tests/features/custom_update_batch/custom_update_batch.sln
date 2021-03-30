@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "custom_update_batch", "custom_update_batch.vcxproj", "{4353740D-3D00-40E3-B15A-9FFE328400FE}"
+	ProjectSection(ProjectDependencies) = postProject
+		{7D671364-FC1F-47B7-86B7-2437741064C5} = {7D671364-FC1F-47B7-86B7-2437741064C5}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "custom_update_batch_CODE\runner.vcxproj", "{7D671364-FC1F-47B7-86B7-2437741064C5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4353740D-3D00-40E3-B15A-9FFE328400FE}.Debug|x64.ActiveCfg = Debug|x64
+		{4353740D-3D00-40E3-B15A-9FFE328400FE}.Debug|x64.Build.0 = Debug|x64
+		{4353740D-3D00-40E3-B15A-9FFE328400FE}.Release|x64.ActiveCfg = Release|x64
+		{4353740D-3D00-40E3-B15A-9FFE328400FE}.Release|x64.Build.0 = Release|x64
+		{7D671364-FC1F-47B7-86B7-2437741064C5}.Debug|x64.ActiveCfg = Debug|x64
+		{7D671364-FC1F-47B7-86B7-2437741064C5}.Debug|x64.Build.0 = Debug|x64
+		{7D671364-FC1F-47B7-86B7-2437741064C5}.Release|x64.ActiveCfg = Release|x64
+		{7D671364-FC1F-47B7-86B7-2437741064C5}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

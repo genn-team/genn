@@ -8,11 +8,12 @@ from weakref import proxy
 import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
-from .genn_wrapper.Models import VarInit, VarInitVector
+from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
+                                  VarInitVector, VarRefVector, 
+                                  VarReferenceVector, WUVarReferenceVector)
 from .genn_wrapper.StlContainers import DoubleVector
 
-def prepare_model(model, group, param_space, var_space, pre_var_space=None,
-                  post_var_space=None, model_family=None):
+def prepare_model(model, group, param_space, var_space, model_family):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
 
@@ -21,10 +22,8 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
     group           --  group model will belong to
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
-    pre_var_space   --  optional dict with (weight update) model
-                        presynaptic variables
-    post_var_space  --  optional dict with (weight update) model
-                        postsynaptic variables
+    var_ref_space   --  optional dict with (custom update) model
+                        variable references
     model_family    --  pygenn.genn_wrapper.NeuronModels or pygenn.genn_wrapper.WeightUpdateModels or pygenn.genn_wrapper.CurrentSourceModels
 
     Returns:
@@ -46,29 +45,8 @@ def prepare_model(model, group, param_space, var_space, pre_var_space=None,
             model_family.__name__))
     var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
                 for vnt in m_instance.get_vars()}
-
-
-    if model_family == genn_wrapper.WeightUpdateModels:
-        pre_var_names = [vnt.name for vnt in m_instance.get_pre_vars()]
-        if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(pre_var_names):
-            raise ValueError("Invalid presynaptic variable initializers "
-                             "for {0}".format(model_family.__name__))
-        pre_var_dict = {
-            vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], group)
-            for vnt in m_instance.get_pre_vars()}
-
-        post_var_names = [vnt.name for vnt in m_instance.get_post_vars()]
-        if post_var_space is not None and set(iterkeys(post_var_space)) != set(post_var_names):
-            raise ValueError("Invalid postsynaptic variable initializers "
-                            "for {0}".format(model_family.__name__))
-        post_var_dict = {
-            vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], group)
-            for vnt in m_instance.get_post_vars()}
-        return (m_instance, m_type, param_names, params, var_names, var_dict,
-                pre_var_names, pre_var_dict, post_var_names, post_var_dict)
-    else:
-        return (m_instance, m_type, param_names, params, var_names, var_dict)
-
+    
+    return (m_instance, m_type, param_names, params, var_names, var_dict)
 
 def prepare_snippet(snippet, param_space, snippet_family):
     """Prepare a snippet by checking its validity and extracting
@@ -168,6 +146,33 @@ def var_space_to_vals(model, var_space):
     return model.make_var_values(VarInitVector([var_space[vnt.name].init_val
                                                 for vnt in model.get_vars()]))
 
+def var_ref_space_to_var_refs(model, var_ref_space):
+    """Convert a var_ref_space dict to VarReferences
+
+    Args:
+    model           -- instance of the model
+    var_ref_space   -- dict with variable references
+
+    Returns:
+    native model's VarValues
+    """
+    return model.make_var_references(
+        VarReferenceVector([var_ref_space[v.name][0]
+                            for v in model.get_var_refs()]))
+                                                
+def var_ref_space_to_wu_var_refs(model, var_ref_space):
+    """Convert a var_ref_space dict to WUVarReferences
+
+    Args:
+    model       -- instance of the model
+    var_space   -- dict with Variables
+
+    Returns:
+    native model's VarValues
+    """
+    return model.make_wuvar_references(
+        WUVarReferenceVector([var_ref_space[v.name][0]
+                              for v in model.get_var_refs()]))
 
 def pre_var_space_to_vals(model, var_space):
     """Convert a var_space dict to PreVarValues

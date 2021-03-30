@@ -10,6 +10,11 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+//--------------------------------------------------------------------------
+// Anonymous namespace
+//--------------------------------------------------------------------------
+namespace
+{
 class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
@@ -21,8 +26,7 @@ public:
       "Aplus",    // 2 - Rate of potentiation
       "Aminus",   // 3 - Rate of depression
       "Wmin",     // 4 - Minimum weight
-      "Wmax",     // 5 - Maximum weight
-    });
+      "Wmax"});   // 5 - Maximum weight
 
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
@@ -90,8 +94,69 @@ public:
 };
 IMPLEMENT_SNIPPET(PreRepeatVal);
 
+class Sum : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 0, 1, 2);
+
+    SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
+
+    SET_VARS({{"sum", "scalar"}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(Sum);
+}   // Anonymous namespace
+
 //--------------------------------------------------------------------------
 // Tests
+//--------------------------------------------------------------------------
+TEST(SynapseGroup, WUVarReferencedByCustomUpdate)
+{
+     ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+
+    STDPAdditive::ParamValues wumParams(10.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::VarValues wumVarVals(0.0);
+    STDPAdditive::PreVarValues wumPreVarVals(0.0);
+    STDPAdditive::PostVarValues wumPostVarVals(0.0);
+
+    auto *sg1 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    auto *sg2 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Synapses2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    auto *sg3 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Synapses3", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+
+    
+    Sum::VarValues sumVarValues(0.0);
+    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg2, "g"), createWUVarRef(sg2, "g"));
+    Sum::VarReferences sumVarReferences3(createWUPreVarRef(sg3, "preTrace"), createWUPreVarRef(sg3, "preTrace"));
+
+    model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate",
+                               {}, sumVarValues, sumVarReferences2);
+    model.addCustomUpdate<Sum>("SumWeight3", "CustomUpdate",
+                               {}, sumVarValues, sumVarReferences3);
+    model.finalize();
+
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(sg1)->areWUVarReferencedByCustomUpdate());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(sg2)->areWUVarReferencedByCustomUpdate());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(sg3)->areWUVarReferencedByCustomUpdate());
+}
 //--------------------------------------------------------------------------
 TEST(SynapseGroup, CompareWUDifferentModel)
 {

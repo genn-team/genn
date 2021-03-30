@@ -42,6 +42,16 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        [](const NeuronGroupInternal &){ return true; },
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
 
+    LOGD_CODE_GEN << "Merging custom update initialization groups:";
+    createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
+                       [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
+                       [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canInitBeMerged(b); });
+
+    LOGD_CODE_GEN << "Merging custom dense weight update initialization groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateDenseInitGroups,
+                       [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) && cg.isVarInitRequired(); },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canInitBeMerged(b); });
+
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
     createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
                        [](const SynapseGroupInternal &sg)
@@ -61,10 +71,15 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        {
                            return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                    (sg.isWUVarInitRequired()
-                                    || (backend.isSynRemapRequired() && !sg.getWUModel()->getSynapseDynamicsCode().empty())
+                                    || backend.isSynRemapRequired(sg)
                                     || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                        },
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
+
+    LOGD_CODE_GEN << "Merging custom sparse weight update initialization groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
+                       [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
@@ -105,6 +120,21 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                            return a.canConnectivityHostInitBeMerged(b); 
                        });
 
+    LOGD_CODE_GEN << "Merging custom update groups:";
+    createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
+                        [](const CustomUpdateInternal &) { return true; },
+                        [](const CustomUpdateInternal &a, const CustomUpdateInternal &b) { return a.canBeMerged(b); });
+
+    LOGD_CODE_GEN << "Merging custom weight update groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
+                       [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });
+
+    LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
+    createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
+                       [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
+                       [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canBeMerged(b); });
+
     // Loop through merged neuron groups
     for(const auto &ng : m_MergedNeuronUpdateGroups) {
         // Add neuron support code
@@ -129,23 +159,5 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
     // Loop through merged synapse dynamics groups and add support code
     for(const auto &sg : m_MergedSynapseDynamicsGroups) {
         m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
-    }
-}
-//----------------------------------------------------------------------------
-void CodeGenerator::ModelSpecMerged::genScalarEGPPush(CodeStream &os, const std::string &suffix, const BackendBase &backend) const
-{
-    // Loop through all merged EGPs
-    for(const auto &e : m_MergedEGPs) {
-        // Loop through all destination structures with this suffix
-        const auto groupEGPs = e.second.equal_range(suffix);
-        for(auto g = groupEGPs.first; g != groupEGPs.second; ++g) {
-            // If EGP is scalar, generate code to copy
-            if(!Utils::isTypePointer(g->second.type)) {
-                backend.genMergedExtraGlobalParamPush(os, suffix, g->second.mergedGroupIndex,
-                                                      std::to_string(g->second.groupIndex),
-                                                      g->second.fieldName, e.first);
-            }
-
-        }
     }
 }

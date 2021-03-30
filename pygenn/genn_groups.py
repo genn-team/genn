@@ -9,7 +9,7 @@ except NameError:  # Python 3
 
 from weakref import proxy
 from deprecated import deprecated
-from six import iteritems
+from six import iteritems, iterkeys, itervalues
 import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
@@ -21,7 +21,7 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
-from .genn_wrapper.Models import VarAccessDuplication_SHARED
+from .genn_wrapper.Models import VarAccessDuplication_SHARED, WUVarReference
 
 class Group(object):
 
@@ -177,7 +177,7 @@ class Group(object):
         # Loop through variables
         for v in vars:
             # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
+            var_data = var_dict[v.name]
 
             # If variable is located on host
             var_loc = get_location_fn(v.name) 
@@ -272,7 +272,6 @@ class NeuronGroup(Group):
         self.spikes = None
         self.spike_count = None
         self.spike_que_ptr = [0]
-        self.is_spike_source_array = False
         self._max_delay_steps = 0
 
     @property
@@ -353,11 +352,8 @@ class NeuronGroup(Group):
         """
         (self.neuron, self.type, self.param_names, self.params,
          self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, self, param_space, var_space, self,
+             model, self, param_space, var_space,
              model_family=genn_wrapper.NeuronModels)
-
-        if self.type == "SpikeSourceArray":
-            self.is_spike_source_array = True
 
     def add_to(self, num_neurons):
         """Add this NeuronGroup to a model
@@ -547,16 +543,28 @@ class SynapseGroup(Group):
             raise Exception("when weight sharing is used, set_weight_update"
                             "can only be used on the 'master' population")
         else:
+            # Prepare standard model
             (self.w_update, self.wu_type, self.wu_param_names, self.wu_params,
-             self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
-             self.wu_post_var_names, post_var_dict) =\
-                 model_preprocessor.prepare_model(
-                     model, self, param_space, var_space, pre_var_space,
-                     post_var_space, model_family=genn_wrapper.WeightUpdateModels)
+             self.wu_var_names, self.vars) =\
+                model_preprocessor.prepare_model(
+                    model, self, param_space, var_space, 
+                    genn_wrapper.WeightUpdateModels)
+             
+            self.wu_pre_var_names = [vnt.name for vnt in self.w_update.get_pre_vars()]
+            if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(self.wu_pre_var_names):
+                raise ValueError("Invalid presynaptic variable initializers "
+                                 "for WeightUpdateModels")
+            self.pre_vars = {
+                vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], self)
+                for vnt in self.w_update.get_pre_vars()}
 
-            self.vars.update(var_dict)
-            self.pre_vars.update(pre_var_dict)
-            self.post_vars.update(post_var_dict)
+            self.wu_post_var_names = [vnt.name for vnt in self.w_update.get_post_vars()]
+            if post_var_space is not None and set(iterkeys(post_var_space)) != set(self.wu_post_var_names):
+                raise ValueError("Invalid postsynaptic variable initializers "
+                                 "for WeightUpdateModels")
+            self.post_vars = {
+                vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], self)
+                for vnt in self.w_update.get_post_vars()}
 
     def set_post_syn(self, model, param_space, var_space):
         """Set postsynaptic model, its parameters and initial variables
@@ -1116,3 +1124,173 @@ class CurrentSource(Group):
         """Reinitialise current source"""
         # Reinitialise current source state variables
         self._reinitialise_vars()
+
+class CustomUpdate(Group):
+
+    """Class representing a custom update"""
+
+    def __init__(self, name, model):
+        """Init CustomUpdate
+
+        Args:
+        name    -- string name of the custom update
+        model   -- pygenn.genn_model.GeNNModel this custom update is part of
+        """
+        super(CustomUpdate, self).__init__(name, model)
+        self.custom_update_model = None
+        self.var_refs = {}
+        self.custom_wu_update = False
+
+    def set_custom_update_model(self, model, param_space, var_space, var_ref_space):
+        """Set custom update model, its parameters, 
+        initial variables and variable referneces
+
+        Args:
+        model           --  type as string or instance of the model
+        param_space     --  dict with model parameters
+        var_space       --  dict with model variables
+        var_references  --  dict with model variables
+        """
+        
+        # Prepare standard model
+        (self.custom_update_model, self.type, self.param_names, self.params,
+         self.var_names, self.vars) =\
+            model_preprocessor.prepare_model(
+                model, self, param_space, var_space, 
+                genn_wrapper.CustomUpdateModels)
+        
+        # Check variable references
+        self.var_ref_names = [vnt.name for vnt in self.custom_update_model.get_var_refs()]
+        if var_ref_space is not None and set(iterkeys(var_ref_space)) != set(self.var_ref_names):
+            raise ValueError("Invalid variable reference initializers "
+                             "for CustomUpdateModels")
+        
+        # Count wu var references in list
+        num_wu_var_refs = sum(isinstance(v[0], WUVarReference)
+                              for v in itervalues(var_ref_space))
+            
+        # If there's a mixture of references to weight 
+        # update  model and other variables, give error
+        if num_wu_var_refs != 0 and num_wu_var_refs != len(var_ref_space):
+            raise ValueError("Custom updates cannot be created with "
+                             "references pointing to a mixture of "
+                             "weight update and other variables")
+
+        # Set flag 
+        self.custom_wu_update = (num_wu_var_refs != 0)
+        
+        # Store variable references in class
+        self.var_refs = var_ref_space
+
+    def add_to(self, group_name):
+        """Attach this CurrentSource to NeuronGroup and
+        add it to the pygenn.genn_model.GeNNModel
+
+        Args:
+        group_name  --  name of update group this update should be performed in
+        """
+        add_fct = getattr(self._model._model, "add_custom_update_" + self.type)
+        
+
+        var_ini = model_preprocessor.var_space_to_vals(self.custom_update_model,
+                                                       self.vars)
+        if self.custom_wu_update:
+            var_refs = model_preprocessor.var_ref_space_to_wu_var_refs(
+                self.custom_update_model, self.var_refs)
+        else:
+            var_refs = model_preprocessor.var_ref_space_to_var_refs(
+                self.custom_update_model, self.var_refs)
+            
+        self.pop = add_fct(self.name, group_name, self.custom_update_model, 
+                           self.params, var_ini, var_refs)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name   -- string with the name of the extra global parameter
+        param_values -- iterable or a single value
+        """
+        self._set_extra_global_param(param_name, param_values,
+                                     self.custom_update_model)
+
+    def load(self):
+        # If this is a custom weight update
+        if self.custom_wu_update:
+            # Assert that population has individual synapse variables
+            assert self._synapse_group.has_individual_synapse_vars
+
+            # Loop through state variables
+            for v in self.custom_update_model.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_var_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    #              else self._model.batch_size)
+                    num_copies = 1
+
+                    # Get view
+                    size = self._synapse_group.weight_update_var_size * num_copies
+                    var_data.view = self._assign_ext_ptr_array(
+                        v.name, size, var_data.type)
+
+                    # If there is more than one copy, reshape view to 2D
+                    if num_copies > 1:
+                        var_data.view = np.reshape(var_data.view, 
+                                                   (num_copies, -1))
+
+                    # Initialise variable if necessary
+                    self._synapse_group._init_wum_var(var_data, num_copies)
+
+                # Load any var initialisation egps associated with this variable
+                self._load_egp(var_data.extra_global_params, v.name)
+        # Otherwise, load variables 
+        else:
+            self._load_vars(self.custom_update_model.get_vars(),
+                            size=self.pop.get_size())
+
+        # Load custom update extra global parameters
+        self._load_egp()
+
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
+
+    def reinitialise(self):
+        """Reinitialise custom update"""
+        # If this is a custom weight update
+        if self.custom_wu_update:
+            # Assert that population has individual synapse variables
+            assert self._synapse_group.has_individual_synapse_vars
+
+            # Loop through custom update state variables
+            for v in self.custom_update_model.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_var_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    #              else self._model.batch_size)
+                    num_copies = 1
+                    
+                    # Initialise
+                    self._synapse_group._init_wum_var(var_data, num_copies)
+        # Otherwise, reinitialise current source state variables
+        else:
+            self._reinitialise_vars(size=self.pop.get_size())
+
+    @property
+    def _synapse_group(self):
+        """Get SynapseGroup associated with custom weight update"""
+        assert self.custom_wu_update
+
+        # Return Python synapse group reference from 
+        # first (arbitrarily) variable reference
+        return next(itervalues(self.var_refs))[1]

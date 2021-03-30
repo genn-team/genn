@@ -71,9 +71,9 @@ void modelDefinition(ModelSpec &model)
     model.setName("batch_pull_current_var");
     
     
-    auto *pop = model.addNeuronPopulation<PreNeuron>("Pop", 10, {}, {0.0});
-    auto *popDelay = model.addNeuronPopulation<PreNeuron>("PopDelay", 10, {}, {0.0});
-    auto *post = model.addNeuronPopulation<PostNeuron>("Post", 10, {}, {0.0});
+    model.addNeuronPopulation<PreNeuron>("Pop", 10, {}, {0.0});
+    model.addNeuronPopulation<PreNeuron>("PopDelay", 10, {}, {0.0});
+    model.addNeuronPopulation<PostNeuron>("Post", 10, {}, {0.0});
     
     model.addSynapsePopulation<Continuous, PostsynapticModels::DeltaCurr>(
         "PopDelay_Post", SynapseMatrixType::DENSE_GLOBALG, 5,

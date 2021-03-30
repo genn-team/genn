@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <random>
+#include <set>
 #include <sstream>
 #include <string>
 
@@ -418,6 +419,54 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
 
     }
 }
+//-------------------------------------------------------------------------
+template<typename V, typename S>
+void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &backend, 
+                     CodeStream &definitionsVar, CodeStream &definitionsFunc, CodeStream &definitionsInternalVar,
+                     CodeStream &runnerVarDecl, CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerExtraGlobalParamFunc,
+                     CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, const std::map<std::string, V> &customUpdates,
+                     MemAlloc &mem, std::vector<std::string> &statePushPullFunctions, S getSizeFn)
+{
+    // Loop through customupdates
+    for(const auto &c : customUpdates) {
+        const auto cuModel = c.second.getCustomUpdateModel();
+        const auto cuVars = cuModel->getVars();
+
+        std::vector<std::string> customUpdateStatePushPullFunctions;
+        for(size_t i = 0; i < cuVars.size(); i++) {
+            const auto *varInitSnippet = c.second.getVarInitialisers()[i].getSnippet();
+            const unsigned int numCopies = c.second.isBatched() ? getNumCopies(cuVars[i].access, modelMerged.getModel().getBatchSize()) : 1;
+            const bool autoInitialized = !varInitSnippet->getCode().empty();
+            mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                runnerPushFunc, runnerPullFunc, cuVars[i].type, cuVars[i].name + c.first, c.second.getVarLocation(i),
+                                autoInitialized, numCopies * getSizeFn(c.second), customUpdateStatePushPullFunctions);
+
+            // Loop through EGPs required to initialize custom update variable
+            const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+            for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+                genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                    runnerVarDecl, runnerExtraGlobalParamFunc,
+                                    extraGlobalParams[e].type, extraGlobalParams[e].name + cuVars[i].name + c.first,
+                                    true, VarLocation::HOST_DEVICE);
+            }
+        }
+
+        // Add helper function to push and pull entire custom update state
+        if(!backend.getPreferences().automaticCopy) {
+            genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc,
+                                c.first, backend.getPreferences().generateEmptyStatePushPull,
+                                customUpdateStatePushPullFunctions, statePushPullFunctions);
+        }
+
+        const auto csExtraGlobalParams = cuModel->getExtraGlobalParams();
+        for(size_t i = 0; i < csExtraGlobalParams.size(); i++) {
+            genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                runnerVarDecl, runnerExtraGlobalParamFunc,
+                                csExtraGlobalParams[i].type, csExtraGlobalParams[i].name + c.first,
+                                true, VarLocation::HOST_DEVICE);
+        }
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -544,6 +593,15 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << "// timers" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
 
+    // Build set containing union of all custom update groupsnames
+    std::set<std::string> customUpdateGroups;
+    std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateValueType &v) { return v.second.getUpdateGroupName(); });
+    std::transform(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   std::inserter(customUpdateGroups, customUpdateGroups.end()),
+                   [](const ModelSpec::CustomUpdateWUValueType &v) { return v.second.getUpdateGroupName(); });
+
     // Generate variables to store total elapsed time
     // **NOTE** we ALWAYS generate these so usercode doesn't require #ifdefs around timing code
     genHostScalar(definitionsVar, runnerVarDecl, "double", "initTime", "0.0");
@@ -553,6 +611,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     genHostScalar(definitionsVar, runnerVarDecl, "double", "postsynapticUpdateTime", "0.0");
     genHostScalar(definitionsVar, runnerVarDecl, "double", "synapseDynamicsTime", "0.0");
 
+    // Generate variables to store total elapsed time for each custom update group
+    for(const auto &g : customUpdateGroups) {
+        genHostScalar(definitionsVar, runnerVarDecl, "double", "customUpdate" + g + "Time", "0.0");
+        genHostScalar(definitionsVar, runnerVarDecl, "double", "customUpdate" + g + "TransposeTime", "0.0");
+    }
     
     // If timing is actually enabled
     if(model.isTimingEnabled()) {
@@ -576,6 +639,14 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         if(!modelMerged.getMergedSynapseDynamicsGroups().empty()) {
             backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              runnerStepTimeFinalise, "synapseDynamics", true);
+        }
+
+        // Add timers for each custom update group
+        for(const auto &g : customUpdateGroups) {
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "customUpdate" + g, false);
+            backend.genTimer(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             runnerStepTimeFinalise, "customUpdate" + g + "Transpose", false);
         }
 
         // Create init timer
@@ -625,6 +696,18 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
+    // Generate merged custom update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom dense WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateDenseInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
@@ -639,6 +722,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom sparse WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateSparseInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                          runnerVarDecl, runnerMergedStructAlloc);
     }
@@ -677,6 +766,24 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+    
+    // Loop through custom variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Loop through custom WU variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateWUGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Loop through custom WU transpose variable update groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -967,6 +1074,26 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     allVarStreams << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    allVarStreams << "// custom update variables" << std::endl;
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
+    genCustomUpdate(modelMerged, backend,
+                    definitionsVar, definitionsFunc, definitionsInternalVar,
+                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                    runnerPushFunc, runnerPullFunc, model.getCustomUpdates(),
+                    mem, statePushPullFunctions, [](const CustomUpdateInternal &c) { return c.getSize(); });
+
+    genCustomUpdate(modelMerged, backend,
+                    definitionsVar, definitionsFunc, definitionsInternalVar,
+                    runnerVarDecl, runnerVarAlloc, runnerVarFree, runnerExtraGlobalParamFunc,
+                    runnerPushFunc, runnerPullFunc, model.getCustomWUUpdates(),
+                    mem, statePushPullFunctions, 
+                    [&backend](const CustomUpdateWUInternal &c) 
+                    { 
+                        return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*c.getSynapseGroup()); 
+                    });
+    allVarStreams << std::endl;
+
+    allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// postsynaptic variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
@@ -1047,10 +1174,10 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                 mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                         s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size);
 
-                // **TODO** remap is not always required
-                if(backend.isSynRemapRequired() && !s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-                    // Allocate synRemap
-                    // **THINK** this is over-allocating
+                
+                // If synapse remap structure is required, allocate synRemap
+                // **THINK** this is over-allocating
+                if(backend.isSynRemapRequired(s.second)) {
                     mem += backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                             "unsigned int", "synRemap" + s.second.getName(), VarLocation::DEVICE, size + 1);
                 }
@@ -1098,7 +1225,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
         const bool proceduralWeights = (s.second.getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         std::vector<std::string> synapseGroupStatePushPullFunctions;
         if (!s.second.isWeightSharingSlave() && (individualWeights || proceduralWeights)) {
-            const size_t size = s.second.getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(s.second);
+            const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
 
             const auto wuVars = wu->getVars();
             for(size_t i = 0; i < wuVars.size(); i++) {
@@ -1527,7 +1654,11 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     definitions << "EXPORT_FUNC void updateSynapses(" << model.getTimePrecision() << " t);" << std::endl;
     definitions << "EXPORT_FUNC void initialize();" << std::endl;
     definitions << "EXPORT_FUNC void initializeSparse();" << std::endl;
-
+    
+    // Generate function definitions for each custom update
+    for(const auto &g : customUpdateGroups) {
+        definitions << "EXPORT_FUNC void update" << g << "();" << std::endl;
+    }
 #ifdef MPI_ENABLE
     definitions << "// MPI functions" << std::endl;
     definitions << "EXPORT_FUNC void generateMPI();" << std::endl;

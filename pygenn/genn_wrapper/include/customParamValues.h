@@ -17,7 +17,7 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets values as a vector of doubles
-    const std::vector<double> &getValues() const
+    const std::vector<double> &getInitialisers() const
     {
         return m_Values;
     }

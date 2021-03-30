@@ -10,6 +10,8 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+namespace
+{
 class WeightUpdateModelPost : public WeightUpdateModels::Base
 {
 public:
@@ -99,6 +101,7 @@ public:
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 IMPLEMENT_MODEL(LIFAdditional);
+}
 
 
 //----------------------------------------------------------------------------

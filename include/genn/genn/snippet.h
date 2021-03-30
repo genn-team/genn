@@ -38,20 +38,20 @@ public:                                                 \
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// Snippet::ValueBase
+// Snippet::InitialiserContainerBase
 //----------------------------------------------------------------------------
-//! Wrapper to ensure at compile time that correct number of values are
-//! used when specifying the values of a model's parameters and initial state.
+//! Wrapper to ensure at compile time that correct 
+//! number of values are used when initialising models
 namespace Snippet
 {
-template<size_t NumVars>
-class ValueBase
+template<typename V, size_t NumVars>
+class InitialiserContainerBase
 {
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
+    // number of parameters e.g. std::array<V, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals) : m_Values(std::vector<double>{{std::forward<const double>(vals)...}})
+    InitialiserContainerBase(T&&... vals) : m_Values(std::vector<V>{{std::forward<const V>(vals)...}})
     {
         static_assert(sizeof...(vals) == NumVars, "Wrong number of values");
     }
@@ -59,8 +59,8 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    //! Gets values as a vector of doubles
-    const std::vector<double> &getValues() const
+    //! Gets values as a vector
+    const std::vector<V> &getInitialisers() const
     {
         return m_Values;
     }
@@ -68,7 +68,7 @@ public:
     //----------------------------------------------------------------------------
     // Operators
     //----------------------------------------------------------------------------
-    double operator[](size_t pos) const
+    const V &operator[](size_t pos) const
     {
         return m_Values[pos];
     }
@@ -77,22 +77,22 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
-    std::vector<double> m_Values;
+    std::vector<V> m_Values;
 };
 
 //----------------------------------------------------------------------------
-// Models::ValueBase<0>
+// Snippet::InitialiserContainerBase<0>
 //----------------------------------------------------------------------------
-//! Template specialisation of ValueBase to avoid compiler warnings
+//! Template specialisation of InitialiserContainerBase to avoid compiler warnings
 //! in the case when a model requires no parameters or state variables
-template<>
-class ValueBase<0>
+template<typename V>
+class InitialiserContainerBase<V, 0>
 {
 public:
     // **NOTE** other less terrifying forms of constructor won't complain at compile time about
     // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
     template<typename... T>
-    ValueBase(T&&... vals)
+    InitialiserContainerBase(T&&... vals)
     {
         static_assert(sizeof...(vals) == 0, "Wrong number of values");
     }
@@ -101,11 +101,17 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Gets values as a vector of doubles
-    std::vector<double> getValues() const
+    std::vector<V> getInitialisers() const
     {
         return {};
     }
 };
+
+//----------------------------------------------------------------------------
+// Snippet::ValueBase
+//----------------------------------------------------------------------------
+template<size_t NumVars>
+using ValueBase = InitialiserContainerBase<double, NumVars>;
 
 //----------------------------------------------------------------------------
 // Snippet::Base
@@ -217,7 +223,10 @@ protected:
     {
         auto iter = std::find_if(vec.begin(), vec.end(),
             [name](const T &v){ return (v.name == name); });
-        assert(iter != vec.end());
+
+        if(iter == vec.end()) {
+            throw std::runtime_error("Cannot find variable '" + name + "'");
+        }
 
         // Return 'distance' between first entry in vector and iterator i.e. index
         return distance(vec.begin(), iter);

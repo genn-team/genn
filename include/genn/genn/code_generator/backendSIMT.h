@@ -30,6 +30,8 @@ enum Kernel
     KernelInitializeSparse,
     KernelPreNeuronReset,
     KernelPreSynapseReset,
+    KernelCustomUpdate,
+    KernelCustomTransposeUpdate,
     KernelMax
 };
 
@@ -79,10 +81,10 @@ public:
     virtual std::string getSharedPrefix() const = 0;
 
     //! Get the ID of the current thread within the threadblock
-    virtual std::string getThreadID() const = 0;
+    virtual std::string getThreadID(unsigned int axis = 0) const = 0;
 
     //! Get the ID of the current thread block
-    virtual std::string getBlockID() const = 0;
+    virtual std::string getBlockID(unsigned int axis = 0) const = 0;
 
     //! Get the name of the count-leading-zeros function
     virtual std::string getCLZ() const = 0;
@@ -120,8 +122,15 @@ public:
     virtual void genPopVariableInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genVariableInit(CodeStream &os, const std::string &count, const std::string &indexVarName,
                                  const Substitutions &kernelSubs, Handler handler) const final;
-    virtual void genSynapseVariableRowInit(CodeStream &os, const SynapseGroupMergedBase &sg,
-                                           const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
+    {
+        genSynapseVariableRowInit(os, kernelSubs, handler);
+    }
+
+    virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const final
+    {
+        genSynapseVariableRowInit(os, kernelSubs, handler);
+    }
 
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
@@ -131,7 +140,7 @@ public:
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
     virtual bool isPopulationRNGRequired() const final { return true; }
 
-    virtual bool isSynRemapRequired() const final { return true; }
+    virtual bool isSynRemapRequired(const SynapseGroupInternal &sg) const final;
     virtual bool isPostsynapticRemapRequired() const final { return true; }
 
     //------------------------------------------------------------------------
@@ -143,6 +152,9 @@ public:
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelBlockSizes.at(kernel); }
 
+    size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
+    size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
+    
     //--------------------------------------------------------------------------
     // Static API
     //--------------------------------------------------------------------------
@@ -177,13 +189,23 @@ protected:
     void genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                   SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 
+    void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                               const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const;
+
+    void genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                 const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const;
+    
+    void genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
+                                          const std::string &updateGroup, CustomUpdateTransposeWUGroupMergedHandler &customWUTransposeUpdateHandler, size_t &idStart) const;
+
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                             NeuronInitGroupMergedHandler neuronInitHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler,
-                             SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
+                             NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 
+                             CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, 
+                             SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                              SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                   SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, 
+                                   SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, 
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
@@ -191,6 +213,9 @@ protected:
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
+    
+    //! Helper wrapper around padSize to pad size to a kernel size
+    size_t padKernelSize(size_t size, Kernel kernel) const;
 
 private:
     //--------------------------------------------------------------------------
@@ -248,46 +273,57 @@ private:
         popSubs.addVarSubstitution("id", "lid");
     }
 
-    template<typename T>
+    template<typename T, typename S, typename F>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          GetPaddedGroupSizeFunc<typename T::GroupInternal> getPaddedSizeFunc,
-                          GroupHandler<T> handler) const
+                          S getPaddedSizeFunc, F filter, GroupHandler<T> handler) const
     {
         // Loop through groups
         for(const auto &gMerge : groups) {
-            // Sum padded sizes of each group within merged group
-            const size_t paddedSize = std::accumulate(
-                gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
-                [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+            if(filter(gMerge)) {
+                // Sum padded sizes of each group within merged group
+                const size_t paddedSize = std::accumulate(
+                    gMerge.getGroups().cbegin(), gMerge.getGroups().cend(), size_t{0},
+                    [gMerge, getPaddedSizeFunc](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
+                    {
+                        return (acc + getPaddedSizeFunc(g.get()));
+                    });
+
+                os << "// merged" << gMerge.getIndex() << std::endl;
+
+                // If this is the first  group
+                if(idStart == 0) {
+                    os << "if(id < " << paddedSize << ")";
+                }
+                else {
+                    os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
+                }
                 {
-                    return (acc + getPaddedSizeFunc(g.get()));
-                });
+                    CodeStream::Scope b(os);
+                    Substitutions popSubs(&kernelSubs);
 
-            os << "// merged" << gMerge.getIndex() << std::endl;
+                    genGroupMergedSearch(os, popSubs, gMerge, idStart);
 
-            // If this is the first  group
-            if(idStart == 0) {
-                os << "if(id < " << paddedSize << ")";
-            }
-            else {
-                os << "if(id >= " << idStart << " && id < " << idStart + paddedSize << ")";
-            }
-            {
-                CodeStream::Scope b(os);
-                Substitutions popSubs(&kernelSubs);
+                    handler(os, gMerge, popSubs);
 
-                genGroupMergedSearch(os, popSubs, gMerge, idStart);
-
-                handler(os, gMerge, popSubs);
-
-                idStart += paddedSize;
+                    idStart += paddedSize;
+                }
             }
         }
+    }
+
+    template<typename T, typename S>
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
+                          S getPaddedSizeFunc, GroupHandler<T> handler) const
+    {
+        genParallelGroup(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+                         [](const T &) { return true; }, handler);
     }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
 
     void genRecordingSharedMemInit(CodeStream &os, const std::string &suffix) const;
+
+    void genSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const;
 
     // Get appropriate presynaptic update strategy to use for this synapse group
     const PresynapticUpdateStrategySIMT::Base *getPresynapticUpdateStrategy(const SynapseGroupInternal &sg) const
