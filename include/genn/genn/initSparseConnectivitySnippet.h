@@ -417,6 +417,16 @@ public:
                               {"minOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw) - (int)$(conv_kw)) / (int)$(conv_sw))))"},
                               {"maxOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))"}});
 
+    SET_COL_BUILD_STATE_VARS({{"outRow", "int", "($(id_post)/ (int)$(conv_oc)) / (int)$(conv_ow)"},
+                              {"outCol", "int", "($(id_post)/ (int)$(conv_oc)) % (int)$(conv_ow)"},
+                              {"outChan", "int", "$(id_post) % (int)$(conv_oc)"},
+                              {"strideRow", "int", "(outRow * (int)$(conv_sh)) - (int)$(conv_padh)"},
+                              {"strideCol", "int", "(outCol * (int)$(conv_sw)) - (int)$(conv_padw)"},
+                              {"inRow", "int", "min((int)$(conv_ih), max(0, (outRow * (int)$(conv_sh)) - (int)$(conv_padh)))"},
+                              {"maxInRow", "int", "min((int)$(conv_ih), max(0, (outRow * (int)$(conv_sh)) + (int)$(conv_kh) - (int)$(conv_padh)))"},
+                              {"minInCol", "int", "min((int)$(conv_iw), max(0, (outCol * (int)$(conv_sw)) - (int)$(conv_padw)))"},
+                              {"maxInCol", "int", "min((int)$(conv_iw), max(0, (outCol * (int)$(conv_sw)) + (int)$(conv_kw) - (int)$(conv_padw)))"}});
+
     SET_ROW_BUILD_CODE(
         "if($(outRow) == $(maxOutRow)) {\n"
         "   $(endRow);\n"
@@ -434,6 +444,22 @@ public:
         "    }\n"
         "}\n"
         "$(outRow)++;\n");
+
+    SET_COL_BUILD_CODE(
+        "if($(inRow) == $(maxInRow)) {\n"
+        "   $(endCol);\n"
+        "}\n"
+        "const int kernRow = $(inRow) - $(strideRow);\n"
+        "for(int inCol = $(minInCol); inCol < $(maxInCol); inCol++) {\n"
+        "    const int kernCol = inCol - $(strideCol);\n"
+        "    for(unsigned int inChan = 0; inChan < (unsigned int)$(conv_ic); inChan++) {\n"
+        "        const int idPre = (($(inRow) * (int)$(conv_iw) * (int)$(conv_ic)) +\n"
+        "                            (inCol * (int)$(conv_ic)) +\n"
+        "                            inChan);\n"
+        "        $(addSynapse, idPre, kernRow, kernCol, inChan, $(outChan));\n"
+        "    }\n"
+        "}\n"
+        "$(inRow)++;\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const std::vector<double> &pars)
