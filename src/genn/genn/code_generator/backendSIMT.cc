@@ -801,7 +801,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                     // Generate presynaptic simulation code into new stringstream-backed code stream
                     std::ostringstream postsynapticUpdateStream;
                     CodeStream postsynapticUpdate(postsynapticUpdateStream);
-                    postLearnHandler(os, sg, postsynapticUpdateSubs);
+                    postLearnHandler(postsynapticUpdate, sg, postsynapticUpdateSubs);
 
                     // When a synapse should be 'added', substitute in presynaptic update code
                     connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), postsynapticUpdateStream.str());
