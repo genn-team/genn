@@ -1014,6 +1014,8 @@ class SynapseGroup(Group):
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
             if self.is_dense:
+                # when an AllToAll connection states that "self" connections
+                # are not allowed, we need to pass weights in the right place
                 if var_data.values.size < var_data.view.size:
                     size = var_data.view.size
                     rs = size - var_data.values.size
