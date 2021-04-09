@@ -239,6 +239,19 @@ private:
             popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
         }
         else {
+            // Use this to get reference to merged group structure
+            os << "const unsigned int groupIdx = d_merged" << T::name << "Group" << g.getIndex() << "BlockIndices[(id - " << idStart << ") / blockDim.x];" << std::endl;
+            os << getPointerPrefix() << "struct Merged" << T::name << "Group" << g.getIndex() << " *group";
+            os << " = &d_merged" << T::name << "Group" << g.getIndex() << "[groupIdx]; " << std::endl;
+
+            // Get group start thread ID and use as group_start_id
+            os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << g.getIndex() << "[groupIdx];" << std::endl;
+            popSubs.addVarSubstitution("group_start_id", "groupStartID");
+
+            // Use this to calculate local id within group
+            os << "const unsigned int lid = id - groupStartID;" << std::endl;
+        }
+        /*else {
             // Perform bisect operation to get index of merged struct
             os << "unsigned int lo = 0;" << std::endl;
             os << "unsigned int hi = " << g.getGroups().size() << ";" << std::endl;
@@ -269,7 +282,7 @@ private:
 
             // Use this to calculate local id within group
             os << "const unsigned int lid = id - groupStartID;" << std::endl;
-        }
+        }*/
         popSubs.addVarSubstitution("id", "lid");
     }
 
