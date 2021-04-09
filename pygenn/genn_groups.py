@@ -1014,7 +1014,14 @@ class SynapseGroup(Group):
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
             if self.is_dense:
-                var_data.view[:] = var_data.values
+                if var_data.values.size < var_data.view.size:
+                    size = var_data.view.size
+                    rs = size - var_data.values.size
+                    cs = size // rs
+                    ids = [i for i in range(size) if (i // cs) != (i % cs)]
+                    var_data.view[ids] = var_data.values
+                else:
+                    var_data.view[:] = var_data.values
             elif self.is_ragged:
                 # Sort variable to match GeNN order
                 sorted_var = var_data.values[self.synapse_order]
