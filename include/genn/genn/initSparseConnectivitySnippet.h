@@ -484,6 +484,8 @@ public:
 // InitSparseConnectivitySnippet::AvgPoolConf2D
 //----------------------------------------------------------------------------
 //! Initialises convolutional connectivity preceded by average pooling
+//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and,
+//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
 /*! This sparse connectivity snippet does not support multiple threads per neuron */
 class AvgPoolConf2D : public Base
 {
@@ -498,55 +500,43 @@ public:
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
 
-    
+    SET_ROW_BUILD_STATE_VARS({{"poolInRow", "int", "($(id_pre) / (int)$(pool_ic)) / (int)$(pool_iw)"},
+                              {"poolInCol", "int", "($(id_pre) / (int)$(pool_ic)) % (int)$(pool_iw)"},
+                              {"poolInChan", "int", "$(id_pre) % (int)$(pool_iw)"},
+                              {"poolOutRow", "int", "(poolInRow + (int)$(pool_padh)) / (int)$(pool_sh)"},
+                              {"poolStrideRow", "int", "poolOutRow * (int)$(pool_sh) - (int)$(pool_padh)"},
+                              {"poolCropKH", "int", "min(poolStrideRow + (int)$(pool_kh), (int)$(pool_ih)) - max(poolStrideRow, 0)"},
+                              {"poolOutCol", "int", "(poolInCol + (int)$(pool_padw)) / (int)$(pool_sw)"},
+                              {"poolStrideCol", "int", "poolOutCol * (int)$(pool_sw) - (int)$(pool_padw)"},
+                              {"poolCropKW", "int", "min(poolStrideCol + (int)$(pool_kw), (int)$(pool_iw)) - max(poolStrideCol, 0)"},
+                              {"convOutRow", "int", "min((int)$(conv_oh), max(0, 1 + ((poolOutRow + (int)$(conv_padh) - (int)$(conv_kh)) / (int)$(conv_sh))))"},
+                              {"maxConvOutRow", "int", "min((int)$(conv_oh), max(0, 1 + ((poolOutRow + (int)$(conv_padh)) / (int)$(conv_sh))))"},
+                              {"minConvOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((poolOutCol + (int)$(conv_padw) - (int)$(conv_kw)) / (int)$(conv_sw))))"},
+                              {"maxConvOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((poolOutCol + (int)$(conv_padw)) / (int)$(conv_sw))))"});
+
+
     SET_ROW_BUILD_CODE(
-        "// Stash all parameters in registers\n"
-        "// **NOTE** this means parameters from group structure only get converted from float->int once\n"
-        "// **NOTE** if they're actually constant, compiler is still likely to treat them as constants rather than allocating registers\n"
-        "const int pool_kh = $(pool_kh), pool_kw = $(pool_kw);\n"
-        "const int pool_sh = $(pool_sh), pool_sw = $(pool_sw);\n"
-        "const int pool_padh = $(pool_padh), pool_padw = $(pool_padw);\n"
-        "const int pool_ih = $(pool_ih), pool_iw = $(pool_iw), pool_ic = $(pool_ic);\n"
-        "const int conv_kh = $(conv_kh), conv_kw = $(conv_kw);\n"
-        "const int conv_sh = $(conv_sh), conv_sw = $(conv_sw);\n"
-        "const int conv_padh = $(conv_padh), conv_padw = $(conv_padw);\n"
-        "const int conv_ow = $(conv_ow), conv_oh = $(conv_oh), conv_oc = $(conv_oc);\n"
-        "// Convert presynaptic neuron ID to row, column and channel in pool input\n"
-        "const int poolInRow = ($(id_pre) / pool_ic) / pool_iw;\n"
-        "const int poolInCol = ($(id_pre) / pool_ic) % pool_iw;\n"
-        "const int poolInChan = $(id_pre) % pool_ic;\n"
-        "// Calculate corresponding pool output\n"
-        "const int poolOutRow = (poolInRow + pool_padh) / pool_sh;\n"
-        "const int poolStrideRow = poolOutRow * pool_sh - pool_padh;\n"
-        "const int poolCropKH = min(poolStrideRow + pool_kh, pool_ih) - max(poolStrideRow, 0);\n"
-        "const int poolOutCol = (poolInCol + pool_padw) / pool_sw;\n"
-        "const int poolStrideCol = poolOutCol * pool_sw - pool_padw;\n"
-        "const int poolCropKW = min(poolStrideCol + pool_kw, pool_iw) - max(poolStrideCol, 0);\n"
-        "if ((poolInRow < (poolStrideRow + pool_kh)) && (poolInCol < (poolStrideCol + pool_kw))) {\n"
-        "    // Calculate range of output rows and columns which this pool output connects to\n"
-        "    const int minOutRow = min(conv_oh, max(0, 1 + ((poolOutRow + conv_padh - conv_kh) / conv_sh)));\n"
-        "    const int maxOutRow = min(conv_oh, max(0, 1 + ((poolOutRow + conv_padh) / conv_sh)));\n"
-        "    const int minOutCol = min(conv_ow, max(0, 1 + ((poolOutCol + conv_padw - conv_kw) / conv_sw)));\n"
-        "    const int maxOutCol = min(conv_ow, max(0, 1 + ((poolOutCol + conv_padw) / conv_sw)));\n"
-        "    // Loop through output rows, columns and channels\n"
-        "    for(int convOutRow = minOutRow; convOutRow < maxOutRow; convOutRow++) {\n"
-        "        const int strideRow = (convOutRow * conv_sh) - conv_padh;\n"
-        "        const int kernRow = poolOutRow - strideRow;\n"
-        "        for(int convOutCol = minOutCol; convOutCol < maxOutCol; convOutCol++) {\n"
-        "            const int strideCol = (convOutCol * conv_sw) - conv_padw;\n"
-        "            const int kernCol = poolOutCol - strideCol;\n"
-        "            for(int outChan = 0; outChan < conv_oc; outChan++) {\n"
-        "                // Calculate postsynaptic index and add synapse\n"
-        "                const int idPost = ((convOutRow * conv_ow * conv_oc) +\n"
-        "                                    (convOutCol * conv_oc) +\n"
-        "                                    outChan);\n"
-        "                $(addSynapse, idPost, kernRow, kernCol, poolInChan, outChan);\n"
-        "            }\"n"
-        "        }\n"
-        "    }\n"
+        "if (($(poolInRow) >= ($(poolStrideRow) + (int)$(pool_kh))) || ($(poolInCol) >= ($(poolStrideCol) + (int)$(pool_kw)))) {\n"
+        "   $(endRow);\n"
         "}\n"
-        "// End the row\n"
-        "$(endRow);\n");
+        "if($(convOutRow) == $(maxConvOutRow)) {\n"
+        "   $(endRow);\n"
+        "}\n"
+        "// Loop through output rows, columns and channels\n"
+        "const int strideRow = (convOutRow * (int)$(conv_sh)) - (int)$(conv_padh);\n"
+        "const int kernRow = $(poolOutRow) - strideRow;\n"
+        "for(int convOutCol = $(minConvOutCol); convOutCol < $(maxConvOutCol); convOutCol++) {\n"
+        "    const int strideCol = (convOutCol * (int)$(conv_sw)) - (int)$(conv_padw);\n"
+        "    const int kernCol = $(poolOutCol) - strideCol;\n"
+        "    for(int outChan = 0; outChan < (int)$(conv_oc); outChan++) {\n"
+        "        // Calculate postsynaptic index and add synapse\n"
+        "        const int idPost = ((convOutRow * (int)$(conv_ow) * (int)$(conv_oc)) +\n"
+        "                            (convOutCol * (int)$(conv_oc)) +\n"
+        "                            outChan);\n"
+        "        $(addSynapse, idPost, kernRow, kernCol, $(poolInChan), outChan);\n"
+        "    }\"n"
+        "}\n"
+        "$(convOutRow)++;\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const std::vector<double> &pars)
