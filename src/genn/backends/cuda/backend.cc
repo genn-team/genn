@@ -1677,7 +1677,7 @@ std::string Backend::getNVCCFlags() const
 #ifndef _WIN32
     nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
 #endif
-    if(m_RuntimeVersion >= 9000) {
+    if(m_RuntimeVersion >= 9020) {
         nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
     }
 
