@@ -9,6 +9,7 @@ IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPostWithReplacement)
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::FixedNumberPreWithReplacement);
 IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::Conv2D);
+IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::AvgPoolConv2D);
 
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
