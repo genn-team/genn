@@ -504,7 +504,7 @@ public:
     
     SET_ROW_BUILD_STATE_VARS({{"poolInRow", "int", "($(id_pre) / (int)$(pool_ic)) / (int)$(pool_iw)"},
                               {"poolInCol", "int", "($(id_pre) / (int)$(pool_ic)) % (int)$(pool_iw)"},
-                              {"poolInChan", "int", "$(id_pre) % (int)$(pool_iw)"},
+                              {"poolInChan", "int", "$(id_pre) % (int)$(pool_ic)"},
                               {"poolOutRow", "int", "(poolInRow + (int)$(pool_padh)) / (int)$(pool_sh)"},
                               {"poolStrideRow", "int", "poolOutRow * (int)$(pool_sh) - (int)$(pool_padh)"},
                               {"poolOutCol", "int", "(poolInCol + (int)$(pool_padw)) / (int)$(pool_sw)"},
@@ -580,8 +580,8 @@ public:
     SET_CALC_KERNEL_SIZE_FUNC(
         [](const std::vector<double> &pars)->std::vector<unsigned int>
         {
-            return {(unsigned int)pars[8], (unsigned int)pars[9],
-                    (unsigned int)pars[10], (unsigned int)pars[19]};
+            return {(unsigned int)pars[9], (unsigned int)pars[10],
+                    (unsigned int)pars[8], (unsigned int)pars[19]};
         });
 };
 }   // namespace InitSparseConnectivitySnippet
