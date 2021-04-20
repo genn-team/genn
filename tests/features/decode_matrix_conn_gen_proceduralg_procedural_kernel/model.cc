@@ -34,25 +34,37 @@ void modelDefinition(ModelSpec &model)
         initVar<InitVarSnippet::Kernel>());    // 0 - Wij (nA)
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 64 * 64, {}, {});
-    model.addNeuronPopulation<PostNeuron>("PostHorz", 62 * 62, {}, PostNeuron::VarValues(0.0));
-    model.addNeuronPopulation<PostNeuron>("PostVert", 62 * 62, {}, PostNeuron::VarValues(0.0));
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("PrePool", 128 * 128, {}, {});
+    model.addNeuronPopulation<PostNeuron>("Post", 62 * 62 * 2, {}, PostNeuron::VarValues(0.0));
+    model.addNeuronPopulation<PostNeuron>("PostPool", 62 * 62 * 2, {}, PostNeuron::VarValues(0.0));
    
     InitSparseConnectivitySnippet::Conv2D::ParamValues convParams(
         3, 3,       // conv_kh, conv_kw
         1, 1,       // conv_sh, conv_sw
         0, 0,       // conv_padh, conv_padw
         64, 64, 1,  // conv_ih, conv_iw, conv_ic
-        62, 62, 1); // conv_oh, conv_ow, conv_oc
-        
+        62, 62, 2); // conv_oh, conv_ow, conv_oc
+    
+    InitSparseConnectivitySnippet::AvgPoolConv2D::ParamValues avgPoolConvParams(
+        2, 2,           // pool_kh, pool_kw
+        2, 2,           // pool_sh, pool_sw
+        0, 0,           // pool_padh, pool_padw
+        128, 128, 1,    // pool_ih, pool_iw, pool_ic
+        3, 3,           // conv_kh, conv_kw
+        1, 1,           // conv_sh, conv_sw
+        0, 0,           // conv_padh, conv_padw
+        64, 64,         // conv_ih, conv_iw
+        62, 62, 2);     // conv_oh, conv_ow, conv_oc
+    
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "SynHorz", SynapseMatrixType::PROCEDURAL_PROCEDURALG, NO_DELAY, "Pre", "PostHorz",
+        "Syn", SynapseMatrixType::PROCEDURAL_PROCEDURALG, NO_DELAY, "Pre", "Post",
         {}, staticSynapseInit,
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::Conv2D>({convParams}));
-
+    
     model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "SynVert", SynapseMatrixType::PROCEDURAL_PROCEDURALG, NO_DELAY, "Pre", "PostVert",
+        "SynPool", SynapseMatrixType::PROCEDURAL_PROCEDURALG, NO_DELAY, "PrePool", "PostPool",
         {}, staticSynapseInit,
         {}, {},
-        initConnectivity<InitSparseConnectivitySnippet::Conv2D>({convParams}));
+        initConnectivity<InitSparseConnectivitySnippet::AvgPoolConv2D>({avgPoolConvParams}));
 }
