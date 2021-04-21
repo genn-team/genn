@@ -46,6 +46,7 @@ from platform import system
 from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
+from warnings import warn
 
 # 3rd party imports
 import numpy as np
@@ -721,8 +722,13 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
-    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=None):
         """Pull extra global parameter from the device for a given population"""
+        if size is None:
+            warn("the default of size=1 is very counter-intuitive and "
+                 "will be removed in future", DeprecationWarning)
+            size = 1
+
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
@@ -763,8 +769,12 @@ class GeNNModel(object):
 
         self._slm.push_var_to_device(pop_name, var_name)
 
-    def push_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+    def push_extra_global_param_to_device(self, pop_name, egp_name, size=None):
         """Push extra global parameter to the device for a given population"""
+        if size is None:
+            warn("the default of size=1 is very counter-intuitive and "
+                 "will be removed in future", DeprecationWarning)
+            size = 1
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pushing")
 
