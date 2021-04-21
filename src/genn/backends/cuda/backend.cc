@@ -283,15 +283,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                               HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
-    
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), memorySpaces);
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups(), memorySpaces);
 
     // Generate preamble
@@ -309,18 +310,35 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                   [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
     os << std::endl;
 
+    // If any neuron groups require their previous spike times updating
+    size_t idNeuronPrevSpikeTimeUpdate = 0;
+    if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << model.getTimePrecision() << " t)";
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+            os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = blockIdx.y;" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
+            }
+            kernelSubs.addVarSubstitution("t", "t");
+
+            genNeuronPrevSpikeTimeUpdateKernel(os, kernelSubs, modelMerged, idNeuronPrevSpikeTimeUpdate);
+        }
+        os << std::endl;
+    }
+
     // Generate reset kernel to be run before the neuron kernel
-    size_t idPreNeuronReset = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "(" << model.getTimePrecision() << " t)";
+    size_t idNeuronSpikeQueueUpdate = 0;
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
     {
         CodeStream::Scope b(os);
 
-        os << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
+        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-        kernelSubs.addVarSubstitution("t", "t");
-
-        genPreNeuronResetKernel(os, kernelSubs, modelMerged, idPreNeuronReset);
+        genNeuronSpikeQueueUpdateKernel(os, modelMerged, idNeuronSpikeQueueUpdate);
     }
     os << std::endl;
 
@@ -358,10 +376,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         // Push any required EGPS
         pushEGPHandler(os);
 
-        if(idPreNeuronReset > 0) {
+        if(idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, 1);
-            os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>(t);" << std::endl;
+            genKernelDimensions(os, KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
+            os << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+        if(idNeuronSpikeQueueUpdate > 0) {
+            CodeStream::Scope b(os);
+            genKernelDimensions(os, KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
+            os << KernelNames[KernelNeuronSpikeQueueUpdate] << "<<<grid, threads>>>();" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
         if(idStart > 0) {
@@ -416,14 +440,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
-    size_t idPreSynapseReset = 0;
+    size_t idSynapseDendricDelayUpdate = 0;
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
         {
             CodeStream::Scope b(os);
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPreSynapseReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genPreSynapseResetKernel(os, modelMerged, idPreSynapseReset);
+            os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genSynapseDendriticDelayUpdateKernel(os, modelMerged, idSynapseDendricDelayUpdate);
         }
         os << std::endl;
     }
@@ -502,10 +526,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         pushEGPHandler(os);
 
         // Launch pre-synapse reset kernel if required
-        if(idPreSynapseReset > 0) {
+        if(idSynapseDendricDelayUpdate > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, 1);
-            os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
+            genKernelDimensions(os, KernelSynapseDendriticDelayUpdate, idSynapseDendricDelayUpdate, 1);
+            os << KernelNames[KernelSynapseDendriticDelayUpdate] << "<<<grid, threads>>>();" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
