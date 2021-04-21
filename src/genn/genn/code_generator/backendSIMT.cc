@@ -706,7 +706,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                 os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
         
                 // If there is a spike for this thread to process
-                os << "if (spike < group->trgSpkCnt[" << sg.getPostSlot(batchSize) << "])";
+                os << "if (spike < numSpikes)";
                 {
                     CodeStream::Scope b(os);
 
