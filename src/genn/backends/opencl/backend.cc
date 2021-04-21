@@ -147,15 +147,19 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     LOGI_BACKEND << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
     
     if(isChosenDeviceAMD()) {
-        LOGI_BACKEND << "Detected as an AMD device" << std::endl;
+        LOGI_BACKEND << "Detected as an AMD device";
     }
     else if(isChosenDeviceNVIDIA()) {
-        LOGI_BACKEND << "Detected as an NVIDIA device" << std::endl;
+        LOGI_BACKEND << "Detected as an NVIDIA device";
     }
     // Set pointer size
     const cl_int deviceAddressBytes = m_ChosenDevice.getInfo<CL_DEVICE_ADDRESS_BITS>() / 8;
     setPointerBytes(deviceAddressBytes);
     LOGI_BACKEND << "Device uses " << deviceAddressBytes * 8 << " bit pointers";
+
+    // Determine minimum alignement
+    m_AllocationAlignementBytes = m_ChosenDevice.getInfo<CL_DEVICE_MEM_BASE_ADDR_ALIGN>() / 8;
+    LOGI_BACKEND << "Device uses " << m_AllocationAlignementBytes << " byte alignement";
 
     // Add OpenCL-specific types
     addType("clrngLfsr113Stream", 16);

@@ -449,6 +449,7 @@ private:
     //--------------------------------------------------------------------------
     const unsigned int m_ChosenPlatformIndex;
     const unsigned int m_ChosenDeviceIndex;
+    unsigned int m_AllocationAlignementBytes;
     cl::Device m_ChosenDevice;
     cl::Platform m_ChosenPlatform;
 };
