@@ -10,7 +10,9 @@ except NameError:  # Python 3
 from weakref import proxy
 from deprecated import deprecated
 from six import iteritems, iterkeys, itervalues
+from warnings import warn
 import numpy as np
+
 from . import genn_wrapper
 from . import model_preprocessor
 from .model_preprocessor import Variable
@@ -79,14 +81,14 @@ class Group(object):
         """
         self._model.pull_var_from_device(self.name, var_name)
 
-    def pull_extra_global_param_from_device(self, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, egp_name, size=None):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
         egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._model.pull_extra_global_param_from_device(self.name, egp_name, size)
+        self._pull_extra_global_param_to_device(egp_name, size)
 
     def push_state_to_device(self):
         """Wrapper around GeNNModel.push_state_to_device"""
@@ -100,14 +102,14 @@ class Group(object):
         """
         self._model.push_var_to_device(self.name, var_name)
 
-    def push_extra_global_param_to_device(self, egp_name, size=1):
+    def push_extra_global_param_to_device(self, egp_name, size=None):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
         Args:
         egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._model.push_extra_global_param_to_device(self.name, egp_name, size)
+        self._push_extra_global_param_to_device(egp_name, size)
 
     def _assign_ext_ptr_array(self, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
@@ -157,6 +159,70 @@ class Group(object):
 
         return self._model.genn_types[var_type].assign_ext_ptr_single(
             internal_var_name)
+
+    def _push_extra_global_param_to_device(self, egp_name, size=None,
+                                           egp_dict=None):
+        """Wrapper around GeNNModel.push_extra_global_param_to_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        size        --  number of entries in EGP array
+        """
+        # If no extra global parameters dictionary
+        # is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Retrieve EGP from dictionary
+        egp = egp_dict[egp_name]
+
+        # If EGP is scalar, give error
+        if egp.is_scalar:
+            raise Exception("Only pointer-type extra global parameters "
+                            "need to be pushed")
+
+        # If deprecated size parameter is passed, give warning and
+        if size is not None:
+            warn("The size parameter is no longer "
+                 "required and will be removed", DeprecationWarning)
+            if size != len(egp.values):
+                raise ValueError("The size parameter doesn't match the "
+                                 "size of the extra global parameter data")
+
+        self._model.push_extra_global_param_to_device(self.name, egp_name,
+                                                      len(egp.values))
+
+    def _pull_extra_global_param_to_device(self, egp_name, size=None,
+                                           egp_dict=None):
+        """Wrapper around GeNNModel.pull_extra_global_param_to_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        size        --  number of entries in EGP array
+        """
+        # If no extra global parameters dictionary
+        # is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Retrieve EGP from dictionary
+        egp = egp_dict[egp_name]
+
+        # If EGP is scalar, give error
+        if egp.is_scalar:
+            raise Exception("Only pointer-type extra global parameters "
+                            "need to be pulled")
+
+        # If deprecated size parameter is passed, give warning and
+        if size is not None:
+            warn("The size parameter is no longer "
+                 "required and will be removed", DeprecationWarning)
+            if size != len(egp.values):
+                raise ValueError("The size parameter doesn't match the "
+                                 "size of the extra global parameter data")
+
+        self._model.pull_extra_global_param_from_device(self.name, egp_name,
+                                                        len(egp.values))
 
     def _load_vars(self, vars, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
@@ -428,7 +494,7 @@ class NeuronGroup(Group):
 
         # Reinitialise neuron state variables
         self._reinitialise_vars()
-        
+
     @property
     def _spike_recording_words(self):
         return ((self.size + 31) // 32)
@@ -822,6 +888,24 @@ class SynapseGroup(Group):
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
+
+    def pull_psm_extra_global_param_from_device(self, egp_name):
+        """Wrapper around GeNNModel.pull_extra_global_param_from_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        """
+        self._pull_extra_global_param_to_device(
+            egp_name, size, egp_dict=self.psm_extra_global_params)
+
+    def push_psm_extra_global_param_to_device(self, egp_name):
+        """Wrapper around GeNNModel.push_extra_global_param_to_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        """
+        self._push_extra_global_param_to_device(
+            egp_name, self.psm_extra_global_params)
 
     def load(self):
         # If synapse population has non-dense connectivity

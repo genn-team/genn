@@ -615,11 +615,11 @@ class GeNNModel(object):
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load_init_egps()
-        
+
         # Loop through custom updates
         for cu_data in itervalues(self.custom_updates):
             cu_data.load_init_egps()
-            
+
         # Initialize model
         self._slm.initialize()
 
@@ -634,11 +634,11 @@ class GeNNModel(object):
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load()
-        
+
         # Loop through custom updates
         for cu_data in itervalues(self.custom_updates):
             cu_data.load()
-            
+
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
 
@@ -725,7 +725,7 @@ class GeNNModel(object):
     def pull_extra_global_param_from_device(self, pop_name, egp_name, size=None):
         """Pull extra global parameter from the device for a given population"""
         if size is None:
-            warn("the default of size=1 is very counter-intuitive and "
+            warn("The default of size=1 is very counter-intuitive and "
                  "will be removed in future", DeprecationWarning)
             size = 1
 
@@ -772,9 +772,10 @@ class GeNNModel(object):
     def push_extra_global_param_to_device(self, pop_name, egp_name, size=None):
         """Push extra global parameter to the device for a given population"""
         if size is None:
-            warn("the default of size=1 is very counter-intuitive and "
+            warn("The default of size=1 is very counter-intuitive and "
                  "will be removed in future", DeprecationWarning)
             size = 1
+
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pushing")
 
