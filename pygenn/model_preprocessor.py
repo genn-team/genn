@@ -43,10 +43,14 @@ def prepare_model(model, group, param_space, var_space, model_family):
     if set(iterkeys(var_space)) != set(var_names):
         raise ValueError("Invalid variable initializers for {0}".format(
             model_family.__name__))
-    var_dict = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
-                for vnt in m_instance.get_vars()}
-    
-    return (m_instance, m_type, param_names, params, var_names, var_dict)
+    vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
+            for vnt in m_instance.get_vars()}
+
+    egps = {egp.name: ExtraGlobalVariable(egp.name, egp.type, group)
+            for egp in m_instance.get_extra_global_params()}
+
+    return (m_instance, m_type, param_names, params,
+            var_names, vars, egps)
 
 def prepare_snippet(snippet, param_space, snippet_family):
     """Prepare a snippet by checking its validity and extracting
@@ -278,7 +282,7 @@ class ExtraGlobalVariable(object):
         Args:
         variable_name   --  string name of the variable
         variable_type   --  string type of the variable
-        group           --  pygenn.genn_groups.Group this  
+        group           --  pygenn.genn_groups.Group this
                             variable is associated with
 
         Keyword args:
@@ -290,7 +294,7 @@ class ExtraGlobalVariable(object):
         else:
             self.is_scalar = True
             self.type = variable_type
-        
+
         self.group = proxy(group)
         self.name = variable_name
         self.view = None
@@ -302,7 +306,9 @@ class ExtraGlobalVariable(object):
         Args:
         values -- iterable or single value
         """
-        if self.is_scalar:
+        if values is None:
+            self.values = None
+        elif self.is_scalar:
             if isinstance(values, Number):
                 self.values = values
             else:
