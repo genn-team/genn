@@ -1111,7 +1111,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
 #endif
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
     // If the model requires zero-copy
     if(modelMerged.getModel().zeroCopyInUse()) {

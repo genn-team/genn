@@ -1545,7 +1545,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
         // Generate preamble -this is the first bit of generated code called by user simulations
         // so global initialisation is often performed here
-        backend.genAllocateMemPreamble(runner, modelMerged);
+        backend.genAllocateMemPreamble(runner, modelMerged, mem);
 
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();
