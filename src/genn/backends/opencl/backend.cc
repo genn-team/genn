@@ -277,9 +277,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateKernels, *this);
 
     // Generate merged data structures
-    genMergedKernelDataStructures(
-        neuronUpdateKernels,
-        modelMerged.getMergedNeuronUpdateGroups(), [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
+    genMergedKernelDataStructures(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(),
+                                  [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
+    genMergedKernelDataStructures(neuronUpdateKernels, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(),
+                                  [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronPrevSpikeTimeUpdate); });
     neuronUpdateKernels << std::endl;
 
     // Generate kernels used to populate merged structs
