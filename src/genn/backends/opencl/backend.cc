@@ -1643,10 +1643,8 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
 {
-    auto allocation = MemAlloc::zero();
-
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
         os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
@@ -1654,7 +1652,7 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
             os << " | CL_MEM_ALLOC_HOST_PTR";
         }
         os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
-        allocation += MemAlloc::device(count * getSize(type));
+        memAlloc += MemAlloc::device(count * getSize(type));
     }
 
     if(loc & VarLocation::HOST) {
@@ -1666,11 +1664,9 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
             os << "CHECK_OPENCL_ERRORS_POINTER(h_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(h_" << name;
             os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
-            allocation += MemAlloc::host(count * getSize(type));
+            memAlloc += MemAlloc::host(count * getSize(type));
         }
     }
-
-    return allocation;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
@@ -1909,7 +1905,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const
 {
     definitionsInternal << "EXPORT_VAR clrngPhilox432Stream* rng;" << std::endl;
     definitionsInternal << "EXPORT_VAR cl::Buffer d_rng;" << std::endl;
@@ -1925,11 +1921,11 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInterna
         allocations << "rng = clrngPhilox432CreateStreams(philoxStreamCreator, 1, &deviceBytes, nullptr);" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
     }
-    return MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
+    memAlloc += MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                   const std::string &name, size_t count) const
+void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                               const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
     definitionsInternal << "EXPORT_VAR clrngLfsr113Stream* " << name << ";" << std::endl;
     definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
@@ -1946,7 +1942,7 @@ MemAlloc Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal,
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
     }
 
-    return MemAlloc::hostDevice(count * getSize("clrngLfsr113Stream"));
+    memAlloc += MemAlloc::hostDevice(count * getSize("clrngLfsr113Stream"));
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream&, CodeStream&,
