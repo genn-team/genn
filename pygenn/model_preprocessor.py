@@ -46,7 +46,7 @@ def prepare_model(model, group, param_space, var_space, model_family):
     vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
             for vnt in m_instance.get_vars()}
 
-    egps = {egp.name: ExtraGlobalVariable(egp.name, egp.type, group)
+    egps = {egp.name: ExtraGlobalParameter(egp.name, egp.type, group)
             for egp in m_instance.get_extra_global_params()}
 
     return (m_instance, m_type, param_names, params,
@@ -272,9 +272,9 @@ class Variable(object):
             except TypeError:
                 self.init_val = VarInit(values)
 
-class ExtraGlobalVariable(object):
+class ExtraGlobalParameter(object):
 
-    """Class holding information about GeNN extra global pointer variable"""
+    """Class holding information about GeNN extra global parameter"""
 
     def __init__(self, variable_name, variable_type, group, values=None):
         """Init Variable

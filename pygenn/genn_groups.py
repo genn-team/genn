@@ -13,7 +13,7 @@ from six import iteritems, iterkeys, itervalues
 import numpy as np
 from . import genn_wrapper
 from . import model_preprocessor
-from .model_preprocessor import ExtraGlobalVariable, Variable
+from .model_preprocessor import Variable
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixConnectivity_BITMASK,
                            SynapseMatrixConnectivity_DENSE,
