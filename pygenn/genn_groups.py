@@ -15,7 +15,7 @@ import numpy as np
 
 from . import genn_wrapper
 from . import model_preprocessor
-from .model_preprocessor import Variable
+from .model_preprocessor import ExtraGlobalParameter, Variable
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixConnectivity_BITMASK,
                            SynapseMatrixConnectivity_DENSE,
@@ -292,7 +292,7 @@ class Group(object):
                                                             egp_data.type)
                 # Copy values
                 egp_data.view[:] = egp_data.values
-            else:
+            elif egp_data.values is not None:
                 # Allocate memory
                 self._model._slm.allocate_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
@@ -845,6 +845,12 @@ class SynapseGroup(Group):
                             if self.connectivity_initialiser is None
                             else self.connectivity_initialiser)
 
+            if self.connectivity_initialiser is not None:
+                snippet = self.connectivity_initialiser.get_snippet()
+                self.connectivity_extra_global_params =\
+                    {egp.name: ExtraGlobalParameter(egp.name, egp.type, self)
+                     for egp in snippet.get_extra_global_params()}
+
             self.pop = add_fct(self.name, self.matrix_type, delay_steps,
                                self.src.name, self.trg.name, self.w_update,
                                self.wu_params, wu_var_ini, wu_pre_var_ini,
@@ -875,11 +881,8 @@ class SynapseGroup(Group):
         param_name   -- string with the name of the extra global parameter
         param_values -- iterable or a single value
         """
-        assert False
         assert self.weight_sharing_master is None
-        self._set_extra_global_param(param_name, param_values,
-                                     self.connectivity_initialiser.get_snippet(),
-                                     self.connectivity_extra_global_params)
+        self.connectivity_extra_global_params[param_name].set_values(param_values)
 
     def pull_connectivity_from_device(self):
         """Wrapper around GeNNModel.pull_connectivity_from_device"""

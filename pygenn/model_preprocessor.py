@@ -4,7 +4,7 @@ This module provides functions for model validation, parameter type conversions
 and defines class Variable
 """
 from numbers import Number
-from weakref import proxy
+from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
@@ -225,22 +225,19 @@ class Variable(object):
         self.name = variable_name
         self.type = variable_type
         self.group = proxy(group)
-        self.extra_global_params = {}
         self.view = None
         self.needs_allocation = False
         self.set_values(values)
 
     def set_extra_global_init_param(self, param_name, param_values):
-        # Check that this variable is initialised with 
-        if not isinstance(self.init_val, VarInit):
-            raise ValueError("Extra global initialisation parameters can only "
-                             "be set on variables configured using variable "
-                             "initialization snippets")
+        """Set values of extra global parameter associated with
+        variable initialisation snippet
 
-        # Set extra global init params
-        self.group._set_extra_global_param(param_name, param_values, 
-                                           self.init_val.get_snippet(),
-                                           self.extra_global_params)
+        Args
+        param_name      -- string, name of parameter
+        param_values    -- iterable or single value
+        """
+        self.extra_global_params[param_name].set_values(param_values)
 
     def set_values(self, values):
         """Set Variable's values
@@ -252,12 +249,19 @@ class Variable(object):
         # By default variable doesn't need initialising
         self.init_required = False
 
-        # If an var initialiser is specified, set it directly
+        # If an var initialiser is specified
         if isinstance(values, VarInit):
+            # Use it as initial value
             self.init_val = values
+
+            # Build extra global parameters dictionary from var init snippet
+            self.extra_global_params =\
+                {egp.name: ExtraGlobalParameter(egp.name, egp.type, self.group)
+                 for egp in self.init_val.get_snippet().get_extra_global_params()}
         # If no values are specified - mark as uninitialised
         elif values is None:
             self.init_val = genn_wrapper.uninitialised_var()
+            self.extra_global_params = {}
         # Otherwise
         else:
             # Try and iterate values - if they are iterable
@@ -268,9 +272,11 @@ class Variable(object):
                 self.values = np.asarray(
                     values, dtype=self.group._model.genn_types[self.type].np_dtype)
                 self.init_required = True
+                self.extra_global_params = {}
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
                 self.init_val = VarInit(values)
+                self.extra_global_params = {}
 
 class ExtraGlobalParameter(object):
 
@@ -295,7 +301,7 @@ class ExtraGlobalParameter(object):
             self.is_scalar = True
             self.type = variable_type
 
-        self.group = proxy(group)
+        self.group = group if type(group) in ProxyTypes else proxy(group)
         self.name = variable_name
         self.view = None
         self.set_values(values)
