@@ -163,7 +163,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 
     // Add OpenCL-specific types
     addType("clrngLfsr113Stream", 16);
-    addType("clrngPhilox432Stream", 44);
+    addType("clrngPhilox432Stream", 132);
 }
 //--------------------------------------------------------------------------
 bool Backend::areSharedMemAtomicsSlow() const
@@ -1647,12 +1647,19 @@ void Backend::genVariableAllocation(CodeStream &os, const std::string &type, con
 {
     // If variable is present on device then initialize the device buffer
     if (loc & VarLocation::DEVICE) {
+        CodeStream::Scope b(os);
+
+        // Apply minimum alignement to size
+        const size_t alignedSize = padSize(count * getSize(type), m_AllocationAlignementBytes);
+
+        // Create region struct defining location of this variable
+        os << "const cl_buffer_region region{" << memAlloc.getDeviceBytes() << ", " << alignedSize << "};" << std::endl;
         os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
         if(loc & VarLocation::ZERO_COPY) {
             os << " | CL_MEM_ALLOC_HOST_PTR";
         }
         os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
-        memAlloc += MemAlloc::device(count * getSize(type));
+        memAlloc += MemAlloc::device(alignedSize);
     }
 
     if(loc & VarLocation::HOST) {
@@ -1917,11 +1924,20 @@ void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, C
 
     {
         CodeStream::Scope b(allocations);
+
+        // Apply minimum alignement to size
+        const size_t alignedSize = padSize(getSize("clrngPhilox432Stream"), m_AllocationAlignementBytes);
+
+        // Create region struct defining location of this variable
+        allocations << "const cl_buffer_region region{" << memAlloc.getDeviceBytes() << ", " << alignedSize << "};" << std::endl;
+
         allocations << "size_t deviceBytes;" << std::endl;
         allocations << "rng = clrngPhilox432CreateStreams(philoxStreamCreator, 1, &deviceBytes, nullptr);" << std::endl;
+        allocations << "assert(deviceBytes == " << getSize("clrngPhilox432Stream") << ");" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
+
+        memAlloc += MemAlloc::hostDevice(alignedSize);
     }
-    memAlloc += MemAlloc::hostDevice(1 * getSize("clrngPhilox432Stream"));
 }
 //--------------------------------------------------------------------------
 void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -1937,12 +1953,20 @@ void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, Cod
 
     {
         CodeStream::Scope b(allocations);
+
+         // Apply minimum alignement to size
+        const size_t alignedSize = padSize(getSize("clrngLfsr113Stream"), m_AllocationAlignementBytes);
+
+        // Create region struct defining location of this variable
+        allocations << "const cl_buffer_region region{" << memAlloc.getDeviceBytes() << ", " << alignedSize << "};" << std::endl;
+
         allocations << "size_t deviceBytes;" << std::endl;
         allocations << name << " = clrngLfsr113CreateStreams(lfsrStreamCreator, " << count << ", &deviceBytes, nullptr);" << std::endl;
+        allocations << "assert(deviceBytes == " << getSize("clrngLfsr113Stream") << ");" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
-    }
 
-    memAlloc += MemAlloc::hostDevice(count * getSize("clrngLfsr113Stream"));
+        memAlloc += MemAlloc::hostDevice(alignedSize);
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream&, CodeStream&,
