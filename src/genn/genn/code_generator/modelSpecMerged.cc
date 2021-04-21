@@ -88,6 +88,16 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
                        {
                            return ((a.getNumDelaySlots() == b.getNumDelaySlots())
                                    && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
+                                   && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired()));
+                       });
+
+    LOGD_CODE_GEN << "Merging neuron groups which require their previous spike times updating:";
+    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
+                       [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
+                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
+                       {
+                           return ((a.getNumDelaySlots() == b.getNumDelaySlots())
+                                   && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
                                    && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired())
                                    && (a.isPrevSpikeTimeRequired() == b.isPrevSpikeTimeRequired())
                                    && (a.isPrevSpikeEventTimeRequired() == b.isPrevSpikeEventTimeRequired()));
