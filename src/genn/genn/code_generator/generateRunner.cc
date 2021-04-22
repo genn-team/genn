@@ -521,7 +521,6 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Write runner preamble
     runner << "#include \"definitionsInternal.h\"" << std::endl << std::endl;
-    backend.genRunnerPreamble(runner, modelMerged);
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
@@ -1363,6 +1362,9 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     // End extern C block around variable declarations
     runnerVarDecl << "}  // extern \"C\"" << std::endl;
  
+    // Write pre-amble to runner
+    backend.genRunnerPreamble(runner, modelMerged, mem);
+
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();
 
