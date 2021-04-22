@@ -301,7 +301,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << ", 1, 1)))" << std::endl;
         neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(";
         genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), true);
-        neuronUpdateKernels << model.getTimePrecision() << " t)";
+        neuronUpdateKernels << model.getTimePrecision() << " t";
+        if(shouldUseSubBufferAllocations()) {
+            neuronUpdateKernels << ", __global void *d_staticBuffer"; 
+        }
+        neuronUpdateKernels << ")";
         {
             CodeStream::Scope b(neuronUpdateKernels);
 
@@ -326,7 +330,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Declare neuron spike queue update kernel
     neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "(";
-    genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), false);
+    genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), shouldUseSubBufferAllocations());
+    if(shouldUseSubBufferAllocations()) {
+        neuronUpdateKernels << ", __global void *d_staticBuffer"; 
+    }
     neuronUpdateKernels << ")";
     {
         CodeStream::Scope b(neuronUpdateKernels);
@@ -407,6 +414,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "// Configure neuron previous spike time update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronPrevSpikeTimeUpdate], modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << (modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() + 1) << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -415,6 +425,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "// Configure neuron spike queue update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronSpikeQueueUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronSpikeQueueUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronSpikeQueueUpdate], modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -423,6 +436,10 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "// Configure neuron update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups());
+            if(shouldUseSubBufferAllocations()) {
+                const unsigned int start = modelMerged.getMergedNeuronUpdateGroups().size() + (model.isRecordingInUse() ? 2 : 1);
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
     }
@@ -445,14 +462,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() << ", t));" << std::endl;
             genKernelDimensions(os, KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-            genPostKernelFlush(os);
             os << std::endl;
         }
         if (idNeuronSpikeQueueUpdate > 0) {
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronSpikeQueueUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-            genPostKernelFlush(os);
             os << std::endl;
         }
         if (idStart > 0) {
@@ -468,7 +483,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 os << ", nullptr, &neuronUpdateEvent";
             }
             os << "));" << std::endl;
-            genPostKernelFlush(os);
         }
     }
 }
@@ -689,6 +703,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "// Configure dendritic delay update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelSynapseDendriticDelayUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelSynapseDendriticDelayUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelSynapseDendriticDelayUpdate], modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDendriticDelayUpdate] << ".setArg(" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -699,6 +716,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             if(globalRNGRequired) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() + 1 << ", d_rng));" << std::endl;
             }
+            if(shouldUseSubBufferAllocations()) {
+                const size_t start = modelMerged.getMergedPresynapticUpdateGroups().size() + (globalRNGRequired ? 1 : 2);
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -706,6 +727,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "// Configure postsynaptic update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelPostsynapticUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelPostsynapticUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelPostsynapticUpdate], modelMerged.getMergedPostsynapticUpdateGroups());
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPostsynapticUpdate] << ".setArg(" << (modelMerged.getMergedPostsynapticUpdateGroups().size() + 1) << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -713,6 +737,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << "// Configure postsynaptic update kernel" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelSynapseDynamicsUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelSynapseDynamicsUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelSynapseDynamicsUpdate], modelMerged.getMergedSynapseDynamicsGroups());
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelSynapseDynamicsUpdate] << ".setArg(" << (modelMerged.getMergedSynapseDynamicsGroups().size() + 1) << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
     }
@@ -731,7 +758,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             CodeStream::Scope b(os);
             genKernelDimensions(os, KernelSynapseDendriticDelayUpdate, idSynapseDendriticDelayUpdate, 1);
             os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDendriticDelayUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-            genPostKernelFlush(os);
         }
 
         // Launch synapse dynamics kernel if required
@@ -745,7 +771,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << ", nullptr, &synapseDynamicsEvent";
             }
             os << "));" << std::endl;
-            genPostKernelFlush(os);
         }
 
         // Launch presynaptic update kernel
@@ -759,7 +784,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << ", nullptr, &presynapticUpdateEvent";
             }
             os << "));" << std::endl;
-            genPostKernelFlush(os);
         }
 
         // Launch postsynaptic update kernel
@@ -773,7 +797,6 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << ", nullptr, &postsynapticUpdateEvent";
             }
             os << "));" << std::endl;
-            genPostKernelFlush(os);
         }
     }
 }
@@ -916,11 +939,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     os << ", nullptr, &customUpdate" + g.first + "Event";
                 }
                 os << "));" << std::endl;
-
-                // If there is an additional kernel
-                if(g.second.second > 0) {
-                    genPostKernelFlush(os);
-                }
             }
 
             // If there are any custom transpose update work-items
@@ -947,9 +965,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     CodeStream::Scope b(os);
                     genReadEventTiming(os, "customUpdate" + g.first + "Transpose");
                 }   
-            }
-            else {
-                genPostKernelFlush(os);
             }
         }
 
@@ -995,12 +1010,18 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     size_t start = 0;
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomUpdateGroups(), start);
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomUpdateWUGroups(), start);
+                    if(shouldUseSubBufferAllocations()) {
+                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomUpdate] << ".setArg(" << (start + 1) << ", d_staticBuffer));" << std::endl;
+                    }
                 }
 
                 if(g.second.second) {
                     os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelCustomTransposeUpdate] << g.first <<" = cl::Kernel(customUpdateProgram, \"" << KernelNames[KernelCustomTransposeUpdate] << g.first << "\", &error));" << std::endl;
 
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomTransposeUpdate] + g.first, modelMerged.getMergedCustomUpdateTransposeWUGroups());
+                    if(shouldUseSubBufferAllocations()) {
+                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomTransposeUpdate] << ".setArg(" << (modelMerged.getMergedCustomUpdateTransposeWUGroups().size() + 1) << ", d_staticBuffer));" << std::endl;
+                    }
                 }
                 os << std::endl;
             }
@@ -1087,7 +1108,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
     initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitialize) << ", 1, 1)))" << std::endl;
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
-    bool additionalParamsRequired = isGlobalDeviceRNGRequired(modelMerged) || shouldUseSubBufferAllocations();
+    bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
+    bool additionalParamsRequired = globalRNGRequired || shouldUseSubBufferAllocations();
     const bool anyCustomUpdateInitGroups = !modelMerged.getMergedCustomUpdateInitGroups().empty();
     const bool anyCustomWUUpdateDenseInitGroups = !modelMerged.getMergedCustomWUUpdateDenseInitGroups().empty();
     const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
@@ -1100,7 +1122,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                                anyDenseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), additionalParamsRequired);
-    if(isGlobalDeviceRNGRequired(modelMerged)) {
+    if(globalRNGRequired) {
         initializeKernels << "__global clrngPhilox432HostStream *d_rng";
     }
     if(shouldUseSubBufferAllocations()) {
@@ -1124,7 +1146,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         const bool anyCustomWUUpdateSparseInitGroups = !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty();
         genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), anyCustomWUUpdateSparseInitGroups || additionalParamsRequired);
         genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), additionalParamsRequired);
-        if(isGlobalDeviceRNGRequired(modelMerged)) {
+        if(globalRNGRequired) {
             initializeKernels << "__global clrngPhilox432HostStream *d_rng";
         }
         if(shouldUseSubBufferAllocations()) {
@@ -1185,6 +1207,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomWUUpdateDenseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseDenseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups(), start);
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << (start + (globalRNGRequired ? 1 : 0)) << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
 
@@ -1194,6 +1219,9 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             size_t start = 0;
             setMergedGroupKernelParams(os, KernelNames[KernelInitializeSparse], modelMerged.getMergedSynapseSparseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitializeSparse], modelMerged.getMergedCustomWUUpdateSparseInitGroups(), start);
+            if(shouldUseSubBufferAllocations()) {
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitializeSparse] << ".setArg(" << (start + (globalRNGRequired ? 1 : 0)) << ", d_staticBuffer));" << std::endl;
+            }
             os << std::endl;
         }
     }
@@ -1253,9 +1281,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
                 os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
                 genReadEventTiming(os, "init");
             }
-            else {
-                genPostKernelFlush(os);
-            }
         }
     }
 
@@ -1291,9 +1316,6 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             if(model.isTimingEnabled()) {
                 os << "CHECK_OPENCL_ERRORS(commandQueue.finish());" << std::endl;
                 genReadEventTiming(os, "initSparse");
-            }
-            else {
-                genPostKernelFlush(os);
             }
         }
     }
@@ -1896,7 +1918,6 @@ void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &s
     os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
     os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
     os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << kernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-    genPostKernelFlush(os);
 }
 //--------------------------------------------------------------------------
 std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
@@ -2525,13 +2546,6 @@ void Backend::genBuildProgramFlagsString(CodeStream &os) const
         os << " -cl-fast-relaxed-math";
     }
     os << "\";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genPostKernelFlush(CodeStream &os) const
-{
-    if(isChosenDeviceAMD() && !getPreferences<Preferences>().disableAMDFlush) {
-        os << "CHECK_OPENCL_ERRORS(commandQueue.flush());" << std::endl;
-    }
 }
 //--------------------------------------------------------------------------
 void Backend::divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const
