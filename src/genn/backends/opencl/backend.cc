@@ -251,17 +251,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     os << "// OpenCL program and kernels" << std::endl;
     os << "//--------------------------------------------------------------------------" << std::endl;
     os << "cl::Program neuronUpdateProgram;" << std::endl;
-    os << "cl::Kernel " << KernelNames[KernelPreNeuronReset] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelNeuronSpikeQueueUpdate] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelNeuronUpdate] << ";" << std::endl;
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedNeuronUpdateGroups());
     os << std::endl;
 
     // Generate preamble
     preambleHandler(os);
-
-    //! KernelPreNeuronReset START
-    size_t idPreNeuronReset = 0;
 
     // Creating the kernel body separately so it can be split into multiple string literals
     std::stringstream neuronUpdateKernelsStream;
@@ -279,41 +278,67 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateKernels, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateKernels, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateKernels, *this);
 
     // Generate merged data structures
-    genMergedKernelDataStructures(
-        neuronUpdateKernels,
-        modelMerged.getMergedNeuronUpdateGroups(), [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
+    genMergedKernelDataStructures(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(),
+                                  [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
+    genMergedKernelDataStructures(neuronUpdateKernels, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(),
+                                  [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronPrevSpikeTimeUpdate); });
     neuronUpdateKernels << std::endl;
 
     // Generate kernels used to populate merged structs
     genMergedStructBuildKernels(neuronUpdateKernels, modelMerged, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructBuildKernels(neuronUpdateKernels, modelMerged, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
     genMergedStructBuildKernels(neuronUpdateKernels, modelMerged, modelMerged.getMergedNeuronUpdateGroups());
 
-    // Declare neuron spike queue update kernel
-    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPreNeuronReset) << ", 1, 1)))" << std::endl;
-    neuronUpdateKernels << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
-    genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), true);
-    neuronUpdateKernels << model.getTimePrecision() << " t";
-    if(shouldUseSubBufferAllocations()) {
-        neuronUpdateKernels << ", __global void *d_staticBuffer"; 
+    //! KernelPreNeuronReset START
+    size_t idNeuronPrevSpikeTimeUpdate = 0;
+
+    // If any neuron groups require their previous spike times updating
+    if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
+        // Declare neuron spike queue update kernel
+        neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << ", 1, 1)))" << std::endl;
+        neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(";
+        genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), true);
+        neuronUpdateKernels << model.getTimePrecision() << " t)";
+        {
+            CodeStream::Scope b(neuronUpdateKernels);
+
+            neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
+            Substitutions kernelSubs(openclLFSRFunctions);
+            kernelSubs.addVarSubstitution("t", "t");
+            if(model.getBatchSize() > 1) {
+                neuronUpdateKernels << "const unsigned int batch = get_global_id(1);" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
+            }
+            else {
+                kernelSubs.addVarSubstitution("batch", "0");
+            }
+            genNeuronPrevSpikeTimeUpdateKernel(neuronUpdateKernels, kernelSubs, modelMerged, idNeuronPrevSpikeTimeUpdate);
+        }
+        neuronUpdateKernels << std::endl;
     }
+
+    //! KernelPreNeuronReset START
+    size_t idNeuronSpikeQueueUpdate = 0;
+
+    // Declare neuron spike queue update kernel
+    neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << ", 1, 1)))" << std::endl;
+    neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "(";
+    genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), false);
     neuronUpdateKernels << ")";
     {
         CodeStream::Scope b(neuronUpdateKernels);
 
         neuronUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
 
-        Substitutions kernelSubs(openclLFSRFunctions);
-        kernelSubs.addVarSubstitution("t", "t");
-
-        genPreNeuronResetKernel(neuronUpdateKernels, kernelSubs, modelMerged, idPreNeuronReset);
+        genNeuronSpikeQueueUpdateKernel(neuronUpdateKernels, modelMerged, idNeuronSpikeQueueUpdate);
     }
     neuronUpdateKernels << std::endl;
-    //! KernelPreNeuronReset END
+
     size_t idStart = 0;
 
-    //! KernelNeuronUpdate BODY START
     neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelNeuronUpdate) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronUpdate] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(), true);
@@ -358,7 +383,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
 
         // If there are any kernels (some implementations complain)
-        if(idPreNeuronReset > 0 || idStart > 0) {
+        if(idNeuronSpikeQueueUpdate > 0 || idNeuronSpikeQueueUpdate > 0 || idNeuronPrevSpikeTimeUpdate > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
             genBuildProgramFlagsString(os);
@@ -372,15 +397,24 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
             os << "// Configure merged struct buffers and kernels" << std::endl;
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), "neuronUpdateProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), "neuronUpdateProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedNeuronUpdateGroups(), "neuronUpdateProgram");
             os << std::endl;
         }
 
-        // KernelPreNeuronReset initialization
-        if(idPreNeuronReset > 0) {
+        // KernelNeuronPrevSpikeTimeUpdate initialisation
+        if(idNeuronPrevSpikeTimeUpdate > 0) {
+            os << "// Configure neuron previous spike time update kernel" << std::endl;
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "\", &error));" << std::endl;
+            setMergedGroupKernelParams(os, KernelNames[KernelNeuronPrevSpikeTimeUpdate], modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
+            os << std::endl;
+        }
+
+        // KernelNeuronSpikeQueueUpdate initialization
+        if(idNeuronSpikeQueueUpdate > 0) {
             os << "// Configure neuron spike queue update kernel" << std::endl;
-            os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelPreNeuronReset] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelPreNeuronReset] << "\", &error));" << std::endl;
-            setMergedGroupKernelParams(os, KernelNames[KernelPreNeuronReset], modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronSpikeQueueUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronSpikeQueueUpdate] << "\", &error));" << std::endl;
+            setMergedGroupKernelParams(os, KernelNames[KernelNeuronSpikeQueueUpdate], modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
             os << std::endl;
         }
 
@@ -406,11 +440,18 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         // Push any required EGPS
         pushEGPHandler(os);
 
-        if (idPreNeuronReset > 0) {
+        if (idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
-            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPreNeuronReset] << ".setArg(" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << ", t));" << std::endl;
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, 1);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreNeuronReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() << ", t));" << std::endl;
+            genKernelDimensions(os, KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            genPostKernelFlush(os);
+            os << std::endl;
+        }
+        if (idNeuronSpikeQueueUpdate > 0) {
+            CodeStream::Scope b(os);
+            genKernelDimensions(os, KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelNeuronSpikeQueueUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             genPostKernelFlush(os);
             os << std::endl;
         }
@@ -445,7 +486,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     os << "// OpenCL program and kernels" << std::endl;
     os << "//--------------------------------------------------------------------------" << std::endl;
     os << "cl::Program synapseUpdateProgram;" << std::endl;
-    os << "cl::Kernel " << KernelNames[KernelPreSynapseReset] << ";" << std::endl;
+    os << "cl::Kernel " << KernelNames[KernelSynapseDendriticDelayUpdate] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelPresynapticUpdate] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelPostsynapticUpdate] << ";" << std::endl;
     os << "cl::Kernel " << KernelNames[KernelSynapseDynamicsUpdate] << ";" << std::endl;
@@ -504,10 +545,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     genMergedStructBuildKernels(synapseUpdateKernels, modelMerged, modelMerged.getMergedSynapseDynamicsGroups());
 
     // Declare neuron spike queue update kernel
-    size_t idPreSynapseReset = 0;
+    size_t idSynapseDendriticDelayUpdate = 0;
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
-        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPreSynapseReset) << ", 1, 1)))" << std::endl;
-        synapseUpdateKernels << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
+        synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << ", 1, 1)))" << std::endl;
+        synapseUpdateKernels << "__kernel void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
         if(shouldUseSubBufferAllocations()) {
             synapseUpdateKernels << ", __global void *d_staticBuffer"; 
@@ -516,7 +557,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         {
             CodeStream::Scope b(synapseUpdateKernels);
             synapseUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-            genPreSynapseResetKernel(synapseUpdateKernels, modelMerged, idPreSynapseReset);
+            genSynapseDendriticDelayUpdateKernel(synapseUpdateKernels, modelMerged, idSynapseDendriticDelayUpdate);
         }
     }
 
@@ -624,7 +665,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         CodeStream::Scope b(os);
 
         // If there are any kernels (some implementations complain)
-        if(idPreSynapseReset > 0 || idPresynapticStart > 0 || idPostsynapticStart > 0 || idSynapseDynamicsStart > 0) {
+        if(idSynapseDendriticDelayUpdate > 0 || idPresynapticStart > 0 || idPostsynapticStart > 0 || idSynapseDynamicsStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(synapseUpdateProgram = cl::Program(clContext, synapseUpdateSrc, false, &error));" << std::endl;
             genBuildProgramFlagsString(os);
@@ -644,10 +685,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             os << std::endl;
         }
 
-        if(idPreSynapseReset > 0) {
+        if(idSynapseDendriticDelayUpdate > 0) {
             os << "// Configure dendritic delay update kernel" << std::endl;
-            os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelPreSynapseReset] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelPreSynapseReset] << "\", &error));" << std::endl;
-            setMergedGroupKernelParams(os, KernelNames[KernelPreSynapseReset], modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelSynapseDendriticDelayUpdate] << " = cl::Kernel(synapseUpdateProgram, \"" << KernelNames[KernelSynapseDendriticDelayUpdate] << "\", &error));" << std::endl;
+            setMergedGroupKernelParams(os, KernelNames[KernelSynapseDendriticDelayUpdate], modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
             os << std::endl;
         }
 
@@ -686,10 +727,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         pushEGPHandler(os);
 
         // Launch pre-synapse reset kernel if required
-        if (idPreSynapseReset > 0) {
+        if (idSynapseDendriticDelayUpdate > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, 1);
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelPreSynapseReset] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
+            genKernelDimensions(os, KernelSynapseDendriticDelayUpdate, idSynapseDendriticDelayUpdate, 1);
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << KernelNames[KernelSynapseDendriticDelayUpdate] << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
             genPostKernelFlush(os);
         }
 

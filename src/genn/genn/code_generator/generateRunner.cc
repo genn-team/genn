@@ -753,6 +753,12 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
+    // Loop through neuron groups whose previous spike times need resetting
+    for(const auto &m : modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     // Loop through neuron groups whose spike queues need resetting
     for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,

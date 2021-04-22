@@ -18,8 +18,8 @@ using namespace CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpdate";
 //----------------------------------------------------------------------------
-NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                                                                    const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                     const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   GroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
     if(getArchetype().isDelayRequired()) {
@@ -33,22 +33,6 @@ NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t inde
 
     if(getArchetype().isSpikeEventRequired()) {
         addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
-    }
-
-    if(getArchetype().isPrevSpikeTimeRequired() || getArchetype().isPrevSpikeEventTimeRequired()) {
-        if(getArchetype().isPrevSpikeTimeRequired()) {
-            addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
-            addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
-        }
-        if(getArchetype().isPrevSpikeEventTimeRequired()) {
-            addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
-            addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
-        }
-
-        if(getArchetype().isDelayRequired()) {
-            addField("unsigned int", "numNeurons",
-                     [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
-        }
     }
 }
 //----------------------------------------------------------------------------
@@ -76,6 +60,43 @@ void NeuronSpikeQueueUpdateGroupMerged::genMergedGroupSpikeCountReset(CodeStream
     }
     else {
         os << "group->spkCnt[" << ((batchSize > 1) ? "batch" : "0") << "] = 0;" << std::endl;
+    }
+}
+
+//----------------------------------------------------------------------------
+// CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeTimeUpdate";
+//----------------------------------------------------------------------------
+NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                                                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+{
+    if(getArchetype().isDelayRequired()) {
+        addField("unsigned int", "numDelaySlots",
+                 [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumDelaySlots()); });
+
+        addPointerField("unsigned int", "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
+    } 
+
+    addPointerField("unsigned int", "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
+
+    if(getArchetype().isSpikeEventRequired()) {
+        addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
+    }
+
+    if(getArchetype().isPrevSpikeTimeRequired()) {
+        addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
+        addPointerField(timePrecision, "prevST", backend.getDeviceVarPrefix() + "prevST");
+    }
+    if(getArchetype().isPrevSpikeEventTimeRequired()) {
+        addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
+        addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
+    }
+
+    if(getArchetype().isDelayRequired()) {
+        addField("unsigned int", "numNeurons",
+                    [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
     }
 }
 
