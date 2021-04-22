@@ -274,7 +274,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genNeuronUpdateGroupSupportCode(neuronUpdateKernels, false);
     modelMerged.genPresynapticUpdateSupportCode(neuronUpdateKernels, false);
     neuronUpdateKernels << std::endl << std::endl;
-    
+
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateKernels, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateKernels, *this);
@@ -332,7 +332,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), shouldUseSubBufferAllocations());
     if(shouldUseSubBufferAllocations()) {
-        neuronUpdateKernels << ", __global void *d_staticBuffer"; 
+        neuronUpdateKernels << "__global void *d_staticBuffer"; 
     }
     neuronUpdateKernels << ")";
     {
@@ -373,7 +373,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         }
         genNeuronUpdateKernel(neuronUpdateKernels, kernelSubs, modelMerged, 
                               simHandler, wuVarUpdateHandler, idStart);
-        
     }
     neuronUpdateKernels << std::endl;
 
@@ -426,7 +425,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronSpikeQueueUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronSpikeQueueUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronSpikeQueueUpdate], modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
             if(shouldUseSubBufferAllocations()) {
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << ", d_staticBuffer));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronSpikeQueueUpdate] << ".setArg(" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << ", d_staticBuffer));" << std::endl;
             }
             os << std::endl;
         }
@@ -438,7 +437,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups());
             if(shouldUseSubBufferAllocations()) {
                 const unsigned int start = modelMerged.getMergedNeuronUpdateGroups().size() + (model.isRecordingInUse() ? 2 : 1);
-                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
+                os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
             }
             os << std::endl;
         }
@@ -511,11 +510,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // Generate preamble
     preambleHandler(os);
-    
+
     // Creating the kernel body separately so it can be split into multiple string literals
     std::stringstream synapseUpdateKernelsStream;
     CodeStream synapseUpdateKernels(synapseUpdateKernelsStream);
-    
+
     // Include definitions
     genKernelPreamble(synapseUpdateKernels, modelMerged);
     synapseUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
@@ -524,7 +523,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     synapseUpdateKernels << "#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1" << std::endl;
     synapseUpdateKernels << "#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0" << std::endl;
     synapseUpdateKernels << std::endl << std::endl;
-  
+
     genAtomicAddFloat(synapseUpdateKernels, "local");
     genAtomicAddFloat(synapseUpdateKernels, "global");
 
@@ -563,9 +562,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "(";
-        genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+        genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), shouldUseSubBufferAllocations());
         if(shouldUseSubBufferAllocations()) {
-            synapseUpdateKernels << ", __global void *d_staticBuffer"; 
+            synapseUpdateKernels << "__global void *d_staticBuffer"; 
         }
         synapseUpdateKernels << ")";
         {
@@ -666,13 +665,13 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         }
     }
     synapseUpdateKernels << std::endl;
-    
+
     // Write out kernel source string literal
     os << "const char* synapseUpdateSrc = ";
     divideKernelStreamInParts(os, synapseUpdateKernelsStream, 5000);
     os << ";" << std::endl;
     os << std::endl;
-    
+
     os << "// Initialize the synapseUpdate kernels" << std::endl;
     os << "void buildSynapseUpdateProgram()";
     {
@@ -717,7 +716,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << modelMerged.getMergedPresynapticUpdateGroups().size() + 1 << ", d_rng));" << std::endl;
             }
             if(shouldUseSubBufferAllocations()) {
-                const size_t start = modelMerged.getMergedPresynapticUpdateGroups().size() + (globalRNGRequired ? 1 : 2);
+                const size_t start = modelMerged.getMergedPresynapticUpdateGroups().size() + (globalRNGRequired ? 2 : 1);
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelPresynapticUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
             }
             os << std::endl;
@@ -1126,7 +1125,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         initializeKernels << "__global clrngPhilox432HostStream *d_rng";
     }
     if(shouldUseSubBufferAllocations()) {
-        initializeKernels << ", __global void *d_staticBuffer"; 
+        if(globalRNGRequired) {
+            initializeKernels << ", ";
+        }
+        initializeKernels << "__global void *d_staticBuffer"; 
     }
     initializeKernels << ")";
     {
@@ -1150,7 +1152,11 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
             initializeKernels << "__global clrngPhilox432HostStream *d_rng";
         }
         if(shouldUseSubBufferAllocations()) {
-            initializeKernels << ", __global void *d_staticBuffer"; 
+            if(globalRNGRequired) {
+                initializeKernels << ", ";
+            }
+
+            initializeKernels << "__global void *d_staticBuffer"; 
         }
         initializeKernels << ")";
         {
@@ -1407,6 +1413,9 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << "extern cl::Context clContext;" << std::endl;
     os << "extern cl::Device clDevice;" << std::endl;
     os << "extern cl::CommandQueue commandQueue;" << std::endl;
+    if(shouldUseSubBufferAllocations()) {
+        os << "extern cl::Buffer d_staticBuffer;" << std::endl;
+    }
     os << std::endl;
 
     os << "// OpenCL program initialization functions" << std::endl;
@@ -1728,7 +1737,7 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
             throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
         }
         definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-        
+
         if(!(loc & VarLocation::ZERO_COPY)) {
             definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
         }
@@ -1742,7 +1751,7 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
 {
     if (loc & VarLocation::HOST) {
         os << type << " " << name << ";" << std::endl;
-        
+
         if(!(loc & VarLocation::ZERO_COPY)) {
             os << "cl::Buffer h_" << name << ";" << std::endl;
         }
@@ -1771,7 +1780,7 @@ void Backend::genVariableAllocation(CodeStream &os, const std::string &type, con
 
             // Create sub-buffer encapsulating this region within main static buffer
             os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
-        
+
             // Add aligned size to mem allocation tracker
             memAlloc += MemAlloc::device(alignedSizeBytes);
         }
@@ -2034,11 +2043,11 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, MemAlloc&) const
 {
     definitionsInternal << "EXPORT_VAR clrngPhilox432Stream* rng;" << std::endl;
     definitionsInternal << "EXPORT_VAR cl::Buffer d_rng;" << std::endl;
-    
+
     runner << "clrngPhilox432Stream* rng;" << std::endl;
     runner << "cl::Buffer d_rng;" << std::endl;
 
@@ -2046,13 +2055,11 @@ void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, C
 
     {
         CodeStream::Scope b(allocations);
-  
+
         allocations << "size_t deviceBytes;" << std::endl;
         allocations << "rng = clrngPhilox432CreateStreams(philoxStreamCreator, 1, &deviceBytes, nullptr);" << std::endl;
         allocations << "assert(deviceBytes == " << getSize("clrngPhilox432Stream") << ");" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
-
-        memAlloc += MemAlloc::hostDevice(getSize("clrngPhilox432Stream"));
     }
 }
 //--------------------------------------------------------------------------
