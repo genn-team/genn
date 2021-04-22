@@ -12,7 +12,7 @@ using namespace CodeGenerator;
 //----------------------------------------------------------------------------
 // CodeGenerator::ModelSpecMerged
 //----------------------------------------------------------------------------
-CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
+ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
 :   m_Model(model), m_NeuronUpdateSupportCode("NeuronUpdateSupportCode"), m_PostsynapticDynamicsSupportCode("PostsynapticDynamicsSupportCode"),
     m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
     m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
@@ -170,4 +170,22 @@ CodeGenerator::ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, 
     for(const auto &sg : m_MergedSynapseDynamicsGroups) {
         m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
     }
+}
+//----------------------------------------------------------------------------
+bool ModelSpecMerged::anyPointerEGPs() const
+{
+    // Loop through grouped merged EGPs
+    for(const auto &e : m_MergedEGPs) {
+        // If there's any pointer EGPs, return true
+        if(std::any_of(e.second.cbegin(), e.second.cend(),
+                       [](const MergedEGPDestinations::value_type &g) 
+                       {
+                           return Utils::isTypePointer(g.second.type); 
+                       }))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

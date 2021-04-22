@@ -389,7 +389,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         CodeStream::Scope b(os);
 
         // If there are any kernels (some implementations complain)
-        if(idNeuronSpikeQueueUpdate > 0 || idNeuronSpikeQueueUpdate > 0 || idNeuronPrevSpikeTimeUpdate > 0) {
+        if(idNeuronPrevSpikeTimeUpdate > 0 || idNeuronSpikeQueueUpdate > 0 || idStart > 0) {
             os << "// Build program" << std::endl;
             os << "CHECK_OPENCL_ERRORS_POINTER(neuronUpdateProgram = cl::Program(clContext, neuronUpdateSrc, false, &error));" << std::endl;
             genBuildProgramFlagsString(os);
@@ -436,7 +436,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "CHECK_OPENCL_ERRORS_POINTER(" << KernelNames[KernelNeuronUpdate] << " = cl::Kernel(neuronUpdateProgram, \"" << KernelNames[KernelNeuronUpdate] << "\", &error));" << std::endl;
             setMergedGroupKernelParams(os, KernelNames[KernelNeuronUpdate], modelMerged.getMergedNeuronUpdateGroups());
             if(shouldUseSubBufferAllocations()) {
-                const unsigned int start = modelMerged.getMergedNeuronUpdateGroups().size() + (model.isRecordingInUse() ? 2 : 1);
+                const size_t start = modelMerged.getMergedNeuronUpdateGroups().size() + (model.isRecordingInUse() ? 2 : 1);
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelNeuronUpdate] << ".setArg(" << start << ", d_staticBuffer));" << std::endl;
             }
             os << std::endl;
@@ -1448,6 +1448,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "cl::CommandQueue commandQueue;" << std::endl;
     if(shouldUseSubBufferAllocations()) {
         os << "cl::Buffer d_staticBuffer;" << std::endl;
+        os << "size_t dynamicAllocationOffset = " << memAlloc.getDeviceBytes() << ";" << std::endl;
     }
     os << std::endl;
 
@@ -1613,7 +1614,17 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << (modelMerged.getModel().isTimingEnabled() ? "CL_QUEUE_PROFILING_ENABLE" : "0") << ");" << std::endl;
     // Create static buffer, within which all other device allocations are created as sub-buffers
     if(shouldUseSubBufferAllocations()) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(d_staticBuffer = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << memAlloc.getDeviceBytes() << "}, nullptr, &error));" << std::endl;
+        os << "CHECK_OPENCL_ERRORS_POINTER(d_staticBuffer = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{";
+        
+        // If model has any pointer EGPs, allocate all allocatable memory
+        if(modelMerged.anyPointerEGPs()) {
+            os << m_ChosenDevice.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
+        }
+        // Otherwise, static buffer only needs to be large enough for all static allocations
+        else {
+            os << memAlloc.getDeviceBytes();
+        }
+        os << "}, nullptr, &error));" << std::endl;
     }
     os << std::endl;
 
@@ -1854,11 +1865,28 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
 
     // If variable is present on device at all
     if(loc & VarLocation::DEVICE) {
-        os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-        if(loc & VarLocation::ZERO_COPY) {
-            os << " | CL_MEM_ALLOC_HOST_PTR";
+        if(shouldUseSubBufferAllocations()) {
+            // Check zero-copy isn't in use
+            assert(!(loc & VarLocation::ZERO_COPY));
+
+            CodeStream::Scope b(os);
+            os << "const unsinged int sizeBytes = " << countVarName << " * sizeof(" << underlyingType << ");" << std::endl;
+            os << "const unsigned int alignedSizeBytes = ((sizeBytes + " << m_AllocationAlignementBytes - 1 << ") / " << m_AllocationAlignementBytes << ") * " << m_AllocationAlignementBytes << ";" << std::endl;
+
+            // Create region struct defining location of this variable
+            os << "const cl_buffer_region region{size_t{dynamicAllocationOffset}, size_t{alignedSizeBytes}};" << std::endl;
+
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
+
+            os << "dynamicAllocationOffset += alignedSizeBytes;" << std::endl;
         }
-        os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+        else {
+            os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+            if(loc & VarLocation::ZERO_COPY) {
+                os << " | CL_MEM_ALLOC_HOST_PTR";
+            }
+            os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+        }
     }
 
     if(loc & VarLocation::HOST) {
