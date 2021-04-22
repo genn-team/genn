@@ -162,7 +162,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     LOGI_BACKEND << "Device uses " << m_AllocationAlignementBytes << " byte alignement";
 
     // Add OpenCL-specific types
-    addType("clrngLfsr113Stream", 16);
+    addType("clrngLfsr113Stream", 48);
     addType("clrngPhilox432Stream", 132);
 }
 //--------------------------------------------------------------------------
@@ -1010,7 +1010,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomUpdateGroups(), start);
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomUpdate] + g.first, modelMerged.getMergedCustomUpdateWUGroups(), start);
                     if(shouldUseSubBufferAllocations()) {
-                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomUpdate] << ".setArg(" << (start + 1) << ", d_staticBuffer));" << std::endl;
+                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomUpdate] << g.first << ".setArg(" << (start + 1) << ", d_staticBuffer));" << std::endl;
                     }
                 }
 
@@ -1019,7 +1019,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                     setMergedGroupKernelParams(os, KernelNames[KernelCustomTransposeUpdate] + g.first, modelMerged.getMergedCustomUpdateTransposeWUGroups());
                     if(shouldUseSubBufferAllocations()) {
-                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomTransposeUpdate] << ".setArg(" << (modelMerged.getMergedCustomUpdateTransposeWUGroups().size() + 1) << ", d_staticBuffer));" << std::endl;
+                        os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelCustomTransposeUpdate] << g.first << ".setArg(" << (modelMerged.getMergedCustomUpdateTransposeWUGroups().size() + 1) << ", d_staticBuffer));" << std::endl;
                     }
                 }
                 os << std::endl;
