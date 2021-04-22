@@ -145,7 +145,7 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 
     // Show device name
     LOGI_BACKEND << "Using OpenCL device:" << m_ChosenDevice.getInfo<CL_DEVICE_NAME>();
-    
+
     if(isChosenDeviceAMD()) {
         LOGI_BACKEND << "Detected as an AMD device";
     }
@@ -1870,14 +1870,16 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
             assert(!(loc & VarLocation::ZERO_COPY));
 
             CodeStream::Scope b(os);
-            os << "const unsinged int sizeBytes = " << countVarName << " * sizeof(" << underlyingType << ");" << std::endl;
+            os << "const unsigned int sizeBytes = " << countVarName << " * sizeof(" << underlyingType << ");" << std::endl;
             os << "const unsigned int alignedSizeBytes = ((sizeBytes + " << m_AllocationAlignementBytes - 1 << ") / " << m_AllocationAlignementBytes << ") * " << m_AllocationAlignementBytes << ";" << std::endl;
 
             // Create region struct defining location of this variable
             os << "const cl_buffer_region region{size_t{dynamicAllocationOffset}, size_t{alignedSizeBytes}};" << std::endl;
 
+            // Create sub-buffer encapsulating this region within main static buffer
             os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
 
+            // Advance dynamic allocation offset
             os << "dynamicAllocationOffset += alignedSizeBytes;" << std::endl;
         }
         else {
@@ -2119,7 +2121,7 @@ void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, Cod
 
             // Create sub-buffer encapsulating this region within main static buffer
             allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
-        
+
             // Copy RNG to sub-buffer
             // **NOTE** not at all clear how CL_MEM_COPY_HOST_PTR works in the context of sub-buffers
             allocations << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << name << ", CL_TRUE, 0, " << sizeBytes << ", " << name << "));" << std::endl;
