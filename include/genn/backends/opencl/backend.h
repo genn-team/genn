@@ -445,6 +445,10 @@ private:
         it would seem, doesn't support some functions e.g. inline PTAX */
     bool isChosenPlatformNVIDIA() const;
 
+    //! Should we make all allocations from sub-buffers?
+    /*! This is required for correct functioning on AMD devices */
+    bool shouldUseSubBufferAllocations() const;
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------

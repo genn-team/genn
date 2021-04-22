@@ -294,7 +294,11 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPreNeuronReset) << ", 1, 1)))" << std::endl;
     neuronUpdateKernels << "__kernel void " << KernelNames[KernelPreNeuronReset] << "(";
     genMergedGroupKernelParams(neuronUpdateKernels, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), true);
-    neuronUpdateKernels << model.getTimePrecision() << " t)";
+    neuronUpdateKernels << model.getTimePrecision() << " t";
+    if(shouldUseSubBufferAllocations()) {
+        neuronUpdateKernels << ", __global void *d_staticBuffer"; 
+    }
+    neuronUpdateKernels << ")";
     {
         CodeStream::Scope b(neuronUpdateKernels);
 
@@ -316,6 +320,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << model.getTimePrecision() << " t";
     if(model.isRecordingInUse()) {
         neuronUpdateKernels << ", unsigned int recordingTimestep";
+    }
+    if(shouldUseSubBufferAllocations()) {
+        neuronUpdateKernels << ", __global void *d_staticBuffer"; 
     }
     neuronUpdateKernels << ")" << std::endl;
     {
@@ -502,6 +509,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPreSynapseReset) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPreSynapseReset] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+        if(shouldUseSubBufferAllocations()) {
+            synapseUpdateKernels << ", __global void *d_staticBuffer"; 
+        }
         synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
@@ -520,6 +530,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << model.getTimePrecision() << " t";
         if(globalRNGRequired) {
             synapseUpdateKernels << ", __global clrngPhilox432HostStream *d_rng";
+        }
+        if(shouldUseSubBufferAllocations()) {
+            synapseUpdateKernels << ", __global void *d_staticBuffer"; 
         }
         synapseUpdateKernels << ")";
         {
@@ -547,7 +560,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelPostsynapticUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelPostsynapticUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedPostsynapticUpdateGroups(), true);
-        synapseUpdateKernels << model.getTimePrecision() << " t)";
+        synapseUpdateKernels << model.getTimePrecision() << " t";
+        if(shouldUseSubBufferAllocations()) {
+            synapseUpdateKernels << ", __global void *d_staticBuffer"; 
+        }
+        synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
 
@@ -571,7 +588,11 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         synapseUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelSynapseDynamicsUpdate) << ", 1, 1)))" << std::endl;
         synapseUpdateKernels << "__kernel void " << KernelNames[KernelSynapseDynamicsUpdate] << "(";
         genMergedGroupKernelParams(synapseUpdateKernels, modelMerged.getMergedSynapseDynamicsGroups(), true);
-        synapseUpdateKernels << model.getTimePrecision() << " t)";
+        synapseUpdateKernels << model.getTimePrecision() << " t";
+        if(shouldUseSubBufferAllocations()) {
+            synapseUpdateKernels << ", __global void *d_staticBuffer"; 
+        }
+        synapseUpdateKernels << ")";
         {
             CodeStream::Scope b(synapseUpdateKernels);
 
@@ -787,7 +808,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomUpdate] << g.first << "(";
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateGroups(), true);
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateWUGroups(), true);
-            customUpdateKernels << model.getTimePrecision() << " t)";
+            customUpdateKernels << model.getTimePrecision() << " t";
+            if(shouldUseSubBufferAllocations()) {
+                customUpdateKernels << ", __global void *d_staticBuffer"; 
+            }
+            customUpdateKernels << ")";
             {
                 CodeStream::Scope b(customUpdateKernels);
 
@@ -812,7 +837,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 8, 1)))" << std::endl;
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomTransposeUpdate] << g.first << "(";
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateTransposeWUGroups(), true);
-            customUpdateKernels << model.getTimePrecision() << " t)";
+            customUpdateKernels << model.getTimePrecision() << " t";
+            if(shouldUseSubBufferAllocations()) {
+                customUpdateKernels << ", __global void *d_staticBuffer"; 
+            }
+            customUpdateKernels << ")";
             {
                 CodeStream::Scope b(customUpdateKernels);
 
@@ -1017,21 +1046,24 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
 
     initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitialize) << ", 1, 1)))" << std::endl;
     initializeKernels << "__kernel void " << KernelNames[KernelInitialize] << "(";
-    bool globalRNGRequired = isGlobalDeviceRNGRequired(modelMerged);
+    bool additionalParamsRequired = isGlobalDeviceRNGRequired(modelMerged) || shouldUseSubBufferAllocations();
     const bool anyCustomUpdateInitGroups = !modelMerged.getMergedCustomUpdateInitGroups().empty();
     const bool anyCustomWUUpdateDenseInitGroups = !modelMerged.getMergedCustomWUUpdateDenseInitGroups().empty();
     const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
     const bool anyConnectivityInitGroups = !modelMerged.getMergedSynapseConnectivityInitGroups().empty();
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), 
-                               anyCustomUpdateInitGroups || anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyConnectivityInitGroups || globalRNGRequired);
+                               anyCustomUpdateInitGroups || anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomUpdateInitGroups(), 
-                               anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyConnectivityInitGroups || globalRNGRequired);
+                               anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), 
-                               anyDenseInitGroups || anyConnectivityInitGroups || globalRNGRequired);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups || globalRNGRequired);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), globalRNGRequired);
-    if(globalRNGRequired) {
+                               anyDenseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyConnectivityInitGroups || additionalParamsRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), additionalParamsRequired);
+    if(isGlobalDeviceRNGRequired(modelMerged)) {
         initializeKernels << "__global clrngPhilox432HostStream *d_rng";
+    }
+    if(shouldUseSubBufferAllocations()) {
+        initializeKernels << ", __global void *d_staticBuffer"; 
     }
     initializeKernels << ")";
     {
@@ -1049,10 +1081,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
         initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitializeSparse) << ", 1, 1)))" << std::endl;
         initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
         const bool anyCustomWUUpdateSparseInitGroups = !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty();
-        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), anyCustomWUUpdateSparseInitGroups || globalRNGRequired);
-        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), globalRNGRequired);
-        if(globalRNGRequired) {
+        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseSparseInitGroups(), anyCustomWUUpdateSparseInitGroups || additionalParamsRequired);
+        genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), additionalParamsRequired);
+        if(isGlobalDeviceRNGRequired(modelMerged)) {
             initializeKernels << "__global clrngPhilox432HostStream *d_rng";
+        }
+        if(shouldUseSubBufferAllocations()) {
+            initializeKernels << ", __global void *d_staticBuffer"; 
         }
         initializeKernels << ")";
         {
@@ -1339,6 +1374,9 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "cl::Context clContext;" << std::endl;
     os << "cl::Device clDevice;" << std::endl;
     os << "cl::CommandQueue commandQueue;" << std::endl;
+    if(shouldUseSubBufferAllocations()) {
+        os << "cl::Buffer d_staticBuffer;" << std::endl;
+    }
     os << std::endl;
 
     os << "// Get OpenCL error as string" << std::endl;
@@ -1483,28 +1521,36 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &allocations) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const
 {
     // Initializing OpenCL programs
     os << "// Get platforms" << std::endl;
     os << "std::vector<cl::Platform> platforms; " << std::endl;
     os << "cl::Platform::get(&platforms);" << std::endl;
-    
+    os << std::endl;
+
     os << "// Get platform devices" << std::endl;
     os << "std::vector<cl::Device> platformDevices; " << std::endl;
     os << "platforms[" << m_ChosenPlatformIndex << "].getDevices(CL_DEVICE_TYPE_ALL, &platformDevices);" << std::endl;
-    
+    os << std::endl;
+
     os << "// Select device and create context and command queue" << std::endl;
     os << "clDevice = platformDevices[" << m_ChosenDeviceIndex << "];" << std::endl;
     os << "clContext = cl::Context(clDevice);" << std::endl;
     os << "commandQueue = cl::CommandQueue(clContext, clDevice, ";
     os << (modelMerged.getModel().isTimingEnabled() ? "CL_QUEUE_PROFILING_ENABLE" : "0") << ");" << std::endl;
+    // Create static buffer, within which all other device allocations are created as sub-buffers
+    if(shouldUseSubBufferAllocations()) {
+        os << "CHECK_OPENCL_ERRORS_POINTER(d_staticBuffer = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{" << memAlloc.getDeviceBytes() << "}, nullptr, &error));" << std::endl;
+    }
+    os << std::endl;
 
     os << "// Build OpenCL programs" << std::endl;
     os << "buildInitializeProgram();" << std::endl;
     os << "buildNeuronUpdateProgram();" << std::endl;
     os << "buildSynapseUpdateProgram();" << std::endl;
     os << "buildCustomUpdateProgram();" << std::endl;
+    os << std::endl;
 
     // If any neuron groups require a simulation RNG
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1649,17 +1695,31 @@ void Backend::genVariableAllocation(CodeStream &os, const std::string &type, con
     if (loc & VarLocation::DEVICE) {
         CodeStream::Scope b(os);
 
-        // Apply minimum alignement to size
-        const size_t alignedSize = padSize(count * getSize(type), m_AllocationAlignementBytes);
+        const size_t sizeBytes = count * getSize(type);
+        if(shouldUseSubBufferAllocations()) {
+            // Check zero-copy isn't in use
+            assert(!(loc & VarLocation::ZERO_COPY));
 
-        // Create region struct defining location of this variable
-        os << "const cl_buffer_region region{" << memAlloc.getDeviceBytes() << ", " << alignedSize << "};" << std::endl;
-        os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-        if(loc & VarLocation::ZERO_COPY) {
-            os << " | CL_MEM_ALLOC_HOST_PTR";
+            // Apply minimum alignement to size
+            const size_t alignedSizeBytes = padSize(sizeBytes, m_AllocationAlignementBytes);
+
+            // Create region struct defining location of this variable
+            os << "const cl_buffer_region region{size_t{" << memAlloc.getDeviceBytes() << "}, size_t{" << alignedSizeBytes << "}};" << std::endl;
+
+            // Create sub-buffer encapsulating this region within main static buffer
+            os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
+        
+            // Add aligned size to mem allocation tracker
+            memAlloc += MemAlloc::device(alignedSizeBytes);
         }
-        os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
-        memAlloc += MemAlloc::device(alignedSize);
+        else {
+            os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+            if(loc & VarLocation::ZERO_COPY) {
+                os << " | CL_MEM_ALLOC_HOST_PTR";
+            }
+            os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
+            memAlloc += MemAlloc::device(sizeBytes);
+        }
     }
 
     if(loc & VarLocation::HOST) {
@@ -1924,19 +1984,13 @@ void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, C
 
     {
         CodeStream::Scope b(allocations);
-
-        // Apply minimum alignement to size
-        const size_t alignedSize = padSize(getSize("clrngPhilox432Stream"), m_AllocationAlignementBytes);
-
-        // Create region struct defining location of this variable
-        allocations << "const cl_buffer_region region{" << memAlloc.getDeviceBytes() << ", " << alignedSize << "};" << std::endl;
-
+  
         allocations << "size_t deviceBytes;" << std::endl;
         allocations << "rng = clrngPhilox432CreateStreams(philoxStreamCreator, 1, &deviceBytes, nullptr);" << std::endl;
         allocations << "assert(deviceBytes == " << getSize("clrngPhilox432Stream") << ");" << std::endl;
         allocations << "CHECK_OPENCL_ERRORS_POINTER(d_rng = cl::Buffer(clContext, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, deviceBytes, rng, &error));" << std::endl;
 
-        memAlloc += MemAlloc::hostDevice(alignedSize);
+        memAlloc += MemAlloc::hostDevice(getSize("clrngPhilox432Stream"));
     }
 }
 //--------------------------------------------------------------------------
@@ -1954,18 +2008,33 @@ void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, Cod
     {
         CodeStream::Scope b(allocations);
 
-         // Apply minimum alignement to size
-        const size_t alignedSize = padSize(getSize("clrngLfsr113Stream"), m_AllocationAlignementBytes);
-
-        // Create region struct defining location of this variable
-        allocations << "const cl_buffer_region region{" << memAlloc.getDeviceBytes() << ", " << alignedSize << "};" << std::endl;
-
+        const size_t sizeBytes = count * getSize("clrngLfsr113Stream");
         allocations << "size_t deviceBytes;" << std::endl;
         allocations << name << " = clrngLfsr113CreateStreams(lfsrStreamCreator, " << count << ", &deviceBytes, nullptr);" << std::endl;
-        allocations << "assert(deviceBytes == " << getSize("clrngLfsr113Stream") << ");" << std::endl;
-        allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
+        allocations << "assert(deviceBytes == " << sizeBytes << ");" << std::endl;
 
-        memAlloc += MemAlloc::hostDevice(alignedSize);
+        if(shouldUseSubBufferAllocations()) {
+            // Apply minimum alignement to size
+            const size_t alignedSizeBytes = padSize(sizeBytes, m_AllocationAlignementBytes);
+
+            // Create region struct defining location of this variable
+            allocations << "const cl_buffer_region region{size_t{" << memAlloc.getDeviceBytes() << "}, size_t{" << alignedSizeBytes << "}};" << std::endl;
+
+            // Create sub-buffer encapsulating this region within main static buffer
+            allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
+        
+            // Copy RNG to sub-buffer
+            // **NOTE** not at all clear how CL_MEM_COPY_HOST_PTR works in the context of sub-buffers
+            allocations << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << name << ", CL_TRUE, 0, " << sizeBytes << ", " << name << "));" << std::endl;
+
+            // Add aligned size to mem allocation tracker
+            memAlloc += MemAlloc::device(alignedSizeBytes);
+        }
+        else {
+            allocations << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceBytes, " << name << ", &error));" << std::endl;
+
+            memAlloc += MemAlloc::hostDevice(sizeBytes);
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -2454,6 +2523,11 @@ bool Backend::isChosenPlatformNVIDIA() const
 {
     const std::string platform = m_ChosenPlatform.getInfo<CL_PLATFORM_NAME>();
     return (platform.find("NVIDIA") != std::string::npos);
+}
+//--------------------------------------------------------------------------
+bool Backend::shouldUseSubBufferAllocations() const
+{
+    return isChosenDeviceAMD();
 }
 } // namespace OpenCL
 } // namespace CodeGenerator
