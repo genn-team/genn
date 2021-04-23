@@ -88,7 +88,7 @@ class Group(object):
         egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._pull_extra_global_param_to_device(egp_name, size)
+        self._pull_extra_global_param_from_device(egp_name, size)
 
     def push_state_to_device(self):
         """Wrapper around GeNNModel.push_state_to_device"""
@@ -192,9 +192,9 @@ class Group(object):
         self._model.push_extra_global_param_to_device(self.name, egp_name,
                                                       len(egp.values))
 
-    def _pull_extra_global_param_to_device(self, egp_name, size=None,
+    def _pull_extra_global_param_from_device(self, egp_name, size=None,
                                            egp_dict=None):
-        """Wrapper around GeNNModel.pull_extra_global_param_to_device
+        """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
         egp_name    --  string with the name of the variable
@@ -898,7 +898,7 @@ class SynapseGroup(Group):
         Args:
         egp_name    --  string with the name of the variable
         """
-        self._pull_extra_global_param_to_device(
+        self._pull_extra_global_param_from_device(
             egp_name, size, egp_dict=self.psm_extra_global_params)
 
     def push_psm_extra_global_param_to_device(self, egp_name):
