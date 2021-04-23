@@ -506,9 +506,9 @@ public:
                               {"poolInCol", "int", "($(id_pre) / (int)$(pool_ic)) % (int)$(pool_iw)"},
                               {"poolInChan", "int", "$(id_pre) % (int)$(pool_ic)"},
                               {"poolOutRow", "int", "(poolInRow + (int)$(pool_padh)) / (int)$(pool_sh)"},
-                              {"poolStrideRow", "int", "poolOutRow * (int)$(pool_sh) - (int)$(pool_padh)"},
+                              {"poolStrideRow", "int", "(poolOutRow * (int)$(pool_sh)) - (int)$(pool_padh)"},
                               {"poolOutCol", "int", "(poolInCol + (int)$(pool_padw)) / (int)$(pool_sw)"},
-                              {"poolStrideCol", "int", "poolOutCol * (int)$(pool_sw) - (int)$(pool_padw)"},
+                              {"poolStrideCol", "int", "(poolOutCol * (int)$(pool_sw)) - (int)$(pool_padw)"},
                               {"convOutRow", "int", "min((int)$(conv_oh), max(0, 1 + ((poolOutRow + (int)$(conv_padh) - (int)$(conv_kh)) / (int)$(conv_sh))))"},
                               {"maxConvOutRow", "int", "min((int)$(conv_oh), max(0, 1 + ((poolOutRow + (int)$(conv_padh)) / (int)$(conv_sh))))"},
                               {"minConvOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((poolOutCol + (int)$(conv_padw) - (int)$(conv_kw)) / (int)$(conv_sw))))"},
@@ -552,7 +552,7 @@ public:
         "   $(endCol);\n"
         "}\n"
         "const int poolOutRow = ($(poolInRow) + (int)$(pool_padh)) / (int)$(pool_sh);\n"
-        "const int convKernRow = poolOutRow - convStrideRow;\n"
+        "const int convKernRow = poolOutRow - $(convStrideRow);\n"
         "for(int poolInCol = $(minPoolInCol); poolInCol < $(maxPoolInCol); poolInCol++) {\n"
         "    const int poolOutCol = (poolInCol + (int)$(pool_padw)) / (int)$(pool_sw);\n"
         "    const int convKernCol = poolOutCol - $(convStrideCol);\n"
