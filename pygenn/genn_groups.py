@@ -1017,10 +1017,9 @@ class SynapseGroup(Group):
                 # when an AllToAll connection states that "self" connections
                 # are not allowed, we need to pass weights in the right place
                 if var_data.values.size < var_data.view.size:
-                    size = var_data.view.size
-                    rs = size - var_data.values.size
-                    cs = size // rs
-                    ids = [i for i in range(size) if (i // cs) != (i % cs)]
+                    wsize = var_data.view.size
+                    n_cols = self.trg.size
+                    ids = [i for i in range(wsize) if (i // n_cols) != (i % n_cols)]
                     var_data.view[ids] = var_data.values
                 else:
                     var_data.view[:] = var_data.values
