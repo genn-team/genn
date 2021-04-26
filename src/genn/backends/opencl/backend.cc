@@ -2155,8 +2155,14 @@ void Backend::genTimer(CodeStream&, CodeStream &definitionsInternal, CodeStream 
 //--------------------------------------------------------------------------
 void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 {
-    // **NOTE** OpenCL does not have this functionality
-    os << "return 0;" << std::endl;
+    // If device is AMD, use extension to get free device memory
+    if(isChosenDeviceAMD()) {
+        return "return CHECK_OPENCL_ERRORS_POINTER(clDevice.getInfo<CL_DEVICE_GLOBAL_FREE_MEMORY_AMD>(&error));"
+    }
+    // Otherwise, return 0 as vanilla OpenCL doesn't have this functionality
+    else {
+        os << "return 0;" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
