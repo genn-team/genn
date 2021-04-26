@@ -68,7 +68,17 @@ public:
         // Pull output
         pullxPostFromDevice();
         pullxPostPoolFromDevice();
+        
+        stepTime();
+        pullxDeconvFromDevice();
 
+        
+        for(unsigned int i = 0; i < 64; i++) {
+            for(unsigned int j = 0; j < 64; j++) {
+                std::cout << xDeconv[(i* 64) + j] << ",";
+            }
+            std::cout << std::endl;
+        }
         // Verify
         if(!verifyOutput(xPost)) {
             return false;
@@ -113,6 +123,7 @@ private:
         
         return true;
     }
+    
 };
 
 TEST_F(SimTest, DecodeMatrixConnGenProceduralgProceduralKernel)
