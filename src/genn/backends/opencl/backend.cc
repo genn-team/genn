@@ -2157,7 +2157,12 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 {
     // If device is AMD, use extension to get free device memory
     if(isChosenDeviceAMD()) {
-        return "return CHECK_OPENCL_ERRORS_POINTER(clDevice.getInfo<CL_DEVICE_GLOBAL_FREE_MEMORY_AMD>(&error));"
+        // CL_DEVICE_GLOBAL_FREE_MEMORY_AMD = 0x4039
+        // **NOTE** http://manpages.ubuntu.com/manpages/bionic/man1/clinfo.1.html and https://github.com/Oblomov/clinfo/blob/master/src/clinfo.c#L1406-L1411 suggest that, with newer drivers, you can also get maximum block size by requesting 128 bits of data here
+        // **YUCK** https://www.khronos.org/registry/OpenCL/extensions/amd/cl_amd_device_attribute_query.txt suggests this should be in KBytes but it doesn't seem to be in bytes
+        os << "cl_ulong freeMem;" << std::endl;
+        os << "CHECK_OPENCL_ERRORS(clDevice.getInfo(0x4039, &freeMem));" << std::endl;
+        os << "return freeMem;" << std::endl;
     }
     // Otherwise, return 0 as vanilla OpenCL doesn't have this functionality
     else {
