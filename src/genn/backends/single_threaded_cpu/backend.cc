@@ -1073,7 +1073,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -1087,7 +1087,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
 {
 }
 //--------------------------------------------------------------------------
@@ -1105,11 +1105,11 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
     os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count, MemAlloc &memAlloc) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
 
-    return MemAlloc::host(count * getSize(type));
+    memAlloc += MemAlloc::host(count * getSize(type));
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
@@ -1256,17 +1256,14 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
 {
     assert(false);
-    return MemAlloc::host(0);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
-                                   const std::string&, size_t) const
+void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
+                                   const std::string&, size_t, MemAlloc&) const
 {
-    // No need for population RNGs for single-threaded CPU
-    return MemAlloc::zero();
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const

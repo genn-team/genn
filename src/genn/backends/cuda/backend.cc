@@ -1124,7 +1124,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const MemAlloc&) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
@@ -1136,7 +1136,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
 #endif
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
     // If the model requires zero-copy
     if(modelMerged.getModel().zeroCopyInUse()) {
@@ -1254,19 +1254,17 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
 {
-    auto allocation = MemAlloc::zero();
-
     if(getPreferences().automaticCopy) {
         os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-        allocation += MemAlloc::device(count * getSize(type));
+        memAlloc += MemAlloc::device(count * getSize(type));
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
             os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
-            allocation += MemAlloc::host(count * getSize(type));
+            memAlloc += MemAlloc::host(count * getSize(type));
         }
 
         // If variable is present on device at all
@@ -1274,16 +1272,14 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
             // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
             if(loc & VarLocation::ZERO_COPY) {
                 os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0));" << std::endl;
-                allocation += MemAlloc::zeroCopy(count * getSize(type));
+                memAlloc += MemAlloc::zeroCopy(count * getSize(type));
             }
             else {
                 os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-                allocation += MemAlloc::device(count * getSize(type));
+                memAlloc += MemAlloc::device(count * getSize(type));
             }
         }
     }
-
-    return allocation;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
@@ -1507,7 +1503,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &) const
+void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &, MemAlloc &memAlloc) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
@@ -1516,14 +1512,14 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsIntern
     // Implement global Phillox RNG
     runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
-    return MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
+    memAlloc += MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                   const std::string &name, size_t count) const
+void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                                   const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
     // Create an array or XORWOW RNGs
-    return genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
+    genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count, memAlloc);
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
