@@ -204,21 +204,25 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, 
-                   const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, const filesystem::path &nvccPath,
+void analyseModule(std::string moduleName, unsigned int r, CUcontext context, std::string nvccFlags, 
+                   const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels,
+                   const filesystem::path &outputPath, const filesystem::path &nvccPath,
                    int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
                    KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
     // Set context for this thread
     cuCtxSetCurrent(context);
 
+    // Build module
+    const std::string modulePath = (outputPath / moduleName).str();
+            
 #ifdef _WIN32
     // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
     const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
 #else
     const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
 #endif
-    
+            
     if(system(nvccCommand.c_str()) != 0) {
         throw std::runtime_error("optimizeBlockSize: NVCC failed");
     }
@@ -270,11 +274,6 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
     if(std::remove((modulePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
     }
-
-    // Remove module source file
-    if(std::remove((modulePath + ".cc").c_str())) {
-        LOGW_BACKEND << "Cannot remove dry-run source file";
-    }
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
@@ -295,6 +294,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
+    // Bitset to mark which kernels are present and array of their attributes for each repetition
+    int krnlSharedSizeBytes[2][KernelMax] = {};
+    int krnlNumRegs[2][KernelMax] = {};
+
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
     filesystem::path nvccPath;
@@ -310,16 +313,12 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         throw std::runtime_error("CUDA_PATH environment variable not set - ");
     }
 
-    // Bitset to mark which kernels are present and array of their attributes for each repetition
-    int krnlSharedSizeBytes[2][KernelMax] = {};
-    int krnlNumRegs[2][KernelMax] = {};
-
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
     KernelOptimisationOutput kernelsToOptimise;
     std::mutex kernelsToOptimiseMutex;
-    std::vector<std::thread> threads;
+    
     for(unsigned int r = 0; r < 2; r++) {
         LOGD  << "Generating code with block size:" << repBlockSizes[r];
 
@@ -330,23 +329,23 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
 
         // Generate code
-        const filesystem::path outputPathUnique(outputPath.str() + "_" + std::to_string(r));
-        const auto moduleNames = generateAll(model, backend, sharePath, outputPathUnique, true).first;
+        const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
 
         // Loop through generated modules and launch threads to build and analyse each module
+        std::vector<std::thread> threads;
         for(const auto &m : moduleNames) {
-            // Build module
-            const std::string modulePath = (outputPathUnique / m).str();
-            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), 
-                                 std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
+            threads.emplace_back(analyseModule, m, r, cuContext, backend.getNVCCFlags(), 
+                                 std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), 
+                                 std::cref(outputPath), std::cref(nvccPath),
                                  std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
+        }
+
+        // Join all threads
+        for(auto &t : threads) {
+            t.join();
         }
     }
 
-    // Join all threads
-    for(auto &t : threads) {
-        t.join();
-    }
     // Destroy context
     CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
 
