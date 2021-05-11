@@ -275,6 +275,9 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                                            KernelBlockSize &blockSize, const Preferences &preferences,
                                            const filesystem::path &sharePath, const filesystem::path &outputPath)
 {
+    // Select device
+    cudaSetDevice(deviceID);
+
     // Calculate model group sizes
     std::set<std::string> customUpdateKernels;
     std::set<std::string> customTransposeUpdateKernels;
