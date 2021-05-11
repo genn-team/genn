@@ -267,12 +267,12 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
     CHECK_CU_ERRORS(cuModuleUnload(module));
 
     // Remove tempory cubin file
-    if(std::remove((modulePath + ".cubin").c_str()) != 0) {
+    if(std::remove((modulePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
     }
 
     // Remove module source file
-    if(std::remove((modulePath + ".cc").c_str()) != 0) {
+    if(std::remove((modulePath + ".cc").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run source file";
     }
 }
@@ -346,20 +346,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     // Join all threads
     for(auto &t : threads) {
         t.join();
-    }
-
-    // Clean up other files and directories created
-    for(unsigned int r = 0; r < 2; r++) {
-        const filesystem::path outputPathUnique(outputPath.str() + "_" + std::to_string(r));
-
-        if((std::remove((outputPathUnique / "definitions.h").str().c_str()) != 0)
-           || (std::remove((outputPathUnique / "definitionsInternal.h").str().c_str()) != 0)
-           || (std::remove((outputPathUnique / "supportCode.h").str().c_str()) != 0)
-           || (std::remove((outputPathUnique / "runner.cc").str().c_str()) != 0)
-           || !filesystem::remove_directory(outputPathUnique))
-        {
-            LOGW_BACKEND << "Cannot remove dry-run files";
-        }
     }
     // Destroy context
     CHECK_CU_ERRORS(cuCtxDestroy(cuContext));
