@@ -338,6 +338,15 @@ inline bool create_directory(const path &p)
 #endif
 }
 
+inline bool remove_directory(const path &p)
+{
+#if defined(_WIN32)
+    return RemoveDirectoryW(p.wstr().c_str()) != 0;
+#else
+    return rmdir(p.str().c_str()) == 0;
+#endif
+}
+
 inline void create_directory_recursive(const path &p)
 {
     // Check path is absolute
