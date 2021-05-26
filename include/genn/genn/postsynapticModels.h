@@ -38,6 +38,11 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base &p, boost::uuids::detail::sha1 &hash);
+
+//----------------------------------------------------------------------------
 // PostsynapticModels::ExpCurr
 //----------------------------------------------------------------------------
 //! Exponential decay with synaptic input treated as a current value.

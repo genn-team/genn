@@ -263,4 +263,11 @@ private:
 //----------------------------------------------------------------------------
 template<size_t NumVars>
 using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
+
+//----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base &m, boost::uuids::detail::sha1 &hash);
 } // Models

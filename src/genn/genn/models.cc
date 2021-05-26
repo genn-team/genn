@@ -131,3 +131,25 @@ const SynapseGroup *WUVarReference::getTransposeSynapseGroup() const
 { 
     return m_TransposeSG; 
 }
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Utils::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Utils::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base &m, boost::uuids::detail::sha1 &hash)
+{
+    // Superclass
+    Snippet::updateHash(m, hash);
+
+    Utils::updateHash(m.getVars(), hash);
+}

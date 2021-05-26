@@ -281,4 +281,32 @@ private:
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
 };
+
+//----------------------------------------------------------------------------
+// Boost hash_value overrides
+//----------------------------------------------------------------------------
+inline void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(e.name, hash);
+    Utils::updateHash(e.type, hash);
+}
+
+inline void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(p.name, hash);
+    Utils::updateHash(p.type, hash);
+    Utils::updateHash(p.value, hash);
+}
+
+inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(d.name, hash);
+}
+
+inline void updateHash(const Base &s, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(s.getParamNames(), hash);
+    Utils::updateHash(s.getDerivedParams(), hash);
+    Utils::updateHash(s.getExtraGlobalParams(), hash);
+}
 }   // namespace Snippet

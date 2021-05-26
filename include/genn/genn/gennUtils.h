@@ -100,12 +100,12 @@ template<typename T>
 void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 {
     for(const auto &v : vector) {
-        update(v, hash);
+        updateHash(v, hash);
     }
 }
 
-//! Hash arithmetic types
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
+//! Hash arithmetic types and enums
+template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type * = nullptr>
 void updateHash(T value, boost::uuids::detail::sha1 &hash)
 {
     hash.process_bytes(&value, sizeof(T));

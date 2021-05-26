@@ -33,6 +33,11 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base &v, boost::uuids::detail::sha1 &hash);
+
+//----------------------------------------------------------------------------
 // InitVarSnippet::Uninitialised
 //----------------------------------------------------------------------------
 //! Used to mark variables as uninitialised - no initialisation code will be run

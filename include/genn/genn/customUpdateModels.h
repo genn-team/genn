@@ -43,6 +43,11 @@ public:
 };
 
 //----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base &c, boost::uuids::detail::sha1 &hash);
+
+//----------------------------------------------------------------------------
 // CustomUpdateModels::Transpose
 //----------------------------------------------------------------------------
 //! Minimal custom update model for calculating tranpose
