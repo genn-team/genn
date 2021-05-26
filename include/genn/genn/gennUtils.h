@@ -5,7 +5,11 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <vector>
+
+// Boost includes
+#include <boost/uuid/detail/sha1.hpp>
 
 // GeNN includes
 #include "gennExport.h"
@@ -84,4 +88,26 @@ std::string writePreciseString(T value)
     return s.str();
 }
 
+//! Hash strings
+void updateHash(const std::string &string, boost::uuids::detail::sha1 &hash)
+{
+    hash.process_bytes(string.data(), string.size());
+}
+
+//! Hash vectors of types which can, themselves, be hashed
+// **THINK** could add override for vectors of arithmetic types where data() is passed in
+template<typename T>
+void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
+{
+    for(const auto &v : vector) {
+        update(v, hash);
+    }
+}
+
+//! Hash arithmetic types
+template<typename T, typename std::enable_if<std::is_arithmetic<T>::value>::type * = nullptr>
+void updateHash(T value, boost::uuids::detail::sha1 &hash)
+{
+    hash.process_bytes(&value, sizeof(T));
+}
 }   // namespace Utils
