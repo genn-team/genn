@@ -150,14 +150,21 @@ template<typename Writer = SpikeWriterText>
 class SpikeRecorder : public Writer
 {
 public:
-    typedef unsigned int& (*GetCurrentSpikeCountFunc)();
-    typedef unsigned int* (*GetCurrentSpikesFunc)();
+    typedef unsigned int& (*GetCurrentSpikeCountFunc)(unsigned int);
+    typedef unsigned int* (*GetCurrentSpikesFunc)(unsigned int);
+    
+    template<typename... WriterArgs>
+    SpikeRecorder(unsigned int batch, GetCurrentSpikesFunc getCurrentSpikes, 
+                  GetCurrentSpikeCountFunc getCurrentSpikeCount, WriterArgs &&... writerArgs)
+    :   Writer(std::forward<WriterArgs>(writerArgs)...), m_Batch(batch),
+        m_GetCurrentSpikes(getCurrentSpikes), m_GetCurrentSpikeCount(getCurrentSpikeCount), m_Sum(0)
+    {
+    }
     
     template<typename... WriterArgs>
     SpikeRecorder(GetCurrentSpikesFunc getCurrentSpikes, GetCurrentSpikeCountFunc getCurrentSpikeCount,
                   WriterArgs &&... writerArgs)
-    :   Writer(std::forward<WriterArgs>(writerArgs)...), m_GetCurrentSpikes(getCurrentSpikes),
-        m_GetCurrentSpikeCount(getCurrentSpikeCount), m_Sum(0)
+    :   SpikeRecorder(0, getCurrentSpikes, getCurrentSpikeCount, std::forward<WriterArgs>(writerArgs)...)
     {
     }
 
@@ -168,9 +175,9 @@ public:
     //----------------------------------------------------------------------------
     void record(double t)
     {
-        const unsigned int spikeCount = m_GetCurrentSpikeCount();
+        const unsigned int spikeCount = m_GetCurrentSpikeCount(m_Batch);
         m_Sum += spikeCount;
-        this->recordSpikes(t, spikeCount, m_GetCurrentSpikes());
+        this->recordSpikes(t, spikeCount, m_GetCurrentSpikes(m_Batch));
     }
     
     unsigned int getSum() const{ return m_Sum; }
@@ -179,6 +186,7 @@ private:
     //----------------------------------------------------------------------------
     // Members
     //----------------------------------------------------------------------------
+    const unsigned int m_Batch;
     GetCurrentSpikesFunc m_GetCurrentSpikes;
     GetCurrentSpikeCountFunc m_GetCurrentSpikeCount;
     unsigned int m_Sum;
