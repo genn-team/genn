@@ -81,7 +81,7 @@ void writePreciseString(std::ostream &os, T value)
 //! \brief This function writes a floating point value to a string - setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>
-std::string writePreciseString(T value)
+inline std::string writePreciseString(T value)
 {
     std::stringstream s;
     writePreciseString(s, value);
@@ -89,7 +89,7 @@ std::string writePreciseString(T value)
 }
 
 //! Hash strings
-void updateHash(const std::string &string, boost::uuids::detail::sha1 &hash)
+inline void updateHash(const std::string &string, boost::uuids::detail::sha1 &hash)
 {
     hash.process_bytes(string.data(), string.size());
 }
@@ -97,7 +97,7 @@ void updateHash(const std::string &string, boost::uuids::detail::sha1 &hash)
 //! Hash vectors of types which can, themselves, be hashed
 // **THINK** could add override for vectors of arithmetic types where data() is passed in
 template<typename T>
-void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
+inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 {
     for(const auto &v : vector) {
         updateHash(v, hash);
@@ -106,7 +106,7 @@ void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 
 //! Hash arithmetic types and enums
 template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type * = nullptr>
-void updateHash(T value, boost::uuids::detail::sha1 &hash)
+inline void updateHash(T value, boost::uuids::detail::sha1 &hash)
 {
     hash.process_bytes(&value, sizeof(T));
 }
