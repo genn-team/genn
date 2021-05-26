@@ -4,7 +4,10 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <numeric>
+#include <thread>
+#include <tuple>
 
 // Standard C includes
 #include <cstdlib>
@@ -200,6 +203,74 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
+void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, 
+                   const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, const filesystem::path &nvccPath,
+                   int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
+                   KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
+{
+    // Set context for this thread
+    cuCtxSetCurrent(context);
+
+#ifdef _WIN32
+    // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
+    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
+#else
+    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
+#endif
+            
+    if(system(nvccCommand.c_str()) != 0) {
+        throw std::runtime_error("optimizeBlockSize: NVCC failed");
+    }
+
+    // Load compiled module
+    CUmodule module;
+    CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
+
+    // Loop through kernels
+    for (unsigned int k = 0; k < KernelMax; k++) {
+        // If this kernel is a custom update
+        // **YUCK** this mechanism is really not very nice but to fix it properly would require
+        // replacing the block sizes std::array with a std::map to handle different custom update kernels
+        //  which would break backward compatibility. For now just use worst case to pick block sizes
+        if(k == KernelCustomUpdate || k == KernelCustomTransposeUpdate) {
+            // Loop through all kernels of this type
+            const auto &kernels = (k == KernelCustomUpdate) ? customUpdateKernels : customTransposeUpdateKernels;
+            for(const std::string &c : kernels) {
+                // If kernel is found, update maximum shared memory size and register count
+                int sharedSizeBytes = 0;
+                int numRegisters = 0;
+                if(getKernelResourceUsage(module, Backend::KernelNames[k] + c, sharedSizeBytes, numRegisters)) {
+                    krnlSharedSizeBytes[r][k] = std::max(krnlSharedSizeBytes[r][k], sharedSizeBytes);
+                    krnlNumRegs[r][k] = std::max(krnlNumRegs[r][k], numRegisters);
+                }
+            }
+
+            // If any kernels were found, add this type of custom update kernel to map
+            if(krnlSharedSizeBytes[r][k] > 0 || krnlNumRegs[r][k] > 0) {
+                std::lock_guard<std::mutex> g(kernelsToOptimiseMutex);
+                kernelsToOptimise.emplace(std::piecewise_construct,
+                                          std::forward_as_tuple(k),
+                                          std::forward_as_tuple(false, 0));
+            }
+        }
+        // Otherwise, if kernel is found, add to map of kernels to optimise
+        else if(getKernelResourceUsage(module, Backend::KernelNames[k], krnlSharedSizeBytes[r][k], krnlNumRegs[r][k])) {
+            std::lock_guard<std::mutex> g(kernelsToOptimiseMutex);
+            kernelsToOptimise.emplace(std::piecewise_construct,
+                                      std::forward_as_tuple(k),
+                                      std::forward_as_tuple(false, 0));
+        }
+    }
+
+    // Unload module
+    CHECK_CU_ERRORS(cuModuleUnload(module));
+
+    // Remove tempory cubin file
+    if(std::remove((modulePath + ".cubin").c_str())) {
+        LOGW_BACKEND << "Cannot remove dry-run cubin file";
+    }
+}
+//--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
                                            KernelBlockSize &blockSize, const Preferences &preferences,
                                            const filesystem::path &sharePath, const filesystem::path &outputPath)
@@ -219,10 +290,6 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
-    // Bitset to mark which kernels are present and array of their attributes for each repetition
-    int krnlSharedSizeBytes[2][KernelMax] = {};
-    int krnlNumRegs[2][KernelMax] = {};
-
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
     filesystem::path nvccPath;
@@ -238,10 +305,18 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         throw std::runtime_error("CUDA_PATH environment variable not set - ");
     }
 
+    // Arrays of kernel attributes gathered across block sizes
+    int krnlSharedSizeBytes[2][KernelMax] = {};
+    int krnlNumRegs[2][KernelMax] = {};
+
+    // Map of kernels that are present in compiled 
+    // modules and mutex to protect access to it
+    KernelOptimisationOutput kernelsToOptimise;
+    std::mutex kernelsToOptimiseMutex;
+    
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
-    KernelOptimisationOutput kernelsToOptimise;
     for(unsigned int r = 0; r < 2; r++) {
         LOGD  << "Generating code with block size:" << repBlockSizes[r];
 
@@ -254,70 +329,19 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Generate code
         const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
 
-        // Set context
-        // **NOTE** CUDA calls in code generation seem to lose driver context
-        CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
-
-        // Loop through generated modules
+        // Loop through generated modules and launch threads to build and analyse each module
+        std::vector<std::thread> threads;
         for(const auto &m : moduleNames) {
             // Build module
             const std::string modulePath = (outputPath / m).str();
-            
-#ifdef _WIN32
-            // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
-            const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
-#else
-            const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
- #endif
-            if(system(nvccCommand.c_str()) != 0) {
-                throw std::runtime_error("optimizeBlockSize: NVCC failed");
-            }
+            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), 
+                                 std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
+                                 std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
+        }
 
-            // Load compiled module
-            CUmodule module;
-            CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
-
-            // Loop through kernels
-            for (unsigned int k = 0; k < KernelMax; k++) {
-                // If this kernel is a custom update
-                // **YUCK** this mechanism is really not very nice but to fix it properly would require
-                // replacing the block sizes std::array with a std::map to handle different custom update kernels
-                //  which would break backward compatibility. For now just use worst case to pick block sizes
-                if(k == KernelCustomUpdate || k == KernelCustomTransposeUpdate) {
-                    // Loop through all kernels of this type
-                    const auto &kernels = (k == KernelCustomUpdate) ? customUpdateKernels : customTransposeUpdateKernels;
-                    for(const std::string &c : kernels) {
-                        // If kernel is found, update maximum shared memory size and register count
-                        int sharedSizeBytes = 0;
-                        int numRegisters = 0;
-                        if(getKernelResourceUsage(module, Backend::KernelNames[k] + c, sharedSizeBytes, numRegisters)) {
-                            krnlSharedSizeBytes[r][k] = std::max(krnlSharedSizeBytes[r][k], sharedSizeBytes);
-                            krnlNumRegs[r][k] = std::max(krnlNumRegs[r][k], numRegisters);
-                        }
-                    }
-
-                    // If any kernels were found, add this type of custom update kernel to map
-                    if(krnlSharedSizeBytes[r][k] > 0 || krnlNumRegs[r][k] > 0) {
-                        kernelsToOptimise.emplace(std::piecewise_construct,
-                                                  std::forward_as_tuple(k),
-                                                  std::forward_as_tuple(false, 0));
-                    }
-                }
-                // Otherwise, if kernel is found, add to map of kernels to optimise
-                else if(getKernelResourceUsage(module, Backend::KernelNames[k], krnlSharedSizeBytes[r][k], krnlNumRegs[r][k])) {
-                    kernelsToOptimise.emplace(std::piecewise_construct,
-                                              std::forward_as_tuple(k),
-                                              std::forward_as_tuple(false, 0));
-                }
-            }
-
-            // Unload module
-            CHECK_CU_ERRORS(cuModuleUnload(module));
-
-            // Remove tempory cubin file
-            if(std::remove((modulePath + ".cubin").c_str())) {
-                LOGW_BACKEND << "Cannot remove dry-run cubin file";
-            }
+        // Join all threads
+        for(auto &t : threads) {
+            t.join();
         }
     }
 
@@ -581,10 +605,6 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
         KernelBlockSize cudaBlockSize;
         const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences,
                                                  sharePath, outputPath);
-
-        // **HACK**
-        cudaBlockSize[KernelCustomUpdate] = 32;
-        cudaBlockSize[KernelCustomTransposeUpdate] = 32;
 
         // Create backend
         return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);

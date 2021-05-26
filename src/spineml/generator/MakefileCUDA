@@ -14,12 +14,12 @@ include MakefileCommon
 # Add include and link flags for CUDA
 CXXFLAGS		+= -I"$(CUDA_PATH)/include"
 ifeq ($(DARWIN),DARWIN)
-    LDFLAGS		+=-rpath $(CUDA_PATH)/lib -L"$(CUDA_PATH)/lib" -lcuda -lcudart
+    LDFLAGS		+=-rpath $(CUDA_PATH)/lib -L"$(CUDA_PATH)/lib" -lcuda -lcudart -pthread
 else
     ifeq ($(OS_SIZE),32)
-        LDFLAGS		+=-L"$(CUDA_PATH)/lib" -lcuda -lcudart
+        LDFLAGS		+=-L"$(CUDA_PATH)/lib" -lcuda -lcudart -pthread
     else
-        LDFLAGS		+=-L"$(CUDA_PATH)/lib64" -lcuda -lcudart
+        LDFLAGS		+=-L"$(CUDA_PATH)/lib64" -lcuda -lcudart -pthread
     endif
 endif
 

@@ -17,7 +17,7 @@
 //----------------------------------------------------------------------------
 // SpineMLGenerator::ParamValues
 //----------------------------------------------------------------------------
-std::vector<double> SpineMLGenerator::ParamValues::getValues() const
+std::vector<double> SpineMLGenerator::ParamValues::getInitialisers() const
 {
     // Get parameter names from model
     auto modelParamNames = m_Model.getParamNames();
