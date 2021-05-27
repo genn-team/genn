@@ -45,7 +45,7 @@ public:
     using SynapseGroup::canWUPostBeMerged;
     using SynapseGroup::canPSBeMerged;
     using SynapseGroup::canPSBeLinearlyCombined;
-    using SynapseGroup::canWUInitBeMerged;
+    using SynapseGroup::updateWUInitHash;
     using SynapseGroup::canWUPreInitBeMerged;
     using SynapseGroup::canWUPostInitBeMerged;
     using SynapseGroup::canPSInitBeMerged;

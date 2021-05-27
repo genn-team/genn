@@ -661,22 +661,16 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUInitBeMerged(const SynapseGroup &other) const
+void SynapseGroup::updateWUInitHash(boost::uuids::detail::sha1 &hash) const
 {
-    if((getMatrixType() == other.getMatrixType())
-       && (getSparseIndType() == other.getSparseIndType())
-       && (getWUModel()->getVars() == other.getWUModel()->getVars()))
-    {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
-            if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
-                return false;
-            }
-        }
+    Utils::updateHash(getMatrixType(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getWUModel()->getVars(), hash);
 
-        return true;
+    // Include variable initialiser hashes
+    for(const auto &w : getWUVarInitialisers()) {
+        w.updateHash(hash);
     }
-    return false;
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const

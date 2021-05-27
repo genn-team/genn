@@ -187,7 +187,7 @@ TEST(SynapseGroup, CompareWUDifferentModel)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     ASSERT_HASH_NE(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_FALSE(sg1Internal->canWUInitBeMerged(*sg0));
+    ASSERT_HASH_NE(sg0Internal, sg1Internal, updateWUInitHash);
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -458,8 +458,10 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
+    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUInitHash);
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
@@ -521,11 +523,12 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
-
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
+    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUInitHash);
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
 }
@@ -566,11 +569,12 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
-
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
+    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUInitHash);
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
 }
@@ -604,7 +608,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
     ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_TRUE(sg1Internal->canWUInitBeMerged(*sg0));
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;

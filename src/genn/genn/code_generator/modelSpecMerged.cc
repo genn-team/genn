@@ -53,12 +53,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                        [](const CustomUpdateWUInternal &a, const CustomUpdateWUInternal &b) { return a.canInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
-                       [](const SynapseGroupInternal &sg)
-                       {
-                           return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
-                       },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
+                           [](const SynapseGroupInternal &sg)
+                           {
+                               return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
+                           },
+                           &SynapseGroupInternal::updateWUInitHash);
 
     LOGD_CODE_GEN << "Merging synapse connectivity initialisation groups:";
     createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
@@ -66,15 +66,15 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                        [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canConnectivityInitBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging synapse sparse initialization groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
-                       [&backend](const SynapseGroupInternal &sg)
-                       {
-                           return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
-                                   (sg.isWUVarInitRequired()
-                                    || backend.isSynRemapRequired(sg)
-                                    || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
-                       },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUInitBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
+                           [&backend](const SynapseGroupInternal &sg)
+                           {
+                               return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
+                                       (sg.isWUVarInitRequired()
+                                        || backend.isSynRemapRequired(sg)
+                                        || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
+                           },
+                           &SynapseGroupInternal::updateWUInitHash);
 
     LOGD_CODE_GEN << "Merging custom sparse weight update initialization groups:";
     createMergedGroups(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
