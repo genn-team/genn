@@ -9,31 +9,19 @@
 //  10 Jan 2012 - can now handle the full size of messages (2^64 - 1 bits)
 
 // This is a byte oriented implementation
+#pragma once
 
-#ifndef BOOST_UUID_SHA1_H
-#define BOOST_UUID_SHA1_H
-
-#include <boost/static_assert.hpp>
-#include <boost/throw_exception.hpp>
-#include <boost/uuid/uuid.hpp> // for version
-#include <cstddef>
+#include <array>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 
-#ifdef BOOST_NO_STDC_NAMESPACE
-namespace std {
-    using ::size_t;
-} // namespace std
-#endif
 
 namespace boost {
 namespace uuids {
 namespace detail {
 
-BOOST_STATIC_ASSERT(sizeof(unsigned char)*8 == 8);
-BOOST_STATIC_ASSERT(sizeof(unsigned int)*8 == 32);
-
-inline unsigned int left_rotate(unsigned int x, std::size_t n)
+inline uint32_t left_rotate(uint32_t x, size_t n)
 {
     return (x<<n) ^ (x>> (32-n));
 }
@@ -41,31 +29,30 @@ inline unsigned int left_rotate(unsigned int x, std::size_t n)
 class sha1
 {
 public:
-    typedef unsigned int(digest_type)[5];
+    typedef std::array<uint32_t, 5> digest_type;
 public:
     sha1();
 
     void reset();
 
-    void process_byte(unsigned char byte);
+    void process_byte(uint8_t byte);
     void process_block(void const* bytes_begin, void const* bytes_end);
-    void process_bytes(void const* buffer, std::size_t byte_count);
+    void process_bytes(void const* buffer, size_t byte_count);
 
-    void get_digest(digest_type& digest);
-    unsigned char get_version() const;
+    digest_type get_digest();
 
 private:
     void process_block();
-    void process_byte_impl(unsigned char byte);
+    void process_byte_impl(uint8_t byte);
 
 private:
-    unsigned int h_[5];
+    digest_type h_;
 
-    unsigned char block_[64];
+    uint8_t block_[64];
 
-    std::size_t block_byte_index_;
-    std::size_t bit_count_low;
-    std::size_t bit_count_high;
+    size_t block_byte_index_;
+    size_t bit_count_low;
+    size_t bit_count_high;
 };
 
 inline sha1::sha1()
@@ -86,7 +73,7 @@ inline void sha1::reset()
     bit_count_high = 0;
 }
 
-inline void sha1::process_byte(unsigned char byte)
+inline void sha1::process_byte(uint8_t byte)
 {
     process_byte_impl(byte);
 
@@ -101,12 +88,12 @@ inline void sha1::process_byte(unsigned char byte)
         if (bit_count_high <= 0xFFFFFFFE) {
             ++bit_count_high;
         } else {
-            BOOST_THROW_EXCEPTION(std::runtime_error("sha1 too many bytes"));
+            throw std::runtime_error("sha1 too many bytes");
         }
     }
 }
 
-inline void sha1::process_byte_impl(unsigned char byte)
+inline void sha1::process_byte_impl(uint8_t byte)
 {
     block_[block_byte_index_++] = byte;
 
@@ -118,41 +105,41 @@ inline void sha1::process_byte_impl(unsigned char byte)
 
 inline void sha1::process_block(void const* bytes_begin, void const* bytes_end)
 {
-    unsigned char const* begin = static_cast<unsigned char const*>(bytes_begin);
-    unsigned char const* end = static_cast<unsigned char const*>(bytes_end);
+    uint8_t const* begin = static_cast<uint8_t const*>(bytes_begin);
+    uint8_t const* end = static_cast<uint8_t const*>(bytes_end);
     for(; begin != end; ++begin) {
         process_byte(*begin);
     }
 }
 
-inline void sha1::process_bytes(void const* buffer, std::size_t byte_count)
+inline void sha1::process_bytes(void const* buffer, size_t byte_count)
 {
-    unsigned char const* b = static_cast<unsigned char const*>(buffer);
+    uint8_t const* b = static_cast<uint8_t const*>(buffer);
     process_block(b, b+byte_count);
 }
 
 inline void sha1::process_block()
 {
-    unsigned int w[80];
-    for (std::size_t i=0; i<16; ++i) {
+    uint32_t w[80];
+    for (size_t i=0; i<16; ++i) {
         w[i]  = (block_[i*4 + 0] << 24);
         w[i] |= (block_[i*4 + 1] << 16);
         w[i] |= (block_[i*4 + 2] << 8);
         w[i] |= (block_[i*4 + 3]);
     }
-    for (std::size_t i=16; i<80; ++i) {
+    for (size_t i=16; i<80; ++i) {
         w[i] = left_rotate((w[i-3] ^ w[i-8] ^ w[i-14] ^ w[i-16]), 1);
     }
 
-    unsigned int a = h_[0];
-    unsigned int b = h_[1];
-    unsigned int c = h_[2];
-    unsigned int d = h_[3];
-    unsigned int e = h_[4];
+    uint32_t a = h_[0];
+    uint32_t b = h_[1];
+    uint32_t c = h_[2];
+    uint32_t d = h_[3];
+    uint32_t e = h_[4];
 
-    for (std::size_t i=0; i<80; ++i) {
-        unsigned int f;
-        unsigned int k;
+    for (size_t i=0; i<80; ++i) {
+        uint32_t f;
+        uint32_t k;
 
         if (i<20) {
             f = (b & c) | (~b & d);
@@ -183,13 +170,7 @@ inline void sha1::process_block()
     h_[4] += e;
 }
 
-inline unsigned char sha1::get_version() const
-{
-    // RFC 4122 Section 4.1.3
-    return uuid::version_name_based_sha1;
-}
-
-inline void sha1::get_digest(digest_type& digest)
+inline sha1::digest_type sha1::get_digest()
 {
     // append the bit '1' to the message
     process_byte_impl(0x80);
@@ -215,23 +196,17 @@ inline void sha1::get_digest(digest_type& digest)
 
     // append length of message (before pre-processing)
     // as a 64-bit big-endian integer
-    process_byte_impl( static_cast<unsigned char>((bit_count_high>>24) & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_high>>16) & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_high>>8 ) & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_high)     & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_low>>24) & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_low>>16) & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_low>>8 ) & 0xFF) );
-    process_byte_impl( static_cast<unsigned char>((bit_count_low)     & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_high>>24) & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_high>>16) & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_high>>8 ) & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_high)     & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_low>>24) & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_low>>16) & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_low>>8 ) & 0xFF) );
+    process_byte_impl( static_cast<uint8_t>((bit_count_low)     & 0xFF) );
 
     // get final digest
-    digest[0] = h_[0];
-    digest[1] = h_[1];
-    digest[2] = h_[2];
-    digest[3] = h_[3];
-    digest[4] = h_[4];
+    return h_;
 }
 
 }}} // namespace boost::uuids::detail
-
-#endif
