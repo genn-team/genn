@@ -318,6 +318,18 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     void updateWUInitHash(boost::uuids::detail::sha1 &hash) const;
 
+     //! Updates hash with presynaptic variable initialisation component of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    void updateWUPreInitHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Updates hash with postsynaptic variable initialisation component of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    void updateWUPostInitHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Updates hash with postsynaptic model variable initialisation component of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    void updatePSInitHash(boost::uuids::detail::sha1 &hash) const;
+
     //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canWUPreInitBeMerged(const SynapseGroup &other) const;

@@ -692,6 +692,37 @@ void SynapseGroup::updateWUInitHash(boost::uuids::detail::sha1 &hash) const
     }
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::updateWUPreInitHash(boost::uuids::detail::sha1 &hash) const
+{
+    Utils::updateHash(getWUModel()->getPreVars(), hash);
+
+    // Include presynaptic variable initialiser hashes
+    for(const auto &w : getWUPreVarInitialisers()) {
+        w.updateHash(hash);
+    }
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::updateWUPostInitHash(boost::uuids::detail::sha1 &hash) const
+{
+    Utils::updateHash(getWUModel()->getPostVars(), hash);
+
+    // Include postsynaptic variable initialiser hashes
+    for(const auto &w : getWUPostVarInitialisers()) {
+        w.updateHash(hash);
+    }
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::updatePSInitHash(boost::uuids::detail::sha1 &hash) const
+{
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash(getPSModel()->getVars(), hash);
+
+    // Include postsynaptic model variable initialiser hashes
+    for(const auto &p : getPSVarInitialisers()) {
+        p.updateHash(hash);
+    }
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const
 {
     if(getWUModel()->getPreVars() == other.getWUModel()->getPreVars()) {
