@@ -65,12 +65,10 @@ public:
     //----------------------------------------------------------------------------
     //! Can this neuron model be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
-};
 
-//----------------------------------------------------------------------------
-// updateHash overrides
-//----------------------------------------------------------------------------
-GENN_EXPORT void updateHash(const Base &n, boost::uuids::detail::sha1 &hash);
+    //! Update hash from model
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+};
 
 //----------------------------------------------------------------------------
 // NeuronModels::RulkovMap

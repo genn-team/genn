@@ -122,6 +122,8 @@ protected:
         return (Snippet::Base::canBeMerged(other)
                 && (getVars() == other->getVars()));
     }
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 };
 
 
@@ -269,5 +271,4 @@ using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarRefer
 //----------------------------------------------------------------------------
 GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
-GENN_EXPORT void updateHash(const Base &m, boost::uuids::detail::sha1 &hash);
 } // Models

@@ -27,19 +27,16 @@ bool NeuronModels::Base::canBeMerged(const Base *other) const
             && (isAutoRefractoryRequired() == other->isAutoRefractoryRequired())
             && (getAdditionalInputVars() == other->getAdditionalInputVars()));
 }
-
 //----------------------------------------------------------------------------
-// updateHash overrides
-//----------------------------------------------------------------------------
-void NeuronModels::updateHash(const Base &n, boost::uuids::detail::sha1 &hash)
+void NeuronModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass
-    Models::updateHash(n, hash);
+    Models::Base::updateHash(hash);
 
-    Utils::updateHash(n.getSimCode(), hash);
-    Utils::updateHash(n.getThresholdConditionCode(), hash);
-    Utils::updateHash(n.getResetCode(), hash);
-    Utils::updateHash(n.getSupportCode(), hash);
-    Utils::updateHash(n.isAutoRefractoryRequired(), hash);
-    Utils::updateHash(n.getAdditionalInputVars(), hash);
+    Utils::updateHash(getSimCode(), hash);
+    Utils::updateHash(getThresholdConditionCode(), hash);
+    Utils::updateHash(getResetCode(), hash);
+    Utils::updateHash(getSupportCode(), hash);
+    Utils::updateHash(isAutoRefractoryRequired(), hash);
+    Utils::updateHash(getAdditionalInputVars(), hash);
 }

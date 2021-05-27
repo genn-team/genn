@@ -9,6 +9,16 @@
 using namespace Models;
 
 //----------------------------------------------------------------------------
+// Models::Base
+//----------------------------------------------------------------------------
+void Base::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+     // Superclass
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getVars(), hash);
+}
+//----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(const NeuronGroup *ng, const std::string &varName)
@@ -144,12 +154,4 @@ void Models::updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
     Utils::updateHash(v.name, hash);
     Utils::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
-}
-//----------------------------------------------------------------------------
-void Models::updateHash(const Base &m, boost::uuids::detail::sha1 &hash)
-{
-    // Superclass
-    Snippet::updateHash(m, hash);
-
-    Utils::updateHash(m.getVars(), hash);
 }

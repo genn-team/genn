@@ -16,17 +16,13 @@ bool PostsynapticModels::Base::canBeMerged(const Base *other) const
             && (getApplyInputCode() == other->getApplyInputCode())
             && (getSupportCode() == other->getSupportCode()));
 }
-
-
 //----------------------------------------------------------------------------
-// updateHash overrides
-//----------------------------------------------------------------------------
-void PostsynapticModels::updateHash(const Base &p, boost::uuids::detail::sha1 &hash)
+void PostsynapticModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass
-    Models::updateHash(p, hash);
+    Models::Base::updateHash(hash);
 
-    Utils::updateHash(p.getDecayCode(), hash);
-    Utils::updateHash(p.getApplyInputCode(), hash);
-    Utils::updateHash(p.getSupportCode(), hash);
+    Utils::updateHash(getDecayCode(), hash);
+    Utils::updateHash(getApplyInputCode(), hash);
+    Utils::updateHash(getSupportCode(), hash);
 }

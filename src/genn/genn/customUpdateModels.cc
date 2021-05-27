@@ -15,13 +15,11 @@ bool CustomUpdateModels::Base::canBeMerged(const Base *other) const
 }
 
 //----------------------------------------------------------------------------
-// updateHash overrides
-//----------------------------------------------------------------------------
-void CustomUpdateModels::updateHash(const Base &c, boost::uuids::detail::sha1 &hash)
+void CustomUpdateModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass
-    Models::updateHash(c, hash);
+    Models::Base::updateHash(hash);
 
-    Utils::updateHash(c.getUpdateCode(), hash);
-    Utils::updateHash(c.getVarRefs(), hash);
+    Utils::updateHash(getUpdateCode(), hash);
+    Utils::updateHash(getVarRefs(), hash);
 }

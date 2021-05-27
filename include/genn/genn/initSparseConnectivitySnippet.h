@@ -70,12 +70,10 @@ public:
     //------------------------------------------------------------------------
     //! Can this sparse connectivity init snippet be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
-};
 
-//----------------------------------------------------------------------------
-// updateHash overrides
-//----------------------------------------------------------------------------
-GENN_EXPORT void updateHash(const Base &c, boost::uuids::detail::sha1 &hash);
+    //! Update hash from snippet
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+};
 
 //----------------------------------------------------------------------------
 // Init

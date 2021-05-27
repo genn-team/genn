@@ -215,6 +215,13 @@ protected:
                 && (getExtraGlobalParams() == other->getExtraGlobalParams()));
     }
 
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        Utils::updateHash(getParamNames(), hash);
+        Utils::updateHash(getDerivedParams(), hash);
+        Utils::updateHash(getExtraGlobalParams(), hash);
+    }
+
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
@@ -283,7 +290,7 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// Boost hash_value overrides
+// updateHash overrides
 //----------------------------------------------------------------------------
 inline void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
 {
@@ -301,12 +308,5 @@ inline void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash
 inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
 {
     Utils::updateHash(d.name, hash);
-}
-
-inline void updateHash(const Base &s, boost::uuids::detail::sha1 &hash)
-{
-    Utils::updateHash(s.getParamNames(), hash);
-    Utils::updateHash(s.getDerivedParams(), hash);
-    Utils::updateHash(s.getExtraGlobalParams(), hash);
 }
 }   // namespace Snippet

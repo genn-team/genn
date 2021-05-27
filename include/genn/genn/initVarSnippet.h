@@ -28,6 +28,9 @@ public:
     //! Can this var init snippet be merged with other? i.e. can they be simulated using same generated code
     bool canBeMerged(const Base *other) const;
 
+    //! Update hash from snippet
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+
     //! Does this var init snippet require kernel-based connectivity
     bool requiresKernel() const;
 };

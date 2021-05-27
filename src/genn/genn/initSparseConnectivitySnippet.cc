@@ -22,18 +22,15 @@ bool InitSparseConnectivitySnippet::Base::canBeMerged(const Base *other) const
             && (getColBuildStateVars() == other->getColBuildStateVars())
             && (getHostInitCode() == other->getHostInitCode()));
 }
-
 //----------------------------------------------------------------------------
-// updateHash overrides
-//----------------------------------------------------------------------------
-void InitSparseConnectivitySnippet::updateHash(const Base &c, boost::uuids::detail::sha1 &hash)
+void InitSparseConnectivitySnippet::Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
     // Superclass
-    Snippet::updateHash(c, hash);
+    Snippet::Base::updateHash(hash);
 
-    Utils::updateHash(c.getRowBuildCode(), hash);
-    Utils::updateHash(c.getRowBuildStateVars(), hash);
-    Utils::updateHash(c.getColBuildCode(), hash);
-    Utils::updateHash(c.getColBuildStateVars(), hash);
-    Utils::updateHash(c.getHostInitCode(), hash);
+    Utils::updateHash(getRowBuildCode(), hash);
+    Utils::updateHash(getRowBuildStateVars(), hash);
+    Utils::updateHash(getColBuildCode(), hash);
+    Utils::updateHash(getColBuildStateVars(), hash);
+    Utils::updateHash(getHostInitCode(), hash);
 }
