@@ -721,16 +721,14 @@ bool SynapseGroup::canPSInitBeMerged(const SynapseGroup &other) const
     return false;
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canConnectivityInitBeMerged(const SynapseGroup &other) const
+void SynapseGroup::updateConnectivityInitHash(boost::uuids::detail::sha1 &hash) const
 {
-    // Connectivity initialization can be merged if the type of connectivity is the same and the initialisers can be merged
-    return (getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser())
-            && (getSynapseMatrixConnectivity(getMatrixType()) == getSynapseMatrixConnectivity(other.getMatrixType()))
-            && (getSparseIndType() == other.getSparseIndType()));
+    getConnectivityInitialiser().updateHash(hash);
+    Utils::updateHash(getMatrixType(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canConnectivityHostInitBeMerged(const SynapseGroup &other) const
+void SynapseGroup::updateConnectivityHostInitHash(boost::uuids::detail::sha1 &hash) const
 {
-    // Connectivity host initialization can be merged if the initialisers 
-    return getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser());
+    getConnectivityInitialiser().updateHash(hash);
 }

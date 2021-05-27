@@ -318,13 +318,13 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     bool canPSInitBeMerged(const SynapseGroup &other) const;
 
-    //! Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Updates hash with connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canConnectivityInitBeMerged(const SynapseGroup &other) const;
+    void updateConnectivityInitHash(boost::uuids::detail::sha1 &hash) const;
 
-    //! Can connectivity host initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Updates hash with host connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canConnectivityHostInitBeMerged(const SynapseGroup &other) const;
+    void updateConnectivityHostInitHash(boost::uuids::detail::sha1 &hash) const;
 
 private:
     //------------------------------------------------------------------------

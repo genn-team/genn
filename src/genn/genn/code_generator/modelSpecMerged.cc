@@ -61,9 +61,9 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            &SynapseGroupInternal::updateWUInitHash);
 
     LOGD_CODE_GEN << "Merging synapse connectivity initialisation groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
-                       [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canConnectivityInitBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
+                           [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
+                           &SynapseGroupInternal::updateConnectivityInitHash);
 
     LOGD_CODE_GEN << "Merging synapse sparse initialization groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
@@ -120,15 +120,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                        });
 
     LOGD_CODE_GEN << "Merging synapse groups which require host code to initialise their synaptic connectivity:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
-                       [](const SynapseGroupInternal &sg)
-                       { 
-                           return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 
-                       },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b)
-                       { 
-                           return a.canConnectivityHostInitBeMerged(b); 
-                       });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
+                           [](const SynapseGroupInternal &sg)
+                           { 
+                               return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 
+                           },
+                           &SynapseGroupInternal::updateConnectivityHostInitHash);
 
     LOGD_CODE_GEN << "Merging custom update groups:";
     createMergedGroups(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,

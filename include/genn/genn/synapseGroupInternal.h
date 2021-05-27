@@ -49,6 +49,6 @@ public:
     using SynapseGroup::canWUPreInitBeMerged;
     using SynapseGroup::canWUPostInitBeMerged;
     using SynapseGroup::canPSInitBeMerged;
-    using SynapseGroup::canConnectivityInitBeMerged;
-    using SynapseGroup::canConnectivityHostInitBeMerged;
+    using SynapseGroup::updateConnectivityInitHash;
+    using SynapseGroup::updateConnectivityHostInitHash;
 };
