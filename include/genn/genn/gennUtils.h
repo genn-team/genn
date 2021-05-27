@@ -9,7 +9,7 @@
 #include <vector>
 
 // Boost includes
-#include <boost/uuid/detail/sha1.hpp>
+#include <sha1.hpp>
 
 // GeNN includes
 #include "gennExport.h"
@@ -110,9 +110,5 @@ inline void updateHash(T value, boost::uuids::detail::sha1 &hash)
 {
     hash.process_bytes(&value, sizeof(T));
 }
-
-//! Do the two hashes match?
-/*! This function take sha1 objects by value because the process of obtaining a digest modifies them */
-GENN_EXPORT bool hashesEqual(boost::uuids::detail::sha1 a, boost::uuids::detail::sha1 b);
 
 }   // namespace Utils

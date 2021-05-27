@@ -40,7 +40,7 @@ public:
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
     using SynapseGroup::getSparseIndType;
-    using SynapseGroup::canWUBeMerged;
+    using SynapseGroup::updateWUHash;
     using SynapseGroup::canWUPreBeMerged;
     using SynapseGroup::canWUPostBeMerged;
     using SynapseGroup::canPSBeMerged;

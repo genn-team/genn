@@ -93,19 +93,4 @@ std::string getUnderlyingType(const std::string &type)
         return type.substr(0, type.length() - 1);
     }
 }
-//--------------------------------------------------------------------------
-bool hashesEqual(boost::uuids::detail::sha1 a, boost::uuids::detail::sha1 b)
-{
-    // Get digest of a
-    boost::uuids::detail::sha1::digest_type aDigest;
-    a.get_digest(aDigest);
-
-    // Get digest of b
-    boost::uuids::detail::sha1::digest_type bDigest;
-    b.get_digest(bDigest);
-
-    // Return whether digests are equal
-    return std::equal(std::begin(aDigest), std::end(aDigest), 
-                      std::begin(bDigest));
-}
 }   // namespace utils

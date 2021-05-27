@@ -1,9 +1,11 @@
 #pragma once
 
 // Standard C++ includes
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -257,6 +259,17 @@ public:
     }
 
 private:
+    //! Functor for generating a size_t size hash from a SHA1 digests
+    struct SHA1Hash
+    {
+        size_t operator()(const boost::uuids::detail::sha1::digest_type &digest) const
+        {
+            size_t hash;
+            memcpy(&hash, &digest[0], sizeof(size_t));
+            return hash;
+        }
+    };
+
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
@@ -348,6 +361,72 @@ private:
 
         // Merge filtered vector
         createMergedGroups(model, backend, unmergedGroups, mergedGroups, canMerge);
+    }
+
+    template<typename Group, typename MergedGroup, typename U>
+    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
+                                std::vector<MergedGroup> &mergedGroups, U updateHash)
+    {
+        // Create a hash map to group together groups with the same SHA1 digest
+        std::unordered_map<boost::uuids::detail::sha1::digest_type, 
+                           std::vector<std::reference_wrapper<const Group>>, 
+                           SHA1Hash> protoMergedGroups;
+
+        // Add unmerged groups to correct vector
+        for(const auto &g : unmergedGroups) {
+            boost::uuids::detail::sha1 hash;
+            (g.get().*updateHash)(hash);
+            
+            protoMergedGroups[hash.get_digest()].push_back(g);
+        }
+        
+        // Reserve final merged groups vector
+        mergedGroups.reserve(protoMergedGroups.size());
+
+        // Loop through resultant merged groups
+        size_t i = 0;
+        for(const auto &p : protoMergedGroups) {
+            // Add group to vector, moving vectors of groups into data structure to avoid copying
+            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
+                                      std::move(p.second));
+     
+            // Loop through fields
+            for(const auto &f : mergedGroups.back().getFields()) {
+                // If field is an EGP, add record to merged EGPS
+                if(std::get<3>(f) == MergedGroup::FieldType::PointerEGP || std::get<3>(f) == MergedGroup::FieldType::ScalarEGP) {
+                    // Loop through groups within newly-created merged group
+                    for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
+                        const auto &g = mergedGroups.back().getGroups()[groupIndex];
+
+                        // Add reference to this group's variable to data structure
+                        m_MergedEGPs[std::get<2>(f)(g, groupIndex)].emplace(
+                            std::piecewise_construct,
+                            std::forward_as_tuple(MergedGroup::name),
+                            std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f)));
+                    }
+                }
+            }
+
+            i++;
+        }
+    }
+
+    template<typename Group, typename MergedGroup, typename F, typename U>
+    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
+                                F filter, U updateHash)
+    {
+        // Build temporary vector of references to groups that pass filter
+        std::vector<std::reference_wrapper<const Group>> unmergedGroups;
+        for(const auto &g : groups) {
+            if(filter(g.second)) {
+                unmergedGroups.emplace_back(std::cref(g.second));
+            }
+        }
+
+        // Merge filtered vector
+        createMergedGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash);
     }
 
     //--------------------------------------------------------------------------

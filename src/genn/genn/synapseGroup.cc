@@ -589,41 +589,6 @@ std::string SynapseGroup::getSparseIndType() const
 
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
-{
-    if(getWUModel()->canBeMerged(other.getWUModel())
-       && (getDelaySteps() == other.getDelaySteps())
-       && (getBackPropDelaySteps() == other.getBackPropDelaySteps())
-       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
-       && (getSparseIndType() == other.getSparseIndType())
-       && (getNumThreadsPerSpike() == other.getNumThreadsPerSpike())
-       && (isEventThresholdReTestRequired() == other.isEventThresholdReTestRequired())
-       && (getSpanType() == other.getSpanType())
-       && (isPSModelMerged() == other.isPSModelMerged())
-       && (getSrcNeuronGroup()->getNumDelaySlots() == other.getSrcNeuronGroup()->getNumDelaySlots())
-       && (getTrgNeuronGroup()->getNumDelaySlots() == other.getTrgNeuronGroup()->getNumDelaySlots())
-       && (getMatrixType() == other.getMatrixType()))
-    {
-        // If weights are procedural and any of the variable's initialisers can't be merged, return false
-        if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-            for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
-                if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
-                    return false;
-                }
-            }
-        }
-
-        // If connectivity is either non-procedural or connectivity initialisers can be merged
-        if(!(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
-           || getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser()))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
 void SynapseGroup::updateWUHash(boost::uuids::detail::sha1 &hash) const
 {
     getWUModel()->updateHash(hash);

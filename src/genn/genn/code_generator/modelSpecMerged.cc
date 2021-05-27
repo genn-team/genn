@@ -23,19 +23,19 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                        [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canBeMerged(b); });
 
     LOGD_CODE_GEN << "Merging presynaptic update groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg){ return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
+                           [](const SynapseGroupInternal &sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
+                           &SynapseGroupInternal::updateWUHash);
 
     LOGD_CODE_GEN << "Merging postsynaptic update groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
-                       [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
+                           [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
+                           &SynapseGroupInternal::updateWUHash);
 
     LOGD_CODE_GEN << "Merging synapse dynamics update groups:";
-    createMergedGroups(model, backend, model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
-                       [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b){ return a.canWUBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
+                           [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
+                           &SynapseGroupInternal::updateWUHash);
 
     LOGD_CODE_GEN << "Merging neuron initialization groups:";
     createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
