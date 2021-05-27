@@ -624,6 +624,34 @@ bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
     return false;
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::updateWUHash(boost::uuids::detail::sha1 &hash) const
+{
+    getWUModel()->updateHash(hash);
+    Utils::updateHash(getDelaySteps(), hash);
+    Utils::updateHash(getBackPropDelaySteps(), hash);
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getNumThreadsPerSpike(), hash);
+    Utils::updateHash(isEventThresholdReTestRequired(), hash);
+    Utils::updateHash(getSpanType(), hash);
+    Utils::updateHash(isPSModelMerged(), hash);
+    Utils::updateHash(getSrcNeuronGroup()->getNumDelaySlots(), hash);
+    Utils::updateHash(getTrgNeuronGroup()->getNumDelaySlots(), hash);
+    Utils::updateHash(getMatrixType(), hash);
+
+    // If weights are procedural, include variable initialiser hashes
+    if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+        for(const auto &w : getWUVarInitialisers()) {
+            w.updateHash(hash);
+        }
+    }
+
+    // If connectivity is procedural, include connectivitiy initialiser hash
+    if(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        getConnectivityInitialiser().updateHash(hash);
+    }
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
 {
     const bool delayed = (getDelaySteps() != 0);

@@ -280,6 +280,11 @@ public:
         return getSnippet()->canBeMerged(other.getSnippet());
     }
 
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        getSnippet()->updateHash(hash);
+    }
+
 private:
     //----------------------------------------------------------------------------
     // Members
