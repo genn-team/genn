@@ -34,9 +34,9 @@ TEST(PostsynapticModels, CompareBuiltIn)
     ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(ExpCond::getInstance()));
     ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(DeltaCurr::getInstance()));
 
-    ASSERT_MODEL_HASH_EQ(ExpCurr::getInstance(), ExpCurr::getInstance());
-    ASSERT_MODEL_HASH_NE(ExpCurr::getInstance(), ExpCond::getInstance());
-    ASSERT_MODEL_HASH_NE(ExpCurr::getInstance(), DeltaCurr::getInstance());
+    ASSERT_HASH_EQ(ExpCurr::getInstance(), ExpCurr::getInstance(), updateHash);
+    ASSERT_HASH_NE(ExpCurr::getInstance(), ExpCond::getInstance(), updateHash);
+    ASSERT_HASH_NE(ExpCurr::getInstance(), DeltaCurr::getInstance(), updateHash);
 }
 
 TEST(PostsynapticModels, CompareCopyPasted)
@@ -46,5 +46,5 @@ TEST(PostsynapticModels, CompareCopyPasted)
     ExpCurrCopy expCurrCopy;
     ASSERT_TRUE(ExpCurr::getInstance()->canBeMerged(&expCurrCopy));
 
-    ASSERT_MODEL_HASH_EQ(ExpCurr::getInstance(), &expCurrCopy);
+    ASSERT_HASH_EQ(ExpCurr::getInstance(), &expCurrCopy, updateHash);
 }

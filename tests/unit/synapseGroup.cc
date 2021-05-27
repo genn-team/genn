@@ -10,6 +10,9 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+// Unit test includes
+#include "hashUtils.h"
+
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -181,8 +184,9 @@ TEST(SynapseGroup, CompareWUDifferentModel)
     // Finalize model
     model.finalize();
 
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
-    ASSERT_FALSE(sg1Internal->canWUBeMerged(*sg0));
+    ASSERT_HASH_NE(sg0Internal, sg1Internal, updateWUHash);
     ASSERT_FALSE(sg1Internal->canWUInitBeMerged(*sg0));
 
     // Create a backend
@@ -230,8 +234,10 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
+    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUHash);
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -282,9 +288,11 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
     // Finalize model
     model.finalize();
 
-    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
+    ASSERT_HASH_EQ(sg0Internal, s2Internal, updateWUHash);
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -339,9 +347,11 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     // Finalize model
     model.finalize();
 
-    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
+    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUHash);
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -391,9 +401,11 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
     // Finalize model
     model.finalize();
 
-    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(!sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
+    ASSERT_HASH_NE(sg0Internal, sg2Internal, updateWUHash);
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -589,8 +601,9 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     // Finalize model
     model.finalize();
 
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
-    ASSERT_TRUE(sg1Internal->canWUBeMerged(*sg0));
+    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
     ASSERT_TRUE(sg1Internal->canWUInitBeMerged(*sg0));
 
     // Create a backend

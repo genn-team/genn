@@ -31,9 +31,9 @@ TEST(InitVarSnippet, CompareBuiltIn)
     ASSERT_FALSE(Uniform::getInstance()->canBeMerged(Normal::getInstance()));
     ASSERT_FALSE(Exponential::getInstance()->canBeMerged(Gamma::getInstance()));
 
-    ASSERT_MODEL_HASH_EQ(Constant::getInstance(), Constant::getInstance());
-    ASSERT_MODEL_HASH_NE(Uniform::getInstance(), Normal::getInstance());
-    ASSERT_MODEL_HASH_NE(Exponential::getInstance(), Gamma::getInstance());
+    ASSERT_HASH_EQ(Constant::getInstance(), Constant::getInstance(), updateHash);
+    ASSERT_HASH_NE(Uniform::getInstance(), Normal::getInstance(), updateHash);
+    ASSERT_HASH_NE(Exponential::getInstance(), Gamma::getInstance(), updateHash);
 }
 
 TEST(InitVarSnippet, CompareCopyPasted)
@@ -42,7 +42,7 @@ TEST(InitVarSnippet, CompareCopyPasted)
 
     UniformCopy uniformCopy;
     ASSERT_TRUE(Uniform::getInstance()->canBeMerged(&uniformCopy));
-    ASSERT_MODEL_HASH_EQ(Uniform::getInstance(), &uniformCopy);
+    ASSERT_HASH_EQ(Uniform::getInstance(), &uniformCopy, updateHash);
 }
 
 TEST(InitVarSnippet, CompareVarInitParameters)

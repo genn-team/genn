@@ -57,10 +57,10 @@ TEST(NeuronModels, CompareBuiltIn)
     ASSERT_FALSE(NeuronModels::Izhikevich::getInstance()->canBeMerged(NeuronModels::IzhikevichVariable::getInstance()));
     ASSERT_FALSE(NeuronModels::TraubMilesAlt::getInstance()->canBeMerged(NeuronModels::TraubMiles::getInstance()));
 
-    ASSERT_MODEL_HASH_EQ(NeuronModels::LIF::getInstance(), NeuronModels::LIF::getInstance());
-    ASSERT_MODEL_HASH_NE(NeuronModels::LIF::getInstance(), NeuronModels::Izhikevich::getInstance());
-    ASSERT_MODEL_HASH_NE(NeuronModels::Izhikevich::getInstance(), NeuronModels::IzhikevichVariable::getInstance());
-    ASSERT_MODEL_HASH_NE(NeuronModels::TraubMilesAlt::getInstance(), NeuronModels::TraubMiles::getInstance());
+    ASSERT_HASH_EQ(NeuronModels::LIF::getInstance(), NeuronModels::LIF::getInstance(), updateHash);
+    ASSERT_HASH_NE(NeuronModels::LIF::getInstance(), NeuronModels::Izhikevich::getInstance(), updateHash);
+    ASSERT_HASH_NE(NeuronModels::Izhikevich::getInstance(), NeuronModels::IzhikevichVariable::getInstance(), updateHash);
+    ASSERT_HASH_NE(NeuronModels::TraubMilesAlt::getInstance(), NeuronModels::TraubMiles::getInstance(), updateHash);
 }
 
 TEST(NeuronModels, CompareCopyPasted)
@@ -70,5 +70,5 @@ TEST(NeuronModels, CompareCopyPasted)
     LIFCopy lifCopy;
     ASSERT_TRUE(NeuronModels::LIF::getInstance()->canBeMerged(&lifCopy));
 
-    ASSERT_MODEL_HASH_EQ(NeuronModels::LIF::getInstance(), &lifCopy);
+    ASSERT_HASH_EQ(NeuronModels::LIF::getInstance(), &lifCopy, updateHash);
 }

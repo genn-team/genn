@@ -84,9 +84,9 @@ TEST(InitSparseConnectivitySnippet, CompareBuiltIn)
     ASSERT_FALSE(OneToOne::getInstance()->canBeMerged(FixedProbability::getInstance()));
     ASSERT_FALSE(FixedProbability::getInstance()->canBeMerged(FixedProbabilityNoAutapse::getInstance()));
 
-    ASSERT_MODEL_HASH_EQ(OneToOne::getInstance(), OneToOne::getInstance());
-    ASSERT_MODEL_HASH_NE(OneToOne::getInstance(), FixedProbability::getInstance());
-    ASSERT_MODEL_HASH_NE(FixedProbability::getInstance(), FixedProbabilityNoAutapse::getInstance());
+    ASSERT_HASH_EQ(OneToOne::getInstance(), OneToOne::getInstance(), updateHash);
+    ASSERT_HASH_NE(OneToOne::getInstance(), FixedProbability::getInstance(), updateHash);
+    ASSERT_HASH_NE(FixedProbability::getInstance(), FixedProbabilityNoAutapse::getInstance(), updateHash);
 
 }
 
@@ -97,7 +97,7 @@ TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
     OneToOneCopy oneToOneCopy;
     ASSERT_TRUE(OneToOne::getInstance()->canBeMerged(&oneToOneCopy));
 
-    ASSERT_MODEL_HASH_EQ(OneToOne::getInstance(), &oneToOneCopy);
+    ASSERT_HASH_EQ(OneToOne::getInstance(), &oneToOneCopy, updateHash);
 }
 
 TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
