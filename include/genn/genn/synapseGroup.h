@@ -286,6 +286,18 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     void updateWUHash(boost::uuids::detail::sha1 &hash) const;
 
+    //! Updates hash with presynaptic update component of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    void updateWUPreHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Updates hash with postsynaptic update component of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    void updateWUPostHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Updates hash with postsynaptic update component of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    void updatePSHash(boost::uuids::detail::sha1 &hash) const;
+
     //! Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canWUPreBeMerged(const SynapseGroup &other) const;

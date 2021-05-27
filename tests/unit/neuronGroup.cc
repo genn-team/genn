@@ -10,6 +10,9 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
+// Unit test includes
+#include "hashUtils.h"
+
 namespace
 {
 class WeightUpdateModelPost : public WeightUpdateModels::Base
@@ -220,9 +223,11 @@ TEST(NeuronGroup, CompareNeuronModels)
     model.finalize();
 
     // Check that all groups can be merged
-    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal*>(ng2);
+    ASSERT_HASH_EQ(ng0Internal, ng1Internal, updateHash);
+    ASSERT_HASH_EQ(ng0Internal, ng2Internal, updateHash);
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
     ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng2));
 
@@ -270,8 +275,9 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     model.finalize();
 
     // Check that all groups can be merged
-    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
+    ASSERT_HASH_EQ(ng0Internal, ng1Internal, updateHash);
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
 
     // Create a backend
@@ -309,8 +315,9 @@ TEST(NeuronGroup, CompareSimRNG)
     model.finalize();
 
     // Check that groups cannot be merged
-    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(!ng0Internal->canBeMerged(*ng1));
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
+    ASSERT_HASH_NE(ng0Internal, ng1Internal, updateHash);
     ASSERT_TRUE(!ng0Internal->canInitBeMerged(*ng1));
 
     ASSERT_TRUE(!ng0->isSimRNGRequired());
@@ -359,10 +366,14 @@ TEST(NeuronGroup, CompareCurrentSources)
     model.finalize();
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canBeMerged(*ng4));
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    ASSERT_HASH_EQ(ng0Internal, ng1Internal, updateHash);
+    ASSERT_HASH_EQ(ng0Internal, ng2Internal, updateHash);
+    ASSERT_HASH_EQ(ng0Internal, ng3Internal, updateHash);
+    ASSERT_HASH_NE(ng0Internal, ng4Internal, updateHash);
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng2));
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng3));
@@ -471,10 +482,14 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     model.finalize();
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canBeMerged(*ng4));
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    ASSERT_HASH_EQ(ng0Internal, ng1Internal, updateHash);
+    ASSERT_HASH_EQ(ng0Internal, ng2Internal, updateHash);
+    ASSERT_HASH_EQ(ng0Internal, ng3Internal, updateHash);
+    ASSERT_HASH_NE(ng0Internal, ng4Internal, updateHash);
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng2));
     ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng3));
@@ -575,10 +590,14 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     // Check which groups can be merged together
     // **NOTE** NG1 and NG5 can be merged because the additional static pulse synapse population doesn't add any presynaptic update
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng5));
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    NeuronGroupInternal *ng5Internal = static_cast<NeuronGroupInternal *>(ng5);
+    ASSERT_HASH_EQ(ng1Internal, ng2Internal, updateHash);
+    ASSERT_HASH_EQ(ng1Internal, ng3Internal, updateHash);
+    ASSERT_HASH_NE(ng1Internal, ng4Internal, updateHash);
+    ASSERT_HASH_EQ(ng1Internal, ng5Internal, updateHash);
     ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng2));
     ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng3));
     ASSERT_FALSE(ng1Internal->canInitBeMerged(*ng4));
@@ -672,10 +691,14 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // **NOTE** NG1 and NG5 can be merged because the additional static pulse synapse population doesn't add any presynaptic update
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng5));
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    NeuronGroupInternal *ng5Internal = static_cast<NeuronGroupInternal *>(ng5);
+    ASSERT_HASH_EQ(ng1Internal, ng2Internal, updateHash);
+    ASSERT_HASH_EQ(ng1Internal, ng3Internal, updateHash);
+    ASSERT_HASH_NE(ng1Internal, ng4Internal, updateHash);
+    ASSERT_HASH_EQ(ng1Internal, ng5Internal, updateHash);
     ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng2));
     ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng3));
     ASSERT_FALSE(ng1Internal->canInitBeMerged(*ng4));

@@ -101,3 +101,18 @@ bool CurrentSource::canInitBeMerged(const CurrentSource &other) const
         return false;
     }
 }
+//----------------------------------------------------------------------------
+void CurrentSource::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    getCurrentSourceModel()->updateHash(hash);
+}
+//----------------------------------------------------------------------------
+void CurrentSource::updateInitHash(boost::uuids::detail::sha1 &hash) const
+{
+    Utils::updateHash(getCurrentSourceModel()->getVars(), hash);
+
+    // Include variable initialiser hashes
+    for(const auto &w : getVarInitialisers()) {
+        w.updateHash(hash);
+    }
+}

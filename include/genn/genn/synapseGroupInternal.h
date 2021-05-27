@@ -41,6 +41,9 @@ public:
     using SynapseGroup::isPSModelMerged;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::updateWUHash;
+    using SynapseGroup::updateWUPreHash;
+    using SynapseGroup::updateWUPostHash;
+    using SynapseGroup::updatePSHash;
     using SynapseGroup::canWUPreBeMerged;
     using SynapseGroup::canWUPostBeMerged;
     using SynapseGroup::canPSBeMerged;

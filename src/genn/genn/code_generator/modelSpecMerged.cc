@@ -18,9 +18,9 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
 {
     LOGD_CODE_GEN << "Merging neuron update groups:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
-                       [](const NeuronGroupInternal &){ return true; },
-                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
+                           [](const NeuronGroupInternal &){ return true; },
+                           &NeuronGroupInternal::updateHash);
 
     LOGD_CODE_GEN << "Merging presynaptic update groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,

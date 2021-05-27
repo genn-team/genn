@@ -617,6 +617,25 @@ void SynapseGroup::updateWUHash(boost::uuids::detail::sha1 &hash) const
     }
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::updateWUPreHash(boost::uuids::detail::sha1 &hash) const
+{
+    getWUModel()->updateHash(hash);
+    Utils::updateHash((getDelaySteps() != 0), hash);
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::updateWUPostHash(boost::uuids::detail::sha1 &hash) const
+{
+    Utils::updateHash((getDelaySteps() != 0), hash);
+    getWUModel()->updateHash(hash);
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::updatePSHash(boost::uuids::detail::sha1 &hash) const
+{
+    getPSModel()->updateHash(hash);
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
 {
     const bool delayed = (getDelaySteps() != 0);

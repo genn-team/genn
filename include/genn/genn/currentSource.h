@@ -97,6 +97,15 @@ protected:
     //! Can the initialisation of these current sources be merged together? i.e. can they be initialised using same generated code
     /*! NOTE: this can only be called after model is finalized */
     bool canInitBeMerged(const CurrentSource &other) const;
+   
+    //! Updates hash with current source
+    /*! NOTE: this can only be called after model is finalized */
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Updates hash with current source initialisation
+    /*! NOTE: this can only be called after model is finalized */
+    void updateInitHash(boost::uuids::detail::sha1 &hash) const;
+
 
 private:
     //------------------------------------------------------------------------

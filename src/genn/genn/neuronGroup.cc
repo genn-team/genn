@@ -44,6 +44,29 @@ bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others
         return false;
     }
 }
+// ------------------------------------------------------------------------
+template<typename T, typename H>
+void updateHashList(const std::vector<T> &objects, boost::uuids::detail::sha1 &hash, H updateHash)
+{
+    // Build vector to hold digests
+    std::vector<boost::uuids::detail::sha1::digest_type> digests;
+    digests.reserve(objects.size());
+
+    // Loop through objects
+    for(const auto o : objects) {
+        // Build hash
+        boost::uuids::detail::sha1 hash;
+        updateHash(o, hash);
+
+        // Add digest to vector
+        digests.push_back(hash.get_digest());
+    }
+    // Sort digests
+    std::sort(digests.begin(), digests.end());
+
+    // Concatenate the digests to the hash
+    Utils::updateHash(digests, hash);
+}
 }   // Anonymous namespace
 
 // ------------------------------------------------------------------------
@@ -415,69 +438,6 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
     return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
-{
-    if(getNeuronModel()->canBeMerged(other.getNeuronModel())
-       && (isSpikeTimeRequired() == other.isSpikeTimeRequired())
-       && (isPrevSpikeTimeRequired() == other.isPrevSpikeTimeRequired())
-       && (getSpikeEventCondition() == other.getSpikeEventCondition())
-       && (isSpikeEventRequired() == other.isSpikeEventRequired())
-       && (isSpikeRecordingEnabled() == other.isSpikeRecordingEnabled())
-       && (isSpikeEventRecordingEnabled() == other.isSpikeEventRecordingEnabled())
-       && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired))
-    {
-
-        // Check if, by reshuffling, all current sources are compatible
-        auto otherCurrentSources = other.getCurrentSources();
-        if(!checkCompatibleUnordered(getCurrentSources(), otherCurrentSources,
-                                     [](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
-                                     {
-                                         return a->canBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all incoming synapse groups with post code are mergable
-        auto otherInSynWithPostCode = other.getInSynWithPostCode();
-        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSynWithPostCode,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPostBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSynWithPreCode = other.getOutSynWithPreCode();
-        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSynWithPreCode,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPreBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all merged incoming synapses are compatible
-        auto otherMergedInSyn = other.getMergedInSyn();
-        if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
-                                     [](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
-                                     {
-                                         return a->canPSBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
 bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
 {
     if((isSpikeTimeRequired() == other.isSpikeTimeRequired())
@@ -544,6 +504,49 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
         return true;
     }
     return false;
+}
+//----------------------------------------------------------------------------
+void NeuronGroup::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    using sha1 = boost::uuids::detail::sha1;
+
+    getNeuronModel()->updateHash(hash);
+    Utils::updateHash(isSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    //Utils::updateHash(getSpikeEventCondition(), hash); **FIXME**
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isSpikeRecordingEnabled(), hash);
+    Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(m_VarQueueRequired, hash);
+
+    // Update hash with hash list built from current sources
+    updateHashList(getCurrentSources(), hash, 
+                   [](const CurrentSourceInternal *cs, sha1 &hash)
+                   {
+                       cs->updateHash(hash);
+                   });
+
+    // Update hash with hash list built from incoming synapse groups with post code
+    updateHashList(getInSynWithPostCode(), hash, 
+                   [](const SynapseGroupInternal *sg, sha1 &hash)
+                   {
+                       sg->updateWUPostHash(hash);
+                   });
+
+    // Update hash with hash list built from outgoing synapse groups with pre code
+    updateHashList(getOutSynWithPreCode(), hash, 
+                   [](const SynapseGroupInternal *sg, sha1 &hash)
+                   {
+                       sg->updateWUPreHash(hash);
+                   });
+
+    // Update hash with hash list built from merged incoming synapses
+    updateHashList(getMergedInSyn(), hash, 
+                   [](const SynapseGroupInternal *sg, sha1 &hash)
+                   {
+                       sg->updatePSHash(hash);
+                   });
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
