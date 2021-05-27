@@ -4,6 +4,9 @@
 // GeNN includes
 #include "modelSpec.h"
 
+// Unit test includes
+#include "hashUtils.h"
+
 //--------------------------------------------------------------------------
 // OneToOneCopy
 //--------------------------------------------------------------------------
@@ -75,15 +78,26 @@ IMPLEMENT_SNIPPET(FixedNumberTotalWithReplacement);
 //--------------------------------------------------------------------------
 TEST(InitSparseConnectivitySnippet, CompareBuiltIn)
 {
-    ASSERT_TRUE(InitSparseConnectivitySnippet::OneToOne::getInstance()->canBeMerged(InitSparseConnectivitySnippet::OneToOne::getInstance()));
-    ASSERT_FALSE(InitSparseConnectivitySnippet::OneToOne::getInstance()->canBeMerged(InitSparseConnectivitySnippet::FixedProbability::getInstance()));
-    ASSERT_FALSE(InitSparseConnectivitySnippet::FixedProbability::getInstance()->canBeMerged(InitSparseConnectivitySnippet::FixedProbabilityNoAutapse::getInstance()));
+    using namespace InitSparseConnectivitySnippet;
+
+    ASSERT_TRUE(OneToOne::getInstance()->canBeMerged(OneToOne::getInstance()));
+    ASSERT_FALSE(OneToOne::getInstance()->canBeMerged(FixedProbability::getInstance()));
+    ASSERT_FALSE(FixedProbability::getInstance()->canBeMerged(FixedProbabilityNoAutapse::getInstance()));
+
+    ASSERT_MODEL_HASH_EQ(OneToOne::getInstance(), OneToOne::getInstance());
+    ASSERT_MODEL_HASH_NE(OneToOne::getInstance(), FixedProbability::getInstance());
+    ASSERT_MODEL_HASH_NE(FixedProbability::getInstance(), FixedProbabilityNoAutapse::getInstance());
+
 }
 
 TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
 {
+    using namespace InitSparseConnectivitySnippet;
+
     OneToOneCopy oneToOneCopy;
-    ASSERT_TRUE(InitSparseConnectivitySnippet::OneToOne::getInstance()->canBeMerged(&oneToOneCopy));
+    ASSERT_TRUE(OneToOne::getInstance()->canBeMerged(&oneToOneCopy));
+
+    ASSERT_MODEL_HASH_EQ(OneToOne::getInstance(), &oneToOneCopy);
 }
 
 TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)

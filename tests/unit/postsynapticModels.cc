@@ -4,6 +4,9 @@
 // GeNN includes
 #include "postsynapticModels.h"
 
+// Unit test includes
+#include "hashUtils.h"
+
 //--------------------------------------------------------------------------
 // ExpCurrCopy
 //--------------------------------------------------------------------------
@@ -25,13 +28,23 @@ public:
 //--------------------------------------------------------------------------
 TEST(PostsynapticModels, CompareBuiltIn)
 {
-    ASSERT_TRUE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(PostsynapticModels::ExpCurr::getInstance()));
-    ASSERT_FALSE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(PostsynapticModels::ExpCond::getInstance()));
-    ASSERT_FALSE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(PostsynapticModels::DeltaCurr::getInstance()));
+    using namespace PostsynapticModels;
+
+    ASSERT_TRUE(ExpCurr::getInstance()->canBeMerged(ExpCurr::getInstance()));
+    ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(ExpCond::getInstance()));
+    ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(DeltaCurr::getInstance()));
+
+    ASSERT_MODEL_HASH_EQ(ExpCurr::getInstance(), ExpCurr::getInstance());
+    ASSERT_MODEL_HASH_NE(ExpCurr::getInstance(), ExpCond::getInstance());
+    ASSERT_MODEL_HASH_NE(ExpCurr::getInstance(), DeltaCurr::getInstance());
 }
 
 TEST(PostsynapticModels, CompareCopyPasted)
 {
+    using namespace PostsynapticModels;
+
     ExpCurrCopy expCurrCopy;
-    ASSERT_TRUE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(&expCurrCopy));
+    ASSERT_TRUE(ExpCurr::getInstance()->canBeMerged(&expCurrCopy));
+
+    ASSERT_MODEL_HASH_EQ(ExpCurr::getInstance(), &expCurrCopy);
 }

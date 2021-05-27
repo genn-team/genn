@@ -4,6 +4,8 @@
 // GeNN includes
 #include "neuronModels.h"
 
+// Unit test includes
+#include "hashUtils.h"
 
 //--------------------------------------------------------------------------
 // LIFCopy
@@ -50,32 +52,15 @@ public:
 //--------------------------------------------------------------------------
 TEST(NeuronModels, CompareBuiltIn)
 {
-    using namespace NeuronModels;
+    ASSERT_TRUE(NeuronModels::LIF::getInstance()->canBeMerged(NeuronModels::LIF::getInstance()));
+    ASSERT_FALSE(NeuronModels::LIF::getInstance()->canBeMerged(NeuronModels::Izhikevich::getInstance()));
+    ASSERT_FALSE(NeuronModels::Izhikevich::getInstance()->canBeMerged(NeuronModels::IzhikevichVariable::getInstance()));
+    ASSERT_FALSE(NeuronModels::TraubMilesAlt::getInstance()->canBeMerged(NeuronModels::TraubMiles::getInstance()));
 
-    ASSERT_TRUE(LIF::getInstance()->canBeMerged(LIF::getInstance()));
-    ASSERT_FALSE(LIF::getInstance()->canBeMerged(Izhikevich::getInstance()));
-    ASSERT_FALSE(Izhikevich::getInstance()->canBeMerged(IzhikevichVariable::getInstance()));
-    ASSERT_FALSE(TraubMilesAlt::getInstance()->canBeMerged(TraubMiles::getInstance()));
-
-    {
-        boost::uuids::detail::sha1 a;
-        updateHash(*LIF::getInstance(), a);
-
-        boost::uuids::detail::sha1::digest_type aDigest;
-        a.get_digest(aDigest);
-
-        boost::uuids::detail::sha1 b;
-        updateHash(*LIF::getInstance(), b);
-
-        boost::uuids::detail::sha1::digest_type bDigest;
-        b.get_digest(bDigest);
-
-        ASSERT_TRUE(std::equal(std::begin(aDigest), std::end(aDigest), std::begin(bDigest)));
-    }
-    /*ASSERT_HASH_EQ(Base, *LIF::getInstance(), *LIF::getInstance());
-    ASSERT_HASH_NE(Base, *LIF::getInstance(), *Izhikevich::getInstance());
-    ASSERT_HASH_NE(Base, *Izhikevich::getInstance(), *IzhikevichVariable::getInstance());
-    ASSERT_HASH_NE(Base, *TraubMilesAlt::getInstance(), *TraubMiles::getInstance());*/
+    ASSERT_MODEL_HASH_EQ(NeuronModels::LIF::getInstance(), NeuronModels::LIF::getInstance());
+    ASSERT_MODEL_HASH_NE(NeuronModels::LIF::getInstance(), NeuronModels::Izhikevich::getInstance());
+    ASSERT_MODEL_HASH_NE(NeuronModels::Izhikevich::getInstance(), NeuronModels::IzhikevichVariable::getInstance());
+    ASSERT_MODEL_HASH_NE(NeuronModels::TraubMilesAlt::getInstance(), NeuronModels::TraubMiles::getInstance());
 }
 
 TEST(NeuronModels, CompareCopyPasted)
@@ -83,7 +68,7 @@ TEST(NeuronModels, CompareCopyPasted)
     using namespace NeuronModels;
 
     LIFCopy lifCopy;
-    ASSERT_TRUE(LIF::getInstance()->canBeMerged(&lifCopy));
+    ASSERT_TRUE(NeuronModels::LIF::getInstance()->canBeMerged(&lifCopy));
 
-    //ASSERT_HASH_EQ(Base, lifCopy, *LIF::getInstance());
+    ASSERT_MODEL_HASH_EQ(NeuronModels::LIF::getInstance(), &lifCopy);
 }

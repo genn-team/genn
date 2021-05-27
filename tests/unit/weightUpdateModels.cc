@@ -4,6 +4,9 @@
 // GeNN includes
 #include "weightUpdateModels.h"
 
+// Unit test includes
+#include "hashUtils.h"
+
 //--------------------------------------------------------------------------
 // PiecewiseSTDPCopy
 //--------------------------------------------------------------------------
@@ -58,13 +61,23 @@ public:
 //--------------------------------------------------------------------------
 TEST(WeightUpdateModels, CompareBuiltIn)
 {
-    ASSERT_TRUE(WeightUpdateModels::StaticPulse::getInstance()->canBeMerged(WeightUpdateModels::StaticPulse::getInstance()));
-    ASSERT_FALSE(WeightUpdateModels::StaticPulse::getInstance()->canBeMerged(WeightUpdateModels::StaticPulseDendriticDelay::getInstance()));
-    ASSERT_FALSE(WeightUpdateModels::StaticPulse::getInstance()->canBeMerged(WeightUpdateModels::StaticGraded::getInstance()));
+    using namespace WeightUpdateModels;
+
+    ASSERT_TRUE(StaticPulse::getInstance()->canBeMerged(StaticPulse::getInstance()));
+    ASSERT_FALSE(StaticPulse::getInstance()->canBeMerged(StaticPulseDendriticDelay::getInstance()));
+    ASSERT_FALSE(StaticPulse::getInstance()->canBeMerged(StaticGraded::getInstance()));
+
+    ASSERT_MODEL_HASH_EQ(StaticPulse::getInstance(), StaticPulse::getInstance());
+    ASSERT_MODEL_HASH_NE(StaticPulse::getInstance(), StaticPulseDendriticDelay::getInstance());
+    ASSERT_MODEL_HASH_NE(StaticPulse::getInstance(), StaticGraded::getInstance());
 }
 
 TEST(WeightUpdateModels, CompareCopyPasted)
 {
+    using namespace WeightUpdateModels;
+
     PiecewiseSTDPCopy pwSTDPCopy;
-    ASSERT_TRUE(WeightUpdateModels::PiecewiseSTDP::getInstance()->canBeMerged(&pwSTDPCopy));
+    ASSERT_TRUE(PiecewiseSTDP::getInstance()->canBeMerged(&pwSTDPCopy));
+
+    ASSERT_MODEL_HASH_EQ(PiecewiseSTDP::getInstance(), &pwSTDPCopy);
 }

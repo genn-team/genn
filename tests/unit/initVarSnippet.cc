@@ -4,6 +4,9 @@
 // GeNN includes
 #include "modelSpec.h"
 
+// Unit test includes
+#include "hashUtils.h"
+
 //--------------------------------------------------------------------------
 // UniformCopy
 //--------------------------------------------------------------------------
@@ -22,15 +25,24 @@ public:
 //--------------------------------------------------------------------------
 TEST(InitVarSnippet, CompareBuiltIn)
 {
-    ASSERT_TRUE(InitVarSnippet::Constant::getInstance()->canBeMerged(InitVarSnippet::Constant::getInstance()));
-    ASSERT_FALSE(InitVarSnippet::Uniform::getInstance()->canBeMerged(InitVarSnippet::Normal::getInstance()));
-    ASSERT_FALSE(InitVarSnippet::Exponential::getInstance()->canBeMerged(InitVarSnippet::Gamma::getInstance()));
+    using namespace InitVarSnippet;
+
+    ASSERT_TRUE(Constant::getInstance()->canBeMerged(Constant::getInstance()));
+    ASSERT_FALSE(Uniform::getInstance()->canBeMerged(Normal::getInstance()));
+    ASSERT_FALSE(Exponential::getInstance()->canBeMerged(Gamma::getInstance()));
+
+    ASSERT_MODEL_HASH_EQ(Constant::getInstance(), Constant::getInstance());
+    ASSERT_MODEL_HASH_NE(Uniform::getInstance(), Normal::getInstance());
+    ASSERT_MODEL_HASH_NE(Exponential::getInstance(), Gamma::getInstance());
 }
 
 TEST(InitVarSnippet, CompareCopyPasted)
 {
+    using namespace InitVarSnippet;
+
     UniformCopy uniformCopy;
-    ASSERT_TRUE(InitVarSnippet::Uniform::getInstance()->canBeMerged(&uniformCopy));
+    ASSERT_TRUE(Uniform::getInstance()->canBeMerged(&uniformCopy));
+    ASSERT_MODEL_HASH_EQ(Uniform::getInstance(), &uniformCopy);
 }
 
 TEST(InitVarSnippet, CompareVarInitParameters)
