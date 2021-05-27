@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <array>
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -100,6 +101,16 @@ template<typename T>
 inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 {
     for(const auto &v : vector) {
+        updateHash(v, hash);
+    }
+}
+
+//! Hash arrays of types which can, themselves, be hashed
+// **THINK** could add override for vectors of arithmetic types where data() is passed in
+template<typename T, size_t N>
+inline void updateHash(const std::array<T, N> &array, boost::uuids::detail::sha1 &hash)
+{
+    for(const auto &v : array) {
         updateHash(v, hash);
     }
 }
