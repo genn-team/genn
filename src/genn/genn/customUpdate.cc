@@ -64,29 +64,21 @@ bool CustomUpdateBase::isZeroCopyEnabled() const
                        [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
 }
 //----------------------------------------------------------------------------
-bool CustomUpdateBase::canBeMerged(const CustomUpdateBase &other) const
+void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    return (getCustomUpdateModel()->canBeMerged(other.getCustomUpdateModel())
-            && (getUpdateGroupName() == other.getUpdateGroupName())
-            && (isBatched() == other.isBatched()));
+    getCustomUpdateModel()->updateHash(hash);
+    Utils::updateHash(getUpdateGroupName(), hash);
+    Utils::updateHash(isBatched(), hash);
 }
 //----------------------------------------------------------------------------
-bool CustomUpdateBase::canInitBeMerged(const CustomUpdateBase &other) const
+void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
 {
-     // If both groups have the same variables
-    if((getCustomUpdateModel()->getVars() == other.getCustomUpdateModel()->getVars())
-       && (isBatched() == other.isBatched())) {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
-            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    else {
-        return false;
+    Utils::updateHash(getCustomUpdateModel()->getVars(), hash);
+    Utils::updateHash(isBatched(), hash);
+    
+    // Include variable initialiser hashes
+    for(const auto &w : getVarInitialisers()) {
+        w.updateHash(hash);
     }
 }
 
@@ -140,26 +132,26 @@ void CustomUpdate::finalize(unsigned int batchSize)
     finalizeBatched(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
-bool CustomUpdate::canBeMerged(const CustomUpdate &other) const
+void CustomUpdate::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    // If the two groups' models can be merged and they either both have no delay neuron group
-    // or both do and delay neuron groups have the same number of delay slots
+    // Superclass
+    CustomUpdateBase::updateHash(hash);
+
+    // Update hash with whether delay is required
     const bool delayed = (getDelayNeuronGroup() != nullptr);
-    const bool otherDelayed = (other.getDelayNeuronGroup() != nullptr);
-    if(CustomUpdateBase::canBeMerged(other)
-       && ((!delayed && !otherDelayed) 
-           || (delayed && otherDelayed && getDelayNeuronGroup()->getNumDelaySlots() == other.getDelayNeuronGroup()->getNumDelaySlots())))
-    {
-        // Return whether the variables with delays match
-        return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
-                          [](const Models::VarReference &a, const Models::VarReference &b)
-                          {
-                              return ((a.getDelayNeuronGroup() == nullptr) == (b.getDelayNeuronGroup() == nullptr));
-                          });
+    Utils::updateHash(delayed, hash);
+
+    // If it is, also update hash with number of delay slots
+    if(delayed) {
+        Utils::updateHash(getDelayNeuronGroup()->getNumDelaySlots(), hash);
     }
 
-    return false;
+    // Update hash with whether variable references require delay
+    for(const auto &v : getVarReferences()) {
+        Utils::updateHash((v.getDelayNeuronGroup() == nullptr), hash);
+    }
 }
+
 
 //----------------------------------------------------------------------------
 // CustomUpdateWU
@@ -224,27 +216,25 @@ bool CustomUpdateWU::isTransposeOperation() const
                        [](const Models::WUVarReference &v) { return (v.getTransposeSynapseGroup() != nullptr); });
 }
 //----------------------------------------------------------------------------
-bool CustomUpdateWU::canBeMerged(const CustomUpdateWU &other) const
+void CustomUpdateWU::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    // If the two groups' models can be merged and their connectivity is the same
-    if(CustomUpdateBase::canBeMerged(other)
-       && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType()))
-       && (getSynapseGroup()->getSparseIndType() == other.getSynapseGroup()->getSparseIndType()))
-    {
-        // Return whether the variables with transposes match
-        return std::equal(getVarReferences().cbegin(), getVarReferences().cend(), other.getVarReferences().cbegin(),
-                          [](const Models::WUVarReference &a, const Models::WUVarReference &b)
-                          {
-                              return ((a.getTransposeSynapseGroup() == nullptr) == (b.getTransposeSynapseGroup() == nullptr));
-                          });
-    }
+    // Superclass
+    CustomUpdateBase::updateHash(hash);
+    
+    Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
+    Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 
-    return false;
+    // Update hash with whether variable references require transpose
+    for(const auto &v : getVarReferences()) {
+        Utils::updateHash((v.getTransposeSynapseGroup() == nullptr), hash);
+    }
 }
 //----------------------------------------------------------------------------
-bool CustomUpdateWU::canInitBeMerged(const CustomUpdateWU &other) const
+void CustomUpdateWU::updateInitHash(boost::uuids::detail::sha1 &hash) const
 {
-    return (CustomUpdateBase::canInitBeMerged(other)
-            && (getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()) == getSynapseMatrixConnectivity(other.getSynapseGroup()->getMatrixType()))
-            && (getSynapseGroup()->getSparseIndType() == other.getSynapseGroup()->getSparseIndType()));
+    // Superclass
+    CustomUpdateBase::updateInitHash(hash);
+
+    Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
+    Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 }

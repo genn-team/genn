@@ -76,13 +76,13 @@ protected:
     //! Is this custom update batched i.e. run in parallel across model batches
     bool isBatched() const { return m_Batched; }
 
-    //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const CustomUpdateBase &other) const;
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 
-    //! Can the initialisation of these custom update be merged together? i.e. can they be initialised using same generated code
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const CustomUpdateBase &other) const;
+    void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Helper function to determine whether a custom update should be batched
     template<typename R>
@@ -177,9 +177,9 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const CustomUpdate &other) const;
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
@@ -221,13 +221,13 @@ protected:
 
     const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
-    //! Can this custom update be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const CustomUpdateWU &other) const;
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 
-    //! Can the initialisation of these custom update be merged together? i.e. can they be initialised using same generated code
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const CustomUpdateWU &other) const;
+    void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
 private:
     //------------------------------------------------------------------------
