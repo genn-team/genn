@@ -259,17 +259,6 @@ public:
     }
 
 private:
-    //! Functor for generating a size_t size hash from a SHA1 digests
-    struct SHA1Hash
-    {
-        size_t operator()(const boost::uuids::detail::sha1::digest_type &digest) const
-        {
-            size_t hash;
-            memcpy(&hash, &digest[0], sizeof(size_t));
-            return hash;
-        }
-    };
-
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
@@ -371,7 +360,7 @@ private:
         // Create a hash map to group together groups with the same SHA1 digest
         std::unordered_map<boost::uuids::detail::sha1::digest_type, 
                            std::vector<std::reference_wrapper<const Group>>, 
-                           SHA1Hash> protoMergedGroups;
+                           Utils::SHA1Hash> protoMergedGroups;
 
         // Add unmerged groups to correct vector
         for(const auto &g : unmergedGroups) {

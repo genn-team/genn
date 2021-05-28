@@ -9,6 +9,9 @@
 #include <type_traits>
 #include <vector>
 
+// Standard C includes
+#include <cstring>
+
 // Boost includes
 #include <sha1.hpp>
 
@@ -121,4 +124,15 @@ inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 
         updateHash(v, hash);
     }
 }
+
+//! Functor for generating a hash suitable for use in std::unordered_map etc (i.e. size_t size) from a SHA1 digests
+struct SHA1Hash
+{
+    size_t operator()(const boost::uuids::detail::sha1::digest_type &digest) const
+    {
+        size_t hash;
+        memcpy(&hash, &digest[0], sizeof(size_t));
+        return hash;
+    };
+};
 }   // namespace Utils
