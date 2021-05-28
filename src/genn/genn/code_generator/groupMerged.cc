@@ -507,12 +507,12 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
 {
     // Build vector of vectors containing each child group's incoming synapse groups
     // with postsynaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(getArchetype().getInSynWithPostCode(), m_SortedInSynWithPostCode, &NeuronGroupInternal::getInSynWithPostCode,
+    orderNeuronGroupChildren(m_SortedInSynWithPostCode, &NeuronGroupInternal::getInSynWithPostCode,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b){ return a->canWUPostBeMerged(*b); });
 
     // Build vector of vectors containing each child group's outgoing synapse groups
     // with presynaptic synaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(getArchetype().getOutSynWithPreCode(), m_SortedOutSynWithPreCode, &NeuronGroupInternal::getOutSynWithPreCode,
+    orderNeuronGroupChildren(m_SortedOutSynWithPreCode, &NeuronGroupInternal::getOutSynWithPreCode,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b){ return a->canWUPreBeMerged(*b); });
 
     // Generate struct fields for incoming synapse groups with postsynaptic update code
@@ -724,12 +724,12 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(getArchetype().getInSynWithPostVars(), m_SortedInSynWithPostVars, &NeuronGroupInternal::getInSynWithPostVars,
+    orderNeuronGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getInSynWithPostVars,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b) { return a->canWUPostInitBeMerged(*b); });
 
     // Build vector of vectors containing each child group's outgoing 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(getArchetype().getOutSynWithPreVars(), m_SortedOutSynWithPreVars, &NeuronGroupInternal::getOutSynWithPreVars,
+    orderNeuronGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getOutSynWithPreVars,
                              [](const SynapseGroupInternal *a, const SynapseGroupInternal *b){ return a->canWUPreInitBeMerged(*b); });
 
     // Generate struct fields for incoming synapse groups with postsynaptic variables

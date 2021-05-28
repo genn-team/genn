@@ -526,10 +526,11 @@ protected:
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     template<typename T, typename G, typename C>
-    void orderNeuronGroupChildren(const std::vector<T> &archetypeChildren,
-                                  std::vector<std::vector<T>> &sortedGroupChildren,
+    void orderNeuronGroupChildren(std::vector<std::vector<T>> &sortedGroupChildren,
                                   G getVectorFunc, C isCompatibleFunc) const
     {
+        const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
+
         // Reserve vector of vectors to hold children for all neuron groups, in archetype order
         sortedGroupChildren.reserve(archetypeChildren.size());
 
@@ -561,14 +562,6 @@ protected:
                 tempChildren.erase(otherChild);
             }
         }
-    }
-    
-    template<typename T, typename G, typename C>
-    void orderNeuronGroupChildren(std::vector<std::vector<T>> &sortedGroupChildren,
-                                  G getVectorFunc, C isCompatibleFunc) const
-    {
-        const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
-        orderNeuronGroupChildren(archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
     }
 
 
