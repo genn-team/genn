@@ -525,42 +525,47 @@ protected:
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    template<typename T, typename G, typename C>
-    void orderNeuronGroupChildren(std::vector<std::vector<T>> &sortedGroupChildren,
-                                  G getVectorFunc, C isCompatibleFunc) const
+    template<typename T, typename G, typename H>
+    void orderNeuronGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
+                                  G getVectorFunc, H getHashDigestFunc) const
     {
-        const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
+        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
 
         // Reserve vector of vectors to hold children for all neuron groups, in archetype order
-        sortedGroupChildren.reserve(archetypeChildren.size());
+        sortedGroupChildren.reserve(getGroups().size());
+
+        // Create temporary vector of children and their digests
+        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, T*>> childDigests;
+        childDigests.reserve(archetypeChildren.size());
 
         // Loop through groups
         for(const auto &g : getGroups()) {
-            // Make temporary copy of this group's children
-            std::vector<T> tempChildren((g.get().*getVectorFunc)());
+            // Get group children
+            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
+            assert(groupChildren.size() == archetypeChildren.size());
 
-            assert(tempChildren.size() == archetypeChildren.size());
+            // Loop through children and add them and their digests to vector
+            childDigests.clear();
+            for(auto *c : groupChildren) {
+                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
+            }
+
+            // Sort by digest
+            std::sort(childDigests.begin(), childDigests.end(),
+                      [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a,
+                         const std::pair<boost::uuids::detail::sha1::digest_type, T*> &b)
+                      {
+                          return (a.first < b.first);
+                      });
+
 
             // Reserve vector for this group's children
             sortedGroupChildren.emplace_back();
-            sortedGroupChildren.back().reserve(tempChildren.size());
+            sortedGroupChildren.back().reserve(groupChildren.size());
 
-            // Loop through archetype group's children
-            for(const auto &archetypeG : archetypeChildren) {
-                // Find compatible child in temporary list
-                const auto otherChild = std::find_if(tempChildren.cbegin(), tempChildren.cend(),
-                                                     [archetypeG, isCompatibleFunc](const T &g)
-                                                     {
-                                                         return isCompatibleFunc(archetypeG, g);
-                                                     });
-                assert(otherChild != tempChildren.cend());
-
-                // Add pointer to vector of compatible merged in syns
-                sortedGroupChildren.back().push_back(*otherChild);
-
-                // Remove from original vector
-                tempChildren.erase(otherChild);
-            }
+            // Copy sorted child pointers into sortedGroupChildren
+            std::transform(childDigests.cbegin(), childDigests.cend(), std::back_inserter(sortedGroupChildren.back()),
+                           [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a){ return a.second; });
         }
     }
 

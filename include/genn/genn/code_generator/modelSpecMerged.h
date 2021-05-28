@@ -376,7 +376,7 @@ private:
             // Add group to vector, moving vectors of groups into data structure to avoid copying
             mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
                                       std::move(p.second));
-     
+
             // Loop through fields
             for(const auto &f : mergedGroups.back().getFields()) {
                 // If field is an EGP, add record to merged EGPS

@@ -46,15 +46,15 @@ bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others
 }
 // ------------------------------------------------------------------------
 template<typename T, typename D>
-void updateHashList(const std::vector<T> &objects, boost::uuids::detail::sha1 &hash, D getHashDigest)
+void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &hash, D getHashDigestFunc)
 {
     // Build vector to hold digests
     std::vector<boost::uuids::detail::sha1::digest_type> digests;
     digests.reserve(objects.size());
 
     // Loop through objects and add their digests to vector
-    for(const auto o : objects) {
-        digests.push_back(getHashDigest(o));
+    for(auto *o : objects) {
+        digests.push_back((o->*getHashDigestFunc)());
     }
     // Sort digests
     std::sort(digests.begin(), digests.end());
@@ -515,32 +515,17 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(m_VarQueueRequired, hash);
 
     // Update hash with hash list built from current sources
-    updateHashList(getCurrentSources(), hash, 
-                   [](const CurrentSourceInternal *cs)
-                   {
-                       return cs->getHashDigest();
-                   });
+    updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
 
     // Update hash with hash list built from incoming synapse groups with post code
-    updateHashList(getInSynWithPostCode(), hash, 
-                   [](const SynapseGroupInternal *sg)
-                   {
-                       return sg->getWUPostHashDigest();
-                   });
+    updateHashList(getInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPostHashDigest);
 
     // Update hash with hash list built from outgoing synapse groups with pre code
-    updateHashList(getOutSynWithPreCode(), hash, 
-                   [](const SynapseGroupInternal *sg)
-                   {
-                       return sg->getWUPreHashDigest();
-                   });
+    updateHashList(getOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
 
     // Update hash with hash list built from merged incoming synapses
-    updateHashList(getMergedInSyn(), hash, 
-                   [](const SynapseGroupInternal *sg)
-                   {
-                       return sg->getPSHashDigest();
-                   });
+    updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

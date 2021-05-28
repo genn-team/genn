@@ -48,10 +48,13 @@ public:
     using SynapseGroup::canWUPostBeMerged;
     using SynapseGroup::canPSBeMerged;
     using SynapseGroup::canPSBeLinearlyCombined;
-    using SynapseGroup::getWUInitHashDigest;
     using SynapseGroup::canWUPreInitBeMerged;
     using SynapseGroup::canWUPostInitBeMerged;
     using SynapseGroup::canPSInitBeMerged;
+    using SynapseGroup::getWUInitHashDigest;
+    using SynapseGroup::getWUPreInitHashDigest;
+    using SynapseGroup::getWUPostInitHashDigest;
+    using SynapseGroup::getPSInitHashDigest;
     using SynapseGroup::getConnectivityInitHashDigest;
     using SynapseGroup::getConnectivityHostInitHashDigest;
 };
