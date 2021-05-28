@@ -675,7 +675,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             if(idCustomTransposeUpdateStart > 0) {
                 CodeStream::Scope b(os);
                 // **TODO** make block height parameterizable
-                genKernelDimensions(os, KernelCustomUpdate, idCustomTransposeUpdateStart, 1, 8);
+                genKernelDimensions(os, KernelCustomTransposeUpdate, idCustomTransposeUpdateStart, 1, 8);
                 Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
