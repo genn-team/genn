@@ -29,8 +29,9 @@ TEST(CurrentSource, CompareDifferentModel)
     // Finalize model
     model.finalize();
 
+    CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_FALSE(cs1Internal->canBeMerged(*cs0));
+    ASSERT_NE(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
 }
 
 TEST(CurrentSource, CompareDifferentParameters)
@@ -55,8 +56,9 @@ TEST(CurrentSource, CompareDifferentParameters)
     // Finalize model
     model.finalize();
 
+    CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_TRUE(cs1Internal->canBeMerged(*cs0));
+    ASSERT_EQ(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
 }
 
 TEST(CurrentSource, CompareSameParameters)
@@ -81,6 +83,7 @@ TEST(CurrentSource, CompareSameParameters)
     // Finalize model
     model.finalize();
 
+    CurrentSourceInternal *cs0Internal = static_cast<CurrentSourceInternal*>(cs0);
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
-    ASSERT_TRUE(cs1Internal->canBeMerged(*cs0));
+    ASSERT_EQ(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
 }

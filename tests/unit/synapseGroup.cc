@@ -459,10 +459,10 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -522,12 +522,12 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentPostVars)
@@ -568,12 +568,12 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
     ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)

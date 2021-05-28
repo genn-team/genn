@@ -225,8 +225,8 @@ TEST(NeuronGroup, CompareNeuronModels)
     NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal*>(ng2);
     ASSERT_EQ(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
     ASSERT_EQ(ng0Internal->getHashDigest(), ng2Internal->getHashDigest());
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
-    ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng2));
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -275,7 +275,7 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
     ASSERT_EQ(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -315,7 +315,7 @@ TEST(NeuronGroup, CompareSimRNG)
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
     ASSERT_NE(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
-    ASSERT_TRUE(!ng0Internal->canInitBeMerged(*ng1));
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
 
     ASSERT_TRUE(!ng0->isSimRNGRequired());
     ASSERT_TRUE(ng1->isSimRNGRequired());
@@ -371,10 +371,10 @@ TEST(NeuronGroup, CompareCurrentSources)
     ASSERT_EQ(ng0Internal->getHashDigest(), ng2Internal->getHashDigest());
     ASSERT_EQ(ng0Internal->getHashDigest(), ng3Internal->getHashDigest());
     ASSERT_NE(ng0Internal->getHashDigest(), ng4Internal->getHashDigest());
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng4));
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -487,10 +487,10 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     ASSERT_EQ(ng0Internal->getHashDigest(), ng2Internal->getHashDigest());
     ASSERT_EQ(ng0Internal->getHashDigest(), ng3Internal->getHashDigest());
     ASSERT_NE(ng0Internal->getHashDigest(), ng4Internal->getHashDigest());
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng4));
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -595,10 +595,10 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     ASSERT_EQ(ng1Internal->getHashDigest(), ng3Internal->getHashDigest());
     ASSERT_NE(ng1Internal->getHashDigest(), ng4Internal->getHashDigest());
     ASSERT_EQ(ng1Internal->getHashDigest(), ng5Internal->getHashDigest());
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canInitBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng5));
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng1Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng5Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -696,10 +696,10 @@ TEST(NeuronGroup, CompareWUPostUpdate)
     ASSERT_EQ(ng1Internal->getHashDigest(), ng3Internal->getHashDigest());
     ASSERT_NE(ng1Internal->getHashDigest(), ng4Internal->getHashDigest());
     ASSERT_EQ(ng1Internal->getHashDigest(), ng5Internal->getHashDigest());
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canInitBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng5));
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng1Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng5Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
