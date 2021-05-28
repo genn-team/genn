@@ -45,21 +45,16 @@ bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others
     }
 }
 // ------------------------------------------------------------------------
-template<typename T, typename H>
-void updateHashList(const std::vector<T> &objects, boost::uuids::detail::sha1 &hash, H updateHash)
+template<typename T, typename D>
+void updateHashList(const std::vector<T> &objects, boost::uuids::detail::sha1 &hash, D getHashDigest)
 {
     // Build vector to hold digests
     std::vector<boost::uuids::detail::sha1::digest_type> digests;
     digests.reserve(objects.size());
 
-    // Loop through objects
+    // Loop through objects and add their digests to vector
     for(const auto o : objects) {
-        // Build hash
-        boost::uuids::detail::sha1 hash;
-        updateHash(o, hash);
-
-        // Add digest to vector
-        digests.push_back(hash.get_digest());
+        digests.push_back(getHashDigest(o));
     }
     // Sort digests
     std::sort(digests.begin(), digests.end());
@@ -506,11 +501,10 @@ bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
     return false;
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
-    using sha1 = boost::uuids::detail::sha1;
-
-    getNeuronModel()->updateHash(hash);
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
     Utils::updateHash(isSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevSpikeTimeRequired(), hash);
     //Utils::updateHash(getSpikeEventCondition(), hash); **FIXME**
@@ -522,31 +516,32 @@ void NeuronGroup::updateHash(boost::uuids::detail::sha1 &hash) const
 
     // Update hash with hash list built from current sources
     updateHashList(getCurrentSources(), hash, 
-                   [](const CurrentSourceInternal *cs, sha1 &hash)
+                   [](const CurrentSourceInternal *cs)
                    {
-                       cs->updateHash(hash);
+                       return cs->getHashDigest();
                    });
 
     // Update hash with hash list built from incoming synapse groups with post code
     updateHashList(getInSynWithPostCode(), hash, 
-                   [](const SynapseGroupInternal *sg, sha1 &hash)
+                   [](const SynapseGroupInternal *sg)
                    {
-                       sg->updateWUPostHash(hash);
+                       return sg->getWUPostHashDigest();
                    });
 
     // Update hash with hash list built from outgoing synapse groups with pre code
     updateHashList(getOutSynWithPreCode(), hash, 
-                   [](const SynapseGroupInternal *sg, sha1 &hash)
+                   [](const SynapseGroupInternal *sg)
                    {
-                       sg->updateWUPreHash(hash);
+                       return sg->getWUPreHashDigest();
                    });
 
     // Update hash with hash list built from merged incoming synapses
     updateHashList(getMergedInSyn(), hash, 
-                   [](const SynapseGroupInternal *sg, sha1 &hash)
+                   [](const SynapseGroupInternal *sg)
                    {
-                       sg->updatePSHash(hash);
+                       return sg->getPSHashDigest();
                    });
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)

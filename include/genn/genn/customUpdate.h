@@ -177,9 +177,13 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
+     //! Updates hash with custom update
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     const NeuronGroup *getDelayNeuronGroup() const { return m_DelayNeuronGroup; }
 
@@ -223,11 +227,11 @@ protected:
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    void updateInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
 private:
     //------------------------------------------------------------------------

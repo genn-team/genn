@@ -10,9 +10,6 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
-// Unit test includes
-#include "hashUtils.h"
-
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -186,8 +183,8 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
-    ASSERT_HASH_NE(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_HASH_NE(sg0Internal, sg1Internal, updateWUInitHash);
+    ASSERT_NE(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_NE(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -236,8 +233,8 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUHash);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -291,8 +288,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_HASH_EQ(sg0Internal, s2Internal, updateWUHash);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -350,8 +347,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUHash);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -404,8 +401,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_HASH_NE(sg0Internal, sg2Internal, updateWUHash);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_NE(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -460,8 +457,8 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
-    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUInitHash);
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
@@ -527,8 +524,8 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
-    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUInitHash);
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
 }
@@ -573,8 +570,8 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
-    ASSERT_HASH_EQ(sg0Internal, sg2Internal, updateWUInitHash);
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
     ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
 }
@@ -607,8 +604,8 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUHash);
-    ASSERT_HASH_EQ(sg0Internal, sg1Internal, updateWUInitHash);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;

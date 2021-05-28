@@ -13,7 +13,7 @@ using namespace Models;
 //----------------------------------------------------------------------------
 void Base::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-     // Superclass
+    // Superclass
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getVars(), hash);

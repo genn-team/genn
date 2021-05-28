@@ -14,10 +14,12 @@ bool CurrentSourceModels::Base::canBeMerged(const Base *other) const
             && (getInjectionCode() == other->getInjectionCode()));
 }
 //----------------------------------------------------------------------------
-void CurrentSourceModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     Models::Base::updateHash(hash);
 
     Utils::updateHash(getInjectionCode(), hash);
+    return hash.get_digest();
 }

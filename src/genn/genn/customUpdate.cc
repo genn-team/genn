@@ -66,7 +66,7 @@ bool CustomUpdateBase::isZeroCopyEnabled() const
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
 {
-    getCustomUpdateModel()->updateHash(hash);
+    Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(isBatched(), hash);
 }
@@ -75,10 +75,10 @@ void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
 {
     Utils::updateHash(getCustomUpdateModel()->getVars(), hash);
     Utils::updateHash(isBatched(), hash);
-    
+
     // Include variable initialiser hashes
     for(const auto &w : getVarInitialisers()) {
-        w.updateHash(hash);
+        Utils::updateHash(w.getHashDigest(), hash);
     }
 }
 
@@ -132,9 +132,10 @@ void CustomUpdate::finalize(unsigned int batchSize)
     finalizeBatched(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
-void CustomUpdate::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateHash(hash);
 
     // Update hash with whether delay is required
@@ -150,8 +151,16 @@ void CustomUpdate::updateHash(boost::uuids::detail::sha1 &hash) const
     for(const auto &v : getVarReferences()) {
         Utils::updateHash((v.getDelayNeuronGroup() == nullptr), hash);
     }
+    return hash.get_digest();
 }
-
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
+{
+    // Superclass
+    boost::uuids::detail::sha1 hash;
+    CustomUpdateBase::updateInitHash(hash);
+    return hash.get_digest();
+}
 
 //----------------------------------------------------------------------------
 // CustomUpdateWU
@@ -216,11 +225,12 @@ bool CustomUpdateWU::isTransposeOperation() const
                        [](const Models::WUVarReference &v) { return (v.getTransposeSynapseGroup() != nullptr); });
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWU::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateHash(hash);
-    
+
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
     Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
 
@@ -228,13 +238,16 @@ void CustomUpdateWU::updateHash(boost::uuids::detail::sha1 &hash) const
     for(const auto &v : getVarReferences()) {
         Utils::updateHash((v.getTransposeSynapseGroup() == nullptr), hash);
     }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CustomUpdateWU::updateInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type CustomUpdateWU::getInitHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     CustomUpdateBase::updateInitHash(hash);
 
     Utils::updateHash(getSynapseMatrixConnectivity(getSynapseGroup()->getMatrixType()), hash);
     Utils::updateHash(getSynapseGroup()->getSparseIndType(), hash);
+    return hash.get_digest();
 }

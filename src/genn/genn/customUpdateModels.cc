@@ -15,11 +15,13 @@ bool CustomUpdateModels::Base::canBeMerged(const Base *other) const
 }
 
 //----------------------------------------------------------------------------
-void CustomUpdateModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type CustomUpdateModels::Base::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     Models::Base::updateHash(hash);
 
     Utils::updateHash(getUpdateCode(), hash);
     Utils::updateHash(getVarRefs(), hash);
+    return hash.get_digest();
 }

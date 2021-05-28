@@ -26,6 +26,6 @@ public:
     using CurrentSource::isZeroCopyEnabled;
     using CurrentSource::canBeMerged;
     using CurrentSource::canInitBeMerged;
-    using CurrentSource::updateHash;
-    using CurrentSource::updateInitHash;
+    using CurrentSource::getHashDigest;
+    using CurrentSource::getInitHashDigest;
 };

@@ -20,12 +20,14 @@ bool InitVarSnippet::Base::canBeMerged(const Base *other) const
             && (getCode() == other->getCode()));
 }
 //----------------------------------------------------------------------------
-void InitVarSnippet::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type InitVarSnippet::Base::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getCode(), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 bool InitVarSnippet::Base::requiresKernel() const

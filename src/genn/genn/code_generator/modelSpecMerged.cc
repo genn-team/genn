@@ -20,22 +20,22 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     LOGD_CODE_GEN << "Merging neuron update groups:";
     createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
                            [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::updateHash);
+                           &NeuronGroupInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging presynaptic update groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
                            [](const SynapseGroupInternal &sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
-                           &SynapseGroupInternal::updateWUHash);
+                           &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging postsynaptic update groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
                            [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
-                           &SynapseGroupInternal::updateWUHash);
+                           &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse dynamics update groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
                            [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
-                           &SynapseGroupInternal::updateWUHash);
+                           &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron initialization groups:";
     createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
@@ -45,12 +45,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     LOGD_CODE_GEN << "Merging custom update initialization groups:";
     createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
                            [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
-                           &CustomUpdateInternal::updateInitHash);
+                           &CustomUpdateInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom dense weight update initialization groups:";
     createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateDenseInitGroups,
                            [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) && cg.isVarInitRequired(); },
-                           &CustomUpdateWUInternal::updateInitHash);
+                           &CustomUpdateWUInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
@@ -58,12 +58,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            {
                                return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
                            },
-                           &SynapseGroupInternal::updateWUInitHash);
+                           &SynapseGroupInternal::getWUInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse connectivity initialisation groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
                            [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-                           &SynapseGroupInternal::updateConnectivityInitHash);
+                           &SynapseGroupInternal::getConnectivityInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse sparse initialization groups:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
@@ -74,12 +74,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                                         || backend.isSynRemapRequired(sg)
                                         || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                            },
-                           &SynapseGroupInternal::updateWUInitHash);
+                           &SynapseGroupInternal::getWUInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom sparse weight update initialization groups:";
     createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
                            [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
-                           &CustomUpdateWUInternal::updateInitHash);
+                           &CustomUpdateWUInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
@@ -125,22 +125,22 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            { 
                                return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 
                            },
-                           &SynapseGroupInternal::updateConnectivityHostInitHash);
+                           &SynapseGroupInternal::getConnectivityHostInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom update groups:";
     createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
                            [](const CustomUpdateInternal &) { return true; },
-                           &CustomUpdateInternal::updateHash);
+                           &CustomUpdateInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging custom weight update groups:";
     createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
                            [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
-                           &CustomUpdateWUInternal::updateHash);
+                           &CustomUpdateWUInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
     createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
                            [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
-                           &CustomUpdateWUInternal::updateHash);
+                           &CustomUpdateWUInternal::getHashDigest);
 
     // Loop through merged neuron groups
     for(const auto &ng : m_MergedNeuronUpdateGroups) {

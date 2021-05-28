@@ -270,7 +270,7 @@ protected:
 
     //! Updates hash with neuron group
     /*! NOTE: this can only be called after model is finalized */
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
 private:
     //------------------------------------------------------------------------

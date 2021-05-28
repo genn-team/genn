@@ -95,14 +95,11 @@ inline void updateHash(const std::string &string, boost::uuids::detail::sha1 &ha
     hash.process_bytes(string.data(), string.size());
 }
 
-//! Hash vectors of types which can, themselves, be hashed
-// **THINK** could add override for vectors of arithmetic types where data() is passed in
-template<typename T>
-inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
+//! Hash arithmetic types and enums
+template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type * = nullptr>
+inline void updateHash(const T &value, boost::uuids::detail::sha1 &hash)
 {
-    for(const auto &v : vector) {
-        updateHash(v, hash);
-    }
+    hash.process_bytes(&value, sizeof(T));
 }
 
 //! Hash arrays of types which can, themselves, be hashed
@@ -115,11 +112,13 @@ inline void updateHash(const std::array<T, N> &array, boost::uuids::detail::sha1
     }
 }
 
-//! Hash arithmetic types and enums
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type * = nullptr>
-inline void updateHash(T value, boost::uuids::detail::sha1 &hash)
+//! Hash vectors of types which can, themselves, be hashed
+// **THINK** could add override for vectors of arithmetic types where data() is passed in
+template<typename T>
+inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 {
-    hash.process_bytes(&value, sizeof(T));
+    for(const auto &v : vector) {
+        updateHash(v, hash);
+    }
 }
-
 }   // namespace Utils

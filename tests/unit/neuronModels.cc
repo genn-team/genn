@@ -4,9 +4,6 @@
 // GeNN includes
 #include "neuronModels.h"
 
-// Unit test includes
-#include "hashUtils.h"
-
 //--------------------------------------------------------------------------
 // LIFCopy
 //--------------------------------------------------------------------------
@@ -57,10 +54,10 @@ TEST(NeuronModels, CompareBuiltIn)
     ASSERT_FALSE(NeuronModels::Izhikevich::getInstance()->canBeMerged(NeuronModels::IzhikevichVariable::getInstance()));
     ASSERT_FALSE(NeuronModels::TraubMilesAlt::getInstance()->canBeMerged(NeuronModels::TraubMiles::getInstance()));
 
-    ASSERT_HASH_EQ(NeuronModels::LIF::getInstance(), NeuronModels::LIF::getInstance(), updateHash);
-    ASSERT_HASH_NE(NeuronModels::LIF::getInstance(), NeuronModels::Izhikevich::getInstance(), updateHash);
-    ASSERT_HASH_NE(NeuronModels::Izhikevich::getInstance(), NeuronModels::IzhikevichVariable::getInstance(), updateHash);
-    ASSERT_HASH_NE(NeuronModels::TraubMilesAlt::getInstance(), NeuronModels::TraubMiles::getInstance(), updateHash);
+    ASSERT_EQ(NeuronModels::LIF::getInstance()->getHashDigest(), NeuronModels::LIF::getInstance()->getHashDigest());
+    ASSERT_NE(NeuronModels::LIF::getInstance()->getHashDigest(), NeuronModels::Izhikevich::getInstance()->getHashDigest());
+    ASSERT_NE(NeuronModels::Izhikevich::getInstance()->getHashDigest(), NeuronModels::IzhikevichVariable::getInstance()->getHashDigest());
+    ASSERT_NE(NeuronModels::TraubMilesAlt::getInstance()->getHashDigest(), NeuronModels::TraubMiles::getInstance()->getHashDigest());
 }
 
 TEST(NeuronModels, CompareCopyPasted)
@@ -70,5 +67,5 @@ TEST(NeuronModels, CompareCopyPasted)
     LIFCopy lifCopy;
     ASSERT_TRUE(NeuronModels::LIF::getInstance()->canBeMerged(&lifCopy));
 
-    ASSERT_HASH_EQ(NeuronModels::LIF::getInstance(), &lifCopy, updateHash);
+    ASSERT_EQ(NeuronModels::LIF::getInstance()->getHashDigest(), lifCopy.getHashDigest());
 }

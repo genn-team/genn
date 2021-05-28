@@ -38,5 +38,5 @@ public:
     using NeuronGroup::getOutSynWithPreVars;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::canInitBeMerged;
-    using NeuronGroup::updateHash;
+    using NeuronGroup::getHashDigest;
 };

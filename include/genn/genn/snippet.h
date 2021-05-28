@@ -280,9 +280,9 @@ public:
         return getSnippet()->canBeMerged(other.getSnippet());
     }
 
-    void updateHash(boost::uuids::detail::sha1 &hash) const
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
-        getSnippet()->updateHash(hash);
+        return getSnippet()->getHashDigest();
     }
 
 private:

@@ -72,7 +72,7 @@ public:
     bool canBeMerged(const Base *other) const;
 
     //! Update hash from snippet
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 };
 
 //----------------------------------------------------------------------------

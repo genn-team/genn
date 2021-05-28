@@ -28,9 +28,10 @@ bool NeuronModels::Base::canBeMerged(const Base *other) const
             && (getAdditionalInputVars() == other->getAdditionalInputVars()));
 }
 //----------------------------------------------------------------------------
-void NeuronModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     Models::Base::updateHash(hash);
 
     Utils::updateHash(getSimCode(), hash);
@@ -39,4 +40,5 @@ void NeuronModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getSupportCode(), hash);
     Utils::updateHash(isAutoRefractoryRequired(), hash);
     Utils::updateHash(getAdditionalInputVars(), hash);
+    return hash.get_digest();
 }

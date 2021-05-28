@@ -589,9 +589,10 @@ std::string SynapseGroup::getSparseIndType() const
 
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateWUHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
-    getWUModel()->updateHash(hash);
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash(getDelaySteps(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
@@ -607,33 +608,40 @@ void SynapseGroup::updateWUHash(boost::uuids::detail::sha1 &hash) const
     // If weights are procedural, include variable initialiser hashes
     if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
         for(const auto &w : getWUVarInitialisers()) {
-            w.updateHash(hash);
+            Utils::updateHash(w.getHashDigest(), hash);
         }
     }
 
     // If connectivity is procedural, include connectivitiy initialiser hash
     if(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-        getConnectivityInitialiser().updateHash(hash);
+        Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
     }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateWUPreHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
 {
-    getWUModel()->updateHash(hash);
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash((getDelaySteps() != 0), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateWUPostHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() const
 {
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash((getDelaySteps() != 0), hash);
-    getWUModel()->updateHash(hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updatePSHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
 {
-    getPSModel()->updateHash(hash);
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
@@ -680,47 +688,55 @@ bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
             && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateWUInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() const
 {
+    boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMatrixType(), hash);
     Utils::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
 
     // Include variable initialiser hashes
     for(const auto &w : getWUVarInitialisers()) {
-        w.updateHash(hash);
+        Utils::updateHash(w.getHashDigest(), hash);
     }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateWUPreInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest() const
 {
+    boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getPreVars(), hash);
 
     // Include presynaptic variable initialiser hashes
     for(const auto &w : getWUPreVarInitialisers()) {
-        w.updateHash(hash);
+        Utils::updateHash(w.getHashDigest(), hash);
     }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateWUPostInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostInitHashDigest() const
 {
+    boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getPostVars(), hash);
 
     // Include postsynaptic variable initialiser hashes
     for(const auto &w : getWUPostVarInitialisers()) {
-        w.updateHash(hash);
+        Utils::updateHash(w.getHashDigest(), hash);
     }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updatePSInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() const
 {
+    boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash(getPSModel()->getVars(), hash);
 
     // Include postsynaptic model variable initialiser hashes
     for(const auto &p : getPSVarInitialisers()) {
-        p.updateHash(hash);
+        Utils::updateHash(p.getHashDigest(), hash);
     }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const
@@ -771,14 +787,16 @@ bool SynapseGroup::canPSInitBeMerged(const SynapseGroup &other) const
     return false;
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateConnectivityInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDigest() const
 {
-    getConnectivityInitialiser().updateHash(hash);
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
     Utils::updateHash(getMatrixType(), hash);
     Utils::updateHash(getSparseIndType(), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void SynapseGroup::updateConnectivityHostInitHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityHostInitHashDigest() const
 {
-    getConnectivityInitialiser().updateHash(hash);
+    return getConnectivityInitialiser().getHashDigest();
 }

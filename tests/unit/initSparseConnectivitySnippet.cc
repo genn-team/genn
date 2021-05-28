@@ -4,9 +4,6 @@
 // GeNN includes
 #include "modelSpec.h"
 
-// Unit test includes
-#include "hashUtils.h"
-
 //--------------------------------------------------------------------------
 // OneToOneCopy
 //--------------------------------------------------------------------------
@@ -84,10 +81,9 @@ TEST(InitSparseConnectivitySnippet, CompareBuiltIn)
     ASSERT_FALSE(OneToOne::getInstance()->canBeMerged(FixedProbability::getInstance()));
     ASSERT_FALSE(FixedProbability::getInstance()->canBeMerged(FixedProbabilityNoAutapse::getInstance()));
 
-    ASSERT_HASH_EQ(OneToOne::getInstance(), OneToOne::getInstance(), updateHash);
-    ASSERT_HASH_NE(OneToOne::getInstance(), FixedProbability::getInstance(), updateHash);
-    ASSERT_HASH_NE(FixedProbability::getInstance(), FixedProbabilityNoAutapse::getInstance(), updateHash);
-
+    ASSERT_EQ(OneToOne::getInstance()->getHashDigest(), OneToOne::getInstance()->getHashDigest());
+    ASSERT_NE(OneToOne::getInstance()->getHashDigest(), FixedProbability::getInstance()->getHashDigest());
+    ASSERT_NE(FixedProbability::getInstance()->getHashDigest(), FixedProbabilityNoAutapse::getInstance()->getHashDigest());
 }
 
 TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
@@ -97,7 +93,7 @@ TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
     OneToOneCopy oneToOneCopy;
     ASSERT_TRUE(OneToOne::getInstance()->canBeMerged(&oneToOneCopy));
 
-    ASSERT_HASH_EQ(OneToOne::getInstance(), &oneToOneCopy, updateHash);
+    ASSERT_EQ(OneToOne::getInstance()->getHashDigest(), oneToOneCopy.getHashDigest());
 }
 
 TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)

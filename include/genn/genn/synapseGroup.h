@@ -284,19 +284,19 @@ protected:
 
     //! Updates hash with weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateWUHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getWUHashDigest() const;
 
     //! Updates hash with presynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateWUPreHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getWUPreHashDigest() const;
 
     //! Updates hash with postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateWUPostHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getWUPostHashDigest() const;
 
     //! Updates hash with postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updatePSHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
     //! Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
@@ -316,19 +316,19 @@ protected:
 
     //! Updates hash with initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateWUInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getWUInitHashDigest() const;
 
      //! Updates hash with presynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateWUPreInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getWUPreInitHashDigest() const;
 
     //! Updates hash with postsynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateWUPostInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getWUPostInitHashDigest() const;
 
     //! Updates hash with postsynaptic model variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updatePSInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
 
     //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
     /*! NOTE: this can only be called after model is finalized */
@@ -344,11 +344,11 @@ protected:
 
     //! Updates hash with connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateConnectivityInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
 
     //! Updates hash with host connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    void updateConnectivityHostInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
 
 private:
     //------------------------------------------------------------------------

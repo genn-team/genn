@@ -23,9 +23,10 @@ bool InitSparseConnectivitySnippet::Base::canBeMerged(const Base *other) const
             && (getHostInitCode() == other->getHostInitCode()));
 }
 //----------------------------------------------------------------------------
-void InitSparseConnectivitySnippet::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type InitSparseConnectivitySnippet::Base::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getRowBuildCode(), hash);
@@ -33,4 +34,5 @@ void InitSparseConnectivitySnippet::Base::updateHash(boost::uuids::detail::sha1 
     Utils::updateHash(getColBuildCode(), hash);
     Utils::updateHash(getColBuildStateVars(), hash);
     Utils::updateHash(getHostInitCode(), hash);
+    return hash.get_digest();
 }

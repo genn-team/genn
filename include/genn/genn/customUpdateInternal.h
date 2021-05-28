@@ -23,10 +23,10 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
-    using CustomUpdateBase::updateInitHash;
 
     using CustomUpdate::finalize;
-    using CustomUpdate::updateHash;
+    using CustomUpdate::getHashDigest;
+    using CustomUpdate::getInitHashDigest;
     using CustomUpdate::getDelayNeuronGroup;
 };
 
@@ -52,8 +52,8 @@ public:
     using CustomUpdateBase::isBatched;
     
     using CustomUpdateWU::finalize;
-    using CustomUpdateWU::updateHash;
-    using CustomUpdateWU::updateInitHash;
+    using CustomUpdateWU::getHashDigest;
+    using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;
     using CustomUpdateWU::isTransposeOperation;
 };

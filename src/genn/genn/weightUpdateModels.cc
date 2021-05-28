@@ -6,7 +6,7 @@ IMPLEMENT_MODEL(WeightUpdateModels::StaticGraded);
 IMPLEMENT_MODEL(WeightUpdateModels::PiecewiseSTDP);
 
 //----------------------------------------------------------------------------
-// NeuronModels::Base
+// WeightUpdateModels::Base
 //----------------------------------------------------------------------------
 bool WeightUpdateModels::Base::canBeMerged(const Base *other) const
 {
@@ -31,9 +31,10 @@ bool WeightUpdateModels::Base::canBeMerged(const Base *other) const
             && (isPrevPreSpikeEventTimeRequired() == other->isPrevPreSpikeEventTimeRequired()));
 }
 //----------------------------------------------------------------------------
-void WeightUpdateModels::Base::updateHash(boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type WeightUpdateModels::Base::getHashDigest() const
 {
     // Superclass
+    boost::uuids::detail::sha1 hash;
     Models::Base::updateHash(hash);
 
     Utils::updateHash(getSimCode(), hash);
@@ -54,4 +55,7 @@ void WeightUpdateModels::Base::updateHash(boost::uuids::detail::sha1 &hash) cons
     Utils::updateHash(isPrevPreSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevPostSpikeTimeRequired(), hash);
     Utils::updateHash(isPrevPreSpikeEventTimeRequired(), hash);
+
+    // Return digest
+    return hash.get_digest();
 }

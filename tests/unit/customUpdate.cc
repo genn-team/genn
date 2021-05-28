@@ -10,9 +10,6 @@
 // (Single-threaded CPU) backend includes
 #include "backend.h"
 
-// Unit test includes
-#include "hashUtils.h"
-
 //--------------------------------------------------------------------------
 // Anonymous namespace
 //--------------------------------------------------------------------------
@@ -309,10 +306,10 @@ TEST(CustomUpdates, CompareDifferentModel)
     CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
     CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
-    ASSERT_HASH_EQ(sum0Internal, sum1Internal, updateHash);
-    ASSERT_HASH_NE(sum0Internal, sum2Internal, updateHash);
-    ASSERT_HASH_EQ(sum0Internal, sum1Internal, updateInitHash);
-    ASSERT_HASH_NE(sum0Internal, sum2Internal, updateInitHash);
+    ASSERT_EQ(sum0Internal->getHashDigest(), sum1Internal->getHashDigest());
+    ASSERT_NE(sum0Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum1Internal->getInitHashDigest());
+    ASSERT_NE(sum0Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -349,10 +346,10 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
     CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
-    ASSERT_HASH_NE(sum0Internal, sum1Internal, updateHash);
-    ASSERT_HASH_EQ(sum0Internal, sum2Internal, updateHash);
-    ASSERT_HASH_EQ(sum0Internal, sum1Internal, updateInitHash);
-    ASSERT_HASH_EQ(sum0Internal, sum2Internal, updateInitHash);
+    ASSERT_NE(sum0Internal->getHashDigest(), sum1Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum1Internal->getInitHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -417,17 +414,17 @@ TEST(CustomUpdates, CompareDifferentDelay)
     CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
     CustomUpdateInternal *sum4Internal = static_cast<CustomUpdateInternal*>(sum4);
 
-    ASSERT_HASH_NE(sum1Internal, sum2Internal, updateHash);
-    ASSERT_HASH_NE(sum1Internal, sum3Internal, updateHash);
-    ASSERT_HASH_NE(sum1Internal, sum4Internal, updateHash);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum4Internal->getHashDigest());
 
     // Delay groups don't matter for initialisation
-    ASSERT_HASH_EQ(sum1Internal, sum2Internal, updateInitHash);
-    ASSERT_HASH_EQ(sum1Internal, sum3Internal, updateInitHash);
-    ASSERT_HASH_EQ(sum1Internal, sum4Internal, updateInitHash);
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum4Internal->getInitHashDigest());
     
-    ASSERT_HASH_EQ(sum2Internal, sum3Internal, updateHash);
-    ASSERT_HASH_NE(sum2Internal, sum4Internal, updateHash);
+    ASSERT_EQ(sum2Internal->getHashDigest(), sum3Internal->getHashDigest());
+    ASSERT_NE(sum2Internal->getHashDigest(), sum4Internal->getHashDigest());
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -468,8 +465,8 @@ TEST(CustomUpdates, CompareDifferentBatched)
     ASSERT_FALSE(sum2Internal->isBatched());
 
     // Check that this means they can't be merged
-    ASSERT_HASH_NE(sum1Internal, sum2Internal, updateHash);
-    ASSERT_HASH_NE(sum1Internal, sum2Internal, updateInitHash);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -515,10 +512,10 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     // Updates which transpose different variables can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
     CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
-    ASSERT_HASH_NE(sum1Internal, sum2Internal, updateHash);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
 
     // Again, this doesn't matter for initialisation
-    ASSERT_HASH_EQ(sum1Internal, sum2Internal, updateInitHash);
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -569,8 +566,8 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     // Updates and initialisation with different connectivity can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
     CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
-    ASSERT_HASH_NE(sum1Internal, sum2Internal, updateHash);
-    ASSERT_HASH_NE(sum1Internal, sum2Internal, updateInitHash);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
     
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;

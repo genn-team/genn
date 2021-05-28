@@ -363,10 +363,10 @@ private:
         createMergedGroups(model, backend, unmergedGroups, mergedGroups, canMerge);
     }
 
-    template<typename Group, typename MergedGroup, typename U>
+    template<typename Group, typename MergedGroup, typename D>
     void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
                                 const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                                std::vector<MergedGroup> &mergedGroups, U updateHash)
+                                std::vector<MergedGroup> &mergedGroups, D getHashDigest)
     {
         // Create a hash map to group together groups with the same SHA1 digest
         std::unordered_map<boost::uuids::detail::sha1::digest_type, 
@@ -375,12 +375,9 @@ private:
 
         // Add unmerged groups to correct vector
         for(const auto &g : unmergedGroups) {
-            boost::uuids::detail::sha1 hash;
-            (g.get().*updateHash)(hash);
-            
-            protoMergedGroups[hash.get_digest()].push_back(g);
+            protoMergedGroups[(g.get().*getHashDigest)()].push_back(g);
         }
-        
+
         // Reserve final merged groups vector
         mergedGroups.reserve(protoMergedGroups.size());
 

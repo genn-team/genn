@@ -4,9 +4,6 @@
 // GeNN includes
 #include "postsynapticModels.h"
 
-// Unit test includes
-#include "hashUtils.h"
-
 //--------------------------------------------------------------------------
 // ExpCurrCopy
 //--------------------------------------------------------------------------
@@ -34,9 +31,9 @@ TEST(PostsynapticModels, CompareBuiltIn)
     ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(ExpCond::getInstance()));
     ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(DeltaCurr::getInstance()));
 
-    ASSERT_HASH_EQ(ExpCurr::getInstance(), ExpCurr::getInstance(), updateHash);
-    ASSERT_HASH_NE(ExpCurr::getInstance(), ExpCond::getInstance(), updateHash);
-    ASSERT_HASH_NE(ExpCurr::getInstance(), DeltaCurr::getInstance(), updateHash);
+    ASSERT_EQ(ExpCurr::getInstance()->getHashDigest(), ExpCurr::getInstance()->getHashDigest());
+    ASSERT_NE(ExpCurr::getInstance()->getHashDigest(), ExpCond::getInstance()->getHashDigest());
+    ASSERT_NE(ExpCurr::getInstance()->getHashDigest(), DeltaCurr::getInstance()->getHashDigest());
 }
 
 TEST(PostsynapticModels, CompareCopyPasted)
@@ -46,5 +43,5 @@ TEST(PostsynapticModels, CompareCopyPasted)
     ExpCurrCopy expCurrCopy;
     ASSERT_TRUE(ExpCurr::getInstance()->canBeMerged(&expCurrCopy));
 
-    ASSERT_HASH_EQ(ExpCurr::getInstance(), &expCurrCopy, updateHash);
+    ASSERT_EQ(ExpCurr::getInstance()->getHashDigest(), expCurrCopy.getHashDigest());
 }

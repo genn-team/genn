@@ -4,9 +4,6 @@
 // GeNN includes
 #include "modelSpec.h"
 
-// Unit test includes
-#include "hashUtils.h"
-
 //--------------------------------------------------------------------------
 // UniformCopy
 //--------------------------------------------------------------------------
@@ -31,9 +28,9 @@ TEST(InitVarSnippet, CompareBuiltIn)
     ASSERT_FALSE(Uniform::getInstance()->canBeMerged(Normal::getInstance()));
     ASSERT_FALSE(Exponential::getInstance()->canBeMerged(Gamma::getInstance()));
 
-    ASSERT_HASH_EQ(Constant::getInstance(), Constant::getInstance(), updateHash);
-    ASSERT_HASH_NE(Uniform::getInstance(), Normal::getInstance(), updateHash);
-    ASSERT_HASH_NE(Exponential::getInstance(), Gamma::getInstance(), updateHash);
+    ASSERT_EQ(Constant::getInstance()->getHashDigest(), Constant::getInstance()->getHashDigest());
+    ASSERT_NE(Uniform::getInstance()->getHashDigest(), Normal::getInstance()->getHashDigest());
+    ASSERT_NE(Exponential::getInstance()->getHashDigest(), Gamma::getInstance()->getHashDigest());
 }
 
 TEST(InitVarSnippet, CompareCopyPasted)
@@ -42,7 +39,7 @@ TEST(InitVarSnippet, CompareCopyPasted)
 
     UniformCopy uniformCopy;
     ASSERT_TRUE(Uniform::getInstance()->canBeMerged(&uniformCopy));
-    ASSERT_HASH_EQ(Uniform::getInstance(), &uniformCopy, updateHash);
+    ASSERT_EQ(Uniform::getInstance()->getHashDigest(), uniformCopy.getHashDigest());
 }
 
 TEST(InitVarSnippet, CompareVarInitParameters)

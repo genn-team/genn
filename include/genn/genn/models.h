@@ -243,7 +243,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     const SynapseGroup *getSynapseGroup() const;
-    
+
     const SynapseGroup *getTransposeSynapseGroup() const;
     const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
     size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
