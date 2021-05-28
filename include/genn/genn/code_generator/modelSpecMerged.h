@@ -373,9 +373,8 @@ private:
         // Loop through resultant merged groups
         size_t i = 0;
         for(const auto &p : protoMergedGroups) {
-            // Add group to vector, moving vectors of groups into data structure to avoid copying
-            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
-                                      std::move(p.second));
+            // Add group to vector
+            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend, p.second);
 
             // Loop through fields
             for(const auto &f : mergedGroups.back().getFields()) {
