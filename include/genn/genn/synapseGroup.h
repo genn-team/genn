@@ -298,13 +298,7 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canWUPreBeMerged(const SynapseGroup &other) const;
-
-    //! Can postsynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canWUPostBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
     //! Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
@@ -329,18 +323,6 @@ protected:
     //! Updates hash with postsynaptic model variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
-
-    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canWUPreInitBeMerged(const SynapseGroup &other) const;
-
-    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canWUPostInitBeMerged(const SynapseGroup &other) const;
-
-    //! Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canPSInitBeMerged(const SynapseGroup &other) const;
 
     //! Updates hash with connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */

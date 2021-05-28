@@ -79,29 +79,6 @@ bool CurrentSource::isZeroCopyEnabled() const
                        [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
 }
 //----------------------------------------------------------------------------
-bool CurrentSource::canBeMerged(const CurrentSource &other) const
-{
-    return getCurrentSourceModel()->canBeMerged(other.getCurrentSourceModel());
-}
-//----------------------------------------------------------------------------
-bool CurrentSource::canInitBeMerged(const CurrentSource &other) const
-{
-     // If both groups have the same number of variables
-    if(getCurrentSourceModel()->getVars() == other.getCurrentSourceModel()->getVars()) {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
-            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
-                return false;
-            }
-        }
-        
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
 {
     return getCurrentSourceModel()->getHashDigest();

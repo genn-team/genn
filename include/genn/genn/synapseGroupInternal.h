@@ -44,13 +44,8 @@ public:
     using SynapseGroup::getWUPreHashDigest;
     using SynapseGroup::getWUPostHashDigest;
     using SynapseGroup::getPSHashDigest;
-    using SynapseGroup::canWUPreBeMerged;
-    using SynapseGroup::canWUPostBeMerged;
-    using SynapseGroup::canPSBeMerged;
+    using SynapseGroup::getDendriticDelayUpdateHashDigest;
     using SynapseGroup::canPSBeLinearlyCombined;
-    using SynapseGroup::canWUPreInitBeMerged;
-    using SynapseGroup::canWUPostInitBeMerged;
-    using SynapseGroup::canPSInitBeMerged;
     using SynapseGroup::getWUInitHashDigest;
     using SynapseGroup::getWUPreInitHashDigest;
     using SynapseGroup::getWUPostInitHashDigest;

@@ -24,8 +24,6 @@ public:
     using CurrentSource::isSimRNGRequired;
     using CurrentSource::isInitRNGRequired;
     using CurrentSource::isZeroCopyEnabled;
-    using CurrentSource::canBeMerged;
-    using CurrentSource::canInitBeMerged;
     using CurrentSource::getHashDigest;
     using CurrentSource::getInitHashDigest;
 };

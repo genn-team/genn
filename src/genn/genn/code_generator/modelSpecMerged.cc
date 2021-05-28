@@ -38,9 +38,9 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron initialization groups:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
-                       [](const NeuronGroupInternal &){ return true; },
-                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b){ return a.canInitBeMerged(b); });
+    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
+                           [](const NeuronGroupInternal &){ return true; },
+                           &NeuronGroupInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom update initialization groups:";
     createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
@@ -82,26 +82,14 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            &CustomUpdateWUInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                       [](const NeuronGroupInternal &){ return true; },
-                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
-                       {
-                           return ((a.getNumDelaySlots() == b.getNumDelaySlots())
-                                   && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
-                                   && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired()));
-                       });
+    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
+                           [](const NeuronGroupInternal &){ return true; },
+                           &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron groups which require their previous spike times updating:";
-    createMergedGroups(model, backend, model.getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
-                       [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
-                       [](const NeuronGroupInternal &a, const NeuronGroupInternal &b)
-                       {
-                           return ((a.getNumDelaySlots() == b.getNumDelaySlots())
-                                   && (a.isSpikeEventRequired() == b.isSpikeEventRequired())
-                                   && (a.isTrueSpikeRequired() == b.isTrueSpikeRequired())
-                                   && (a.isPrevSpikeTimeRequired() == b.isPrevSpikeTimeRequired())
-                                   && (a.isPrevSpikeEventTimeRequired() == b.isPrevSpikeEventTimeRequired()));
-                       });
+    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
+                           [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
+                           &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
 
     // Build vector of merged synapse groups which require dendritic delay
     std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
@@ -113,11 +101,8 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
         }
     }
     LOGD_CODE_GEN << "Merging synapse groups which require their dendritic delay updating:";
-    createMergedGroups(model, backend, synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
-                       [](const SynapseGroupInternal &a, const SynapseGroupInternal &b)
-                       {
-                           return (a.getMaxDendriticDelayTimesteps() == b.getMaxDendriticDelayTimesteps());
-                       });
+    createMergedGroupsHash(model, backend, synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+                           &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse groups which require host code to initialise their synaptic connectivity:";
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,

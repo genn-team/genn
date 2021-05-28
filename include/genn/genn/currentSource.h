@@ -90,14 +90,6 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
-    //! Can this current source be merged with other? i.e. can they be simulated using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const CurrentSource &other) const;
-
-    //! Can the initialisation of these current sources be merged together? i.e. can they be initialised using same generated code
-    /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const CurrentSource &other) const;
-   
     //! Updates hash with current source
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
@@ -105,7 +97,6 @@ protected:
     //! Updates hash with current source initialisation
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
-
 
 private:
     //------------------------------------------------------------------------

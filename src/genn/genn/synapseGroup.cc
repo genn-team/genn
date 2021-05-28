@@ -644,20 +644,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getDendriticDelayUpdateHashDigest() const
 {
-    const bool delayed = (getDelaySteps() != 0);
-    const bool otherDelayed = (other.getDelaySteps() != 0);
-    return (getWUModel()->canBeMerged(other.getWUModel())
-            && (delayed == otherDelayed));
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canWUPostBeMerged(const SynapseGroup &other) const
-{
-    const bool delayed = (getDelaySteps() != 0);
-    const bool otherDelayed = (other.getDelaySteps() != 0);
-    return (getWUModel()->canBeMerged(other.getWUModel())
-            && (delayed == otherDelayed));
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
@@ -737,54 +728,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
         Utils::updateHash(p.getHashDigest(), hash);
     }
     return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const
-{
-    if(getWUModel()->getPreVars() == other.getWUModel()->getPreVars()) {
-        // if any of the presynaptic variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUPreVarInitialisers().size(); i++) {
-            if(!getWUPreVarInitialisers()[i].canBeMerged(other.getWUPreVarInitialisers()[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    return false;
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canWUPostInitBeMerged(const SynapseGroup &other) const
-{
-    if(getWUModel()->getPostVars() == other.getWUModel()->getPostVars()) {
-        // if any of the postsynaptic variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUPostVarInitialisers().size(); i++) {
-            if(!getWUPostVarInitialisers()[i].canBeMerged(other.getWUPostVarInitialisers()[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    return false;
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canPSInitBeMerged(const SynapseGroup &other) const
-{
-    if((getPSModel()->getVars() == other.getPSModel()->getVars())
-       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps()))
-    {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getPSVarInitialisers().size(); i++) {
-            if(!getPSVarInitialisers()[i].canBeMerged(other.getPSVarInitialisers()[i])) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    return false;
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDigest() const

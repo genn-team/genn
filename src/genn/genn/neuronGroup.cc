@@ -433,74 +433,6 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
     return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
-{
-    if((isSpikeTimeRequired() == other.isSpikeTimeRequired())
-       && (isPrevSpikeTimeRequired() == other.isPrevSpikeTimeRequired())
-       && (isSpikeEventRequired() == other.isSpikeEventRequired())
-       && (isSimRNGRequired() == other.isSimRNGRequired())
-       && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired)
-       && (getNeuronModel()->getVars() == other.getNeuronModel()->getVars()))
-    {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
-            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
-                return false;
-            }
-        }
-
-
-        // If both groups have the same number of current sources
-        auto otherCurrentSources = other.getCurrentSources();
-        if(!checkCompatibleUnordered(getCurrentSources(), otherCurrentSources,
-                                     [](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
-                                     {
-                                         return a->canInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all incoming synapse groups with are mergable
-        auto otherInSynWithPostVars = other.getInSynWithPostVars();
-        if(!checkCompatibleUnordered(getInSynWithPostVars(), otherInSynWithPostVars,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPostInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSynWithPreVars = other.getOutSynWithPreVars();
-        if(!checkCompatibleUnordered(getOutSynWithPreVars(), otherOutSynWithPreVars,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPreInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // If both groups have the same number of incoming synapse groups after merging
-        auto otherMergedInSyn = other.getMergedInSyn();
-        if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canPSInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-
-        return true;
-    }
-    return false;
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -526,6 +458,57 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     // Update hash with hash list built from merged incoming synapses
     updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
 
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(isSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isSimRNGRequired(), hash);
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(m_VarQueueRequired, hash);
+    Utils::updateHash(getNeuronModel()->getVars(), hash);
+
+    // Include variable initialiser hashes
+    for(const auto &n : getVarInitialisers()) {
+        Utils::updateHash(n.getHashDigest(), hash);
+    }
+
+    // Update hash with hash list built from current sources
+    updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
+
+    // Update hash with hash list built from incoming synapse groups with post vars
+    updateHashList(getInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPostInitHashDigest);
+
+    // Update hash with hash list built from outgoing synapse groups with pre vars
+    updateHashList(getOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
+
+    // Update hash with hash list built from merged incoming synapses
+    updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getPrevSpikeTimeUpdateHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
