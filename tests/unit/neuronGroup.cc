@@ -393,7 +393,7 @@ TEST(NeuronGroup, CompareCurrentSources)
     ASSERT_TRUE(dcDCMergedGroup.getGroups().size() == 1);
     
     // Find which child in the DC + poisson merged group is the poisson current source
-    const size_t poissonIndex = (dcPoissonMergedGroup.getArchetype().getCurrentSources().at(0)->getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
+    const size_t poissonIndex = (dcPoissonMergedGroup.getSortedArchetypeCurrentSources().at(0)->getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
     
     // Check that only the standard deviation parameter of the gaussian current sources is heterogeneous
     // **NOTE** tau is not heterogeneous because it's not references
@@ -511,10 +511,10 @@ TEST(NeuronGroup, ComparePostsynapticModels)
                                                         [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Find which child in the DC + gaussian merged group is the gaussian current source
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().size() == 2);
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().size() == 2);
-    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
-    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getSortedArchetypeMergedInSyns().size() == 2);
+    ASSERT_TRUE(deltaAlphaMergedInitGroup->getSortedArchetypeMergedInSyns().size() == 2);
+    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getSortedArchetypeMergedInSyns().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getSortedArchetypeMergedInSyns().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
 
     // Check that parameter and both derived parameters are heterogeneous
     // **NOTE** tau is NOT heterogeneous because it's unused
