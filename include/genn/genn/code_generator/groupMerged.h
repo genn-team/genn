@@ -518,6 +518,11 @@ public:
     //! Should the postsynaptic model var init derived parameter be implemented heterogeneously?
     bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
+    //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
+    std::vector<SynapseGroupInternal*> getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
+
+    //! Get sorted vectors of current sources belonging to archetype group
+    std::vector<CurrentSourceInternal*> getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
 protected:
     //------------------------------------------------------------------------
     // Protected methods
@@ -724,6 +729,12 @@ public:
     //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
     bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
+    //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
+
+    //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
+
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
@@ -750,7 +761,6 @@ private:
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
     void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
-                       const std::vector<SynapseGroupInternal*> &archetypeSyn,
                        const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
@@ -772,6 +782,9 @@ public:
     NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
     //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
     bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
@@ -783,6 +796,12 @@ public:
 
     //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
     bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Get sorted vectors of incoming synapse groups with postsynaptic variables belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostVars() const { return m_SortedInSynWithPostVars.front(); }
+
+    //! Get sorted vectors of outgoing synapse groups with presynaptic variables belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreVars() const { return m_SortedOutSynWithPreVars.front(); }
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
@@ -803,7 +822,6 @@ private:
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
     void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem,
-                       const std::vector<SynapseGroupInternal *> &archetypeSyn,
                        const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialisers)(void) const,
