@@ -90,7 +90,7 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
 
     if(getArchetype().isDelayRequired()) {
         addField("unsigned int", "numNeurons",
-                    [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+                 [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
     }
 }
 
@@ -629,15 +629,24 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
     // Loop through groups
+    // **TODO** add updateHash protected helper which updates hash for everything in group using lambda funcion
     for(size_t i = 0; i < getGroups().size(); i++) {
         const auto &group = getGroups().at(i).get();
+
+        // Update hash with number of neurons in their group 
+        // **NOTE** there are too few fields that belong here to make it worth doing anything smart
         Utils::updateHash(group.getNumNeurons(), hash);
+
+        // if(init) {
+        // **TODO** update hash based on var init params and derived params
+        // else {
         Utils::updateHash(group.getParams(), hash);
         Utils::updateHash(group.getDerivedParams(), hash);
+        //}
 
         // Update hash with current source parameters
         // **TODO** Move outside loop to make more composable
-        for(const auto *c : m_Sorted.at(i)) {
+        for(const auto *c : m_SortedInSynWithPostCode.at(i)) {
             const std::vector<std::string> codeStrings{c->getWUModel()->getPostSpikeCode(), 
                                                        c->getWUModel()->getPostDynamicsCode()};
             updateParamHash(codeStrings, c->getWUModel()->getParamNames(), c->getWUParams(), hash);
