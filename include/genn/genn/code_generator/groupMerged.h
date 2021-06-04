@@ -540,6 +540,8 @@ protected:
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
+    void updateHash(bool init, boost::uuids::detail::sha1 &hash) const;
+
     template<typename T, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
                                   G getVectorFunc, H getHashDigestFunc) const
@@ -590,7 +592,7 @@ protected:
                                         const std::string &paramName, size_t childIndex, size_t paramIndex,
                                         const std::vector<std::vector<T>> &sortedGroupChildren, G getParamValuesFn) const
     {
-        // If none of the code strings reference the parameter
+        // If any of the code strings reference the parameter
         if(std::any_of(codeStrings.begin(), codeStrings.end(),
                         [&paramName](const std::string &c)
                         {
@@ -707,8 +709,63 @@ protected:
         }
     }
 
-    void addMergedInSynPointerField(const std::string &type, const std::string &name, 
+    template<typename C, typename V>
+    void updateChildParamHash(const Snippet::Base::StringVec &paramNames, const std::vector<std::string> &codeStrings,
+                              const std::vector<std::vector<C>> &sortedGroupChildren,
+                              size_t childIndex, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through parameters
+        for(size_t p = 0; p < paramNames.size(); p++) {
+            // If any of the code strings reference the parameter
+            const std::string &paramName = paramNames.at(p);
+            if(std::any_of(codeStrings.begin(), codeStrings.end(),
+                            [&paramName](const std::string &c)
+                            {
+                                return (c.find("$(" + paramName + ")") != std::string::npos);
+                            }))
+            {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+
+                    // Update hash with parameter value
+                    Utils::updateHash((child->*getValueFn)().at(p), hash);
+                }
+            }
+        }
+    }
+
+    template<typename C, typename V>
+    void updateChildDerivedParamHash(const Snippet::Base::DerivedParamVec &derivedParams, const std::vector<std::string> &codeStrings,
+                                     const std::vector<std::vector<C>> &sortedGroupChildren,
+                                     size_t childIndex, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through derived parameters
+        for(size_t p = 0; p < derivedParams.size(); p++) {
+            // If any of the code strings reference the parameter
+            const std::string &paramName = derivedParams.at(p).name;
+            if(std::any_of(codeStrings.begin(), codeStrings.end(),
+                            [&paramName](const std::string &c)
+                            {
+                                return (c.find("$(" + paramName + ")") != std::string::npos);
+                            }))
+            {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+
+                    // Update hash with parameter value
+                    Utils::updateHash((child->*getValueFn)().at(p), hash);
+                }
+            }
+        }
+    }
+
+    void addMergedInSynPointerField(const std::string &type, const std::string &name,
                                     size_t archetypeIndex, const std::string &prefix);
+
 
 private:
     //------------------------------------------------------------------------

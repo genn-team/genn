@@ -464,6 +464,43 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     }
 }
 //----------------------------------------------------------------------------
+void NeuronGroupMergedBase::updateHash(bool init, boost::uuids::detail::sha1 &hash) const
+{
+    // Update hash with archetype's hash
+    Utils::updateHash(getArchetype().getHashDigest(), hash);
+
+    // Update hash with each group's neuron count
+    updateHash(&NeuronGroupInternal::getNumNeurons, hash);
+
+    if(init) {
+    }
+    else {
+        // Update hash wtih each groups parameters and derived parameters
+        updateHash(&NeuronGroupInternal::getParams, hash);
+        updateHash(&NeuronGroupInternal::getDerivedParams, hash);
+
+        // Loop through child current sources
+        for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
+            const auto *csm = getSortedArchetypeCurrentSources().at(i)->getCurrentSourceModel();
+            const std::vector<std::string> codeStrings{csm->getInjectionCode()};
+            updateChildParamHash(csm->getParamNames(), codeStrings, m_SortedCurrentSources,
+                                 i, &CurrentSourceInternal::getParams, hash);
+            updateChildDerivedParamHash(csm->getDerivedParams(), codeStrings, m_SortedCurrentSources,
+                                        i, &CurrentSourceInternal::getDerivedParams, hash);
+        }
+
+        // Loop through child merged insyns
+        for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
+            const auto *psm = getSortedArchetypeMergedInSyns().at(i)->getPSModel();
+            const std::vector<std::string> codeStrings{psm->getApplyInputCode(), psm->getDecayCode()};
+            updateChildParamHash(psm->getParamNames(), codeStrings, m_SortedMergedInSyns,
+                                 i, &SynapseGroupInternal::getPSParams, hash);
+            updateChildDerivedParamHash(psm->getDerivedParams(), codeStrings, m_SortedMergedInSyns,
+                                        i, &SynapseGroupInternal::getPSDerivedParams, hash);
+        }
+    }
+}
+//----------------------------------------------------------------------------
 void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, const std::string &name, 
                                                        size_t archetypeIndex, const std::string &prefix)
 {
@@ -618,16 +655,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
 {
     boost::uuids::detail::sha1 hash;
 
-    // Update hash with archetype's hash
-    Utils::updateHash(getArchetype().getHashDigest(), hash);
-
-    // Update hash with each group's neuron count
-    updateHash(&NeuronGroupInternal::getNumNeurons, hash);
-
-    // Update hash wtih each groups parameters and derived parameters
-    updateHash(&NeuronGroupInternal::getParams, hash);
-    updateHash(&NeuronGroupInternal::getDerivedParams, hash);
-
+    updateHash(false, hash);
     // Loop through groups
     // **TODO** add updateHash protected helper which updates hash for everything in group using lambda funcion
     /*for(size_t i = 0; i < getGroups().size(); i++) {
