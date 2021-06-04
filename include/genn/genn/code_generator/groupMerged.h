@@ -192,41 +192,12 @@ protected:
         }
     }
 
-    void updateParamHash(const std::vector<std::string> &codeStrings, const std::vector<std::string> &paramNames,
-                         const std::vector<double> &paramValues, boost::uuids::detail::sha1 &hash) const
+    //! Helper to update hash with the hash of calling getHashableFn on each group
+    template<typename H>
+    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
     {
-        // Loop through parameters
-        for(size_t p = 0; p < paramNames.size(); p++) {
-            // If any code strings reference parameter
-            const std::string paramName = paramNames.at(p);
-            if(std::any_of(codeStrings.begin(), codeStrings.end(),
-                            [&paramName](const std::string &c) 
-                            { 
-                                return (c.find("$(" + paramName + ")") != std::string::npos); 
-                            }))
-            {
-                // Update hash with parameter
-                Utils::updateHash(paramValues.at(p), hash);
-            }
-        }
-    }
-
-    void updateDerivedParamHash(const std::vector<std::string> &codeStrings, const Snippet::Base::DerivedParamVec &derivedParams,
-                                const std::vector<double> &derivedParamValues, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        for(size_t p = 0; p < derivedParams.size(); p++) {
-            // If any code strings reference parameter
-            const std::string paramName = derivedParams.at(p).name;
-            if(std::any_of(codeStrings.begin(), codeStrings.end(),
-                            [&paramName](const std::string &c) 
-                            { 
-                                return (c.find("$(" + paramName + ")") != std::string::npos); 
-                            }))
-            {
-                // Update hash with parameter
-                Utils::updateHash(derivedParamValues.at(p), hash);
-            }
+        for(const auto &g : getGroups()) {
+            Utils::updateHash((g.get().*getHashableFn)(), hash);
         }
     }
 
@@ -389,7 +360,7 @@ protected:
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
-            
+
             // Raise error if this field is a host field but this isn't a host structure
             assert(std::get<3>(f) != FieldType::Host || host);
         }
@@ -561,6 +532,7 @@ public:
 
     //! Get sorted vectors of current sources belonging to archetype group
     std::vector<CurrentSourceInternal*> getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
+
 protected:
     //------------------------------------------------------------------------
     // Protected methods
@@ -729,8 +701,6 @@ protected:
                      Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
-    
-
 
     void addMergedInSynPointerField(const std::string &type, const std::string &name, 
                                     size_t archetypeIndex, const std::string &prefix);
