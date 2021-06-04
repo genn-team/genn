@@ -382,19 +382,16 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         if(!init) {
             // Add any heterogeneous postsynaptic model parameters
             const auto paramNames = sg->getPSModel()->getParamNames();
-            addHeterogeneousChildParams(paramNames, i, "InSyn", &NeuronGroupMergedBase::isPSMParamHeterogeneous,
-                                        [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                        {
-                                            return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSParams().at(paramIndex);
-                                        });
+            addHeterogeneousChildParams(paramNames, m_SortedMergedInSyns, i, "InSyn",
+                                        &NeuronGroupMergedBase::isPSMParamHeterogeneous,
+                                        &SynapseGroupInternal::getPSParams);
 
             // Add any heterogeneous postsynaptic mode derived parameters
             const auto derivedParams = sg->getPSModel()->getDerivedParams();
-            addHeterogeneousChildDerivedParams(derivedParams, i, "InSyn", &NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous,
-                                               [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                               {
-                                                    return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSDerivedParams().at(paramIndex);
-                                               });
+            addHeterogeneousChildDerivedParams(derivedParams, m_SortedMergedInSyns, i, "InSyn",
+                                               &NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous,
+                                               &SynapseGroupInternal::getPSDerivedParams);
+
             // Add EGPs
             addChildEGPs(sg->getPSModel()->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), "InSyn",
                          [this](size_t groupIndex, size_t childIndex)
@@ -446,19 +443,15 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         if(!init) {
             // Add any heterogeneous current source parameters
             const auto paramNames = cs->getCurrentSourceModel()->getParamNames();
-            addHeterogeneousChildParams(paramNames, i, "CS", &NeuronGroupMergedBase::isCurrentSourceParamHeterogeneous,
-                                        [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                        {
-                                            return m_SortedCurrentSources.at(groupIndex).at(childIndex)->getParams().at(paramIndex);
-                                        });
+            addHeterogeneousChildParams(paramNames, m_SortedCurrentSources, i, "CS",
+                                        &NeuronGroupMergedBase::isCurrentSourceParamHeterogeneous,
+                                        &CurrentSourceInternal::getParams);
 
             // Add any heterogeneous current source derived parameters
             const auto derivedParams = cs->getCurrentSourceModel()->getDerivedParams();
-            addHeterogeneousChildDerivedParams(derivedParams, i, "CS", &NeuronGroupMergedBase::isCurrentSourceDerivedParamHeterogeneous,
-                                               [this](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                {
-                                                    return m_SortedCurrentSources.at(groupIndex).at(childIndex)->getDerivedParams().at(paramIndex);
-                                                });
+            addHeterogeneousChildDerivedParams(derivedParams, m_SortedCurrentSources, i, "CS",
+                                               &NeuronGroupMergedBase::isCurrentSourceDerivedParamHeterogeneous,
+                                               &CurrentSourceInternal::getDerivedParams);
 
             // Add EGPs
             addChildEGPs(cs->getCurrentSourceModel()->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), "CS",
@@ -727,18 +720,12 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
         }
 
         // Add any heterogeneous parameters
-        addHeterogeneousChildParams<NeuronUpdateGroupMerged>(sg->getWUModel()->getParamNames(), i, fieldPrefixStem, isParamHeterogeneous,
-                                                             [&sortedSyn](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                             {
-                                                                 return sortedSyn.at(groupIndex).at(childIndex)->getWUParams().at(paramIndex);
-                                                             });
+        addHeterogeneousChildParams<NeuronUpdateGroupMerged>(sg->getWUModel()->getParamNames(), sortedSyn, i, fieldPrefixStem,
+                                                             isParamHeterogeneous, &SynapseGroupInternal::getWUParams);
 
         // Add any heterogeneous derived parameters
-        addHeterogeneousChildDerivedParams<NeuronUpdateGroupMerged>(sg->getWUModel()->getDerivedParams(), i, fieldPrefixStem, isDerivedParamHeterogeneous,
-                                                                    [&sortedSyn](size_t groupIndex, size_t childIndex, size_t paramIndex)
-                                                                    {
-                                                                        return sortedSyn.at(groupIndex).at(childIndex)->getWUDerivedParams().at(paramIndex);
-                                                                    });
+        addHeterogeneousChildDerivedParams<NeuronUpdateGroupMerged>(sg->getWUModel()->getDerivedParams(), sortedSyn, i, fieldPrefixStem,
+                                                                    isDerivedParamHeterogeneous, &SynapseGroupInternal::getWUDerivedParams);
 
         // Add EGPs
         addChildEGPs(sg->getWUModel()->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), fieldPrefixStem,

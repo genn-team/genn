@@ -612,9 +612,10 @@ protected:
         return false;
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildParams(const Snippet::Base::StringVec &paramNames, size_t childIndex,
-                                     const std::string &prefix, 
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildParams(const Snippet::Base::StringVec &paramNames,
+                                     const std::vector<std::vector<C>> &sortedGroupChildren,
+                                     size_t childIndex, const std::string &prefix,
                                      H isChildParamHeterogeneousFn, V getValueFn)
     {
         // Loop through parameters
@@ -622,26 +623,30 @@ protected:
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, p)) {
                 addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
-                               [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   return Utils::writePreciseString((child->*getValueFn)().at(p));
                                });
             }
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
-                                            const std::string &prefix, H isChildDerivedParamHeterogeneousFn, V getValueFn)
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams,
+                                            const std::vector<std::vector<C>> &sortedGroupChildren,
+                                            size_t childIndex, const std::string &prefix,
+                                            H isChildDerivedParamHeterogeneousFn, V getValueFn)
     {
         // Loop through derived parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, p)) {
                 addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
-                               [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   return Utils::writePreciseString((child->*getValueFn)().at(p));
                                });
             }
         }
