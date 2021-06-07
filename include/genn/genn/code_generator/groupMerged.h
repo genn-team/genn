@@ -1222,11 +1222,11 @@ protected:
     SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                            Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
-    void updateBaseHash(Role role, boost::uuids::detail::sha1 &hash) const;
-
     //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
+    boost::uuids::detail::sha1::digest_type getHashDigest(Role role) const;
+
     const std::string &getArchetypeCode() const { return m_ArchetypeCode; }
 
 private:
@@ -1297,6 +1297,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PresynapticUpdate);
+    }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1321,6 +1326,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PostsynapticUpdate);
     }
 
     //----------------------------------------------------------------------------
@@ -1349,6 +1359,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SynapseDynamics);
+    }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1372,6 +1387,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::DenseInit);
     }
 
     //----------------------------------------------------------------------------
@@ -1399,6 +1419,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SparseInit);
+    }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1423,6 +1448,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::ConnectivityInit);
     }
 
     //----------------------------------------------------------------------------

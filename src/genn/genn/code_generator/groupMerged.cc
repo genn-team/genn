@@ -1525,7 +1525,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             }
         }
 
-        // If weights are procedura, we're initializing individual variables or we're initialising variables in a kernel
+        // If weights are procedural, we're initializing individual variables or we're initialising variables in a kernel
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
         if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty()) 
            || (varInitRole && individualWeights)) 
@@ -1577,13 +1577,14 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     }
 }
 //----------------------------------------------------------------------------
-void SynapseGroupMergedBase::updateBaseHash(Role role, boost::uuids::detail::sha1 &hash) const
+boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Role role) const
 {
     const bool updateRole = ((role == Role::PresynapticUpdate)
                              || (role == Role::PostsynapticUpdate)
                              || (role == Role::SynapseDynamics));
 
     // Update hash with archetype's hash
+    boost::uuids::detail::sha1 hash;
     if(updateRole) {
         Utils::updateHash(getArchetype().getWUHashDigest(), hash);
     }
@@ -1621,8 +1622,10 @@ void SynapseGroupMergedBase::updateBaseHash(Role role, boost::uuids::detail::sha
             [](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getDerivedParams(); }, hash);
     }
 
+
     // If we're updating a hash for a group with procedural connectivity or initialising connectivity
     if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
+        // Update hash with connectivity parameters and derived parameters
         updateParamHash<SynapseGroupMergedBase>(
             &SynapseGroupMergedBase::isConnectivityInitParamReferenced,
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
@@ -1631,6 +1634,49 @@ void SynapseGroupMergedBase::updateBaseHash(Role role, boost::uuids::detail::sha
             &SynapseGroupMergedBase::isConnectivityInitDerivedParamReferenced,
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
     }
+
+    if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
+        // If this is an update role
+        // **NOTE **global variable values aren't useful during initialization
+        if(updateRole) {
+            /*for(size_t v = 0; v < vars.size(); v++) {
+                // If variable should be implemented heterogeneously, add scalar field
+                if(isWUGlobalVarHeterogeneous(v)) {
+                    addScalarField(vars[v].name,
+                                   [v](const SynapseGroupInternal &sg, size_t)
+                                   {
+                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
+                                   });
+                }
+            }*/
+        }
+    }
+    // Otherwise (weights are individual or procedural)
+    else {
+        const bool connectInitRole = (role == Role::ConnectivityInit);
+        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
+        const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
+        const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+
+        // If synapse group has a kernel and we're either updating with procedural  
+        // weights or initialising individual weights, update hash with kernel size
+        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
+            updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
+        }
+
+        // If weights are procedural, we're initializing individual variables or we're initialising variables in a kernel
+        // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
+        if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty())
+           || (varInitRole && individualWeights))
+        {
+            // Update hash with each group's variable initialisation parameters and derived parameters
+            updateVarInitParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers, 
+                                                           &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
+            updateVarInitDerivedParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers,
+                                                                  &SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced, hash);
+        }
+    }
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix)
