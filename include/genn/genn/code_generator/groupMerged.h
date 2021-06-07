@@ -202,15 +202,6 @@ protected:
         }
     }
 
-    //! Helper to update hash with the hash of calling getHashableFn on each group
-    template<typename H>
-    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
-    {
-        for(const auto &g : getGroups()) {
-            Utils::updateHash((g.get().*getHashableFn)(), hash);
-        }
-    }
-
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
@@ -342,6 +333,63 @@ protected:
                                        const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
                                        return Utils::writePreciseString(values.at(d));
                                    });
+                }
+            }
+        }
+    }
+
+    //! Helper to update hash with the hash of calling getHashableFn on each group
+    template<typename H>
+    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
+    {
+        for(const auto &g : getGroups()) {
+            Utils::updateHash((g.get().*getHashableFn)(), hash);
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateVarInitParamHash(const Models::Base::VarVec &vars, V getVarInitialisers,
+                                R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through variables
+        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+            // Loop through parameters
+            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            for(size_t p = 0; p < varInit.getParams().size(); p++) {
+                // If any of the code strings reference the parameter
+                if((static_cast<const T *>(this)->*isParamReferencedFn)(v, p)) {
+                    // Loop through groups
+                    for(const auto &g : getGroups()) {
+                        const auto &values = (g.get().*getVarInitialisers)()[v].getParams();
+
+                        // Update hash with parameter value
+                        Utils::updateHash(values.at(p), hash);
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateVarInitDerivedParamHash(const Models::Base::VarVec &vars, V getVarInitialisers,
+                                       R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through variables
+        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+            // Loop through parameters
+            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
+                // If any of the code strings reference the parameter
+                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(v, d)) {
+                    // Loop through groups
+                    for(const auto &g : getGroups()) {
+                        const auto &values = (g.get().*getVarInitialisers)()[v].getDerivedParams();
+
+                        // Update hash with parameter value
+                        Utils::updateHash(values.at(d), hash);
+                    }
                 }
             }
         }
@@ -782,6 +830,45 @@ protected:
             }
         }
     }
+
+    /*template<typename T = NeuronGroupMergedBase, typename R, typename V>
+    void updateChildVarInitParamsHash(const Snippet::Base::StringVec &paramNames, size_t childIndex,
+                                      size_t varIndex, R isChildParamReferencedFn, V getVarInitialiserFn,
+                                      boost::uuids::detail::sha1 &hash)
+    {
+        // Loop through parameters
+        for(size_t p = 0; p < paramNames.size(); p++) {
+            // If parameter is heterogeneous
+            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varIndex, p)) {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+                    const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                   return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
+                               });
+            }
+        }
+    }
+
+    template<typename T = NeuronGroupMergedBase, typename R, typename V>
+    void updateChildVarInitDerivedParamsHash(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
+                                             size_t varIndex, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
+                                             boost::uuids::detail::sha1 &hash)
+    {
+        // Loop through parameters
+        for(size_t p = 0; p < derivedParams.size(); p++) {
+            // If parameter is heterogeneous
+            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varIndex, p)) {
+                addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
+                               [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               {
+                                   const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                   return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(p));
+                               });
+            }
+        }
+    }*/
 
     void addMergedInSynPointerField(const std::string &type, const std::string &name,
                                     size_t archetypeIndex, const std::string &prefix);

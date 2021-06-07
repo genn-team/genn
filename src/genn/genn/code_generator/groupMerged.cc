@@ -432,10 +432,16 @@ void NeuronGroupMergedBase::updateHash(bool init, boost::uuids::detail::sha1 &ha
     // Update hash with each group's neuron count
     updateHash(&NeuronGroupInternal::getNumNeurons, hash);
 
+    // **YUCK** it would be much nicer to have this in derived classes
     if(init) {
+        // Update hash with each group's variable initialisation parameters and derived parameters
+        updateVarInitParamHash<NeuronGroupMergedBase>(getArchetype().getNeuronModel()->getVars(), &NeuronGroupInternal::getVarInitialisers,
+                               &NeuronGroupMergedBase::isVarInitParamReferenced, hash);
+        updateVarInitDerivedParamHash<NeuronGroupMergedBase>(getArchetype().getNeuronModel()->getVars(), &NeuronGroupInternal::getVarInitialisers,
+                                      &NeuronGroupMergedBase::isVarInitDerivedParamReferenced, hash);
     }
     else {
-        // Update hash wtih each groups parameters and derived parameters
+        // Update hash with each group's parameters and derived parameters
         updateHash(&NeuronGroupInternal::getParams, hash);
         updateHash(&NeuronGroupInternal::getDerivedParams, hash);
 
