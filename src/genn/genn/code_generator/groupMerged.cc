@@ -281,9 +281,8 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     }
 
     // Loop through merged synaptic inputs to archetypical neuron group (0) in sorted order
-    const auto &archetypeMergedInSyns = getSortedArchetypeMergedInSyns();
-    for(size_t i = 0; i < archetypeMergedInSyns.size(); i++) {
-        const SynapseGroupInternal *sg = archetypeMergedInSyns.at(i);
+    for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
+        const SynapseGroupInternal *sg = getSortedArchetypeMergedInSyns().at(i);
 
         // Add pointer to insyn
         addMergedInSynPointerField(precision, "inSynInSyn", i, backend.getDeviceVarPrefix() + "inSyn");
@@ -358,9 +357,8 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     }
 
     // Loop through current sources to archetypical neuron group in sorted order
-    const auto &archetypeCurrentSources = getSortedArchetypeCurrentSources();
-    for(size_t i = 0; i < archetypeCurrentSources.size(); i++) {
-        const auto *cs = archetypeCurrentSources.at(i);
+    for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
+        const auto *cs = getSortedArchetypeCurrentSources().at(i);
 
         // Loop through variables
         const auto vars = cs->getCurrentSourceModel()->getVars();
@@ -431,6 +429,40 @@ void NeuronGroupMergedBase::updateHash(bool init, boost::uuids::detail::sha1 &ha
                                &NeuronGroupMergedBase::isVarInitParamReferenced, hash);
         updateVarInitDerivedParamHash<NeuronGroupMergedBase>(getArchetype().getNeuronModel()->getVars(), &NeuronGroupInternal::getVarInitialisers,
                                       &NeuronGroupMergedBase::isVarInitDerivedParamReferenced, hash);
+
+        // Loop through child current sources
+        for(size_t c = 0; c < getSortedArchetypeCurrentSources().size(); c++) {
+            const auto *cs = getSortedArchetypeCurrentSources().at(c);
+
+            // Loop through variables and update hash with variable initialisation parameters and derived parameters
+            const auto &varInit = cs->getVarInitialisers();
+            for(size_t v = 0; v < varInit.size(); v++) {
+                const auto *varInitSnippet = varInit.at(v).getSnippet();
+                updateChildVarInitParamsHash(varInitSnippet->getParamNames(), m_SortedCurrentSources, c, v,
+                                             &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, 
+                                             &CurrentSourceInternal::getVarInitialisers, hash);
+                updateChildVarInitDerivedParamsHash(varInitSnippet->getDerivedParams(), m_SortedCurrentSources, c, v,
+                                                    &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamReferenced, 
+                                                    &CurrentSourceInternal::getVarInitialisers, hash);
+            }
+        }
+
+        // Loop through child merged insyns
+        for(size_t c = 0; c < getSortedArchetypeMergedInSyns().size(); c++) {
+            const auto *sg = getSortedArchetypeMergedInSyns().at(c);
+
+            // Loop through variables and update hash with variable initialisation parameters and derived parameters
+            const auto &varInit = sg->getPSVarInitialisers();
+            for(size_t v = 0; v < varInit.size(); v++) {
+                const auto *varInitSnippet = varInit.at(v).getSnippet();
+                updateChildVarInitParamsHash(varInitSnippet->getParamNames(), m_SortedMergedInSyns, c, v,
+                                             &NeuronGroupMergedBase::isPSMVarInitParamReferenced, 
+                                             &SynapseGroupInternal::getPSVarInitialisers, hash);
+                updateChildVarInitDerivedParamsHash(varInitSnippet->getDerivedParams(), m_SortedMergedInSyns, c, v,
+                                                    &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced, 
+                                                    &SynapseGroupInternal::getPSVarInitialisers, hash);
+            }
+        }
     }
     else {
         // Update hash with each group's parameters and derived parameters
@@ -690,7 +722,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
 {
     boost::uuids::detail::sha1 hash;
 
-    // Update hash with generic neuron update group
+    // Update hash with generic neuron group data
     updateHash(false, hash);
 
     // Loop through child incoming synapse groups with postsynaptic update code
@@ -877,6 +909,48 @@ bool NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous(size_t c
 boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
+
+    // Update hash with generic neuron group data
+    updateHash(true, hash);
+
+    // Loop through child incoming synapse groups with postsynaptic variables
+    for(size_t c = 0; c < getSortedArchetypeInSynWithPostVars().size(); c++) {
+        const auto *sg = getSortedArchetypeInSynWithPostVars().at(c);
+
+        // Loop through variables and update hash with variable initialisation parameters and derived parameters
+        const auto &varInit = sg->getWUPostVarInitialisers();
+        for(size_t v = 0; v < varInit.size(); v++) {
+            const auto *varInitSnippet = varInit.at(v).getSnippet();
+            updateChildVarInitParamsHash<NeuronInitGroupMerged>(
+                varInitSnippet->getParamNames(), m_SortedInSynWithPostVars, c, v,
+                &NeuronInitGroupMerged::isInSynWUMVarInitParamReferenced, 
+                &SynapseGroupInternal::getWUPostVarInitialisers, hash);
+            updateChildVarInitDerivedParamsHash<NeuronInitGroupMerged>(
+                varInitSnippet->getDerivedParams(), m_SortedInSynWithPostVars, c, v,
+                &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamReferenced, 
+                &SynapseGroupInternal::getWUPostVarInitialisers, hash);
+        }
+    }
+
+    // Loop through child outgoing synapse groups with presynaptic variables
+    for(size_t c = 0; c < getSortedArchetypeOutSynWithPreVars().size(); c++) {
+        const auto *sg = getSortedArchetypeOutSynWithPreVars().at(c);
+
+        // Loop through variables and update hash with variable initialisation parameters and derived parameters
+        const auto &varInit = sg->getWUPreVarInitialisers();
+        for(size_t v = 0; v < varInit.size(); v++) {
+            const auto *varInitSnippet = varInit.at(v).getSnippet();
+            updateChildVarInitParamsHash<NeuronInitGroupMerged>(
+                varInitSnippet->getParamNames(), m_SortedOutSynWithPreVars, c, v,
+                &NeuronInitGroupMerged::isOutSynWUMVarInitParamReferenced, 
+                &SynapseGroupInternal::getWUPreVarInitialisers, hash);
+            updateChildVarInitDerivedParamsHash<NeuronInitGroupMerged>(
+                varInitSnippet->getDerivedParams(), m_SortedOutSynWithPreVars, c, v,
+                &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamReferenced, 
+                &SynapseGroupInternal::getWUPreVarInitialisers, hash);
+        }
+    }
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
