@@ -182,26 +182,6 @@ protected:
                            });
     }
 
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(const std::vector<std::string> &codeStrings, const std::string &paramName,
-                                   size_t index, P getParamValuesFn) const
-    {
-        // If none of the code strings reference the parameter, return false
-        if(std::none_of(codeStrings.begin(), codeStrings.end(),
-                        [&paramName](const std::string &c) 
-                        { 
-                            return (c.find("$(" + paramName + ")") != std::string::npos); 
-                        }))
-        {
-            return false;
-        }
-        // Otherwise check if values are heterogeneous
-        else {
-            return isParamValueHeterogeneous<P>(index, getParamValuesFn);
-        }
-    }
-
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
@@ -343,13 +323,29 @@ protected:
     void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
     {
         for(const auto &g : getGroups()) {
-            Utils::updateHash((g.get().*getHashableFn)(), hash);
+            Utils::updateHash(getHashableFn(g.get()), hash);
         }
     }
 
     template<typename T, typename V, typename R>
-    void updateVarInitParamHash(const Models::Base::VarVec &vars, V getVarInitialisers,
-                                R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through parameters
+        const auto &archetypeParams = getValueFn(getArchetype());
+        for(size_t p = 0; p < archetypeParams.size(); p++) {
+            // If any of the code strings reference the parameter
+            if((static_cast<const T*>(this)->*isParamReferencedFn)(p)) {
+                // Loop through groups
+                for(const auto &g : getGroups()) {
+                    // Update hash with parameter value
+                    Utils::updateHash(getValueFn(g.get()).at(p), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
         const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
@@ -372,8 +368,7 @@ protected:
     }
 
     template<typename T, typename V, typename R>
-    void updateVarInitDerivedParamHash(const Models::Base::VarVec &vars, V getVarInitialisers,
-                                       R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    void updateVarInitDerivedParamHash(V getVarInitialisers, R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
         const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
@@ -795,12 +790,13 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildParamHash(const Snippet::Base::StringVec &paramNames, const std::vector<std::vector<C>> &sortedGroupChildren,
+    void updateChildParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
                               size_t childIndex, R isChildParamReferencedFn, V getValueFn, 
                               boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        for(size_t p = 0; p < paramNames.size(); p++) {
+        const auto &archetypeParamNames = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
+        for(size_t p = 0; p < archetypeParamNames.size(); p++) {
             // If any of the code strings reference the parameter
             if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p)) {
                 // Loop through groups
@@ -816,11 +812,13 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildDerivedParamHash(const Snippet::Base::DerivedParamVec &derivedParams, const std::vector<std::vector<C>> &sortedGroupChildren,
-                                     size_t childIndex,  R isChildDerivedParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    void updateChildDerivedParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
+                                     size_t childIndex,  R isChildDerivedParamReferencedFn, V getValueFn, 
+                                     boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        for(size_t p = 0; p < derivedParams.size(); p++) {
+        const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
+        for(size_t p = 0; p < archetypeDerivedParams.size(); p++) {
             // If any of the code strings reference the parameter
             if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, p)) {
                 // Loop through groups
@@ -836,12 +834,13 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
-    void updateChildVarInitParamsHash(const Snippet::Base::StringVec &paramNames, const std::vector<std::vector<C>> &sortedGroupChildren,
+    void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
                                       size_t childIndex, size_t varIndex, R isChildParamReferencedFn, V getVarInitialiserFn,
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        for(size_t p = 0; p < paramNames.size(); p++) {
+        const auto &archetypeParamNames = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        for(size_t p = 0; p < archetypeParamNames.size(); p++) {
             // If parameter is referenced
             if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varIndex, p)) {
                 // Loop through groups
@@ -858,12 +857,13 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
-    void updateChildVarInitDerivedParamsHash(const Snippet::Base::DerivedParamVec &derivedParams, const std::vector<std::vector<C>> &sortedGroupChildren,
+    void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
                                              size_t childIndex, size_t varIndex, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
                                              boost::uuids::detail::sha1 &hash) const
     {
-        // Loop through parameters
-        for(size_t p = 0; p < derivedParams.size(); p++) {
+        // Loop through derived parameters
+        const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        for(size_t p = 0; p < archetypeDerivedParams.size(); p++) {
             // If parameter is referenced
             if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varIndex, p)) {
                 // Loop through groups
@@ -1107,6 +1107,16 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+     //! Is the connectivity initialization parameter referenced?
+    bool isConnectivityInitParamReferenced(size_t paramIndex) const;
+
+    //! Is the connectivity initialization derived parameter referenced?
+    bool isConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
 };
 
 //----------------------------------------------------------------------------
@@ -1212,6 +1222,8 @@ protected:
     SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                            Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
+    void updateBaseHash(Role role, boost::uuids::detail::sha1 &hash) const;
+
     //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
@@ -1225,6 +1237,39 @@ private:
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+
+    //! Is the weight update model parameter referenced?
+    bool isWUParamReferenced(size_t paramIndex) const;
+
+    //! Is the weight update model derived parameter referenced?
+    bool isWUDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is the GLOBALG weight update model variable referenced?
+    bool isWUGlobalVarReferenced(size_t varIndex) const;
+
+    //! Is the weight update model variable initialization parameter referenced?
+    bool isWUVarInitParamReferenced(size_t varIndex, size_t paramIndex) const;
+    
+    //! Is the weight update model variable initialization derived parameter referenced?
+    bool isWUVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const;
+
+    //! Is the connectivity initialization parameter referenced?
+    bool isConnectivityInitParamReferenced(size_t paramIndex) const;
+
+    //! Is the connectivity initialization parameter referenced?
+    bool isConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is presynaptic neuron parameter referenced?
+    bool isSrcNeuronParamReferenced(size_t paramIndex) const;
+
+    //! Is presynaptic neuron derived parameter referenced?
+    bool isSrcNeuronDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is postsynaptic neuron parameter referenced?
+    bool isTrgNeuronParamReferenced(size_t paramIndex) const;
+
+    //! Is postsynaptic neuron derived parameter referenced?
+    bool isTrgNeuronDerivedParamReferenced(size_t paramIndex) const;
 
     //------------------------------------------------------------------------
     // Members
@@ -1512,30 +1557,18 @@ public:
      //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-     //! Should the var init parameter be implemented heterogeneously?
+    //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
     {
-        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
-        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
-        return this->isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
-                                               [varIndex](const G &cg)
-                                               {
-                                                   return cg.getVarInitialisers().at(varIndex).getParams();
-                                               });
+        return (isVarInitParamReferenced(varIndex, paramIndex) &&
+                this->isParamValueHeterogeneous(paramIndex, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getParams(); }));
     }
 
     //! Should the var init derived parameter be implemented heterogeneously?
     bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
     {
-        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
-        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
-        return this->isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
-                                               [varIndex](const G &cg)
-                                               {
-                                                   return cg.getVarInitialisers().at(varIndex).getDerivedParams();
-                                               });
+        return (isVarInitDerivedParamReferenced(varIndex, paramIndex) &&
+                this->isParamValueHeterogeneous(paramIndex, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getDerivedParams(); }));
     }
 
 protected:
@@ -1566,6 +1599,25 @@ protected:
         this->template addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMergedBase<G>>(
             vars, &G::getVarInitialisers,
             &CustomUpdateInitGroupMergedBase<G>::isVarInitDerivedParamHeterogeneous);
+    }
+
+private:
+    //! Is the var init parameter referenced?
+    bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
+        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
+    }
+
+    //! Is the var init derived parameter referenced?
+    bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
+        return this->isParamReferenced({varInitSnippet->getCode()}, derivedParamName);
     }
 };
 
