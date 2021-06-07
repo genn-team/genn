@@ -735,9 +735,10 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildVarInitParams(const Snippet::Base::StringVec &paramNames, size_t childIndex,
-                                            size_t varIndex, const std::string &prefix,
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildVarInitParams(const Snippet::Base::StringVec &paramNames, 
+                                            const std::vector<std::vector<C>> &sortedGroupChildren,
+                                            size_t childIndex, size_t varIndex, const std::string &prefix,
                                             H isChildParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
@@ -745,18 +746,20 @@ protected:
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
                 addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
-                               [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
                                    return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
                                });
             }
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildVarInitDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
-                                                   size_t varIndex, const std::string &prefix,
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildVarInitDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, 
+                                                   const std::vector<std::vector<C>> &sortedGroupChildren,
+                                                   size_t childIndex, size_t varIndex, const std::string &prefix,
                                                    H isChildDerivedParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
@@ -764,9 +767,10 @@ protected:
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, p)) {
                 addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
-                               [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
                                    return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(p));
                                });
             }
@@ -1019,9 +1023,9 @@ private:
     void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem,
                        const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                       const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialisers)(void) const,
-                       bool(NeuronInitGroupMerged::*isParamHeterogeneous)(size_t, size_t, size_t) const,
-                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const);
+                       const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
+                       bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
+                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const);
 
     //! Is the incoming synapse weight update model var init parameter referenced?
     bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;

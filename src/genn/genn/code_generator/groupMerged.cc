@@ -309,14 +309,10 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
                 // If we're generating an initialization structure, also add any heterogeneous parameters, derived parameters or extra global parameters required for initializers
                 if(init) {
                     const auto *varInitSnippet = varInit.at(v).getSnippet();
-                    auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
-                                               {
-                                                   return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSVarInitialisers();
-                                               };
-                    addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), i, v, var.name + "InSyn",
-                                                       &NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous, getVarInitialiserFn);
-                    addHeterogeneousChildVarInitDerivedParams(varInitSnippet->getDerivedParams(), i, v, var.name + "InSyn",
-                                                              &NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
+                    addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), m_SortedMergedInSyns, i, v, var.name + "InSyn",
+                                                       &NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous, &SynapseGroupInternal::getPSVarInitialisers);
+                    addHeterogeneousChildVarInitDerivedParams(varInitSnippet->getDerivedParams(), m_SortedMergedInSyns, i, v, var.name + "InSyn",
+                                                              &NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous, &SynapseGroupInternal::getPSVarInitialisers);
                     addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "InSyn",
                                  [var, this](size_t groupIndex, size_t childIndex)
                                  {
@@ -384,14 +380,10 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
             // If we're generating an initialization structure, also add any heterogeneous parameters, derived parameters or extra global parameters required for initializers
             if(init) {
                 const auto *varInitSnippet = varInit.at(v).getSnippet();
-                auto getVarInitialiserFn = [this](size_t groupIndex, size_t childIndex)
-                {
-                    return m_SortedCurrentSources.at(groupIndex).at(childIndex)->getVarInitialisers();
-                };
-                addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), i, v, var.name + "CS",
-                                                   &NeuronGroupMergedBase::isCurrentSourceVarInitParamHeterogeneous, getVarInitialiserFn);
-                addHeterogeneousChildVarInitDerivedParams(varInitSnippet->getDerivedParams(), i, v, var.name + "CS",
-                                                          &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamHeterogeneous, getVarInitialiserFn);
+                addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), m_SortedCurrentSources, i, v, var.name + "CS",
+                                                   &NeuronGroupMergedBase::isCurrentSourceVarInitParamHeterogeneous, &CurrentSourceInternal::getVarInitialisers);
+                addHeterogeneousChildVarInitDerivedParams(varInitSnippet->getDerivedParams(), m_SortedCurrentSources, i, v, var.name + "CS",
+                                                          &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamHeterogeneous,  &CurrentSourceInternal::getVarInitialisers);
                 addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "CS",
                              [var, this](size_t groupIndex, size_t childIndex)
                              {
@@ -892,9 +884,9 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
                                           const std::string &fieldPrefixStem,
                                           const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                                           Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                                          const std::vector<Models::VarInit> &(SynapseGroupInternal:: *getVarInitialisers)(void) const,
-                                          bool(NeuronInitGroupMerged::*isParamHeterogeneous)(size_t, size_t, size_t) const,
-                                          bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const)
+                                          const std::vector<Models::VarInit> &(SynapseGroupInternal:: *getVarInitialiserFn)(void) const,
+                                          bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
+                                          bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();
@@ -903,7 +895,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
 
         // Loop through variables
         const auto vars = (sg->getWUModel()->*getVars)();
-        const auto &varInit = (sg->*getVarInitialisers)();
+        const auto &varInit = (sg->*getVarInitialiserFn)();
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars.at(v);
@@ -918,14 +910,10 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
 
             // Also add any heterogeneous, derived or extra global parameters required for initializers
             const auto *varInitSnippet = varInit.at(v).getSnippet();
-            auto getVarInitialiserFn = [&sortedSyn](size_t groupIndex, size_t childIndex)
-                                       {
-                                           return sortedSyn.at(groupIndex).at(childIndex)->getWUPreVarInitialisers();
-                                       };
-            addHeterogeneousChildVarInitParams<NeuronInitGroupMerged>(varInitSnippet->getParamNames(), i, v, var.name + fieldPrefixStem,
-                                                                      isParamHeterogeneous, getVarInitialiserFn);
-            addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(varInitSnippet->getDerivedParams(), i, v, var.name + fieldPrefixStem,
-                                                                             isDerivedParamHeterogeneous, getVarInitialiserFn);
+            addHeterogeneousChildVarInitParams<NeuronInitGroupMerged>(varInitSnippet->getParamNames(), sortedSyn, i, v, var.name + fieldPrefixStem,
+                                                                      isParamHeterogeneousFn, getVarInitialiserFn);
+            addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(varInitSnippet->getDerivedParams(), sortedSyn, i, v, var.name + fieldPrefixStem,
+                                                                             isDerivedParamHeterogeneousFn, getVarInitialiserFn);
             addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + fieldPrefixStem,
                          [var, &sortedSyn](size_t groupIndex, size_t childIndex)
                          {
