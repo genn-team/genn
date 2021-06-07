@@ -281,6 +281,24 @@ bool ModelSpec::isRecordingInUse() const
                        [](const NeuronGroupValueType &n) { return n.second.isRecordingEnabled(); });
 }
 
+boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest(bool includeSeed) const
+{
+    boost::uuids::detail::sha1 hash;
+
+    Utils::updateHash(getName(), hash);
+    Utils::updateHash(getPrecision(), hash);
+    Utils::updateHash(getTimePrecision(), hash);
+    Utils::updateHash(getDT(), hash);
+    Utils::updateHash(isTimingEnabled(), hash);
+    Utils::updateHash(getBatchSize(), hash);
+    
+    if(includeSeed) {
+        Utils::updateHash(getSeed(), hash);
+    }
+
+    return hash.get_digest();
+}
+
 NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)
 {
     // If a matching local neuron group is found, return it
