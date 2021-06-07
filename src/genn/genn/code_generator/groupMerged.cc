@@ -442,21 +442,19 @@ void NeuronGroupMergedBase::updateHash(bool init, boost::uuids::detail::sha1 &ha
         // Loop through child current sources
         for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
             const auto *csm = getSortedArchetypeCurrentSources().at(i)->getCurrentSourceModel();
-            const std::vector<std::string> codeStrings{csm->getInjectionCode()};
-            updateChildParamHash(csm->getParamNames(), codeStrings, m_SortedCurrentSources,
-                                 i, &CurrentSourceInternal::getParams, hash);
-            updateChildDerivedParamHash(csm->getDerivedParams(), codeStrings, m_SortedCurrentSources,
-                                        i, &CurrentSourceInternal::getDerivedParams, hash);
+            updateChildParamHash(csm->getParamNames(), m_SortedCurrentSources, i, 
+                                 &NeuronGroupMergedBase::isCurrentSourceParamReferenced, &CurrentSourceInternal::getParams, hash);
+            updateChildDerivedParamHash(csm->getDerivedParams(), m_SortedCurrentSources, i, 
+                                        &NeuronGroupMergedBase::isCurrentSourceDerivedParamReferenced, &CurrentSourceInternal::getDerivedParams, hash);
         }
 
         // Loop through child merged insyns
         for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
             const auto *psm = getSortedArchetypeMergedInSyns().at(i)->getPSModel();
-            const std::vector<std::string> codeStrings{psm->getApplyInputCode(), psm->getDecayCode()};
-            updateChildParamHash(psm->getParamNames(), codeStrings, m_SortedMergedInSyns,
-                                 i, &SynapseGroupInternal::getPSParams, hash);
-            updateChildDerivedParamHash(psm->getDerivedParams(), codeStrings, m_SortedMergedInSyns,
-                                        i, &SynapseGroupInternal::getPSDerivedParams, hash);
+            updateChildParamHash(psm->getParamNames(), m_SortedMergedInSyns, i, 
+                                 &NeuronGroupMergedBase::isPSMParamReferenced, &SynapseGroupInternal::getPSParams, hash);
+            updateChildDerivedParamHash(psm->getDerivedParams(), m_SortedMergedInSyns, i,
+                                        &NeuronGroupMergedBase::isPSMDerivedParamReferenced, &SynapseGroupInternal::getPSDerivedParams, hash);
         }
     }
 }
@@ -694,45 +692,31 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
 {
     boost::uuids::detail::sha1 hash;
 
+    // Update hash with generic neuron update group
     updateHash(false, hash);
-    // Loop through groups
-    // **TODO** add updateHash protected helper which updates hash for everything in group using lambda funcion
-    /*for(size_t i = 0; i < getGroups().size(); i++) {
-        const auto &group = getGroups().at(i).get();
 
-        // Update hash with number of neurons in their group 
-        // **NOTE** there are too few fields that belong here to make it worth doing anything smart
-        Utils::updateHash(group.getNumNeurons(), hash);
+    // Loop through child incoming synapse groups with postsynaptic update code
+    for(size_t i = 0; i < getSortedArchetypeInSynWithPostCode().size(); i++) {
+        const auto *wum = getSortedArchetypeInSynWithPostCode().at(i)->getWUModel();
+        updateChildParamHash<NeuronUpdateGroupMerged>(wum->getParamNames(), m_SortedInSynWithPostCode, i, 
+                                                      &NeuronUpdateGroupMerged::isInSynWUMParamReferenced, 
+                                                      &SynapseGroupInternal::getWUParams, hash);
+        updateChildDerivedParamHash<NeuronUpdateGroupMerged>(wum->getDerivedParams(), m_SortedInSynWithPostCode, i, 
+                                                             &NeuronUpdateGroupMerged::isInSynWUMDerivedParamReferenced, 
+                                                             &SynapseGroupInternal::getWUDerivedParams, hash);
+    }
 
-        // if(init) {
-        // **TODO** update hash based on var init params and derived params
-        // else {
-        Utils::updateHash(group.getParams(), hash);
-        Utils::updateHash(group.getDerivedParams(), hash);
-        //}
+    // Loop through child outgoing synapse groups with presynaptic update code
+    for(size_t i = 0; i < getSortedArchetypeOutSynWithPreCode().size(); i++) {
+        const auto *wum = getSortedArchetypeOutSynWithPreCode().at(i)->getWUModel();
+        updateChildParamHash<NeuronUpdateGroupMerged>(wum->getParamNames(), m_SortedOutSynWithPreCode, i, 
+                                                      &NeuronUpdateGroupMerged::isOutSynWUMParamReferenced, 
+                                                      &SynapseGroupInternal::getWUParams, hash);
+        updateChildDerivedParamHash<NeuronUpdateGroupMerged>(wum->getDerivedParams(), m_SortedOutSynWithPreCode, i, 
+                                                             &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamReferenced, 
+                                                             &SynapseGroupInternal::getWUDerivedParams, hash);
+    }
 
-        // Update hash with current source parameters
-        // **TODO** Move outside loop to make more composable
-        for(const auto *c : m_SortedInSynWithPostCode.at(i)) {
-            const std::vector<std::string> codeStrings{c->getWUModel()->getPostSpikeCode(), 
-                                                       c->getWUModel()->getPostDynamicsCode()};
-            updateParamHash(codeStrings, c->getWUModel()->getParamNames(), c->getWUParams(), hash);
-            updateDerivedParamHash(codeStrings, c->getWUModel()->getDerivedParams(), c->getWUDerivedParams(), hash);
-        }
-
-        // InSyn params + derived params
-
-        // Pre and post wu params + derived params
-        
-        // Update hash with incoming synapse groups parameters
-        for(const auto *c : m_SortedInSynWithPostCode.at(i)) {
-            const std::vector<std::string> codeStrings{c->getWUModel()->getPostSpikeCode(), 
-                                                       c->getWUModel()->getPostDynamicsCode()};
-            updateParamHash(codeStrings, c->getWUModel()->getParamNames(), c->getWUParams(), hash);
-            updateDerivedParamHash(codeStrings, c->getWUModel()->getDerivedParams(), c->getWUDerivedParams(), hash);
-        }
-        
-    }*/
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
