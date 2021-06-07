@@ -181,7 +181,7 @@ bool NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous(size_t childIndex, si
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
 {    
-    return (isPSMVarInitDerivedParamHeterogeneous(childIndex, varIndex, paramIndex) &&
+    return (isPSMVarInitDerivedParamReferenced(childIndex, varIndex, paramIndex) &&
             isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedMergedInSyns,
                                           [varIndex](const SynapseGroupInternal *inSyn){ return inSyn->getPSVarInitialisers().at(varIndex).getDerivedParams(); }));
 }
@@ -414,7 +414,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroupMergedBase::updateHash(bool init, boost::uuids::detail::sha1 &hash) const
+void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const
 {
     // Update hash with archetype's hash
     Utils::updateHash(getArchetype().getHashDigest(), hash);
@@ -723,7 +723,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     boost::uuids::detail::sha1 hash;
 
     // Update hash with generic neuron group data
-    updateHash(false, hash);
+    updateBaseHash(false, hash);
 
     // Loop through child incoming synapse groups with postsynaptic update code
     for(size_t i = 0; i < getSortedArchetypeInSynWithPostCode().size(); i++) {
@@ -911,7 +911,7 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
     boost::uuids::detail::sha1 hash;
 
     // Update hash with generic neuron group data
-    updateHash(true, hash);
+    updateBaseHash(true, hash);
 
     // Loop through child incoming synapse groups with postsynaptic variables
     for(size_t c = 0; c < getSortedArchetypeInSynWithPostVars().size(); c++) {

@@ -598,7 +598,7 @@ protected:
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    void updateHash(bool init, boost::uuids::detail::sha1 &hash) const;
+    void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
 
     template<typename T, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
