@@ -138,9 +138,9 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
         // Show module hashes
         // **TODO** switch these to debug log level once development is complete
         LOGI_CODE_GEN << "Merged model hash:";
-        LOGI_CODE_GEN << "\tNeuron update hash digest:" << modelMerged.getNeuronUpdateHashDigest();
-        LOGI_CODE_GEN << "\tSynapse update hash digest:" << modelMerged.getSynapseUpdateHashDigest();
-        LOGI_CODE_GEN << "\tInitialization hash digest:" << modelMerged.getInitHashDigest();
+        LOGI_CODE_GEN << "\tNeuron update hash digest:" << modelMerged.getNeuronUpdateModuleHashDigest();
+        LOGI_CODE_GEN << "\tSynapse update hash digest:" << modelMerged.getSynapseUpdateModuleHashDigest();
+        LOGI_CODE_GEN << "\tInitialization hash digest:" << modelMerged.getInitModuleHashDigest();
 
         // Show memory usage
         LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
