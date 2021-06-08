@@ -839,8 +839,9 @@ protected:
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeParamNames = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
-        for(size_t p = 0; p < archetypeParamNames.size(); p++) {
+        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeParams = archetypeVarInit.at(varIndex).getParams();
+        for(size_t p = 0; p < archetypeParams.size(); p++) {
             // If parameter is referenced
             if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varIndex, p)) {
                 // Loop through groups
@@ -862,7 +863,8 @@ protected:
                                              boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeDerivedParams = archetypeVarInit.at(varIndex).getDerivedParams();
         for(size_t p = 0; p < archetypeDerivedParams.size(); p++) {
             // If parameter is referenced
             if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varIndex, p)) {
@@ -870,7 +872,7 @@ protected:
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
+                    const auto &varInit = (child->*getVarInitialiserFn)();
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varIndex).getDerivedParams().at(p), hash);
