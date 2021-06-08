@@ -421,12 +421,6 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
 
     // **YUCK** it would be much nicer to have this in derived classes
     if(init) {
-        // Update hash with each group's variable initialisation parameters and derived parameters
-        updateVarInitParamHash<NeuronGroupMergedBase>(&NeuronGroupInternal::getVarInitialisers, 
-                                                      &NeuronGroupMergedBase::isVarInitParamReferenced, hash);
-        updateVarInitDerivedParamHash<NeuronGroupMergedBase>(&NeuronGroupInternal::getVarInitialisers,
-                                                             &NeuronGroupMergedBase::isVarInitDerivedParamReferenced, hash);
-
         // Loop through child current sources
         for(size_t c = 0; c < getSortedArchetypeCurrentSources().size(); c++) {
             const auto *cs = getSortedArchetypeCurrentSources().at(c);
@@ -460,10 +454,6 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
         }
     }
     else {
-        // Update hash with each group's parameters and derived parameters
-        updateHash([](const NeuronGroupInternal &g) { return g.getParams(); }, hash);
-        updateHash([](const NeuronGroupInternal &g) { return g.getDerivedParams(); }, hash);
-        
         // Loop through child current sources
         for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
             updateChildParamHash(m_SortedCurrentSources, i, &NeuronGroupMergedBase::isCurrentSourceParamReferenced, 
@@ -721,6 +711,10 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     // Update hash with archetype's hash digest
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
+    // Update hash with each group's parameters and derived parameters
+    updateHash([](const NeuronGroupInternal &g) { return g.getParams(); }, hash);
+    updateHash([](const NeuronGroupInternal &g) { return g.getDerivedParams(); }, hash);
+        
     // Loop through child incoming synapse groups with postsynaptic update code
     for(size_t i = 0; i < getSortedArchetypeInSynWithPostCode().size(); i++) {
         updateChildParamHash<NeuronUpdateGroupMerged>(m_SortedInSynWithPostCode, i, &NeuronUpdateGroupMerged::isInSynWUMParamReferenced, 
@@ -906,6 +900,12 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
     // Update hash with archetype's hash digest
     Utils::updateHash(getArchetype().getInitHashDigest(), hash);
 
+    // Update hash with each group's variable initialisation parameters and derived parameters
+    updateVarInitParamHash<NeuronInitGroupMerged>(&NeuronGroupInternal::getVarInitialisers, 
+                                                  &NeuronInitGroupMerged::isVarInitParamReferenced, hash);
+    updateVarInitDerivedParamHash<NeuronInitGroupMerged>(&NeuronGroupInternal::getVarInitialisers,
+                                                         &NeuronInitGroupMerged::isVarInitDerivedParamReferenced, hash);
+    
     // Loop through child incoming synapse groups with postsynaptic variables
     for(size_t c = 0; c < getSortedArchetypeInSynWithPostVars().size(); c++) {
         const auto *sg = getSortedArchetypeInSynWithPostVars().at(c);
@@ -1903,6 +1903,23 @@ bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
     return isParamValueHeterogeneous(index, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getHashDigest(), hash);
+
+    // Update hash with each group's custom update size
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getSize(); }, hash);
+
+    // Update hash with each group's parameters and derived parameters
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getParams(); }, hash);
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); }, hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If variable is shared, the batch size is one or this custom update isn't batched, batch offset isn't required
@@ -1933,6 +1950,33 @@ bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(size_t index) co
     return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with archetype's hash digest
+    Utils::updateHash(getArchetype().getHashDigest(), hash);
+
+    // Update hash with sizes of pre and postsynaptic neuron groups
+    updateHash([](const CustomUpdateWUInternal &cg) 
+               {
+                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
+               }, hash);
+
+    updateHash([](const CustomUpdateWUInternal &cg) 
+               {
+                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
+               }, hash);
+
+    // **TODO** rowstride
+
+    // Update hash with each group's parameters and derived parameters
+    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getParams(); }, hash);
+    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); }, hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 std::string CustomUpdateWUGroupMergedBase::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
@@ -1956,7 +2000,6 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                  return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
              });
     
-
     addField("unsigned int", "numSrcNeurons",
              [](const CustomUpdateWUInternal &cg, size_t) 
              {
@@ -2056,6 +2099,19 @@ CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
 }
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+    // Update hash with size of custom update
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getSize(); }, hash);
+
+    return hash.get_digest();
+}
 
 // ----------------------------------------------------------------------------
 // CustomWUUpdateDenseInitGroupMerged
@@ -2073,6 +2129,30 @@ CustomWUUpdateDenseInitGroupMerged::CustomWUUpdateDenseInitGroupMerged(size_t in
              [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
              [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomWUUpdateDenseInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+    // Update hash with sizes of pre and postsynaptic neuron groups
+    updateHash([](const CustomUpdateWUInternal &cg) 
+               {
+                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
+               }, hash);
+
+    updateHash([](const CustomUpdateWUInternal &cg) 
+               {
+                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
+               }, hash);
+
+
+    // **TODO** rowstride
+
+    return hash.get_digest();
 }
 
 // ----------------------------------------------------------------------------
@@ -2104,4 +2184,28 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
                  return backend.getDeviceVarPrefix() + "ind" + sg->getName();
              });
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+    // Update hash with sizes of pre and postsynaptic neuron groups
+    updateHash([](const CustomUpdateWUInternal &cg) 
+               {
+                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
+               }, hash);
+
+    updateHash([](const CustomUpdateWUInternal &cg) 
+               {
+                   return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
+               }, hash);
+
+
+    // **TODO** rowstride
+
+    return hash.get_digest();
 }
