@@ -10,6 +10,21 @@
 using namespace CodeGenerator;
 
 //----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+template<typename T>
+void assignGroups(const BackendBase &backend, std::vector<T> &groups, BackendBase::MemorySpaces &memorySpaces)
+{
+    // Loop through groups and assign groups
+    for(auto &g : groups) {
+        g.assignMemorySpaces(backend, memorySpaces);
+    }
+}
+}
+
+//----------------------------------------------------------------------------
 // CodeGenerator::ModelSpecMerged
 //----------------------------------------------------------------------------
 ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend)
@@ -127,8 +142,41 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
                            &CustomUpdateWUInternal::getHashDigest);
 
+
+    // Get memory spaces available to this backend
+    // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order
+    auto memorySpaces = backend.getMergedGroupMemorySpaces(*this);
+
+    // Loop through dendritic delay update groups and assign memory spaces
+    assignGroups(backend, m_MergedSynapseDendriticDelayUpdateGroups, memorySpaces);
+
+    // Loop through merged presynaptic update groups, assign memory spaces and add support code
+    for(auto &sg : m_MergedPresynapticUpdateGroups) {
+        sg.assignMemorySpaces(backend, memorySpaces);
+        m_PresynapticUpdateSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSimSupportCode());
+    }
+
+    // Loop through merged postsynaptic update groups, assign memory spaces and add support code
+    for(auto &sg : m_MergedPostsynapticUpdateGroups) {
+        sg.assignMemorySpaces(backend, memorySpaces);
+        m_PostsynapticUpdateSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getLearnPostSupportCode());
+    }
+
+    // Loop through merged synapse dynamics groups, assign memory spaces and add support code
+    for(auto &sg : m_MergedSynapseDynamicsGroups) {
+        sg.assignMemorySpaces(backend, memorySpaces);
+        m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
+    }
+
+    // Loop through previous spike time and spike queue update groups and assign memory spaces
+    assignGroups(backend, m_MergedNeuronPrevSpikeTimeUpdateGroups, memorySpaces);
+    assignGroups(backend, m_MergedNeuronSpikeQueueUpdateGroups, memorySpaces);
+    
     // Loop through merged neuron groups
-    for(const auto &ng : m_MergedNeuronUpdateGroups) {
+    for(auto &ng : m_MergedNeuronUpdateGroups) {
+        // Assign memory spaces
+        ng.assignMemorySpaces(backend, memorySpaces);
+
         // Add neuron support code
         m_NeuronUpdateSupportCode.addSupportCode(ng.getArchetype().getNeuronModel()->getSupportCode());
 
@@ -138,20 +186,19 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
         }
     }
 
-    // Loop through merged presynaptic update groups and add support code
-    for(const auto &sg : m_MergedPresynapticUpdateGroups) {
-        m_PresynapticUpdateSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSimSupportCode());
-    }
+    // Loop through custom update groups and assign memory spaces
+    assignGroups(backend, m_MergedCustomUpdateGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomUpdateWUGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomUpdateTransposeWUGroups, memorySpaces);
 
-    // Loop through merged postsynaptic update groups and add support code
-    for(const auto &sg : m_MergedPostsynapticUpdateGroups) {
-        m_PostsynapticUpdateSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getLearnPostSupportCode());
-    }
-
-    // Loop through merged synapse dynamics groups and add support code
-    for(const auto &sg : m_MergedSynapseDynamicsGroups) {
-        m_SynapseDynamicsSupportCode.addSupportCode(sg.getArchetype().getWUModel()->getSynapseDynamicsSuppportCode());
-    }
+    // Loop through init groups and assign memory spaces
+    assignGroups(backend, m_MergedNeuronInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedSynapseDenseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedSynapseSparseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedSynapseConnectivityInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomUpdateInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomWUUpdateDenseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateModuleHashDigest() const

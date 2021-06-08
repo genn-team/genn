@@ -269,15 +269,14 @@ void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const SynapseCo
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                 const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
 
-    backend.genInit(os, modelMerged, memorySpaces,
+    backend.genInit(os, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

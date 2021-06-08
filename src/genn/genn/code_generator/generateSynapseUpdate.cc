@@ -166,8 +166,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     if (backend.supportsNamespace()) {
@@ -179,7 +178,7 @@ void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpa
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Synaptic update kernels
-    backend.genSynapseUpdate(os, modelMerged, memorySpaces,
+    backend.genSynapseUpdate(os, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

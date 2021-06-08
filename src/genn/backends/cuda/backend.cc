@@ -279,8 +279,8 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localRNG");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                              HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -291,9 +291,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -405,8 +405,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
@@ -418,10 +418,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -566,7 +566,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,HostHandler preambleHandler, 
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
                               CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
                               CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
 {
@@ -578,9 +578,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     
     // Generate preamble
     preambleHandler(os);
@@ -707,8 +707,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                      NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                       CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -729,13 +729,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -1679,7 +1679,10 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     const size_t groupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
-                                     getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
+                                     getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedCustomUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedCustomUpdateWUGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedCustomUpdateTransposeWUGroups()));
 
     // Return available constant memory and to
     return {{"__device__ __constant__", (groupStartIDSize > getChosenDeviceSafeConstMemBytes()) ? 0 : (getChosenDeviceSafeConstMemBytes() - groupStartIDSize)},

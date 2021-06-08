@@ -116,8 +116,7 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                         const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     if (backend.supportsNamespace()) {
@@ -126,7 +125,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
     os << std::endl;
 
     // Neuron update kernel
-    backend.genNeuronUpdate(os, modelMerged, memorySpaces,
+    backend.genNeuronUpdate(os, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

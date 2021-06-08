@@ -64,6 +64,9 @@ public:
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
     const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
 
+    //! Get name of memory space assigned to group
+    const std::string &getMemorySpace() const { return m_MemorySpace; }
+
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
@@ -151,6 +154,34 @@ public:
         // Add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
         return padSize(structSize, largestFieldSize) * getGroups().size();
+    }
+
+    //! Assign memory spaces to group
+    /*! Memory spaces are given out on a first-come, first-serve basis so this should be called on groups in preferential order */
+    void assignMemorySpaces(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
+    {
+        // Ensure that memory space hasn't already been assigned
+        assert(m_MemorySpace.empty());
+
+        // Get size of group in bytes
+        const size_t groupBytes = getStructArraySize(backend);
+
+        // Loop through memory spaces
+        for(auto &m : memorySpaces) {
+            // If there is space in this memory space for group
+            if(m.second > groupBytes) {
+                // Cache memory space name in object
+                m_MemorySpace = m.first;
+
+                // Subtract
+                m.second -= groupBytes;
+
+                // Stop searching
+                return;
+            }
+        }
+
+        assert(false);
     }
 
 protected:
@@ -474,6 +505,7 @@ private:
     //------------------------------------------------------------------------
     const size_t m_Index;
     const std::string m_LiteralSuffix;
+    std::string m_MemorySpace;
     std::vector<Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
 };

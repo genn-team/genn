@@ -98,14 +98,13 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                         const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
     os << "#include \"definitionsInternal.h\"" << std::endl;
     os << std::endl;
 
     // Neuron update kernel
-    backend.genCustomUpdate(os, modelMerged, memorySpaces,
+    backend.genCustomUpdate(os, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
