@@ -160,28 +160,26 @@ public:
     /*! Memory spaces are given out on a first-come, first-serve basis so this should be called on groups in preferential order */
     void assignMemorySpaces(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
     {
-        // Ensure that memory space hasn't already been assigned
-        assert(m_MemorySpace.empty());
+        // If this backend uses memory spaces
+        if(!memorySpaces.empty()) {
+            // Get size of group in bytes
+            const size_t groupBytes = getStructArraySize(backend);
 
-        // Get size of group in bytes
-        const size_t groupBytes = getStructArraySize(backend);
+            // Loop through memory spaces
+            for(auto &m : memorySpaces) {
+                // If there is space in this memory space for group
+                if(m.second > groupBytes) {
+                    // Cache memory space name in object
+                    m_MemorySpace = m.first;
 
-        // Loop through memory spaces
-        for(auto &m : memorySpaces) {
-            // If there is space in this memory space for group
-            if(m.second > groupBytes) {
-                // Cache memory space name in object
-                m_MemorySpace = m.first;
+                    // Subtract
+                    m.second -= groupBytes;
 
-                // Subtract
-                m.second -= groupBytes;
-
-                // Stop searching
-                return;
+                    // Stop searching
+                    break;
+                }
             }
         }
-
-        assert(false);
     }
 
 protected:

@@ -1386,7 +1386,7 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &) const
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
 {
-    return {{"", std::numeric_limits<size_t>::max()}};
+    return {};
 }
 //--------------------------------------------------------------------------
 void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
