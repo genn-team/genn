@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -28,7 +29,11 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
-#include "code_generator/generateAll.h"
+#include "code_generator/generateCustomUpdate.h"
+#include "code_generator/generateInit.h"
+#include "code_generator/generateNeuronUpdate.h"
+#include "code_generator/generateSynapseUpdate.h"
+#include "code_generator/modelSpecMerged.h"
 
 // CUDA backend includes
 #include "utils.h"
@@ -42,7 +47,15 @@ using namespace CUDA;
 namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
-
+typedef void (*GenerateFn)(CodeStream &, const ModelSpecMerged &, const BackendBase &);
+//--------------------------------------------------------------------------
+const std::vector<std::tuple<std::string, GenerateFn, std::vector<Kernel>>> modules = {
+    {"customUpdate", &generateCustomUpdate, {KernelCustomUpdate, KernelCustomTransposeUpdate}},
+    {"init", &generateInit, {KernelInitialize, KernelInitializeSparse}},
+    {"neuronUpdate", &generateNeuronUpdate, {KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}},
+    {"synapseUpdate", &generateSynapseUpdate, {KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate}}
+};
+//--------------------------------------------------------------------------
 bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
 {
     // If function is found
@@ -203,7 +216,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, 
+void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, const std::vector<Kernel> &moduleKernels,
                    const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, const filesystem::path &nvccPath,
                    int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
                    KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
@@ -226,8 +239,8 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
     CUmodule module;
     CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
 
-    // Loop through kernels
-    for (unsigned int k = 0; k < KernelMax; k++) {
+    // Loop through kernels that might be in this module
+    for(Kernel k : moduleKernels) {
         // If this kernel is a custom update
         // **YUCK** this mechanism is really not very nice but to fix it properly would require
         // replacing the block sizes std::array with a std::map to handle different custom update kernels
@@ -268,6 +281,11 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
     // Remove tempory cubin file
     if(std::remove((modulePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
+    }
+    
+    // Remove version of module build for block size optimization
+    if(std::remove(modulePath.c_str())) {
+        LOGW_BACKEND << "Cannot remove temporary source file";
     }
 }
 //--------------------------------------------------------------------------
@@ -326,15 +344,20 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Create backend
         Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
 
-        // Generate code
-        const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
+        // Create merged model
+        ModelSpecMerged modelMerged(model, backend);
 
-        // Loop through generated modules and launch threads to build and analyse each module
+        // Loop through modules 
         std::vector<std::thread> threads;
-        for(const auto &m : moduleNames) {
-            // Build module
-            const std::string modulePath = (outputPath / m).str();
-            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), 
+        for(const auto &m : modules) {
+            // Generate code for module
+            const std::string modulePath = (outputPath / (std::get<0>(m) + "_optim.cc")).str();
+            std::ofstream moduleStream(modulePath);
+            CodeStream moduleCodeStream(moduleStream);
+            std::get<1>(m)(moduleCodeStream, modelMerged, backend);
+
+            // Launch thread to analyse kernels in this module
+            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), std::cref(std::get<2>(m)),
                                  std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
                                  std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
         }
