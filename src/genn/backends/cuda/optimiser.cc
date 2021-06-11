@@ -32,6 +32,7 @@
 #include "code_generator/generateCustomUpdate.h"
 #include "code_generator/generateInit.h"
 #include "code_generator/generateNeuronUpdate.h"
+#include "code_generator/generateRunner.h"
 #include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/modelSpecMerged.h"
 
@@ -48,12 +49,13 @@ namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
 typedef void (*GenerateFn)(CodeStream &, const ModelSpecMerged &, const BackendBase &);
+typedef boost::uuids::detail::sha1::digest_type (ModelSpecMerged::*GetArchetypeHashDigestFn)(void) const;
 //--------------------------------------------------------------------------
-const std::vector<std::tuple<std::string, GenerateFn, std::vector<Kernel>>> modules = {
-    {"customUpdate", &generateCustomUpdate, {KernelCustomUpdate, KernelCustomTransposeUpdate}},
-    {"init", &generateInit, {KernelInitialize, KernelInitializeSparse}},
-    {"neuronUpdate", &generateNeuronUpdate, {KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}},
-    {"synapseUpdate", &generateSynapseUpdate, {KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate}}
+const std::vector<std::tuple<std::string, GenerateFn, GetArchetypeHashDigestFn, std::vector<Kernel>>> modules = {
+    {"customUpdate", &generateCustomUpdate, &ModelSpecMerged::getCustomUpdateArchetypeHashDigest, {KernelCustomUpdate, KernelCustomTransposeUpdate}},
+    {"init", &generateInit, &ModelSpecMerged::getInitArchetypeHashDigest, {KernelInitialize, KernelInitializeSparse}},
+    {"neuronUpdate", &generateNeuronUpdate, &ModelSpecMerged::getNeuronUpdateArchetypeHashDigest, {KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}},
+    {"synapseUpdate", &generateSynapseUpdate, &ModelSpecMerged::getSynapseUpdateArchetypeHashDigest, {KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate}}
 };
 //--------------------------------------------------------------------------
 bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
@@ -216,9 +218,57 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, const std::vector<Kernel> &moduleKernels,
+bool shouldAnalyseModule(const std::string &moduleSHAPath, const boost::uuids::detail::sha1::digest_type &hashDigest,
+                        const std::vector<Kernel> &moduleKernels, int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax])
+{
+    try {
+        // Open file
+        std::ifstream is(moduleSHAPath);
+
+        // Throw exceptions in case of all errors
+        is.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
+        
+        // Read previous hash as hash
+        boost::uuids::detail::sha1::digest_type previousHashDigest;
+        is >> std::hex;
+        for(auto &d : previousHashDigest) {
+            is >> d;
+        }
+
+        // If hash matches
+        if(previousHashDigest == hashDigest) {
+            // Loop through kernels in module
+            is >> std::dec;
+            for(Kernel k : moduleKernels) {
+                // Read shared memory size
+                is >> krnlSharedSizeBytes[0][k];
+                is >> krnlSharedSizeBytes[1][k];
+
+                // Read number of registers
+                is >> krnlNumRegs[0][k];
+                is >> krnlNumRegs[1][k];
+            }
+
+            LOGI_BACKEND << "\tModule unchanged - re-using shared memory and register usage";
+
+            // No need to re-analyse
+            return false;
+        }
+        // Otherwise, module needs analysing
+        else {
+            LOGI_BACKEND << "\tModule changed - re-analysing";
+            return true;
+        }
+    }
+    catch(const std::ios_base::failure&) {
+        LOGI_BACKEND << "\tUnable to read previous hash - re-analysing";
+        return true;
+    }
+}
+//--------------------------------------------------------------------------
+void analyseModule(std::string sourcePath, std::string shaPath, unsigned int r, CUcontext context, std::string nvccFlags, const std::vector<Kernel> &moduleKernels,
                    const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, const filesystem::path &nvccPath,
-                   int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
+                   boost::uuids::detail::sha1::digest_type hashDigest, int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
                    KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
     // Set context for this thread
@@ -226,9 +276,9 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
 
 #ifdef _WIN32
     // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
-    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
+    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"\"";
 #else
-    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
+    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"";
 #endif
             
     if(system(nvccCommand.c_str()) != 0) {
@@ -237,7 +287,7 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
 
     // Load compiled module
     CUmodule module;
-    CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
+    CHECK_CU_ERRORS(cuModuleLoad(&module, (sourcePath + ".cubin").c_str()));
 
     // Loop through kernels that might be in this module
     for(Kernel k : moduleKernels) {
@@ -278,13 +328,36 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
     // Unload module
     CHECK_CU_ERRORS(cuModuleUnload(module));
 
+    // If this is the second repeat and therefore both metrics have been calculated
+    if(r == 1) {
+        // Open sha file
+        std::ofstream os(shaPath);
+
+        // Write digest as hex with each word seperated by a space
+        os << std::hex;
+        for(const auto d : hashDigest) {
+            os << d << " ";
+        }
+        os << std::endl;
+
+        // Loop through kernels in this module
+        os << std::dec;
+        for(Kernel k : moduleKernels) {
+            // Write shared memory size
+            os << krnlSharedSizeBytes[0][k] << " " << krnlSharedSizeBytes[1][k] << " ";
+
+            // Write number of registers
+            os << krnlNumRegs[0][k] << " " << krnlNumRegs[1][k] << std::endl;
+        }
+    }
+
     // Remove tempory cubin file
-    if(std::remove((modulePath + ".cubin").c_str())) {
+    if(std::remove((sourcePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
     }
     
     // Remove version of module build for block size optimization
-    if(std::remove(modulePath.c_str())) {
+    if(std::remove(sourcePath.c_str())) {
         LOGW_BACKEND << "Cannot remove temporary source file";
     }
 }
@@ -347,19 +420,46 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Create merged model
         ModelSpecMerged modelMerged(model, backend);
 
+        // Generate runner
+        // **NOTE** scope forces flushing
+        {
+            // **YUCK** all we really need is the headers but still
+            std::ofstream definitionsStream((outputPath / "definitions.h").str());
+            std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
+            std::ofstream runnerStream((outputPath / "runner.cc").str());
+            CodeStream definitions(definitionsStream);
+            CodeStream definitionsInternal(definitionsInternalStream);
+            CodeStream runner(runnerStream);
+            generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
+        }
+
         // Loop through modules 
         std::vector<std::thread> threads;
         for(const auto &m : modules) {
-            // Generate code for module
-            const std::string modulePath = (outputPath / (std::get<0>(m) + "_optim.cc")).str();
-            std::ofstream moduleStream(modulePath);
-            CodeStream moduleCodeStream(moduleStream);
-            std::get<1>(m)(moduleCodeStream, modelMerged, backend);
+            // Get hash of archetypes which dictate the register and shared memory usage of this module
+            // **NOTE** full module hash is unneccesary as e.g. population sizes only matter at runtime
+            const auto hashDigest = (modelMerged.*std::get<2>(m))();
+            
+            LOGI_BACKEND << "Module " << std::get<0>(m);
 
-            // Launch thread to analyse kernels in this module
-            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), std::cref(std::get<2>(m)),
-                                 std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
-                                 std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
+            // If we should analyse this module
+            const std::string moduleSHAPath = (outputPath / (std::get<0>(m) + "_CUDA.sha")).str();
+            if(shouldAnalyseModule(moduleSHAPath, hashDigest, std::get<3>(m),
+                                   krnlSharedSizeBytes, krnlNumRegs)) {
+                // Generate code for module
+                // **NOTE** scope forces flushing
+                const std::string moduleSourcePath = (outputPath / (std::get<0>(m) + "_optim.cc")).str();
+                {
+                    std::ofstream moduleStream(moduleSourcePath);
+                    CodeStream moduleCodeStream(moduleStream);
+                    std::get<1>(m)(moduleCodeStream, modelMerged, backend);
+                }
+
+                // Launch thread to analyse kernels in this module
+                threads.emplace_back(analyseModule, moduleSourcePath, moduleSHAPath, r, cuContext, backend.getNVCCFlags(), std::cref(std::get<3>(m)),
+                                     std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
+                                     hashDigest, std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
+            }
         }
 
         // Join all threads
