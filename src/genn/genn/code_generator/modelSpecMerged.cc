@@ -318,6 +318,123 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitModuleHashDigest
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateArchetypeHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Add hash of model batch size
+    Utils::updateHash(getModel().getBatchSize(), hash);
+
+    // Concatenate hash digest of archetype neuron update group
+    for(const auto &g : m_MergedNeuronUpdateGroups) {
+        Utils::updateHash(g.getArchetype().getHashDigest(), hash);
+    }
+
+    // **NOTE** all properties of neuron spike queue and previous spike time
+    // updates are also included in neuron update groups so no need to hash
+    
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateArchetypeHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Add hash of model batch size
+    Utils::updateHash(getModel().getBatchSize(), hash);
+
+    // Concatenate hash digest of archetype presynaptic update group
+    for(const auto &g : m_MergedPresynapticUpdateGroups) {
+        Utils::updateHash(g.getArchetype().getWUHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype postsynaptic update group
+    for(const auto &g : m_MergedPostsynapticUpdateGroups) {
+        Utils::updateHash(g.getArchetype().getWUHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype synapse dynamics group
+    for(const auto &g : m_MergedSynapseDynamicsGroups) {
+        Utils::updateHash(g.getArchetype().getWUHashDigest(), hash);
+    }
+
+    // **NOTE** all properties of synapse dendritic delay updates
+    //  are also included in synapse update groups so no need to hash
+
+    return hash.get_digest();
+    
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateArchetypeHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Add hash of model batch size
+    Utils::updateHash(getModel().getBatchSize(), hash);
+    
+    // Concatenate hash digest of archetype custom update group
+    for(const auto &g : m_MergedCustomUpdateGroups) {
+        Utils::updateHash(g.getArchetype().getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom WU update group
+    for(const auto &g : m_MergedCustomUpdateWUGroups) {
+        Utils::updateHash(g.getArchetype().getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom transpose WU update group
+    for(const auto &g : m_MergedCustomUpdateTransposeWUGroups) {
+        Utils::updateHash(g.getArchetype().getHashDigest(), hash);
+    }
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Add hash of model batch size
+    Utils::updateHash(getModel().getBatchSize(), hash);
+    
+    // Concatenate hash digest of archetype neuron init group
+    for(const auto &g : m_MergedNeuronInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype synapse dense init group
+    for(const auto &g : m_MergedSynapseDenseInitGroups) {
+        Utils::updateHash(g.getArchetype().getWUInitHashDigest(), hash);
+    }
+
+    // Update hash with hash digest of archetype synapse sparse init group
+    for(const auto &g : m_MergedSynapseSparseInitGroups) {
+        Utils::updateHash(g.getArchetype().getWUInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype synapse connectivity init group
+    for(const auto &g : m_MergedSynapseConnectivityInitGroups) {
+        Utils::updateHash(g.getArchetype().getConnectivityInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom update init group
+    for(const auto &g : m_MergedCustomUpdateInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom dense WU update init group
+    for(const auto &g : m_MergedCustomWUUpdateDenseInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom sparse WU update init group
+    for(const auto &g : m_MergedCustomWUUpdateSparseInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 bool ModelSpecMerged::anyPointerEGPs() const
 {
     // Loop through grouped merged EGPs

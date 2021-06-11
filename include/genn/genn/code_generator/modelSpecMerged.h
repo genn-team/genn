@@ -192,6 +192,18 @@ public:
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitModuleHashDigest() const;
 
+    //! Get hash digest of neuron update module
+    boost::uuids::detail::sha1::digest_type getNeuronUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of synapse update module
+    boost::uuids::detail::sha1::digest_type getSynapseUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of custom update module
+    boost::uuids::detail::sha1::digest_type getCustomUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of init module
+    boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
+
     //! Does model have any EGPs?
     bool anyPointerEGPs() const;
 
