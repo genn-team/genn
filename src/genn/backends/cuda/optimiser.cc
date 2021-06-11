@@ -218,8 +218,9 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-bool shouldAnalyseModule(const std::string &moduleSHAPath, const boost::uuids::detail::sha1::digest_type &hashDigest, const std::vector<Kernel> &moduleKernels, 
-                         int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax], KernelOptimisationOutput &kernelsToOptimise)
+bool shouldAnalyseModule(const std::string &moduleSHAPath, const boost::uuids::detail::sha1::digest_type &hashDigest, 
+                         const std::vector<Kernel> &moduleKernels, int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax], 
+                         KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
     try {
         // Open file
@@ -250,6 +251,7 @@ bool shouldAnalyseModule(const std::string &moduleSHAPath, const boost::uuids::d
 
                 // If this kernel requires any registers (and hence exists), add to map of kernels to optimier
                 if(krnlNumRegs[0][k] > 0 || krnlNumRegs[1][k] > 0) {
+                    std::lock_guard<std::mutex> l(kernelsToOptimiseMutex);
                     kernelsToOptimise.emplace(std::piecewise_construct,
                                               std::forward_as_tuple(k),
                                               std::forward_as_tuple(false, 0));
@@ -452,7 +454,8 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // If we should analyse this module
             const std::string moduleSHAPath = (outputPath / (std::get<0>(m) + "_CUDA.sha")).str();
             if(shouldAnalyseModule(moduleSHAPath, hashDigest, std::get<3>(m),
-                                   krnlSharedSizeBytes, krnlNumRegs, kernelsToOptimise)) {
+                                   krnlSharedSizeBytes, krnlNumRegs, 
+                                   kernelsToOptimise, kernelsToOptimiseMutex)) {
                 // Generate code for module
                 // **NOTE** scope forces flushing
                 const std::string moduleSourcePath = (outputPath / (std::get<0>(m) + "_optim.cc")).str();
