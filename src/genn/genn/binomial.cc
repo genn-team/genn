@@ -124,8 +124,8 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 }
 
 
-// evaluates inverse CDF of binomial distribution directly from the definition
-// The calculation is doen mostly in the log domain except for teh final
+// Evaluates the inverse CDF of the binomial distribution directly from the definition
+// The calculation is done mostly in the log domain except for the final
 // accumulation of the probabilities
 unsigned int directBinomialInverseCDF(double cdf, unsigned int n, double p)
 {
