@@ -140,6 +140,6 @@ unsigned int directBinomialInverseCDF(double cdf, unsigned int n, double p)
         bp*= (n-k)*pfac/(k+1.0);
         ptot+= bp;
     }
-    return n
+    return n;
 }
    
