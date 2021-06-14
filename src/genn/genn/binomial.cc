@@ -124,7 +124,9 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 }
 
 
-// evaluates inverse CDF of binomial distribution directly from definition
+// evaluates inverse CDF of binomial distribution directly from the definition
+// The calculation is doen mostly in the log domain except for teh final
+// accumulation of the probabilities
 unsigned int directBinomialInverseCDF(double cdf, unsigned int n, double p)
 {
     if(cdf < 0.0 || 1.0 < cdf) {
@@ -138,8 +140,6 @@ unsigned int directBinomialInverseCDF(double cdf, unsigned int n, double p)
       if (ptot >= cdf) return k;
       bp+= log(n-k)-log(k+1)+pfac;
       ptot+= expl(bp);
-      //      std::cerr << bp << std::endl;
-      //      std::cerr << ptot << std::endl;
     }
     return n;
 }
