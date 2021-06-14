@@ -130,15 +130,16 @@ unsigned int directBinomialInverseCDF(double cdf, unsigned int n, double p)
     if(cdf < 0.0 || 1.0 < cdf) {
         throw std::runtime_error("binomialInverseCDF error - CDF < 0 or 1 < CDF");
     }
-
-    double bp = pow(1.0-p,n);
-    double pfac= p/(1.0-p);
-    double ptot= bp;
+    long double bp = n*log(1.0-p);
+    long double pfac= log(p)-log(1.0-p);
+    long double ptot= expl(bp);
     // Loop through ks <= n 
     for (unsigned int k = 0; k < n; k++) {
-        if (ptot > cdf) return k;
-        bp*= (n-k)*pfac/(k+1.0);
-        ptot+= bp;
+      if (ptot >= cdf) return k;
+      bp+= log(n-k)-log(k+1)+pfac;
+      ptot+= expl(bp);
+      //      std::cerr << bp << std::endl;
+      //      std::cerr << ptot << std::endl;
     }
     return n;
 }
