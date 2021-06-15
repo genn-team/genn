@@ -30,7 +30,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     // The logarithms in the middle two terms can be pre-calculated and then added on for every k:
     const long double logProbRatio = log((long double)p) - log((long double)(1.0 - p));
 
-    if (cdf < p) {
+    if (cdf < 0.5) {
         // The final term is a constant so we can again calculate it once at the start of our sum:
         long double logPMF = (long double)n * log((long double)(1.0 - p));
       
