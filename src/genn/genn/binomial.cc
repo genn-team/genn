@@ -31,7 +31,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     const long double logProbRatio = log(p) - log(1.0 - p);
 
     // The final term is a constant so we can again calculate it once at the start of our sum:
-    long double logPMF = (double)n * log(1.0 - p);
+    long double logPMF = (long double)n * log((long double)(1.0 - p));
  
     // Because the first three terms of (2) will be zero for k=0,
     // we can can calculate the CDF by taking the exponent of the constant term
@@ -55,7 +55,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
         // So we can update our log PMF for the next k by adding 
         // these log terms as well as the one pre-calculated earlier
-        logPMF += log(n - k) - log(k + 1) + logProbRatio;
+        logPMF += log((long double)(n - k)) - log((long double)(k + 1)) + logProbRatio;
 
         // Add the exponent of the updated PMF to the CDF total
         cdfTotal += exp(logPMF);
