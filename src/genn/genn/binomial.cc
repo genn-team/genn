@@ -41,17 +41,31 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
     // The logarithms in the middle two terms can be pre-calculated and then added on for every k:
     const double logProbRatio = log((double)p) - log((double)(1.0 - p));
+    // log of the minimum value that is not flushed to 0 in doube precision
+    double logMin = log(std::numeric_limits<double>::min());
 
     if (cdf < 0.5) {
+	unsigned int kmin= 0;
+	unsigned int kmax= (unsigned int) n*p;
+	unsigned int mid;
+	while(kmax-kmin > 100) {
+	  mid= (kmax+kmin)/2;
+	  if (logPMFBinomial(p, n, mid) > logMin) {
+	    kmax= mid;
+	  }
+	  else {
+	    kmin= mid;
+	  }
+	}
         // The final term is a constant so we can again calculate it once at the start of our sum:
-        double logPMF = (double)n * log((double)(1.0 - p));
+	double logPMF= logPMFBinomial(p, n, kmin);
 
         // Because the first three terms of (2) will be zero for k=0,
         // we can can calculate the CDF by taking the exponent of the constant term
         double cdfTotal = exp(logPMF);
 
         // Loop through ks <= n
-        for (unsigned int k = 0; k < n; k++) {
+        for (unsigned int k = kmin; k < n; k++) {
             // If we have reached the CDF value we're looking for, return k
             if(cdfTotal >= cdf) {
                 return k;
@@ -78,8 +92,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     else {
         // Same approach as above but counting down from high k
         cdf= 1.0 - cdf;
-	// log of the minimum value that is not flushed to 0 in long doube precision
-	double logMin = log(std::numeric_limits<double>::min());
+
 	/* 
 	// Version based on normal approximation:
 	// Expectation value and standard deviation
