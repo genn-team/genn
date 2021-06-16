@@ -7,11 +7,13 @@
 #include <cmath>
 #include <limits>
 #include <cassert>
-#include <iostream>
 
+// calculates the log of the binomial coefficient n choose k
 double logChoose(int n, int k) {
     return std::lgamma(double(n+1)) - std::lgamma(double(k+1)) - std::lgamma(double(n-k+1));
 }
+
+// calculates the log of the binomial CDF
 double logPMFBinomial(double p, int n, int k) {
   return logChoose(n, k) + (double)k*std::log(p) + (double)(n-k)*std::log(1-p);
 }
@@ -77,7 +79,9 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         // Same approach as above but counting down from high k
         cdf= 1.0 - cdf;
 	// log of the minimum value that is not flushed to 0 in long doube precision
-	double logMin = logl(std::numeric_limits<double>::min());
+	double logMin = log(std::numeric_limits<double>::min());
+	/* 
+	// Version based on normal approximation:
 	// Expectation value and standard deviation
 	double mu= n*p;
 	double sig= sqrt(n*p*(1-p));
@@ -86,10 +90,26 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 	// Adding sigma as a margin for error of the used normal approximation
 	unsigned int kmax= (unsigned int) (mu+sig*sqrt(-2.0*(log(sig*sqrt(2*M_PI))+logMin))+sig);
 	kmax= std::min(kmax, n);
-	// Initialize with the logPMF value at kmax
-	double logPMF= logPMFBinomial(p, n, kmax);
 	std::cout << logPMF << " " << logMin << std::endl;
 	assert(logPMF <= logMin);
+	//end Version 
+	*/
+
+	// Binary search version
+	unsigned int kmin= (unsigned int) n*p;
+	unsigned int kmax= n;
+	unsigned int mid;
+	while(kmax-kmin > 100) {
+	  mid= (kmax+kmin)/2;
+	  if (logPMFBinomial(p, n, mid) > logMin) {
+	    kmin= mid;
+	  }
+	  else {
+	    kmax= mid;
+	  }
+	}
+	// Initialize with the logPMF value at kmax
+	double logPMF= logPMFBinomial(p, n, kmax);
 	// add the initial term to cdfTotal (likely still flushed to 0 at this point)
         double cdfTotal = exp(logPMF);
 	
