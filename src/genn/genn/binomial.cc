@@ -6,12 +6,14 @@
 // Standard C includes
 #include <cmath>
 #include <limits>
+#include <cassert>
+#include <iostream>
 
-long double logChoose(int n, int k) {
+double logChoose(int n, int k) {
     return std::lgamma(double(n+1)) - std::lgamma(double(k+1)) - std::lgamma(double(n-k+1));
 }
-long double logPMFBinomial(long double p, int n, int k) {
-  return logChoose(n, k) + (long double)k*std::log(p) + (long double)(n-k)*std::log(1-p);
+double logPMFBinomial(double p, int n, int k) {
+  return logChoose(n, k) + (double)k*std::log(p) + (double)(n-k)*std::log(1-p);
 }
 
 // Evaluates the inverse CDF of the binomial distribution directly from the definition
@@ -36,15 +38,15 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     //                      |k|
 
     // The logarithms in the middle two terms can be pre-calculated and then added on for every k:
-    const long double logProbRatio = log((long double)p) - log((long double)(1.0 - p));
+    const double logProbRatio = log((double)p) - log((double)(1.0 - p));
 
     if (cdf < 0.5) {
         // The final term is a constant so we can again calculate it once at the start of our sum:
-        long double logPMF = (long double)n * log((long double)(1.0 - p));
+        double logPMF = (double)n * log((double)(1.0 - p));
 
         // Because the first three terms of (2) will be zero for k=0,
         // we can can calculate the CDF by taking the exponent of the constant term
-        long double cdfTotal = exp(logPMF);
+        double cdfTotal = exp(logPMF);
 
         // Loop through ks <= n
         for (unsigned int k = 0; k < n; k++) {
@@ -64,7 +66,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
             // So we can update our log PMF for the next k by adding
             // these log terms as well as the one pre-calculated earlier
-            logPMF += log((long double)(n - k)) - log((long double)(k + 1)) + logProbRatio;
+            logPMF += log((double)(n - k)) - log((double)(k + 1)) + logProbRatio;
 
             // Add the exponent of the updated PMF to the CDF total
             cdfTotal += exp(logPMF);
@@ -74,14 +76,22 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     else {
         // Same approach as above but counting down from high k
         cdf= 1.0 - cdf;
-	long double logMin = logl(std::numeric_limits<long double>::min());
-	long double mu= n*p;
-	long double sig= sqrt(n*p*(1-p));
-	unsigned int kmax= (unsigned int) (mu+sig*sqrt(-2.0*(log(sig*sqrt(2*M_PI))+logMin)))+1;
-	long double logPMF= logPMFBinomial(p, n, kmax); 
-	// Because the first three terms of (2) will be zero for k=0,
-        // we can can calculate the CDF by taking the exponent of the constant term
-        long double cdfTotal = exp(logPMF);
+	// log of the minimum value that is not flushed to 0 in long doube precision
+	double logMin = logl(std::numeric_limits<double>::min());
+	// Expectation value and standard deviation
+	double mu= n*p;
+	double sig= sqrt(n*p*(1-p));
+	// Guesstimate when the terms of logPMF are getting large enough so that exp(logPMF) is not flushed to 0
+	// based on the normal approximation of the binomial distribution.
+	// Adding sigma as a margin for error of the used normal approximation
+	unsigned int kmax= (unsigned int) (mu+sig*sqrt(-2.0*(log(sig*sqrt(2*M_PI))+logMin)))+sig;
+	kmax= std::min(kmax, n);
+	// Initialize with the logPMF value at kmax
+	double logPMF= logPMFBinomial(p, n, kmax);
+	std::cout << logPMF << " " << logMin << std::endl;
+	assert(logPMF <= logMin);
+	// add the initial term to cdfTotal (likely still flushed to 0 at this point)
+        double cdfTotal = exp(logPMF);
 	
         // Loop through ks >= 0
         for (unsigned int k = kmax-1; k >= 0; k--) {
@@ -101,7 +111,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
             // So we can update our log PMF for the previous k by adding
             // these log terms as well as the one pre-calculated earlier
-            logPMF += log((long double)(k + 1)/(long double)(n - k)) - logProbRatio;
+            logPMF += log((double)(k + 1)/(double)(n - k)) - logProbRatio;
 
             // Add the exponent of the updated PMF to the CDF total
 	    if (logPMF > logMin) {
