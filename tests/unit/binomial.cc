@@ -1,3 +1,6 @@
+// Standard C includes
+#include <cmath>
+
 // Google test includes
 #include "gtest/gtest.h"
 
