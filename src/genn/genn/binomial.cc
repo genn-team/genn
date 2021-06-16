@@ -84,7 +84,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 	// Guesstimate when the terms of logPMF are getting large enough so that exp(logPMF) is not flushed to 0
 	// based on the normal approximation of the binomial distribution.
 	// Adding sigma as a margin for error of the used normal approximation
-	unsigned int kmax= (unsigned int) (mu+sig*sqrt(-2.0*(log(sig*sqrt(2*M_PI))+logMin)))+sig;
+	unsigned int kmax= (unsigned int) (mu+sig*sqrt(-2.0*(log(sig*sqrt(2*M_PI))+logMin))+sig);
 	kmax= std::min(kmax, n);
 	// Initialize with the logPMF value at kmax
 	double logPMF= logPMFBinomial(p, n, kmax);
