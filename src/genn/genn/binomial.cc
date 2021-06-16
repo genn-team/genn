@@ -42,10 +42,10 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         for (unsigned int k = 0; k < n; k++) {
             // If we have reached the CDF value we're looking for, return k
             if(cdfTotal >= cdf) {
-                    return k;
+                return k;
             }
 
-            // Binomiral coefficients can be calculated iteratively (for k from 0 to n) with:
+            // Binomial coefficients can be calculated iteratively (for k from 0 to n) with:
             // |  n  | =  n - k  |n|
             // |k + 1|   ------- |k|
             //            k + 1
@@ -64,8 +64,8 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         return n;
     }
     else {
-        // same approach as above but counting down from high k
-        cdf= 1.0-cdf;
+        // Same approach as above but counting down from high k
+        cdf= 1.0 - cdf;
         long double logPMF = (long double)n * log((long double)p);
 
         // Because the first three terms of (2) will be zero for k=0,
@@ -73,13 +73,13 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         long double cdfTotal = exp(logPMF);
 
         // Loop through ks >= 0
-        for (unsigned int k = n-1; k >= 0; k--) {
+        for (unsigned int k = (n - 1); k >= 0; k--) {
             // If we have reached the CDF value we're looking for, return k
             if(cdfTotal > cdf) {
-                return k+1;
+                return k + 1;
             }
 
-            // Binomiral coefficients can be calculated iteratively (for k from n-1 down to 0) with:
+            // Binomiral coefficients can be calculated iteratively (for k from n - 1 down to 0) with:
             // | n | =  k + 1  |   n  |
             // | k |   ------- | k + 1|
             //          n - k
