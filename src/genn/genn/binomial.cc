@@ -165,7 +165,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
         // Loop downwards through ks >= 0
         assert(kMax >= 1);
-        for (unsigned int k = (kMax - 1); k >= 0; k--) {
+        for (unsigned int k = (kMax - 1);; k--) {
             // If we have reached the CDF value we're looking for, return k
             if(cdfTotal > cdf) {
                 return k + 1;
@@ -188,6 +188,11 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
             // **NOTE** we only add the term if it's not zero to avoid our sum getting renormalised into nothing
             if (logPMF > logMin) {
                 cdfTotal += std::exp(logPMF);
+            }
+
+            // End iteration at k == 0
+            if(k == 0) {
+                break;
             }
         }
     }
