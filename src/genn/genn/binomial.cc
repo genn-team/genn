@@ -45,12 +45,25 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         throw std::runtime_error("binomialInverseCDF error - p < 0 or p > 1");
     }
 
-    // Handle special cases
+    // Handle special cases of p
     if(p == 0.0) {
         return 0;
     }
     else if(p == 1.0) {
         return n;
+    }
+
+    // Handle special cases of cdf
+    if(cdf == 0.0) {
+        return 0;
+    }
+    else if(cdf == 1.0) {
+        return n;
+    }
+
+    // Handle special case of n
+    if(n == 0) {
+        return 0;
     }
 
     // While you can calculate the CDF directly using the incomplete beta function, because we need to loop through
@@ -122,7 +135,6 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
             // Add the exponent of the updated PMF to the CDF total
             cdfTotal += std::exp(logPMF);
         }
-        return n;
     }
     // Otherwise, if we are above the expectation value of the CDF
     else {
@@ -178,7 +190,9 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
                 cdfTotal += std::exp(logPMF);
             }
         }
-        return 0;
     }
+
+    // Failing to sum anything should be impossible!
+    assert(false);
 }
    
