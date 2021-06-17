@@ -375,7 +375,7 @@ public:
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
         {
-            // Calculate suitable quantile for 0.9999 change when drawing numPre times
+            // Calculate suitable quantile for 0.9999 chance when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
 
             // In each column the number of connections that end up in a row are distributed
