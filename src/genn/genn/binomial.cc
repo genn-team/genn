@@ -32,9 +32,9 @@ double logPMFBinomial(unsigned int n, unsigned int k, double logP, double logOne
 }
 }
 
-// Evaluates the inverse CDF of the binomial distribution directly from the definition
-// The calculation is done mostly in the log domain except for the final
-// accumulation of the probabilities
+//! Evaluates the inverse CDF of the binomial distribution directly from the definition
+//! The calculation is done mostly in the log domain except for the final
+//! accumulation of the probabilities
 unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 {
     // Validate cdf and p parameters
@@ -75,10 +75,11 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
     // Calculate the log of the minimum value that is not flushed to 0 in doube precision
     const double logMin = std::log(std::numeric_limits<double>::min());
 
-    // If we
+    // If we are below the expectation value of the CDF
     if (cdf < 0.5) {
-        // Binary search upwards from 0 to the mean of the binomial  
-        // distribution to find the point where the PMF starts to rise above zero
+        // Binary search between 0 and the mean of the binomial distribution 
+        // to find the point where the PMF starts to rise above zero
+        // **NOTE** mean is NOT the peak of the distribution as it's skewed
         unsigned int kMin = 0;
         unsigned int kMax = (unsigned int)(n * p);
         while((kMax - kMin) > 100) {
@@ -98,7 +99,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         // We can can then begin our calculation of the CDF by taking the exponent of this logPMF
         double cdfTotal = std::exp(logPMF);
 
-        // Loop through ks <= n
+        // Loop upwards through ks <= n
         for (unsigned int k = kMin; k < n; k++) {
             // If we have reached the CDF value we're looking for, return k
             if(cdfTotal >= cdf) {
@@ -116,28 +117,30 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
             // So we can update our log PMF for the next k by adding
             // these log terms as well as the one pre-calculated earlier
-            logPMF += std::log(n - k) - std::log(k + 1) + logProbRatio;
+            logPMF += std::log((double)(n - k) / (double)(k + 1)) + logProbRatio;
 
             // Add the exponent of the updated PMF to the CDF total
             cdfTotal += std::exp(logPMF);
         }
         return n;
     }
+    // Otherwise, if we are above the expectation value of the CDF
     else {
         // Same approach as above but counting down from high k
         cdf = 1.0 - cdf;
 
-        // Binary search downwards from 0 to the mean of the binomial  
-        // distribution to find the point where the PMF starts to rise above zero
+        // Binary search between 0 and the mean of the binomial distribution
+        // to find the point where the PMF starts to rise above zero
+        // **NOTE** mean is NOT the peak of the distribution as it's skewed
         unsigned int kMin = (unsigned int)(n * p);
         unsigned int kMax = n;
         while((kMax - kMin) > 100) {
             const unsigned int mid = (kMax + kMin) / 2;
             if (logPMFBinomial(n, mid, logP, logOneMinusP) > logMin) {
-                kMin= mid;
+                kMin = mid;
             }
             else {
-                kMax= mid;
+                kMax = mid;
             }
         }
         
@@ -148,7 +151,7 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
         // We can can then begin our calculation of the CDF by taking the exponent of this logPMF
         double cdfTotal = std::exp(logPMF);
 
-        // Loop through ks >= 0
+        // Loop downwards through ks >= 0
         assert(kMax >= 1);
         for (unsigned int k = (kMax - 1); k >= 0; k--) {
             // If we have reached the CDF value we're looking for, return k
@@ -167,12 +170,10 @@ unsigned int binomialInverseCDF(double cdf, unsigned int n, double p)
 
             // So we can update our log PMF for the previous k by adding
             // these log terms as well as the one pre-calculated earlier
-            // **JAMIE** isn't this rather than subtracting logs risking overflow?
-            logPMF += std::log((double)(k + 1)/(double)(n - k)) - logProbRatio;
+            logPMF += std::log((double)(k + 1) / (double)(n - k)) - logProbRatio;
 
             // Add the exponent of the updated PMF to the CDF total
             // **NOTE** we only add the term if it's not zero to avoid our sum getting renormalised into nothing
-            // **JAMIE** couldn't we stop once this ceases to be the case?
             if (logPMF > logMin) {
                 cdfTotal += std::exp(logPMF);
             }
