@@ -51,8 +51,6 @@ void calcHistogram(const unsigned int *rowLength, const uint32_t *ind,
 
 TEST_F(SimTest, ConnectInit)
 {
-    const double p = 0.02;
-    
     // Pull connectivity back to host
     pullFixedNumberTotalConnectivityFromDevice();
     pullFixedNumberPostConnectivityFromDevice();

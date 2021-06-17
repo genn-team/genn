@@ -32,9 +32,11 @@ public:
     using SynapseGroup::getWUDerivedParams;
     using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::setEventThresholdReTestRequired;
+    using SynapseGroup::setWUVarReferencedByCustomUpdate;
     using SynapseGroup::setPSModelMergeTarget;
     using SynapseGroup::initDerivedParams;
     using SynapseGroup::isEventThresholdReTestRequired;
+    using SynapseGroup::areWUVarReferencedByCustomUpdate;
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
     using SynapseGroup::getSparseIndType;

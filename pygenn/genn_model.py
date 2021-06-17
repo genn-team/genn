@@ -46,6 +46,7 @@ from platform import system
 from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
+from warnings import warn
 
 # 3rd party imports
 import numpy as np
@@ -54,7 +55,8 @@ from six import iteritems, itervalues, string_types
 # pygenn imports
 from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModelNumpy as slm
-from .genn_wrapper.Models import (Var, VarInit, VarVector)
+from .genn_wrapper.Models import (Var, VarRef, VarInit, VarReference, 
+                                  WUVarReference, VarVector, VarRefVector)
 from .genn_wrapper.InitSparseConnectivitySnippet import Init
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
                                    EGPVector, ParamValVector,
@@ -62,7 +64,8 @@ from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
 from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf, make_cksf
 from .genn_wrapper.StlContainers import StringVector
 from .genn_wrapper import VarLocation_HOST_DEVICE
-from .genn_groups import NeuronGroup, SynapseGroup, CurrentSource
+from .genn_groups import (NeuronGroup, SynapseGroup, 
+                          CurrentSource, CustomUpdate)
 from .model_preprocessor import prepare_snippet
 
 # Loop through backends in preferential order
@@ -150,6 +153,7 @@ class GeNNModel(object):
         self.neuron_populations = {}
         self.synapse_populations = {}
         self.current_sources = {}
+        self.custom_updates = {}
         self.dT = 0.1
 
         # Build dictionary containing conversions between GeNN C++ types and numpy types
@@ -313,6 +317,12 @@ class GeNNModel(object):
     @property
     def init_sparse_time(self):
         return self._slm.get_init_sparse_time()
+
+    def get_custom_update_time(self, name):
+        return self._slm.get_custom_update_time(name)
+
+    def get_custom_update_transpose_time(self, name):
+        return self._slm.get_custom_update_transpose_time(name)
 
     def add_neuron_population(self, pop_name, num_neurons, neuron,
                               param_space, var_space):
@@ -487,7 +497,43 @@ class GeNNModel(object):
         self.current_sources[cs_name] = c_source
 
         return c_source
+    
+    def add_custom_update(self, cu_name, group_name, custom_update_model,
+                          param_space, var_space, var_ref_space):
+        """Add a current source to the GeNN model
 
+        Args:
+        cu_name                 -- name of the new current source
+        group_name              -- name of
+        custom_update_model     -- type of the CustomUpdateModel class as
+                                   string or instance of CustomUpdateModel
+                                   class derived from
+                                   ``pygenn.genn_wrapper.CustomUpdateModel.Custom`` (see also
+                                   pygenn.genn_model.create_custom_custom_update_class)
+        param_space             -- dict with param values for the
+                                   CustomUpdateModel class
+        var_space               -- dict with initial variable values for the
+                                   CustomUpdateModel class
+        var_ref_space           -- dict with variable references for the
+                                   CustomUpdateModel class
+        """
+        if self._built:
+            raise Exception("GeNN model already built")
+
+        if cu_name in self.current_sources:
+            raise ValueError("current source '{0}' "
+                             "already exists".format(cu_name))
+
+        c_update = CustomUpdate(cu_name, self)
+        c_update.set_custom_update_model(custom_update_model,
+                                         param_space, var_space, 
+                                         var_ref_space)
+        c_update.add_to(group_name)
+
+        self.custom_updates[cu_name] = c_update
+
+        return c_update
+        
     def build(self, path_to_model="./"):
         """Finalize and build a GeNN model
 
@@ -570,6 +616,10 @@ class GeNNModel(object):
         for src_data in itervalues(self.current_sources):
             src_data.load_init_egps()
 
+        # Loop through custom updates
+        for cu_data in itervalues(self.custom_updates):
+            cu_data.load_init_egps()
+
         # Initialize model
         self._slm.initialize()
 
@@ -584,6 +634,10 @@ class GeNNModel(object):
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load()
+
+        # Loop through custom updates
+        for cu_data in itervalues(self.custom_updates):
+            cu_data.load()
 
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
@@ -612,16 +666,27 @@ class GeNNModel(object):
         for src_data in itervalues(self.current_sources):
             src_data.reinitialise()
 
+        # Loop through custom updates
+        for cu_data in itervalues(self.custom_updates):
+            cu_data.reinitialise()
+            
         # Initialise any sparse variables
         self._slm.initialize_sparse()
 
     def step_time(self):
+        """Make one simulation step"""
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before stepping")
 
-        """Make one simulation step"""
         self._slm.step_time()
-
+    
+    def custom_update(self, name):
+        """Perform custom update"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before performing custom update")
+            
+        self._slm.custom_update(name)
+        
     def pull_state_from_device(self, pop_name):
         """Pull state from the device for a given population"""
         if not self._loaded:
@@ -657,8 +722,13 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
-    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=None):
         """Pull extra global parameter from the device for a given population"""
+        if size is None:
+            warn("The default of size=1 is very counter-intuitive and "
+                 "will be removed in future", DeprecationWarning)
+            size = 1
+
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
@@ -699,8 +769,13 @@ class GeNNModel(object):
 
         self._slm.push_var_to_device(pop_name, var_name)
 
-    def push_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+    def push_extra_global_param_to_device(self, pop_name, egp_name, size=None):
         """Push extra global parameter to the device for a given population"""
+        if size is None:
+            warn("The default of size=1 is very counter-intuitive and "
+                 "will be removed in future", DeprecationWarning)
+            size = 1
+
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pushing")
 
@@ -719,7 +794,8 @@ class GeNNModel(object):
 
     def end(self):
         """Free memory"""
-        for group in [self.neuron_populations, self.current_sources]:
+        for group in [self.neuron_populations, self.synapse_populations,
+                      self.current_sources, custom_updates]:
             for g_name, g_dat in iteritems(group):
                 for egp_name, egp_dat in iteritems(g_dat.extra_global_params):
                     # if auto allocation is not enabled, let the user care
@@ -815,6 +891,74 @@ def init_connectivity(init_sparse_connect_snippet, param_space):
     # Use add function to create suitable VarInit
     return Init(s_instance, params)
 
+def create_var_ref(pop, var_name):
+    """This helper function creates a Models::VarReference
+    pointing to a neuron or current source variable
+    for initialising variable references.
+
+    Args:
+    pop         -- population, either a NeuronGroup or CurrentSource object
+    var_name    -- name of variable in population to reference
+    """
+    return (genn_wrapper.create_var_ref(pop.pop, var_name), pop)
+    
+def create_psm_var_ref(sg, var_name):
+    """This helper function creates a Models::VarReference
+    pointing to a postsynaptic model variable
+    for initialising variable references.
+
+    Args:
+    sg          -- SynapseGroup object
+    var_name    -- name of postsynaptic model variable
+                   in synapse group to reference
+    """
+    return (genn_wrapper.create_psmvar_ref(sg.pop, var_name), sg)
+
+def create_wu_pre_var_ref(sg, var_name):
+    """This helper function creates a Models::VarReference
+    pointing to a presynaptic weight update model variable
+    for initialising variable references.
+
+    Args:
+    sg          -- SynapseGroup object
+    var_name    -- name of presynaptic weight update model
+                   variable in synapse group to reference
+    """
+    return (genn_wrapper.create_wupre_var_ref(sg.pop, var_name), sg)
+
+def create_wu_post_var_ref(sg, var_name):
+    """This helper function creates a Models::VarReference
+    pointing to a postsynaptic weight update model variable
+    for initialising variable references.
+
+    Args:
+    sg          -- SynapseGroup object
+    var_name    -- name of postsynaptic weight update model  
+                   variable in synapse group to reference
+    """
+    return (genn_wrapper.create_wupost_var_ref(sg.pop, var_name), sg)
+
+def create_wu_var_ref(sg, var_name, tp_sg=None, tp_var_name=None):
+    """This helper function creates a Models::WUVarReference
+    pointing to a weight update model variable for 
+    initialising variable references.
+
+    Args:
+    sg          -- SynapseGroup object
+    var_name    -- name of weight update model variable 
+                   in synapse group to reference
+    tp_sg       -- (optional) SynapseGroup object to 
+                   copy transpose of variable to
+    tp_var_name -- (optional) name of weight update 
+                   model variable in tranpose synapse group
+                   to copy transpose to
+    """
+    if tp_sg is None:
+        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name), sg)
+    else:
+        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name,
+                                              tp_sg.pop, tp_var_name), sg)
+    
 
 def create_custom_neuron_class(class_name, param_names=None,
                                var_name_types=None, derived_params=None,
@@ -1174,6 +1318,64 @@ def create_custom_current_source_class(class_name, param_names=None,
     return create_custom_model_class(
         class_name, genn_wrapper.CurrentSourceModels.Custom, param_names,
         var_name_types, derived_params, body)
+
+
+def create_custom_custom_update_class(class_name, param_names=None,
+                                      var_name_types=None,
+                                      derived_params=None,
+                                      var_refs=None,
+                                      update_code=None,
+                                      extra_global_params=None,
+                                      custom_body=None):
+    """This helper function creates a custom CustomUpdate class.
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+    create_custom_sparse_connect_init_snippet_class
+
+    Args:
+    class_name          --  name of the new class
+
+    Keyword args:
+    param_names         --  list of strings with param names of the model
+    var_name_types      --  list of tuples of strings with varible names and
+                            types of the variable
+    derived_params      --  list of tuples, where the first member is string
+                            with name of the derived parameter and the second
+                            should be a functor returned by create_dpf_class
+    var_refs            --  list of tuples of strings with varible names and
+                            types of variabled variable
+    update_code         --  string with the current injection code
+    extra_global_params --  list of pairs of strings with names and types of
+                            additional parameters
+    custom_body         --  dictionary with additional attributes and methods
+                            of the new class
+    """
+    if not isinstance(custom_body, dict) and custom_body is not None:
+        raise ValueError("custom_body must be an instance of dict or None")
+
+    body = {}
+
+    if update_code is not None:
+        body["get_update_code"] = lambda self: dedent(update_code)
+
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: EGPVector([EGP(egp[0], egp[1])
+                                    for egp in extra_global_params])
+    
+    if var_refs is not None:
+        body["get_var_refs"] = \
+            lambda self: VarRefVector([VarRef(*v)
+                                       for v in var_refs])
+    if custom_body is not None:
+        body.update(custom_body)
+
+    return create_custom_model_class(
+        class_name, genn_wrapper.CustomUpdateModels.Custom, param_names,
+        var_name_types, derived_params, body)        
 
 
 def create_custom_model_class(class_name, base, param_names, var_name_types,

@@ -382,6 +382,19 @@ public:
         m_StepTime();
     }
     
+    void customUpdate(const std::string &name)
+    {
+        auto c = m_CustomUpdates.find(name);
+        if(c != m_CustomUpdates.cend()) {
+            c->second();
+        }
+        else {
+            auto customUpdateFn = (VoidFunction)getSymbol("update" + name);
+            m_CustomUpdates.emplace(name, customUpdateFn);
+            customUpdateFn();
+        }
+    }
+    
     void pullRecordingBuffersFromDevice()
     {
         if(m_PullRecordingBuffersFromDevice == nullptr) {
@@ -416,6 +429,8 @@ public:
     double getPostsynapticUpdateTime() const{ return *(double*)getSymbol("postsynapticUpdateTime"); }
     double getSynapseDynamicsTime() const{ return *(double*)getSymbol("synapseDynamicsTime"); }
     double getInitSparseTime() const{ return *(double*)getSymbol("initSparseTime"); }
+    double getCustomUpdateTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "Time"); }
+    double getCustomUpdateTransposeTime(const std::string &name)const{ return *(double*)getSymbol("customUpdate" + name + "TransposeTime"); }
     
     void *getSymbol(const std::string &symbolName, bool allowMissing = false, void *defaultSymbol = nullptr) const
     {
@@ -525,7 +540,7 @@ private:
 
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
-
+    std::unordered_map<std::string, VoidFunction> m_CustomUpdates;
     scalar *m_T;
     unsigned long long *m_Timestep;
 };

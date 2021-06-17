@@ -16,6 +16,7 @@
 
 // Code generator includes
 #include "code_generator/codeStream.h"
+#include "code_generator/generateCustomUpdate.h"
 #include "code_generator/generateInit.h"
 #include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateSupportCode.h"
@@ -63,6 +64,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Open output file streams for generated code files
     std::ofstream definitionsStream((outputPath / "definitions.h").str());
     std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
+    std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
     std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
     std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
     std::ofstream initStream((outputPath / "init.cc").str());
@@ -71,6 +73,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Wrap output file streams in CodeStreams for formatting
     CodeStream definitions(definitionsStream);
     CodeStream definitionsInternal(definitionsInternalStream);
+    CodeStream customUpdate(customUpdateStream);
     CodeStream neuronUpdate(neuronUpdateStream);
     CodeStream synapseUpdate(synapseUpdateStream);
     CodeStream init(initStream);
@@ -85,6 +88,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
     generateSynapseUpdate(synapseUpdate, memorySpaces, modelMerged, backend);
     generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
+    generateCustomUpdate(customUpdate, memorySpaces, modelMerged, backend);
     generateInit(init, memorySpaces, modelMerged, backend);
 
     // Generate support code module if the backend supports namespaces
@@ -103,7 +107,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     }
 
     // Create basic list of modules
-    std::vector<std::string> modules = {"neuronUpdate", "synapseUpdate", "init"};
+    std::vector<std::string> modules = {"customUpdate", "neuronUpdate", "synapseUpdate", "init"};
 
     // If we aren't building standalone modules
     if(!standaloneModules) {
@@ -128,10 +132,16 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedPresynapticUpdateGroups().size() << " merged presynaptic update groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedPostsynapticUpdateGroups().size() << " merged postsynaptic update groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDynamicsGroups().size() << " merged synapse dynamics groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateGroups().size() << " merged custom update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateWUGroups().size() << " merged custom weight update groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateTransposeWUGroups().size() << " merged custom weight transpose update groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateInitGroups().size() << " merged custom update init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateDenseInitGroups().size() << " merged custom WU update dense init groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDenseInitGroups().size() << " merged synapse dense init groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
+        LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateSparseInitGroups().size() << " merged custom WU update sparse init groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
         LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";

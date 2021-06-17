@@ -9,11 +9,13 @@ except NameError:  # Python 3
 
 from weakref import proxy
 from deprecated import deprecated
-from six import iteritems
+from six import iteritems, iterkeys, itervalues
+from warnings import warn
 import numpy as np
+
 from . import genn_wrapper
 from . import model_preprocessor
-from .model_preprocessor import ExtraGlobalVariable, Variable
+from .model_preprocessor import ExtraGlobalParameter, Variable
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixConnectivity_BITMASK,
                            SynapseMatrixConnectivity_DENSE,
@@ -21,7 +23,7 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
-from .genn_wrapper.Models import VarAccessDuplication_SHARED
+from .genn_wrapper.Models import VarAccessDuplication_SHARED, WUVarReference
 
 class Group(object):
 
@@ -48,6 +50,25 @@ class Group(object):
         """
         self.vars[var_name].set_values(values)
 
+    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
+    def add_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self.set_extra_global_param(param_name, param_values)
+
+    def set_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter
+
+        Args:
+        param_name      --  string with the name of the extra global parameter
+        param_values    --  iterable or a single value
+        """
+        self.extra_global_params[param_name].set_values(param_values)
+
     def pull_state_from_device(self):
         """Wrapper around GeNNModel.pull_state_from_device"""
         self._model.pull_state_from_device(self.name)
@@ -60,14 +81,14 @@ class Group(object):
         """
         self._model.pull_var_from_device(self.name, var_name)
 
-    def pull_extra_global_param_from_device(self, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, egp_name, size=None):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
         egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._model.pull_extra_global_param_from_device(self.name, egp_name, size)
+        self._pull_extra_global_param_from_device(egp_name, size)
 
     def push_state_to_device(self):
         """Wrapper around GeNNModel.push_state_to_device"""
@@ -81,36 +102,14 @@ class Group(object):
         """
         self._model.push_var_to_device(self.name, var_name)
 
-    def push_extra_global_param_to_device(self, egp_name, size=1):
+    def push_extra_global_param_to_device(self, egp_name, size=None):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
         Args:
         egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._model.push_extra_global_param_to_device(self.name, egp_name, size)
-
-    def _set_extra_global_param(self, param_name, param_values, model, egp_dict=None):
-        """Set extra global parameter
-
-        Args:
-        param_name      --  string with the name of the extra global parameter
-        param_values    --  iterable
-        model           --  instance of the model
-        """
-        # If no EGP dictionary is specified, use standard one
-        if egp_dict is None:
-            egp_dict = self.extra_global_params
-
-        param_type = None
-        for p in model.get_extra_global_params():
-            if p.name == param_name:
-                param_type = p.type
-                break
-
-        assert param_type is not None
-        egp_dict[param_name] = ExtraGlobalVariable(param_name, param_type,
-                                                   self, param_values)
+        self._push_extra_global_param_to_device(egp_name, size)
 
     def _assign_ext_ptr_array(self, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
@@ -161,6 +160,70 @@ class Group(object):
         return self._model.genn_types[var_type].assign_ext_ptr_single(
             internal_var_name)
 
+    def _push_extra_global_param_to_device(self, egp_name, size=None,
+                                           egp_dict=None):
+        """Wrapper around GeNNModel.push_extra_global_param_to_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        size        --  number of entries in EGP array
+        """
+        # If no extra global parameters dictionary
+        # is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Retrieve EGP from dictionary
+        egp = egp_dict[egp_name]
+
+        # If EGP is scalar, give error
+        if egp.is_scalar:
+            raise Exception("Only pointer-type extra global parameters "
+                            "need to be pushed")
+
+        # If deprecated size parameter is passed, give warning and
+        if size is not None:
+            warn("The size parameter is no longer "
+                 "required and will be removed", DeprecationWarning)
+            if size != len(egp.values):
+                raise ValueError("The size parameter doesn't match the "
+                                 "size of the extra global parameter data")
+
+        self._model.push_extra_global_param_to_device(self.name, egp_name,
+                                                      len(egp.values))
+
+    def _pull_extra_global_param_from_device(self, egp_name, size=None,
+                                           egp_dict=None):
+        """Wrapper around GeNNModel.pull_extra_global_param_from_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        size        --  number of entries in EGP array
+        """
+        # If no extra global parameters dictionary
+        # is specified, use standard one
+        if egp_dict is None:
+            egp_dict = self.extra_global_params
+
+        # Retrieve EGP from dictionary
+        egp = egp_dict[egp_name]
+
+        # If EGP is scalar, give error
+        if egp.is_scalar:
+            raise Exception("Only pointer-type extra global parameters "
+                            "need to be pulled")
+
+        # If deprecated size parameter is passed, give warning and
+        if size is not None:
+            warn("The size parameter is no longer "
+                 "required and will be removed", DeprecationWarning)
+            if size != len(egp.values):
+                raise ValueError("The size parameter doesn't match the "
+                                 "size of the extra global parameter data")
+
+        self._model.pull_extra_global_param_from_device(self.name, egp_name,
+                                                        len(egp.values))
+
     def _load_vars(self, vars, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
         if size is None:
@@ -177,7 +240,7 @@ class Group(object):
         # Loop through variables
         for v in vars:
             # Get corresponding data from dictionary
-            var_data = self.vars[v.name]
+            var_data = var_dict[v.name]
 
             # If variable is located on host
             var_loc = get_location_fn(v.name) 
@@ -229,7 +292,7 @@ class Group(object):
                                                             egp_data.type)
                 # Copy values
                 egp_data.view[:] = egp_data.values
-            else:
+            elif egp_data.values is not None:
                 # Allocate memory
                 self._model._slm.allocate_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
@@ -272,7 +335,6 @@ class NeuronGroup(Group):
         self.spikes = None
         self.spike_count = None
         self.spike_que_ptr = [0]
-        self.is_spike_source_array = False
         self._max_delay_steps = 0
 
     @property
@@ -352,12 +414,10 @@ class NeuronGroup(Group):
         var_space   --  dict with model variables
         """
         (self.neuron, self.type, self.param_names, self.params,
-         self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, self, param_space, var_space, self,
-             model_family=genn_wrapper.NeuronModels)
-
-        if self.type == "SpikeSourceArray":
-            self.is_spike_source_array = True
+         self.var_names, self.vars, self.extra_global_params) =\
+             model_preprocessor.prepare_model(
+                model, self, param_space, var_space,
+                model_family=genn_wrapper.NeuronModels)
 
     def add_to(self, num_neurons):
         """Add this NeuronGroup to a model
@@ -370,25 +430,6 @@ class NeuronGroup(Group):
         var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
         self.pop = add_fct(self.name, num_neurons, self.neuron,
                            self.params, var_ini)
-
-    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
-    def add_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter
-
-        Args:
-        param_name      --  string with the name of the extra global parameter
-        param_values    --  iterable or a single value
-        """
-        self.set_extra_global_param(param_name, param_values)
-
-    def set_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter
-
-        Args:
-        param_name      --  string with the name of the extra global parameter
-        param_values    --  iterable or a single value
-        """
-        self._set_extra_global_param(param_name, param_values, self.neuron)
 
     def pull_spikes_from_device(self):
         """Wrapper around GeNNModel.pull_spikes_from_device"""
@@ -453,7 +494,7 @@ class NeuronGroup(Group):
 
         # Reinitialise neuron state variables
         self._reinitialise_vars()
-        
+
     @property
     def _spike_recording_words(self):
         return ((self.size + 31) // 32)
@@ -547,16 +588,28 @@ class SynapseGroup(Group):
             raise Exception("when weight sharing is used, set_weight_update"
                             "can only be used on the 'master' population")
         else:
+            # Prepare standard model
             (self.w_update, self.wu_type, self.wu_param_names, self.wu_params,
-             self.wu_var_names, var_dict, self.wu_pre_var_names, pre_var_dict,
-             self.wu_post_var_names, post_var_dict) =\
-                 model_preprocessor.prepare_model(
-                     model, self, param_space, var_space, pre_var_space,
-                     post_var_space, model_family=genn_wrapper.WeightUpdateModels)
+             self.wu_var_names, self.vars, self.extra_global_params) =\
+                model_preprocessor.prepare_model(
+                    model, self, param_space, var_space, 
+                    genn_wrapper.WeightUpdateModels)
 
-            self.vars.update(var_dict)
-            self.pre_vars.update(pre_var_dict)
-            self.post_vars.update(post_var_dict)
+            self.wu_pre_var_names = [vnt.name for vnt in self.w_update.get_pre_vars()]
+            if pre_var_space is not None and set(iterkeys(pre_var_space)) != set(self.wu_pre_var_names):
+                raise ValueError("Invalid presynaptic variable initializers "
+                                 "for WeightUpdateModels")
+            self.pre_vars = {
+                vnt.name: Variable(vnt.name, vnt.type, pre_var_space[vnt.name], self)
+                for vnt in self.w_update.get_pre_vars()}
+
+            self.wu_post_var_names = [vnt.name for vnt in self.w_update.get_post_vars()]
+            if post_var_space is not None and set(iterkeys(post_var_space)) != set(self.wu_post_var_names):
+                raise ValueError("Invalid postsynaptic variable initializers "
+                                 "for WeightUpdateModels")
+            self.post_vars = {
+                vnt.name: Variable(vnt.name, vnt.type, post_var_space[vnt.name], self)
+                for vnt in self.w_update.get_post_vars()}
 
     def set_post_syn(self, model, param_space, var_space):
         """Set postsynaptic model, its parameters and initial variables
@@ -567,11 +620,10 @@ class SynapseGroup(Group):
         var_space   --  dict with model variables
         """
         (self.postsyn, self.ps_type, self.ps_param_names, self.ps_params,
-         self.ps_var_names, var_dict) = model_preprocessor.prepare_model(
-             model, self, param_space, var_space,
-             model_family=genn_wrapper.PostsynapticModels)
-
-        self.psm_vars.update(var_dict)
+         self.ps_var_names, self.psm_vars, self.psm_extra_global_params) =\
+             model_preprocessor.prepare_model(
+                model, self, param_space, var_space,
+                model_family=genn_wrapper.PostsynapticModels)
 
     def get_var_values(self, var_name):
         if self.weight_sharing_master is not None:
@@ -793,6 +845,12 @@ class SynapseGroup(Group):
                             if self.connectivity_initialiser is None
                             else self.connectivity_initialiser)
 
+            if self.connectivity_initialiser is not None:
+                snippet = self.connectivity_initialiser.get_snippet()
+                self.connectivity_extra_global_params =\
+                    {egp.name: ExtraGlobalParameter(egp.name, egp.type, self)
+                     for egp in snippet.get_extra_global_params()}
+
             self.pop = add_fct(self.name, self.matrix_type, delay_steps,
                                self.src.name, self.trg.name, self.w_update,
                                self.wu_params, wu_var_ini, wu_pre_var_ini,
@@ -807,35 +865,14 @@ class SynapseGroup(Group):
                                delay_steps,self.src.name, self.trg.name,
                                self.postsyn, self.ps_params, ps_var_ini)
 
-    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
-    def add_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter
+    def set_psm_extra_global_param(self, param_name, param_values):
+        """Set extra global parameter to postsynaptic model
 
         Args:
         param_name      --  string with the name of the extra global parameter
         param_values    --  iterable or a single value
         """
-        self.set_extra_global_param(param_name, param_values)
-
-    def set_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter to weight update model
-
-        Args:
-        param_name   -- string with the name of the extra global parameter
-        param_values -- iterable or a single value
-        """
-        self._set_extra_global_param(param_name, param_values, self.w_update)
-
-    def set_psm_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter to postsynaptic model
-
-        Args:
-        param_name   -- string with the name of the extra global parameter
-        param_values -- iterable or a single value
-        """
-        self._set_extra_global_param(param_name, param_values,
-                                     self.postsyn,
-                                     self.psm_extra_global_params)
+        self.psm_extra_global_params[param_name].set_values(param_values)
 
     def set_connectivity_extra_global_param(self, param_name, param_values):
         """Set extra global parameter to connectivity initialisation snippet
@@ -845,9 +882,7 @@ class SynapseGroup(Group):
         param_values -- iterable or a single value
         """
         assert self.weight_sharing_master is None
-        self._set_extra_global_param(param_name, param_values,
-                                     self.connectivity_initialiser.get_snippet(),
-                                     self.connectivity_extra_global_params)
+        self.connectivity_extra_global_params[param_name].set_values(param_values)
 
     def pull_connectivity_from_device(self):
         """Wrapper around GeNNModel.pull_connectivity_from_device"""
@@ -856,6 +891,24 @@ class SynapseGroup(Group):
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
+
+    def pull_psm_extra_global_param_from_device(self, egp_name):
+        """Wrapper around GeNNModel.pull_extra_global_param_from_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        """
+        self._pull_extra_global_param_from_device(
+            egp_name, size, egp_dict=self.psm_extra_global_params)
+
+    def push_psm_extra_global_param_to_device(self, egp_name):
+        """Wrapper around GeNNModel.push_extra_global_param_to_device
+
+        Args:
+        egp_name    --  string with the name of the variable
+        """
+        self._push_extra_global_param_to_device(
+            egp_name, self.psm_extra_global_params)
 
     def load(self):
         # If synapse population has non-dense connectivity
@@ -946,8 +999,8 @@ class SynapseGroup(Group):
 
             # Load postsynaptic update model variables
             if self.has_individual_postsynaptic_vars:
-                self._load_vars(self.postsyn.get_vars(), self.trg.size, self.psm_vars,
-                                self.pop.get_psvar_location)
+                self._load_vars(self.postsyn.get_vars(), self.trg.size,
+                                self.psm_vars, self.pop.get_psvar_location)
 
         # Load extra global parameters
         self._load_egp()
@@ -1061,9 +1114,10 @@ class CurrentSource(Group):
         var_space   --  dict with model variables
         """
         (self.current_source_model, self.type, self.param_names, self.params,
-         self.var_names, self.vars) = model_preprocessor.prepare_model(
-             model, self, param_space, var_space,
-             model_family=genn_wrapper.CurrentSourceModels)
+         self.var_names, self.vars, self.extra_global_params) =\
+             model_preprocessor.prepare_model(
+                model, self, param_space, var_space,
+                model_family=genn_wrapper.CurrentSourceModels)
 
     def add_to(self, pop):
         """Attach this CurrentSource to NeuronGroup and
@@ -1081,26 +1135,6 @@ class CurrentSource(Group):
         self.pop = add_fct(self.name, self.current_source_model, pop.name,
                            self.params, var_ini)
 
-    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
-    def add_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter
-
-        Args:
-        param_name   -- string with the name of the extra global parameter
-        param_values -- iterable or a single value
-        """
-        self.set_extra_global_param(param_name, param_values)
-
-    def set_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter
-
-        Args:
-        param_name   -- string with the name of the extra global parameter
-        param_values -- iterable or a single value
-        """
-        self._set_extra_global_param(param_name, param_values,
-                                     self.current_source_model)
-
     def load(self):
         # Load current source variables
         self._load_vars(self.current_source_model.get_vars())
@@ -1116,3 +1150,162 @@ class CurrentSource(Group):
         """Reinitialise current source"""
         # Reinitialise current source state variables
         self._reinitialise_vars()
+
+class CustomUpdate(Group):
+
+    """Class representing a custom update"""
+
+    def __init__(self, name, model):
+        """Init CustomUpdate
+
+        Args:
+        name    -- string name of the custom update
+        model   -- pygenn.genn_model.GeNNModel this custom update is part of
+        """
+        super(CustomUpdate, self).__init__(name, model)
+        self.custom_update_model = None
+        self.var_refs = {}
+        self.custom_wu_update = False
+
+    def set_custom_update_model(self, model, param_space, var_space, var_ref_space):
+        """Set custom update model, its parameters, 
+        initial variables and variable referneces
+
+        Args:
+        model           --  type as string or instance of the model
+        param_space     --  dict with model parameters
+        var_space       --  dict with model variables
+        var_references  --  dict with model variables
+        """
+
+        # Prepare standard model
+        (self.custom_update_model, self.type, self.param_names, self.params,
+         self.var_names, self.vars, self.extra_global_params) =\
+            model_preprocessor.prepare_model(
+                model, self, param_space, var_space, 
+                genn_wrapper.CustomUpdateModels)
+
+        # Check variable references
+        self.var_ref_names = [vnt.name for vnt in self.custom_update_model.get_var_refs()]
+        if var_ref_space is not None and set(iterkeys(var_ref_space)) != set(self.var_ref_names):
+            raise ValueError("Invalid variable reference initializers "
+                             "for CustomUpdateModels")
+
+        # Count wu var references in list
+        num_wu_var_refs = sum(isinstance(v[0], WUVarReference)
+                              for v in itervalues(var_ref_space))
+
+        # If there's a mixture of references to weight 
+        # update  model and other variables, give error
+        if num_wu_var_refs != 0 and num_wu_var_refs != len(var_ref_space):
+            raise ValueError("Custom updates cannot be created with "
+                             "references pointing to a mixture of "
+                             "weight update and other variables")
+
+        # Set flag 
+        self.custom_wu_update = (num_wu_var_refs != 0)
+
+        # Store variable references in class
+        self.var_refs = var_ref_space
+
+    def add_to(self, group_name):
+        """Attach this CurrentSource to NeuronGroup and
+        add it to the pygenn.genn_model.GeNNModel
+
+        Args:
+        group_name  --  name of update group this update should be performed in
+        """
+        add_fct = getattr(self._model._model, "add_custom_update_" + self.type)
+
+        var_ini = model_preprocessor.var_space_to_vals(self.custom_update_model,
+                                                       self.vars)
+        if self.custom_wu_update:
+            var_refs = model_preprocessor.var_ref_space_to_wu_var_refs(
+                self.custom_update_model, self.var_refs)
+        else:
+            var_refs = model_preprocessor.var_ref_space_to_var_refs(
+                self.custom_update_model, self.var_refs)
+
+        self.pop = add_fct(self.name, group_name, self.custom_update_model, 
+                           self.params, var_ini, var_refs)
+
+    def load(self):
+        # If this is a custom weight update
+        if self.custom_wu_update:
+            # Assert that population has individual synapse variables
+            assert self._synapse_group.has_individual_synapse_vars
+
+            # Loop through state variables
+            for v in self.custom_update_model.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_var_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    #              else self._model.batch_size)
+                    num_copies = 1
+
+                    # Get view
+                    size = self._synapse_group.weight_update_var_size * num_copies
+                    var_data.view = self._assign_ext_ptr_array(
+                        v.name, size, var_data.type)
+
+                    # If there is more than one copy, reshape view to 2D
+                    if num_copies > 1:
+                        var_data.view = np.reshape(var_data.view, 
+                                                   (num_copies, -1))
+
+                    # Initialise variable if necessary
+                    self._synapse_group._init_wum_var(var_data, num_copies)
+
+                # Load any var initialisation egps associated with this variable
+                self._load_egp(var_data.extra_global_params, v.name)
+        # Otherwise, load variables 
+        else:
+            self._load_vars(self.custom_update_model.get_vars(),
+                            size=self.pop.get_size())
+
+        # Load custom update extra global parameters
+        self._load_egp()
+
+    def load_init_egps(self):
+        # Load any egps used for variable initialisation
+        self._load_var_init_egps()
+
+    def reinitialise(self):
+        """Reinitialise custom update"""
+        # If this is a custom weight update
+        if self.custom_wu_update:
+            # Assert that population has individual synapse variables
+            assert self._synapse_group.has_individual_synapse_vars
+
+            # Loop through custom update state variables
+            for v in self.custom_update_model.get_vars():
+                # Get corresponding data from dictionary
+                var_data = self.vars[v.name]
+
+                # If variable is located on host
+                var_loc = self.pop.get_var_location(v.name) 
+                if (var_loc & VarLocation_HOST) != 0:
+                    # Determine how many copies of this variable are present
+                    #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    #              else self._model.batch_size)
+                    num_copies = 1
+
+                    # Initialise
+                    self._synapse_group._init_wum_var(var_data, num_copies)
+        # Otherwise, reinitialise current source state variables
+        else:
+            self._reinitialise_vars(size=self.pop.get_size())
+
+    @property
+    def _synapse_group(self):
+        """Get SynapseGroup associated with custom weight update"""
+        assert self.custom_wu_update
+
+        # Return Python synapse group reference from 
+        # first (arbitrarily) variable reference
+        return next(itervalues(self.var_refs))[1]

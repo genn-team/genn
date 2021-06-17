@@ -17,12 +17,15 @@
     <ClCompile Include="codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
+    <ClCompile Include="modelSpec.cc" />
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="synapseGroup.cc" />
+    <ClCompile Include="models.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest-all.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest_main.cc" />

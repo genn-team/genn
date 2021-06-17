@@ -24,6 +24,7 @@
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
     <ClCompile Include="code_generator\generateAll.cc" />
+    <ClCompile Include="code_generator\generateCustomUpdate.cc" />
     <ClCompile Include="code_generator\generateInit.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
@@ -38,9 +39,12 @@
     <ClCompile Include="binomial.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customUpdate.cc" />
+    <ClCompile Include="customUpdateModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="logging.cc" />
+    <ClCompile Include="models.cc" />
     <ClCompile Include="modelSpec.cc" />
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
@@ -60,6 +64,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateAll.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateCustomUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateInit.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
@@ -76,6 +81,9 @@
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customUpdate.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customUpdateInternal.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />

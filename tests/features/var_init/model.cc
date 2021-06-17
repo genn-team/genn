@@ -59,6 +59,19 @@ public:
 };
 IMPLEMENT_MODEL(WeightUpdateModel);
 
+//----------------------------------------------------------------------------
+// NopCustomUpdateModel
+//----------------------------------------------------------------------------
+class NopCustomUpdateModel : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(NopCustomUpdateModel, 0, 5, 1);
+
+    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
+    SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
+};
+IMPLEMENT_MODEL(NopCustomUpdateModel);
+
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -135,26 +148,62 @@ void modelDefinition(ModelSpec &model)
         initVar<InitVarSnippet::Exponential>(exponentialParams),
         initVar<InitVarSnippet::Gamma>(gammaParams));
     
+    NopCustomUpdateModel::VarValues customUpdateInit(
+        13.0,
+        initVar<InitVarSnippet::Uniform>(uniformParams),
+        initVar<InitVarSnippet::Normal>(normalParams),
+        initVar<InitVarSnippet::Exponential>(exponentialParams),
+        initVar<InitVarSnippet::Gamma>(gammaParams));
+    
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
-    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource2", 20000, {}, {});
-    model.addNeuronPopulation<Neuron>("Pop", 20000, {}, neuronInit);
-    model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource2", 50000, {}, {});
+    NeuronGroup *ng = model.addNeuronPopulation<Neuron>("Pop", 50000, {}, neuronInit);
+    CurrentSource *cs = model.addCurrentSource<CurrentSrc>("CurrSource", "Pop", {}, currentSourceInit);
 
     // Dense synapse populations
-    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
+    SynapseGroup *sgDense = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource1", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit);
 
     // Sparse synapse populations
-    model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
+    SynapseGroup *sgSparse = model.addSynapsePopulation<WeightUpdateModel, PostsynapticModel>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource2", "Pop",
         {}, weightUpdateInit, weightUpdatePreInit, weightUpdatePostInit,
         {}, postsynapticInit,
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
+    
+    // Custom updates
+    NopCustomUpdateModel::VarReferences neuronVarReferences(createVarRef(ng, "constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("NeuronCustomUpdate", "Test",
+                                               {}, customUpdateInit, neuronVarReferences);
+    
+    NopCustomUpdateModel::VarReferences currentSourceVarReferences(createVarRef(cs, "constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("CurrentSourceCustomUpdate", "Test",
+                                               {}, customUpdateInit, currentSourceVarReferences);
+                                               
+    NopCustomUpdateModel::VarReferences psmVarReferences(createPSMVarRef(sgDense, "pconstant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("PSMCustomUpdate", "Test",
+                                               {}, customUpdateInit, neuronVarReferences);
+                                    
+    NopCustomUpdateModel::VarReferences wuPreVarReferences(createWUPreVarRef(sgSparse, "pre_constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("WUPreCustomUpdate", "Test",
+                                               {}, customUpdateInit, wuPreVarReferences);
+                                               
+    NopCustomUpdateModel::VarReferences wuPostVarReferences(createWUPostVarRef(sgDense, "post_constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("WUPostCustomUpdate", "Test",
+                                               {}, customUpdateInit, wuPostVarReferences);
+    
+    NopCustomUpdateModel::WUVarReferences wuSparseVarReferences(createWUVarRef(sgSparse, "constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("WUSparseCustomUpdate", "Test",
+                                               {}, customUpdateInit, wuSparseVarReferences);
+    
+    NopCustomUpdateModel::WUVarReferences wuDenseVarReferences(createWUVarRef(sgDense, "constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("WUDenseCustomUpdate", "Test",
+                                               {}, customUpdateInit, wuDenseVarReferences);
 
     model.setPrecision(GENN_FLOAT);
 }

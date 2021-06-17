@@ -83,10 +83,6 @@ struct Preferences : public PreferencesBase
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelBlockSize manualWorkGroupSizes;
-    
-    //! On AMD devices, command queue flushes are inserted after every kernel launch  
-    //! to workaround driver issues. Set this flag to disable this behaviour.
-    bool disableAMDFlush = false;
 };
 
 //--------------------------------------------------------------------------
@@ -108,10 +104,10 @@ public:
     virtual std::string getSharedPrefix() const override { return "__local "; }
 
     //! Get the ID of the current thread within the threadblock
-    virtual std::string getThreadID() const override { return "get_local_id(0)"; }
+    virtual std::string getThreadID(unsigned int axis = 0) const override{ return "get_local_id(" + std::to_string(axis) + ")"; }
 
     //! Get the ID of the current thread block
-    virtual std::string getBlockID() const override { return "get_group_id(0)"; }
+    virtual std::string getBlockID(unsigned int axis = 0) const override{ return "get_group_id(" + std::to_string(axis) + ")"; }
 
     //! Get the name of the count-leading-zeros function
     virtual std::string getCLZ() const override { return "clz"; }
@@ -149,21 +145,26 @@ public:
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler,
+                                 CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
+                                 CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const override;
+
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
-                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler,
-                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
+                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+                         CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
+                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
+                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
+                         CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &allocations) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -211,9 +212,10 @@ public:
         genCurrentSpikePull(os, ng, batchSize, true);
     }
 
-    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
-    virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                      CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const override;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations,
+                                  CodeStream &free, const std::string &name, size_t count, MemAlloc &memAlloc) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;
@@ -299,7 +301,6 @@ private:
                 os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
                 os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << buildKernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-                genPostKernelFlush(os);
             }
         }
 
@@ -417,14 +418,12 @@ private:
 
     void genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const;
 
-    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreads, size_t batchSize) const;
+    void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 
     void genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const;
 
     //! Build a string called "buildProgramFlags" containing flags to pass to cl::Program::build
     void genBuildProgramFlagsString(CodeStream &os) const;
-
-    void genPostKernelFlush(CodeStream &os) const;
 
     void divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const;
 
@@ -439,11 +438,16 @@ private:
         it would seem, doesn't support some functions e.g. inline PTAX */
     bool isChosenPlatformNVIDIA() const;
 
+    //! Should we make all allocations from sub-buffers?
+    /*! This is required for correct functioning on AMD devices */
+    bool shouldUseSubBufferAllocations() const;
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const unsigned int m_ChosenPlatformIndex;
     const unsigned int m_ChosenDeviceIndex;
+    unsigned int m_AllocationAlignementBytes;
     cl::Device m_ChosenDevice;
     cl::Platform m_ChosenPlatform;
 };

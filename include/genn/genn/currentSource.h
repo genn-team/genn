@@ -11,6 +11,9 @@
 #include "gennExport.h"
 #include "variableMode.h"
 
+// Forward declarations
+class NeuronGroupInternal;
+
 //------------------------------------------------------------------------
 // CurrentSource
 //------------------------------------------------------------------------
@@ -59,9 +62,10 @@ public:
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
                   const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
+                  const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation, 
+                  VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_VarLocation(varInitialisers.size(), defaultVarLocation),
+        m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
     {
     }
@@ -74,6 +78,8 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
+    const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
+
     const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source require an RNG to simulate
@@ -81,6 +87,8 @@ protected:
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
+
+    bool isZeroCopyEnabled() const;
 
     //! Can this current source be merged with other? i.e. can they be simulated using same generated code
     /*! NOTE: this can only be called after model is finalized */
@@ -100,6 +108,8 @@ private:
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
+
+    const NeuronGroupInternal *m_TrgNeuronGroup;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;

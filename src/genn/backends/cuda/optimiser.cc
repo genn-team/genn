@@ -4,7 +4,10 @@
 #include <algorithm>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <numeric>
+#include <thread>
+#include <tuple>
 
 // Standard C includes
 #include <cstdlib>
@@ -40,6 +43,27 @@ namespace
 {
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
 
+bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
+{
+    // If function is found
+    CUfunction kern;
+    CUresult res = cuModuleGetFunction(&kern, module, kernelName.c_str());
+    if(res == CUDA_SUCCESS) {
+        LOGD_BACKEND << "\tKernel '" << kernelName << "' found";
+
+        // Read function's shared memory size and register count and add blank entry to map of kernels to optimise
+        CHECK_CU_ERRORS(cuFuncGetAttribute(&sharedMemBytes, CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
+        CHECK_CU_ERRORS(cuFuncGetAttribute(&numRegisters, CU_FUNC_ATTRIBUTE_NUM_REGS, kern));
+
+        LOGD_BACKEND << "\t\tShared memory bytes:" << sharedMemBytes;
+        LOGD_BACKEND << "\t\tNum registers:" << numRegisters;
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+//--------------------------------------------------------------------------
 void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &warpAllocGran, size_t &regAllocGran,
                                      size_t &smemAllocGran, size_t &maxBlocksPerSM)
 {
@@ -94,12 +118,13 @@ void getDeviceArchitectureProperties(const cudaDeviceProp &deviceProps, size_t &
 }
 //--------------------------------------------------------------------------
 void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInternal &model,
-                    std::vector<size_t> (&groupSizes)[KernelMax])
+                    std::vector<size_t> (&groupSizes)[KernelMax], std::set<std::string> &customUpdateKernels,
+                    std::set<std::string> &customTransposeUpdateKernels)
 {
     // Loop through neuron groups
     for(const auto &n : model.getNeuronGroups()) {
         // Add number of neurons to vector of neuron kernels
-        groupSizes[KernelNeuronUpdate].push_back(n.second.getNumNeurons());
+        groupSizes[KernelNeuronUpdate].push_back(model.getBatchSize() * n.second.getNumNeurons());
 
         // Add number of neurons to initialisation kernel (all neuron groups at least require spike counts initialising)
         groupSizes[KernelInitialize].push_back(n.second.getNumNeurons());
@@ -107,7 +132,35 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         // If neuron group requires previous spike or spike-like-event times to be reset after update 
         // i.e. in the pre-neuron reset kernel, add number of neurons to kernel
         if(n.second.isPrevSpikeTimeRequired() || n.second.isPrevSpikeEventTimeRequired()) {
-            groupSizes[KernelPreNeuronReset].push_back(n.second.getNumNeurons());
+            groupSizes[KernelNeuronPrevSpikeTimeUpdate].push_back((size_t)model.getBatchSize() * n.second.getNumNeurons());
+        }
+    }
+
+    // Loop through custom updates, add size to vector of custom update groups and update group name to set
+    for(const auto &c : model.getCustomUpdates()) {
+        groupSizes[KernelCustomUpdate].push_back(c.second.isBatched() ? (model.getBatchSize() * c.second.getSize()) : c.second.getSize());
+        customUpdateKernels.insert(c.second.getUpdateGroupName());
+    }
+
+     // Loop through custom updates add size to vector of custom update groups and update group name to set
+    for(const auto &c : model.getCustomWUUpdates()) {
+        const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(c.second.getSynapseGroup());
+        if(c.second.isTransposeOperation()) {
+            const size_t numCopies = c.second.isBatched() ? model.getBatchSize() : 1;
+            const size_t size = numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons();
+            groupSizes[KernelCustomTransposeUpdate].push_back(size);
+            customTransposeUpdateKernels.insert(c.second.getUpdateGroupName());
+        }
+        else {
+            customUpdateKernels.insert(c.second.getUpdateGroupName());
+
+            const size_t numCopies = c.second.isBatched() ? model.getBatchSize() : 1;
+            if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections());
+            }
+            else {
+                groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons());
+            }
         }
     }
 
@@ -115,15 +168,15 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     size_t numPreSynapseResetGroups = 0;
     for(const auto &s : model.getSynapseGroups()) {
         if(s.second.isSpikeEventRequired() || s.second.isTrueSpikeRequired()) {
-            groupSizes[KernelPresynapticUpdate].push_back(Backend::getNumPresynapticUpdateThreads(s.second, preferences));
+            groupSizes[KernelPresynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPresynapticUpdateThreads(s.second, preferences));
         }
 
         if(!s.second.getWUModel()->getLearnPostCode().empty()) {
-            groupSizes[KernelPostsynapticUpdate].push_back(Backend::getNumPostsynapticUpdateThreads(s.second));
+            groupSizes[KernelPostsynapticUpdate].push_back(model.getBatchSize() * Backend::getNumPostsynapticUpdateThreads(s.second));
         }
 
         if(!s.second.getWUModel()->getSynapseDynamicsCode().empty()) {
-            groupSizes[KernelSynapseDynamicsUpdate].push_back(Backend::getNumSynapseDynamicsThreads(s.second));
+            groupSizes[KernelSynapseDynamicsUpdate].push_back(model.getBatchSize() * Backend::getNumSynapseDynamicsThreads(s.second));
         }
 
         // If synapse group has individual weights and needs device initialisation
@@ -146,10 +199,76 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     }
 
     // Add group sizes for reset kernels
-    // **NOTE** individual pre-neuron reset groups have already been added for neuron groups 
-    // which require previous spike or spike-like-event times, just add single big group for remainder here
-    groupSizes[KernelPreNeuronReset].push_back(model.getNeuronGroups().size() - groupSizes[KernelPreNeuronReset].size());
-    groupSizes[KernelPreSynapseReset].push_back(numPreSynapseResetGroups);
+    groupSizes[KernelNeuronSpikeQueueUpdate].push_back(model.getNeuronGroups().size());
+    groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
+}
+//--------------------------------------------------------------------------
+void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, 
+                   const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, const filesystem::path &nvccPath,
+                   int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
+                   KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
+{
+    // Set context for this thread
+    cuCtxSetCurrent(context);
+
+#ifdef _WIN32
+    // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
+    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
+#else
+    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
+#endif
+            
+    if(system(nvccCommand.c_str()) != 0) {
+        throw std::runtime_error("optimizeBlockSize: NVCC failed");
+    }
+
+    // Load compiled module
+    CUmodule module;
+    CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
+
+    // Loop through kernels
+    for (unsigned int k = 0; k < KernelMax; k++) {
+        // If this kernel is a custom update
+        // **YUCK** this mechanism is really not very nice but to fix it properly would require
+        // replacing the block sizes std::array with a std::map to handle different custom update kernels
+        //  which would break backward compatibility. For now just use worst case to pick block sizes
+        if(k == KernelCustomUpdate || k == KernelCustomTransposeUpdate) {
+            // Loop through all kernels of this type
+            const auto &kernels = (k == KernelCustomUpdate) ? customUpdateKernels : customTransposeUpdateKernels;
+            for(const std::string &c : kernels) {
+                // If kernel is found, update maximum shared memory size and register count
+                int sharedSizeBytes = 0;
+                int numRegisters = 0;
+                if(getKernelResourceUsage(module, Backend::KernelNames[k] + c, sharedSizeBytes, numRegisters)) {
+                    krnlSharedSizeBytes[r][k] = std::max(krnlSharedSizeBytes[r][k], sharedSizeBytes);
+                    krnlNumRegs[r][k] = std::max(krnlNumRegs[r][k], numRegisters);
+                }
+            }
+
+            // If any kernels were found, add this type of custom update kernel to map
+            if(krnlSharedSizeBytes[r][k] > 0 || krnlNumRegs[r][k] > 0) {
+                std::lock_guard<std::mutex> g(kernelsToOptimiseMutex);
+                kernelsToOptimise.emplace(std::piecewise_construct,
+                                          std::forward_as_tuple(k),
+                                          std::forward_as_tuple(false, 0));
+            }
+        }
+        // Otherwise, if kernel is found, add to map of kernels to optimise
+        else if(getKernelResourceUsage(module, Backend::KernelNames[k], krnlSharedSizeBytes[r][k], krnlNumRegs[r][k])) {
+            std::lock_guard<std::mutex> g(kernelsToOptimiseMutex);
+            kernelsToOptimise.emplace(std::piecewise_construct,
+                                      std::forward_as_tuple(k),
+                                      std::forward_as_tuple(false, 0));
+        }
+    }
+
+    // Unload module
+    CHECK_CU_ERRORS(cuModuleUnload(module));
+
+    // Remove tempory cubin file
+    if(std::remove((modulePath + ".cubin").c_str())) {
+        LOGW_BACKEND << "Cannot remove dry-run cubin file";
+    }
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
@@ -160,18 +279,16 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     cudaSetDevice(deviceID);
 
     // Calculate model group sizes
+    std::set<std::string> customUpdateKernels;
+    std::set<std::string> customTransposeUpdateKernels;
     std::vector<size_t> groupSizes[KernelMax];
-    calcGroupSizes(preferences, model, groupSizes);
+    calcGroupSizes(preferences, model, groupSizes, customUpdateKernels, customTransposeUpdateKernels);
 
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
     CUcontext cuContext;
     CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
-
-    // Bitset to mark which kernels are present and array of their attributes for each repetition
-    int krnlSharedSizeBytes[2][KernelMax];
-    int krnlNumRegs[2][KernelMax];
 
     // Get CUDA_PATH environment variable
     // **NOTE** adding CUDA_PATH/bin to path is a REQUIRED post-installation action when installing CUDA so this shouldn't be required
@@ -187,11 +304,19 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     else {
         throw std::runtime_error("CUDA_PATH environment variable not set - ");
     }
+
+    // Arrays of kernel attributes gathered across block sizes
+    int krnlSharedSizeBytes[2][KernelMax] = {};
+    int krnlNumRegs[2][KernelMax] = {};
+
+    // Map of kernels that are present in compiled 
+    // modules and mutex to protect access to it
+    KernelOptimisationOutput kernelsToOptimise;
+    std::mutex kernelsToOptimiseMutex;
     
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
-    KernelOptimisationOutput kernelsToOptimise;
     for(unsigned int r = 0; r < 2; r++) {
         LOGD  << "Generating code with block size:" << repBlockSizes[r];
 
@@ -204,58 +329,19 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Generate code
         const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
 
-        // Set context
-        // **NOTE** CUDA calls in code generation seem to lose driver context
-        CHECK_CU_ERRORS(cuCtxSetCurrent(cuContext));
-
-        // Loop through generated modules
+        // Loop through generated modules and launch threads to build and analyse each module
+        std::vector<std::thread> threads;
         for(const auto &m : moduleNames) {
             // Build module
             const std::string modulePath = (outputPath / m).str();
-            
-#ifdef _WIN32
-            // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
-            const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
-#else
-            const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
- #endif
-            if(system(nvccCommand.c_str()) != 0) {
-                throw std::runtime_error("optimizeBlockSize: NVCC failed");
-            }
+            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), 
+                                 std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
+                                 std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
+        }
 
-            // Load compiled module
-            CUmodule module;
-            CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
-
-            // Loop through kernels
-            for (unsigned int k = 0; k < KernelMax; k++) {
-                // If function is found
-                CUfunction kern;
-                CUresult res = cuModuleGetFunction(&kern, module, Backend::KernelNames[k]);
-                if (res == CUDA_SUCCESS) {
-                    LOGD_BACKEND << "\tKernel '" << Backend::KernelNames[k] << "' found";
-
-                    // Read function's shared memory size and register counand add blank entry to map of kernels to optimise
-                    CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlSharedSizeBytes[r][k], CU_FUNC_ATTRIBUTE_SHARED_SIZE_BYTES, kern));
-                    CHECK_CU_ERRORS(cuFuncGetAttribute(&krnlNumRegs[r][k], CU_FUNC_ATTRIBUTE_NUM_REGS , kern));
-
-                    //CHECK_CUDA_ERRORS(cudaFuncGetAttributes(&krnlAttr[r][k], kern));
-                    kernelsToOptimise.emplace(std::piecewise_construct,
-                                              std::forward_as_tuple(k),
-                                              std::forward_as_tuple(false, 0));
-
-                    LOGD_BACKEND << "\t\tShared memory bytes:" << krnlSharedSizeBytes[r][k];
-                    LOGD_BACKEND << "\t\tNum registers:" << krnlNumRegs[r][k];
-                }
-            }
-
-            // Unload module
-            CHECK_CU_ERRORS(cuModuleUnload(module));
-
-            // Remove tempory cubin file
-            if(std::remove((modulePath + ".cubin").c_str())) {
-                LOGW_BACKEND << "Cannot remove dry-run cubin file";
-            }
+        // Join all threads
+        for(auto &t : threads) {
+            t.join();
         }
     }
 
@@ -297,10 +383,10 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
             // Calculate number of blocks the groups used by this kernel will require
             const size_t reqBlocks = std::accumulate(groupSizes[k.first].begin(), groupSizes[k.first].end(), size_t{0},
-                                                        [blockThreads](size_t acc, size_t size)
-                                                        {
-                                                            return acc + ceilDivide(size, blockThreads);
-                                                        });
+                                                     [blockThreads](size_t acc, size_t size)
+                                                     {
+                                                         return acc + ceilDivide(size, blockThreads);
+                                                     });
             LOGD_BACKEND << "\t\tBlocks required (according to padded sum):" << reqBlocks;
 
             // Start estimating SM block limit - the number of blocks of this size that can run on a single SM
