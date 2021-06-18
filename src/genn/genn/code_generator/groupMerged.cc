@@ -613,16 +613,9 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     // Update hash with archetype's hash
     Utils::updateHash(getArchetype().getHashDigest(), hash);
 
-    // Update hash with each group's neuron count
-    updateHash(&NeuronGroupInternal::getNumNeurons, hash);
-
-    // Update hash wtih each groups parameters and derived parameters
-    updateHash(&NeuronGroupInternal::getParams, hash);
-    updateHash(&NeuronGroupInternal::getDerivedParams, hash);
-
     // Loop through groups
     // **TODO** add updateHash protected helper which updates hash for everything in group using lambda funcion
-    /*for(size_t i = 0; i < getGroups().size(); i++) {
+    for(size_t i = 0; i < getGroups().size(); i++) {
         const auto &group = getGroups().at(i).get();
 
         // Update hash with number of neurons in their group 
@@ -657,7 +650,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
             updateDerivedParamHash(codeStrings, c->getWUModel()->getDerivedParams(), c->getWUDerivedParams(), hash);
         }
         
-    }*/
+    }
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
@@ -796,6 +789,12 @@ bool NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous(size_t c
 boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
+    for(const auto &g : getGroups()) {
+        Utils::updateHash(g.get().getNumNeurons(), hash);
+        
+        // **TODO** var init parameters and derived
+    }
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
