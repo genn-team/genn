@@ -49,55 +49,7 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
     assert(outputFileStream.good());
     outputFileStream << inputFileStream.rdbuf();
 }
-//--------------------------------------------------------------------------
-void readHashDigest(const filesystem::path &outputPath, const std::string &name, boost::uuids::detail::sha1::digest_type &hashDigest)
-{
-    // Open file
-    std::ifstream is((outputPath / (name + ".sha")).str());
-    
-    // If it's good
-    if(is.good()) {
-        // Read digest as hex
-        is >> std::hex;
-        for(auto &d : hashDigest) {
-            is >> d;
-        }
-    }
 }
-//--------------------------------------------------------------------------
-void writeHashDigest(const filesystem::path &outputPath, const std::string &name, const boost::uuids::detail::sha1::digest_type &hashDigest)
-{
-    // Open file
-    std::ofstream os((outputPath / (name + ".sha")).str());
-    
-    // Write digest as hex with each word seperated by a space
-    os << std::hex;
-    for(const auto d : hashDigest) {
-        os << d << " ";
-    }
-}
-//--------------------------------------------------------------------------
-bool shouldRebuildModel(const filesystem::path &outputPath, const std::string &name, const boost::uuids::detail::sha1::digest_type &hashDigest)
-{
-    LOGI_CODE_GEN << "Module " << name << " hash digest " << hashDigest;
-
-    // Read previous hash
-    boost::uuids::detail::sha1::digest_type previousHashDigest;
-    readHashDigest(outputPath, name, previousHashDigest);
-
-    // If current hash is the same as previous, no need to rebuild
-    if(previousHashDigest == hashDigest) {
-        LOGI_CODE_GEN << "\tModule unchanged - skipping rebuild";
-        return false;
-    }
-    // Write new hash digest and rebuild
-    else {
-        LOGI_CODE_GEN << "\tModule changed (previous digest " << previousHashDigest << ") - rebuilding";
-        writeHashDigest(outputPath, name, hashDigest);
-        return true;
-    }
-}
-}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // plog namespace
@@ -127,52 +79,35 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Create directory for generated code
     filesystem::create_directory(outputPath);
 
+    // Open output file streams for generated code files
+    std::ofstream definitionsStream((outputPath / "definitions.h").str());
+    std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
+    std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
+    std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
+    std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
+    std::ofstream initStream((outputPath / "init.cc").str());
+    std::ofstream runnerStream((outputPath / "runner.cc").str());
+
+    // Wrap output file streams in CodeStreams for formatting
+    CodeStream definitions(definitionsStream);
+    CodeStream definitionsInternal(definitionsInternalStream);
+    CodeStream customUpdate(customUpdateStream);
+    CodeStream neuronUpdate(neuronUpdateStream);
+    CodeStream synapseUpdate(synapseUpdateStream);
+    CodeStream init(initStream);
+    CodeStream runner(runnerStream);
 
     // Create merged model
     ModelSpecMerged modelMerged(model, backend);
 
-    // Get model hash digests
-    const auto neuronUpdateHashDigest = modelMerged.getNeuronUpdateModuleHashDigest();
-    const auto synapseUpdateHashDigest = modelMerged.getSynapseUpdateModuleHashDigest();
-    const auto customUpdateHashDigest = modelMerged.getCustomUpdateModuleHashDigest();
-    const auto initHashDigest = modelMerged.getInitModuleHashDigest();
-
-    // Generate runner
-    std::ofstream definitionsStream((outputPath / "definitions.h").str());
-    std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
-    std::ofstream runnerStream((outputPath / "runner.cc").str());
-    CodeStream definitions(definitionsStream);
-    CodeStream definitionsInternal(definitionsInternalStream);
-    CodeStream runner(runnerStream);
+    // Generate modules
+    //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
+    auto memorySpaces = backend.getMergedGroupMemorySpaces(modelMerged);
     auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
-
-    // Generate synapse update module if required
-    if(shouldRebuildModel(outputPath, "synapseUpdate", synapseUpdateHashDigest)) {
-        std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
-        CodeStream synapseUpdate(synapseUpdateStream);
-        generateSynapseUpdate(synapseUpdate, modelMerged, backend);
-    }
-
-    // Generate neuron update module if required
-    if(shouldRebuildModel(outputPath, "neuronUpdate", neuronUpdateHashDigest)) {
-        std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
-        CodeStream neuronUpdate(neuronUpdateStream);
-        generateNeuronUpdate(neuronUpdate, modelMerged, backend);
-    }
-
-    // Generate custom update module if required
-    if(shouldRebuildModel(outputPath, "customUpdate", customUpdateHashDigest)) {
-        std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
-        CodeStream customUpdate(customUpdateStream);
-        generateCustomUpdate(customUpdate, modelMerged, backend);
-    }
-
-    // Generate initialisation module if required
-    if(shouldRebuildModel(outputPath, "init", initHashDigest)) {
-        std::ofstream initStream((outputPath / "init.cc").str());
-        CodeStream init(initStream);
-        generateInit(init, modelMerged, backend);
-    }
+    generateSynapseUpdate(synapseUpdate, memorySpaces, modelMerged, backend);
+    generateNeuronUpdate(neuronUpdate, memorySpaces, modelMerged, backend);
+    generateCustomUpdate(customUpdate, memorySpaces, modelMerged, backend);
+    generateInit(init, memorySpaces, modelMerged, backend);
 
     // Generate support code module if the backend supports namespaces
     if (backend.supportsNamespace()) {
