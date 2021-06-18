@@ -4,8 +4,12 @@
 namespace CodeGenerator
 {
 class BackendBase;
-class CodeStream;
 class ModelSpecMerged;
+}
+
+namespace filesystem
+{
+class path;
 }
 
 //--------------------------------------------------------------------------
@@ -13,5 +17,5 @@ class ModelSpecMerged;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend);
+void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

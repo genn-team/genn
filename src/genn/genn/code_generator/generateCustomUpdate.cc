@@ -1,6 +1,7 @@
 #include "code_generator/generateCustomUpdate.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -98,13 +99,17 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
-    os << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
+    CodeStream customUpdate(customUpdateStream);
+
+    customUpdate << "#include \"definitionsInternal.h\"" << std::endl;
+    customUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genCustomUpdate(os, modelMerged,
+    backend.genCustomUpdate(customUpdate, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

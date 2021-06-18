@@ -1,6 +1,7 @@
 #include "code_generator/generateInit.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <string>
 
 // GeNN includes
@@ -269,14 +270,18 @@ void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const SynapseCo
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream initStream((outputPath / "init.cc").str());
+    CodeStream init(initStream);
+
+    init << "#include \"definitionsInternal.h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
 
-    backend.genInit(os, modelMerged,
+    backend.genInit(init, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
