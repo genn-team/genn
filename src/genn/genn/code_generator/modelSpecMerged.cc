@@ -201,7 +201,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateModuleHashDigest() const
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
 
@@ -219,7 +219,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateModuleHa
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateModuleHashDigest() const
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
 
@@ -244,7 +244,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateModuleH
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateModuleHashDigest() const
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
 
@@ -254,7 +254,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateModuleHa
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitModuleHashDigest() const
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
 
