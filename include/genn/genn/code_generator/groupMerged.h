@@ -1674,7 +1674,7 @@ protected:
     void updateBaseHash(boost::uuids::detail::sha1 &hash) const
     {
         // Update hash with archetype's hash digest
-        Utils::updateHash(this->getArchetype().getInitHashDigest(), hash);
+        Utils::updateHash(getArchetype().getInitHashDigest(), hash);
         
         // Update hash with each group's variable initialisation parameters and derived parameters
         this->template updateVarInitParamHash<CustomUpdateInitGroupMergedBase<G>>(
