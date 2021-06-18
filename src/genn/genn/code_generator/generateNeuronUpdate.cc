@@ -1,6 +1,7 @@
 #include "code_generator/generateNeuronUpdate.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -116,16 +117,20 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
+    CodeStream neuronUpdate(neuronUpdateStream);
+
+    neuronUpdate << "#include \"definitionsInternal.h\"" << std::endl;
     if (backend.supportsNamespace()) {
-        os << "#include \"supportCode.h\"" << std::endl;
+        neuronUpdate << "#include \"supportCode.h\"" << std::endl;
     }
-    os << std::endl;
+    neuronUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genNeuronUpdate(os, modelMerged,
+    backend.genNeuronUpdate(neuronUpdate, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

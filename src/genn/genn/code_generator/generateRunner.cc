@@ -1,6 +1,7 @@
 #include "code_generator/generateRunner.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <random>
 #include <set>
 #include <sstream>
@@ -469,9 +470,16 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                       const ModelSpecMerged &modelMerged, const BackendBase &backend)
+MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
+    // Create output streams to write to file and wrap in CodeStreams
+    std::ofstream definitionsStream((outputPath / "definitions.h").str());
+    std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
+    std::ofstream runnerStream((outputPath / "runner.cc").str());
+    CodeStream definitions(definitionsStream);
+    CodeStream definitionsInternal(definitionsInternalStream);
+    CodeStream runner(runnerStream);
+
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
 

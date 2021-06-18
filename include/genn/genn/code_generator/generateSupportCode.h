@@ -3,14 +3,19 @@
 // Forward declarations
 namespace CodeGenerator
 {
-class CodeStream;
 class ModelSpecMerged;
 }
+
+namespace filesystem
+{
+class path;
+}
+
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSupportCode(CodeStream &os, const ModelSpecMerged &modelMerged);
+void generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged);
 }

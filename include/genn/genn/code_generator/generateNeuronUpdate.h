@@ -4,14 +4,19 @@
 namespace CodeGenerator
 {
 class BackendBase;
-class CodeStream;
 class ModelSpecMerged;
 }
+
+namespace filesystem
+{
+class path;
+}
+
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const BackendBase &backend);
+void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

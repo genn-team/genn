@@ -6,8 +6,12 @@
 // Forward declarations
 namespace CodeGenerator
 {
-class CodeStream;
 class ModelSpecMerged;
+}
+
+namespace filesystem
+{
+class path;
 }
 
 //--------------------------------------------------------------------------
@@ -15,6 +19,5 @@ class ModelSpecMerged;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-MemAlloc generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                        const ModelSpecMerged &modelMerged, const BackendBase &backend);
+MemAlloc generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

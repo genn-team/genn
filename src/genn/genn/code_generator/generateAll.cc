@@ -60,40 +60,20 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Create directory for generated code
     filesystem::create_directory(outputPath);
 
-    // Open output file streams for generated code files
-    std::ofstream definitionsStream((outputPath / "definitions.h").str());
-    std::ofstream definitionsInternalStream((outputPath / "definitionsInternal.h").str());
-    std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
-    std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
-    std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
-    std::ofstream initStream((outputPath / "init.cc").str());
-    std::ofstream runnerStream((outputPath / "runner.cc").str());
-
-    // Wrap output file streams in CodeStreams for formatting
-    CodeStream definitions(definitionsStream);
-    CodeStream definitionsInternal(definitionsInternalStream);
-    CodeStream customUpdate(customUpdateStream);
-    CodeStream neuronUpdate(neuronUpdateStream);
-    CodeStream synapseUpdate(synapseUpdateStream);
-    CodeStream init(initStream);
-    CodeStream runner(runnerStream);
-
     // Create merged model
     ModelSpecMerged modelMerged(model, backend);
 
     // Generate modules
     //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
-    auto mem = generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
-    generateSynapseUpdate(synapseUpdate, modelMerged, backend);
-    generateNeuronUpdate(neuronUpdate, modelMerged, backend);
-    generateCustomUpdate(customUpdate, modelMerged, backend);
-    generateInit(init, modelMerged, backend);
+    auto mem = generateRunner(outputPath, modelMerged, backend);
+    generateSynapseUpdate(outputPath, modelMerged, backend);
+    generateNeuronUpdate(outputPath, modelMerged, backend);
+    generateCustomUpdate(outputPath, modelMerged, backend);
+    generateInit(outputPath, modelMerged, backend);
 
     // Generate support code module if the backend supports namespaces
     if (backend.supportsNamespace()) {
-        std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
-        CodeStream supportCode(supportCodeStream);
-        generateSupportCode(supportCode, modelMerged);
+        generateSupportCode(outputPath, modelMerged);
     }
 
     // Get list of files to copy into generated code
