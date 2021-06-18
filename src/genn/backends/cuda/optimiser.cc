@@ -34,6 +34,7 @@
 #include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateRunner.h"
 #include "code_generator/generateSynapseUpdate.h"
+#include "code_generator/generateSupportCode.h"
 #include "code_generator/modelSpecMerged.h"
 
 // CUDA backend includes
@@ -364,11 +365,6 @@ void analyseModule(std::string sourcePath, std::string shaPath, unsigned int r, 
     if(std::remove((sourcePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
     }
-    
-    // Remove version of module build for block size optimization
-    if(std::remove(sourcePath.c_str())) {
-        LOGW_BACKEND << "Cannot remove temporary source file";
-    }
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
@@ -440,6 +436,13 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             CodeStream definitionsInternal(definitionsInternalStream);
             CodeStream runner(runnerStream);
             generateRunner(definitions, definitionsInternal, runner, modelMerged, backend);
+
+            // Generate support code module if the backend supports namespaces
+            if (backend.supportsNamespace()) {
+                std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
+                CodeStream supportCode(supportCodeStream);
+                generateSupportCode(supportCode, modelMerged);
+            }
         }
 
         // Loop through modules 
@@ -458,7 +461,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                                    kernelsToOptimise, kernelsToOptimiseMutex)) {
                 // Generate code for module
                 // **NOTE** scope forces flushing
-                const std::string moduleSourcePath = (outputPath / (std::get<0>(m) + "_optim.cc")).str();
+                const std::string moduleSourcePath = (outputPath / (std::get<0>(m) + ".cc")).str();
                 {
                     std::ofstream moduleStream(moduleSourcePath);
                     CodeStream moduleCodeStream(moduleStream);
