@@ -776,15 +776,21 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildParamHash(const Snippet::Base::StringVec &paramNames, const std::vector<std::vector<C>> &sortedGroupChildren,
-                              size_t childIndex, R isChildParamReferencedFn, V getValueFn, 
-                              boost::uuids::detail::sha1 &hash) const
+    template<typename C, typename V>
+    void updateChildParamHash(const Snippet::Base::StringVec &paramNames, const std::vector<std::string> &codeStrings,
+                              const std::vector<std::vector<C>> &sortedGroupChildren,
+                              size_t childIndex, V getValueFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
         for(size_t p = 0; p < paramNames.size(); p++) {
             // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p)) {
+            const std::string &paramName = paramNames.at(p);
+            if(std::any_of(codeStrings.begin(), codeStrings.end(),
+                            [&paramName](const std::string &c)
+                            {
+                                return (c.find("$(" + paramName + ")") != std::string::npos);
+                            }))
+            {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group
@@ -797,14 +803,21 @@ protected:
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildDerivedParamHash(const Snippet::Base::DerivedParamVec &derivedParams, const std::vector<std::vector<C>> &sortedGroupChildren,
-                                     size_t childIndex,  R isChildDerivedParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    template<typename C, typename V>
+    void updateChildDerivedParamHash(const Snippet::Base::DerivedParamVec &derivedParams, const std::vector<std::string> &codeStrings,
+                                     const std::vector<std::vector<C>> &sortedGroupChildren,
+                                     size_t childIndex, V getValueFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, p)) {
+            const std::string &paramName = derivedParams.at(p).name;
+            if(std::any_of(codeStrings.begin(), codeStrings.end(),
+                            [&paramName](const std::string &c)
+                            {
+                                return (c.find("$(" + paramName + ")") != std::string::npos);
+                            }))
+            {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group
