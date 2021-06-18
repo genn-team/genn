@@ -605,54 +605,6 @@ bool NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous(size_t childI
     return isChildParamValueHeterogeneous({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreCode,
                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); });
 }
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;
-
-    // Update hash with archetype's hash
-    Utils::updateHash(getArchetype().getHashDigest(), hash);
-
-    // Loop through groups
-    // **TODO** add updateHash protected helper which updates hash for everything in group using lambda funcion
-    for(size_t i = 0; i < getGroups().size(); i++) {
-        const auto &group = getGroups().at(i).get();
-
-        // Update hash with number of neurons in their group 
-        // **NOTE** there are too few fields that belong here to make it worth doing anything smart
-        Utils::updateHash(group.getNumNeurons(), hash);
-
-        // if(init) {
-        // **TODO** update hash based on var init params and derived params
-        // else {
-        Utils::updateHash(group.getParams(), hash);
-        Utils::updateHash(group.getDerivedParams(), hash);
-        //}
-
-        // Update hash with current source parameters
-        // **TODO** Move outside loop to make more composable
-        for(const auto *c : m_SortedInSynWithPostCode.at(i)) {
-            const std::vector<std::string> codeStrings{c->getWUModel()->getPostSpikeCode(), 
-                                                       c->getWUModel()->getPostDynamicsCode()};
-            updateParamHash(codeStrings, c->getWUModel()->getParamNames(), c->getWUParams(), hash);
-            updateDerivedParamHash(codeStrings, c->getWUModel()->getDerivedParams(), c->getWUDerivedParams(), hash);
-        }
-
-        // InSyn params + derived params
-
-        // Pre and post wu params + derived params
-        
-        // Update hash with incoming synapse groups parameters
-        for(const auto *c : m_SortedInSynWithPostCode.at(i)) {
-            const std::vector<std::string> codeStrings{c->getWUModel()->getPostSpikeCode(), 
-                                                       c->getWUModel()->getPostDynamicsCode()};
-            updateParamHash(codeStrings, c->getWUModel()->getParamNames(), c->getWUParams(), hash);
-            updateDerivedParamHash(codeStrings, c->getWUModel()->getDerivedParams(), c->getWUDerivedParams(), hash);
-        }
-        
-    }
-    return hash.get_digest();
-}
 //--------------------------------------------------------------------------
 std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
@@ -784,18 +736,6 @@ bool NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous(size_t c
     const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
     return isChildParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, childIndex, paramIndex, m_SortedOutSynWithPreVars,
                                           [varIndex](const SynapseGroupInternal *s) { return s->getWUPreVarInitialisers().at(varIndex).getDerivedParams(); });
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;
-    Utils::updateHash(getArchetype().getInitHashDigest(), hash);
-    for(const auto &g : getGroups()) {
-        Utils::updateHash(g.get().getNumNeurons(), hash);
-        
-        // **TODO** var init parameters and derived
-    }
-    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,

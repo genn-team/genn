@@ -221,44 +221,6 @@ protected:
         }
     }
 
-    void updateParamHash(const std::vector<std::string> &codeStrings, const std::vector<std::string> &paramNames,
-                         const std::vector<double> &paramValues, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        for(size_t p = 0; p < paramNames.size(); p++) {
-            // If any code strings reference parameter
-            const std::string paramName = paramNames.at(p);
-            if(std::any_of(codeStrings.begin(), codeStrings.end(),
-                            [&paramName](const std::string &c) 
-                            { 
-                                return (c.find("$(" + paramName + ")") != std::string::npos); 
-                            }))
-            {
-                // Update hash with parameter
-                Utils::updateHash(paramValues.at(p), hash);
-            }
-        }
-    }
-
-    void updateDerivedParamHash(const std::vector<std::string> &codeStrings, const Snippet::Base::DerivedParamVec &derivedParams,
-                                const std::vector<double> &derivedParamValues, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        for(size_t p = 0; p < derivedParams.size(); p++) {
-            // If any code strings reference parameter
-            const std::string paramName = derivedParams.at(p).name;
-            if(std::any_of(codeStrings.begin(), codeStrings.end(),
-                            [&paramName](const std::string &c) 
-                            { 
-                                return (c.find("$(" + paramName + ")") != std::string::npos); 
-                            }))
-            {
-                // Update hash with parameter
-                Utils::updateHash(derivedParamValues.at(p), hash);
-            }
-        }
-    }
-
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
@@ -812,9 +774,6 @@ public:
     //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
 
-    //! Get hash digest used for detecting changes
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
@@ -882,9 +841,6 @@ public:
 
     //! Get sorted vectors of outgoing synapse groups with presynaptic variables belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreVars() const { return m_SortedOutSynWithPreVars.front(); }
-
-    //! Get hash digest used for detecting changes
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
