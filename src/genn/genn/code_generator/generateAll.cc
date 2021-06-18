@@ -52,25 +52,6 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
 }
 
 //--------------------------------------------------------------------------
-// plog namespace
-//--------------------------------------------------------------------------
-// **YUCK** in order for the compiler to find this it essentially needs to be either
-// in the std namespace (where the stream is) or the plog namespace where it's called from
-namespace plog
-{
-template<typename T>
-std::basic_ostream<T> &operator << (std::basic_ostream<T> &os, const boost::uuids::detail::sha1::digest_type &digest)
-{
-    os << std::hex;
-    for(auto d : digest) {
-        os << d;
-    }
-    os << std::dec;
-    return os;
-}
-
-}
-//--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,

@@ -181,18 +181,6 @@ public:
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
     //! Get hash digest of neuron update module
-    boost::uuids::detail::sha1::digest_type getNeuronUpdateHashDigest() const;
-    
-    //! Get hash digest of synapse update module
-    boost::uuids::detail::sha1::digest_type getSynapseUpdateHashDigest() const;
-    
-    //! Get hash digest of custom update module
-    boost::uuids::detail::sha1::digest_type getCustomUpdateHashDigest() const;
-    
-    //! Get hash digest of init module
-    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
-
-    //! Get hash digest of neuron update module
     boost::uuids::detail::sha1::digest_type getNeuronUpdateArchetypeHashDigest() const;
     
     //! Get hash digest of synapse update module

@@ -201,60 +201,6 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;
-
-    // Update hash with hash digest of model properties
-    Utils::updateHash(getModel().getHashDigest(false), hash);
-
-    // Update hash with hash digest of neuron update groups
-    for(const auto &n : m_MergedNeuronUpdateGroups) {
-        Utils::updateHash(n.getHashDigest(), hash);
-    }
-
-    // **NOTE** all properties of neuron spike queue and previous spike time
-    // updates are also included in neuron update groups so no need to hash
-    
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;
-
-    // Update hash with hash of model properties
-    Utils::updateHash(getModel().getHashDigest(false), hash);
-    
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;
-
-    // Update hash with hash of model properties
-    Utils::updateHash(getModel().getHashDigest(false), hash);
-    
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitHashDigest() const
-{
-    boost::uuids::detail::sha1 hash;
-
-    // Update hash with hash of model properties
-    // **NOTE** RNG seed effects initialisation model
-    Utils::updateHash(getModel().getHashDigest(true), hash);
-    
-    // Update hash with hash digest of neuron init groups
-    for(const auto &n : m_MergedNeuronInitGroups) {
-        Utils::updateHash(n.getHashDigest(), hash);
-    }
-
-    return hash.get_digest();
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateArchetypeHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

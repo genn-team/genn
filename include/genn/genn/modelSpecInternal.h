@@ -25,5 +25,4 @@ public:
 
     using ModelSpec::zeroCopyInUse;
     using ModelSpec::isRecordingInUse;
-    using ModelSpec::getHashDigest;
 };
