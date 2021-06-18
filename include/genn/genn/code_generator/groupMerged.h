@@ -186,16 +186,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    //! Helper to test whether parameter is referenced in vector of codestrings
-    bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
-    {
-        return std::any_of(codeStrings.begin(), codeStrings.end(),
-                           [&paramName](const std::string &c)
-                           {
-                               return (c.find("$(" + paramName + ")") != std::string::npos);
-                           });
-    }
-
     //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
     bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
@@ -626,54 +616,31 @@ protected:
         }
     }
 
-    //! Is the var init parameter referenced?
-    bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const;
-
-    //! Is the var init derived parameter referenced?
-    bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const;
-
-    //! Is the current source parameter referenced?
-    bool isCurrentSourceParamReferenced(size_t childIndex, size_t paramIndex) const;
-
-    //! Is the current source derived parameter referenced?
-    bool isCurrentSourceDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
-
-    //! Is the current source var init parameter referenced?
-    bool isCurrentSourceVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Is the current source var init derived parameter referenced?
-    bool isCurrentSourceVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Is the postsynaptic model parameter referenced?
-    bool isPSMParamReferenced(size_t childIndex, size_t paramIndex) const;
-
-    //! Is the postsynaptic model derived parameter referenced?
-    bool isPSMDerivedParamReferenced(size_t childIndex, size_t varIndex) const;
-
-    //! Is the GLOBALG postsynaptic model variable referenced?
-    bool isPSMGlobalVarReferenced(size_t childIndex, size_t varIndex) const;
-
-    //! Is the postsynaptic model var init parameter referenced?
-    bool isPSMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Is the postsynaptic model var init derived parameter referenced?
-    bool isPSMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     template<typename T, typename G>
-    bool isChildParamValueHeterogeneous(size_t childIndex, size_t paramIndex,
+    bool isChildParamValueHeterogeneous(const std::vector<std::string> &codeStrings,
+                                        const std::string &paramName, size_t childIndex, size_t paramIndex,
                                         const std::vector<std::vector<T>> &sortedGroupChildren, G getParamValuesFn) const
     {
-        // Get value of archetype derived parameter
-        const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
+        // If any of the code strings reference the parameter
+        if(std::any_of(codeStrings.begin(), codeStrings.end(),
+                        [&paramName](const std::string &c)
+                        {
+                            return (c.find("$(" + paramName + ")") != std::string::npos);
+                        }))
+        {
+            // Get value of archetype derived parameter
+            const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
 
-        // Loop through groups within merged group
-        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-            const auto group = sortedGroupChildren[i][childIndex];
-            if(getParamValuesFn(group).at(paramIndex) != firstValue) {
-                return true;
+            // Loop through groups within merged group
+            for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
+                const auto group = sortedGroupChildren[i][childIndex];
+                if(getParamValuesFn(group).at(paramIndex) != firstValue) {
+                    return true;
+                }
             }
         }
-       
+
         return false;
     }
 
@@ -906,18 +873,6 @@ private:
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
                        bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const);
 
-    //! Is the incoming synapse weight update model parameter referenced?
-    bool isInSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
-
-    //! Is the incoming synapse weight update model derived parameter referenced?
-    bool isInSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
-
-    //! Is the outgoing synapse weight update model parameter referenced?
-    bool isOutSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
-
-    //! Is the outgoing synapse weight update model derived parameter referenced?
-    bool isOutSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
-
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
@@ -983,17 +938,6 @@ private:
                        bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
                        bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const);
 
-    //! Is the incoming synapse weight update model var init parameter referenced?
-    bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Is the incoming synapse weight update model var init derived parameter referenced?
-    bool isInSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Is the outgoing synapse weight update model var init parameter referenced?
-    bool isOutSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
-
-    //! Is the outgoing synapse weight update model var init derived parameter referenced?
-    bool isOutSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     //------------------------------------------------------------------------
     // Members
