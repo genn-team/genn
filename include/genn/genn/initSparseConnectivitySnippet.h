@@ -151,8 +151,8 @@ public:
 //! between a pair of pre and postsynaptic neurons.
 /*! Whether a synapse exists between a pair of pre and a postsynaptic
     neurons can be modelled using a Bernoulli distribution. While this COULD
-    br sampling directly by repeatedly drawing from the uniform distribution,
-    this is innefficient. Instead we sample from the gemetric distribution
+    be sampled directly by repeatedly drawing from the uniform distribution,
+    this is inefficient. Instead we sample from the geometric distribution
     which describes "the probability distribution of the number of Bernoulli
     trials needed to get one success" -- essentially the distribution of the
     'gaps' between synapses. We do this using the "inversion method"
