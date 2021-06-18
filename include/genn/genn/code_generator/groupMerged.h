@@ -1514,8 +1514,6 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
@@ -1540,8 +1538,6 @@ public:
     bool isParamHeterogeneous(size_t index) const;
     bool isDerivedParamHeterogeneous(size_t index) const;
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
@@ -1551,7 +1547,6 @@ public:
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
-
 };
 
 // ----------------------------------------------------------------------------
@@ -1619,7 +1614,7 @@ template<typename G>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
 public:
-    //----------------------------------------------------------------------------
+     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
     //! Should the var init parameter be implemented heterogeneously?
@@ -1657,7 +1652,7 @@ protected:
             this->addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
         }
 
-        this->template addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G>>(
+        this->template  addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G>>(
             vars, &G::getVarInitialisers,
             &CustomUpdateInitGroupMergedBase<G>::isVarInitParamHeterogeneous);
 
@@ -1666,26 +1661,7 @@ protected:
             &CustomUpdateInitGroupMergedBase<G>::isVarInitDerivedParamHeterogeneous);
     }
 
-    //----------------------------------------------------------------------------
-    // Protected methods
-    //----------------------------------------------------------------------------
-    void updateBaseHash(boost::uuids::detail::sha1 &hash) const
-    {
-        // Update hash with archetype's hash digest
-        Utils::updateHash(getArchetype().getInitHashDigest(), hash);
-        
-        // Update hash with each group's variable initialisation parameters and derived parameters
-        this->template updateVarInitParamHash<CustomUpdateInitGroupMergedBase<G>>(
-            &G::getVarInitialisers, &CustomUpdateInitGroupMergedBase<G>::isVarInitParamHeterogeneous, hash);
-        
-        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<G>>(
-            &G::getVarInitialisers, &CustomUpdateInitGroupMergedBase<G>::isVarInitDerivedParamHeterogeneous, hash);
-    }
-
 private:
-    //----------------------------------------------------------------------------
-    // Private methods
-    //----------------------------------------------------------------------------
     //! Is the var init parameter referenced?
     bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const
     {
@@ -1725,8 +1701,6 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1754,8 +1728,6 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1781,8 +1753,6 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
-
-    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //----------------------------------------------------------------------------
     // Static constants
