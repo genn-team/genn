@@ -106,7 +106,6 @@ inline void updateHash(const T &value, boost::uuids::detail::sha1 &hash)
 }
 
 //! Hash arrays of types which can, themselves, be hashed
-// **THINK** could add override for vectors of arithmetic types where data() is passed in
 template<typename T, size_t N>
 inline void updateHash(const std::array<T, N> &array, boost::uuids::detail::sha1 &hash)
 {
@@ -116,11 +115,18 @@ inline void updateHash(const std::array<T, N> &array, boost::uuids::detail::sha1
 }
 
 //! Hash vectors of types which can, themselves, be hashed
-// **THINK** could add override for vectors of arithmetic types where data() is passed in
 template<typename T>
 inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 {
     for(const auto &v : vector) {
+        updateHash(v, hash);
+    }
+}
+
+//! Hash vectors of bools
+inline void updateHash(const std::vector<bool> &vector, boost::uuids::detail::sha1 &hash)
+{
+    for(bool v : vector) {
         updateHash(v, hash);
     }
 }
