@@ -359,7 +359,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
                                            KernelBlockSize &blockSize, const Preferences &preferences,
-                                           const filesystem::path &sharePath, const filesystem::path &outputPath)
+                                           const filesystem::path &outputPath)
 {
     // Select device
     cudaSetDevice(deviceID);
@@ -417,7 +417,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 
         // Generate code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
-        auto mem = generateRunner(outputPath, modelMerged, backend);
+        generateRunner(outputPath, modelMerged, backend);
         generateSynapseUpdate(outputPath, modelMerged, backend);
         generateNeuronUpdate(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);
@@ -556,8 +556,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 }
 //--------------------------------------------------------------------------
 int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSize,
-                        const Preferences &preferences,
-                        const filesystem::path &sharePath, const filesystem::path &outputPath)
+                        const Preferences &preferences, const filesystem::path &outputPath)
 {
     // Get number of devices
     int deviceCount;
@@ -578,8 +577,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences,
-                                               sharePath, outputPath);
+        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -679,7 +677,7 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sharePath,
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &,
                       const filesystem::path &outputPath, plog::Severity backendLevel,
                       plog::IAppender *backendAppender, const Preferences &preferences)
 {
@@ -700,8 +698,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
         // Choose optimal device
         KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences,
-                                                 sharePath, outputPath);
+        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
         return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
@@ -720,8 +717,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences,
-                              sharePath, outputPath);
+            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
             return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
