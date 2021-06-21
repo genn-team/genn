@@ -589,6 +589,15 @@ std::string SynapseGroup::getSparseIndType() const
 
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canPSBeLinearlyCombined() const
+{
+    // Return true if there are no variables or extra global parameters
+    // **NOTE** many models with variables would work fine, but  
+    // nothing stops initialisers being used to configure PS models 
+    // to behave totally different, similarly with EGPs
+    return (getPSVarInitialisers().empty() && getPSModel()->getExtraGlobalParams().empty());
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -644,39 +653,22 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSLinearCombineHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getPSModel()->getHashDigest(), hash);
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+    Utils::updateHash(getPSParams(), hash);
+    Utils::updateHash(getPSDerivedParams(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getDendriticDelayUpdateHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     return hash.get_digest();
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
-{
-    const bool individualPSM = (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
-    const bool otherIndividualPSM = (other.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
-    if(getPSModel()->canBeMerged(other.getPSModel())
-       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
-       && (individualPSM == otherIndividualPSM))
-    {
-        return true;
-    }
-
-    return false;
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
-{
-    // Postsynaptic models can be linearly combined if they can be merged and either 
-    // they DON'T have individual postsynaptic model variables or they have no variable at all
-    // **NOTE** many models with variables would work fine, but nothing stops
-    // initialisers being used to configure PS models to behave totally different
-    // **NOTE** similarly with EGPs
-    return (canPSBeMerged(other)
-            && (getPSParams() == other.getPSParams())
-            && (getPSDerivedParams() == other.getPSDerivedParams())
-            && getPSModel()->getExtraGlobalParams().empty()
-            && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() const

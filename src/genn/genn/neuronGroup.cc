@@ -323,12 +323,13 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
             continue;
         }
 
-        // Continue if postsynaptic model has any variables
-        // **NOTE** many models with variables would work fine, but nothing stops
-        // initialisers being used to configure PS models to behave totally different
-        if(!a->getPSVarInitialisers().empty()) {
+        // If this synapse group's postsynaptic model can be linearly combined with others
+        if(!a->canPSBeLinearlyCombined()) {
             continue;
         }
+
+        // Get hash digest used for checking compatibility
+        const auto aHashDigest = a->getPSLinearCombineHashDigest();
 
         // Create a name for mmerged
         const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
@@ -336,8 +337,8 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         // Loop through remainder of incoming synapse populations
         bool anyMerged = false;
         for(auto b = inSyn.begin(); b != inSyn.end();) {
-            // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
-            if(a->canPSBeLinearlyCombined(**b)) {
+            // If synapse group b's postsynaptic model can be linearly combined with others and it's compatible with a
+            if((*b)->canPSBeLinearlyCombined() && (aHashDigest == (*b)->getPSLinearCombineHashDigest())) {
                 LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
 
                 // Set b's merge target to our unique name
