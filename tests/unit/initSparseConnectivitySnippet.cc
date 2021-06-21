@@ -77,10 +77,6 @@ TEST(InitSparseConnectivitySnippet, CompareBuiltIn)
 {
     using namespace InitSparseConnectivitySnippet;
 
-    ASSERT_TRUE(OneToOne::getInstance()->canBeMerged(OneToOne::getInstance()));
-    ASSERT_FALSE(OneToOne::getInstance()->canBeMerged(FixedProbability::getInstance()));
-    ASSERT_FALSE(FixedProbability::getInstance()->canBeMerged(FixedProbabilityNoAutapse::getInstance()));
-
     ASSERT_EQ(OneToOne::getInstance()->getHashDigest(), OneToOne::getInstance()->getHashDigest());
     ASSERT_NE(OneToOne::getInstance()->getHashDigest(), FixedProbability::getInstance()->getHashDigest());
     ASSERT_NE(FixedProbability::getInstance()->getHashDigest(), FixedProbabilityNoAutapse::getInstance()->getHashDigest());
@@ -91,8 +87,6 @@ TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
     using namespace InitSparseConnectivitySnippet;
 
     OneToOneCopy oneToOneCopy;
-    ASSERT_TRUE(OneToOne::getInstance()->canBeMerged(&oneToOneCopy));
-
     ASSERT_EQ(OneToOne::getInstance()->getHashDigest(), oneToOneCopy.getHashDigest());
 }
 
@@ -109,8 +103,8 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
     connectivityInit1.initDerivedParams(0.1);
     connectivityInit2.initDerivedParams(0.1);
 
-    ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit1));
-    ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit2));
+    ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit1.getHashDigest());
+    ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit2.getHashDigest());
 }
 
 TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
@@ -124,5 +118,5 @@ TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
     connectivityInit0.initDerivedParams(0.1);
     connectivityInit1.initDerivedParams(0.1);
 
-    ASSERT_TRUE(connectivityInit0.canBeMerged(connectivityInit1));
+    ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit1.getHashDigest());
 }

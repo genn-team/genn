@@ -60,10 +60,6 @@ TEST(WeightUpdateModels, CompareBuiltIn)
 {
     using namespace WeightUpdateModels;
 
-    ASSERT_TRUE(StaticPulse::getInstance()->canBeMerged(StaticPulse::getInstance()));
-    ASSERT_FALSE(StaticPulse::getInstance()->canBeMerged(StaticPulseDendriticDelay::getInstance()));
-    ASSERT_FALSE(StaticPulse::getInstance()->canBeMerged(StaticGraded::getInstance()));
-
     ASSERT_EQ(StaticPulse::getInstance()->getHashDigest(), StaticPulse::getInstance()->getHashDigest());
     ASSERT_NE(StaticPulse::getInstance()->getHashDigest(), StaticPulseDendriticDelay::getInstance()->getHashDigest());
     ASSERT_NE(StaticPulse::getInstance()->getHashDigest(), StaticGraded::getInstance()->getHashDigest());
@@ -74,7 +70,5 @@ TEST(WeightUpdateModels, CompareCopyPasted)
     using namespace WeightUpdateModels;
 
     PiecewiseSTDPCopy pwSTDPCopy;
-    ASSERT_TRUE(PiecewiseSTDP::getInstance()->canBeMerged(&pwSTDPCopy));
-
     ASSERT_EQ(PiecewiseSTDP::getInstance()->getHashDigest(), pwSTDPCopy.getHashDigest());
 }

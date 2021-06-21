@@ -49,11 +49,6 @@ public:
 //--------------------------------------------------------------------------
 TEST(NeuronModels, CompareBuiltIn)
 {
-    ASSERT_TRUE(NeuronModels::LIF::getInstance()->canBeMerged(NeuronModels::LIF::getInstance()));
-    ASSERT_FALSE(NeuronModels::LIF::getInstance()->canBeMerged(NeuronModels::Izhikevich::getInstance()));
-    ASSERT_FALSE(NeuronModels::Izhikevich::getInstance()->canBeMerged(NeuronModels::IzhikevichVariable::getInstance()));
-    ASSERT_FALSE(NeuronModels::TraubMilesAlt::getInstance()->canBeMerged(NeuronModels::TraubMiles::getInstance()));
-
     ASSERT_EQ(NeuronModels::LIF::getInstance()->getHashDigest(), NeuronModels::LIF::getInstance()->getHashDigest());
     ASSERT_NE(NeuronModels::LIF::getInstance()->getHashDigest(), NeuronModels::Izhikevich::getInstance()->getHashDigest());
     ASSERT_NE(NeuronModels::Izhikevich::getInstance()->getHashDigest(), NeuronModels::IzhikevichVariable::getInstance()->getHashDigest());
@@ -65,7 +60,5 @@ TEST(NeuronModels, CompareCopyPasted)
     using namespace NeuronModels;
 
     LIFCopy lifCopy;
-    ASSERT_TRUE(NeuronModels::LIF::getInstance()->canBeMerged(&lifCopy));
-
     ASSERT_EQ(NeuronModels::LIF::getInstance()->getHashDigest(), lifCopy.getHashDigest());
 }
