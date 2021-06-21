@@ -40,12 +40,13 @@ public:
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::isPSModelMerged;
     using SynapseGroup::getSparseIndType;
+    using SynapseGroup::canPSBeLinearlyCombined;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPreHashDigest;
     using SynapseGroup::getWUPostHashDigest;
     using SynapseGroup::getPSHashDigest;
+    using SynapseGroup::getPSLinearCombineHashDigest;
     using SynapseGroup::getDendriticDelayUpdateHashDigest;
-    using SynapseGroup::canPSBeLinearlyCombined;
     using SynapseGroup::getWUInitHashDigest;
     using SynapseGroup::getWUPreInitHashDigest;
     using SynapseGroup::getWUPostInitHashDigest;
