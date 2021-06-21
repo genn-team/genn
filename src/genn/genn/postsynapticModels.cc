@@ -9,14 +9,6 @@ IMPLEMENT_MODEL(PostsynapticModels::DeltaCurr);
 //----------------------------------------------------------------------------
 // PostsynapticModels::Base
 //----------------------------------------------------------------------------
-bool PostsynapticModels::Base::canBeMerged(const Base *other) const
-{
-    return (Models::Base::canBeMerged(other)
-            && (getDecayCode() == other->getDecayCode())
-            && (getApplyInputCode() == other->getApplyInputCode())
-            && (getSupportCode() == other->getSupportCode()));
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type PostsynapticModels::Base::getHashDigest() const
 {
     // Superclass

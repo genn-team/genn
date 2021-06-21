@@ -68,9 +68,6 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Can this sparse connectivity init snippet be merged with other? i.e. can they be simulated using same generated code
-    bool canBeMerged(const Base *other) const;
-
     //! Update hash from snippet
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 };
