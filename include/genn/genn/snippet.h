@@ -267,11 +267,6 @@ public:
         }
     }
 
-    bool canBeMerged(const Init<SnippetBase> &other) const
-    {
-        return getSnippet()->canBeMerged(other.getSnippet());
-    }
-
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
         return getSnippet()->getHashDigest();
