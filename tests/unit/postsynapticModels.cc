@@ -27,10 +27,6 @@ TEST(PostsynapticModels, CompareBuiltIn)
 {
     using namespace PostsynapticModels;
 
-    ASSERT_TRUE(ExpCurr::getInstance()->canBeMerged(ExpCurr::getInstance()));
-    ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(ExpCond::getInstance()));
-    ASSERT_FALSE(ExpCurr::getInstance()->canBeMerged(DeltaCurr::getInstance()));
-
     ASSERT_EQ(ExpCurr::getInstance()->getHashDigest(), ExpCurr::getInstance()->getHashDigest());
     ASSERT_NE(ExpCurr::getInstance()->getHashDigest(), ExpCond::getInstance()->getHashDigest());
     ASSERT_NE(ExpCurr::getInstance()->getHashDigest(), DeltaCurr::getInstance()->getHashDigest());
@@ -41,7 +37,5 @@ TEST(PostsynapticModels, CompareCopyPasted)
     using namespace PostsynapticModels;
 
     ExpCurrCopy expCurrCopy;
-    ASSERT_TRUE(ExpCurr::getInstance()->canBeMerged(&expCurrCopy));
-
     ASSERT_EQ(ExpCurr::getInstance()->getHashDigest(), expCurrCopy.getHashDigest());
 }

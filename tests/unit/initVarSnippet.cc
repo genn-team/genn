@@ -24,10 +24,6 @@ TEST(InitVarSnippet, CompareBuiltIn)
 {
     using namespace InitVarSnippet;
 
-    ASSERT_TRUE(Constant::getInstance()->canBeMerged(Constant::getInstance()));
-    ASSERT_FALSE(Uniform::getInstance()->canBeMerged(Normal::getInstance()));
-    ASSERT_FALSE(Exponential::getInstance()->canBeMerged(Gamma::getInstance()));
-
     ASSERT_EQ(Constant::getInstance()->getHashDigest(), Constant::getInstance()->getHashDigest());
     ASSERT_NE(Uniform::getInstance()->getHashDigest(), Normal::getInstance()->getHashDigest());
     ASSERT_NE(Exponential::getInstance()->getHashDigest(), Gamma::getInstance()->getHashDigest());
@@ -38,7 +34,6 @@ TEST(InitVarSnippet, CompareCopyPasted)
     using namespace InitVarSnippet;
 
     UniformCopy uniformCopy;
-    ASSERT_TRUE(Uniform::getInstance()->canBeMerged(&uniformCopy));
     ASSERT_EQ(Uniform::getInstance()->getHashDigest(), uniformCopy.getHashDigest());
 }
 
@@ -51,6 +46,6 @@ TEST(InitVarSnippet, CompareVarInitParameters)
     const auto varInit1 = initVar<InitVarSnippet::Uniform>(uniformParamsA);
     const auto varInit2 = initVar<InitVarSnippet::Uniform>(uniformParamsB);
 
-    ASSERT_TRUE(varInit0.canBeMerged(varInit1));
-    ASSERT_TRUE(varInit0.canBeMerged(varInit2));
+    ASSERT_EQ(varInit0.getHashDigest(), varInit1.getHashDigest());
+    ASSERT_EQ(varInit0.getHashDigest(), varInit2.getHashDigest());
 }

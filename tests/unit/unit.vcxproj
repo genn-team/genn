@@ -30,9 +30,6 @@
     <ClCompile Include="$(GTEST_DIR)/src/gtest-all.cc" />
     <ClCompile Include="$(GTEST_DIR)/src/gtest_main.cc" />
   </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="hashUtils.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
