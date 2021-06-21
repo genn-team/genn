@@ -116,13 +116,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    bool canBeMerged(const Base *other) const
-    {
-        // Return true if vars and egps match
-        return (Snippet::Base::canBeMerged(other)
-                && (getVars() == other->getVars()));
-    }
-
     void updateHash(boost::uuids::detail::sha1 &hash) const;
 };
 

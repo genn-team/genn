@@ -207,14 +207,6 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    bool canBeMerged(const Base *other) const
-    {
-        // Return true if parameters names and derived parameter names match
-        return ((getParamNames() == other->getParamNames()) 
-                && (getDerivedParams() == other->getDerivedParams())
-                && (getExtraGlobalParams() == other->getExtraGlobalParams()));
-    }
-
     void updateHash(boost::uuids::detail::sha1 &hash) const
     {
         Utils::updateHash(getParamNames(), hash);

@@ -17,17 +17,6 @@ IMPLEMENT_MODEL(NeuronModels::TraubMilesNStep);
 //----------------------------------------------------------------------------
 // NeuronModels::Base
 //----------------------------------------------------------------------------
-bool NeuronModels::Base::canBeMerged(const Base *other) const
-{
-    return (Models::Base::canBeMerged(other)
-            && (getSimCode() == other->getSimCode())
-            && (getThresholdConditionCode() == other->getThresholdConditionCode())
-            && (getResetCode() == other->getResetCode())
-            && (getSupportCode() == other->getSupportCode())
-            && (isAutoRefractoryRequired() == other->isAutoRefractoryRequired())
-            && (getAdditionalInputVars() == other->getAdditionalInputVars()));
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() const
 {
     // Superclass

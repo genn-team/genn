@@ -8,12 +8,6 @@ IMPLEMENT_MODEL(CurrentSourceModels::PoissonExp);
 //----------------------------------------------------------------------------
 // CurrentSourceModels::Base
 //----------------------------------------------------------------------------
-bool CurrentSourceModels::Base::canBeMerged(const Base *other) const
-{
-    return (Models::Base::canBeMerged(other)
-            && (getInjectionCode() == other->getInjectionCode()));
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest() const
 {
     // Superclass

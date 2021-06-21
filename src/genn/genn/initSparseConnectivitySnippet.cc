@@ -13,16 +13,6 @@ IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::Conv2D);
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
 //----------------------------------------------------------------------------
-bool InitSparseConnectivitySnippet::Base::canBeMerged(const Base *other) const
-{
-    return (Snippet::Base::canBeMerged(other)
-            && (getRowBuildCode() == other->getRowBuildCode())
-            && (getRowBuildStateVars() == other->getRowBuildStateVars())
-            && (getColBuildCode() == other->getColBuildCode())
-            && (getColBuildStateVars() == other->getColBuildStateVars())
-            && (getHostInitCode() == other->getHostInitCode()));
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type InitSparseConnectivitySnippet::Base::getHashDigest() const
 {
     // Superclass

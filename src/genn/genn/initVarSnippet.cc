@@ -14,12 +14,6 @@ IMPLEMENT_SNIPPET(InitVarSnippet::Gamma);
 //----------------------------------------------------------------------------
 // InitVarSnippet::Base
 //----------------------------------------------------------------------------
-bool InitVarSnippet::Base::canBeMerged(const Base *other) const
-{
-    return (Snippet::Base::canBeMerged(other)
-            && (getCode() == other->getCode()));
-}
-//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type InitVarSnippet::Base::getHashDigest() const
 {
     // Superclass
