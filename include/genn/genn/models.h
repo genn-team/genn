@@ -116,12 +116,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    bool canBeMerged(const Base *other) const
-    {
-        // Return true if vars and egps match
-        return (Snippet::Base::canBeMerged(other)
-                && (getVars() == other->getVars()));
-    }
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 };
 
 
@@ -241,7 +236,7 @@ public:
     // Public API
     //------------------------------------------------------------------------
     const SynapseGroup *getSynapseGroup() const;
-    
+
     const SynapseGroup *getTransposeSynapseGroup() const;
     const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
     size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
@@ -263,4 +258,10 @@ private:
 //----------------------------------------------------------------------------
 template<size_t NumVars>
 using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
+
+//----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 } // Models

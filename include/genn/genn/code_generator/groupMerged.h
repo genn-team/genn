@@ -64,6 +64,9 @@ public:
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
     const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
 
+    //! Get name of memory space assigned to group
+    const std::string &getMemorySpace() const { return m_MemorySpace; }
+
     //! Gets access to underlying vector of neuron groups which have been merged
     const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
@@ -151,6 +154,32 @@ public:
         // Add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
         return padSize(structSize, largestFieldSize) * getGroups().size();
+    }
+
+    //! Assign memory spaces to group
+    /*! Memory spaces are given out on a first-come, first-serve basis so this should be called on groups in preferential order */
+    void assignMemorySpaces(const BackendBase &backend, BackendBase::MemorySpaces &memorySpaces)
+    {
+        // If this backend uses memory spaces
+        if(!memorySpaces.empty()) {
+            // Get size of group in bytes
+            const size_t groupBytes = getStructArraySize(backend);
+
+            // Loop through memory spaces
+            for(auto &m : memorySpaces) {
+                // If there is space in this memory space for group
+                if(m.second > groupBytes) {
+                    // Cache memory space name in object
+                    m_MemorySpace = m.first;
+
+                    // Subtract
+                    m.second -= groupBytes;
+
+                    // Stop searching
+                    break;
+                }
+            }
+        }
     }
 
 protected:
@@ -412,6 +441,7 @@ private:
     //------------------------------------------------------------------------
     const size_t m_Index;
     const std::string m_LiteralSuffix;
+    std::string m_MemorySpace;
     std::vector<Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
 };
@@ -518,6 +548,11 @@ public:
     //! Should the postsynaptic model var init derived parameter be implemented heterogeneously?
     bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
+    //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
+    std::vector<SynapseGroupInternal*> getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
+
+    //! Get sorted vectors of current sources belonging to archetype group
+    std::vector<CurrentSourceInternal*> getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
 protected:
     //------------------------------------------------------------------------
     // Protected methods
@@ -525,50 +560,48 @@ protected:
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
-    template<typename T, typename G, typename C>
-    void orderNeuronGroupChildren(const std::vector<T> &archetypeChildren,
-                                  std::vector<std::vector<T>> &sortedGroupChildren,
-                                  G getVectorFunc, C isCompatibleFunc) const
+    template<typename T, typename G, typename H>
+    void orderNeuronGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
+                                  G getVectorFunc, H getHashDigestFunc) const
     {
+        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
+
         // Reserve vector of vectors to hold children for all neuron groups, in archetype order
-        sortedGroupChildren.reserve(archetypeChildren.size());
+        sortedGroupChildren.reserve(getGroups().size());
+
+        // Create temporary vector of children and their digests
+        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, T*>> childDigests;
+        childDigests.reserve(archetypeChildren.size());
 
         // Loop through groups
         for(const auto &g : getGroups()) {
-            // Make temporary copy of this group's children
-            std::vector<T> tempChildren((g.get().*getVectorFunc)());
+            // Get group children
+            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
+            assert(groupChildren.size() == archetypeChildren.size());
 
-            assert(tempChildren.size() == archetypeChildren.size());
+            // Loop through children and add them and their digests to vector
+            childDigests.clear();
+            for(auto *c : groupChildren) {
+                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
+            }
+
+            // Sort by digest
+            std::sort(childDigests.begin(), childDigests.end(),
+                      [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a,
+                         const std::pair<boost::uuids::detail::sha1::digest_type, T*> &b)
+                      {
+                          return (a.first < b.first);
+                      });
+
 
             // Reserve vector for this group's children
             sortedGroupChildren.emplace_back();
-            sortedGroupChildren.back().reserve(tempChildren.size());
+            sortedGroupChildren.back().reserve(groupChildren.size());
 
-            // Loop through archetype group's children
-            for(const auto &archetypeG : archetypeChildren) {
-                // Find compatible child in temporary list
-                const auto otherChild = std::find_if(tempChildren.cbegin(), tempChildren.cend(),
-                                                     [archetypeG, isCompatibleFunc](const T &g)
-                                                     {
-                                                         return isCompatibleFunc(archetypeG, g);
-                                                     });
-                assert(otherChild != tempChildren.cend());
-
-                // Add pointer to vector of compatible merged in syns
-                sortedGroupChildren.back().push_back(*otherChild);
-
-                // Remove from original vector
-                tempChildren.erase(otherChild);
-            }
+            // Copy sorted child pointers into sortedGroupChildren
+            std::transform(childDigests.cbegin(), childDigests.cend(), std::back_inserter(sortedGroupChildren.back()),
+                           [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a){ return a.second; });
         }
-    }
-    
-    template<typename T, typename G, typename C>
-    void orderNeuronGroupChildren(std::vector<std::vector<T>> &sortedGroupChildren,
-                                  G getVectorFunc, C isCompatibleFunc) const
-    {
-        const std::vector<T> &archetypeChildren = (getArchetype().*getVectorFunc)();
-        orderNeuronGroupChildren(archetypeChildren, sortedGroupChildren, getVectorFunc, isCompatibleFunc);
     }
 
 
@@ -599,9 +632,10 @@ protected:
         return false;
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildParams(const Snippet::Base::StringVec &paramNames, size_t childIndex,
-                                     const std::string &prefix, 
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildParams(const Snippet::Base::StringVec &paramNames,
+                                     const std::vector<std::vector<C>> &sortedGroupChildren,
+                                     size_t childIndex, const std::string &prefix,
                                      H isChildParamHeterogeneousFn, V getValueFn)
     {
         // Loop through parameters
@@ -609,34 +643,39 @@ protected:
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, p)) {
                 addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
-                               [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   return Utils::writePreciseString((child->*getValueFn)().at(p));
                                });
             }
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
-                                            const std::string &prefix, H isChildDerivedParamHeterogeneousFn, V getValueFn)
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams,
+                                            const std::vector<std::vector<C>> &sortedGroupChildren,
+                                            size_t childIndex, const std::string &prefix,
+                                            H isChildDerivedParamHeterogeneousFn, V getValueFn)
     {
         // Loop through derived parameters
         for(size_t p = 0; p < derivedParams.size(); p++) {
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, p)) {
                 addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
-                               [childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   return Utils::writePreciseString(getValueFn(groupIndex, childIndex, p));
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   return Utils::writePreciseString((child->*getValueFn)().at(p));
                                });
             }
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildVarInitParams(const Snippet::Base::StringVec &paramNames, size_t childIndex,
-                                            size_t varIndex, const std::string &prefix,
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildVarInitParams(const Snippet::Base::StringVec &paramNames, 
+                                            const std::vector<std::vector<C>> &sortedGroupChildren,
+                                            size_t childIndex, size_t varIndex, const std::string &prefix,
                                             H isChildParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
@@ -644,18 +683,20 @@ protected:
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
                 addScalarField(paramNames[p] + prefix + std::to_string(childIndex),
-                               [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
                                    return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
                                });
             }
         }
     }
 
-    template<typename T = NeuronGroupMergedBase, typename H, typename V>
-    void addHeterogeneousChildVarInitDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, size_t childIndex,
-                                                   size_t varIndex, const std::string &prefix,
+    template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
+    void addHeterogeneousChildVarInitDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, 
+                                                   const std::vector<std::vector<C>> &sortedGroupChildren,
+                                                   size_t childIndex, size_t varIndex, const std::string &prefix,
                                                    H isChildDerivedParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
@@ -663,9 +704,10 @@ protected:
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, p)) {
                 addScalarField(derivedParams[p].name + prefix + std::to_string(childIndex),
-                               [childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   const std::vector<Models::VarInit> &varInit = getVarInitialiserFn(groupIndex, childIndex);
+                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                                   const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
                                    return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(p));
                                });
             }
@@ -726,6 +768,12 @@ public:
     //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
     bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
 
+    //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
+
+    //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
+
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
@@ -752,7 +800,6 @@ private:
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
     void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
-                       const std::vector<SynapseGroupInternal*> &archetypeSyn,
                        const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
@@ -774,6 +821,9 @@ public:
     NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
     //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
     bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
@@ -785,6 +835,12 @@ public:
 
     //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
     bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Get sorted vectors of incoming synapse groups with postsynaptic variables belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostVars() const { return m_SortedInSynWithPostVars.front(); }
+
+    //! Get sorted vectors of outgoing synapse groups with presynaptic variables belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreVars() const { return m_SortedOutSynWithPreVars.front(); }
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
@@ -805,12 +861,11 @@ private:
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
     void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem,
-                       const std::vector<SynapseGroupInternal *> &archetypeSyn,
                        const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                       const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialisers)(void) const,
-                       bool(NeuronInitGroupMerged::*isParamHeterogeneous)(size_t, size_t, size_t) const,
-                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t, size_t) const);
+                       const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
+                       bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
+                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const);
 
 
     //------------------------------------------------------------------------

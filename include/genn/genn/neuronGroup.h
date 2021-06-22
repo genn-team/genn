@@ -264,14 +264,17 @@ protected:
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
-    //! Can this neuron group be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with neuron group
     /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const NeuronGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code
+    //! Updates hash with neuron group initialisation
     /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const NeuronGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
+    boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
+
+    boost::uuids::detail::sha1::digest_type getPrevSpikeTimeUpdateHashDigest() const;
 private:
     //------------------------------------------------------------------------
     // Private methods

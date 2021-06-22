@@ -44,6 +44,24 @@ bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others
         return false;
     }
 }
+// ------------------------------------------------------------------------
+template<typename T, typename D>
+void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &hash, D getHashDigestFunc)
+{
+    // Build vector to hold digests
+    std::vector<boost::uuids::detail::sha1::digest_type> digests;
+    digests.reserve(objects.size());
+
+    // Loop through objects and add their digests to vector
+    for(auto *o : objects) {
+        digests.push_back((o->*getHashDigestFunc)());
+    }
+    // Sort digests
+    std::sort(digests.begin(), digests.end());
+
+    // Concatenate the digests to the hash
+    Utils::updateHash(digests, hash);
+}
 }   // Anonymous namespace
 
 // ------------------------------------------------------------------------
@@ -305,12 +323,13 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
             continue;
         }
 
-        // Continue if postsynaptic model has any variables
-        // **NOTE** many models with variables would work fine, but nothing stops
-        // initialisers being used to configure PS models to behave totally different
-        if(!a->getPSVarInitialisers().empty()) {
+        // If this synapse group's postsynaptic model can be linearly combined with others
+        if(!a->canPSBeLinearlyCombined()) {
             continue;
         }
+
+        // Get hash digest used for checking compatibility
+        const auto aHashDigest = a->getPSLinearCombineHashDigest();
 
         // Create a name for mmerged
         const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
@@ -318,8 +337,8 @@ void NeuronGroup::mergeIncomingPSM(bool merge)
         // Loop through remainder of incoming synapse populations
         bool anyMerged = false;
         for(auto b = inSyn.begin(); b != inSyn.end();) {
-            // If synapse population b has the same model type as a and; their varmodes, parameters and derived parameters match
-            if(a->canPSBeLinearlyCombined(**b)) {
+            // If synapse group b's postsynaptic model can be linearly combined with others and it's compatible with a
+            if((*b)->canPSBeLinearlyCombined() && (aHashDigest == (*b)->getPSLinearCombineHashDigest())) {
                 LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
 
                 // Set b's merge target to our unique name
@@ -415,135 +434,83 @@ bool NeuronGroup::isVarQueueRequired(const std::string &var) const
     return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::canBeMerged(const NeuronGroup &other) const
+boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
-    if(getNeuronModel()->canBeMerged(other.getNeuronModel())
-       && (isSpikeTimeRequired() == other.isSpikeTimeRequired())
-       && (isPrevSpikeTimeRequired() == other.isPrevSpikeTimeRequired())
-       && (getSpikeEventCondition() == other.getSpikeEventCondition())
-       && (isSpikeEventRequired() == other.isSpikeEventRequired())
-       && (isSpikeRecordingEnabled() == other.isSpikeRecordingEnabled())
-       && (isSpikeEventRecordingEnabled() == other.isSpikeEventRecordingEnabled())
-       && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired))
-    {
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
+    Utils::updateHash(isSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    //Utils::updateHash(getSpikeEventCondition(), hash); **FIXME**
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isSpikeRecordingEnabled(), hash);
+    Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(m_VarQueueRequired, hash);
 
-        // Check if, by reshuffling, all current sources are compatible
-        auto otherCurrentSources = other.getCurrentSources();
-        if(!checkCompatibleUnordered(getCurrentSources(), otherCurrentSources,
-                                     [](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
-                                     {
-                                         return a->canBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
+    // Update hash with hash list built from current sources
+    updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
 
-        // Check if, by reshuffling, all incoming synapse groups with post code are mergable
-        auto otherInSynWithPostCode = other.getInSynWithPostCode();
-        if(!checkCompatibleUnordered(getInSynWithPostCode(), otherInSynWithPostCode,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPostBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
+    // Update hash with hash list built from incoming synapse groups with post code
+    updateHashList(getInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPostHashDigest);
 
-        // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSynWithPreCode = other.getOutSynWithPreCode();
-        if(!checkCompatibleUnordered(getOutSynWithPreCode(), otherOutSynWithPreCode,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPreBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
+    // Update hash with hash list built from outgoing synapse groups with pre code
+    updateHashList(getOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
 
-        // Check if, by reshuffling, all merged incoming synapses are compatible
-        auto otherMergedInSyn = other.getMergedInSyn();
-        if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
-                                     [](const SynapseGroupInternal *a, const SynapseGroupInternal *b)
-                                     {
-                                         return a->canPSBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
+    // Update hash with hash list built from merged incoming synapses
+    updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
 
-        return true;
-    }
-
-    return false;
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::canInitBeMerged(const NeuronGroup &other) const
+boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
 {
-    if((isSpikeTimeRequired() == other.isSpikeTimeRequired())
-       && (isPrevSpikeTimeRequired() == other.isPrevSpikeTimeRequired())
-       && (isSpikeEventRequired() == other.isSpikeEventRequired())
-       && (isSimRNGRequired() == other.isSimRNGRequired())
-       && (getNumDelaySlots() == other.getNumDelaySlots())
-       && (m_VarQueueRequired == other.m_VarQueueRequired)
-       && (getNeuronModel()->getVars() == other.getNeuronModel()->getVars()))
-    {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
-            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
-                return false;
-            }
-        }
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(isSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isSimRNGRequired(), hash);
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(m_VarQueueRequired, hash);
+    Utils::updateHash(getNeuronModel()->getVars(), hash);
 
-
-        // If both groups have the same number of current sources
-        auto otherCurrentSources = other.getCurrentSources();
-        if(!checkCompatibleUnordered(getCurrentSources(), otherCurrentSources,
-                                     [](const CurrentSourceInternal *a, const CurrentSourceInternal *b)
-                                     {
-                                         return a->canInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all incoming synapse groups with are mergable
-        auto otherInSynWithPostVars = other.getInSynWithPostVars();
-        if(!checkCompatibleUnordered(getInSynWithPostVars(), otherInSynWithPostVars,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPostInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // Check if, by reshuffling, all outgoing synapse groups with pre code are mergable
-        auto otherOutSynWithPreVars = other.getOutSynWithPreVars();
-        if(!checkCompatibleUnordered(getOutSynWithPreVars(), otherOutSynWithPreVars,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canWUPreInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-        // If both groups have the same number of incoming synapse groups after merging
-        auto otherMergedInSyn = other.getMergedInSyn();
-        if(!checkCompatibleUnordered(getMergedInSyn(), otherMergedInSyn,
-                                     [](const SynapseGroupInternal *a, SynapseGroupInternal *b)
-                                     {
-                                         return a->canPSInitBeMerged(*b);
-                                     }))
-        {
-            return false;
-        }
-
-
-        return true;
+    // Include variable initialiser hashes
+    for(const auto &n : getVarInitialisers()) {
+        Utils::updateHash(n.getHashDigest(), hash);
     }
-    return false;
+
+    // Update hash with hash list built from current sources
+    updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
+
+    // Update hash with hash list built from incoming synapse groups with post vars
+    updateHashList(getInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPostInitHashDigest);
+
+    // Update hash with hash list built from outgoing synapse groups with pre vars
+    updateHashList(getOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
+
+    // Update hash with hash list built from merged incoming synapses
+    updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getPrevSpikeTimeUpdateHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)

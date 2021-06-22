@@ -9,6 +9,16 @@
 using namespace Models;
 
 //----------------------------------------------------------------------------
+// Models::Base
+//----------------------------------------------------------------------------
+void Base::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    // Superclass
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getVars(), hash);
+}
+//----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(const NeuronGroup *ng, const std::string &varName)
@@ -130,4 +140,18 @@ const SynapseGroup *WUVarReference::getSynapseGroup() const
 const SynapseGroup *WUVarReference::getTransposeSynapseGroup() const 
 { 
     return m_TransposeSG; 
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Utils::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Utils::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
 }

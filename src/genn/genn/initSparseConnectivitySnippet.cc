@@ -13,12 +13,16 @@ IMPLEMENT_SNIPPET(InitSparseConnectivitySnippet::Conv2D);
 //----------------------------------------------------------------------------
 // InitSparseConnectivitySnippet::Base
 //----------------------------------------------------------------------------
-bool InitSparseConnectivitySnippet::Base::canBeMerged(const Base *other) const
+boost::uuids::detail::sha1::digest_type InitSparseConnectivitySnippet::Base::getHashDigest() const
 {
-    return (Snippet::Base::canBeMerged(other)
-            && (getRowBuildCode() == other->getRowBuildCode())
-            && (getRowBuildStateVars() == other->getRowBuildStateVars())
-            && (getColBuildCode() == other->getColBuildCode())
-            && (getColBuildStateVars() == other->getColBuildStateVars())
-            && (getHostInitCode() == other->getHostInitCode()));
+    // Superclass
+    boost::uuids::detail::sha1 hash;
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getRowBuildCode(), hash);
+    Utils::updateHash(getRowBuildStateVars(), hash);
+    Utils::updateHash(getColBuildCode(), hash);
+    Utils::updateHash(getColBuildStateVars(), hash);
+    Utils::updateHash(getHostInitCode(), hash);
+    return hash.get_digest();
 }

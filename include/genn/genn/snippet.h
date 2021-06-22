@@ -207,12 +207,11 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    bool canBeMerged(const Base *other) const
+    void updateHash(boost::uuids::detail::sha1 &hash) const
     {
-        // Return true if parameters names and derived parameter names match
-        return ((getParamNames() == other->getParamNames()) 
-                && (getDerivedParams() == other->getDerivedParams())
-                && (getExtraGlobalParams() == other->getExtraGlobalParams()));
+        Utils::updateHash(getParamNames(), hash);
+        Utils::updateHash(getDerivedParams(), hash);
+        Utils::updateHash(getExtraGlobalParams(), hash);
     }
 
     //------------------------------------------------------------------------
@@ -268,9 +267,9 @@ public:
         }
     }
 
-    bool canBeMerged(const Init<SnippetBase> &other) const
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
-        return getSnippet()->canBeMerged(other.getSnippet());
+        return getSnippet()->getHashDigest();
     }
 
 private:
@@ -281,4 +280,25 @@ private:
     std::vector<double> m_Params;
     std::vector<double> m_DerivedParams;
 };
+
+//----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+inline void updateHash(const Base::EGP &e, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(e.name, hash);
+    Utils::updateHash(e.type, hash);
+}
+
+inline void updateHash(const Base::ParamVal &p, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(p.name, hash);
+    Utils::updateHash(p.type, hash);
+    Utils::updateHash(p.value, hash);
+}
+
+inline void updateHash(const Base::DerivedParam &d, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(d.name, hash);
+}
 }   // namespace Snippet

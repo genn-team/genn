@@ -220,11 +220,13 @@ TEST(NeuronGroup, CompareNeuronModels)
     model.finalize();
 
     // Check that all groups can be merged
-    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
-    ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng2));
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal*>(ng2);
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng2Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -270,9 +272,10 @@ TEST(NeuronGroup, CompareHeterogeneousParamVarState)
     model.finalize();
 
     // Check that all groups can be merged
-    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -309,9 +312,10 @@ TEST(NeuronGroup, CompareSimRNG)
     model.finalize();
 
     // Check that groups cannot be merged
-    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(!ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(!ng0Internal->canInitBeMerged(*ng1));
+    NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal*>(ng0);
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal*>(ng1);
+    ASSERT_NE(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
 
     ASSERT_TRUE(!ng0->isSimRNGRequired());
     ASSERT_TRUE(ng1->isSimRNGRequired());
@@ -359,14 +363,18 @@ TEST(NeuronGroup, CompareCurrentSources)
     model.finalize();
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canBeMerged(*ng4));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng4));
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng2Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng3Internal->getHashDigest());
+    ASSERT_NE(ng0Internal->getHashDigest(), ng4Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -379,12 +387,13 @@ TEST(NeuronGroup, CompareCurrentSources)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
 
     // Find which merged neuron group is the one with the single population i.e. the two DC current sources
-    const size_t dcDCIndex = (modelSpecMerged.getMergedNeuronUpdateGroups().at(0).getGroups().size() == 2) ? 1 : 0;
+    const size_t dcDCIndex = (modelSpecMerged.getMergedNeuronUpdateGroups().at(0).getGroups().size() == 4) ? 1 : 0;
     const auto dcDCMergedGroup = modelSpecMerged.getMergedNeuronUpdateGroups().at(dcDCIndex);
     const auto dcPoissonMergedGroup = modelSpecMerged.getMergedNeuronUpdateGroups().at(1 - dcDCIndex);
+    ASSERT_TRUE(dcDCMergedGroup.getGroups().size() == 1);
     
     // Find which child in the DC + poisson merged group is the poisson current source
-    const size_t poissonIndex = (dcPoissonMergedGroup.getArchetype().getCurrentSources().at(0)->getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
+    const size_t poissonIndex = (dcPoissonMergedGroup.getSortedArchetypeCurrentSources().at(0)->getCurrentSourceModel() == CurrentSourceModels::PoissonExp::getInstance()) ? 0 : 1;
     
     // Check that only the standard deviation parameter of the gaussian current sources is heterogeneous
     // **NOTE** tau is not heterogeneous because it's not references
@@ -471,14 +480,18 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     model.finalize();
 
     NeuronGroupInternal *ng0Internal = static_cast<NeuronGroupInternal *>(ng0);
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canBeMerged(*ng4));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng1));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng0Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng0Internal->canInitBeMerged(*ng4));
+    NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng1Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng2Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getHashDigest(), ng3Internal->getHashDigest());
+    ASSERT_NE(ng0Internal->getHashDigest(), ng4Internal->getHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng1Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng0Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng0Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -498,10 +511,10 @@ TEST(NeuronGroup, ComparePostsynapticModels)
                                                         [](const CodeGenerator::NeuronInitGroupMerged &ng) { return (ng.getGroups().size() == 4); });
 
     // Find which child in the DC + gaussian merged group is the gaussian current source
-    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().size() == 2);
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().size() == 2);
-    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getArchetype().getMergedInSyn().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
-    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getArchetype().getMergedInSyn().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    ASSERT_TRUE(deltaAlphaMergedUpdateGroup->getSortedArchetypeMergedInSyns().size() == 2);
+    ASSERT_TRUE(deltaAlphaMergedInitGroup->getSortedArchetypeMergedInSyns().size() == 2);
+    const size_t alphaUpdateIndex = (deltaAlphaMergedUpdateGroup->getSortedArchetypeMergedInSyns().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
+    const size_t alphaInitIndex = (deltaAlphaMergedInitGroup->getSortedArchetypeMergedInSyns().at(0)->getPSModel() == AlphaCurr::getInstance()) ? 0 : 1;
 
     // Check that parameter and both derived parameters are heterogeneous
     // **NOTE** tau is NOT heterogeneous because it's unused
@@ -575,14 +588,18 @@ TEST(NeuronGroup, CompareWUPreUpdate)
     // Check which groups can be merged together
     // **NOTE** NG1 and NG5 can be merged because the additional static pulse synapse population doesn't add any presynaptic update
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng5));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canInitBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng5));
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    NeuronGroupInternal *ng5Internal = static_cast<NeuronGroupInternal *>(ng5);
+    ASSERT_EQ(ng1Internal->getHashDigest(), ng2Internal->getHashDigest());
+    ASSERT_EQ(ng1Internal->getHashDigest(), ng3Internal->getHashDigest());
+    ASSERT_NE(ng1Internal->getHashDigest(), ng4Internal->getHashDigest());
+    ASSERT_EQ(ng1Internal->getHashDigest(), ng5Internal->getHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng1Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng5Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -672,14 +689,18 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // **NOTE** NG1 and NG5 can be merged because the additional static pulse synapse population doesn't add any presynaptic update
     NeuronGroupInternal *ng1Internal = static_cast<NeuronGroupInternal *>(ng1);
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canBeMerged(*ng5));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng2));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng3));
-    ASSERT_FALSE(ng1Internal->canInitBeMerged(*ng4));
-    ASSERT_TRUE(ng1Internal->canInitBeMerged(*ng5));
+    NeuronGroupInternal *ng2Internal = static_cast<NeuronGroupInternal *>(ng2);
+    NeuronGroupInternal *ng3Internal = static_cast<NeuronGroupInternal *>(ng3);
+    NeuronGroupInternal *ng4Internal = static_cast<NeuronGroupInternal *>(ng4);
+    NeuronGroupInternal *ng5Internal = static_cast<NeuronGroupInternal *>(ng5);
+    ASSERT_EQ(ng1Internal->getHashDigest(), ng2Internal->getHashDigest());
+    ASSERT_EQ(ng1Internal->getHashDigest(), ng3Internal->getHashDigest());
+    ASSERT_NE(ng1Internal->getHashDigest(), ng4Internal->getHashDigest());
+    ASSERT_EQ(ng1Internal->getHashDigest(), ng5Internal->getHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng2Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng3Internal->getInitHashDigest());
+    ASSERT_NE(ng1Internal->getInitHashDigest(), ng4Internal->getInitHashDigest());
+    ASSERT_EQ(ng1Internal->getInitHashDigest(), ng5Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;

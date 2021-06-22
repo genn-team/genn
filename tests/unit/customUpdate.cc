@@ -304,10 +304,12 @@ TEST(CustomUpdates, CompareDifferentModel)
     model.finalize();
 
     CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
-    ASSERT_TRUE(sum0Internal->canBeMerged(*sum1));
-    ASSERT_FALSE(sum0Internal->canBeMerged(*sum2));
-    ASSERT_TRUE(sum0Internal->canInitBeMerged(*sum1));
-    ASSERT_FALSE(sum0Internal->canInitBeMerged(*sum2));
+    CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    ASSERT_EQ(sum0Internal->getHashDigest(), sum1Internal->getHashDigest());
+    ASSERT_NE(sum0Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum1Internal->getInitHashDigest());
+    ASSERT_NE(sum0Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -341,11 +343,13 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     // Finalize model
     model.finalize();
 
-    CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal *>(sum0);
-    ASSERT_FALSE(sum0Internal->canBeMerged(*sum1));
-    ASSERT_TRUE(sum0Internal->canBeMerged(*sum2));
-    ASSERT_TRUE(sum0Internal->canInitBeMerged(*sum1));
-    ASSERT_TRUE(sum0Internal->canInitBeMerged(*sum2));
+    CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
+    CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    ASSERT_NE(sum0Internal->getHashDigest(), sum1Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum1Internal->getInitHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -406,19 +410,22 @@ TEST(CustomUpdates, CompareDifferentDelay)
 
     // No delay group can't be merged with any others
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum3));
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum4));
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
+    CustomUpdateInternal *sum4Internal = static_cast<CustomUpdateInternal*>(sum4);
+
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum4Internal->getHashDigest());
 
     // Delay groups don't matter for initialisation
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum2));
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum3));
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum4));
-
-    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
-    ASSERT_TRUE(sum2Internal->canBeMerged(*sum3));
-    ASSERT_FALSE(sum2Internal->canBeMerged(*sum4));
-
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum4Internal->getInitHashDigest());
+    
+    ASSERT_EQ(sum2Internal->getHashDigest(), sum3Internal->getHashDigest());
+    ASSERT_NE(sum2Internal->getHashDigest(), sum4Internal->getHashDigest());
+    
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -458,9 +465,9 @@ TEST(CustomUpdates, CompareDifferentBatched)
     ASSERT_FALSE(sum2Internal->isBatched());
 
     // Check that this means they can't be merged
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
-    ASSERT_FALSE(sum1Internal->canInitBeMerged(*sum2));
-
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -504,10 +511,11 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     // Updates which transpose different variables can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
+    CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
 
     // Again, this doesn't matter for initialisation
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum2));
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -557,9 +565,10 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     // Updates and initialisation with different connectivity can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
-    ASSERT_FALSE(sum1Internal->canInitBeMerged(*sum2));
-
+    CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);

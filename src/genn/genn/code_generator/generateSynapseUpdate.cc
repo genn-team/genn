@@ -1,6 +1,7 @@
 #include "code_generator/generateSynapseUpdate.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <string>
 
 // GeNN code generator includes
@@ -166,20 +167,23 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                          const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
+    CodeStream synapseUpdate(synapseUpdateStream);
+
+    synapseUpdate << "#include \"definitionsInternal.h\"" << std::endl;
     if (backend.supportsNamespace()) {
-        os << "#include \"supportCode.h\"" << std::endl;
+        synapseUpdate << "#include \"supportCode.h\"" << std::endl;
     }
-    os << std::endl;
+    synapseUpdate << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Synaptic update kernels
-    backend.genSynapseUpdate(os, modelMerged, memorySpaces,
+    backend.genSynapseUpdate(synapseUpdate, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

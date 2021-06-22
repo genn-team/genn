@@ -1,9 +1,12 @@
 #pragma once
 
 // Standard C++ includes
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
+#include "gennUtils.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -178,6 +181,18 @@ public:
     const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
+    //! Get hash digest of neuron update module
+    boost::uuids::detail::sha1::digest_type getNeuronUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of synapse update module
+    boost::uuids::detail::sha1::digest_type getSynapseUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of custom update module
+    boost::uuids::detail::sha1::digest_type getCustomUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of init module
+    boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
+
     //! Does model have any EGPs?
     bool anyPointerEGPs() const;
 
@@ -269,51 +284,30 @@ private:
         }
     }
 
-    template<typename Group, typename MergedGroup, typename M>
-    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
-                            std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                            std::vector<MergedGroup> &mergedGroups, M canMerge)
+    template<typename Group, typename MergedGroup, typename D>
+    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
+                                std::vector<MergedGroup> &mergedGroups, D getHashDigest)
     {
-        // Loop through un-merged  groups
-        std::vector<std::vector<std::reference_wrapper<const Group>>> protoMergedGroups;
-        while(!unmergedGroups.empty()) {
-            // Remove last group from vector
-            const Group &group = unmergedGroups.back().get();
-            unmergedGroups.pop_back();
+        // Create a hash map to group together groups with the same SHA1 digest
+        std::unordered_map<boost::uuids::detail::sha1::digest_type, 
+                           std::vector<std::reference_wrapper<const Group>>, 
+                           Utils::SHA1Hash> protoMergedGroups;
 
-            // Loop through existing proto-merged groups
-            bool existingMergedGroupFound = false;
-            for(auto &p : protoMergedGroups) {
-                assert(!p.empty());
-
-                // If our group can be merged with this proto-merged group
-                if(canMerge(p.front().get(), group)) {
-                    // Add group to vector
-                    p.emplace_back(group);
-
-                    // Set flag and stop searching
-                    existingMergedGroupFound = true;
-                    break;
-                }
-            }
-
-            // If no existing merged groups were found, 
-            // create a new proto-merged group containing just this group
-            if(!existingMergedGroupFound) {
-                protoMergedGroups.emplace_back();
-                protoMergedGroups.back().emplace_back(group);
-            }
+        // Add unmerged groups to correct vector
+        for(const auto &g : unmergedGroups) {
+            protoMergedGroups[(g.get().*getHashDigest)()].push_back(g);
         }
 
         // Reserve final merged groups vector
         mergedGroups.reserve(protoMergedGroups.size());
 
         // Loop through resultant merged groups
-        for(size_t i = 0; i < protoMergedGroups.size(); i++) {
-            // Add group to vector, moving vectors of groups into data structure to avoid copying
-            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
-                                      std::move(protoMergedGroups[i]));
-     
+        size_t i = 0;
+        for(const auto &p : protoMergedGroups) {
+            // Add group to vector
+            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend, p.second);
+
             // Loop through fields
             for(const auto &f : mergedGroups.back().getFields()) {
                 // If field is an EGP, add record to merged EGPS
@@ -330,13 +324,15 @@ private:
                     }
                 }
             }
+
+            i++;
         }
     }
-    
-    template<typename Group, typename MergedGroup, typename F, typename M>
-    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
-                            const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                            F filter, M canMerge)
+
+    template<typename Group, typename MergedGroup, typename F, typename U>
+    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
+                                F filter, U updateHash)
     {
         // Build temporary vector of references to groups that pass filter
         std::vector<std::reference_wrapper<const Group>> unmergedGroups;
@@ -347,7 +343,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(model, backend, unmergedGroups, mergedGroups, canMerge);
+        createMergedGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash);
     }
 
     //--------------------------------------------------------------------------
