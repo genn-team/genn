@@ -234,7 +234,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
     // Calculate modules hash digest
     const auto hashDigest = (modelMerged.*std::get<1>(module))();
 
-    LOGI_BACKEND << "\tModule " << std::get<0>(module);
+    LOGD_BACKEND << "\tModule " << std::get<0>(module);
     try {
         // Open SHA file
         std::ifstream is(moduleSHAPath);
@@ -266,16 +266,16 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
                 }
             }
 
-            LOGI_BACKEND << "\tModule unchanged - re-using shared memory and register usage";
+            LOGD_BACKEND << "\tModule unchanged - re-using shared memory and register usage";
             return;
         }
         // Otherwise, module needs analysing
         else {
-            LOGI_BACKEND << "\tModule changed - re-analysing";
+            LOGD_BACKEND << "\tModule changed - re-analysing";
         }
     }
     catch(const std::ios_base::failure&) {
-        LOGI_BACKEND << "\tUnable to read previous hash - re-analysing";
+        LOGD_BACKEND << "\tUnable to read previous hash - re-analysing";
     }
 
     // Set context for this thread
@@ -404,7 +404,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
     for(unsigned int r = 0; r < 2; r++) {
-        LOGD  << "Generating code with block size:" << repBlockSizes[r];
+        LOGD_BACKEND  << "Generating code with block size:" << repBlockSizes[r];
 
         // Start with all group sizes set to warp size
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
