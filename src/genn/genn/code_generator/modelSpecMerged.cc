@@ -201,12 +201,15 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest() const
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const
 {
     boost::uuids::detail::sha1 hash;
 
     // Concatenate hash digest of model properties
     Utils::updateHash(getModel().getHashDigest(), hash);
+
+    // Concatenate hash digest of backend properties
+    Utils::updateHash(backend.getHashDigest(), hash);
 
     // Concatenate hash digest of neuron update groups
     for(const auto &g : m_MergedNeuronUpdateGroups) {

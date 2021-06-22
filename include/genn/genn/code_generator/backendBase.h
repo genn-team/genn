@@ -16,6 +16,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -81,6 +82,17 @@ struct PreferencesBase
 
     //! Logging level to use for code generation
     plog::Severity logLevel = plog::info;
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // **NOTE** optimizeCode, debugCode and various compiler flags only affect makefiles/msbuild 
+
+        //! Update hash with preferences
+        Utils::updateHash(enableBitmaskOptimisations, hash);
+        Utils::updateHash(automaticCopy, hash);
+        Utils::updateHash(generateEmptyStatePushPull, hash);
+        Utils::updateHash(generateExtraGlobalParamPull, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -412,7 +424,11 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
+    //! Does this backend support namespaces i.e. can C++ implementation of support functions be used
     virtual bool supportsNamespace() const = 0;
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
     //--------------------------------------------------------------------------
     // Public API

@@ -1389,6 +1389,19 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     return {};
 }
 //--------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash was name of backend
+    Utils::updateHash("SingleThreadedCPU", hash);
+    
+    // Update hash with preferences
+    getPreferences<Preferences>().updateHash(hash);
+
+    return hash.get_digest();
+}
+//--------------------------------------------------------------------------
 void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
                                    bool trueSpike, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler) const
 {

@@ -2303,6 +2303,25 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     return {};
 }
 //--------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash was name of backend
+    ::Utils::updateHash("OpenCL", hash);
+    
+    // Update hash with chosen device ID and kernel block sizes
+    ::Utils::updateHash(m_ChosenPlatformIndex, hash);
+    ::Utils::updateHash(m_ChosenDeviceIndex, hash);
+    ::Utils::updateHash(m_AllocationAlignementBytes, hash);
+    ::Utils::updateHash(getKernelBlockSize(), hash);
+
+    // Update hash with preferences
+    getPreferences<Preferences>().updateHash(hash);
+
+    return hash.get_digest();
+}
+//--------------------------------------------------------------------------
 void Backend::genCurrentSpikePushPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent, bool push) const
 {
     assert(!getPreferences().automaticCopy);

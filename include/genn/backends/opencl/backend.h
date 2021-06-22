@@ -13,6 +13,7 @@
 
 // GeNN includes
 #include "backendExport.h"
+#include "gennUtils.h"
 
 // GeNN code generator includes
 #include "code_generator/backendSIMT.h"
@@ -255,7 +256,10 @@ public:
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     virtual bool supportsNamespace() const override { return false; };
-
+    
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
+    
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------

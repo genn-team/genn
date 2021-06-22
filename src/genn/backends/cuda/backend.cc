@@ -1689,6 +1689,23 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
             {"__device__", m_ChosenDevice.totalGlobalMem}};
 }
 //--------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash was name of backend
+    Utils::updateHash("CUDA", hash);
+    
+    // Update hash with chosen device ID and kernel block sizes
+    Utils::updateHash(m_ChosenDeviceID, hash);
+    Utils::updateHash(getKernelBlockSize(), hash);
+
+    // Update hash with preferences
+    getPreferences<Preferences>().updateHash(hash);
+
+    return hash.get_digest();
+}
+//--------------------------------------------------------------------------
 std::string Backend::getNVCCFlags() const
 {
     // **NOTE** now we don't include runner.cc when building standalone modules we get loads of warnings about

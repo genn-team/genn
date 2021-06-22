@@ -49,7 +49,49 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
     assert(outputFileStream.good());
     outputFileStream << inputFileStream.rdbuf();
 }
+//--------------------------------------------------------------------------
+bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest)
+{
+    try
+    {
+        // Open file
+        std::ifstream is((outputPath / "model.sha").str());
+
+        // Throw exceptions in case of all errors
+        is.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
+
+        // Read previous hash digest as hex
+        boost::uuids::detail::sha1::digest_type previousHashDigest; 
+        is >> std::hex;
+        for(auto &d : previousHashDigest) {
+            is >> d;
+        }
+        
+        // If hash matches
+        if(previousHashDigest == hashDigest) {
+            LOGI_CODE_GEN << "Model unchanged - skipping code generation";
+            return false;
+        }
+        else {
+            LOGI_CODE_GEN << "Model changed - re-generating code";
+        }
+    }
+    catch(const std::ios_base::failure&) {
+        LOGD_CODE_GEN << "Unable to read previous model hash - re-generating code";
+    }
+
+    // Open file
+    std::ofstream os((outputPath / "model.sha").str());
+    
+    // Write digest as hex with each word seperated by a space
+    os << std::hex;
+    for(const auto d : hashDigest) {
+        os << d << " ";
+    }
+
+    return true;
 }
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator
@@ -62,36 +104,43 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
 
     // Create merged model
     ModelSpecMerged modelMerged(model, backend);
+    
+    // **HACK**
+    MemAlloc mem = MemAlloc::zero();
 
-    // Generate modules
-    //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
-    auto mem = generateRunner(outputPath, modelMerged, backend);
-    generateSynapseUpdate(outputPath, modelMerged, backend);
-    generateNeuronUpdate(outputPath, modelMerged, backend);
-    generateCustomUpdate(outputPath, modelMerged, backend);
-    generateInit(outputPath, modelMerged, backend);
+    // If model should be rebuilt
+    const auto hashDigest = modelMerged.getHashDigest(backend);
+    if(shouldRebuildModel(outputPath, hashDigest)) {
+        // Generate modules
+        //**NOTE** memory spaces are given out on a first-come, first-serve basis so the modules should be in preferential order
+        generateRunner(outputPath, modelMerged, backend);
+        generateSynapseUpdate(outputPath, modelMerged, backend);
+        generateNeuronUpdate(outputPath, modelMerged, backend);
+        generateCustomUpdate(outputPath, modelMerged, backend);
+        generateInit(outputPath, modelMerged, backend);
 
-    // Generate support code module if the backend supports namespaces
-    if (backend.supportsNamespace()) {
-        generateSupportCode(outputPath, modelMerged);
-    }
+        // Generate support code module if the backend supports namespaces
+        if(backend.supportsNamespace()) {
+            generateSupportCode(outputPath, modelMerged);
+        }
 
-    // Get list of files to copy into generated code
-    const auto backendSharePath = sharePath / "backends";
-    const auto filesToCopy = backend.getFilesToCopy(modelMerged);
-    const auto absOutputPath = outputPath.make_absolute();
-    for(const auto &f : filesToCopy) {
-        copyFile(f, backendSharePath, absOutputPath);
-    }
+        // Get list of files to copy into generated code
+        const auto backendSharePath = sharePath / "backends";
+        const auto filesToCopy = backend.getFilesToCopy(modelMerged);
+        const auto absOutputPath = outputPath.make_absolute();
+        for(const auto &f : filesToCopy) {
+            copyFile(f, backendSharePath, absOutputPath);
+        }
 
-    // Show memory usage
-    LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
-    LOGI_CODE_GEN << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
-    LOGI_CODE_GEN << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
+        // Show memory usage
+        LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
+        LOGI_CODE_GEN << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
+        LOGI_CODE_GEN << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
 
-    // Give warning of model requires more memory than device has
-    if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
-        LOGW_CODE_GEN << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
+        // Give warning of model requires more memory than device has
+        if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
+            LOGW_CODE_GEN << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
+        }
     }
 
     // Output summary to log
