@@ -20,6 +20,6 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void GENN_EXPORT generateMakefile(std::ostream &os, const BackendBase &backend,
+GENN_EXPORT void generateMakefile(std::ostream &os, const BackendBase &backend,
                                   const std::vector<std::string> &moduleNames);
 }

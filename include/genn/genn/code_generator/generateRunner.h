@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN includes
+#include "gennExport.h"
+
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 
@@ -19,5 +22,5 @@ class path;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-MemAlloc generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
+GENN_EXPORT MemAlloc generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

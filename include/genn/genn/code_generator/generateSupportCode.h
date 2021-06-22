@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN includes
+#include "gennExport.h"
+
 // Forward declarations
 namespace CodeGenerator
 {
@@ -17,5 +20,5 @@ class path;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged);
+GENN_EXPORT void generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged);
 }
