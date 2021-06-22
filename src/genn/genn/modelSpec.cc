@@ -281,7 +281,7 @@ bool ModelSpec::isRecordingInUse() const
                        [](const NeuronGroupValueType &n) { return n.second.isRecordingEnabled(); });
 }
 
-boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest(bool includeSeed) const
+boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
 
@@ -291,10 +291,7 @@ boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest(bool includeSee
     Utils::updateHash(getDT(), hash);
     Utils::updateHash(isTimingEnabled(), hash);
     Utils::updateHash(getBatchSize(), hash);
-    
-    if(includeSeed) {
-        Utils::updateHash(getSeed(), hash);
-    }
+    Utils::updateHash(getSeed(), hash);
 
     return hash.get_digest();
 }
