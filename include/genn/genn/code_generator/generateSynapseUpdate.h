@@ -1,5 +1,8 @@
 #pragma once
 
+// GeNN includes
+#include "gennExport.h"
+
 // Forward declarations
 namespace CodeGenerator
 {
@@ -17,5 +20,5 @@ class path;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
+GENN_EXPORT void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend);
 }

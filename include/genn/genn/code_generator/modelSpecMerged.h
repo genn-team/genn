@@ -5,6 +5,7 @@
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
 #include "gennUtils.h"
 #include "modelSpecInternal.h"
 
@@ -23,7 +24,7 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-class ModelSpecMerged
+class GENN_EXPORT ModelSpecMerged
 {
 public:
     ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend);
