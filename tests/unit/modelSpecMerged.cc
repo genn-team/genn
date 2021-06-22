@@ -51,7 +51,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
 
         // Write hash digests of model to array
-        moduleHash[i] = modelSpecMerged.getHashDigest();
+        moduleHash[i] = modelSpecMerged.getHashDigest(backend);
     }
 
     // Loop through modified models
@@ -75,7 +75,7 @@ TEST(ModelSpecMerged, CompareModelChanges)
         {[](ModelSpecInternal &model) { model.setPrecision(GENN_DOUBLE); }, false},
         {[](ModelSpecInternal &model) { model.setTimePrecision(TimePrecision::DOUBLE); }, false},
         {[](ModelSpecInternal &model) { model.setBatchSize(10); }, false},
-        {[](ModelSpecInternal &model) { model.setSeed(1234); }, true}};
+        {[](ModelSpecInternal &model) { model.setSeed(1234); }, false}};
     
     test(modelModifiers, 
          [](std::function<void(ModelSpecInternal &)> modifier, ModelSpecInternal &model)
