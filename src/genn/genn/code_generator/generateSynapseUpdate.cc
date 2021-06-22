@@ -167,15 +167,16 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                          const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
-    std::ofstream synapseUpdateStream((outputPath / "synapseUpdate.cc").str());
+    std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
     CodeStream synapseUpdate(synapseUpdateStream);
 
-    synapseUpdate << "#include \"definitionsInternal.h\"" << std::endl;
+    synapseUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
     if (backend.supportsNamespace()) {
-        synapseUpdate << "#include \"supportCode.h\"" << std::endl;
+        synapseUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
     }
     synapseUpdate << std::endl;
 

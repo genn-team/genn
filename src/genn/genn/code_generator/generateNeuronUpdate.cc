@@ -117,15 +117,16 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                         const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
-    std::ofstream neuronUpdateStream((outputPath / "neuronUpdate.cc").str());
+    std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
     CodeStream neuronUpdate(neuronUpdateStream);
 
-    neuronUpdate << "#include \"definitionsInternal.h\"" << std::endl;
+    neuronUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
     if (backend.supportsNamespace()) {
-        neuronUpdate << "#include \"supportCode.h\"" << std::endl;
+        neuronUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
     }
     neuronUpdate << std::endl;
 
