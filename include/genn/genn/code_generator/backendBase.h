@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <fstream>
 #include <functional>
 #include <map>
 #include <string>
@@ -142,7 +143,27 @@ private:
     size_t m_HostBytes;
     size_t m_DeviceBytes;
     size_t m_ZeroCopyBytes;
+
+    //--------------------------------------------------------------------------
+    // Friend operators
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator << (std::ostream &out, const MemAlloc &m);
+    friend std::istream& operator >> (std::istream &in,  MemAlloc &m);
 };
+
+inline std::ostream & operator << (std::ostream &out, const MemAlloc &m)
+{
+    out << m.m_HostBytes << " " << m.m_DeviceBytes << " " << m.m_ZeroCopyBytes;
+    return out;
+}
+ 
+inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
+{
+    in >> m.m_HostBytes;
+    in >> m.m_DeviceBytes;
+    in >> m.m_ZeroCopyBytes;
+    return in;
+}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
