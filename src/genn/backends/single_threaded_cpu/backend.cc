@@ -1331,11 +1331,15 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Release'\">WIN32;WIN64;NDEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<PreprocessorDefinitions Condition=\"'$(Configuration)'=='Debug'\">WIN32;WIN64;_DEBUG;_CONSOLE;BUILDING_GENERATED_CODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>" << std::endl;
     os << "\t\t\t<FloatingPointModel>" << (getPreferences().optimizeCode ? "Fast" : "Precise") << "</FloatingPointModel>" << std::endl;
+    if(getPreferences().synchronizePDBWrites) {
+        os << "\t\t\t<AdditionalOptions>/FS</AdditionalOptions>" << std::endl;
+    }
     os << "\t\t</ClCompile>" << std::endl;
 
     // Add item definition for linking
     os << "\t\t<Link>" << std::endl;
-    os << "\t\t\t<GenerateDebugInformation>true</GenerateDebugInformation>" << std::endl;
+    os << "\t\t\t<GenerateDebugInformation Condition=\"'$(Configuration)'=='Debug'\">true</GenerateDebugInformation>" << std::endl;
+    os << "\t\t\t<GenerateDebugInformation Condition=\"'$(Configuration)'=='Release'\">false</GenerateDebugInformation>" << std::endl;
     os << "\t\t\t<EnableCOMDATFolding Condition=\"'$(Configuration)'=='Release'\">true</EnableCOMDATFolding>" << std::endl;
     os << "\t\t\t<OptimizeReferences Condition=\"'$(Configuration)'=='Release'\">true</OptimizeReferences>" << std::endl;
     os << "\t\t\t<SubSystem>Console</SubSystem>" << std::endl;

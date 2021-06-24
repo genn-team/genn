@@ -73,6 +73,11 @@ struct PreferencesBase
     //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
     bool generateExtraGlobalParamPull = true;
 
+    //! On some Windows systems, for reasons yet to be identified, 
+    //! you get Fatal error C1090: PDB API call failed, error code '3' when building generated code.
+    //! Setting this flag should fix these errors
+    bool synchronizePDBWrites = false;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
