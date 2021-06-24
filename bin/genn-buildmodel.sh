@@ -10,6 +10,7 @@ genn_help () {
     echo "-m            generate MPI simulation code"
     echo "-v            generates coverage information"
     echo "-h            shows this help message"
+    echo "-f            force model to be rebuilt even if GeNN doesn't think it's required"
     echo "-s standard   changes the C++ standard the model is built with"
     echo "-o outpath    changes the output directory"
     echo "-i includepath    add additional include directories (seperated by colons)"
@@ -27,13 +28,15 @@ OUT_PATH="$PWD";
 BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++11"
+FORCE_REBUILD=0
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cldvs:o:i:h" option; do
+    while getopts "cldvfs:o:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
         l) GENERATOR_MAKEFILE="MakefileOpenCL";;
         d) DEBUG=1;;
         v) COVERAGE=1;;
+        f) FORCE_REBUILD=1;;
         h) genn_help; exit;;
         s) CXX_STANDARD="$OPTARG";;
         o) OUT_PATH="$OPTARG";;
@@ -83,9 +86,9 @@ BASEDIR=$(dirname "$0")
 make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH"
+    gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
 else
-    "$GENERATOR" "$BASEDIR/../" "$OUT_PATH"
+    "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
 fi
 
 echo "model build complete"

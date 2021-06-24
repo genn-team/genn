@@ -12,6 +12,7 @@ echo -l             generate simulation code for OpenCL
 echo -d             enables the debugging mode
 echo -h             shows this help message
 echo -s             build GeNN without SDL checks
+echo -f             force model to be rebuilt even if GeNN doesn't think it's required
 echo -o outpath     changes the output directory
 echo -i includepath add additional include directories (seperated by semicolons)
 goto :eof
