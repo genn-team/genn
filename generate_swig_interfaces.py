@@ -573,12 +573,15 @@ def generateConfigs(gennPath, backends):
                 Logging::init(gennLevel, codeGeneratorLevel, consoleAppender, consoleAppender);
             }
 
-            CodeGenerator::MemAlloc generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &sharePathStr, const std::string &outputPathStr, int localHostID)
+            CodeGenerator::MemAlloc generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
             {
                 const filesystem::path outputPath(outputPathStr);
 
                 // Generate code, returning list of module names that must be build
-                const auto output = CodeGenerator::generateAll(model, backend, filesystem::path(sharePathStr), outputPath);
+                const auto output = CodeGenerator::generateAll(
+                    model, backend, 
+                    filesystem::path(sharePathStr), outputPath, 
+                    forceRebuild);
 
             #ifdef _WIN32
                 // Create MSBuild project to compile and link all generated modules

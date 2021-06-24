@@ -94,7 +94,8 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 // CodeGenerator
 //--------------------------------------------------------------------------
 std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                                                        const filesystem::path &sharePath, const filesystem::path &outputPath)
+                                                                                        const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                                                        bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -102,10 +103,10 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Create merged model
     ModelSpecMerged modelMerged(model, backend);
     
-    // If model should be rebuilt
+    // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
     MemAlloc mem = MemAlloc::zero();
-    if(shouldRebuildModel(outputPath, hashDigest, mem)) {
+    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)) {
         // Generate modules
         mem += generateRunner(outputPath, modelMerged, backend);
         generateSynapseUpdate(outputPath, modelMerged, backend);
