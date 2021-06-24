@@ -46,8 +46,8 @@ namespace OpenCL
 namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path&,
-                      const filesystem::path&, plog::Severity backendLevel,
-                      plog::IAppender *backendAppender, const Preferences &preferences)
+                      plog::Severity backendLevel, plog::IAppender *backendAppender, 
+                      const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {

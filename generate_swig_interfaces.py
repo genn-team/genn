@@ -474,10 +474,10 @@ def generateBackend(swigPath, folder, namespace):
 
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
-            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &sharePath, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
+            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
                      '{\n'
                      '  auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;\n'
-                     '  return Optimiser::createBackend(model, filesystem::path(sharePath), filesystem::path(outputPath), backendLevel, consoleAppender, preferences);\n'
+                     '  return Optimiser::createBackend(model, filesystem::path(outputPath), backendLevel, consoleAppender, preferences);\n'
                      '}\n\n'
                      'void delete_backend(CodeGenerator::' + namespace + '::Backend *backend)\n'
                      '{\n'

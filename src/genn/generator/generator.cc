@@ -63,7 +63,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
         filesystem::create_directory(outputPath);
 
         // Create backend
-        auto backend = Optimiser::createBackend(model, sharePath, outputPath,
+        auto backend = Optimiser::createBackend(model, outputPath,
                                                 GENN_PREFERENCES.logLevel, &consoleAppender,
                                                 GENN_PREFERENCES);
 

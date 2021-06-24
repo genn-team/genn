@@ -617,7 +617,7 @@ int main(int argc, char *argv[])
 
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(
-            model, sharePath, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
+            model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
 
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, codePath).first;

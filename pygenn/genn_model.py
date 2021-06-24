@@ -562,8 +562,9 @@ class GeNNModel(object):
                 setattr(preferences, k, v)
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, share_path, output_path, 
-                                                      self.backend_log_level, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path,
+                                                      self.backend_log_level,
+                                                      preferences)
 
         # Generate code
         mem_alloc = genn_wrapper.generate_code(self._model, backend, 
