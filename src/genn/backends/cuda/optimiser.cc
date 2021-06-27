@@ -361,6 +361,9 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                                            KernelBlockSize &blockSize, const Preferences &preferences,
                                            const filesystem::path &outputPath)
 {
+    // Create directory for generated code
+    filesystem::create_directory(outputPath);
+
     // Select device
     cudaSetDevice(deviceID);
 
@@ -399,7 +402,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     // modules and mutex to protect access to it
     KernelOptimisationOutput kernelsToOptimise;
     std::mutex kernelsToOptimiseMutex;
-    
+
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
@@ -431,9 +434,11 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Loop through modules and launch threads to analyse kernels if required
         std::vector<std::thread> threads;
         for(const auto &m : modules) {
-            threads.emplace_back(analyseModule, std::cref(m), r, cuContext, std::cref(outputPath), std::cref(nvccPath), 
+            threads.emplace_back(analyseModule, std::cref(m), r, cuContext, std::cref(outputPath), std::cref(nvccPath),
                                  std::cref(modelMerged), std::cref(backend), std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels),
                                  std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
+            //analyseModule(m, r, cuContext, outputPath, nvccPath, modelMerged, backend, customUpdateKernels, customTransposeUpdateKernels,
+            //              krnlSharedSizeBytes, krnlNumRegs, kernelsToOptimise, kernelsToOptimiseMutex);
         }
 
         // Join all threads
