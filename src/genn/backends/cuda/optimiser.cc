@@ -263,6 +263,10 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
                 }
             }
 
+            // Remove tempory source file
+            if(std::remove(sourcePath.c_str())) {
+                LOGW_BACKEND << "Cannot remove dry-run source file";
+            }
             LOGD_BACKEND << "\tModule unchanged - re-using shared memory and register usage";
             return;
         }
@@ -348,12 +352,12 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
         os << krnlSharedSizeBytes[r][k] << " " << krnlNumRegs[r][k] << std::endl;
     }
 
-    // Remove tempory source file
+    // Remove tempory cubin file
     if(std::remove((sourcePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
     }
 
-    // Remove tempory cubin file
+    // Remove tempory source file
     if(std::remove(sourcePath.c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run source file";
     }
