@@ -605,3 +605,45 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
              }
          });
 }
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareConnectivityParamChanges)
+{
+    // Connectivity parameters
+    const double paramVals1 = 0.1;
+    const double paramVals2 = 0.2;
+    const double paramVals3 = 0.9;
+
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<double>, bool> modelModifiers[] = {
+        {{paramVals1, paramVals2},  true},
+        {{paramVals1, paramVals2},  true},
+        {{paramVals1, paramVals1},  false},
+        {{paramVals2, paramVals3},  false},
+        {{},                        false},
+        {{paramVals1},              false}};
+
+    test(modelModifiers, 
+         [](const std::vector<double> &connectivityParams, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             // Add desired number of post populations
+             for(size_t p = 0; p < connectivityParams.size(); p++) {
+                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                     neuronParamVals, neuronVarVals);
+
+                 WeightUpdateModels::StaticPulse::VarValues varValues(1.0);
+                 InitSparseConnectivitySnippet::FixedProbability::ParamValues connectParams(connectivityParams[p]);
+                 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                     "Synapse" + std::to_string(p), SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
+                     "Pre", "Post" + std::to_string(p),
+                     {}, varValues,
+                     {}, {},
+                     initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(connectParams));
+             }
+         });
+}
