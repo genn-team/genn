@@ -223,16 +223,13 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
 }
 //--------------------------------------------------------------------------
 void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::vector<Kernel>> &module, unsigned int r, CUcontext context, 
-                   const filesystem::path &outputPath, const filesystem::path &nvccPath, const ModelSpecMerged &modelMerged, const Backend &backend,
+                   boost::uuids::detail::sha1::digest_type hashDigest, const filesystem::path &outputPath, const filesystem::path &nvccPath, const Backend &backend,
                    const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, 
                    int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax], KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
     // Build source and module paths from module name
     const std::string sourcePath = (outputPath / (std::get<0>(module) + ".cc")).str();
     const std::string moduleSHAPath = (outputPath / (std::get<0>(module) + "_CUDA_" + std::to_string(r) + ".sha")).str();
-
-    // Calculate modules hash digest
-    const auto hashDigest = (modelMerged.*std::get<1>(module))();
 
     LOGD_BACKEND << "\tModule " << std::get<0>(module);
     try {
@@ -241,7 +238,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
 
         // Throw exceptions in case of all errors
         is.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
-        
+
         // Read previous hash as hash
         boost::uuids::detail::sha1::digest_type previousHashDigest;
         is >> std::hex;
@@ -287,7 +284,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
 #else
     const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"";
 #endif
-            
+
     if(system(nvccCommand.c_str()) != 0) {
         throw std::runtime_error("optimizeBlockSize: NVCC failed");
     }
@@ -361,6 +358,9 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
                                            KernelBlockSize &blockSize, const Preferences &preferences,
                                            const filesystem::path &outputPath)
 {
+    // Create directory for generated code
+    filesystem::create_directory(outputPath);
+
     // Select device
     cudaSetDevice(deviceID);
 
@@ -399,7 +399,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     // modules and mutex to protect access to it
     KernelOptimisationOutput kernelsToOptimise;
     std::mutex kernelsToOptimiseMutex;
-    
+
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
@@ -428,11 +428,17 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             generateSupportCode(outputPath, modelMerged);
         }
 
-        // Loop through modules and launch threads to analyse kernels if required
+        // Loop through modules
         std::vector<std::thread> threads;
         for(const auto &m : modules) {
-            threads.emplace_back(analyseModule, std::cref(m), r, cuContext, std::cref(outputPath), std::cref(nvccPath), 
-                                 std::cref(modelMerged), std::cref(backend), std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels),
+            // Calculate module's hash digest
+            // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
+            // this will call into Python code it would require whole Python interface to be made thread-safe
+            const auto hashDigest = (modelMerged.*std::get<1>(m))();
+
+            // Launch thread to analyse kernels in this module (if required)
+            threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),
+                                 std::cref(backend), std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels),
                                  std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
         }
 
