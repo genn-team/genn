@@ -22,7 +22,7 @@ rem :: define genn-buildmodel.bat options separated by spaces
 rem :: -<option>:              option
 rem :: -<option>:""            option with argument
 rem :: -<option>:"<default>"   option with argument and default value
-set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h: -s: -l:"
+set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h: -s: -f: -l:"
 for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
 :genn_option
@@ -64,6 +64,13 @@ if defined -s (
     set "MACROS=%MACROS% /p:BuildModelSDLCheck=false"
 ) else (
     set "MACROS=%MACROS% /p:BuildModelSDLCheck=true"
+)
+
+rem set force rebuild macro
+if defined -f (
+    SET "FORCE_REBUILD=1"
+) else (
+    SET "FORCE_REBUILD=0"
 )
 
 if defined -d (
@@ -119,11 +126,10 @@ msbuild "%GENN_PATH%..\src\genn\generator\generator.vcxproj" /m /verbosity:minim
     echo Unable to build code generator
     goto :eof
 )
-
 if defined -d (
-    devenv /debugexe "%GENERATOR%" "%GENN_PATH%.." "%-o%"
+    devenv /debugexe "%GENERATOR%" "%GENN_PATH%.." "%-o%" "%FORCE_REBUILD%"
 ) else (
-    "%GENERATOR%" "%GENN_PATH%.." "%-o%"
+    "%GENERATOR%" "%GENN_PATH%.." "%-o%" "%FORCE_REBUILD%"
 )
 
 echo Model build complete
