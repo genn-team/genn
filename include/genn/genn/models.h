@@ -264,4 +264,6 @@ using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarRefer
 //----------------------------------------------------------------------------
 GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
 } // Models

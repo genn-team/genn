@@ -1915,9 +1915,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
     // Update hash with each group's custom update size
     updateHash([](const CustomUpdateInternal &cg) { return cg.getSize(); }, hash);
 
-    // Update hash with each group's parameters and derived parameters
+    // Update hash with each group's parameters, derived parameters and variable references
     updateHash([](const CustomUpdateInternal &cg) { return cg.getParams(); }, hash);
     updateHash([](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); }, hash);
+    updateHash([](const CustomUpdateInternal &cg) { return cg.getVarReferences(); }, hash);
 
     return hash.get_digest();
 }
@@ -1972,9 +1973,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
 
     // **TODO** rowstride
 
-    // Update hash with each group's parameters and derived parameters
+    // Update hash with each group's parameters, derived parameters and variable referneces
     updateHash([](const CustomUpdateWUInternal &cg) { return cg.getParams(); }, hash);
     updateHash([](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); }, hash);
+    updateHash([](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); }, hash);
 
     return hash.get_digest();
 }

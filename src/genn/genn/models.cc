@@ -155,3 +155,17 @@ void Models::updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
     Utils::updateHash(v.type, hash);
     Utils::updateHash(v.access, hash);
 }
+//----------------------------------------------------------------------------
+void Models::updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.getTargetName(), hash);
+    Utils::updateHash(v.getVarIndex(), hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.getTargetName(), hash);
+    Utils::updateHash(v.getVarIndex(), hash);
+    Utils::updateHash(v.getTransposeTargetName(), hash);
+    Utils::updateHash(v.getTransposeVarIndex(), hash);
+}
