@@ -1605,7 +1605,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
     updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
     updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
-    //updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
+    // **NOTE** ideally we'd include the row stride but this needs a backend and it SHOULDN'T be necessary
+    // as I can't think of any way of changing this without changing the hash in other places
 
     if(updateRole) {
         // Update hash with weight update model parameters and derived parameters
@@ -1970,8 +1971,6 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
                {
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
                }, hash);
-
-    // **TODO** rowstride
 
     // Update hash with each group's parameters, derived parameters and variable referneces
     updateHash([](const CustomUpdateWUInternal &cg) { return cg.getParams(); }, hash);
