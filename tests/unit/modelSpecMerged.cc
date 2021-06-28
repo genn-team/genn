@@ -84,6 +84,18 @@ public:
 };
 IMPLEMENT_MODEL(STDPAdditive);
 
+class Sum : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 1, 1, 1);
+
+    SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
+
+    SET_VARS({{"sum", "scalar"}});
+    SET_PARAM_NAMES({"b"});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(Sum);
+
 template<typename T, typename M, size_t N>
 void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
 {
@@ -644,6 +656,76 @@ TEST(ModelSpecMerged, CompareConnectivityParamChanges)
                      {}, varValues,
                      {}, {},
                      initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(connectParams));
+             }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomUpdateParamChanges)
+{
+    // Custom update model "b" parameters
+    const double paramVal1 = 5.0;
+    const double paramVal2 = 1.0;
+    const double paramVal3 = 10.0;
+
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<double>, bool> modelModifiers[] = {
+        {{paramVal1, paramVal2},  true},
+        {{paramVal1, paramVal2},  true},
+        {{paramVal1, paramVal1},  false},
+        {{paramVal2, paramVal3},  false},
+        {{},                      false},
+        {{paramVal1},             false}};
+
+    test(modelModifiers, 
+         [](const std::vector<double> &customUpdateParams, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                             neuronParamVals, neuronVarVals);
+
+             // Add desired number of custom updates
+             for(size_t c = 0; c < customUpdateParams.size(); c++) {
+                 Sum::ParamValues paramVals(customUpdateParams[c]);
+                 Sum::VarValues vals(0.0);
+                 Sum::VarReferences varRefs(createVarRef(pre, "V"));
+                 model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
+             }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomUpdateVarInitParamChanges)
+{
+    // Custom update model var initialisers
+    const std::array<double, 2> paramVals1{0.0, 1.0};
+    const std::array<double, 2> paramVals2{0.1, 0.2};
+    const std::array<double, 2> paramVals3{0.3, 0.9};
+
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::array<double, 2>>, bool> modelModifiers[] = {
+        {{paramVals1, paramVals2},  true},
+        {{paramVals1, paramVals2},  true},
+        {{paramVals1, paramVals1},  false},
+        {{paramVals2, paramVals3},  false},
+        {{},                        false},
+        {{paramVals1},              false}};
+
+    test(modelModifiers, 
+         [](const std::vector<std::array<double, 2>> &customUpdateVarInitParams, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                             neuronParamVals, neuronVarVals);
+
+             // Add desired number of custom updates
+             for(size_t c = 0; c < customUpdateVarInitParams.size(); c++) {
+                 Sum::ParamValues paramVals(1.0);
+                 Sum::VarValues vals(initVar<InitVarSnippet::Uniform>({customUpdateVarInitParams[c][0], customUpdateVarInitParams[c][1]}));
+                 Sum::VarReferences varRefs(createVarRef(pre, "V"));
+                 model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
              }
          });
 }
