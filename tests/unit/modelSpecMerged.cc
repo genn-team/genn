@@ -729,3 +729,34 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarInitParamChanges)
              }
          });
 }
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomUpdateVarRefTargetChanges)
+{
+
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
+        {{"V", "U"},    true},
+        {{"V", "U"},    true},
+        {{"U", "V"},    false},
+        {{"V", "V"},    false},
+        {{},            false},
+        {{"V"},         false}};
+
+    test(modelModifiers, 
+         [](const std::vector<std::string> &customUpdateVarRefTargets, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                             neuronParamVals, neuronVarVals);
+
+             // Add desired number of custom updates
+             for(size_t c = 0; c < customUpdateVarRefTargets.size(); c++) {
+                 Sum::ParamValues paramVals(1.0);
+                 Sum::VarValues vals(0.0);
+                 Sum::VarReferences varRefs(createVarRef(pre, customUpdateVarRefTargets[c]));
+                 model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
+             }
+         });
+}
