@@ -438,6 +438,46 @@ TEST(ModelSpecMerged, CompareWUMParamChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareWUMGlobalGVarChanges)
+{
+    // Weight update model variable initialisers
+    const double varVals1 = 1.0;
+    const double varVals2 = 0.2;
+    const double varVals3 = 0.9;
+
+    // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
+    const std::pair<std::vector<double>, bool> modelModifiers[] = {
+        {{varVals1, varVals2},  true},
+        {{varVals1, varVals2},  true},
+        {{varVals1, varVals1},  false},
+        {{varVals2, varVals3},  false},
+        {{},                        false},
+        {{varVals1},              false}};
+
+    test(modelModifiers, 
+         [](const std::vector<double> &wumVarVals, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             // Add desired number of post populations
+             for(size_t p = 0; p < wumVarVals.size(); p++) {
+                 model.addNeuronPopulation<NeuronModels::Izhikevich>("Post" + std::to_string(p), 100, 
+                                                                     neuronParamVals, neuronVarVals);
+
+                 WeightUpdateModels::StaticPulse::VarValues varValues(wumVarVals[p]);
+                 model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                    "Synapse" + std::to_string(p), SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+                    "Pre", "Post" + std::to_string(p),
+                    {}, varValues,
+                    {}, {});
+             }
+         });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
 {
     // Weight update model var initialisers
