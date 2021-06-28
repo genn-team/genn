@@ -444,12 +444,14 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
             // Loop through variables and update hash with variable initialisation parameters and derived parameters
             const auto &varInit = sg->getPSVarInitialisers();
             for(size_t v = 0; v < varInit.size(); v++) {
-                updateChildVarInitParamsHash(m_SortedMergedInSyns, c, v,
-                                             &NeuronGroupMergedBase::isPSMVarInitParamReferenced, 
-                                             &SynapseGroupInternal::getPSVarInitialisers, hash);
-                updateChildVarInitDerivedParamsHash(m_SortedMergedInSyns, c, v,
-                                                    &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced, 
-                                                    &SynapseGroupInternal::getPSVarInitialisers, hash);
+                if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
+                    updateChildVarInitParamsHash(m_SortedMergedInSyns, c, v,
+                                                 &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
+                                                 &SynapseGroupInternal::getPSVarInitialisers, hash);
+                    updateChildVarInitDerivedParamsHash(m_SortedMergedInSyns, c, v,
+                                                        &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced,
+                                                        &SynapseGroupInternal::getPSVarInitialisers, hash);
+                }
             }
         }
     }
@@ -464,10 +466,17 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
 
         // Loop through child merged insyns
         for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
+            const auto *sg = getSortedArchetypeMergedInSyns().at(i);
+
             updateChildParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
                                  &SynapseGroupInternal::getPSParams, hash);
             updateChildDerivedParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMDerivedParamReferenced, 
                                         &SynapseGroupInternal::getPSDerivedParams, hash);
+
+            if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
+                updateChildParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMGlobalVarReferenced,
+                                     &SynapseGroupInternal::getPSConstInitVals, hash);
+            }
         }
     }
 }
@@ -1639,16 +1648,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
         // If this is an update role
         // **NOTE **global variable values aren't useful during initialization
         if(updateRole) {
-            /*for(size_t v = 0; v < vars.size(); v++) {
-                // If variable should be implemented heterogeneously, add scalar field
-                if(isWUGlobalVarHeterogeneous(v)) {
-                    addScalarField(vars[v].name,
-                                   [v](const SynapseGroupInternal &sg, size_t)
-                                   {
-                                       return Utils::writePreciseString(sg.getWUConstInitVals().at(v));
-                                   });
-                }
-            }*/
+            updateParamHash<SynapseGroupMergedBase>(
+                &SynapseGroupMergedBase::isWUGlobalVarReferenced,
+                [](const SynapseGroupInternal &sg) { return sg.getWUConstInitVals();  }, hash);
         }
     }
     // Otherwise (weights are individual or procedural)
