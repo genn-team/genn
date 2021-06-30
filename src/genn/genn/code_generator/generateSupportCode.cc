@@ -12,9 +12,10 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged)
+void CodeGenerator::generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                        const std::string &suffix)
 {
-    std::ofstream supportCodeStream((outputPath / "supportCode.h").str());
+    std::ofstream supportCodeStream((outputPath / ("supportCode" + suffix + ".h")).str());
     CodeStream supportCode(supportCodeStream);
 
     supportCode << "#pragma once" << std::endl;

@@ -534,12 +534,14 @@ class GeNNModel(object):
 
         return c_update
         
-    def build(self, path_to_model="./"):
+    def build(self, path_to_model="./", force_rebuild=False):
         """Finalize and build a GeNN model
 
         Keyword args:
         path_to_model   --  path where to place the generated model code.
                             Defaults to the local directory.
+        force_rebuild   --  should model be rebuilt even if 
+                            it doesn't appear to be required
         """
 
         if self._built:
@@ -562,12 +564,13 @@ class GeNNModel(object):
                 setattr(preferences, k, v)
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, share_path, output_path, 
-                                                      self.backend_log_level, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path,
+                                                      self.backend_log_level,
+                                                      preferences)
 
         # Generate code
         mem_alloc = genn_wrapper.generate_code(self._model, backend, 
-                                               share_path, output_path, 0)
+                                               share_path, output_path, force_rebuild)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         backend = None

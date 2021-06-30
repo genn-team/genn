@@ -474,10 +474,10 @@ def generateBackend(swigPath, folder, namespace):
 
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
-            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &sharePath, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
+            mg.write('CodeGenerator::' + namespace + '::Backend create_backend(const ModelSpecInternal &model, const std::string &outputPath, plog::Severity backendLevel, const CodeGenerator::' + namespace + '::Preferences &preferences)\n'
                      '{\n'
                      '  auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;\n'
-                     '  return Optimiser::createBackend(model, filesystem::path(sharePath), filesystem::path(outputPath), backendLevel, consoleAppender, preferences);\n'
+                     '  return Optimiser::createBackend(model, filesystem::path(outputPath), backendLevel, consoleAppender, preferences);\n'
                      '}\n\n'
                      'void delete_backend(CodeGenerator::' + namespace + '::Backend *backend)\n'
                      '{\n'
@@ -573,12 +573,15 @@ def generateConfigs(gennPath, backends):
                 Logging::init(gennLevel, codeGeneratorLevel, consoleAppender, consoleAppender);
             }
 
-            CodeGenerator::MemAlloc generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &sharePathStr, const std::string &outputPathStr, int localHostID)
+            CodeGenerator::MemAlloc generate_code(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
             {
                 const filesystem::path outputPath(outputPathStr);
 
                 // Generate code, returning list of module names that must be build
-                const auto output = CodeGenerator::generateAll(model, backend, filesystem::path(sharePathStr), outputPath);
+                const auto output = CodeGenerator::generateAll(
+                    model, backend, 
+                    filesystem::path(sharePathStr), outputPath, 
+                    forceRebuild);
 
             #ifdef _WIN32
                 // Create MSBuild project to compile and link all generated modules

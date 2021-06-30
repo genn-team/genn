@@ -186,6 +186,16 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
+    //! Helper to test whether parameter is referenced in vector of codestrings
+    bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
+    {
+        return std::any_of(codeStrings.begin(), codeStrings.end(),
+                           [&paramName](const std::string &c)
+                           {
+                               return (c.find("$(" + paramName + ")") != std::string::npos);
+                           });
+    }
+
     //! Helper to test whether parameter values are heterogeneous within merged group
     template<typename P>
     bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
@@ -199,26 +209,6 @@ protected:
                            {
                                return (getParamValuesFn(g).at(index) != archetypeValue);
                            });
-    }
-
-    //! Helper to test whether parameter values are heterogeneous within merged group
-    template<typename P>
-    bool isParamValueHeterogeneous(const std::vector<std::string> &codeStrings, const std::string &paramName,
-                                   size_t index, P getParamValuesFn) const
-    {
-        // If none of the code strings reference the parameter, return false
-        if(std::none_of(codeStrings.begin(), codeStrings.end(),
-                        [&paramName](const std::string &c) 
-                        { 
-                            return (c.find("$(" + paramName + ")") != std::string::npos); 
-                        }))
-        {
-            return false;
-        }
-        // Otherwise check if values are heterogeneous
-        else {
-            return isParamValueHeterogeneous<P>(index, getParamValuesFn);
-        }
     }
 
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
@@ -357,6 +347,78 @@ protected:
         }
     }
 
+    //! Helper to update hash with the hash of calling getHashableFn on each group
+    template<typename H>
+    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
+    {
+        for(const auto &g : getGroups()) {
+            Utils::updateHash(getHashableFn(g.get()), hash);
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through parameters
+        const auto &archetypeParams = getValueFn(getArchetype());
+        for(size_t p = 0; p < archetypeParams.size(); p++) {
+            // If any of the code strings reference the parameter
+            if((static_cast<const T*>(this)->*isParamReferencedFn)(p)) {
+                // Loop through groups
+                for(const auto &g : getGroups()) {
+                    // Update hash with parameter value
+                    Utils::updateHash(getValueFn(g.get()).at(p), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through variables
+        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+            // Loop through parameters
+            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            for(size_t p = 0; p < varInit.getParams().size(); p++) {
+                // If any of the code strings reference the parameter
+                if((static_cast<const T *>(this)->*isParamReferencedFn)(v, p)) {
+                    // Loop through groups
+                    for(const auto &g : getGroups()) {
+                        const auto &values = (g.get().*getVarInitialisers)()[v].getParams();
+
+                        // Update hash with parameter value
+                        Utils::updateHash(values.at(p), hash);
+                    }
+                }
+            }
+        }
+    }
+
+    template<typename T, typename V, typename R>
+    void updateVarInitDerivedParamHash(V getVarInitialisers, R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through variables
+        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+            // Loop through parameters
+            const Models::VarInit &varInit = archetypeVarInitialisers[v];
+            for(size_t d = 0; d < varInit.getDerivedParams().size(); d++) {
+                // If any of the code strings reference the parameter
+                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(v, d)) {
+                    // Loop through groups
+                    for(const auto &g : getGroups()) {
+                        const auto &values = (g.get().*getVarInitialisers)()[v].getDerivedParams();
+
+                        // Update hash with parameter value
+                        Utils::updateHash(values.at(d), hash);
+                    }
+                }
+            }
+        }
+    }
+
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
                             CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                             CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
@@ -380,7 +442,7 @@ protected:
                 definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
-            
+
             // Raise error if this field is a host field but this isn't a host structure
             assert(std::get<3>(f) != FieldType::Host || host);
         }
@@ -549,16 +611,19 @@ public:
     bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
-    std::vector<SynapseGroupInternal*> getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
 
     //! Get sorted vectors of current sources belonging to archetype group
-    std::vector<CurrentSourceInternal*> getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
+    const std::vector<CurrentSourceInternal*> &getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
+
 protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
 
     template<typename T, typename G, typename H>
     void orderNeuronGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
@@ -604,31 +669,54 @@ protected:
         }
     }
 
+    //! Is the var init parameter referenced?
+    bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const;
+
+    //! Is the var init derived parameter referenced?
+    bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const;
+
+    //! Is the current source parameter referenced?
+    bool isCurrentSourceParamReferenced(size_t childIndex, size_t paramIndex) const;
+
+    //! Is the current source derived parameter referenced?
+    bool isCurrentSourceDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
+
+    //! Is the current source var init parameter referenced?
+    bool isCurrentSourceVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Is the current source var init derived parameter referenced?
+    bool isCurrentSourceVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Is the postsynaptic model parameter referenced?
+    bool isPSMParamReferenced(size_t childIndex, size_t paramIndex) const;
+
+    //! Is the postsynaptic model derived parameter referenced?
+    bool isPSMDerivedParamReferenced(size_t childIndex, size_t varIndex) const;
+
+    //! Is the GLOBALG postsynaptic model variable referenced?
+    bool isPSMGlobalVarReferenced(size_t childIndex, size_t varIndex) const;
+
+    //! Is the postsynaptic model var init parameter referenced?
+    bool isPSMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Is the postsynaptic model var init derived parameter referenced?
+    bool isPSMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     template<typename T, typename G>
-    bool isChildParamValueHeterogeneous(const std::vector<std::string> &codeStrings,
-                                        const std::string &paramName, size_t childIndex, size_t paramIndex,
+    bool isChildParamValueHeterogeneous(size_t childIndex, size_t paramIndex,
                                         const std::vector<std::vector<T>> &sortedGroupChildren, G getParamValuesFn) const
     {
-        // If none of the code strings reference the parameter
-        if(std::any_of(codeStrings.begin(), codeStrings.end(),
-                        [&paramName](const std::string &c)
-                        {
-                            return (c.find("$(" + paramName + ")") != std::string::npos);
-                        }))
-        {
-            // Get value of archetype derived parameter
-            const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
+        // Get value of archetype derived parameter
+        const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
 
-            // Loop through groups within merged group
-            for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-                const auto group = sortedGroupChildren[i][childIndex];
-                if(getParamValuesFn(group).at(paramIndex) != firstValue) {
-                    return true;
-                }
+        // Loop through groups within merged group
+        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
+            const auto group = sortedGroupChildren[i][childIndex];
+            if(getParamValuesFn(group).at(paramIndex) != firstValue) {
+                return true;
             }
         }
-
+       
         return false;
     }
 
@@ -730,11 +818,102 @@ protected:
                      Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
-    
 
+    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
+    void updateChildParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
+                              size_t childIndex, R isChildParamReferencedFn, V getValueFn, 
+                              boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through parameters
+        const auto &archetypeParamNames = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
+        for(size_t p = 0; p < archetypeParamNames.size(); p++) {
+            // If any of the code strings reference the parameter
+            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p)) {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
 
-    void addMergedInSynPointerField(const std::string &type, const std::string &name, 
+                    // Update hash with parameter value
+                    Utils::updateHash((child->*getValueFn)().at(p), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
+    void updateChildDerivedParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
+                                     size_t childIndex,  R isChildDerivedParamReferencedFn, V getValueFn, 
+                                     boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through derived parameters
+        const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
+        for(size_t p = 0; p < archetypeDerivedParams.size(); p++) {
+            // If any of the code strings reference the parameter
+            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, p)) {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+
+                    // Update hash with parameter value
+                    Utils::updateHash((child->*getValueFn)().at(p), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
+                                      size_t childIndex, size_t varIndex, R isChildParamReferencedFn, V getVarInitialiserFn,
+                                      boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through parameters
+        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeParams = archetypeVarInit.at(varIndex).getParams();
+        for(size_t p = 0; p < archetypeParams.size(); p++) {
+            // If parameter is referenced
+            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varIndex, p)) {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group and its variable initialisers
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+                    const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
+
+                    // Update hash with parameter value
+                    Utils::updateHash(varInit.at(varIndex).getParams().at(p), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
+                                             size_t childIndex, size_t varIndex, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
+                                             boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through derived parameters
+        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeDerivedParams = archetypeVarInit.at(varIndex).getDerivedParams();
+        for(size_t p = 0; p < archetypeDerivedParams.size(); p++) {
+            // If parameter is referenced
+            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varIndex, p)) {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group and its variable initialisers
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+                    const auto &varInit = (child->*getVarInitialiserFn)();
+
+                    // Update hash with parameter value
+                    Utils::updateHash(varInit.at(varIndex).getDerivedParams().at(p), hash);
+                }
+            }
+        }
+    }
+
+    void addMergedInSynPointerField(const std::string &type, const std::string &name,
                                     size_t archetypeIndex, const std::string &prefix);
+
 
 private:
     //------------------------------------------------------------------------
@@ -774,6 +953,9 @@ public:
     //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
 
+    //! Get hash digest used for detecting changes
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
@@ -804,6 +986,18 @@ private:
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
                        bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const);
+
+    //! Is the incoming synapse weight update model parameter referenced?
+    bool isInSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
+
+    //! Is the incoming synapse weight update model derived parameter referenced?
+    bool isInSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
+
+    //! Is the outgoing synapse weight update model parameter referenced?
+    bool isOutSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
+
+    //! Is the outgoing synapse weight update model derived parameter referenced?
+    bool isOutSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
 
     //------------------------------------------------------------------------
     // Members
@@ -842,6 +1036,9 @@ public:
     //! Get sorted vectors of outgoing synapse groups with presynaptic variables belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreVars() const { return m_SortedOutSynWithPreVars.front(); }
 
+    //! Get hash digest used for detecting changes
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
@@ -867,6 +1064,17 @@ private:
                        bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
                        bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const);
 
+    //! Is the incoming synapse weight update model var init parameter referenced?
+    bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Is the incoming synapse weight update model var init derived parameter referenced?
+    bool isInSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Is the outgoing synapse weight update model var init parameter referenced?
+    bool isOutSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+
+    //! Is the outgoing synapse weight update model var init derived parameter referenced?
+    bool isOutSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
 
     //------------------------------------------------------------------------
     // Members
@@ -931,6 +1139,16 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+     //! Is the connectivity initialization parameter referenced?
+    bool isConnectivityInitParamReferenced(size_t paramIndex) const;
+
+    //! Is the connectivity initialization derived parameter referenced?
+    bool isConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
 };
 
 //----------------------------------------------------------------------------
@@ -1039,6 +1257,8 @@ protected:
     //----------------------------------------------------------------------------
     // Protected methods
     //----------------------------------------------------------------------------
+    boost::uuids::detail::sha1::digest_type getHashDigest(Role role) const;
+
     const std::string &getArchetypeCode() const { return m_ArchetypeCode; }
 
 private:
@@ -1049,6 +1269,39 @@ private:
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+
+    //! Is the weight update model parameter referenced?
+    bool isWUParamReferenced(size_t paramIndex) const;
+
+    //! Is the weight update model derived parameter referenced?
+    bool isWUDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is the GLOBALG weight update model variable referenced?
+    bool isWUGlobalVarReferenced(size_t varIndex) const;
+
+    //! Is the weight update model variable initialization parameter referenced?
+    bool isWUVarInitParamReferenced(size_t varIndex, size_t paramIndex) const;
+    
+    //! Is the weight update model variable initialization derived parameter referenced?
+    bool isWUVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const;
+
+    //! Is the connectivity initialization parameter referenced?
+    bool isConnectivityInitParamReferenced(size_t paramIndex) const;
+
+    //! Is the connectivity initialization parameter referenced?
+    bool isConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is presynaptic neuron parameter referenced?
+    bool isSrcNeuronParamReferenced(size_t paramIndex) const;
+
+    //! Is presynaptic neuron derived parameter referenced?
+    bool isSrcNeuronDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is postsynaptic neuron parameter referenced?
+    bool isTrgNeuronParamReferenced(size_t paramIndex) const;
+
+    //! Is postsynaptic neuron derived parameter referenced?
+    bool isTrgNeuronDerivedParamReferenced(size_t paramIndex) const;
 
     //------------------------------------------------------------------------
     // Members
@@ -1074,6 +1327,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PresynapticUpdate);
     }
 
     //----------------------------------------------------------------------------
@@ -1102,6 +1360,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PostsynapticUpdate);
+    }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1126,6 +1389,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SynapseDynamics);
     }
 
     //----------------------------------------------------------------------------
@@ -1153,6 +1421,11 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::DenseInit);
+    }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1176,6 +1449,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SparseInit);
     }
 
     //----------------------------------------------------------------------------
@@ -1202,6 +1480,11 @@ public:
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::ConnectivityInit);
     }
 
     //----------------------------------------------------------------------------
@@ -1233,6 +1516,8 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
@@ -1257,6 +1542,8 @@ public:
     bool isParamHeterogeneous(size_t index) const;
     bool isDerivedParamHeterogeneous(size_t index) const;
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
@@ -1266,6 +1553,7 @@ public:
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+
 };
 
 // ----------------------------------------------------------------------------
@@ -1333,33 +1621,21 @@ template<typename G>
 class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
 {
 public:
-     //----------------------------------------------------------------------------
+    //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-     //! Should the var init parameter be implemented heterogeneously?
+    //! Should the var init parameter be implemented heterogeneously?
     bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
     {
-        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
-        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
-        return this->isParamValueHeterogeneous({varInitSnippet->getCode()}, paramName, paramIndex,
-                                               [varIndex](const G &cg)
-                                               {
-                                                   return cg.getVarInitialisers().at(varIndex).getParams();
-                                               });
+        return (isVarInitParamReferenced(varIndex, paramIndex) &&
+                this->isParamValueHeterogeneous(paramIndex, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getParams(); }));
     }
 
     //! Should the var init derived parameter be implemented heterogeneously?
     bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
     {
-        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
-        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
-        return this->isParamValueHeterogeneous({varInitSnippet->getCode()}, derivedParamName, paramIndex,
-                                               [varIndex](const G &cg)
-                                               {
-                                                   return cg.getVarInitialisers().at(varIndex).getDerivedParams();
-                                               });
+        return (isVarInitDerivedParamReferenced(varIndex, paramIndex) &&
+                this->isParamValueHeterogeneous(paramIndex, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getDerivedParams(); }));
     }
 
 protected:
@@ -1383,13 +1659,51 @@ protected:
             this->addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
         }
 
-        this->template  addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G>>(
+        this->template addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G>>(
             vars, &G::getVarInitialisers,
             &CustomUpdateInitGroupMergedBase<G>::isVarInitParamHeterogeneous);
 
         this->template addHeterogeneousVarInitDerivedParams<CustomUpdateInitGroupMergedBase<G>>(
             vars, &G::getVarInitialisers,
             &CustomUpdateInitGroupMergedBase<G>::isVarInitDerivedParamHeterogeneous);
+    }
+
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
+    void updateBaseHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // Update hash with archetype's hash digest
+        Utils::updateHash(this->getArchetype().getInitHashDigest(), hash);
+        
+        // Update hash with each group's variable initialisation parameters and derived parameters
+        this->template updateVarInitParamHash<CustomUpdateInitGroupMergedBase<G>>(
+            &G::getVarInitialisers, &CustomUpdateInitGroupMergedBase<G>::isVarInitParamHeterogeneous, hash);
+        
+        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<G>>(
+            &G::getVarInitialisers, &CustomUpdateInitGroupMergedBase<G>::isVarInitDerivedParamHeterogeneous, hash);
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    //! Is the var init parameter referenced?
+    bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
+        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
+    }
+
+    //! Is the var init derived parameter referenced?
+    bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
+        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
+        return this->isParamReferenced({varInitSnippet->getCode()}, derivedParamName);
     }
 };
 
@@ -1412,6 +1726,8 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -1440,6 +1756,8 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1465,6 +1783,8 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //----------------------------------------------------------------------------
     // Static constants

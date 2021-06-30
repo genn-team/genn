@@ -228,8 +228,8 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
                    int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax], KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
     // Build source and module paths from module name
-    const std::string sourcePath = (outputPath / (std::get<0>(module) + ".cc")).str();
-    const std::string moduleSHAPath = (outputPath / (std::get<0>(module) + "_CUDA_" + std::to_string(r) + ".sha")).str();
+    const std::string sourcePath = (outputPath / (std::get<0>(module) + "CUDAOptim.cc")).str();
+    const std::string moduleSHAPath = (outputPath / (std::get<0>(module) + "CUDA" + std::to_string(r) + ".sha")).str();
 
     LOGD_BACKEND << "\tModule " << std::get<0>(module);
     try {
@@ -263,6 +263,10 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
                 }
             }
 
+            // Remove tempory source file
+            if(std::remove(sourcePath.c_str())) {
+                LOGW_BACKEND << "Cannot remove dry-run source file";
+            }
             LOGD_BACKEND << "\tModule unchanged - re-using shared memory and register usage";
             return;
         }
@@ -352,6 +356,11 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
     if(std::remove((sourcePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
     }
+
+    // Remove tempory source file
+    if(std::remove(sourcePath.c_str())) {
+        LOGW_BACKEND << "Cannot remove dry-run source file";
+    }
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
@@ -415,17 +424,18 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Create merged model
         ModelSpecMerged modelMerged(model, backend);
 
-        // Generate code
+        // Generate code with suffix so it doesn't interfere with primary generated code
         // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
-        generateRunner(outputPath, modelMerged, backend);
-        generateSynapseUpdate(outputPath, modelMerged, backend);
-        generateNeuronUpdate(outputPath, modelMerged, backend);
-        generateCustomUpdate(outputPath, modelMerged, backend);
-        generateInit(outputPath, modelMerged, backend);
+        const std::string dryRunSuffix = "CUDAOptim";
+        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
+        generateSynapseUpdate(outputPath, modelMerged, backend, dryRunSuffix);
+        generateNeuronUpdate(outputPath, modelMerged, backend, dryRunSuffix);
+        generateCustomUpdate(outputPath, modelMerged, backend, dryRunSuffix);
+        generateInit(outputPath, modelMerged, backend, dryRunSuffix);
 
         // Generate support code module if the backend supports namespaces
         if (backend.supportsNamespace()) {
-            generateSupportCode(outputPath, modelMerged);
+            generateSupportCode(outputPath, modelMerged, dryRunSuffix);
         }
 
         // Loop through modules
@@ -445,6 +455,20 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Join all threads
         for(auto &t : threads) {
             t.join();
+        }
+
+        // Remove tempory source file
+        if(std::remove((outputPath / ("runner" + dryRunSuffix + ".cc")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
+        }
+        if(std::remove((outputPath / ("supportCode" + dryRunSuffix + ".h")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
+        }
+        if(std::remove((outputPath / ("definitions" + dryRunSuffix + ".h")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
+        }
+        if(std::remove((outputPath / ("definitionsInternal" + dryRunSuffix + ".h")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
         }
     }
 
@@ -683,9 +707,9 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &,
-                      const filesystem::path &outputPath, plog::Severity backendLevel,
-                      plog::IAppender *backendAppender, const Preferences &preferences)
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
+                      plog::Severity backendLevel, plog::IAppender *backendAppender, 
+                      const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {

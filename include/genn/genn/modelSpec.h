@@ -656,6 +656,9 @@ protected:
     //! Is recording enabled on any population in this model?
     bool isRecordingInUse() const;
 
+    //! Get hash digest used for detecting changes
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     //! Get std::map containing local named NeuronGroup objects in model
     const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
 

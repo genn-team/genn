@@ -220,6 +220,9 @@ protected:
     //! Helper wrapper around padSize to pad size to a kernel size
     size_t padKernelSize(size_t size, Kernel kernel) const;
 
+    //! Get kernel block size
+    const KernelBlockSize &getKernelBlockSize() const { return m_KernelBlockSizes; }
+
 private:
     //--------------------------------------------------------------------------
     // Type definitions

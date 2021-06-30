@@ -96,6 +96,21 @@ struct Preferences : public PreferencesBase
 
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // Superclass 
+        PreferencesBase::updateHash(hash);
+
+        // **NOTE** showPtxInfo, generateLineInfo and userNvccFlags only affect makefiles/msbuild 
+        // **NOTE** block size optimization is also not relevant, the chosen block size is hashed in the backend
+        // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
+
+        //! Update hash with preferences
+        Utils::updateHash(selectGPUByDeviceID, hash);
+        Utils::updateHash(deviceSelectMethod, hash);
+        Utils::updateHash(constantCacheOverhead, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -263,6 +278,9 @@ public:
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     virtual bool supportsNamespace() const override { return true; };
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
 
     //--------------------------------------------------------------------------
     // Public API

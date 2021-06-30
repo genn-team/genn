@@ -201,6 +201,89 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Concatenate hash digest of model properties
+    Utils::updateHash(getModel().getHashDigest(), hash);
+
+    // Concatenate hash digest of backend properties
+    Utils::updateHash(backend.getHashDigest(), hash);
+
+    // Concatenate hash digest of neuron update groups
+    for(const auto &g : m_MergedNeuronUpdateGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of presynaptic update groups
+    for(const auto &g : m_MergedPresynapticUpdateGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of postsynaptic update groups
+    for(const auto &g : m_MergedPostsynapticUpdateGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of synapse dynamics groups
+    for(const auto &g : m_MergedSynapseDynamicsGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom update groups
+    for(const auto &g : m_MergedCustomUpdateGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom WU update groups
+    for(const auto &g : m_MergedCustomUpdateWUGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom transpose WU update groups
+    for(const auto &g : m_MergedCustomUpdateTransposeWUGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of neuron init groups
+    for(const auto &g : m_MergedNeuronInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of synapse dense init groups
+    for(const auto &g : m_MergedSynapseDenseInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Update hash with hash digest of synapse sparse init groups
+    for(const auto &g : m_MergedSynapseSparseInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of synapse connectivity init groups
+    for(const auto &g : m_MergedSynapseConnectivityInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom update init groups
+    for(const auto &g : m_MergedCustomUpdateInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom dense WU update init groups
+    for(const auto &g : m_MergedCustomWUUpdateDenseInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom sparse WU update init groups
+    for(const auto &g : m_MergedCustomWUUpdateSparseInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateArchetypeHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

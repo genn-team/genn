@@ -181,6 +181,9 @@ public:
     const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
+    //! Get hash digest of entire model
+    boost::uuids::detail::sha1::digest_type getHashDigest(const BackendBase &backend) const;
+
     //! Get hash digest of neuron update module
     boost::uuids::detail::sha1::digest_type getNeuronUpdateArchetypeHashDigest() const;
     

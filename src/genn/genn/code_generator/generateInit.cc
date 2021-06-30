@@ -270,13 +270,14 @@ void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const SynapseCo
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                 const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
-    std::ofstream initStream((outputPath / "init.cc").str());
+    std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
     CodeStream init(initStream);
 
-    init << "#include \"definitionsInternal.h\"" << std::endl;
+    init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();

@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <fstream>
 #include <functional>
 #include <map>
 #include <string>
@@ -16,6 +17,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -81,6 +83,17 @@ struct PreferencesBase
 
     //! Logging level to use for code generation
     plog::Severity logLevel = plog::info;
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // **NOTE** optimizeCode, debugCode and various compiler flags only affect makefiles/msbuild 
+
+        //! Update hash with preferences
+        Utils::updateHash(enableBitmaskOptimisations, hash);
+        Utils::updateHash(automaticCopy, hash);
+        Utils::updateHash(generateEmptyStatePushPull, hash);
+        Utils::updateHash(generateExtraGlobalParamPull, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -130,7 +143,27 @@ private:
     size_t m_HostBytes;
     size_t m_DeviceBytes;
     size_t m_ZeroCopyBytes;
+
+    //--------------------------------------------------------------------------
+    // Friend operators
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator << (std::ostream &out, const MemAlloc &m);
+    friend std::istream& operator >> (std::istream &in,  MemAlloc &m);
 };
+
+inline std::ostream & operator << (std::ostream &out, const MemAlloc &m)
+{
+    out << m.m_HostBytes << " " << m.m_DeviceBytes << " " << m.m_ZeroCopyBytes;
+    return out;
+}
+ 
+inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
+{
+    in >> m.m_HostBytes;
+    in >> m.m_DeviceBytes;
+    in >> m.m_ZeroCopyBytes;
+    return in;
+}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
@@ -412,7 +445,11 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
+    //! Does this backend support namespaces i.e. can C++ implementation of support functions be used
     virtual bool supportsNamespace() const = 0;
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
     //--------------------------------------------------------------------------
     // Public API

@@ -99,13 +99,14 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                         const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
-    std::ofstream customUpdateStream((outputPath / "customUpdate.cc").str());
+    std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
     CodeStream customUpdate(customUpdateStream);
 
-    customUpdate << "#include \"definitionsInternal.h\"" << std::endl;
+    customUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
     customUpdate << std::endl;
 
     // Neuron update kernel
