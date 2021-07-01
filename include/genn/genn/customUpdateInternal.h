@@ -23,6 +23,7 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
+    using CustomUpdateBase::getVarLocationHashDigest;
 
     using CustomUpdate::finalize;
     using CustomUpdate::getHashDigest;
@@ -50,6 +51,7 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
+    using CustomUpdateBase::getVarLocationHashDigest;
     
     using CustomUpdateWU::finalize;
     using CustomUpdateWU::getHashDigest;

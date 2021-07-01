@@ -735,3 +735,18 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityHostInitHas
 {
     return getConnectivityInitialiser().getHashDigest();
 }
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getInSynLocation(), hash);
+    Utils::updateHash(getDendriticDelayLocation(), hash);
+    Utils::updateHash(getSparseConnectivityLocation(), hash);
+    Utils::updateHash(m_WUVarLocation, hash);
+    Utils::updateHash(m_WUPreVarLocation, hash);
+    Utils::updateHash(m_WUPostVarLocation, hash);
+    Utils::updateHash(m_PSVarLocation, hash);
+    Utils::updateHash(m_WUExtraGlobalParamLocation, hash);
+    Utils::updateHash(m_PSExtraGlobalParamLocation, hash);
+    return hash.get_digest();
+}

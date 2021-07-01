@@ -41,4 +41,5 @@ public:
     using NeuronGroup::getInitHashDigest;
     using NeuronGroup::getSpikeQueueUpdateHashDigest;
     using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
+    using NeuronGroup::getVarLocationHashDigest;
 };
