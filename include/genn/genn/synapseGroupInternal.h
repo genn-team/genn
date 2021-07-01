@@ -38,7 +38,6 @@ public:
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::areWUVarReferencedByCustomUpdate;
     using SynapseGroup::getPSModelTargetName;
-    using SynapseGroup::isPSModelMerged;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::canPSBeLinearlyCombined;
     using SynapseGroup::getWUHashDigest;

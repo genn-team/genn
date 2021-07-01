@@ -138,6 +138,8 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
+    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
@@ -273,8 +275,7 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
-    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }    
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;

@@ -1079,15 +1079,17 @@ class SynapseGroup(Group):
                                 self.psm_vars, self.pop.get_psvar_location)
         
         # If this synapse group's inSyn is accessible on the host
-        if (self.pop.get_in_syn_location() & VarLocation_HOST) != 0:
+        if (not self.pop.is_psmodel_merged() and
+            (self.pop.get_in_syn_location() & VarLocation_HOST) != 0):
             # Get view
             self.in_syn = self._assign_ext_ptr_array(
                 "inSyn", self.trg.size * self._model.batch_size,
                 "scalar")
 
             # Reshape to expose batches
-            self.in_syn = np.reshape(view, (batch_size, self.trg.size))
-        
+            self.in_syn = np.reshape(self.in_syn, (self._model.batch_size,
+                                                   self.trg.size))
+
         # Load extra global parameters
         self._load_egp()
         self._load_egp(self.psm_extra_global_params)
