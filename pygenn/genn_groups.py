@@ -442,22 +442,26 @@ class NeuronGroup(Group):
     def pull_current_spikes_from_device(self):
         """Wrapper around GeNNModel.pull_current_spikes_from_device"""
         self._model.pull_current_spikes_from_device(self.name)
-    
+
     def pull_spike_times_from_device(self):
         """Helper to pull spike times from device"""
-        self.pull_var_from_device("SpikeTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("SpikeTimes", self.name)
+
     def pull_spike_event_times_from_device(self):
         """Helper to pull spike event times from device"""
-        self.pull_var_from_device("SpikeEventTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("SpikeEventTimes", self.name)
+
     def pull_prev_spike_times_from_device(self):
         """Helper to pull previous spike times from device"""
-        self.pull_var_from_device("PreviousSpikeTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("PreviousSpikeTimes", self.name)
+
     def pull_prev_spike_event_times_from_device(self):
         """Helper to pull previous spike event times from device"""
-        self.pull_var_from_device("PreviousSpikeEventTimes")
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("PreviousSpikeEventTimes", self.name)
 
     def push_spikes_to_device(self):
         """Wrapper around GeNNModel.push_spikes_to_device"""
@@ -469,20 +473,24 @@ class NeuronGroup(Group):
 
     def push_spike_times_to_device(self):
         """Helper to push spike times to device"""
-        self.push_var_to_device("SpikeTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("SpikeTimes", self.name)
+
     def push_spike_event_times_to_device(self):
         """Helper to push spike event times to device"""
-        self.push_var_to_device("SpikeEventTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("SpikeEventTimes", self.name)
+
     def push_prev_spike_times_to_device(self):
         """Helper to push previous spike times to device"""
-        self.push_var_to_device("PreviousSpikeTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("PreviousSpikeTimes", self.name)
+
     def push_prev_spike_event_times_to_device(self):
         """Helper to push previous spike event times to device"""
-        self.push_var_to_device("PreviousSpikeEventTimes")
-    
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("PreviousSpikeEventTimes", self.name)
+
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
         # If spike data is present on the host
