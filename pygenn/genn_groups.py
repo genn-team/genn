@@ -506,28 +506,28 @@ class NeuronGroup(Group):
         if (self.pop.is_spike_time_required() and
             (self.pop.get_spike_time_location() & VarLocation_HOST) != 0):
             
-            self.spike_times = self.get_event_time_view("sT")
+            self.spike_times = self._get_event_time_view("sT")
         
         # If this neuron group generates spike event times 
         # and they are accesible on the host
         if (self.pop.is_spike_event_time_required() and
             (self.pop.get_spike_event_time_location() & VarLocation_HOST) != 0):
             
-            self.spike_event_times = self.get_event_time_view("seT")
+            self.spike_event_times = self._get_event_time_view("seT")
         
         # If this neuron group generates previous spike times 
         # and they are accesible on the host
         if (self.pop.is_prev_spike_time_required() and
             (self.pop.get_prev_spike_time_location() & VarLocation_HOST) != 0):
             
-            self.prev_spike_times = self.get_event_time_view("prevST")
+            self.prev_spike_times = self._get_event_time_view("prevST")
         
         # If this neuron group generates previous spike event times 
         # and they are accesible on the host
         if (self.pop.is_prev_spike_event_time_required() and
             (self.pop.get_prev_spike_event_time_location() & VarLocation_HOST) != 0):
             
-            self.prev_spike_event_times = self.get_event_time_view("prevSET")
+            self.prev_spike_event_times = self._get_event_time_view("prevSET")
 
         # If spike recording is enabled
         if self.spike_recording_enabled:
@@ -563,8 +563,9 @@ class NeuronGroup(Group):
     def _spike_recording_words(self):
         return ((self.size + 31) // 32)
         
-    def get_event_time_view(name, self):
+    def _get_event_time_view(self, name):
         # Get view
+        batch_size = self._model.batch_size
         view = self._assign_ext_ptr_array(
             name, self.size * self.delay_slots * batch_size,
             self._model._time_precision)
@@ -967,7 +968,15 @@ class SynapseGroup(Group):
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
+    
+    def pull_in_syn_from_device(self):
+        """Pull synaptic input current from device"""
+        self.pull_var_from_device("inSyn")
 
+    def push_in_syn_to_device(self):
+        """Push synaptic input current to device"""
+        self.push_var_to_device("inSyn")
+        
     def pull_psm_extra_global_param_from_device(self, egp_name):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
