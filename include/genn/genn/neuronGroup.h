@@ -275,6 +275,9 @@ protected:
     boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getPrevSpikeTimeUpdateHashDigest() const;
+
+    boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
 private:
     //------------------------------------------------------------------------
     // Private methods

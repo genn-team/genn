@@ -53,4 +53,5 @@ public:
     using SynapseGroup::getPSInitHashDigest;
     using SynapseGroup::getConnectivityInitHashDigest;
     using SynapseGroup::getConnectivityHostInitHashDigest;
+    using SynapseGroup::getVarLocationHashDigest;
 };

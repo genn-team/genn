@@ -513,6 +513,20 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getPrevSpikeTimeUpdateHashD
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getSpikeLocation(), hash);
+    Utils::updateHash(getSpikeEventLocation(), hash);
+    Utils::updateHash(getSpikeTimeLocation(), hash);
+    Utils::updateHash(getPrevSpikeTimeLocation(), hash);
+    Utils::updateHash(getSpikeEventTimeLocation(), hash);
+    Utils::updateHash(getPrevSpikeEventTimeLocation(), hash);
+    Utils::updateHash(m_VarLocation, hash);
+    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
 {
     // Loop through variables

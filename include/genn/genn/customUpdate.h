@@ -84,6 +84,8 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
+    boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
     //! Helper function to determine whether a custom update should be batched
     template<typename R>
     void finalizeBatched(unsigned int batchSize, const std::vector<R> &varRefs)

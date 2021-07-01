@@ -95,3 +95,11 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest() const
     }
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CurrentSource::getVarLocationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(m_VarLocation, hash);
+    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    return hash.get_digest();
+}
