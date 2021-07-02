@@ -81,6 +81,14 @@ void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
         Utils::updateHash(w.getHashDigest(), hash);
     }
 }
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(m_VarLocation, hash);
+    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    return hash.get_digest();
+}
 
 //----------------------------------------------------------------------------
 // CustomUpdate

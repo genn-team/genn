@@ -138,6 +138,69 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         ASSERT_TRUE((moduleHash[i] == moduleHash[0]) == modelModifiers[i].second);
     }
 }
+//--------------------------------------------------------------------------
+template<typename S>
+void testNeuronVarLocation(S setVarLocationFn)
+{
+    // Make array of variable locations to build model with and flags determining whether the hashes should match baseline
+    const std::pair<VarLocation, bool> modelModifiers[] = {
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::DEVICE,                   false},
+        {VarLocation::HOST_DEVICE_ZERO_COPY,    false}};
+
+    test(modelModifiers, 
+         [setVarLocationFn](const VarLocation &varLocation, ModelSpecInternal &model)
+         {
+             // Default neuron parameters
+             NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 4.0);
+             NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+             auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                             paramVals, varVals);
+
+             // Call function to apply var location to model
+             setVarLocationFn(pop, varLocation);
+         });
+}
+//--------------------------------------------------------------------------
+template<typename S>
+void testSynapseVarLocation(S setVarLocationFn)
+{
+    // Make array of variable locations to build model with and flags determining whether the hashes should match baseline
+    const std::pair<VarLocation, bool> modelModifiers[] = {
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::DEVICE,                   false},
+        {VarLocation::HOST_DEVICE_ZERO_COPY,    false}};
+
+    test(modelModifiers, 
+         [setVarLocationFn](const VarLocation &varLocation, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             STDPAdditive::ParamValues params(20.0, 20.0, 0.001, -0.001, 0.0, 1.0);
+             STDPAdditive::VarValues varValues(0.5);
+             STDPAdditive::PreVarValues preVarValues(0.0);
+             STDPAdditive::PostVarValues postVarValues(0.0);
+               
+             AlphaCurr::ParamValues psmParams(5.0);
+             AlphaCurr::VarValues psmVarValues(0.0);
+
+             auto *sg = model.addSynapsePopulation<STDPAdditive, AlphaCurr>(
+                 "Synapse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+                 "Pre", "Post",
+                 params, varValues, preVarValues, postVarValues,
+                 psmParams, psmVarValues,
+                 initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
+             setVarLocationFn(sg, varLocation);
+         });
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -256,6 +319,31 @@ TEST(ModelSpecMerged, CompareNeuronVarInitChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronVarLocationChanges)
+{
+    testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setVarLocation("V", varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronSpikeLocationChanges)
+{
+    testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setSpikeLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronSpikeEventLocationChanges)
+{
+    testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setSpikeEventLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronSpikeTimeLocationChanges)
+{
+    testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setSpikeTimeLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronSpikeEventTimeLocationChanges)
+{
+    testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setSpikeEventTimeLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCurrentSourceParamChanges)
 {
     // Current source parameter sets
@@ -322,6 +410,31 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarInitParamChanges)
                  model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS" + std::to_string(p), "Neurons",
                                                                          paramVals, varVals);
              }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCurrentSourceVarLocationChanges)
+{
+    // Make array of variable locations to build model with and flags determining whether the hashes should match baseline
+    const std::pair<VarLocation, bool> modelModifiers[] = {
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::DEVICE,                   false},
+        {VarLocation::HOST_DEVICE_ZERO_COPY,    false}};
+
+    test(modelModifiers, 
+         [](const VarLocation &varLocation, ModelSpecInternal &model)
+         {
+              // Add population
+              NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+              NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+              model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+              CurrentSourceModels::PoissonExp::ParamValues paramVals(1.0, 20.0, 10.0);
+              CurrentSourceModels::PoissonExp::VarValues varVals(0.0);
+              auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons",
+                                                                                 paramVals, varVals);
+              cs->setVarLocation("current", varLocation);
          });
 }
 //--------------------------------------------------------------------------
@@ -404,6 +517,11 @@ TEST(ModelSpecMerged, ComparePSMVarInitParamChanges)
                     params, varValues);
              }
          });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, ComparePSMVarLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setPSVarLocation("x", varLocation); });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareWUMParamChanges)
@@ -530,6 +648,11 @@ TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareWUMVarLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setWUVarLocation("g", varLocation); });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareWUMPreVarInitParamChanges)
 {
     // Weight update model presynaptic var initialisers
@@ -572,6 +695,11 @@ TEST(ModelSpecMerged, CompareWUMPreVarInitParamChanges)
                     {}, {});
              }
          });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareWUMPreVarLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setWUPreVarLocation("preTrace", varLocation); });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
@@ -618,6 +746,11 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareWUMPostVarLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setWUPostVarLocation("postTrace", varLocation); });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareConnectivityParamChanges)
 {
     // Connectivity parameters
@@ -658,6 +791,21 @@ TEST(ModelSpecMerged, CompareConnectivityParamChanges)
                      initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(connectParams));
              }
          });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareConnectivityLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setSparseConnectivityLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareInSynLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setInSynVarLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareDendriticDelayLocationChanges)
+{
+    testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setDendriticDelayLocation(varLocation); });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCustomUpdateParamChanges)
@@ -727,6 +875,32 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarInitParamChanges)
                  Sum::VarReferences varRefs(createVarRef(pre, "V"));
                  model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
              }
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomUpdateVarLocationChanges)
+{
+    // Make array of variable locations to build model with and flags determining whether the hashes should match baseline
+    const std::pair<VarLocation, bool> modelModifiers[] = {
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::HOST_DEVICE,              true},
+        {VarLocation::DEVICE,                   false},
+        {VarLocation::HOST_DEVICE_ZERO_COPY,    false}};
+
+    test(modelModifiers, 
+         [](const VarLocation &varLocation, ModelSpecInternal &model)
+         {
+             // Add pre population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                             neuronParamVals, neuronVarVals);
+
+            Sum::ParamValues paramVals(1.0);
+            Sum::VarValues vals(0.0);
+            Sum::VarReferences varRefs(createVarRef(pre, "V"));
+            auto *cu = model.addCustomUpdate<Sum>("CU", "Group", paramVals, vals, varRefs);
+            cu->setVarLocation("sum", varLocation);
          });
 }
 //--------------------------------------------------------------------------
