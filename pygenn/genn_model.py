@@ -114,17 +114,17 @@ class GeNNModel(object):
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
         # **NOTE** all SLM uses its template parameter for is time variable
-        time_precision = precision if time_precision is None else time_precision
-        if time_precision == "float":
+        self._time_precision = precision if time_precision is None else time_precision
+        if self._time_precision == "float":
             self._slm = slm.SharedLibraryModelNumpy_f()
             genn_time_type = "TimePrecision_FLOAT"
-        elif time_precision == "double":
+        elif self._time_precision == "double":
             self._slm = slm.SharedLibraryModelNumpy_d()
             genn_time_type = "TimePrecision_DOUBLE"
         else:
             raise ValueError(
                 "Supported time precisions are float and double, "
-                "but '{1}' was given".format(time_precision))
+                "but '{1}' was given".format(self._time_precision))
 
         # Store precision in class and determine GeNN scalar type
         self._scalar = precision
