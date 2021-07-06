@@ -17,3 +17,11 @@ boost::uuids::detail::sha1::digest_type CustomUpdateModels::Base::getHashDigest(
     Utils::updateHash(getVarRefs(), hash);
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+void CustomUpdateModels::Base::validateNames() const
+{
+    // Superclass
+    Models::Base::validateNames();
+
+    Utils::validateVecNames(getVarRefs(), "Variable reference");
+}

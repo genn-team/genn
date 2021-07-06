@@ -6,6 +6,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "customUpdateModels.h"
 #include "variableMode.h"
 
@@ -56,6 +57,10 @@ protected:
         m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_Batched(false)
     {
+        // Validate names
+        Utils::validateVarPopName(name, "Custom update");
+        Utils::validateVarPopName(updateGroupName, "Custom update group name");
+        getCustomUpdateModel()->validateNames();
     }
 
     //------------------------------------------------------------------------

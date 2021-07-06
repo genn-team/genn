@@ -8,6 +8,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "neuronModels.h"
 #include "variableMode.h"
 
@@ -205,6 +206,9 @@ protected:
         m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
     {
+        // Validate names
+        Utils::validateVarPopName(name, "Neuron group");
+        getNeuronModel()->validateNames();
     }
 
     //------------------------------------------------------------------------

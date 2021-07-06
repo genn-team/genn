@@ -439,6 +439,11 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
+    // Validate names
+    Utils::validateVarPopName(name, "Synapse group");
+    getWUModel()->validateNames();
+    getPSModel()->validateNames();
+
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
         // If there's no row build code, give an error

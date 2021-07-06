@@ -214,6 +214,14 @@ protected:
         Utils::updateHash(getExtraGlobalParams(), hash);
     }
 
+    //! Validate names of parameters etc
+    void validateNames() const
+    {
+        Utils::validateParamNames(getParamNames());
+        Utils::validateVecNames(getDerivedParams(), "Derived parameter");
+        Utils::validateVecNames(getExtraGlobalParams(), "Derived parameter");
+    }
+
     //------------------------------------------------------------------------
     // Protected static helpers
     //------------------------------------------------------------------------
@@ -245,6 +253,8 @@ public:
     Init(const SnippetBase *snippet, const std::vector<double> &params)
         : m_Snippet(snippet), m_Params(params)
     {
+        // Validate names
+        getSnippet()->validateNames();
     }
 
     //----------------------------------------------------------------------------

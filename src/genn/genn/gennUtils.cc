@@ -93,4 +93,31 @@ std::string getUnderlyingType(const std::string &type)
         return type.substr(0, type.length() - 1);
     }
 }
+//--------------------------------------------------------------------------
+void validateVarPopName(const std::string &name, const std::string &description)
+{
+    // Empty names aren't valid
+    if(name.empty()) {
+        throw std::runtime_error(description + " name invalid: cannot be empty");
+    }
+
+    // If first character's a number, name isn't valid
+    if(std::isdigit(name.front())) {
+        throw std::runtime_error(description + " name invalid: '" + name + "' starts with a digit");
+    }
+    
+    // If any characters aren't underscores or alphanumeric, name isn't valud
+    if(std::any_of(name.cbegin(), name.cend(),
+                   [](char c) { return (c != '_') && !std::isalnum(c); }))
+    {
+        throw std::runtime_error(description + " name invalid: '" + name + "' contains an illegal character");
+    }
+}
+//--------------------------------------------------------------------------
+void validateParamNames(const std::vector<std::string> &paramNames)
+{
+    for(const std::string &p : paramNames) {
+        validateVarPopName(p, "Parameter");
+    }
+}
 }   // namespace utils
