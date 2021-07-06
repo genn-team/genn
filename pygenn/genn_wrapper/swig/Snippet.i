@@ -17,6 +17,7 @@
 %}
 %include <std_string.i>
 %include <std_vector.i>
+%include <exception.i>
 
 %feature("flatnested", "1");
 %rename("%(undercase)s", %$isfunction, notregexmatch$name="add[a-zA-Z]*Population", notregexmatch$name="addCurrentSource", notregexmatch$name="addCustomUpdate", notregexmatch$name="assignExternalPointer[a-zA-Z]*") "";
@@ -26,6 +27,16 @@
 
 %feature("director") Snippet::Base; // for inheritance in python
 
+// Add standard exception handler
+%exception {
+    try {
+        $action
+    }
+    SWIG_CATCH_STDEXCEPT // catch std::exception
+    catch (...) {
+        SWIG_exception(SWIG_UnknownError, "Unknown exception");
+    }
+}
 
 // flatten nested classes
 %rename (EGP) Snippet::Base::EGP;
