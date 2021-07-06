@@ -39,6 +39,7 @@ import os  # to work with paths nicely
 from itertools import product
 from string import Template # for better text substitutions
 from argparse import ArgumentParser # to parse command line args
+from textwrap import dedent
 
 # module attributes
 NEURONMODELS = 'neuronModels'
@@ -175,7 +176,7 @@ class SwigModuleGenerator( object ):
         self.write( '#include {} {}\n'.format( cHeader, comment ) )
     
     def addStandardExceptionHandler(self):
-        self.write(
+        self.write(dedent(
         """
         %exception {
             try {
@@ -186,7 +187,7 @@ class SwigModuleGenerator( object ):
                 SWIG_exception(SWIG_UnknownError, "Unknown exception");
             }
           }
-        """)
+        """))
     
     def addAutoGenWarning( self ):
         '''Adds a comment line telling that this file was generated automatically'''
