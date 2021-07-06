@@ -444,6 +444,9 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigEnableUnderCaseConvert()
         mg.addSwigInclude('<exception.i>')
 
+        # Add exception handler
+        mg.addStandardExceptionHandler()
+
         with SwigAsIsScope(mg):
             mg.addCppInclude('<plog/Appenders/ConsoleAppender.h>')
             mg.addCppInclude('"optimiser.h"')
@@ -474,9 +477,6 @@ def generateBackend(swigPath, folder, namespace):
 
         # Import stl containers so as to support std::string
         mg.addSwigImport( '"StlContainers.i"' )
-
-        # Add exception handler
-        mg.addStandardExceptionHandler()
 
         # To prevent having to expose filesystem, simply export a wrapper that converts a string to a filesystem::path and calls createBackend
         with SwigInlineScope(mg):
