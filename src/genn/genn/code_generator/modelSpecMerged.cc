@@ -211,6 +211,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
     // Concatenate hash digest of backend properties
     Utils::updateHash(backend.getHashDigest(), hash);
 
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
+
     // Concatenate hash digest of neuron update groups
     for(const auto &g : m_MergedNeuronUpdateGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
