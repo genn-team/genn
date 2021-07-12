@@ -4,10 +4,14 @@ OS_UPPER			:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN				:=$(strip $(findstring DARWIN,$(OS_UPPER)))
 
 # Get directory of this makefile i.e. GeNN directory (means make can be invoked else where)
-GENN_DIR 			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
+GENN_DIR			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
+
+# Read GeNN version and git hash
+GENN_VERSION		:= $(shell cat "$(GENN_DIR)/version.txt")
+GIT_HASH			:= $(shell git -C "$(GENN_DIR)" rev-parse HEAD 2>/dev/null)
 
 # Set standard compiler and archiver flags
-CXXFLAGS 			+=-Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn/genn -I$(GENN_DIR)/include/genn/third_party
+CXXFLAGS			+=-Wall -Wpedantic -Wextra -MMD -MP -I$(GENN_DIR)/include/genn/genn -I$(GENN_DIR)/include/genn/third_party -DGENN_VERSION=\"$(GENN_VERSION)\" -DGIT_HASH=\"$(GIT_HASH)\"
 ARFLAGS				:=-rcs
 
 # On Mac OS X, use Clang++ rather than GC++
@@ -41,7 +45,7 @@ ifdef DYNAMIC
     ifeq ($(DARWIN),DARWIN)
         LIBRARY_EXTENSION	:=dylib
     else
-	LIBRARY_EXTENSION	:=so
+    LIBRARY_EXTENSION	:=so
     endif
 else
     LIBRARY_EXTENSION		:=a
@@ -55,4 +59,4 @@ endif
 # Add prefix to object directory and library name
 OBJECT_DIRECTORY		?=$(GENN_DIR)/obj$(GENN_PREFIX)
 LIBRARY_DIRECTORY		?=$(GENN_DIR)/lib
-LIBGENN				:=$(LIBRARY_DIRECTORY)/libgenn$(GENN_PREFIX).$(LIBRARY_EXTENSION)
+LIBGENN					:=$(LIBRARY_DIRECTORY)/libgenn$(GENN_PREFIX).$(LIBRARY_EXTENSION)
