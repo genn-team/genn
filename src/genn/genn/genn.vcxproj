@@ -152,4 +152,14 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="ReadGitHash" BeforeTargets="PrepareForBuild">
+    <Exec Command="git -C $(MSBuildThisFileDirectory) rev-parse HEAD" ConsoleToMsBuild="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitHash" />
+    </Exec>
+    <ItemGroup>
+      <ClCompile>
+       <PreprocessorDefinitions>%(PreprocessorDefinitions);GIT_HASH="$(GitHash)"</PreprocessorDefinitions>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
 </Project>
