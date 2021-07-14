@@ -2,6 +2,7 @@
 
 // Standard C++ includes
 #include <algorithm>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <mutex>
@@ -28,7 +29,13 @@
 
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
-#include "code_generator/generateAll.h"
+#include "code_generator/generateCustomUpdate.h"
+#include "code_generator/generateInit.h"
+#include "code_generator/generateNeuronUpdate.h"
+#include "code_generator/generateRunner.h"
+#include "code_generator/generateSynapseUpdate.h"
+#include "code_generator/generateSupportCode.h"
+#include "code_generator/modelSpecMerged.h"
 
 // CUDA backend includes
 #include "utils.h"
@@ -41,7 +48,19 @@ using namespace CUDA;
 //--------------------------------------------------------------------------
 namespace
 {
+//! Map of kernel IDs to flag indicating whether all blocks can be run concurrently and occupancy value
 typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput;
+
+//! Pointer to ModelSpecMerged member function for getting archetype hash digest
+typedef boost::uuids::detail::sha1::digest_type (ModelSpecMerged::*GetArchetypeHashDigestFn)(void) const;
+
+//! Table of module names to functions to get their archetype hash digests and the kernel IDs they might contain
+const std::vector<std::tuple<std::string, GetArchetypeHashDigestFn, std::vector<Kernel>>> modules = {
+    {"customUpdate",    &ModelSpecMerged::getCustomUpdateArchetypeHashDigest,   {KernelCustomUpdate, KernelCustomTransposeUpdate}},
+    {"init",            &ModelSpecMerged::getInitArchetypeHashDigest,           {KernelInitialize, KernelInitializeSparse}},
+    {"neuronUpdate",    &ModelSpecMerged::getNeuronUpdateArchetypeHashDigest,   {KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}},
+    {"synapseUpdate",   &ModelSpecMerged::getSynapseUpdateArchetypeHashDigest,  {KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate}}
+};
 
 bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
 {
@@ -203,31 +222,83 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-void analyseModule(std::string modulePath, unsigned int r, CUcontext context, std::string nvccFlags, 
-                   const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, const filesystem::path &nvccPath,
-                   int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax],
-                   KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
+void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::vector<Kernel>> &module, unsigned int r, CUcontext context, 
+                   boost::uuids::detail::sha1::digest_type hashDigest, const filesystem::path &outputPath, const filesystem::path &nvccPath, const Backend &backend,
+                   const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, 
+                   int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax], KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
+    // Build source and module paths from module name
+    const std::string sourcePath = (outputPath / (std::get<0>(module) + "CUDAOptim.cc")).str();
+    const std::string moduleSHAPath = (outputPath / (std::get<0>(module) + "CUDA" + std::to_string(r) + ".sha")).str();
+
+    LOGD_BACKEND << "\tModule " << std::get<0>(module);
+    try {
+        // Open SHA file
+        std::ifstream is(moduleSHAPath);
+
+        // Throw exceptions in case of all errors
+        is.exceptions(std::ifstream::badbit | std::ifstream::failbit | std::ifstream::eofbit);
+
+        // Read previous hash as hash
+        boost::uuids::detail::sha1::digest_type previousHashDigest;
+        is >> std::hex;
+        for(auto &d : previousHashDigest) {
+            is >> d;
+        }
+
+        // If hash matches
+        if(previousHashDigest == hashDigest) {
+            // Loop through kernels in module
+            is >> std::dec;
+            for(Kernel k : std::get<2>(module)) {
+                // Read shared memory size and number of registers
+                is >> krnlSharedSizeBytes[r][k] >> krnlNumRegs[r][k];
+
+                // If this kernel requires any registers (and hence exists), add to map of kernels to optimier
+                if(krnlNumRegs[r][k] > 0) {
+                    std::lock_guard<std::mutex> l(kernelsToOptimiseMutex);
+                    kernelsToOptimise.emplace(std::piecewise_construct,
+                                              std::forward_as_tuple(k),
+                                              std::forward_as_tuple(false, 0));
+                }
+            }
+
+            // Remove tempory source file
+            if(std::remove(sourcePath.c_str())) {
+                LOGW_BACKEND << "Cannot remove dry-run source file";
+            }
+            LOGD_BACKEND << "\tModule unchanged - re-using shared memory and register usage";
+            return;
+        }
+        // Otherwise, module needs analysing
+        else {
+            LOGD_BACKEND << "\tModule changed - re-analysing";
+        }
+    }
+    catch(const std::ios_base::failure&) {
+        LOGD_BACKEND << "\tUnable to read previous hash - re-analysing";
+    }
+
     // Set context for this thread
     cuCtxSetCurrent(context);
 
 #ifdef _WIN32
     // **YUCK** extra outer quotes required to workaround gross windowsness https://stackoverflow.com/questions/9964865/c-system-not-working-when-there-are-spaces-in-two-different-parameters
-    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"\"";
+    const std::string nvccCommand = "\"\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"\"";
 #else
-    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + nvccFlags + " -DBUILDING_GENERATED_CODE -o \"" + modulePath + ".cubin\" \"" + modulePath + ".cc\"";
+    const std::string nvccCommand = "\"" + nvccPath.str() + "\" -cubin " + backend.getNVCCFlags() + " -DBUILDING_GENERATED_CODE -o \"" + sourcePath + ".cubin\" \"" + sourcePath + "\"";
 #endif
-            
+
     if(system(nvccCommand.c_str()) != 0) {
         throw std::runtime_error("optimizeBlockSize: NVCC failed");
     }
 
     // Load compiled module
-    CUmodule module;
-    CHECK_CU_ERRORS(cuModuleLoad(&module, (modulePath + ".cubin").c_str()));
+    CUmodule loadedModule;
+    CHECK_CU_ERRORS(cuModuleLoad(&loadedModule, (sourcePath + ".cubin").c_str()));
 
-    // Loop through kernels
-    for (unsigned int k = 0; k < KernelMax; k++) {
+    // Loop through kernels that might be in this module
+    for(Kernel k : std::get<2>(module)) {
         // If this kernel is a custom update
         // **YUCK** this mechanism is really not very nice but to fix it properly would require
         // replacing the block sizes std::array with a std::map to handle different custom update kernels
@@ -239,7 +310,7 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
                 // If kernel is found, update maximum shared memory size and register count
                 int sharedSizeBytes = 0;
                 int numRegisters = 0;
-                if(getKernelResourceUsage(module, Backend::KernelNames[k] + c, sharedSizeBytes, numRegisters)) {
+                if(getKernelResourceUsage(loadedModule, Backend::KernelNames[k] + c, sharedSizeBytes, numRegisters)) {
                     krnlSharedSizeBytes[r][k] = std::max(krnlSharedSizeBytes[r][k], sharedSizeBytes);
                     krnlNumRegs[r][k] = std::max(krnlNumRegs[r][k], numRegisters);
                 }
@@ -254,7 +325,7 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
             }
         }
         // Otherwise, if kernel is found, add to map of kernels to optimise
-        else if(getKernelResourceUsage(module, Backend::KernelNames[k], krnlSharedSizeBytes[r][k], krnlNumRegs[r][k])) {
+        else if(getKernelResourceUsage(loadedModule, Backend::KernelNames[k], krnlSharedSizeBytes[r][k], krnlNumRegs[r][k])) {
             std::lock_guard<std::mutex> g(kernelsToOptimiseMutex);
             kernelsToOptimise.emplace(std::piecewise_construct,
                                       std::forward_as_tuple(k),
@@ -263,18 +334,42 @@ void analyseModule(std::string modulePath, unsigned int r, CUcontext context, st
     }
 
     // Unload module
-    CHECK_CU_ERRORS(cuModuleUnload(module));
+    CHECK_CU_ERRORS(cuModuleUnload(loadedModule));
+
+    // Open sha file
+    std::ofstream os(moduleSHAPath);
+
+    // Write digest as hex with each word seperated by a space
+    os << std::hex;
+    for(const auto d : hashDigest) {
+        os << d << " ";
+    }
+    os << std::endl;
+
+    // Loop through kernels in this module and write shared memory size and number of registers
+    os << std::dec;
+    for(Kernel k : std::get<2>(module)) {
+        os << krnlSharedSizeBytes[r][k] << " " << krnlNumRegs[r][k] << std::endl;
+    }
 
     // Remove tempory cubin file
-    if(std::remove((modulePath + ".cubin").c_str())) {
+    if(std::remove((sourcePath + ".cubin").c_str())) {
         LOGW_BACKEND << "Cannot remove dry-run cubin file";
+    }
+
+    // Remove tempory source file
+    if(std::remove(sourcePath.c_str())) {
+        LOGW_BACKEND << "Cannot remove dry-run source file";
     }
 }
 //--------------------------------------------------------------------------
 KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
                                            KernelBlockSize &blockSize, const Preferences &preferences,
-                                           const filesystem::path &sharePath, const filesystem::path &outputPath)
+                                           const filesystem::path &outputPath)
 {
+    // Create directory for generated code
+    filesystem::create_directory(outputPath);
+
     // Select device
     cudaSetDevice(deviceID);
 
@@ -313,12 +408,12 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     // modules and mutex to protect access to it
     KernelOptimisationOutput kernelsToOptimise;
     std::mutex kernelsToOptimiseMutex;
-    
+
     // Do two repititions with different candidate kernel size
     const size_t warpSize = 32;
     const size_t repBlockSizes[2] = {warpSize, warpSize * 2};
     for(unsigned int r = 0; r < 2; r++) {
-        LOGD  << "Generating code with block size:" << repBlockSizes[r];
+        LOGD_BACKEND  << "Generating code with block size:" << repBlockSizes[r];
 
         // Start with all group sizes set to warp size
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
@@ -326,22 +421,54 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         // Create backend
         Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
 
-        // Generate code
-        const auto moduleNames = generateAll(model, backend, sharePath, outputPath, true).first;
+        // Create merged model
+        ModelSpecMerged modelMerged(model, backend);
 
-        // Loop through generated modules and launch threads to build and analyse each module
+        // Generate code with suffix so it doesn't interfere with primary generated code
+        // **NOTE** we don't really need to generate all the code but, on windows, generating code selectively seems to result in werid b
+        const std::string dryRunSuffix = "CUDAOptim";
+        generateRunner(outputPath, modelMerged, backend, dryRunSuffix);
+        generateSynapseUpdate(outputPath, modelMerged, backend, dryRunSuffix);
+        generateNeuronUpdate(outputPath, modelMerged, backend, dryRunSuffix);
+        generateCustomUpdate(outputPath, modelMerged, backend, dryRunSuffix);
+        generateInit(outputPath, modelMerged, backend, dryRunSuffix);
+
+        // Generate support code module if the backend supports namespaces
+        if (backend.supportsNamespace()) {
+            generateSupportCode(outputPath, modelMerged, dryRunSuffix);
+        }
+
+        // Loop through modules
         std::vector<std::thread> threads;
-        for(const auto &m : moduleNames) {
-            // Build module
-            const std::string modulePath = (outputPath / m).str();
-            threads.emplace_back(analyseModule, modulePath, r, cuContext, backend.getNVCCFlags(), 
-                                 std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels), std::cref(nvccPath),
+        for(const auto &m : modules) {
+            // Calculate module's hash digest
+            // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
+            // this will call into Python code it would require whole Python interface to be made thread-safe
+            const auto hashDigest = (modelMerged.*std::get<1>(m))();
+
+            // Launch thread to analyse kernels in this module (if required)
+            threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),
+                                 std::cref(backend), std::cref(customUpdateKernels), std::cref(customTransposeUpdateKernels),
                                  std::ref(krnlSharedSizeBytes), std::ref(krnlNumRegs), std::ref(kernelsToOptimise), std::ref(kernelsToOptimiseMutex));
         }
 
         // Join all threads
         for(auto &t : threads) {
             t.join();
+        }
+
+        // Remove tempory source file
+        if(std::remove((outputPath / ("runner" + dryRunSuffix + ".cc")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
+        }
+        if(std::remove((outputPath / ("supportCode" + dryRunSuffix + ".h")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
+        }
+        if(std::remove((outputPath / ("definitions" + dryRunSuffix + ".h")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
+        }
+        if(std::remove((outputPath / ("definitionsInternal" + dryRunSuffix + ".h")).str().c_str())) {
+            LOGW_BACKEND << "Cannot remove dry-run source file";
         }
     }
 
@@ -459,8 +586,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
 }
 //--------------------------------------------------------------------------
 int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSize,
-                        const Preferences &preferences,
-                        const filesystem::path &sharePath, const filesystem::path &outputPath)
+                        const Preferences &preferences, const filesystem::path &outputPath)
 {
     // Get number of devices
     int deviceCount;
@@ -481,8 +607,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences,
-                                               sharePath, outputPath);
+        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -582,9 +707,9 @@ namespace CUDA
 {
 namespace Optimiser
 {
-Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sharePath,
-                      const filesystem::path &outputPath, plog::Severity backendLevel,
-                      plog::IAppender *backendAppender, const Preferences &preferences)
+Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
+                      plog::Severity backendLevel, plog::IAppender *backendAppender, 
+                      const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {
@@ -603,8 +728,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
         // Choose optimal device
         KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences,
-                                                 sharePath, outputPath);
+        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
         return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
@@ -623,8 +747,7 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &sh
 
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences,
-                              sharePath, outputPath);
+            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
             return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);

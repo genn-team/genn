@@ -68,8 +68,8 @@ public:
     //------------------------------------------------------------------------
     // Public methods
     //------------------------------------------------------------------------
-    //! Can this sparse connectivity init snippet be merged with other? i.e. can they be simulated using same generated code
-    bool canBeMerged(const Base *other) const;
+    //! Update hash from snippet
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 };
 
 //----------------------------------------------------------------------------
@@ -151,8 +151,8 @@ public:
 //! between a pair of pre and postsynaptic neurons.
 /*! Whether a synapse exists between a pair of pre and a postsynaptic
     neurons can be modelled using a Bernoulli distribution. While this COULD
-    br sampling directly by repeatedly drawing from the uniform distribution,
-    this is innefficient. Instead we sample from the gemetric distribution
+    be sampled directly by repeatedly drawing from the uniform distribution,
+    this is inefficient. Instead we sample from the geometric distribution
     which describes "the probability distribution of the number of Bernoulli
     trials needed to get one success" -- essentially the distribution of the
     'gaps' between synapses. We do this using the "inversion method"
@@ -375,7 +375,7 @@ public:
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int numPre, unsigned int numPost, const std::vector<double> &pars)
         {
-            // Calculate suitable quantile for 0.9999 change when drawing numPre times
+            // Calculate suitable quantile for 0.9999 chance when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
 
             // In each column the number of connections that end up in a row are distributed

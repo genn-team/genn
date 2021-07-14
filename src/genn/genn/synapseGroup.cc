@@ -589,161 +589,164 @@ std::string SynapseGroup::getSparseIndType() const
 
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUBeMerged(const SynapseGroup &other) const
+bool SynapseGroup::canPSBeLinearlyCombined() const
 {
-    if(getWUModel()->canBeMerged(other.getWUModel())
-       && (getDelaySteps() == other.getDelaySteps())
-       && (getBackPropDelaySteps() == other.getBackPropDelaySteps())
-       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
-       && (getSparseIndType() == other.getSparseIndType())
-       && (getNumThreadsPerSpike() == other.getNumThreadsPerSpike())
-       && (isEventThresholdReTestRequired() == other.isEventThresholdReTestRequired())
-       && (getSpanType() == other.getSpanType())
-       && (isPSModelMerged() == other.isPSModelMerged())
-       && (getSrcNeuronGroup()->getNumDelaySlots() == other.getSrcNeuronGroup()->getNumDelaySlots())
-       && (getTrgNeuronGroup()->getNumDelaySlots() == other.getTrgNeuronGroup()->getNumDelaySlots())
-       && (getMatrixType() == other.getMatrixType()))
-    {
-        // If weights are procedural and any of the variable's initialisers can't be merged, return false
-        if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
-            for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
-                if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
-                    return false;
-                }
-            }
-        }
+    // Return true if there are no variables or extra global parameters
+    // **NOTE** many models with variables would work fine, but  
+    // nothing stops initialisers being used to configure PS models 
+    // to behave totally different, similarly with EGPs
+    return (getPSVarInitialisers().empty() && getPSModel()->getExtraGlobalParams().empty());
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getDelaySteps(), hash);
+    Utils::updateHash(getBackPropDelaySteps(), hash);
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getNumThreadsPerSpike(), hash);
+    Utils::updateHash(isEventThresholdReTestRequired(), hash);
+    Utils::updateHash(getSpanType(), hash);
+    Utils::updateHash(isPSModelMerged(), hash);
+    Utils::updateHash(getSrcNeuronGroup()->getNumDelaySlots(), hash);
+    Utils::updateHash(getTrgNeuronGroup()->getNumDelaySlots(), hash);
+    Utils::updateHash(getMatrixType(), hash);
 
-        // If connectivity is either non-procedural or connectivity initialisers can be merged
-        if(!(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL)
-           || getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser()))
-        {
-            return true;
+    // If weights are procedural, include variable initialiser hashes
+    if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
+        for(const auto &w : getWUVarInitialisers()) {
+            Utils::updateHash(w.getHashDigest(), hash);
         }
     }
 
-    return false;
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canWUPreBeMerged(const SynapseGroup &other) const
-{
-    const bool delayed = (getDelaySteps() != 0);
-    const bool otherDelayed = (other.getDelaySteps() != 0);
-    return (getWUModel()->canBeMerged(other.getWUModel())
-            && (delayed == otherDelayed));
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canWUPostBeMerged(const SynapseGroup &other) const
-{
-    const bool delayed = (getDelaySteps() != 0);
-    const bool otherDelayed = (other.getDelaySteps() != 0);
-    return (getWUModel()->canBeMerged(other.getWUModel())
-            && (delayed == otherDelayed));
-}
-//----------------------------------------------------------------------------
-bool SynapseGroup::canPSBeMerged(const SynapseGroup &other) const
-{
-    const bool individualPSM = (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
-    const bool otherIndividualPSM = (other.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM);
-    if(getPSModel()->canBeMerged(other.getPSModel())
-       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps())
-       && (individualPSM == otherIndividualPSM))
-    {
-        return true;
+    // If connectivity is procedural, include connectivitiy initialiser hash
+    if(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+        Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
     }
-
-    return false;
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canPSBeLinearlyCombined(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest() const
 {
-    // Postsynaptic models can be linearly combined if they can be merged and either 
-    // they DON'T have individual postsynaptic model variables or they have no variable at all
-    // **NOTE** many models with variables would work fine, but nothing stops
-    // initialisers being used to configure PS models to behave totally different
-    // **NOTE** similarly with EGPs
-    return (canPSBeMerged(other)
-            && (getPSParams() == other.getPSParams())
-            && (getPSDerivedParams() == other.getPSDerivedParams())
-            && getPSModel()->getExtraGlobalParams().empty()
-            && (!(getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) || getPSVarInitialisers().empty()));
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash((getDelaySteps() != 0), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUInitBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() const
 {
-    if((getMatrixType() == other.getMatrixType())
-       && (getSparseIndType() == other.getSparseIndType())
-       && (getWUModel()->getVars() == other.getWUModel()->getVars()))
-    {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUVarInitialisers().size(); i++) {
-            if(!getWUVarInitialisers()[i].canBeMerged(other.getWUVarInitialisers()[i])) {
-                return false;
-            }
-        }
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash((getDelaySteps() != 0), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getPSModel()->getHashDigest(), hash);
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSLinearCombineHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getPSModel()->getHashDigest(), hash);
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+    Utils::updateHash(getPSParams(), hash);
+    Utils::updateHash(getPSDerivedParams(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getDendriticDelayUpdateHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getMatrixType(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getWUModel()->getVars(), hash);
 
-        return true;
+    // Include variable initialiser hashes
+    for(const auto &w : getWUVarInitialisers()) {
+        Utils::updateHash(w.getHashDigest(), hash);
     }
-    return false;
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUPreInitBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest() const
 {
-    if(getWUModel()->getPreVars() == other.getWUModel()->getPreVars()) {
-        // if any of the presynaptic variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUPreVarInitialisers().size(); i++) {
-            if(!getWUPreVarInitialisers()[i].canBeMerged(other.getWUPreVarInitialisers()[i])) {
-                return false;
-            }
-        }
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getPreVars(), hash);
 
-        return true;
+    // Include presynaptic variable initialiser hashes
+    for(const auto &w : getWUPreVarInitialisers()) {
+        Utils::updateHash(w.getHashDigest(), hash);
     }
-    return false;
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUPostInitBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostInitHashDigest() const
 {
-    if(getWUModel()->getPostVars() == other.getWUModel()->getPostVars()) {
-        // if any of the postsynaptic variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getWUPostVarInitialisers().size(); i++) {
-            if(!getWUPostVarInitialisers()[i].canBeMerged(other.getWUPostVarInitialisers()[i])) {
-                return false;
-            }
-        }
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getPostVars(), hash);
 
-        return true;
+    // Include postsynaptic variable initialiser hashes
+    for(const auto &w : getWUPostVarInitialisers()) {
+        Utils::updateHash(w.getHashDigest(), hash);
     }
-    return false;
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canPSInitBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() const
 {
-    if((getPSModel()->getVars() == other.getPSModel()->getVars())
-       && (getMaxDendriticDelayTimesteps() == other.getMaxDendriticDelayTimesteps()))
-    {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getPSVarInitialisers().size(); i++) {
-            if(!getPSVarInitialisers()[i].canBeMerged(other.getPSVarInitialisers()[i])) {
-                return false;
-            }
-        }
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
+    Utils::updateHash(getPSModel()->getVars(), hash);
 
-        return true;
+    // Include postsynaptic model variable initialiser hashes
+    for(const auto &p : getPSVarInitialisers()) {
+        Utils::updateHash(p.getHashDigest(), hash);
     }
-
-    return false;
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canConnectivityInitBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDigest() const
 {
-    // Connectivity initialization can be merged if the type of connectivity is the same and the initialisers can be merged
-    return (getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser())
-            && (getSynapseMatrixConnectivity(getMatrixType()) == getSynapseMatrixConnectivity(other.getMatrixType()))
-            && (getSparseIndType() == other.getSparseIndType()));
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
+    Utils::updateHash(getMatrixType(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canConnectivityHostInitBeMerged(const SynapseGroup &other) const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityHostInitHashDigest() const
 {
-    // Connectivity host initialization can be merged if the initialisers 
-    return getConnectivityInitialiser().canBeMerged(other.getConnectivityInitialiser());
+    return getConnectivityInitialiser().getHashDigest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getInSynLocation(), hash);
+    Utils::updateHash(getDendriticDelayLocation(), hash);
+    Utils::updateHash(getSparseConnectivityLocation(), hash);
+    Utils::updateHash(m_WUVarLocation, hash);
+    Utils::updateHash(m_WUPreVarLocation, hash);
+    Utils::updateHash(m_WUPostVarLocation, hash);
+    Utils::updateHash(m_PSVarLocation, hash);
+    Utils::updateHash(m_WUExtraGlobalParamLocation, hash);
+    Utils::updateHash(m_PSExtraGlobalParamLocation, hash);
+    return hash.get_digest();
 }

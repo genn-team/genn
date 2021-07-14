@@ -37,6 +37,9 @@ public:
     using NeuronGroup::getInSynWithPostVars;
     using NeuronGroup::getOutSynWithPreVars;
     using NeuronGroup::isVarQueueRequired;
-    using NeuronGroup::canBeMerged;
-    using NeuronGroup::canInitBeMerged;
+    using NeuronGroup::getHashDigest;
+    using NeuronGroup::getInitHashDigest;
+    using NeuronGroup::getSpikeQueueUpdateHashDigest;
+    using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
+    using NeuronGroup::getVarLocationHashDigest;
 };

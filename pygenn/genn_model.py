@@ -114,17 +114,17 @@ class GeNNModel(object):
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
         # **NOTE** all SLM uses its template parameter for is time variable
-        time_precision = precision if time_precision is None else time_precision
-        if time_precision == "float":
+        self._time_precision = precision if time_precision is None else time_precision
+        if self._time_precision == "float":
             self._slm = slm.SharedLibraryModelNumpy_f()
             genn_time_type = "TimePrecision_FLOAT"
-        elif time_precision == "double":
+        elif self._time_precision == "double":
             self._slm = slm.SharedLibraryModelNumpy_d()
             genn_time_type = "TimePrecision_DOUBLE"
         else:
             raise ValueError(
                 "Supported time precisions are float and double, "
-                "but '{1}' was given".format(time_precision))
+                "but '{1}' was given".format(self._time_precision))
 
         # Store precision in class and determine GeNN scalar type
         self._scalar = precision
@@ -534,12 +534,14 @@ class GeNNModel(object):
 
         return c_update
         
-    def build(self, path_to_model="./"):
+    def build(self, path_to_model="./", force_rebuild=False):
         """Finalize and build a GeNN model
 
         Keyword args:
         path_to_model   --  path where to place the generated model code.
                             Defaults to the local directory.
+        force_rebuild   --  should model be rebuilt even if 
+                            it doesn't appear to be required
         """
 
         if self._built:
@@ -562,12 +564,13 @@ class GeNNModel(object):
                 setattr(preferences, k, v)
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, share_path, output_path, 
-                                                      self.backend_log_level, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path,
+                                                      self.backend_log_level,
+                                                      preferences)
 
         # Generate code
         mem_alloc = genn_wrapper.generate_code(self._model, backend, 
-                                               share_path, output_path, 0)
+                                               share_path, output_path, force_rebuild)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         backend = None

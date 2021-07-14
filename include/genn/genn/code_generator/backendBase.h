@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <fstream>
 #include <functional>
 #include <map>
 #include <string>
@@ -16,6 +17,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -81,6 +83,17 @@ struct PreferencesBase
 
     //! Logging level to use for code generation
     plog::Severity logLevel = plog::info;
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // **NOTE** optimizeCode, debugCode and various compiler flags only affect makefiles/msbuild 
+
+        //! Update hash with preferences
+        Utils::updateHash(enableBitmaskOptimisations, hash);
+        Utils::updateHash(automaticCopy, hash);
+        Utils::updateHash(generateEmptyStatePushPull, hash);
+        Utils::updateHash(generateExtraGlobalParamPull, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -130,7 +143,27 @@ private:
     size_t m_HostBytes;
     size_t m_DeviceBytes;
     size_t m_ZeroCopyBytes;
+
+    //--------------------------------------------------------------------------
+    // Friend operators
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator << (std::ostream &out, const MemAlloc &m);
+    friend std::istream& operator >> (std::istream &in,  MemAlloc &m);
 };
+
+inline std::ostream & operator << (std::ostream &out, const MemAlloc &m)
+{
+    out << m.m_HostBytes << " " << m.m_DeviceBytes << " " << m.m_ZeroCopyBytes;
+    return out;
+}
+ 
+inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
+{
+    in >> m.m_HostBytes;
+    in >> m.m_DeviceBytes;
+    in >> m.m_ZeroCopyBytes;
+    return in;
+}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
@@ -181,19 +214,17 @@ public:
     //! Generate platform-specific function to update the state of all neurons
     /*! \param os                       CodeStream to write function to
         \param modelMerged              merged model to generate code for
-        \param memorySpaces             for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler          callback to write functions for pushing extra-global parameters
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes
         \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
-                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
-        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
         \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
@@ -211,8 +242,8 @@ public:
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
@@ -220,18 +251,16 @@ public:
     //! Generate platform-specific functions to perform custom updates
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
-        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler              callback to write functions for pushing extra-global parameters
       
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler, 
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
                                  CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
                                  CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
-        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param localNGHandler               callback to write platform-independent code to initialize a merged neuron group
         \param sgDenseInitHandler           callback to write platform-independent code to initialize the synapse variables of
@@ -246,8 +275,8 @@ public:
                                             a merged synapse group with sparse connectivity
         \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
         \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                          CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -416,7 +445,11 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
+    //! Does this backend support namespaces i.e. can C++ implementation of support functions be used
     virtual bool supportsNamespace() const = 0;
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
     //--------------------------------------------------------------------------
     // Public API

@@ -14,6 +14,7 @@
     <ProjectGuid>{A202469A-9380-4F7E-B2A9-6FD1B52F2F91}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup>
+    <ClCompile Include="binomial.cc" />
     <ClCompile Include="codeGenUtils.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
@@ -21,6 +22,7 @@
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="modelSpec.cc" />
+    <ClCompile Include="modelSpecMerged.cc" />
     <ClCompile Include="neuronGroup.cc" />
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />

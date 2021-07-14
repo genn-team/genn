@@ -1,6 +1,7 @@
 #include "code_generator/generateRunner.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <random>
 #include <set>
 #include <sstream>
@@ -469,9 +470,17 @@ void genCustomUpdate(const ModelSpecMerged &modelMerged, const BackendBase &back
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                       const ModelSpecMerged &modelMerged, const BackendBase &backend)
+MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                       const BackendBase &backend, const std::string &suffix)
 {
+    // Create output streams to write to file and wrap in CodeStreams
+    std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());
+    std::ofstream definitionsInternalStream((outputPath / ("definitionsInternal" + suffix + ".h")).str());
+    std::ofstream runnerStream((outputPath / ("runner" + suffix + ".cc")).str());
+    CodeStream definitions(definitionsStream);
+    CodeStream definitionsInternal(definitionsInternalStream);
+    CodeStream runner(runnerStream);
+
     // Track memory allocations, initially starting from zero
     auto mem = MemAlloc::zero();
 
@@ -494,7 +503,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
 
     // Write definitions internal preamble
     definitionsInternal << "#pragma once" << std::endl;
-    definitionsInternal << "#include \"definitions.h\"" << std::endl << std::endl;
+    definitionsInternal << "#include \"definitions" << suffix << ".h\"" << std::endl << std::endl;
     backend.genDefinitionsInternalPreamble(definitionsInternal, modelMerged);
     
     // write DT macro
@@ -520,7 +529,7 @@ MemAlloc CodeGenerator::generateRunner(CodeStream &definitions, CodeStream &defi
     definitions << std::endl;
 
     // Write runner preamble
-    runner << "#include \"definitionsInternal.h\"" << std::endl << std::endl;
+    runner << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl << std::endl;
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;

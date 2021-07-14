@@ -19,12 +19,12 @@ class GaussianNoiseCopy : public CurrentSourceModels::Base
 //--------------------------------------------------------------------------
 TEST(CurrentSourceModels, CompareBuiltIn)
 {
-    ASSERT_TRUE(CurrentSourceModels::DC::getInstance()->canBeMerged(CurrentSourceModels::DC::getInstance()));
-    ASSERT_FALSE(CurrentSourceModels::DC::getInstance()->canBeMerged(CurrentSourceModels::GaussianNoise::getInstance()));
+    ASSERT_EQ(CurrentSourceModels::DC::getInstance()->getHashDigest(), CurrentSourceModels::DC::getInstance()->getHashDigest());
+    ASSERT_NE(CurrentSourceModels::DC::getInstance()->getHashDigest(), CurrentSourceModels::GaussianNoise::getInstance()->getHashDigest());
 }
 
 TEST(CurrentSourceModels, CompareCopyPasted)
 {
     GaussianNoiseCopy gaussianCopy;
-    ASSERT_TRUE(CurrentSourceModels::GaussianNoise::getInstance()->canBeMerged(&gaussianCopy));
+    ASSERT_EQ(CurrentSourceModels::GaussianNoise::getInstance()->getHashDigest(), gaussianCopy.getHashDigest());
 }

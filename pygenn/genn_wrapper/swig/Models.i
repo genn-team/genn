@@ -33,6 +33,7 @@
 %ignore LegacyWrapper;
 
 %include <std_vector.i>
+%include <exception.i>
 
 %import "Snippet.i"
 %import "InitVarSnippet.i"
@@ -50,6 +51,17 @@
 // add vector overrides for them
 %template(VarVector) std::vector<Models::Base::Var>;
 %template(VarRefVector) std::vector<Models::Base::VarRef>;
+
+// Add standard exception handler
+%exception {
+    try {
+        $action
+    }
+    SWIG_CATCH_STDEXCEPT // catch std::exception
+    catch (...) {
+        SWIG_exception(SWIG_UnknownError, "Unknown exception");
+    }
+}
 
 %include "models.h"
 %include "varAccess.h"

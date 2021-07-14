@@ -336,6 +336,10 @@ class NeuronGroup(Group):
         self.spike_count = None
         self.spike_que_ptr = [0]
         self._max_delay_steps = 0
+        self.spike_times = None
+        self.prev_spike_times = None
+        self.spike_event_times = None
+        self.prev_spike_event_times = None
 
     @property
     def current_spikes(self):
@@ -439,6 +443,26 @@ class NeuronGroup(Group):
         """Wrapper around GeNNModel.pull_current_spikes_from_device"""
         self._model.pull_current_spikes_from_device(self.name)
 
+    def pull_spike_times_from_device(self):
+        """Helper to pull spike times from device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("SpikeTimes", self.name)
+
+    def pull_spike_event_times_from_device(self):
+        """Helper to pull spike event times from device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("SpikeEventTimes", self.name)
+
+    def pull_prev_spike_times_from_device(self):
+        """Helper to pull previous spike times from device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("PreviousSpikeTimes", self.name)
+
+    def pull_prev_spike_event_times_from_device(self):
+        """Helper to pull previous spike event times from device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.pull_var_from_device("PreviousSpikeEventTimes", self.name)
+
     def push_spikes_to_device(self):
         """Wrapper around GeNNModel.push_spikes_to_device"""
         self._model.push_spikes_to_device(self.name)
@@ -446,6 +470,26 @@ class NeuronGroup(Group):
     def push_current_spikes_to_device(self):
         """Wrapper around GeNNModel.push_current_spikes_to_device"""
         self._model.push_current_spikes_to_device(self.name)
+
+    def push_spike_times_to_device(self):
+        """Helper to push spike times to device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("SpikeTimes", self.name)
+
+    def push_spike_event_times_to_device(self):
+        """Helper to push spike event times to device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("SpikeEventTimes", self.name)
+
+    def push_prev_spike_times_to_device(self):
+        """Helper to push previous spike times to device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("PreviousSpikeTimes", self.name)
+
+    def push_prev_spike_event_times_to_device(self):
+        """Helper to push previous spike event times to device"""
+        # **YUCK** these variables are named inconsistently
+        self._model.push_var_to_device("PreviousSpikeEventTimes", self.name)
 
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
@@ -464,6 +508,34 @@ class NeuronGroup(Group):
                                                    self.size))
             self.spike_count = np.reshape(self.spike_count, (batch_size,
                                                              self.delay_slots))
+        
+        # If this neuron group generates spike times 
+        # and they are accesible on the host
+        if (self.pop.is_spike_time_required() and
+            (self.pop.get_spike_time_location() & VarLocation_HOST) != 0):
+            
+            self.spike_times = self._get_event_time_view("sT")
+        
+        # If this neuron group generates spike event times 
+        # and they are accesible on the host
+        if (self.pop.is_spike_event_time_required() and
+            (self.pop.get_spike_event_time_location() & VarLocation_HOST) != 0):
+            
+            self.spike_event_times = self._get_event_time_view("seT")
+        
+        # If this neuron group generates previous spike times 
+        # and they are accesible on the host
+        if (self.pop.is_prev_spike_time_required() and
+            (self.pop.get_prev_spike_time_location() & VarLocation_HOST) != 0):
+            
+            self.prev_spike_times = self._get_event_time_view("prevST")
+        
+        # If this neuron group generates previous spike event times 
+        # and they are accesible on the host
+        if (self.pop.is_prev_spike_event_time_required() and
+            (self.pop.get_prev_spike_event_time_location() & VarLocation_HOST) != 0):
+            
+            self.prev_spike_event_times = self._get_event_time_view("prevSET")
 
         # If spike recording is enabled
         if self.spike_recording_enabled:
@@ -498,6 +570,18 @@ class NeuronGroup(Group):
     @property
     def _spike_recording_words(self):
         return ((self.size + 31) // 32)
+        
+    def _get_event_time_view(self, name):
+        # Get view
+        batch_size = self._model.batch_size
+        view = self._assign_ext_ptr_array(
+            name, self.size * self.delay_slots * batch_size,
+            self._model._time_precision)
+
+        # Reshape to expose delay slots and batches
+        view = np.reshape(view, (batch_size, self.delay_slots,
+                                 self.size))
+        return view
 
 class SynapseGroup(Group):
 
@@ -524,6 +608,7 @@ class SynapseGroup(Group):
         self.connectivity_extra_global_params = {}
         self.connectivity_initialiser = None
         self.weight_sharing_master = weight_sharing_master
+        self.in_syn = None
 
     @property
     def num_synapses(self):
@@ -891,7 +976,15 @@ class SynapseGroup(Group):
     def push_connectivity_to_device(self):
         """Wrapper around GeNNModel.push_connectivity_to_device"""
         self._model.push_connectivity_to_device(self.name)
+    
+    def pull_in_syn_from_device(self):
+        """Pull synaptic input current from device"""
+        self.pull_var_from_device("inSyn")
 
+    def push_in_syn_to_device(self):
+        """Push synaptic input current to device"""
+        self.push_var_to_device("inSyn")
+        
     def pull_psm_extra_global_param_from_device(self, egp_name):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
@@ -1001,6 +1094,18 @@ class SynapseGroup(Group):
             if self.has_individual_postsynaptic_vars:
                 self._load_vars(self.postsyn.get_vars(), self.trg.size,
                                 self.psm_vars, self.pop.get_psvar_location)
+        
+        # If this synapse group's inSyn is accessible on the host
+        if (not self.pop.is_psmodel_merged() and
+            (self.pop.get_in_syn_location() & VarLocation_HOST) != 0):
+            # Get view
+            self.in_syn = self._assign_ext_ptr_array(
+                "inSyn", self.trg.size * self._model.batch_size,
+                "scalar")
+
+            # Reshape to expose batches
+            self.in_syn = np.reshape(self.in_syn, (self._model.batch_size,
+                                                   self.trg.size))
 
         # Load extra global parameters
         self._load_egp()

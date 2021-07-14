@@ -138,6 +138,8 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
+    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::vector<double> &getWUParams() const{ return m_WUParams; }
@@ -273,8 +275,7 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
-    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }    
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
@@ -282,50 +283,58 @@ protected:
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
 
-    //! Can weight update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    //! Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    bool canWUBeMerged(const SynapseGroup &other) const;
-
-    //! Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    bool canPSBeLinearlyCombined() const;
+    
+    //! Updates hash with weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canWUPreBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getWUHashDigest() const;
 
-    //! Can postsynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with presynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canWUPostBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getWUPreHashDigest() const;
 
-    //! Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canPSBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getWUPostHashDigest() const;
 
-    //! Can postsynaptic update component of this synapse group not only be merged with other, but combined so only one needs simulating at all
+    //! Updates hash with postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canPSBeLinearlyCombined(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Can initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Updates hash with postsynaptic update component of this synapse group with additional components to ensure PSMs 
+    //! with matching hashes can not only be simulated using the same code, but combined so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    bool canWUInitBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getPSLinearCombineHashDigest() const;
 
-    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
+    boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
+
+    //! Updates hash with initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canWUPreInitBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getWUInitHashDigest() const;
 
-    //! Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code
+     //! Updates hash with presynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canWUPostInitBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getWUPreInitHashDigest() const;
 
-    //! Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Updates hash with postsynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canPSInitBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getWUPostInitHashDigest() const;
 
-    //! Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Updates hash with postsynaptic model variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canConnectivityInitBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
 
-    //! Can connectivity host initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code
+    //! Updates hash with connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
-    bool canConnectivityHostInitBeMerged(const SynapseGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
 
+    //! Updates hash with host connectivity initialisation of this synapse group
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
+
+    boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 private:
     //------------------------------------------------------------------------
     // Members

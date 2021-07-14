@@ -14,13 +14,18 @@ IMPLEMENT_SNIPPET(InitVarSnippet::Gamma);
 //----------------------------------------------------------------------------
 // InitVarSnippet::Base
 //----------------------------------------------------------------------------
-bool InitVarSnippet::Base::canBeMerged(const Base *other) const
+boost::uuids::detail::sha1::digest_type InitVarSnippet::Base::getHashDigest() const
 {
-    return (Snippet::Base::canBeMerged(other)
-            && (getCode() == other->getCode()));
+    // Superclass
+    boost::uuids::detail::sha1 hash;
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getCode(), hash);
+    return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 bool InitVarSnippet::Base::requiresKernel() const
 {
     return (getCode().find("$(id_kernel)") != std::string::npos);
 }
+

@@ -96,6 +96,21 @@ struct Preferences : public PreferencesBase
 
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // Superclass 
+        PreferencesBase::updateHash(hash);
+
+        // **NOTE** showPtxInfo, generateLineInfo and userNvccFlags only affect makefiles/msbuild 
+        // **NOTE** block size optimization is also not relevant, the chosen block size is hashed in the backend
+        // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
+
+        //! Update hash with preferences
+        Utils::updateHash(selectGPUByDeviceID, hash);
+        Utils::updateHash(deviceSelectMethod, hash);
+        Utils::updateHash(constantCacheOverhead, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -148,22 +163,22 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler, 
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
                                  CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
                                  CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                          CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
                          SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -264,6 +279,9 @@ public:
 
     virtual bool supportsNamespace() const override { return true; };
 
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
+
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -277,33 +295,15 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, MemorySpaces &memorySpaces) const
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
-            // Get size of group in bytes
-            const size_t groupBytes = g.getStructArraySize(*this);
+            // Check that a memory space has been assigned
+            assert(!g.getMemorySpace().empty());
 
-            // Loop through memory spaces
-            bool memorySpaceFound = false;
-            for(auto &m : memorySpaces) {
-                // If there is space in this memory space for group
-                if(m.second > groupBytes) {
-                    // Implement merged group array in this memory space
-                    os << m.first << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
-
-                    // Set flag
-                    memorySpaceFound = true;
-
-                    // Subtract
-                    m.second -= groupBytes;
-
-                    // Stop searching
-                    break;
-                }
-            }
-
-            assert(memorySpaceFound);
+            // Implement merged group array in previously assigned memory space
+            os << g.getMemorySpace() << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
 
             // Write function to update
             os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";
