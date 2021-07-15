@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -120,6 +120,21 @@ Functions</h2></td></tr>
 <tr class="memitem:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7fa33c9872ab0cf97d0b60fa41bf17fe">init_connectivity</a> (init_sparse_connect_snippet, param_space)</td></tr>
 <tr class="memdesc:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> object to easily initialise connectivity using a snippet.  <a href="#a7fa33c9872ab0cf97d0b60fa41bf17fe">More...</a><br /></td></tr>
 <tr class="separator:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a58d69fc68a1745c3aff4fecd4e6e456e">create_var_ref</a> (pop, var_name)</td></tr>
+<tr class="memdesc:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a neuron or current source variable for initialising variable references.  <a href="#a58d69fc68a1745c3aff4fecd4e6e456e">More...</a><br /></td></tr>
+<tr class="separator:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a909a0153a1bdd03bc878aabd80851505"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a909a0153a1bdd03bc878aabd80851505">create_psm_var_ref</a> (sg, var_name)</td></tr>
+<tr class="memdesc:a909a0153a1bdd03bc878aabd80851505"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a postsynaptic model variable for initialising variable references.  <a href="#a909a0153a1bdd03bc878aabd80851505">More...</a><br /></td></tr>
+<tr class="separator:a909a0153a1bdd03bc878aabd80851505"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecd5b6795a09e26bee8ad28c193b512d"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#aecd5b6795a09e26bee8ad28c193b512d">create_wu_pre_var_ref</a> (sg, var_name)</td></tr>
+<tr class="memdesc:aecd5b6795a09e26bee8ad28c193b512d"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a presynaptic weight update model variable for initialising variable references.  <a href="#aecd5b6795a09e26bee8ad28c193b512d">More...</a><br /></td></tr>
+<tr class="separator:aecd5b6795a09e26bee8ad28c193b512d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a76a9e68c8ab998734058a6ddd629b2bb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a76a9e68c8ab998734058a6ddd629b2bb">create_wu_post_var_ref</a> (sg, var_name)</td></tr>
+<tr class="memdesc:a76a9e68c8ab998734058a6ddd629b2bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a postsynaptic weight update model variable for initialising variable references.  <a href="#a76a9e68c8ab998734058a6ddd629b2bb">More...</a><br /></td></tr>
+<tr class="separator:a76a9e68c8ab998734058a6ddd629b2bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac420218045517b46a8361512b1769098"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ac420218045517b46a8361512b1769098">create_wu_var_ref</a> (sg, var_name, tp_sg=None, tp_var_name=None)</td></tr>
+<tr class="memdesc:ac420218045517b46a8361512b1769098"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">Models::WUVarReference</a> pointing to a weight update model variable for initialising variable references.  <a href="#ac420218045517b46a8361512b1769098">More...</a><br /></td></tr>
+<tr class="separator:ac420218045517b46a8361512b1769098"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a80f3b56cb2dc934ea04ed15a629c7db9"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a80f3b56cb2dc934ea04ed15a629c7db9">create_custom_neuron_class</a> (class_name, param_names=None, var_name_types=None, derived_params=None, sim_code=None, threshold_condition_code=None, reset_code=None, support_code=None, extra_global_params=None, additional_input_vars=None, is_auto_refractory_required=None, custom_body=None)</td></tr>
 <tr class="memdesc:a80f3b56cb2dc934ea04ed15a629c7db9"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom NeuronModel class.  <a href="#a80f3b56cb2dc934ea04ed15a629c7db9">More...</a><br /></td></tr>
 <tr class="separator:a80f3b56cb2dc934ea04ed15a629c7db9"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -132,6 +147,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a1cd795d295c4cc4f05968f04dbf5b9d3"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a1cd795d295c4cc4f05968f04dbf5b9d3">create_custom_current_source_class</a> (class_name, param_names=None, var_name_types=None, derived_params=None, injection_code=None, extra_global_params=None, custom_body=None)</td></tr>
 <tr class="memdesc:a1cd795d295c4cc4f05968f04dbf5b9d3"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom NeuronModel class.  <a href="#a1cd795d295c4cc4f05968f04dbf5b9d3">More...</a><br /></td></tr>
 <tr class="separator:a1cd795d295c4cc4f05968f04dbf5b9d3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9914061f9946583d9c2fd4959fa8bff1"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a9914061f9946583d9c2fd4959fa8bff1">create_custom_custom_update_class</a> (class_name, param_names=None, var_name_types=None, derived_params=None, var_refs=None, update_code=None, extra_global_params=None, custom_body=None)</td></tr>
+<tr class="memdesc:a9914061f9946583d9c2fd4959fa8bff1"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom <a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a> class.  <a href="#a9914061f9946583d9c2fd4959fa8bff1">More...</a><br /></td></tr>
+<tr class="separator:a9914061f9946583d9c2fd4959fa8bff1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a603410a2e8454498c99148657de8c460"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a603410a2e8454498c99148657de8c460">create_custom_model_class</a> (class_name, base, param_names, var_name_types, derived_params, custom_body)</td></tr>
 <tr class="memdesc:a603410a2e8454498c99148657de8c460"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function completes a custom model class creation.  <a href="#a603410a2e8454498c99148657de8c460">More...</a><br /></td></tr>
 <tr class="separator:a603410a2e8454498c99148657de8c460"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -289,6 +307,94 @@ Variables</h2></td></tr>
     <tr><td class="paramname">var_name_types</td><td>list of pairs of strings with varible names and types of the model </td></tr>
     <tr><td class="paramname">derived_params</td><td>list of pairs, where the first member is string with name of the derived parameter and the second should be a functor returned by create_dpf_class </td></tr>
     <tr><td class="paramname">injection_code</td><td>string with the current injection code </td></tr>
+    <tr><td class="paramname">extra_global_params</td><td>list of pairs of strings with names and types of additional parameters </td></tr>
+    <tr><td class="paramname">custom_body</td><td>dictionary with additional attributes and methods of the new class </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a9914061f9946583d9c2fd4959fa8bff1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9914061f9946583d9c2fd4959fa8bff1">&#9670;&nbsp;</a></span>create_custom_custom_update_class()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_custom_custom_update_class </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>class_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_names</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_name_types</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>derived_params</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_refs</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>update_code</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>extra_global_params</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>custom_body</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a custom <a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a> class. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a80f3b56cb2dc934ea04ed15a629c7db9" title="This helper function creates a custom NeuronModel class. ">create_custom_neuron_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7c2e854789f74d6ffd92be2a487a0e5b" title="This helper function creates a custom WeightUpdateModel class. ">create_custom_weight_update_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a1cd795d295c4cc4f05968f04dbf5b9d3" title="This helper function creates a custom NeuronModel class. ">create_custom_current_source_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ab404f74c9628546ff3dc41feab504833" title="This helper function creates a custom InitVarSnippet class. ">create_custom_init_var_snippet_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a6afa899f0322db64b39395534d1e29d8" title="This helper function creates a custom InitSparseConnectivitySnippet class. ">create_custom_sparse_connect_init_snippet_class</a></dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">class_name</td><td>name of the new class</td></tr>
+    <tr><td class="paramname">param_names</td><td>list of strings with param names of the model </td></tr>
+    <tr><td class="paramname">var_name_types</td><td>list of tuples of strings with varible names and types of the variable </td></tr>
+    <tr><td class="paramname">derived_params</td><td>list of tuples, where the first member is string with name of the derived parameter and the second should be a functor returned by create_dpf_class </td></tr>
+    <tr><td class="paramname">var_refs</td><td>list of tuples of strings with varible names and types of variabled variable </td></tr>
+    <tr><td class="paramname">update_code</td><td>string with the current injection code </td></tr>
     <tr><td class="paramname">extra_global_params</td><td>list of pairs of strings with names and types of additional parameters </td></tr>
     <tr><td class="paramname">custom_body</td><td>dictionary with additional attributes and methods of the new class </td></tr>
   </table>
@@ -1008,6 +1114,205 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="a909a0153a1bdd03bc878aabd80851505"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a909a0153a1bdd03bc878aabd80851505">&#9670;&nbsp;</a></span>create_psm_var_ref()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_psm_var_ref </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a postsynaptic model variable for initialising variable references. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sg</td><td><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> object </td></tr>
+    <tr><td class="paramname">var_name</td><td>name of postsynaptic model variable in synapse group to reference </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a58d69fc68a1745c3aff4fecd4e6e456e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a58d69fc68a1745c3aff4fecd4e6e456e">&#9670;&nbsp;</a></span>create_var_ref()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_var_ref </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>pop</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a neuron or current source variable for initialising variable references. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pop</td><td>population, either a <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> or <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> object </td></tr>
+    <tr><td class="paramname">var_name</td><td>name of variable in population to reference </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a76a9e68c8ab998734058a6ddd629b2bb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76a9e68c8ab998734058a6ddd629b2bb">&#9670;&nbsp;</a></span>create_wu_post_var_ref()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_wu_post_var_ref </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a postsynaptic weight update model variable for initialising variable references. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sg</td><td><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> object </td></tr>
+    <tr><td class="paramname">var_name</td><td>name of postsynaptic weight update model variable in synapse group to reference </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aecd5b6795a09e26bee8ad28c193b512d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecd5b6795a09e26bee8ad28c193b512d">&#9670;&nbsp;</a></span>create_wu_pre_var_ref()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_wu_pre_var_ref </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a presynaptic weight update model variable for initialising variable references. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sg</td><td><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> object </td></tr>
+    <tr><td class="paramname">var_name</td><td>name of presynaptic weight update model variable in synapse group to reference </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ac420218045517b46a8361512b1769098"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac420218045517b46a8361512b1769098">&#9670;&nbsp;</a></span>create_wu_var_ref()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_wu_var_ref </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>tp_sg</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>tp_var_name</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">Models::WUVarReference</a> pointing to a weight update model variable for initialising variable references. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">sg</td><td><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> object </td></tr>
+    <tr><td class="paramname">var_name</td><td>name of weight update model variable in synapse group to reference </td></tr>
+    <tr><td class="paramname">tp_sg</td><td>(optional) <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> object to copy transpose of variable to </td></tr>
+    <tr><td class="paramname">tp_var_name</td><td>(optional) name of weight update model variable in tranpose synapse group to copy transpose to </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a7fa33c9872ab0cf97d0b60fa41bf17fe"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7fa33c9872ab0cf97d0b60fa41bf17fe">&#9670;&nbsp;</a></span>init_connectivity()</h2>
 
@@ -1132,7 +1437,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html">genn_model</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

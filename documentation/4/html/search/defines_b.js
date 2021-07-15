@@ -43,6 +43,8 @@ var searchData=
   ['set_5fsynapse_5fdynamics_5fcode',['SET_SYNAPSE_DYNAMICS_CODE',['../dc/dab/weightUpdateModels_8h.html#ae68b0e54b73f5cda5fe9bab3667de3a8',1,'weightUpdateModels.h']]],
   ['set_5fsynapse_5fdynamics_5fsupport_5fcode',['SET_SYNAPSE_DYNAMICS_SUPPORT_CODE',['../dc/dab/weightUpdateModels_8h.html#ad6ae07196480eed9c142da2e6ba48fac',1,'weightUpdateModels.h']]],
   ['set_5fthreshold_5fcondition_5fcode',['SET_THRESHOLD_CONDITION_CODE',['../d3/dc0/neuronModels_8h.html#a9c94b28e6356469d85e3376f3336f0a2',1,'neuronModels.h']]],
+  ['set_5fupdate_5fcode',['SET_UPDATE_CODE',['../d3/df5/customUpdateModels_8h.html#a8d6d4a547def292ea8860a85ed80c1a7',1,'customUpdateModels.h']]],
+  ['set_5fvar_5frefs',['SET_VAR_REFS',['../d3/df5/customUpdateModels_8h.html#af5fc31e556cfb8724ac72739462fee53',1,'customUpdateModels.h']]],
   ['set_5fvars',['SET_VARS',['../d4/d13/models_8h.html#a3025b9fc844fccdf8cc2b51ef4a6e0aa',1,'models.h']]],
   ['stringify',['STRINGIFY',['../d0/d78/opencl_2backend_8cc.html#a770271a6fc04a0fbbaedcbd16f734f81',1,'backend.cc']]]
 ];

@@ -18,7 +18,9 @@ var classCodeGenerator_1_1GroupMerged =
     [ "addHeterogeneousVarInitParams", "df/dfd/classCodeGenerator_1_1GroupMerged.html#abc11e3da7c939eba195df820c015d555", null ],
     [ "addPointerField", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a13180928229e33ec72a6b0896f132c2f", null ],
     [ "addScalarField", "df/dfd/classCodeGenerator_1_1GroupMerged.html#afb64eb31f8ecb21a5fdebf31b8df918e", null ],
+    [ "addVarReferences", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a17cd1c220f55b51848d406e4e32cf11d", null ],
     [ "addVars", "df/dfd/classCodeGenerator_1_1GroupMerged.html#af0f0a4dba7b2fdd7244227385bcc6954", null ],
+    [ "assignMemorySpaces", "df/dfd/classCodeGenerator_1_1GroupMerged.html#af92aaeb21f030deb215087d03e6039ae", null ],
     [ "generateRunnerBase", "df/dfd/classCodeGenerator_1_1GroupMerged.html#ac77f91d8484a2c12b56e94dc23d89003", null ],
     [ "generateStruct", "df/dfd/classCodeGenerator_1_1GroupMerged.html#adcc2b080bdcbd7c6d3d8d8b16fa609c4", null ],
     [ "generateStructFieldArgumentDefinitions", "df/dfd/classCodeGenerator_1_1GroupMerged.html#aae68697044f258f736cca9c753bcedfb", null ],
@@ -26,8 +28,13 @@ var classCodeGenerator_1_1GroupMerged =
     [ "getFields", "df/dfd/classCodeGenerator_1_1GroupMerged.html#ad3054484f053ed6d1dd6924c5a91c4eb", null ],
     [ "getGroups", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a26f1cfd1cea50675f49e6163bff47ee1", null ],
     [ "getIndex", "df/dfd/classCodeGenerator_1_1GroupMerged.html#ab3301e1ebcc1341522444549d8bc863b", null ],
+    [ "getMemorySpace", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a51a4f3f463244f3150e16dbe0066d88a", null ],
     [ "getSortedFields", "df/dfd/classCodeGenerator_1_1GroupMerged.html#afbc43d1b9ce4c99ce6c9720db09f4d31", null ],
     [ "getStructArraySize", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a9736f70187bdb4b9def628a4c9adc570", null ],
+    [ "isParamReferenced", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a55919084b08d84b5c618a797473652ee", null ],
     [ "isParamValueHeterogeneous", "df/dfd/classCodeGenerator_1_1GroupMerged.html#ab81dc8060e3208107a635b805ea75798", null ],
-    [ "isParamValueHeterogeneous", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a6c4acb65e6fc248a9a3302ee0785f189", null ]
+    [ "updateHash", "df/dfd/classCodeGenerator_1_1GroupMerged.html#ab0e8075c0b3900c64eac9ae89701d2bd", null ],
+    [ "updateParamHash", "df/dfd/classCodeGenerator_1_1GroupMerged.html#a7be7b638dd4bd85467ec5af89852cef4", null ],
+    [ "updateVarInitDerivedParamHash", "df/dfd/classCodeGenerator_1_1GroupMerged.html#afcec8eb78ea3e7d0a1bc18344f7391ce", null ],
+    [ "updateVarInitParamHash", "df/dfd/classCodeGenerator_1_1GroupMerged.html#afbf5991703bb949583ec14a78ee4a7af", null ]
 ];

@@ -9,5 +9,5 @@ var searchData=
   ['exponentialdistribution',['ExponentialDistribution',['../d7/d82/classSpineMLSimulator_1_1ModelProperty_1_1ExponentialDistribution.html',1,'SpineMLSimulator::ModelProperty']]],
   ['external',['External',['../df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html',1,'SpineMLSimulator::InputValue']]],
   ['externalnetwork',['ExternalNetwork',['../d2/d70/classSpineMLSimulator_1_1InputValue_1_1ExternalNetwork.html',1,'SpineMLSimulator::InputValue']]],
-  ['extraglobalvariable',['ExtraGlobalVariable',['../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html',1,'pygenn::model_preprocessor']]]
+  ['extraglobalparameter',['ExtraGlobalParameter',['../d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html',1,'pygenn::model_preprocessor']]]
 ];

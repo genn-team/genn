@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -217,6 +217,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2948d9d9c159d940fe02042b04c81ef3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a2948d9d9c159d940fe02042b04c81ef3">isWeightSharingSlave</a> () const</td></tr>
 <tr class="memdesc:a2948d9d9c159d940fe02042b04c81ef3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is this synapse group a weight-sharing slave.  <a href="#a2948d9d9c159d940fe02042b04c81ef3">More...</a><br /></td></tr>
 <tr class="separator:a2948d9d9c159d940fe02042b04c81ef3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aed8d1a858f0731119785fc90394b2220"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aed8d1a858f0731119785fc90394b2220">isPSModelMerged</a> () const</td></tr>
+<tr class="separator:aed8d1a858f0731119785fc90394b2220"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff9ca57ce84ca974596b02752172601a"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../d2/d05/classWeightUpdateModels_1_1Base.html">WeightUpdateModels::Base</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aff9ca57ce84ca974596b02752172601a">getWUModel</a> () const</td></tr>
 <tr class="separator:aff9ca57ce84ca974596b02752172601a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab02794caf82b3124b2e7a43819df6df5"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; double &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ab02794caf82b3124b2e7a43819df6df5">getWUParams</a> () const</td></tr>
@@ -321,6 +323,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a4d1d61a12436e603e6443b4d6d788a00"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3ec881945c4a9559545b8fa98e5748f3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a3ec881945c4a9559545b8fa98e5748f3">setEventThresholdReTestRequired</a> (bool req)</td></tr>
 <tr class="separator:a3ec881945c4a9559545b8fa98e5748f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad1b983436b5cbf8793310ba104ca55d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aad1b983436b5cbf8793310ba104ca55d">setWUVarReferencedByCustomUpdate</a> (bool ref)</td></tr>
+<tr class="memdesc:aad1b983436b5cbf8793310ba104ca55d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set if any of this synapse group's weight update model variables referenced by a custom update.  <a href="#aad1b983436b5cbf8793310ba104ca55d">More...</a><br /></td></tr>
+<tr class="separator:aad1b983436b5cbf8793310ba104ca55d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a9287f2623d68be8ced4c11c42b4528"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a9a9287f2623d68be8ced4c11c42b4528">setPSModelMergeTarget</a> (const std::string &amp;targetName)</td></tr>
 <tr class="separator:a9a9287f2623d68be8ced4c11c42b4528"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a46f29a2fdfe2b86ffe00aeb0574c9f05"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a46f29a2fdfe2b86ffe00aeb0574c9f05">initDerivedParams</a> (double dt)</td></tr>
@@ -340,44 +345,51 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a3598cc5fbf801448c1aa4d16daab03f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4f5754f3d4f79d356db2c81b41137ca3"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a4f5754f3d4f79d356db2c81b41137ca3">getPSModelTargetName</a> () const</td></tr>
 <tr class="separator:a4f5754f3d4f79d356db2c81b41137ca3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aed8d1a858f0731119785fc90394b2220"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aed8d1a858f0731119785fc90394b2220">isPSModelMerged</a> () const</td></tr>
-<tr class="separator:aed8d1a858f0731119785fc90394b2220"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a822567755aa123506880e402d93bb92f"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a822567755aa123506880e402d93bb92f">getSparseIndType</a> () const</td></tr>
 <tr class="memdesc:a822567755aa123506880e402d93bb92f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the type to use for sparse connectivity indices for synapse group.  <a href="#a822567755aa123506880e402d93bb92f">More...</a><br /></td></tr>
 <tr class="separator:a822567755aa123506880e402d93bb92f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a33905fe55a863ae72c13116e1a040e2b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a33905fe55a863ae72c13116e1a040e2b">canWUBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a33905fe55a863ae72c13116e1a040e2b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can weight update component of this synapse group be merged with other? i.e. can they be simulated using same generated code.  <a href="#a33905fe55a863ae72c13116e1a040e2b">More...</a><br /></td></tr>
-<tr class="separator:a33905fe55a863ae72c13116e1a040e2b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41452da0ead3463b4f061972c9c60191"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a41452da0ead3463b4f061972c9c60191">canWUPreBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a41452da0ead3463b4f061972c9c60191"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code.  <a href="#a41452da0ead3463b4f061972c9c60191">More...</a><br /></td></tr>
-<tr class="separator:a41452da0ead3463b4f061972c9c60191"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a213aa999d00be7cc6741950c749fc32e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a213aa999d00be7cc6741950c749fc32e">canWUPostBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a213aa999d00be7cc6741950c749fc32e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can postsynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code.  <a href="#a213aa999d00be7cc6741950c749fc32e">More...</a><br /></td></tr>
-<tr class="separator:a213aa999d00be7cc6741950c749fc32e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0fd40d777a83cec5b456eef2d0d374e5"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a0fd40d777a83cec5b456eef2d0d374e5">canPSBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a0fd40d777a83cec5b456eef2d0d374e5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code.  <a href="#a0fd40d777a83cec5b456eef2d0d374e5">More...</a><br /></td></tr>
-<tr class="separator:a0fd40d777a83cec5b456eef2d0d374e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9914d35175a62a94f518c43012f6dd7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#aa9914d35175a62a94f518c43012f6dd7">canPSBeLinearlyCombined</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:aa9914d35175a62a94f518c43012f6dd7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can postsynaptic update component of this synapse group not only be merged with other, but combined so only one needs simulating at all.  <a href="#aa9914d35175a62a94f518c43012f6dd7">More...</a><br /></td></tr>
-<tr class="separator:aa9914d35175a62a94f518c43012f6dd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30273732707f3c5edf80f4f716f5c050"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a30273732707f3c5edf80f4f716f5c050">canWUInitBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a30273732707f3c5edf80f4f716f5c050"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code.  <a href="#a30273732707f3c5edf80f4f716f5c050">More...</a><br /></td></tr>
-<tr class="separator:a30273732707f3c5edf80f4f716f5c050"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac859c1444e6bb690bd8efb827758236c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ac859c1444e6bb690bd8efb827758236c">canWUPreInitBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:ac859c1444e6bb690bd8efb827758236c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code.  <a href="#ac859c1444e6bb690bd8efb827758236c">More...</a><br /></td></tr>
-<tr class="separator:ac859c1444e6bb690bd8efb827758236c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a32ac4e55cf7db129472b1d38dfdae23d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a32ac4e55cf7db129472b1d38dfdae23d">canWUPostInitBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a32ac4e55cf7db129472b1d38dfdae23d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code.  <a href="#a32ac4e55cf7db129472b1d38dfdae23d">More...</a><br /></td></tr>
-<tr class="separator:a32ac4e55cf7db129472b1d38dfdae23d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7c16956b68a61a88b19d4fe14f3e7d84"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7c16956b68a61a88b19d4fe14f3e7d84">canPSInitBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a7c16956b68a61a88b19d4fe14f3e7d84"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code.  <a href="#a7c16956b68a61a88b19d4fe14f3e7d84">More...</a><br /></td></tr>
-<tr class="separator:a7c16956b68a61a88b19d4fe14f3e7d84"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3015c27c4ea1d874422d08e2af2defe9"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a3015c27c4ea1d874422d08e2af2defe9">canConnectivityInitBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a3015c27c4ea1d874422d08e2af2defe9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code.  <a href="#a3015c27c4ea1d874422d08e2af2defe9">More...</a><br /></td></tr>
-<tr class="separator:a3015c27c4ea1d874422d08e2af2defe9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6ddc05d2f9f64540aca5f657a399904c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a6ddc05d2f9f64540aca5f657a399904c">canConnectivityHostInitBeMerged</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a6ddc05d2f9f64540aca5f657a399904c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can connectivity host initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code.  <a href="#a6ddc05d2f9f64540aca5f657a399904c">More...</a><br /></td></tr>
-<tr class="separator:a6ddc05d2f9f64540aca5f657a399904c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06557a9b30cde852ffd183a4fa8695f7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a06557a9b30cde852ffd183a4fa8695f7">areWUVarReferencedByCustomUpdate</a> () const</td></tr>
+<tr class="memdesc:a06557a9b30cde852ffd183a4fa8695f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Are any of this synapse group's weight update model variables referenced by a custom update.  <a href="#a06557a9b30cde852ffd183a4fa8695f7">More...</a><br /></td></tr>
+<tr class="separator:a06557a9b30cde852ffd183a4fa8695f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05578d73f21f8ff49def3b0823f802db"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a05578d73f21f8ff49def3b0823f802db">canPSBeLinearlyCombined</a> () const</td></tr>
+<tr class="memdesc:a05578d73f21f8ff49def3b0823f802db"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all.  <a href="#a05578d73f21f8ff49def3b0823f802db">More...</a><br /></td></tr>
+<tr class="separator:a05578d73f21f8ff49def3b0823f802db"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e0bdb4b53089341f04a55c5e8f5fdb0"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a2e0bdb4b53089341f04a55c5e8f5fdb0">getWUHashDigest</a> () const</td></tr>
+<tr class="memdesc:a2e0bdb4b53089341f04a55c5e8f5fdb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with weight update component of this synapse group.  <a href="#a2e0bdb4b53089341f04a55c5e8f5fdb0">More...</a><br /></td></tr>
+<tr class="separator:a2e0bdb4b53089341f04a55c5e8f5fdb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab7921d9c55fb508df26fcedb2eff2b81"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ab7921d9c55fb508df26fcedb2eff2b81">getWUPreHashDigest</a> () const</td></tr>
+<tr class="memdesc:ab7921d9c55fb508df26fcedb2eff2b81"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with presynaptic update component of this synapse group.  <a href="#ab7921d9c55fb508df26fcedb2eff2b81">More...</a><br /></td></tr>
+<tr class="separator:ab7921d9c55fb508df26fcedb2eff2b81"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a079777c1335d5959bef40f50a1db1153"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a079777c1335d5959bef40f50a1db1153">getWUPostHashDigest</a> () const</td></tr>
+<tr class="memdesc:a079777c1335d5959bef40f50a1db1153"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with postsynaptic update component of this synapse group.  <a href="#a079777c1335d5959bef40f50a1db1153">More...</a><br /></td></tr>
+<tr class="separator:a079777c1335d5959bef40f50a1db1153"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f052212fef05356b2696a68867fc0a5"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7f052212fef05356b2696a68867fc0a5">getPSHashDigest</a> () const</td></tr>
+<tr class="memdesc:a7f052212fef05356b2696a68867fc0a5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with postsynaptic update component of this synapse group.  <a href="#a7f052212fef05356b2696a68867fc0a5">More...</a><br /></td></tr>
+<tr class="separator:a7f052212fef05356b2696a68867fc0a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5326bdf064da55a963c2d559a939ce6e"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a5326bdf064da55a963c2d559a939ce6e">getPSLinearCombineHashDigest</a> () const</td></tr>
+<tr class="separator:a5326bdf064da55a963c2d559a939ce6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac98b26617c46c185123695ee2a379d5b"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ac98b26617c46c185123695ee2a379d5b">getDendriticDelayUpdateHashDigest</a> () const</td></tr>
+<tr class="separator:ac98b26617c46c185123695ee2a379d5b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19f5176cb20042fdca974fed126b62f2"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a19f5176cb20042fdca974fed126b62f2">getWUInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:a19f5176cb20042fdca974fed126b62f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with initialisation component of this synapse group.  <a href="#a19f5176cb20042fdca974fed126b62f2">More...</a><br /></td></tr>
+<tr class="separator:a19f5176cb20042fdca974fed126b62f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0de536d841bcb3fb5368f7afb19301d4"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a0de536d841bcb3fb5368f7afb19301d4">getWUPreInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:a0de536d841bcb3fb5368f7afb19301d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with presynaptic variable initialisation component of this synapse group.  <a href="#a0de536d841bcb3fb5368f7afb19301d4">More...</a><br /></td></tr>
+<tr class="separator:a0de536d841bcb3fb5368f7afb19301d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe9239f8fe357a99aa10a64870393a0b"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#afe9239f8fe357a99aa10a64870393a0b">getWUPostInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:afe9239f8fe357a99aa10a64870393a0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with postsynaptic variable initialisation component of this synapse group.  <a href="#afe9239f8fe357a99aa10a64870393a0b">More...</a><br /></td></tr>
+<tr class="separator:afe9239f8fe357a99aa10a64870393a0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af54e5984713afd8347933ef7e87770e7"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#af54e5984713afd8347933ef7e87770e7">getPSInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:af54e5984713afd8347933ef7e87770e7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with postsynaptic model variable initialisation component of this synapse group.  <a href="#af54e5984713afd8347933ef7e87770e7">More...</a><br /></td></tr>
+<tr class="separator:af54e5984713afd8347933ef7e87770e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7d93df859226019541e018b7525c86d5"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7d93df859226019541e018b7525c86d5">getConnectivityInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:a7d93df859226019541e018b7525c86d5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with connectivity initialisation of this synapse group.  <a href="#a7d93df859226019541e018b7525c86d5">More...</a><br /></td></tr>
+<tr class="separator:a7d93df859226019541e018b7525c86d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c5829cce6e3ccb0df1fe040ed6b723b"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#a7c5829cce6e3ccb0df1fe040ed6b723b">getConnectivityHostInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:a7c5829cce6e3ccb0df1fe040ed6b723b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with host connectivity initialisation of this synapse group.  <a href="#a7c5829cce6e3ccb0df1fe040ed6b723b">More...</a><br /></td></tr>
+<tr class="separator:a7c5829cce6e3ccb0df1fe040ed6b723b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab079fa7861ec8635fb5450acdbd14486"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/dfa/classSynapseGroup.html#ab079fa7861ec8635fb5450acdbd14486">getVarLocationHashDigest</a> () const</td></tr>
+<tr class="separator:ab079fa7861ec8635fb5450acdbd14486"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Enumeration Documentation</h2>
 <a id="a3da23a0e726b05a12e95c3d58645b1a2"></a>
@@ -597,8 +609,8 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a6ddc05d2f9f64540aca5f657a399904c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6ddc05d2f9f64540aca5f657a399904c">&#9670;&nbsp;</a></span>canConnectivityHostInitBeMerged()</h2>
+<a id="a06557a9b30cde852ffd183a4fa8695f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06557a9b30cde852ffd183a4fa8695f7">&#9670;&nbsp;</a></span>areWUVarReferencedByCustomUpdate()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -607,56 +619,25 @@ Protected Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool SynapseGroup::canConnectivityHostInitBeMerged </td>
+          <td class="memname">bool SynapseGroup::areWUVarReferencedByCustomUpdate </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
 
-<p>Can connectivity host initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
+<p>Are any of this synapse group's weight update model variables referenced by a custom update. </p>
 
 </div>
 </div>
-<a id="a3015c27c4ea1d874422d08e2af2defe9"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3015c27c4ea1d874422d08e2af2defe9">&#9670;&nbsp;</a></span>canConnectivityInitBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canConnectivityInitBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can connectivity initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="aa9914d35175a62a94f518c43012f6dd7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa9914d35175a62a94f518c43012f6dd7">&#9670;&nbsp;</a></span>canPSBeLinearlyCombined()</h2>
+<a id="a05578d73f21f8ff49def3b0823f802db"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a05578d73f21f8ff49def3b0823f802db">&#9670;&nbsp;</a></span>canPSBeLinearlyCombined()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -667,8 +648,7 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="memname">bool SynapseGroup::canPSBeLinearlyCombined </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -679,239 +659,7 @@ Protected Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Can postsynaptic update component of this synapse group not only be merged with other, but combined so only one needs simulating at all. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a0fd40d777a83cec5b456eef2d0d374e5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0fd40d777a83cec5b456eef2d0d374e5">&#9670;&nbsp;</a></span>canPSBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canPSBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can postsynaptic update component of this synapse group be merged with other? i.e. can they be simulated using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a7c16956b68a61a88b19d4fe14f3e7d84"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7c16956b68a61a88b19d4fe14f3e7d84">&#9670;&nbsp;</a></span>canPSInitBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canPSInitBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can postsynaptic initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a33905fe55a863ae72c13116e1a040e2b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a33905fe55a863ae72c13116e1a040e2b">&#9670;&nbsp;</a></span>canWUBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canWUBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can weight update component of this synapse group be merged with other? i.e. can they be simulated using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a30273732707f3c5edf80f4f716f5c050"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a30273732707f3c5edf80f4f716f5c050">&#9670;&nbsp;</a></span>canWUInitBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canWUInitBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can initialisation for this synapse group be merged with other? i.e. can they be performed using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a213aa999d00be7cc6741950c749fc32e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a213aa999d00be7cc6741950c749fc32e">&#9670;&nbsp;</a></span>canWUPostBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canWUPostBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can postsynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a32ac4e55cf7db129472b1d38dfdae23d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a32ac4e55cf7db129472b1d38dfdae23d">&#9670;&nbsp;</a></span>canWUPostInitBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canWUPostInitBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a41452da0ead3463b4f061972c9c60191"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a41452da0ead3463b4f061972c9c60191">&#9670;&nbsp;</a></span>canWUPreBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canWUPreBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can presynaptic update of this synapse group be merged with other? i.e. can they be simulated using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="ac859c1444e6bb690bd8efb827758236c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ac859c1444e6bb690bd8efb827758236c">&#9670;&nbsp;</a></span>canWUPreInitBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroup::canWUPreInitBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can initialisation for this synapse group's presynaptic variables be merged with other? i.e. can they be performed using same generated code. </p>
+<p>Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all. </p>
 <p>NOTE: this can only be called after model is finalized </p>
 
 </div>
@@ -938,6 +686,62 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7c5829cce6e3ccb0df1fe040ed6b723b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c5829cce6e3ccb0df1fe040ed6b723b">&#9670;&nbsp;</a></span>getConnectivityHostInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityHostInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with host connectivity initialisation of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="a7d93df859226019541e018b7525c86d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7d93df859226019541e018b7525c86d5">&#9670;&nbsp;</a></span>getConnectivityInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with connectivity initialisation of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
 
 </div>
 </div>
@@ -1015,6 +819,31 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get variable mode used for this synapse group's dendritic delay buffers. </p>
+
+</div>
+</div>
+<a id="ac98b26617c46c185123695ee2a379d5b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac98b26617c46c185123695ee2a379d5b">&#9670;&nbsp;</a></span>getDendriticDelayUpdateHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getDendriticDelayUpdateHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1293,6 +1122,89 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get location of postsynaptic model extra global parameter by index. </p>
 <p>This is only used by extra global parameters which are pointers </p>
+
+</div>
+</div>
+<a id="a7f052212fef05356b2696a68867fc0a5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7f052212fef05356b2696a68867fc0a5">&#9670;&nbsp;</a></span>getPSHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with postsynaptic update component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="af54e5984713afd8347933ef7e87770e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af54e5984713afd8347933ef7e87770e7">&#9670;&nbsp;</a></span>getPSInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with postsynaptic model variable initialisation component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="a5326bdf064da55a963c2d559a939ce6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5326bdf064da55a963c2d559a939ce6e">&#9670;&nbsp;</a></span>getPSLinearCombineHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getPSLinearCombineHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Updates hash with postsynaptic update component of this synapse group with additional components to ensure PSMs with matching hashes can not only be simulated using the same code, but combined so only one needs simulating at all</p>
+<p>NOTE: this can only be called after model is finalized </p>
 
 </div>
 </div>
@@ -1657,6 +1569,31 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ab079fa7861ec8635fb5450acdbd14486"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab079fa7861ec8635fb5450acdbd14486">&#9670;&nbsp;</a></span>getVarLocationHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="af3857cce796a91d0ea38b666ebb81bbb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af3857cce796a91d0ea38b666ebb81bbb">&#9670;&nbsp;</a></span>getWeightSharingMaster()</h2>
 
@@ -1776,6 +1713,62 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a2e0bdb4b53089341f04a55c5e8f5fdb0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e0bdb4b53089341f04a55c5e8f5fdb0">&#9670;&nbsp;</a></span>getWUHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with weight update component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="a19f5176cb20042fdca974fed126b62f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a19f5176cb20042fdca974fed126b62f2">&#9670;&nbsp;</a></span>getWUInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with initialisation component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
 <a id="aff9ca57ce84ca974596b02752172601a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aff9ca57ce84ca974596b02752172601a">&#9670;&nbsp;</a></span>getWUModel()</h2>
 
@@ -1823,6 +1816,62 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="a079777c1335d5959bef40f50a1db1153"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a079777c1335d5959bef40f50a1db1153">&#9670;&nbsp;</a></span>getWUPostHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with postsynaptic update component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="afe9239f8fe357a99aa10a64870393a0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afe9239f8fe357a99aa10a64870393a0b">&#9670;&nbsp;</a></span>getWUPostInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with postsynaptic variable initialisation component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
 
 </div>
 </div>
@@ -1896,6 +1945,62 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get location of weight update model postsynaptic state variable by index. </p>
+
+</div>
+</div>
+<a id="ab7921d9c55fb508df26fcedb2eff2b81"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab7921d9c55fb508df26fcedb2eff2b81">&#9670;&nbsp;</a></span>getWUPreHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with presynaptic update component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="a0de536d841bcb3fb5368f7afb19301d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0de536d841bcb3fb5368f7afb19301d4">&#9670;&nbsp;</a></span>getWUPreInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with presynaptic variable initialisation component of this synapse group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
 
 </div>
 </div>
@@ -2183,7 +2288,7 @@ Protected Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -2857,6 +2962,34 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="aad1b983436b5cbf8793310ba104ca55d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad1b983436b5cbf8793310ba104ca55d">&#9670;&nbsp;</a></span>setWUVarReferencedByCustomUpdate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroup::setWUVarReferencedByCustomUpdate </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>ref</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Set if any of this synapse group's weight update model variables referenced by a custom update. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
 <li><a class="el" href="../../de/db0/synapseGroup_8h_source.html">synapseGroup.h</a></li>
 <li><a class="el" href="../../da/d3e/synapseGroup_8cc.html">synapseGroup.cc</a></li>
@@ -2868,7 +3001,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:35 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

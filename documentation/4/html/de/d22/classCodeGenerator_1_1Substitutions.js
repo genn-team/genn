@@ -7,6 +7,7 @@ var classCodeGenerator_1_1Substitutions =
     [ "addParamValueSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#a6e00e02a190497748561fed0e4c937b0", null ],
     [ "addParamValueSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#aff0168fcb07187481c05db1ae01455bd", null ],
     [ "addVarNameSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#ace9f2d94bf7832f0f538c53d27063540", null ],
+    [ "addVarNameSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#a961eb4c0eb0972f99ee47906d6d163a3", null ],
     [ "addVarSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#ae3ed06630ef19dce975fd16651768c32", null ],
     [ "addVarValueSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#a2f2f923e25cbc9d17819cc4453482dc8", null ],
     [ "addVarValueSubstitution", "de/d22/classCodeGenerator_1_1Substitutions.html#a8ed76724aadfec9d584edf8bfa47e2b3", null ],

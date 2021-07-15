@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -95,12 +95,19 @@ $(document).ready(function(){initNavTree('d4/d3d/namespaceUtils.html','../../');
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">Utils Namespace Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/df4/structUtils_1_1SHA1Hash.html">SHA1Hash</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Functor for generating a hash suitable for use in std::unordered_map etc (i.e. size_t size) from a SHA1 digests.  <a href="../../d1/df4/structUtils_1_1SHA1Hash.html#details">More...</a><br /></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
 <tr class="memitem:aed26fcdb3b695c252189c2059b17b14d"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#aed26fcdb3b695c252189c2059b17b14d">isRNGRequired</a> (const std::string &amp;code)</td></tr>
@@ -126,6 +133,24 @@ Functions</h2></td></tr>
 <tr class="memitem:a2ec4824de9bfbbcfa129f3df90b36c45"><td class="memTemplItemLeft" align="right" valign="top">std::string&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a2ec4824de9bfbbcfa129f3df90b36c45">writePreciseString</a> (T value)</td></tr>
 <tr class="memdesc:a2ec4824de9bfbbcfa129f3df90b36c45"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function writes a floating point value to a string - setting the precision so no digits are lost.  <a href="#a2ec4824de9bfbbcfa129f3df90b36c45">More...</a><br /></td></tr>
 <tr class="separator:a2ec4824de9bfbbcfa129f3df90b36c45"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afc96df9e942864835c0f81c417004647"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#afc96df9e942864835c0f81c417004647">updateHash</a> (const std::string &amp;string, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="memdesc:afc96df9e942864835c0f81c417004647"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hash strings.  <a href="#afc96df9e942864835c0f81c417004647">More...</a><br /></td></tr>
+<tr class="separator:afc96df9e942864835c0f81c417004647"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae55486e13e7ed81c88358cf9ce4cf014"><td class="memTemplParams" colspan="2">template&lt;typename T , typename std::enable_if&lt; std::is_arithmetic&lt; T &gt;::value||std::is_enum&lt; T &gt;::value &gt;::type *  = nullptr&gt; </td></tr>
+<tr class="memitem:ae55486e13e7ed81c88358cf9ce4cf014"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#ae55486e13e7ed81c88358cf9ce4cf014">updateHash</a> (const T &amp;value, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="memdesc:ae55486e13e7ed81c88358cf9ce4cf014"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hash arithmetic types and enums.  <a href="#ae55486e13e7ed81c88358cf9ce4cf014">More...</a><br /></td></tr>
+<tr class="separator:ae55486e13e7ed81c88358cf9ce4cf014"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a06219e83500b611706d6e1b01018fa32"><td class="memTemplParams" colspan="2">template&lt;typename T , size_t N&gt; </td></tr>
+<tr class="memitem:a06219e83500b611706d6e1b01018fa32"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a06219e83500b611706d6e1b01018fa32">updateHash</a> (const std::array&lt; T, N &gt; &amp;array, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="memdesc:a06219e83500b611706d6e1b01018fa32"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hash arrays of types which can, themselves, be hashed.  <a href="#a06219e83500b611706d6e1b01018fa32">More...</a><br /></td></tr>
+<tr class="separator:a06219e83500b611706d6e1b01018fa32"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26399b9c55e40486843592383a2ba6d9"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
+<tr class="memitem:a26399b9c55e40486843592383a2ba6d9"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a26399b9c55e40486843592383a2ba6d9">updateHash</a> (const std::vector&lt; T &gt; &amp;vector, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="memdesc:a26399b9c55e40486843592383a2ba6d9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hash vectors of types which can, themselves, be hashed.  <a href="#a26399b9c55e40486843592383a2ba6d9">More...</a><br /></td></tr>
+<tr class="separator:a26399b9c55e40486843592383a2ba6d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3bac70e73a2d09f7b7e2df7b453346f4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a3bac70e73a2d09f7b7e2df7b453346f4">updateHash</a> (const std::vector&lt; bool &gt; &amp;vector, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="memdesc:a3bac70e73a2d09f7b7e2df7b453346f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Hash vectors of bools.  <a href="#a3bac70e73a2d09f7b7e2df7b453346f4">More...</a><br /></td></tr>
+<tr class="separator:a3bac70e73a2d09f7b7e2df7b453346f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function Documentation</h2>
 <a id="a81b8175ca219ca3b6cee762c38d6013f"></a>
@@ -228,6 +253,202 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="afc96df9e942864835c0f81c417004647"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afc96df9e942864835c0f81c417004647">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[1/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Utils::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>string</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hash strings. </p>
+
+</div>
+</div>
+<a id="ae55486e13e7ed81c88358cf9ce4cf014"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae55486e13e7ed81c88358cf9ce4cf014">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[2/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename std::enable_if&lt; std::is_arithmetic&lt; T &gt;::value||std::is_enum&lt; T &gt;::value &gt;::type *  = nullptr&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Utils::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const T &amp;&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hash arithmetic types and enums. </p>
+
+</div>
+</div>
+<a id="a06219e83500b611706d6e1b01018fa32"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a06219e83500b611706d6e1b01018fa32">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[3/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , size_t N&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Utils::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const std::array&lt; T, N &gt; &amp;&#160;</td>
+          <td class="paramname"><em>array</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hash arrays of types which can, themselves, be hashed. </p>
+
+</div>
+</div>
+<a id="a26399b9c55e40486843592383a2ba6d9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26399b9c55e40486843592383a2ba6d9">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[4/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Utils::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>vector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hash vectors of types which can, themselves, be hashed. </p>
+
+</div>
+</div>
+<a id="a3bac70e73a2d09f7b7e2df7b453346f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3bac70e73a2d09f7b7e2df7b453346f4">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[5/5]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Utils::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; bool &gt; &amp;&#160;</td>
+          <td class="paramname"><em>vector</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Hash vectors of bools. </p>
+
+</div>
+</div>
 <a id="ae03fe3aae05bd1f1522bdd541681a785"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ae03fe3aae05bd1f1522bdd541681a785">&#9670;&nbsp;</a></span>writePreciseString() <span class="overload">[1/2]</span></h2>
 
@@ -267,6 +488,9 @@ template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &
 <div class="memproto">
 <div class="memtemplate">
 template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &gt;::value &gt;::type *  = nullptr&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
           <td class="memname">std::string Utils::writePreciseString </td>
@@ -276,6 +500,11 @@ template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
 
 <p>This function writes a floating point value to a string - setting the precision so no digits are lost. </p>
@@ -289,7 +518,7 @@ template&lt;class T , typename std::enable_if&lt; std::is_floating_point&lt; T &
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d4/d3d/namespaceUtils.html">Utils</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:57 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

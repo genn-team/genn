@@ -6,6 +6,8 @@ var searchData=
   ['gennmodel',['GeNNModel',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html',1,'pygenn::genn_model']]],
   ['group',['Group',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html',1,'pygenn::genn_groups']]],
   ['groupmerged',['GroupMerged',['../df/dfd/classCodeGenerator_1_1GroupMerged.html',1,'CodeGenerator']]],
+  ['groupmerged_3c_20customupdateinternal_20_3e',['GroupMerged&lt; CustomUpdateInternal &gt;',['../df/dfd/classCodeGenerator_1_1GroupMerged.html',1,'CodeGenerator']]],
+  ['groupmerged_3c_20customupdatewuinternal_20_3e',['GroupMerged&lt; CustomUpdateWUInternal &gt;',['../df/dfd/classCodeGenerator_1_1GroupMerged.html',1,'CodeGenerator']]],
   ['groupmerged_3c_20neurongroupinternal_20_3e',['GroupMerged&lt; NeuronGroupInternal &gt;',['../df/dfd/classCodeGenerator_1_1GroupMerged.html',1,'CodeGenerator']]],
   ['groupmerged_3c_20synapsegroupinternal_20_3e',['GroupMerged&lt; SynapseGroupInternal &gt;',['../df/dfd/classCodeGenerator_1_1GroupMerged.html',1,'CodeGenerator']]]
 ];

@@ -5,6 +5,7 @@ var searchData=
   ['neurongroupinternal',['NeuronGroupInternal',['../dc/da3/classNeuronGroupInternal.html',1,'']]],
   ['neurongroupmergedbase',['NeuronGroupMergedBase',['../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html',1,'CodeGenerator']]],
   ['neuroninitgroupmerged',['NeuronInitGroupMerged',['../dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html',1,'CodeGenerator']]],
+  ['neuronprevspiketimeupdategroupmerged',['NeuronPrevSpikeTimeUpdateGroupMerged',['../d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged.html',1,'CodeGenerator']]],
   ['neuronspikequeueupdategroupmerged',['NeuronSpikeQueueUpdateGroupMerged',['../d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged.html',1,'CodeGenerator']]],
   ['neuronupdategroupmerged',['NeuronUpdateGroupMerged',['../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html',1,'CodeGenerator']]],
   ['normal',['Normal',['../d5/dc1/classInitVarSnippet_1_1Normal.html',1,'InitVarSnippet']]],

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -118,7 +118,7 @@ Inheritance diagram for Snippet::Base:</div>
   <map id="Snippet::Base_map" name="Snippet::Base_map">
 <area href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html" alt="InitSparseConnectivitySnippet::Base" shape="rect" coords="0,56,384,80"/>
 <area href="../../d3/d9e/classInitVarSnippet_1_1Base.html" alt="InitVarSnippet::Base" shape="rect" coords="788,56,1172,80"/>
-<area href="../../d6/d97/classModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab..." alt="Models::Base" shape="rect" coords="1576,56,1960,80"/>
+<area href="../../d6/d97/classModels_1_1Base.html" alt="Models::Base" shape="rect" coords="1576,56,1960,80"/>
 <area href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html" alt="InitSparseConnectivitySnippet::Conv2D" shape="rect" coords="394,112,778,136"/>
 <area href="../../db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html" title="Initialises connectivity with a fixed number of random synapses per row. " alt="InitSparseConnectivitySnippet::FixedNumberPostWithReplacement" shape="rect" coords="394,168,778,192"/>
 <area href="../../d1/d59/classInitSparseConnectivitySnippet_1_1FixedNumberPreWithReplacement.html" title="Initialises connectivity with a fixed number of random synapses per column. " alt="InitSparseConnectivitySnippet::FixedNumberPreWithReplacement" shape="rect" coords="394,224,778,248"/>
@@ -136,9 +136,10 @@ Inheritance diagram for Snippet::Base:</div>
 <area href="../../dd/da0/classInitVarSnippet_1_1Uniform.html" title="Initialises variable by sampling from the uniform distribution. " alt="InitVarSnippet::Uniform" shape="rect" coords="1182,504,1566,528"/>
 <area href="../../d9/db6/classInitVarSnippet_1_1Uninitialised.html" title="Used to mark variables as uninitialised - no initialisation code will be run. " alt="InitVarSnippet::Uninitialised" shape="rect" coords="1182,560,1566,584"/>
 <area href="../../d0/de0/classCurrentSourceModels_1_1Base.html" title="Base class for all current source models. " alt="CurrentSourceModels::Base" shape="rect" coords="1970,112,2354,136"/>
-<area href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. " alt="NeuronModels::Base" shape="rect" coords="1970,168,2354,192"/>
-<area href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. " alt="PostsynapticModels::Base" shape="rect" coords="1970,224,2354,248"/>
-<area href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. " alt="WeightUpdateModels::Base" shape="rect" coords="1970,280,2354,304"/>
+<area href="../../de/db4/classCustomUpdateModels_1_1Base.html" title="Base class for all current source models. " alt="CustomUpdateModels::Base" shape="rect" coords="1970,168,2354,192"/>
+<area href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. " alt="NeuronModels::Base" shape="rect" coords="1970,224,2354,248"/>
+<area href="../../d1/d3a/classPostsynapticModels_1_1Base.html" title="Base class for all postsynaptic models. " alt="PostsynapticModels::Base" shape="rect" coords="1970,280,2354,304"/>
+<area href="../../d2/d05/classWeightUpdateModels_1_1Base.html" title="Base class for all weight update models. " alt="WeightUpdateModels::Base" shape="rect" coords="1970,336,2354,360"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -182,8 +183,8 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a9d722773e634fc452ddc257027f85faf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9d722773e634fc452ddc257027f85faf">canBeMerged</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Base</a> *other) const</td></tr>
-<tr class="separator:a9d722773e634fc452ddc257027f85faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae09ab9858d5752c76803fcc876a1ca60"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#ae09ab9858d5752c76803fcc876a1ca60">updateHash</a> (boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="separator:ae09ab9858d5752c76803fcc876a1ca60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-static-methods"></a>
 Static Protected Member Functions</h2></td></tr>
@@ -277,32 +278,6 @@ Static Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a9d722773e634fc452ddc257027f85faf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9d722773e634fc452ddc257027f85faf">&#9670;&nbsp;</a></span>canBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool Snippet::Base::canBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Base</a> *&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a450c7783570d875e19bcd8a88d10bbf6"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a450c7783570d875e19bcd8a88d10bbf6">&#9670;&nbsp;</a></span>getDerivedParams()</h2>
 
@@ -454,6 +429,32 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="ae09ab9858d5752c76803fcc876a1ca60"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae09ab9858d5752c76803fcc876a1ca60">&#9670;&nbsp;</a></span>updateHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Snippet::Base::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li><a class="el" href="../../de/d6c/snippet_8h_source.html">snippet.h</a></li>
 </ul>
@@ -464,7 +465,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../df/daa/namespaceSnippet.html">Snippet</a></li><li class="navelem"><a class="el" href="../../db/d97/classSnippet_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

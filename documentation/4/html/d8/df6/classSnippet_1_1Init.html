@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -116,8 +116,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a293e3c5bd9130372a3b0cdf0312f4590"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a567ca2921ef0b3906c8a418aff1124c0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df6/classSnippet_1_1Init.html#a567ca2921ef0b3906c8a418aff1124c0">initDerivedParams</a> (double dt)</td></tr>
 <tr class="separator:a567ca2921ef0b3906c8a418aff1124c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4a141e18f280fe1cba8044fcf7c7dfe6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df6/classSnippet_1_1Init.html#a4a141e18f280fe1cba8044fcf7c7dfe6">canBeMerged</a> (const <a class="el" href="../../d8/df6/classSnippet_1_1Init.html">Init</a>&lt; SnippetBase &gt; &amp;other) const</td></tr>
-<tr class="separator:a4a141e18f280fe1cba8044fcf7c7dfe6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a64d0b81d564768795b1aece030607051"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/df6/classSnippet_1_1Init.html#a64d0b81d564768795b1aece030607051">getHashDigest</a> () const</td></tr>
+<tr class="separator:a64d0b81d564768795b1aece030607051"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename SnippetBase&gt;<br />
@@ -167,34 +167,6 @@ template&lt;typename SnippetBase&gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a4a141e18f280fe1cba8044fcf7c7dfe6"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4a141e18f280fe1cba8044fcf7c7dfe6">&#9670;&nbsp;</a></span>canBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename SnippetBase&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool <a class="el" href="../../d8/df6/classSnippet_1_1Init.html">Snippet::Init</a>&lt; SnippetBase &gt;::canBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d8/df6/classSnippet_1_1Init.html">Init</a>&lt; SnippetBase &gt; &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-</div>
-</div>
 <a id="a293e3c5bd9130372a3b0cdf0312f4590"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a293e3c5bd9130372a3b0cdf0312f4590">&#9670;&nbsp;</a></span>getDerivedParams()</h2>
 
@@ -208,6 +180,33 @@ template&lt;typename SnippetBase&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">const std::vector&lt;double&gt;&amp; <a class="el" href="../../d8/df6/classSnippet_1_1Init.html">Snippet::Init</a>&lt; SnippetBase &gt;::getDerivedParams </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a64d0b81d564768795b1aece030607051"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a64d0b81d564768795b1aece030607051">&#9670;&nbsp;</a></span>getHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename SnippetBase&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type <a class="el" href="../../d8/df6/classSnippet_1_1Init.html">Snippet::Init</a>&lt; SnippetBase &gt;::getHashDigest </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td> const</td>
@@ -314,7 +313,7 @@ template&lt;typename SnippetBase&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../df/daa/namespaceSnippet.html">Snippet</a></li><li class="navelem"><a class="el" href="../../d8/df6/classSnippet_1_1Init.html">Init</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:55 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -103,6 +103,33 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <li>CalcMaxLengthFunc
 : <a class="el" href="d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7719c85cf11d180023fa955ec86a4204">InitSparseConnectivitySnippet::Base</a>
 </li>
+<li>CurrentSourceValueType
+: <a class="el" href="da/dfd/classModelSpec.html#a9cf2119c1434c8535a8c13b8d6f6cf86">ModelSpec</a>
+</li>
+<li>CustomUpdateGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ac7bc5c26f226caf958bfc9f72a833893">CodeGenerator::BackendBase</a>
+</li>
+<li>CustomUpdateInitGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a13d23fe289492ea5a1eaf8c0dbae9eb3">CodeGenerator::BackendBase</a>
+</li>
+<li>CustomUpdateTransposeWUGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a3cbc7b9e7a5f2f3b608026bf204c9395">CodeGenerator::BackendBase</a>
+</li>
+<li>CustomUpdateValueType
+: <a class="el" href="da/dfd/classModelSpec.html#a62172240b2be64180257581ffae179f4">ModelSpec</a>
+</li>
+<li>CustomUpdateWUGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ac01c888239b8ea78b65fba1cf0de3b31">CodeGenerator::BackendBase</a>
+</li>
+<li>CustomUpdateWUValueType
+: <a class="el" href="da/dfd/classModelSpec.html#a3fb4bcc11436931b9096b97ebee30872">ModelSpec</a>
+</li>
+<li>CustomWUUpdateDenseInitGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a6a2f1cc29216bf24ccccce5e7f624d5e">CodeGenerator::BackendBase</a>
+</li>
+<li>CustomWUUpdateSparseInitGroupMergedHandler
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a8e23567a9644391bfc78a38523b890b3">CodeGenerator::BackendBase</a>
+</li>
 </ul>
 
 
@@ -129,13 +156,16 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 
 <h3><a id="index_g"></a>- g -</h3><ul>
 <li>GetCurrentSpikeCountFunc
-: <a class="el" href="dd/d9b/classSpikeRecorder.html#a32532f11a1a0a8c0be3af26169ccc420">SpikeRecorder&lt; Writer &gt;</a>
+: <a class="el" href="dd/d9b/classSpikeRecorder.html#a17c116ffbdfe205a4132986a53697f50">SpikeRecorder&lt; Writer &gt;</a>
 </li>
 <li>GetCurrentSpikesFunc
-: <a class="el" href="dd/d9b/classSpikeRecorder.html#a669f71a4fa8b383541e6d3bc98141184">SpikeRecorder&lt; Writer &gt;</a>
+: <a class="el" href="dd/d9b/classSpikeRecorder.html#a4d3ac63b0c1a255c8692ac8fcbaa0907">SpikeRecorder&lt; Writer &gt;</a>
 </li>
 <li>GetFieldValueFunc
 : <a class="el" href="df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">CodeGenerator::GroupMerged&lt; G &gt;</a>
+</li>
+<li>GetTargetNameFn
+: <a class="el" href="df/d91/classModels_1_1VarReferenceBase.html#a3ecd4b87643fc8b3503035ee49f097cd">Models::VarReferenceBase</a>
 </li>
 <li>GroupHandler
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">CodeGenerator::BackendBase</a>
@@ -284,6 +314,9 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 
 
 <h3><a id="index_v"></a>- v -</h3><ul>
+<li>VarRefVec
+: <a class="el" href="d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a">Models::Base</a>
+</li>
 <li>VarValues
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#a5f87cf43404ed2416185be2e85f6bd74">CurrentSourceModels::DC</a>
 , <a class="el" href="d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a28b334e3b77583f34c5b64330307a856">CurrentSourceModels::GaussianNoise</a>
@@ -314,7 +347,7 @@ $(document).ready(function(){initNavTree('functions_type.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Jan 5 2021 09:30:02 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:49 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

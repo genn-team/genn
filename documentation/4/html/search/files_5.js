@@ -17,6 +17,11 @@ var searchData=
   ['currentsourceinternal_2eh',['currentSourceInternal.h',['../d2/d1a/currentSourceInternal_8h.html',1,'']]],
   ['currentsourcemodels_2ecc',['currentSourceModels.cc',['../d4/d8a/currentSourceModels_8cc.html',1,'']]],
   ['currentsourcemodels_2eh',['currentSourceModels.h',['../da/d49/currentSourceModels_8h.html',1,'']]],
+  ['customupdate_2ecc',['customUpdate.cc',['../dd/dc6/customUpdate_8cc.html',1,'']]],
+  ['customupdate_2eh',['customUpdate.h',['../d5/d56/customUpdate_8h.html',1,'']]],
+  ['customupdateinternal_2eh',['customUpdateInternal.h',['../d8/d04/customUpdateInternal_8h.html',1,'']]],
+  ['customupdatemodels_2ecc',['customUpdateModels.cc',['../d2/d2c/customUpdateModels_8cc.html',1,'']]],
+  ['customupdatemodels_2eh',['customUpdateModels.h',['../d3/df5/customUpdateModels_8h.html',1,'']]],
   ['optimiser_2ecc',['optimiser.cc',['../d7/dff/cuda_2optimiser_8cc.html',1,'']]],
   ['optimiser_2eh',['optimiser.h',['../d5/d50/cuda_2optimiser_8h.html',1,'']]],
   ['utils_2eh',['utils.h',['../d3/dcc/cuda_2utils_8h.html',1,'']]]

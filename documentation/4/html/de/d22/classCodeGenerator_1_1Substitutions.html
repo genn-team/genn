@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -119,6 +119,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ace9f2d94bf7832f0f538c53d27063540"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:ace9f2d94bf7832f0f538c53d27063540"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#ace9f2d94bf7832f0f538c53d27063540">addVarNameSubstitution</a> (const std::vector&lt; T &gt; &amp;variables, const std::string &amp;sourceSuffix=&quot;&quot;, const std::string &amp;destPrefix=&quot;&quot;, const std::string &amp;destSuffix=&quot;&quot;)</td></tr>
 <tr class="separator:ace9f2d94bf7832f0f538c53d27063540"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a961eb4c0eb0972f99ee47906d6d163a3"><td class="memTemplParams" colspan="2">template&lt;typename T , typename S &gt; </td></tr>
+<tr class="memitem:a961eb4c0eb0972f99ee47906d6d163a3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#a961eb4c0eb0972f99ee47906d6d163a3">addVarNameSubstitution</a> (const std::vector&lt; T &gt; &amp;variables, const std::string &amp;sourceSuffix, const std::string &amp;destPrefix, S getDestSuffixFn)</td></tr>
+<tr class="separator:a961eb4c0eb0972f99ee47906d6d163a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2f2f923e25cbc9d17819cc4453482dc8"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a2f2f923e25cbc9d17819cc4453482dc8"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html#a2f2f923e25cbc9d17819cc4453482dc8">addVarValueSubstitution</a> (const std::vector&lt; T &gt; &amp;variables, const std::vector&lt; double &gt; &amp;values, const std::string &amp;sourceSuffix=&quot;&quot;)</td></tr>
 <tr class="separator:a2f2f923e25cbc9d17819cc4453482dc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -336,7 +339,7 @@ template&lt;typename G &gt; </div>
 </div>
 </div>
 <a id="ace9f2d94bf7832f0f538c53d27063540"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ace9f2d94bf7832f0f538c53d27063540">&#9670;&nbsp;</a></span>addVarNameSubstitution()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ace9f2d94bf7832f0f538c53d27063540">&#9670;&nbsp;</a></span>addVarNameSubstitution() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -369,6 +372,56 @@ template&lt;typename T &gt; </div>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>destSuffix</em> = <code>&quot;&quot;</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a961eb4c0eb0972f99ee47906d6d163a3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a961eb4c0eb0972f99ee47906d6d163a3">&#9670;&nbsp;</a></span>addVarNameSubstitution() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T , typename S &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CodeGenerator::Substitutions::addVarNameSubstitution </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; T &gt; &amp;&#160;</td>
+          <td class="paramname"><em>variables</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>sourceSuffix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>destPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">S&#160;</td>
+          <td class="paramname"><em>getDestSuffixFn</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -644,7 +697,7 @@ template&lt;typename T , typename G &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:48 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:36 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

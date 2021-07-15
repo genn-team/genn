@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -127,6 +127,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a49adcd489cc63005ee91d327a8928a10"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb6cffa809abb1752a67c2c2a8f82237"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#abb6cffa809abb1752a67c2c2a8f82237">timing_enabled</a> (self, timing)</td></tr>
 <tr class="separator:abb6cffa809abb1752a67c2c2a8f82237"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5078f9c0f18eb6e6cd2ae6da705077bd"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a5078f9c0f18eb6e6cd2ae6da705077bd">batch_size</a> (self)</td></tr>
+<tr class="separator:a5078f9c0f18eb6e6cd2ae6da705077bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94f02f039c06df9ae3bcdd33c008197e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a94f02f039c06df9ae3bcdd33c008197e">batch_size</a> (self, batch_size)</td></tr>
+<tr class="separator:a94f02f039c06df9ae3bcdd33c008197e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abac6e37ea0e6fc1a3b092543a9012951"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#abac6e37ea0e6fc1a3b092543a9012951">default_var_location</a> (self)</td></tr>
 <tr class="memdesc:abac6e37ea0e6fc1a3b092543a9012951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Default variable location - defines where state variables are initialised.  <a href="#abac6e37ea0e6fc1a3b092543a9012951">More...</a><br /></td></tr>
 <tr class="separator:abac6e37ea0e6fc1a3b092543a9012951"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -171,6 +175,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a3cafe733ce4f7ccd2b53746ada70c40e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a385b3616dad8cc31ce305ad378b5dbaa"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a385b3616dad8cc31ce305ad378b5dbaa">init_sparse_time</a> (self)</td></tr>
 <tr class="separator:a385b3616dad8cc31ce305ad378b5dbaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a909c3149d535226c9934729bef96ced3"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a909c3149d535226c9934729bef96ced3">get_custom_update_time</a> (self, name)</td></tr>
+<tr class="separator:a909c3149d535226c9934729bef96ced3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a514574f491289a567a9c639b6553ad28"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a514574f491289a567a9c639b6553ad28">get_custom_update_transpose_time</a> (self, name)</td></tr>
+<tr class="separator:a514574f491289a567a9c639b6553ad28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a100324e214546094fced5e66fb0582d4"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a100324e214546094fced5e66fb0582d4">add_neuron_population</a> (self, pop_name, num_neurons, neuron, param_space, var_space)</td></tr>
 <tr class="memdesc:a100324e214546094fced5e66fb0582d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a neuron population to the GeNN model.  <a href="#a100324e214546094fced5e66fb0582d4">More...</a><br /></td></tr>
 <tr class="separator:a100324e214546094fced5e66fb0582d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -183,9 +191,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a3a292992d6141aab34e3dee468069b45"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3a292992d6141aab34e3dee468069b45">add_current_source</a> (self, cs_name, current_source_model, pop, param_space, var_space)</td></tr>
 <tr class="memdesc:a3a292992d6141aab34e3dee468069b45"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a current source to the GeNN model.  <a href="#a3a292992d6141aab34e3dee468069b45">More...</a><br /></td></tr>
 <tr class="separator:a3a292992d6141aab34e3dee468069b45"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a481795d2e7a45410799786a1c5122834"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a481795d2e7a45410799786a1c5122834">build</a> (self, path_to_model=&quot;./&quot;)</td></tr>
-<tr class="memdesc:a481795d2e7a45410799786a1c5122834"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finalize and build a GeNN model.  <a href="#a481795d2e7a45410799786a1c5122834">More...</a><br /></td></tr>
-<tr class="separator:a481795d2e7a45410799786a1c5122834"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afb3bb39a2b69df18cf4ac6d0fcc45ece"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afb3bb39a2b69df18cf4ac6d0fcc45ece">add_custom_update</a> (self, cu_name, group_name, custom_update_model, param_space, var_space, var_ref_space)</td></tr>
+<tr class="memdesc:afb3bb39a2b69df18cf4ac6d0fcc45ece"><td class="mdescLeft">&#160;</td><td class="mdescRight">Add a current source to the GeNN model.  <a href="#afb3bb39a2b69df18cf4ac6d0fcc45ece">More...</a><br /></td></tr>
+<tr class="separator:afb3bb39a2b69df18cf4ac6d0fcc45ece"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a860896623fb19b828a4ffa17bd664d08"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a860896623fb19b828a4ffa17bd664d08">build</a> (self, path_to_model=&quot;./&quot;, force_rebuild=False)</td></tr>
+<tr class="memdesc:a860896623fb19b828a4ffa17bd664d08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finalize and build a GeNN model.  <a href="#a860896623fb19b828a4ffa17bd664d08">More...</a><br /></td></tr>
+<tr class="separator:a860896623fb19b828a4ffa17bd664d08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a662cf82b5390a03b117581a47b0ae147"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a662cf82b5390a03b117581a47b0ae147">load</a> (self, path_to_model=&quot;./&quot;, num_recording_timesteps=None)</td></tr>
 <tr class="memdesc:a662cf82b5390a03b117581a47b0ae147"><td class="mdescLeft">&#160;</td><td class="mdescRight">import the model as shared library and initialize it  <a href="#a662cf82b5390a03b117581a47b0ae147">More...</a><br /></td></tr>
 <tr class="separator:a662cf82b5390a03b117581a47b0ae147"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -193,7 +204,11 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a475a22c65205debb202eb98d4dc929f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">reinitialise model to its original state without re-loading  <a href="#a475a22c65205debb202eb98d4dc929f2">More...</a><br /></td></tr>
 <tr class="separator:a475a22c65205debb202eb98d4dc929f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6d71c8d91805b64c5a69fc62ea3dfbdb"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6d71c8d91805b64c5a69fc62ea3dfbdb">step_time</a> (self)</td></tr>
+<tr class="memdesc:a6d71c8d91805b64c5a69fc62ea3dfbdb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Make one simulation step.  <a href="#a6d71c8d91805b64c5a69fc62ea3dfbdb">More...</a><br /></td></tr>
 <tr class="separator:a6d71c8d91805b64c5a69fc62ea3dfbdb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37d2ef2c56291a96aa2ddf45f6537d87"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a37d2ef2c56291a96aa2ddf45f6537d87">custom_update</a> (self, name)</td></tr>
+<tr class="memdesc:a37d2ef2c56291a96aa2ddf45f6537d87"><td class="mdescLeft">&#160;</td><td class="mdescRight">Perform custom update.  <a href="#a37d2ef2c56291a96aa2ddf45f6537d87">More...</a><br /></td></tr>
+<tr class="separator:a37d2ef2c56291a96aa2ddf45f6537d87"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c5c3ab36b8348eade67585325652a70"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6c5c3ab36b8348eade67585325652a70">pull_state_from_device</a> (self, pop_name)</td></tr>
 <tr class="memdesc:a6c5c3ab36b8348eade67585325652a70"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pull state from the device for a given population.  <a href="#a6c5c3ab36b8348eade67585325652a70">More...</a><br /></td></tr>
 <tr class="separator:a6c5c3ab36b8348eade67585325652a70"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -209,9 +224,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a9a24190a85b0e01e1f22e030a4a6a42b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9a24190a85b0e01e1f22e030a4a6a42b">pull_var_from_device</a> (self, pop_name, var_name)</td></tr>
 <tr class="memdesc:a9a24190a85b0e01e1f22e030a4a6a42b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pull variable from the device for a given population.  <a href="#a9a24190a85b0e01e1f22e030a4a6a42b">More...</a><br /></td></tr>
 <tr class="separator:a9a24190a85b0e01e1f22e030a4a6a42b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a414b34f9e91be639135b4b37658ebbf5"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a414b34f9e91be639135b4b37658ebbf5">pull_extra_global_param_from_device</a> (self, pop_name, egp_name, size=1)</td></tr>
-<tr class="memdesc:a414b34f9e91be639135b4b37658ebbf5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pull extra global parameter from the device for a given population.  <a href="#a414b34f9e91be639135b4b37658ebbf5">More...</a><br /></td></tr>
-<tr class="separator:a414b34f9e91be639135b4b37658ebbf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af9c46456f2802ff0362a3ff0ac959e54"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#af9c46456f2802ff0362a3ff0ac959e54">pull_extra_global_param_from_device</a> (self, pop_name, egp_name, size=None)</td></tr>
+<tr class="memdesc:af9c46456f2802ff0362a3ff0ac959e54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pull extra global parameter from the device for a given population.  <a href="#af9c46456f2802ff0362a3ff0ac959e54">More...</a><br /></td></tr>
+<tr class="separator:af9c46456f2802ff0362a3ff0ac959e54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afc6a5ef4b76997365450b40eaca00db0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afc6a5ef4b76997365450b40eaca00db0">push_state_to_device</a> (self, pop_name)</td></tr>
 <tr class="memdesc:afc6a5ef4b76997365450b40eaca00db0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push state to the device for a given population.  <a href="#afc6a5ef4b76997365450b40eaca00db0">More...</a><br /></td></tr>
 <tr class="separator:afc6a5ef4b76997365450b40eaca00db0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -227,9 +242,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a8217fc38ecb1bbbd249bfee27455ac90"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a8217fc38ecb1bbbd249bfee27455ac90">push_var_to_device</a> (self, pop_name, var_name)</td></tr>
 <tr class="memdesc:a8217fc38ecb1bbbd249bfee27455ac90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push variable to the device for a given population.  <a href="#a8217fc38ecb1bbbd249bfee27455ac90">More...</a><br /></td></tr>
 <tr class="separator:a8217fc38ecb1bbbd249bfee27455ac90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94ccfe8b242fe621d60a1e705376101f"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a94ccfe8b242fe621d60a1e705376101f">push_extra_global_param_to_device</a> (self, pop_name, egp_name, size=1)</td></tr>
-<tr class="memdesc:a94ccfe8b242fe621d60a1e705376101f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push extra global parameter to the device for a given population.  <a href="#a94ccfe8b242fe621d60a1e705376101f">More...</a><br /></td></tr>
-<tr class="separator:a94ccfe8b242fe621d60a1e705376101f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6b6eb8faf228d32045ae3a1322ee6cec"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6b6eb8faf228d32045ae3a1322ee6cec">push_extra_global_param_to_device</a> (self, pop_name, egp_name, size=None)</td></tr>
+<tr class="memdesc:a6b6eb8faf228d32045ae3a1322ee6cec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Push extra global parameter to the device for a given population.  <a href="#a6b6eb8faf228d32045ae3a1322ee6cec">More...</a><br /></td></tr>
+<tr class="separator:a6b6eb8faf228d32045ae3a1322ee6cec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c5fc9394f573e6e464fa3a6add748f0"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9c5fc9394f573e6e464fa3a6add748f0">pull_recording_buffers_from_device</a> (self)</td></tr>
 <tr class="memdesc:a9c5fc9394f573e6e464fa3a6add748f0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Pull recording buffers from device.  <a href="#a9c5fc9394f573e6e464fa3a6add748f0">More...</a><br /></td></tr>
 <tr class="separator:a9c5fc9394f573e6e464fa3a6add748f0"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -253,6 +268,8 @@ Public Attributes</h2></td></tr>
 <tr class="separator:a97cca022c95e6744c4b0f6ea8f770565"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a93daad6952a3dd9e66bc292617ae1830"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a93daad6952a3dd9e66bc292617ae1830">current_sources</a></td></tr>
 <tr class="separator:a93daad6952a3dd9e66bc292617ae1830"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad64438a8dbd3c945e6eed54d58e2b3fb"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ad64438a8dbd3c945e6eed54d58e2b3fb">custom_updates</a></td></tr>
+<tr class="separator:ad64438a8dbd3c945e6eed54d58e2b3fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afa2abcf499adbe2380463cc68ec614db"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa2abcf499adbe2380463cc68ec614db">dT</a></td></tr>
 <tr class="separator:afa2abcf499adbe2380463cc68ec614db"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81288a619a25a65d3ff4afd52bed3647"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a81288a619a25a65d3ff4afd52bed3647">genn_types</a></td></tr>
@@ -405,6 +422,77 @@ Public Attributes</h2></td></tr>
     <tr><td class="paramname">pop</td><td>population into which the current source should be injected (either name or <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> object) </td></tr>
     <tr><td class="paramname">param_space</td><td>dict with param values for the <a class="el" href="../../d6/dd3/namespaceCurrentSourceModels.html">CurrentSourceModels</a> class </td></tr>
     <tr><td class="paramname">var_space</td><td>dict with initial variable values for the <a class="el" href="../../d6/dd3/namespaceCurrentSourceModels.html">CurrentSourceModels</a> class </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="afb3bb39a2b69df18cf4ac6d0fcc45ece"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afb3bb39a2b69df18cf4ac6d0fcc45ece">&#9670;&nbsp;</a></span>add_custom_update()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.add_custom_update </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>cu_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>group_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>custom_update_model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_space</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_space</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_ref_space</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Add a current source to the GeNN model. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">cu_name</td><td>name of the new current source </td></tr>
+    <tr><td class="paramname">group_name</td><td>name of </td></tr>
+    <tr><td class="paramname">custom_update_model</td><td>type of the CustomUpdateModel class as string or instance of CustomUpdateModel class derived from <code>pygenn.genn_wrapper.CustomUpdateModel.Custom</code> (see also <a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a9914061f9946583d9c2fd4959fa8bff1" title="This helper function creates a custom CustomUpdate class. ">pygenn.genn_model.create_custom_custom_update_class</a>) </td></tr>
+    <tr><td class="paramname">param_space</td><td>dict with param values for the CustomUpdateModel class </td></tr>
+    <tr><td class="paramname">var_space</td><td>dict with initial variable values for the CustomUpdateModel class </td></tr>
+    <tr><td class="paramname">var_ref_space</td><td>dict with variable references for the CustomUpdateModel class </td></tr>
   </table>
   </dd>
 </dl>
@@ -687,8 +775,54 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a481795d2e7a45410799786a1c5122834"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a481795d2e7a45410799786a1c5122834">&#9670;&nbsp;</a></span>build()</h2>
+<a id="a5078f9c0f18eb6e6cd2ae6da705077bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5078f9c0f18eb6e6cd2ae6da705077bd">&#9670;&nbsp;</a></span>batch_size() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.batch_size </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a94f02f039c06df9ae3bcdd33c008197e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94f02f039c06df9ae3bcdd33c008197e">&#9670;&nbsp;</a></span>batch_size() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.batch_size </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>batch_size</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a860896623fb19b828a4ffa17bd664d08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a860896623fb19b828a4ffa17bd664d08">&#9670;&nbsp;</a></span>build()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -703,7 +837,13 @@ Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>path_to_model</em> = <code>&quot;./&quot;</code>&#160;</td>
+          <td class="paramname"><em>path_to_model</em> = <code>&quot;./&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>force_rebuild</em> = <code>False</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -717,9 +857,40 @@ Public Attributes</h2></td></tr>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">path_to_model</td><td>path where to place the generated model code. Defaults to the local directory. </td></tr>
+    <tr><td class="paramname">force_rebuild</td><td>should model be rebuilt even if it doesn't appear to be required </td></tr>
   </table>
   </dd>
 </dl>
+
+</div>
+</div>
+<a id="a37d2ef2c56291a96aa2ddf45f6537d87"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a37d2ef2c56291a96aa2ddf45f6537d87">&#9670;&nbsp;</a></span>custom_update()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.custom_update </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Perform custom update. </p>
 
 </div>
 </div>
@@ -899,6 +1070,62 @@ Public Attributes</h2></td></tr>
           <td class="paramtype">&#160;</td>
           <td class="paramname"><em>self</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a909c3149d535226c9934729bef96ced3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a909c3149d535226c9934729bef96ced3">&#9670;&nbsp;</a></span>get_custom_update_time()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.get_custom_update_time </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a514574f491289a567a9c639b6553ad28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a514574f491289a567a9c639b6553ad28">&#9670;&nbsp;</a></span>get_custom_update_transpose_time()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.GeNNModel.get_custom_update_transpose_time </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>self</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>name</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -1139,8 +1366,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a414b34f9e91be639135b4b37658ebbf5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a414b34f9e91be639135b4b37658ebbf5">&#9670;&nbsp;</a></span>pull_extra_global_param_from_device()</h2>
+<a id="af9c46456f2802ff0362a3ff0ac959e54"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af9c46456f2802ff0362a3ff0ac959e54">&#9670;&nbsp;</a></span>pull_extra_global_param_from_device()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1167,7 +1394,7 @@ Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>size</em> = <code>1</code>&#160;</td>
+          <td class="paramname"><em>size</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1357,8 +1584,8 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
-<a id="a94ccfe8b242fe621d60a1e705376101f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94ccfe8b242fe621d60a1e705376101f">&#9670;&nbsp;</a></span>push_extra_global_param_to_device()</h2>
+<a id="a6b6eb8faf228d32045ae3a1322ee6cec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6b6eb8faf228d32045ae3a1322ee6cec">&#9670;&nbsp;</a></span>push_extra_global_param_to_device()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1385,7 +1612,7 @@ Public Attributes</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>size</em> = <code>1</code>&#160;</td>
+          <td class="paramname"><em>size</em> = <code>None</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1530,6 +1757,8 @@ Public Attributes</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Make one simulation step. </p>
 
 </div>
 </div>
@@ -1768,6 +1997,20 @@ Public Attributes</h2></td></tr>
 
 </div>
 </div>
+<a id="ad64438a8dbd3c945e6eed54d58e2b3fb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad64438a8dbd3c945e6eed54d58e2b3fb">&#9670;&nbsp;</a></span>custom_updates</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">pygenn.genn_model.GeNNModel.custom_updates</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ab76469f3e0329c1bc7827b6b98d276b3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab76469f3e0329c1bc7827b6b98d276b3">&#9670;&nbsp;</a></span>default_var_location</h2>
 
@@ -1876,7 +2119,7 @@ Public Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html">genn_model</a></li><li class="navelem"><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html">GeNNModel</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

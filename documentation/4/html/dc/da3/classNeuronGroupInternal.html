@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -287,12 +287,18 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:aea0036098408c4e451602ff91396d426 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0334b1ef880461db1959fd2210e0837 inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">isVarQueueRequired</a> (size_t index) const</td></tr>
 <tr class="separator:aa0334b1ef880461db1959fd2210e0837 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a651fd70a96b7793c0a76a1a29ab4c323 inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a651fd70a96b7793c0a76a1a29ab4c323">canBeMerged</a> (const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a651fd70a96b7793c0a76a1a29ab4c323 inherit pro_methods_classNeuronGroup"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this neuron group be merged with other? i.e. can they be simulated using same generated code.  <a href="../../d7/d3b/classNeuronGroup.html#a651fd70a96b7793c0a76a1a29ab4c323">More...</a><br /></td></tr>
-<tr class="separator:a651fd70a96b7793c0a76a1a29ab4c323 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f8d74a9b26c9f3c3b54f6d13d9e4209 inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a5f8d74a9b26c9f3c3b54f6d13d9e4209">canInitBeMerged</a> (const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a5f8d74a9b26c9f3c3b54f6d13d9e4209 inherit pro_methods_classNeuronGroup"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code.  <a href="../../d7/d3b/classNeuronGroup.html#a5f8d74a9b26c9f3c3b54f6d13d9e4209">More...</a><br /></td></tr>
-<tr class="separator:a5f8d74a9b26c9f3c3b54f6d13d9e4209 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33def3267138044355f18cffe3b48f2e inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a33def3267138044355f18cffe3b48f2e">getHashDigest</a> () const</td></tr>
+<tr class="memdesc:a33def3267138044355f18cffe3b48f2e inherit pro_methods_classNeuronGroup"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with neuron group.  <a href="../../d7/d3b/classNeuronGroup.html#a33def3267138044355f18cffe3b48f2e">More...</a><br /></td></tr>
+<tr class="separator:a33def3267138044355f18cffe3b48f2e inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ee55aceb612586322524904c7cc7529 inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a1ee55aceb612586322524904c7cc7529">getInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:a1ee55aceb612586322524904c7cc7529 inherit pro_methods_classNeuronGroup"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with neuron group initialisation.  <a href="../../d7/d3b/classNeuronGroup.html#a1ee55aceb612586322524904c7cc7529">More...</a><br /></td></tr>
+<tr class="separator:a1ee55aceb612586322524904c7cc7529 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdc5463576c8f959bdb00e785fb5c55b inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#acdc5463576c8f959bdb00e785fb5c55b">getSpikeQueueUpdateHashDigest</a> () const</td></tr>
+<tr class="separator:acdc5463576c8f959bdb00e785fb5c55b inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4196552d03b596b6401342f5c6553e7 inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ae4196552d03b596b6401342f5c6553e7">getPrevSpikeTimeUpdateHashDigest</a> () const</td></tr>
+<tr class="separator:ae4196552d03b596b6401342f5c6553e7 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a954ac1dce1347c1bc7de0375ab316c40 inherit pro_methods_classNeuronGroup"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a954ac1dce1347c1bc7de0375ab316c40">getVarLocationHashDigest</a> () const</td></tr>
+<tr class="separator:a954ac1dce1347c1bc7de0375ab316c40 inherit pro_methods_classNeuronGroup"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a636944ae68b13c7fd8b9ff89a3a9691f"></a>
@@ -371,7 +377,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:34 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

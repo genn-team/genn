@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -124,6 +124,12 @@ Public Types</h2></td></tr>
 <tr class="separator:ac724c12166b5ee5fb4492277c1d8deb5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8af14d4e037788bb97854c4d0da801df"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; std::string, <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a8af14d4e037788bb97854c4d0da801df">SynapseGroupValueType</a></td></tr>
 <tr class="separator:a8af14d4e037788bb97854c4d0da801df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cf2119c1434c8535a8c13b8d6f6cf86"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; std::string, <a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a> &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a9cf2119c1434c8535a8c13b8d6f6cf86">CurrentSourceValueType</a></td></tr>
+<tr class="separator:a9cf2119c1434c8535a8c13b8d6f6cf86"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62172240b2be64180257581ffae179f4"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; std::string, <a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a> &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a62172240b2be64180257581ffae179f4">CustomUpdateValueType</a></td></tr>
+<tr class="separator:a62172240b2be64180257581ffae179f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3fb4bcc11436931b9096b97ebee30872"><td class="memItemLeft" align="right" valign="top">typedef std::map&lt; std::string, <a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a> &gt;::value_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a3fb4bcc11436931b9096b97ebee30872">CustomUpdateWUValueType</a></td></tr>
+<tr class="separator:a3fb4bcc11436931b9096b97ebee30872"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
@@ -168,6 +174,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#ac40ba51579f94af5ca7fa51c4f67fe8f">setMergePostsynapticModels</a> (bool merge)</td></tr>
 <tr class="memdesc:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should compatible postsynaptic models and dendritic delay buffers be merged?  <a href="#ac40ba51579f94af5ca7fa51c4f67fe8f">More...</a><br /></td></tr>
 <tr class="separator:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adb09e23344a1534409756919123b7ab0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#adb09e23344a1534409756919123b7ab0">setBatchSize</a> (unsigned int batchSize)</td></tr>
+<tr class="separator:adb09e23344a1534409756919123b7ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85d4dd3812220d12c99a35333c9d1803"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a85d4dd3812220d12c99a35333c9d1803">getName</a> () const</td></tr>
 <tr class="memdesc:a85d4dd3812220d12c99a35333c9d1803"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the name of the neuronal network model.  <a href="#a85d4dd3812220d12c99a35333c9d1803">More...</a><br /></td></tr>
 <tr class="separator:a85d4dd3812220d12c99a35333c9d1803"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -186,6 +194,8 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acadfb9fd83c86d18ccf678e43d08ac5d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#acadfb9fd83c86d18ccf678e43d08ac5d">isTimingEnabled</a> () const</td></tr>
 <tr class="memdesc:acadfb9fd83c86d18ccf678e43d08ac5d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Are timers and timing commands enabled.  <a href="#acadfb9fd83c86d18ccf678e43d08ac5d">More...</a><br /></td></tr>
 <tr class="separator:acadfb9fd83c86d18ccf678e43d08ac5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af98330272efa74a925d29854830106de"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#af98330272efa74a925d29854830106de">getBatchSize</a> () const</td></tr>
+<tr class="separator:af98330272efa74a925d29854830106de"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ed13c5dd6690fefc1737b25f11796ec"><td class="memItemLeft" align="right" valign="top">unsigned int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a9ed13c5dd6690fefc1737b25f11796ec">getNumNeurons</a> () const</td></tr>
 <tr class="memdesc:a9ed13c5dd6690fefc1737b25f11796ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">How many neurons make up the entire model.  <a href="#a9ed13c5dd6690fefc1737b25f11796ec">More...</a><br /></td></tr>
 <tr class="separator:a9ed13c5dd6690fefc1737b25f11796ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -234,6 +244,19 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a54bfff6bcd9ae2bf4d3424177a68265c"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a54bfff6bcd9ae2bf4d3424177a68265c">addCurrentSource</a> (const std::string &amp;currentSourceName, const std::string &amp;targetNeuronGroupName, const typename CurrentSourceModel::ParamValues &amp;paramValues, const typename CurrentSourceModel::VarValues &amp;varInitialisers)</td></tr>
 <tr class="memdesc:a54bfff6bcd9ae2bf4d3424177a68265c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros.  <a href="#a54bfff6bcd9ae2bf4d3424177a68265c">More...</a><br /></td></tr>
 <tr class="separator:a54bfff6bcd9ae2bf4d3424177a68265c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b94a4645aa935cfa1b33ecfbe10c81a"><td class="memTemplParams" colspan="2">template&lt;typename CustomUpdateModel &gt; </td></tr>
+<tr class="memitem:a1b94a4645aa935cfa1b33ecfbe10c81a"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a1b94a4645aa935cfa1b33ecfbe10c81a">addCustomUpdate</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const CustomUpdateModel *model, const typename CustomUpdateModel::ParamValues &amp;paramValues, const typename CustomUpdateModel::VarValues &amp;varInitialisers, const typename CustomUpdateModel::VarReferences &amp;varReferences)</td></tr>
+<tr class="memdesc:a1b94a4645aa935cfa1b33ecfbe10c81a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new custom update with references to the model using a custom update model managed by the user.  <a href="#a1b94a4645aa935cfa1b33ecfbe10c81a">More...</a><br /></td></tr>
+<tr class="separator:a1b94a4645aa935cfa1b33ecfbe10c81a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abff15f6bb7b61613814efc820e8b31e1"><td class="memTemplParams" colspan="2">template&lt;typename CustomUpdateModel &gt; </td></tr>
+<tr class="memitem:abff15f6bb7b61613814efc820e8b31e1"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#abff15f6bb7b61613814efc820e8b31e1">addCustomUpdate</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const CustomUpdateModel *model, const typename CustomUpdateModel::ParamValues &amp;paramValues, const typename CustomUpdateModel::VarValues &amp;varInitialisers, const typename CustomUpdateModel::WUVarReferences &amp;varReferences)</td></tr>
+<tr class="separator:abff15f6bb7b61613814efc820e8b31e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4cd187525540e5ab5b090d5aaf95c7af"><td class="memTemplParams" colspan="2">template&lt;typename CustomUpdateModel &gt; </td></tr>
+<tr class="memitem:a4cd187525540e5ab5b090d5aaf95c7af"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a4cd187525540e5ab5b090d5aaf95c7af">addCustomUpdate</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const typename CustomUpdateModel::ParamValues &amp;paramValues, const typename CustomUpdateModel::VarValues &amp;varInitialisers, const typename CustomUpdateModel::VarReferences &amp;varReferences)</td></tr>
+<tr class="separator:a4cd187525540e5ab5b090d5aaf95c7af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32e05d4d38ca57c3f1c1d4a6052b9603"><td class="memTemplParams" colspan="2">template&lt;typename CustomUpdateModel &gt; </td></tr>
+<tr class="memitem:a32e05d4d38ca57c3f1c1d4a6052b9603"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a32e05d4d38ca57c3f1c1d4a6052b9603">addCustomUpdate</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const typename CustomUpdateModel::ParamValues &amp;paramValues, const typename CustomUpdateModel::VarValues &amp;varInitialisers, const typename CustomUpdateModel::WUVarReferences &amp;varReferences)</td></tr>
+<tr class="separator:a32e05d4d38ca57c3f1c1d4a6052b9603"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
@@ -249,6 +272,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:ab08bc83824d4efbde2154b8b8985a1c2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#ab08bc83824d4efbde2154b8b8985a1c2">isRecordingInUse</a> () const</td></tr>
 <tr class="memdesc:ab08bc83824d4efbde2154b8b8985a1c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is recording enabled on any population in this model?  <a href="#ab08bc83824d4efbde2154b8b8985a1c2">More...</a><br /></td></tr>
 <tr class="separator:ab08bc83824d4efbde2154b8b8985a1c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa25ee11ef3f3ce6b4acf51f735b739b6"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#aa25ee11ef3f3ce6b4acf51f735b739b6">getHashDigest</a> () const</td></tr>
+<tr class="memdesc:aa25ee11ef3f3ce6b4acf51f735b739b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get hash digest used for detecting changes.  <a href="#aa25ee11ef3f3ce6b4acf51f735b739b6">More...</a><br /></td></tr>
+<tr class="separator:aa25ee11ef3f3ce6b4acf51f735b739b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15622cc92f6c37e56aee253e02ad923e"><td class="memItemLeft" align="right" valign="top">const std::map&lt; std::string, <a class="el" href="../../dc/da3/classNeuronGroupInternal.html">NeuronGroupInternal</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a15622cc92f6c37e56aee253e02ad923e">getNeuronGroups</a> () const</td></tr>
 <tr class="memdesc:a15622cc92f6c37e56aee253e02ad923e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get std::map containing local named <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> objects in model.  <a href="#a15622cc92f6c37e56aee253e02ad923e">More...</a><br /></td></tr>
 <tr class="separator:a15622cc92f6c37e56aee253e02ad923e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -258,10 +284,57 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:a5d96bb38a3fc0d31bbc01078807be541"><td class="memItemLeft" align="right" valign="top">const std::map&lt; std::string, <a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a5d96bb38a3fc0d31bbc01078807be541">getLocalCurrentSources</a> () const</td></tr>
 <tr class="memdesc:a5d96bb38a3fc0d31bbc01078807be541"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get std::map containing local named <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> objects in model.  <a href="#a5d96bb38a3fc0d31bbc01078807be541">More...</a><br /></td></tr>
 <tr class="separator:a5d96bb38a3fc0d31bbc01078807be541"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8bbbeb6de9dba7b4f83dc1d18e4aaf73"><td class="memItemLeft" align="right" valign="top">const std::map&lt; std::string, <a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a8bbbeb6de9dba7b4f83dc1d18e4aaf73">getCustomUpdates</a> () const</td></tr>
+<tr class="memdesc:a8bbbeb6de9dba7b4f83dc1d18e4aaf73"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get std::map containing named <a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a> objects in model.  <a href="#a8bbbeb6de9dba7b4f83dc1d18e4aaf73">More...</a><br /></td></tr>
+<tr class="separator:a8bbbeb6de9dba7b4f83dc1d18e4aaf73"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a96c9cdb07ecb3786bc1016b86b9edccf"><td class="memItemLeft" align="right" valign="top">const std::map&lt; std::string, <a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a96c9cdb07ecb3786bc1016b86b9edccf">getCustomWUUpdates</a> () const</td></tr>
+<tr class="separator:a96c9cdb07ecb3786bc1016b86b9edccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Object used for specifying a neuronal network model. </p>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a9cf2119c1434c8535a8c13b8d6f6cf86"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9cf2119c1434c8535a8c13b8d6f6cf86">&#9670;&nbsp;</a></span>CurrentSourceValueType</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::map&lt;std::string, <a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a>&gt;::value_type <a class="el" href="../../da/dfd/classModelSpec.html#a9cf2119c1434c8535a8c13b8d6f6cf86">ModelSpec::CurrentSourceValueType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a62172240b2be64180257581ffae179f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62172240b2be64180257581ffae179f4">&#9670;&nbsp;</a></span>CustomUpdateValueType</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::map&lt;std::string, <a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a>&gt;::value_type <a class="el" href="../../da/dfd/classModelSpec.html#a62172240b2be64180257581ffae179f4">ModelSpec::CustomUpdateValueType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a3fb4bcc11436931b9096b97ebee30872"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3fb4bcc11436931b9096b97ebee30872">&#9670;&nbsp;</a></span>CustomUpdateWUValueType</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::map&lt;std::string, <a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a>&gt;::value_type <a class="el" href="../../da/dfd/classModelSpec.html#a3fb4bcc11436931b9096b97ebee30872">ModelSpec::CustomUpdateWUValueType</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ac724c12166b5ee5fb4492277c1d8deb5"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac724c12166b5ee5fb4492277c1d8deb5">&#9670;&nbsp;</a></span>NeuronGroupValueType</h2>
 
@@ -492,6 +565,319 @@ template&lt;typename CurrentSourceModel &gt; </div>
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> </dd></dl>
+
+</div>
+</div>
+<a id="a1b94a4645aa935cfa1b33ecfbe10c81a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b94a4645aa935cfa1b33ecfbe10c81a">&#9670;&nbsp;</a></span>addCustomUpdate() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename CustomUpdateModel &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a>* ModelSpec::addCustomUpdate </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>updateGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CustomUpdateModel *&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>paramValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::VarReferences &amp;&#160;</td>
+          <td class="paramname"><em>varReferences</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Adds a new custom update with references to the model using a custom update model managed by the user. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">CustomUpdateModel</td><td>type of custom update model (derived from <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html" title="Base class for all current source models. ">CustomUpdateModels::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>string containing unique name of custom update </td></tr>
+    <tr><td class="paramname">updateGroupName</td><td>string containing name of group to add this custom update to </td></tr>
+    <tr><td class="paramname">model</td><td>custom update model to use for custom update. </td></tr>
+    <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in CustomUpdateModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object. </td></tr>
+    <tr><td class="paramname">varReferences</td><td>variable references wrapped in CustomUpdateModel::VarReferences object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a> </dd></dl>
+
+</div>
+</div>
+<a id="abff15f6bb7b61613814efc820e8b31e1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abff15f6bb7b61613814efc820e8b31e1">&#9670;&nbsp;</a></span>addCustomUpdate() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename CustomUpdateModel &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a>* ModelSpec::addCustomUpdate </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>updateGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const CustomUpdateModel *&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>paramValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::WUVarReferences &amp;&#160;</td>
+          <td class="paramname"><em>varReferences</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Adds a new custom update with references to weight update model variable to the model using a custom update model managed by the user</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">CustomUpdateModel</td><td>type of custom update model (derived from <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html" title="Base class for all current source models. ">CustomUpdateModels::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>string containing unique name of custom update </td></tr>
+    <tr><td class="paramname">updateGroupName</td><td>string containing name of group to add this custom update to </td></tr>
+    <tr><td class="paramname">operation</td><td>CustomUpdate::Operation specifying operation update should be performed within </td></tr>
+    <tr><td class="paramname">model</td><td>custom update model to use for custom update. </td></tr>
+    <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in CustomUpdateModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object. </td></tr>
+    <tr><td class="paramname">varReferences</td><td>variable references wrapped in CustomUpdateModel::VarReferences object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a> </dd></dl>
+
+</div>
+</div>
+<a id="a4cd187525540e5ab5b090d5aaf95c7af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4cd187525540e5ab5b090d5aaf95c7af">&#9670;&nbsp;</a></span>addCustomUpdate() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename CustomUpdateModel &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a>* ModelSpec::addCustomUpdate </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>updateGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>paramValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::VarReferences &amp;&#160;</td>
+          <td class="paramname"><em>varReferences</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Adds a new custom update to the model using a singleton custom update model created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">CustomUpdateModel</td><td>type of custom update model (derived from <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html" title="Base class for all current source models. ">CustomUpdateModels::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>string containing unique name of custom update </td></tr>
+    <tr><td class="paramname">updateGroupName</td><td>string containing name of group to add this custom update to </td></tr>
+    <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in CustomUpdateModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>variable references wrapped in CustomUpdateModel::VarReferences object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a> </dd></dl>
+
+</div>
+</div>
+<a id="a32e05d4d38ca57c3f1c1d4a6052b9603"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32e05d4d38ca57c3f1c1d4a6052b9603">&#9670;&nbsp;</a></span>addCustomUpdate() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename CustomUpdateModel &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a>* ModelSpec::addCustomUpdate </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>updateGroupName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>paramValues</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::VarValues &amp;&#160;</td>
+          <td class="paramname"><em>varInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const typename CustomUpdateModel::WUVarReferences &amp;&#160;</td>
+          <td class="paramname"><em>varReferences</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Adds a new custom update with references to weight update model variables to the model using a singleton custom update model created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros</p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">CustomUpdateModel</td><td>type of neuron model (derived from <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html" title="Base class for all current source models. ">CustomUpdateModels::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">name</td><td>string containing unique name of custom update </td></tr>
+    <tr><td class="paramname">updateGroupName</td><td>string containing name of group to add this custom update to </td></tr>
+    <tr><td class="paramname">operation</td><td>CustomUpdate::Operation specifying operation update should be performed within </td></tr>
+    <tr><td class="paramname">paramValues</td><td>parameters for model wrapped in CustomUpdateModel::ParamValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object. </td></tr>
+    <tr><td class="paramname">varInitialisers</td><td>variable references wrapped in CustomUpdateModel::VarReferences object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>pointer to newly created <a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a> </dd></dl>
 
 </div>
 </div>
@@ -1294,6 +1680,83 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 
 </div>
 </div>
+<a id="af98330272efa74a925d29854830106de"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af98330272efa74a925d29854830106de">&#9670;&nbsp;</a></span>getBatchSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">unsigned int ModelSpec::getBatchSize </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8bbbeb6de9dba7b4f83dc1d18e4aaf73"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8bbbeb6de9dba7b4f83dc1d18e4aaf73">&#9670;&nbsp;</a></span>getCustomUpdates()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::map&lt;std::string, <a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a>&gt;&amp; ModelSpec::getCustomUpdates </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get std::map containing named <a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a> objects in model. </p>
+
+</div>
+</div>
+<a id="a96c9cdb07ecb3786bc1016b86b9edccf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a96c9cdb07ecb3786bc1016b86b9edccf">&#9670;&nbsp;</a></span>getCustomWUUpdates()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::map&lt;std::string, <a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a>&gt;&amp; ModelSpec::getCustomWUUpdates </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a589612f79c2f9645cd485285b33d2edd"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a589612f79c2f9645cd485285b33d2edd">&#9670;&nbsp;</a></span>getDT()</h2>
 
@@ -1318,6 +1781,33 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 </div><div class="memdoc">
 
 <p>Gets the model integration step size. </p>
+
+</div>
+</div>
+<a id="aa25ee11ef3f3ce6b4acf51f735b739b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa25ee11ef3f3ce6b4acf51f735b739b6">&#9670;&nbsp;</a></span>getHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get hash digest used for detecting changes. </p>
 
 </div>
 </div>
@@ -1626,6 +2116,32 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 </div><div class="memdoc">
 
 <p>Get the string literal that should be used to represent a value in the model's floating-point type. </p>
+
+</div>
+</div>
+<a id="adb09e23344a1534409756919123b7ab0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adb09e23344a1534409756919123b7ab0">&#9670;&nbsp;</a></span>setBatchSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ModelSpec::setBatchSize </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>batchSize</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1972,7 +2488,7 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dfd/classModelSpec.html">ModelSpec</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:34 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

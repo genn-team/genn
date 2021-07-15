@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -95,37 +95,225 @@ $(document).ready(function(){initNavTree('dd/d20/namespaceModels.html','../../')
 
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a>  </div>
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">Models Namespace Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+
+<p><a class="el" href="../../d6/d97/classModels_1_1Base.html">Base</a> class for all models - in addition to the parameters snippets have, models can have state variables.  
+<a href="#details">More...</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d97/classModels_1_1Base.html">Base</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../d6/d97/classModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab...">Base</a> class for all models - in addition to the parameters snippets have, models can have state variables.  <a href="../../d6/d97/classModels_1_1Base.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dee/classModels_1_1VarInit.html">VarInit</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d24/classModels_1_1VarInitContainerBase.html">VarInitContainerBase</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html">VarInitContainerBase&lt; 0 &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d91/classModels_1_1VarReferenceBase.html">VarReferenceBase</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">WUVarReference</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a8253538cc9596a686fc0bdadb60cf15a"><td class="memTemplParams" colspan="2">template&lt;size_t NumVars&gt; </td></tr>
+<tr class="memitem:a8253538cc9596a686fc0bdadb60cf15a"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a8253538cc9596a686fc0bdadb60cf15a">VarInitContainerBase</a> = <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">VarInit</a>, NumVars &gt;</td></tr>
+<tr class="separator:a8253538cc9596a686fc0bdadb60cf15a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c3dba8861d8593d5ea00006bcb7ae9c"><td class="memTemplParams" colspan="2">template&lt;size_t NumVars&gt; </td></tr>
+<tr class="memitem:a7c3dba8861d8593d5ea00006bcb7ae9c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a7c3dba8861d8593d5ea00006bcb7ae9c">VarReferenceContainerBase</a> = <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt; <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a>, NumVars &gt;</td></tr>
+<tr class="separator:a7c3dba8861d8593d5ea00006bcb7ae9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af21fe15595e4e0ded13ecf3a0ef78e42"><td class="memTemplParams" colspan="2">template&lt;size_t NumVars&gt; </td></tr>
+<tr class="memitem:af21fe15595e4e0ded13ecf3a0ef78e42"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#af21fe15595e4e0ded13ecf3a0ef78e42">WUVarReferenceContainerBase</a> = <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt; <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">WUVarReference</a>, NumVars &gt;</td></tr>
+<tr class="separator:af21fe15595e4e0ded13ecf3a0ef78e42"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:a894a4d3698fd28cb70725dcf018af320"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a894a4d3698fd28cb70725dcf018af320">updateHash</a> (const <a class="el" href="../../d5/d42/structModels_1_1Base_1_1Var.html">Base::Var</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:a894a4d3698fd28cb70725dcf018af320"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae34fbe09a870f56771c40d0f82f23e3b"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#ae34fbe09a870f56771c40d0f82f23e3b">updateHash</a> (const <a class="el" href="../../d1/daf/structModels_1_1Base_1_1VarRef.html">Base::VarRef</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:ae34fbe09a870f56771c40d0f82f23e3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b20b6197ac56a8b3e9a26b70e1b86ef"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a5b20b6197ac56a8b3e9a26b70e1b86ef">updateHash</a> (const <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:a5b20b6197ac56a8b3e9a26b70e1b86ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b2b07b7cca0433e766bb778a7cf30fd"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/d20/namespaceModels.html#a8b2b07b7cca0433e766bb778a7cf30fd">updateHash</a> (const <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">WUVarReference</a> &amp;v, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:a8b2b07b7cca0433e766bb778a7cf30fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p>Class used to bind together everything required to initialise a variable:</p><ol type="1">
-<li>A pointer to a variable initialisation snippet</li>
-<li>The parameters required to control the variable initialisation snippet </li>
-</ol>
-</div></div><!-- contents -->
+<div class="textblock"><p><a class="el" href="../../d6/d97/classModels_1_1Base.html">Base</a> class for all models - in addition to the parameters snippets have, models can have state variables. </p>
+</div><h2 class="groupheader">Typedef Documentation</h2>
+<a id="a8253538cc9596a686fc0bdadb60cf15a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8253538cc9596a686fc0bdadb60cf15a">&#9670;&nbsp;</a></span>VarInitContainerBase</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t NumVars&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="../../dd/d20/namespaceModels.html#a8253538cc9596a686fc0bdadb60cf15a">Models::VarInitContainerBase</a> = typedef <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt;<a class="el" href="../../d8/dee/classModels_1_1VarInit.html">VarInit</a>, NumVars&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a7c3dba8861d8593d5ea00006bcb7ae9c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7c3dba8861d8593d5ea00006bcb7ae9c">&#9670;&nbsp;</a></span>VarReferenceContainerBase</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t NumVars&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="../../dd/d20/namespaceModels.html#a7c3dba8861d8593d5ea00006bcb7ae9c">Models::VarReferenceContainerBase</a> = typedef <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt;<a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a>, NumVars&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af21fe15595e4e0ded13ecf3a0ef78e42"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af21fe15595e4e0ded13ecf3a0ef78e42">&#9670;&nbsp;</a></span>WUVarReferenceContainerBase</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;size_t NumVars&gt; </div>
+      <table class="memname">
+        <tr>
+          <td class="memname">using <a class="el" href="../../dd/d20/namespaceModels.html#af21fe15595e4e0ded13ecf3a0ef78e42">Models::WUVarReferenceContainerBase</a> = typedef <a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a>&lt;<a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">WUVarReference</a>, NumVars&gt;</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<h2 class="groupheader">Function Documentation</h2>
+<a id="a894a4d3698fd28cb70725dcf018af320"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a894a4d3698fd28cb70725dcf018af320">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[1/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Models::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d5/d42/structModels_1_1Base_1_1Var.html">Base::Var</a> &amp;&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="ae34fbe09a870f56771c40d0f82f23e3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae34fbe09a870f56771c40d0f82f23e3b">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[2/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Models::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d1/daf/structModels_1_1Base_1_1VarRef.html">Base::VarRef</a> &amp;&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a5b20b6197ac56a8b3e9a26b70e1b86ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b20b6197ac56a8b3e9a26b70e1b86ef">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[3/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Models::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">VarReference</a> &amp;&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a8b2b07b7cca0433e766bb778a7cf30fd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b2b07b7cca0433e766bb778a7cf30fd">&#9670;&nbsp;</a></span>updateHash() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Models::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">WUVarReference</a> &amp;&#160;</td>
+          <td class="paramname"><em>v</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
+</div><!-- contents -->
 </div><!-- doc-content -->
 <!-- HTML footer for doxygen 1.8.13-->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dd/d20/namespaceModels.html">Models</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:52 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:40 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

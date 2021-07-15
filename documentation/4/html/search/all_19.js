@@ -13,5 +13,9 @@ var searchData=
   ['writecache',['writeCache',['../d9/d5d/classSpikeWriterTextCached.html#a4fa13b38ea34732773c93ca73435080a',1,'SpikeWriterTextCached']]],
   ['writeprecisestring',['writePreciseString',['../d4/d3d/namespaceUtils.html#ae03fe3aae05bd1f1522bdd541681a785',1,'Utils::writePreciseString(std::ostream &amp;os, T value)'],['../d4/d3d/namespaceUtils.html#a2ec4824de9bfbbcfa129f3df90b36c45',1,'Utils::writePreciseString(T value)']]],
   ['writesizes',['writeSizes',['../d4/d40/classGenerateRunBase.html#a69c50969f70935c2b97727588317db82',1,'GenerateRunBase']]],
-  ['writetextspikerecording',['writeTextSpikeRecording',['../d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456',1,'spikeRecorder.h']]]
+  ['writetextspikerecording',['writeTextSpikeRecording',['../d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456',1,'spikeRecorder.h']]],
+  ['wu_5fpost_5fvar_5fnames',['wu_post_var_names',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a04b838195834ada8aa3b582724d99847',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['wu_5fpre_5fvar_5fnames',['wu_pre_var_names',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab033e98cc959663f97752c5c1244995d',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['wuvarreference',['WUVarReference',['../dc/d6d/classModels_1_1WUVarReference.html',1,'Models::WUVarReference'],['../dc/d6d/classModels_1_1WUVarReference.html#a91aab6db587b0fde944bb0bfbc5da99c',1,'Models::WUVarReference::WUVarReference()']]],
+  ['wuvarreferencecontainerbase',['WUVarReferenceContainerBase',['../dd/d20/namespaceModels.html#af21fe15595e4e0ded13ecf3a0ef78e42',1,'Models']]]
 ];

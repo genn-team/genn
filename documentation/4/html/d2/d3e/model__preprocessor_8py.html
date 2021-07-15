@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -108,8 +108,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html">pygenn.model_preprocessor.Variable</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class holding information about GeNN variables.  <a href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html">pygenn.model_preprocessor.ExtraGlobalVariable</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class holding information about GeNN extra global pointer variable.  <a href="../../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html">pygenn.model_preprocessor.ExtraGlobalParameter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class holding information about GeNN extra global paramete.  <a href="../../d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -120,9 +120,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a698da20e6a95c9e0624aaba819b4a71b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a698da20e6a95c9e0624aaba819b4a71b">pygenn.model_preprocessor.prepare_model</a> (model, group, param_space, var_space, pre_var_space=None, post_var_space=None, model_family=None)</td></tr>
-<tr class="memdesc:a698da20e6a95c9e0624aaba819b4a71b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a model by checking its validity and extracting information about variables and parameters.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a698da20e6a95c9e0624aaba819b4a71b">More...</a><br /></td></tr>
-<tr class="separator:a698da20e6a95c9e0624aaba819b4a71b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03a19192b9fe6502a9cfc2dbdd5b5736"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a03a19192b9fe6502a9cfc2dbdd5b5736">pygenn.model_preprocessor.prepare_model</a> (model, group, param_space, var_space, model_family)</td></tr>
+<tr class="memdesc:a03a19192b9fe6502a9cfc2dbdd5b5736"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a model by checking its validity and extracting information about variables and parameters.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a03a19192b9fe6502a9cfc2dbdd5b5736">More...</a><br /></td></tr>
+<tr class="separator:a03a19192b9fe6502a9cfc2dbdd5b5736"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef83afc60aa51f177264dcb416a6035c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aef83afc60aa51f177264dcb416a6035c">pygenn.model_preprocessor.prepare_snippet</a> (snippet, param_space, snippet_family)</td></tr>
 <tr class="memdesc:aef83afc60aa51f177264dcb416a6035c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a snippet by checking its validity and extracting information about parameters.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aef83afc60aa51f177264dcb416a6035c">More...</a><br /></td></tr>
 <tr class="separator:aef83afc60aa51f177264dcb416a6035c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -138,6 +138,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a4ece878baa9619ecfcbdf5770e5a4eec"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a4ece878baa9619ecfcbdf5770e5a4eec">pygenn.model_preprocessor.var_space_to_vals</a> (model, var_space)</td></tr>
 <tr class="memdesc:a4ece878baa9619ecfcbdf5770e5a4eec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_space dict to VarValues.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a4ece878baa9619ecfcbdf5770e5a4eec">More...</a><br /></td></tr>
 <tr class="separator:a4ece878baa9619ecfcbdf5770e5a4eec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32ed4952819c43baa62d0c2249805326"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a32ed4952819c43baa62d0c2249805326">pygenn.model_preprocessor.var_ref_space_to_var_refs</a> (model, var_ref_space)</td></tr>
+<tr class="memdesc:a32ed4952819c43baa62d0c2249805326"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_ref_space dict to VarReferences.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a32ed4952819c43baa62d0c2249805326">More...</a><br /></td></tr>
+<tr class="separator:a32ed4952819c43baa62d0c2249805326"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb3b54fcdc5a58707dc46b21f04a89d7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#abb3b54fcdc5a58707dc46b21f04a89d7">pygenn.model_preprocessor.var_ref_space_to_wu_var_refs</a> (model, var_ref_space)</td></tr>
+<tr class="memdesc:abb3b54fcdc5a58707dc46b21f04a89d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_ref_space dict to WUVarReferences.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#abb3b54fcdc5a58707dc46b21f04a89d7">More...</a><br /></td></tr>
+<tr class="separator:abb3b54fcdc5a58707dc46b21f04a89d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa3a43765e294bbd7fe4976a3b377b733"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aa3a43765e294bbd7fe4976a3b377b733">pygenn.model_preprocessor.pre_var_space_to_vals</a> (model, var_space)</td></tr>
 <tr class="memdesc:aa3a43765e294bbd7fe4976a3b377b733"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_space dict to PreVarValues.  <a href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aa3a43765e294bbd7fe4976a3b377b733">More...</a><br /></td></tr>
 <tr class="separator:aa3a43765e294bbd7fe4976a3b377b733"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -152,7 +158,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_4d3be5bd6ef78564e8c4f17e25f05ae0.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d2/d3e/model__preprocessor_8py.html">model_preprocessor.py</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:42 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:31 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

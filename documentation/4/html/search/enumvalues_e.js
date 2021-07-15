@@ -1,7 +1,7 @@
 var searchData=
 [
   ['scalaregp',['ScalarEGP',['../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aefaaf7aa8b84e3288be41d172962730a601',1,'CodeGenerator::GroupMerged']]],
-  ['shared',['SHARED',['../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a9f6b80da64dbc8cebcc8438492b18c35a049518eb4dc1859c7cebbe15876cfd63',1,'CodeGenerator::BackendSIMT']]],
+  ['shared',['SHARED',['../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a9f6b80da64dbc8cebcc8438492b18c35a049518eb4dc1859c7cebbe15876cfd63',1,'CodeGenerator::BackendSIMT::SHARED()'],['../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63',1,'SHARED():&#160;varAccess.h']]],
   ['source',['Source',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#af183b028ead473c3b08e4961edd6e66baf31bbdd1b3e85bccd652680e16935819',1,'SpineMLSimulator::NetworkClient']]],
   ['sparse',['SPARSE',['../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e',1,'synapseMatrixType.h']]],
   ['sparse_5fglobalg',['SPARSE_GLOBALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca14329718a99dc337fa3bd33b9104d75d',1,'synapseMatrixType.h']]],

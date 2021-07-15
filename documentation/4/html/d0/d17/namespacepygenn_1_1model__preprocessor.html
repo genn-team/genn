@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -107,8 +107,8 @@ $(document).ready(function(){initNavTree('d0/d17/namespacepygenn_1_1model__prepr
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html">ExtraGlobalVariable</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class holding information about GeNN extra global pointer variable.  <a href="../../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html#details">More...</a><br /></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html">ExtraGlobalParameter</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class holding information about GeNN extra global paramete.  <a href="../../d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html#details">More...</a><br /></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html">Variable</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Class holding information about GeNN variables.  <a href="../../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#details">More...</a><br /></td></tr>
@@ -116,9 +116,9 @@ Classes</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:a698da20e6a95c9e0624aaba819b4a71b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a698da20e6a95c9e0624aaba819b4a71b">prepare_model</a> (model, group, param_space, var_space, pre_var_space=None, post_var_space=None, model_family=None)</td></tr>
-<tr class="memdesc:a698da20e6a95c9e0624aaba819b4a71b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a model by checking its validity and extracting information about variables and parameters.  <a href="#a698da20e6a95c9e0624aaba819b4a71b">More...</a><br /></td></tr>
-<tr class="separator:a698da20e6a95c9e0624aaba819b4a71b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03a19192b9fe6502a9cfc2dbdd5b5736"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a03a19192b9fe6502a9cfc2dbdd5b5736">prepare_model</a> (model, group, param_space, var_space, model_family)</td></tr>
+<tr class="memdesc:a03a19192b9fe6502a9cfc2dbdd5b5736"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a model by checking its validity and extracting information about variables and parameters.  <a href="#a03a19192b9fe6502a9cfc2dbdd5b5736">More...</a><br /></td></tr>
+<tr class="separator:a03a19192b9fe6502a9cfc2dbdd5b5736"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aef83afc60aa51f177264dcb416a6035c"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aef83afc60aa51f177264dcb416a6035c">prepare_snippet</a> (snippet, param_space, snippet_family)</td></tr>
 <tr class="memdesc:aef83afc60aa51f177264dcb416a6035c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prepare a snippet by checking its validity and extracting information about parameters.  <a href="#aef83afc60aa51f177264dcb416a6035c">More...</a><br /></td></tr>
 <tr class="separator:aef83afc60aa51f177264dcb416a6035c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -134,6 +134,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a4ece878baa9619ecfcbdf5770e5a4eec"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a4ece878baa9619ecfcbdf5770e5a4eec">var_space_to_vals</a> (model, var_space)</td></tr>
 <tr class="memdesc:a4ece878baa9619ecfcbdf5770e5a4eec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_space dict to VarValues.  <a href="#a4ece878baa9619ecfcbdf5770e5a4eec">More...</a><br /></td></tr>
 <tr class="separator:a4ece878baa9619ecfcbdf5770e5a4eec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a32ed4952819c43baa62d0c2249805326"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#a32ed4952819c43baa62d0c2249805326">var_ref_space_to_var_refs</a> (model, var_ref_space)</td></tr>
+<tr class="memdesc:a32ed4952819c43baa62d0c2249805326"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_ref_space dict to VarReferences.  <a href="#a32ed4952819c43baa62d0c2249805326">More...</a><br /></td></tr>
+<tr class="separator:a32ed4952819c43baa62d0c2249805326"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb3b54fcdc5a58707dc46b21f04a89d7"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#abb3b54fcdc5a58707dc46b21f04a89d7">var_ref_space_to_wu_var_refs</a> (model, var_ref_space)</td></tr>
+<tr class="memdesc:abb3b54fcdc5a58707dc46b21f04a89d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_ref_space dict to WUVarReferences.  <a href="#abb3b54fcdc5a58707dc46b21f04a89d7">More...</a><br /></td></tr>
+<tr class="separator:abb3b54fcdc5a58707dc46b21f04a89d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa3a43765e294bbd7fe4976a3b377b733"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html#aa3a43765e294bbd7fe4976a3b377b733">pre_var_space_to_vals</a> (model, var_space)</td></tr>
 <tr class="memdesc:aa3a43765e294bbd7fe4976a3b377b733"><td class="mdescLeft">&#160;</td><td class="mdescRight">Convert a var_space dict to PreVarValues.  <a href="#aa3a43765e294bbd7fe4976a3b377b733">More...</a><br /></td></tr>
 <tr class="separator:aa3a43765e294bbd7fe4976a3b377b733"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -335,8 +341,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a698da20e6a95c9e0624aaba819b4a71b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a698da20e6a95c9e0624aaba819b4a71b">&#9670;&nbsp;</a></span>prepare_model()</h2>
+<a id="a03a19192b9fe6502a9cfc2dbdd5b5736"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03a19192b9fe6502a9cfc2dbdd5b5736">&#9670;&nbsp;</a></span>prepare_model()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -369,19 +375,7 @@ Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>pre_var_space</em> = <code>None</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>post_var_space</em> = <code>None</code>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname"><em>model_family</em> = <code>None</code>&#160;</td>
+          <td class="paramname"><em>model_family</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -398,8 +392,7 @@ Functions</h2></td></tr>
     <tr><td class="paramname">group</td><td>group model will belong to </td></tr>
     <tr><td class="paramname">param_space</td><td>dict with model parameters </td></tr>
     <tr><td class="paramname">var_space</td><td>dict with model variables </td></tr>
-    <tr><td class="paramname">pre_var_space</td><td>optional dict with (weight update) model presynaptic variables </td></tr>
-    <tr><td class="paramname">post_var_space</td><td>optional dict with (weight update) model postsynaptic variables </td></tr>
+    <tr><td class="paramname">var_ref_space</td><td>optional dict with (custom update) model variable references </td></tr>
     <tr><td class="paramname">model_family</td><td>pygenn.genn_wrapper.NeuronModels or pygenn.genn_wrapper.WeightUpdateModels or pygenn.genn_wrapper.CurrentSourceModels</td></tr>
   </table>
   </dd>
@@ -453,6 +446,82 @@ Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a32ed4952819c43baa62d0c2249805326"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32ed4952819c43baa62d0c2249805326">&#9670;&nbsp;</a></span>var_ref_space_to_var_refs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.model_preprocessor.var_ref_space_to_var_refs </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_ref_space</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convert a var_ref_space dict to VarReferences. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model</td><td>instance of the model </td></tr>
+    <tr><td class="paramname">var_ref_space</td><td>dict with variable references</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>native model's VarValues </dd></dl>
+
+</div>
+</div>
+<a id="abb3b54fcdc5a58707dc46b21f04a89d7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abb3b54fcdc5a58707dc46b21f04a89d7">&#9670;&nbsp;</a></span>var_ref_space_to_wu_var_refs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.model_preprocessor.var_ref_space_to_wu_var_refs </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>model</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>var_ref_space</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Convert a var_ref_space dict to WUVarReferences. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">model</td><td>instance of the model </td></tr>
+    <tr><td class="paramname">var_space</td><td>dict with Variables</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>native model's VarValues </dd></dl>
+
+</div>
+</div>
 <a id="a4ece878baa9619ecfcbdf5770e5a4eec"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4ece878baa9619ecfcbdf5770e5a4eec">&#9670;&nbsp;</a></span>var_space_to_vals()</h2>
 
@@ -498,7 +567,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../d0/d17/namespacepygenn_1_1model__preprocessor.html">model_preprocessor</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:54 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:42 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

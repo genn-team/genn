@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -97,7 +97,9 @@ $(document).ready(function(){initNavTree('de/d6c/snippet_8h.html','../../');});
   <div class="summary">
 <a href="#nested-classes">Classes</a> &#124;
 <a href="#namespaces">Namespaces</a> &#124;
-<a href="#define-members">Macros</a>  </div>
+<a href="#define-members">Macros</a> &#124;
+<a href="#typedef-members">Typedefs</a> &#124;
+<a href="#func-members">Functions</a>  </div>
   <div class="headertitle">
 <div class="title">snippet.h File Reference</div>  </div>
 </div><!--header-->
@@ -114,9 +116,9 @@ $(document).ready(function(){initNavTree('de/d6c/snippet_8h.html','../../');});
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase&lt; NumVars &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase&lt; V, NumVars &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html">Snippet::ValueBase&lt; 0 &gt;</a></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/dc3/classSnippet_1_1InitialiserContainerBase_3_01V_00_010_01_4.html">Snippet::InitialiserContainerBase&lt; V, 0 &gt;</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. ">Base</a> class for all code snippets.  <a href="../../db/d97/classSnippet_1_1Base.html#details">More...</a><br /></td></tr>
@@ -150,6 +152,21 @@ Macros</h2></td></tr>
 <tr class="separator:aa592bfe3ce05ffc19a8f21d8482add6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa33e3634a531794ddac1ad49bde09071"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6c/snippet_8h.html#aa33e3634a531794ddac1ad49bde09071">SET_EXTRA_GLOBAL_PARAMS</a>(...)&#160;&#160;&#160;virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }</td></tr>
 <tr class="separator:aa33e3634a531794ddac1ad49bde09071"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="typedef-members"></a>
+Typedefs</h2></td></tr>
+<tr class="memitem:a53c1a4e7ca9880cbeea429409e0ecb8c"><td class="memTemplParams" colspan="2">template&lt;size_t NumVars&gt; </td></tr>
+<tr class="memitem:a53c1a4e7ca9880cbeea429409e0ecb8c"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a> = InitialiserContainerBase&lt; double, NumVars &gt;</td></tr>
+<tr class="separator:a53c1a4e7ca9880cbeea429409e0ecb8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
+Functions</h2></td></tr>
+<tr class="memitem:ad32ed533c92ae16761a4b573c6230cc7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/daa/namespaceSnippet.html#ad32ed533c92ae16761a4b573c6230cc7">Snippet::updateHash</a> (const Base::EGP &amp;e, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:ad32ed533c92ae16761a4b573c6230cc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a046ec5d02f45d58eff76b06b6cba2a0e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/daa/namespaceSnippet.html#a046ec5d02f45d58eff76b06b6cba2a0e">Snippet::updateHash</a> (const Base::ParamVal &amp;p, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:a046ec5d02f45d58eff76b06b6cba2a0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1e40f99e13377a733de640fa62389b5e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/daa/namespaceSnippet.html#a1e40f99e13377a733de640fa62389b5e">Snippet::updateHash</a> (const Base::DerivedParam &amp;d, boost::uuids::detail::sha1 &amp;hash)</td></tr>
+<tr class="separator:a1e40f99e13377a733de640fa62389b5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
 <a id="ac5727a6720d28f034afadde948ed6e9a"></a>
@@ -177,8 +194,8 @@ Macros</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line"><span class="keyword">private</span>:                                                \</div><div class="line">    GENN_EXPORT <span class="keyword">static</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a> *s_Instance;                \</div><div class="line">public:                                                 \</div><div class="line">    static <span class="keyword">const</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a> *getInstance()                    \</div><div class="line">    {                                                   \</div><div class="line">        if(s_Instance == NULL)                          \</div><div class="line">        {                                               \</div><div class="line">            s_Instance = <span class="keyword">new</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>;                      \</div><div class="line">        }                                               \</div><div class="line">        return s_Instance;                              \</div><div class="line">    }                                                   \</div><div class="line">    typedef <a class="code" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase&lt;NUM_PARAMS&gt;</a> ParamValues  \</div><div class="ttc" id="backendBase_8cc_html_a250d7d96debe4c60c4d0449c2a96ba78"><div class="ttname"><a href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a></div><div class="ttdeci">#define TYPE(T)</div><div class="ttdef"><b>Definition:</b> backendBase.cc:8</div></div>
-<div class="ttc" id="classSnippet_1_1ValueBase_html"><div class="ttname"><a href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a></div><div class="ttdef"><b>Definition:</b> snippet.h:48</div></div>
+<b>Value:</b><div class="fragment"><div class="line"><span class="keyword">private</span>:                                                \</div><div class="line">    GENN_EXPORT <span class="keyword">static</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a> *s_Instance;                \</div><div class="line">public:                                                 \</div><div class="line">    static <span class="keyword">const</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a> *getInstance()                    \</div><div class="line">    {                                                   \</div><div class="line">        if(s_Instance == NULL)                          \</div><div class="line">        {                                               \</div><div class="line">            s_Instance = <span class="keyword">new</span> <a class="code" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>;                      \</div><div class="line">        }                                               \</div><div class="line">        return s_Instance;                              \</div><div class="line">    }                                                   \</div><div class="line">    typedef <a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::ValueBase&lt;NUM_PARAMS&gt;</a> ParamValues  \</div><div class="ttc" id="backendBase_8cc_html_a250d7d96debe4c60c4d0449c2a96ba78"><div class="ttname"><a href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a></div><div class="ttdeci">#define TYPE(T)</div><div class="ttdef"><b>Definition:</b> backendBase.cc:11</div></div>
+<div class="ttc" id="classSnippet_1_1InitialiserContainerBase_html"><div class="ttname"><a href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">Snippet::InitialiserContainerBase</a></div><div class="ttdef"><b>Definition:</b> snippet.h:48</div></div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -261,7 +278,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../de/d6c/snippet_8h.html">snippet.h</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:43 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:32 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

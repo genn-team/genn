@@ -1,8 +1,8 @@
 var classWeightUpdateModels_1_1Base =
 [
-    [ "canBeMerged", "d2/d05/classWeightUpdateModels_1_1Base.html#a039c4568a9235e31b269d161f3727873", null ],
     [ "getEventCode", "d2/d05/classWeightUpdateModels_1_1Base.html#a8c4939c38b32ae603cd237f0e8d76b8a", null ],
     [ "getEventThresholdConditionCode", "d2/d05/classWeightUpdateModels_1_1Base.html#aab9670aee177fafc6908f177b322b791", null ],
+    [ "getHashDigest", "d2/d05/classWeightUpdateModels_1_1Base.html#a18e619ce02092f9e97ade2f3c40c6694", null ],
     [ "getLearnPostCode", "d2/d05/classWeightUpdateModels_1_1Base.html#a0bb39d77c70d759d9036352d316ee044", null ],
     [ "getLearnPostSupportCode", "d2/d05/classWeightUpdateModels_1_1Base.html#ac5d1d2d7524cab0f19e965159dd58e8b", null ],
     [ "getPostDynamicsCode", "d2/d05/classWeightUpdateModels_1_1Base.html#a8b9c023af547671d7a0b11f2331d268a", null ],

@@ -8,6 +8,68 @@ var hierarchy =
       ] ],
       [ "CodeGenerator::SingleThreadedCPU::Backend", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html", null ]
     ] ],
+    [ "Snippet::Base", "db/d97/classSnippet_1_1Base.html", [
+      [ "InitSparseConnectivitySnippet::Base", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html", [
+        [ "InitSparseConnectivitySnippet::Conv2D", "d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html", null ],
+        [ "InitSparseConnectivitySnippet::FixedNumberPostWithReplacement", "db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html", null ],
+        [ "InitSparseConnectivitySnippet::FixedNumberPreWithReplacement", "d1/d59/classInitSparseConnectivitySnippet_1_1FixedNumberPreWithReplacement.html", null ],
+        [ "InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement", "da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html", null ],
+        [ "InitSparseConnectivitySnippet::FixedProbabilityBase", "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html", [
+          [ "InitSparseConnectivitySnippet::FixedProbability", "df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html", null ],
+          [ "InitSparseConnectivitySnippet::FixedProbabilityNoAutapse", "d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html", null ]
+        ] ],
+        [ "InitSparseConnectivitySnippet::OneToOne", "d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne.html", null ],
+        [ "InitSparseConnectivitySnippet::Uninitialised", "d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html", null ]
+      ] ],
+      [ "InitVarSnippet::Base", "d3/d9e/classInitVarSnippet_1_1Base.html", [
+        [ "InitVarSnippet::Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", null ],
+        [ "InitVarSnippet::Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", null ],
+        [ "InitVarSnippet::Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", null ],
+        [ "InitVarSnippet::Kernel", "df/d7b/classInitVarSnippet_1_1Kernel.html", null ],
+        [ "InitVarSnippet::Normal", "d5/dc1/classInitVarSnippet_1_1Normal.html", null ],
+        [ "InitVarSnippet::NormalClipped", "d7/d22/classInitVarSnippet_1_1NormalClipped.html", null ],
+        [ "InitVarSnippet::NormalClippedDelay", "d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html", null ],
+        [ "InitVarSnippet::Uniform", "dd/da0/classInitVarSnippet_1_1Uniform.html", null ],
+        [ "InitVarSnippet::Uninitialised", "d9/db6/classInitVarSnippet_1_1Uninitialised.html", null ]
+      ] ],
+      [ "Models::Base", "d6/d97/classModels_1_1Base.html", [
+        [ "CurrentSourceModels::Base", "d0/de0/classCurrentSourceModels_1_1Base.html", [
+          [ "CurrentSourceModels::DC", "d7/da1/classCurrentSourceModels_1_1DC.html", null ],
+          [ "CurrentSourceModels::GaussianNoise", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html", null ],
+          [ "CurrentSourceModels::PoissonExp", "d6/d0b/classCurrentSourceModels_1_1PoissonExp.html", null ]
+        ] ],
+        [ "CustomUpdateModels::Base", "de/db4/classCustomUpdateModels_1_1Base.html", [
+          [ "CustomUpdateModels::Transpose", "d6/d4c/classCustomUpdateModels_1_1Transpose.html", null ]
+        ] ],
+        [ "NeuronModels::Base", "d7/dad/classNeuronModels_1_1Base.html", [
+          [ "NeuronModels::Izhikevich", "d7/d0a/classNeuronModels_1_1Izhikevich.html", [
+            [ "NeuronModels::IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", null ]
+          ] ],
+          [ "NeuronModels::LIF", "d0/d6d/classNeuronModels_1_1LIF.html", null ],
+          [ "NeuronModels::Poisson", "de/d1d/classNeuronModels_1_1Poisson.html", null ],
+          [ "NeuronModels::PoissonNew", "dc/dc0/classNeuronModels_1_1PoissonNew.html", null ],
+          [ "NeuronModels::RulkovMap", "db/d23/classNeuronModels_1_1RulkovMap.html", null ],
+          [ "NeuronModels::SpikeSource", "d5/d1f/classNeuronModels_1_1SpikeSource.html", null ],
+          [ "NeuronModels::SpikeSourceArray", "db/d38/classNeuronModels_1_1SpikeSourceArray.html", null ],
+          [ "NeuronModels::TraubMiles", "d2/dc3/classNeuronModels_1_1TraubMiles.html", [
+            [ "NeuronModels::TraubMilesAlt", "d0/df2/classNeuronModels_1_1TraubMilesAlt.html", null ],
+            [ "NeuronModels::TraubMilesFast", "dc/d4c/classNeuronModels_1_1TraubMilesFast.html", null ],
+            [ "NeuronModels::TraubMilesNStep", "d6/d08/classNeuronModels_1_1TraubMilesNStep.html", null ]
+          ] ]
+        ] ],
+        [ "PostsynapticModels::Base", "d1/d3a/classPostsynapticModels_1_1Base.html", [
+          [ "PostsynapticModels::DeltaCurr", "de/da9/classPostsynapticModels_1_1DeltaCurr.html", null ],
+          [ "PostsynapticModels::ExpCond", "d5/d27/classPostsynapticModels_1_1ExpCond.html", null ],
+          [ "PostsynapticModels::ExpCurr", "d5/d1e/classPostsynapticModels_1_1ExpCurr.html", null ]
+        ] ],
+        [ "WeightUpdateModels::Base", "d2/d05/classWeightUpdateModels_1_1Base.html", [
+          [ "WeightUpdateModels::PiecewiseSTDP", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html", null ],
+          [ "WeightUpdateModels::StaticGraded", "d6/d64/classWeightUpdateModels_1_1StaticGraded.html", null ],
+          [ "WeightUpdateModels::StaticPulse", "d9/d74/classWeightUpdateModels_1_1StaticPulse.html", null ],
+          [ "WeightUpdateModels::StaticPulseDendriticDelay", "d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html", null ]
+        ] ]
+      ] ]
+    ] ],
     [ "SpineMLSimulator::Input::Base", "d2/db3/classSpineMLSimulator_1_1Input_1_1Base.html", [
       [ "SpineMLSimulator::Input::Analogue", "d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html", null ],
       [ "SpineMLSimulator::Input::SpikeBase", "d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html", [
@@ -51,65 +113,6 @@ var hierarchy =
       [ "CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan", "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html", null ],
       [ "CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html", null ]
     ] ],
-    [ "Snippet::Base", "db/d97/classSnippet_1_1Base.html", [
-      [ "InitSparseConnectivitySnippet::Base", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html", [
-        [ "InitSparseConnectivitySnippet::Conv2D", "d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html", null ],
-        [ "InitSparseConnectivitySnippet::FixedNumberPostWithReplacement", "db/d07/classInitSparseConnectivitySnippet_1_1FixedNumberPostWithReplacement.html", null ],
-        [ "InitSparseConnectivitySnippet::FixedNumberPreWithReplacement", "d1/d59/classInitSparseConnectivitySnippet_1_1FixedNumberPreWithReplacement.html", null ],
-        [ "InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement", "da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html", null ],
-        [ "InitSparseConnectivitySnippet::FixedProbabilityBase", "db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html", [
-          [ "InitSparseConnectivitySnippet::FixedProbability", "df/d2e/classInitSparseConnectivitySnippet_1_1FixedProbability.html", null ],
-          [ "InitSparseConnectivitySnippet::FixedProbabilityNoAutapse", "d2/d17/classInitSparseConnectivitySnippet_1_1FixedProbabilityNoAutapse.html", null ]
-        ] ],
-        [ "InitSparseConnectivitySnippet::OneToOne", "d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne.html", null ],
-        [ "InitSparseConnectivitySnippet::Uninitialised", "d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html", null ]
-      ] ],
-      [ "InitVarSnippet::Base", "d3/d9e/classInitVarSnippet_1_1Base.html", [
-        [ "InitVarSnippet::Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", null ],
-        [ "InitVarSnippet::Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", null ],
-        [ "InitVarSnippet::Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", null ],
-        [ "InitVarSnippet::Kernel", "df/d7b/classInitVarSnippet_1_1Kernel.html", null ],
-        [ "InitVarSnippet::Normal", "d5/dc1/classInitVarSnippet_1_1Normal.html", null ],
-        [ "InitVarSnippet::NormalClipped", "d7/d22/classInitVarSnippet_1_1NormalClipped.html", null ],
-        [ "InitVarSnippet::NormalClippedDelay", "d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html", null ],
-        [ "InitVarSnippet::Uniform", "dd/da0/classInitVarSnippet_1_1Uniform.html", null ],
-        [ "InitVarSnippet::Uninitialised", "d9/db6/classInitVarSnippet_1_1Uninitialised.html", null ]
-      ] ],
-      [ "Models::Base", "d6/d97/classModels_1_1Base.html", [
-        [ "CurrentSourceModels::Base", "d0/de0/classCurrentSourceModels_1_1Base.html", [
-          [ "CurrentSourceModels::DC", "d7/da1/classCurrentSourceModels_1_1DC.html", null ],
-          [ "CurrentSourceModels::GaussianNoise", "d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html", null ],
-          [ "CurrentSourceModels::PoissonExp", "d6/d0b/classCurrentSourceModels_1_1PoissonExp.html", null ]
-        ] ],
-        [ "NeuronModels::Base", "d7/dad/classNeuronModels_1_1Base.html", [
-          [ "NeuronModels::Izhikevich", "d7/d0a/classNeuronModels_1_1Izhikevich.html", [
-            [ "NeuronModels::IzhikevichVariable", "dc/d87/classNeuronModels_1_1IzhikevichVariable.html", null ]
-          ] ],
-          [ "NeuronModels::LIF", "d0/d6d/classNeuronModels_1_1LIF.html", null ],
-          [ "NeuronModels::Poisson", "de/d1d/classNeuronModels_1_1Poisson.html", null ],
-          [ "NeuronModels::PoissonNew", "dc/dc0/classNeuronModels_1_1PoissonNew.html", null ],
-          [ "NeuronModels::RulkovMap", "db/d23/classNeuronModels_1_1RulkovMap.html", null ],
-          [ "NeuronModels::SpikeSource", "d5/d1f/classNeuronModels_1_1SpikeSource.html", null ],
-          [ "NeuronModels::SpikeSourceArray", "db/d38/classNeuronModels_1_1SpikeSourceArray.html", null ],
-          [ "NeuronModels::TraubMiles", "d2/dc3/classNeuronModels_1_1TraubMiles.html", [
-            [ "NeuronModels::TraubMilesAlt", "d0/df2/classNeuronModels_1_1TraubMilesAlt.html", null ],
-            [ "NeuronModels::TraubMilesFast", "dc/d4c/classNeuronModels_1_1TraubMilesFast.html", null ],
-            [ "NeuronModels::TraubMilesNStep", "d6/d08/classNeuronModels_1_1TraubMilesNStep.html", null ]
-          ] ]
-        ] ],
-        [ "PostsynapticModels::Base", "d1/d3a/classPostsynapticModels_1_1Base.html", [
-          [ "PostsynapticModels::DeltaCurr", "de/da9/classPostsynapticModels_1_1DeltaCurr.html", null ],
-          [ "PostsynapticModels::ExpCond", "d5/d27/classPostsynapticModels_1_1ExpCond.html", null ],
-          [ "PostsynapticModels::ExpCurr", "d5/d1e/classPostsynapticModels_1_1ExpCurr.html", null ]
-        ] ],
-        [ "WeightUpdateModels::Base", "d2/d05/classWeightUpdateModels_1_1Base.html", [
-          [ "WeightUpdateModels::PiecewiseSTDP", "df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html", null ],
-          [ "WeightUpdateModels::StaticGraded", "d6/d64/classWeightUpdateModels_1_1StaticGraded.html", null ],
-          [ "WeightUpdateModels::StaticPulse", "d9/d74/classWeightUpdateModels_1_1StaticPulse.html", null ],
-          [ "WeightUpdateModels::StaticPulseDendriticDelay", "d2/d53/classWeightUpdateModels_1_1StaticPulseDendriticDelay.html", null ]
-        ] ]
-      ] ]
-    ] ],
     [ "CodeGenerator::CodeStream::CB", "d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html", null ],
     [ "clrngLfsr113Stream_", "d3/db7/structclrngLfsr113Stream__.html", null ],
     [ "clrngLfsr113StreamCreator_", "d3/d52/structclrngLfsr113StreamCreator__.html", null ],
@@ -122,6 +125,14 @@ var hierarchy =
     [ "CurrentSource", "d1/d48/classCurrentSource.html", [
       [ "CurrentSourceInternal", "d6/de6/classCurrentSourceInternal.html", null ]
     ] ],
+    [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html", [
+      [ "CustomUpdate", "d7/d60/classCustomUpdate.html", [
+        [ "CustomUpdateInternal", "d7/df7/classCustomUpdateInternal.html", null ]
+      ] ],
+      [ "CustomUpdateWU", "db/dd4/classCustomUpdateWU.html", [
+        [ "CustomUpdateWUInternal", "da/ddf/classCustomUpdateWUInternal.html", null ]
+      ] ]
+    ] ],
     [ "Snippet::Base::DerivedParam", "d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html", null ],
     [ "Snippet::Base::EGP", "dd/d5d/structSnippet_1_1Base_1_1EGP.html", null ],
     [ "CodeGenerator::ModelSpecMerged::EGPField", "dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html", [
@@ -129,12 +140,31 @@ var hierarchy =
     ] ],
     [ "CodeGenerator::Substitutions::FunctionTemplate", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html", null ],
     [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", null ],
-    [ "CodeGenerator::GroupMerged< G >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", null ],
+    [ "CodeGenerator::GroupMerged< G >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
+      [ "CodeGenerator::CustomUpdateInitGroupMergedBase< G >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", null ]
+    ] ],
+    [ "CodeGenerator::GroupMerged< CustomUpdateInternal >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
+      [ "CodeGenerator::CustomUpdateGroupMerged", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html", null ],
+      [ "CodeGenerator::CustomUpdateInitGroupMergedBase< CustomUpdateInternal >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", [
+        [ "CodeGenerator::CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", null ]
+      ] ]
+    ] ],
+    [ "CodeGenerator::GroupMerged< CustomUpdateWUInternal >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
+      [ "CodeGenerator::CustomUpdateWUGroupMergedBase", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html", [
+        [ "CodeGenerator::CustomUpdateTransposeWUGroupMerged", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html", null ],
+        [ "CodeGenerator::CustomUpdateWUGroupMerged", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html", null ]
+      ] ],
+      [ "CodeGenerator::CustomUpdateInitGroupMergedBase< CustomUpdateWUInternal >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", [
+        [ "CodeGenerator::CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", null ],
+        [ "CodeGenerator::CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", null ]
+      ] ]
+    ] ],
     [ "CodeGenerator::GroupMerged< NeuronGroupInternal >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
       [ "CodeGenerator::NeuronGroupMergedBase", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html", [
         [ "CodeGenerator::NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", null ],
         [ "CodeGenerator::NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html", null ]
       ] ],
+      [ "CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged", "d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged.html", null ],
       [ "CodeGenerator::NeuronSpikeQueueUpdateGroupMerged", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged.html", null ]
     ] ],
     [ "CodeGenerator::GroupMerged< SynapseGroupInternal >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
@@ -156,6 +186,8 @@ var hierarchy =
     [ "Snippet::Init< InitVarSnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
       [ "Models::VarInit", "d8/dee/classModels_1_1VarInit.html", null ]
     ] ],
+    [ "Snippet::InitialiserContainerBase< V, NumVars >", "db/dbb/classSnippet_1_1InitialiserContainerBase.html", null ],
+    [ "Snippet::InitialiserContainerBase< V, 0 >", "d5/dc3/classSnippet_1_1InitialiserContainerBase_3_01V_00_010_01_4.html", null ],
     [ "std::ios_base", null, [
       [ "std::basic_ios< Char >", null, [
         [ "std::basic_ostream< Char >", null, [
@@ -179,11 +211,12 @@ var hierarchy =
     [ "object", null, [
       [ "pygenn.genn_groups.Group", "d1/db3/classpygenn_1_1genn__groups_1_1Group.html", [
         [ "pygenn.genn_groups.CurrentSource", "da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html", null ],
+        [ "pygenn.genn_groups.CustomUpdate", "d5/dc7/classpygenn_1_1genn__groups_1_1CustomUpdate.html", null ],
         [ "pygenn.genn_groups.NeuronGroup", "dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html", null ],
         [ "pygenn.genn_groups.SynapseGroup", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html", null ]
       ] ],
       [ "pygenn.genn_model.GeNNModel", "db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html", null ],
-      [ "pygenn.model_preprocessor.ExtraGlobalVariable", "d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html", null ],
+      [ "pygenn.model_preprocessor.ExtraGlobalParameter", "d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html", null ],
       [ "pygenn.model_preprocessor.Variable", "d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html", null ]
     ] ],
     [ "Snippet::Base::ParamVal", "d7/dda/structSnippet_1_1Base_1_1ParamVal.html", null ],
@@ -193,6 +226,7 @@ var hierarchy =
       [ "CodeGenerator::SingleThreadedCPU::Preferences", "d2/d1e/structCodeGenerator_1_1SingleThreadedCPU_1_1Preferences.html", null ]
     ] ],
     [ "CodeGenerator::CodeStream::Scope", "d4/d6e/classCodeGenerator_1_1CodeStream_1_1Scope.html", null ],
+    [ "Utils::SHA1Hash", "d1/df4/structUtils_1_1SHA1Hash.html", null ],
     [ "SharedLibraryModel< scalar >", "d9/d7e/classSharedLibraryModel.html", null ],
     [ "SpineMLSimulator::Simulator", "db/d3e/classSpineMLSimulator_1_1Simulator.html", null ],
     [ "NeuronGroup::SpikeEventThreshold", "d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html", null ],
@@ -212,11 +246,12 @@ var hierarchy =
     [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
     [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
-    [ "Snippet::ValueBase< NumVars >", "da/d76/classSnippet_1_1ValueBase.html", null ],
-    [ "Snippet::ValueBase< 0 >", "dd/df2/classSnippet_1_1ValueBase_3_010_01_4.html", null ],
     [ "Models::Base::Var", "d5/d42/structModels_1_1Base_1_1Var.html", null ],
-    [ "Models::VarInitContainerBase< NumVars >", "d6/d24/classModels_1_1VarInitContainerBase.html", null ],
-    [ "Models::VarInitContainerBase< 0 >", "db/db0/classModels_1_1VarInitContainerBase_3_010_01_4.html", null ],
+    [ "Models::Base::VarRef", "d1/daf/structModels_1_1Base_1_1VarRef.html", null ],
+    [ "Models::VarReferenceBase", "df/d91/classModels_1_1VarReferenceBase.html", [
+      [ "Models::VarReference", "d1/db6/classModels_1_1VarReference.html", null ],
+      [ "Models::WUVarReference", "dc/d6d/classModels_1_1WUVarReference.html", null ]
+    ] ],
     [ "Writer", null, [
       [ "SpikeRecorder< Writer >", "dd/d9b/classSpikeRecorder.html", null ]
     ] ]

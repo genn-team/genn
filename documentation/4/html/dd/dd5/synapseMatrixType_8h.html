@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -110,14 +110,15 @@ Enumerations</h2></td></tr>
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699">SynapseMatrixConnectivity::BITMASK</a> = (1 &lt;&lt; 1), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da0459833ba9cad7cfd7bbfe10d7bbbe6e">SynapseMatrixConnectivity::SPARSE</a> = (1 &lt;&lt; 2), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89">SynapseMatrixConnectivity::PROCEDURAL</a> = (1 &lt;&lt; 3)
- }<tr class="memdesc:aedb0946699027562bc78103a5d2a578d"><td class="mdescLeft">&#160;</td><td class="mdescRight">&lt; Flags defining differnet types of synaptic matrix connectivity  <a href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578d">More...</a><br /></td></tr>
+ }<tr class="memdesc:aedb0946699027562bc78103a5d2a578d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flags defining differnet types of synaptic matrix connectivity.  <a href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578d">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:aedb0946699027562bc78103a5d2a578d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3c0f0120d3cb9e81daea1d2afa7fbe1f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1f">SynapseMatrixWeight</a> : unsigned int { <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334">SynapseMatrixWeight::GLOBAL</a> = (1 &lt;&lt; 5), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323">SynapseMatrixWeight::INDIVIDUAL</a> = (1 &lt;&lt; 6), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa71de203441306efe17e882a16d439b89">SynapseMatrixWeight::PROCEDURAL</a> = (1 &lt;&lt; 7), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1faf92bc2c3cbbf79265bfd8deb87b087fa">SynapseMatrixWeight::INDIVIDUAL_PSM</a> = (1 &lt;&lt; 8)
- }</td></tr>
+ }<tr class="memdesc:a3c0f0120d3cb9e81daea1d2afa7fbe1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flags defining different types of synaptic matrix connectivity.  <a href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1f">More...</a><br /></td></tr>
+</td></tr>
 <tr class="separator:a3c0f0120d3cb9e81daea1d2afa7fbe1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a24a045033b9a7e987843a67ff5ddec9c"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">SynapseMatrixType</a> : unsigned int { <br />
 &#160;&#160;<a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca0103dab4be5e9b66601b43a52ffa00f0">SynapseMatrixType::DENSE_GLOBALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::DENSE) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL), 
@@ -135,7 +136,8 @@ Enumerations</h2></td></tr>
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca0fa3005652ae18ada3a75bc01dc81f82">SynapseMatrixType::PROCEDURAL_GLOBALG_INDIVIDUAL_PSM</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::GLOBAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM), 
 <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cadd8d747d9023d98e9045f39935d2803a">SynapseMatrixType::PROCEDURAL_PROCEDURALG</a> = static_cast&lt;unsigned int&gt;(SynapseMatrixConnectivity::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::PROCEDURAL) | static_cast&lt;unsigned int&gt;(SynapseMatrixWeight::INDIVIDUAL_PSM)
 <br />
- }</td></tr>
+ }<tr class="memdesc:a24a045033b9a7e987843a67ff5ddec9c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight.  <a href="../../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9c">More...</a><br /></td></tr>
+</td></tr>
 <tr class="separator:a24a045033b9a7e987843a67ff5ddec9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -172,7 +174,7 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>&lt; Flags defining differnet types of synaptic matrix connectivity </p>
+<p>Flags defining differnet types of synaptic matrix connectivity. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="aedb0946699027562bc78103a5d2a578da0706fbbd929bd8abc4de386c53d439ff"></a>DENSE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aedb0946699027562bc78103a5d2a578da0287e103671bf22378919a64d4b70699"></a>BITMASK&#160;</td><td class="fielddoc"></td></tr>
@@ -201,6 +203,8 @@ Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9ca0103dab4be5e9b66601b43a52ffa00f0"></a>DENSE_GLOBALG&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a24a045033b9a7e987843a67ff5ddec9ca05bf2ba82e234d9d8ba1b92b6287945e"></a>DENSE_GLOBALG_INDIVIDUAL_PSM&#160;</td><td class="fielddoc"></td></tr>
@@ -237,6 +241,8 @@ Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Flags defining different types of synaptic matrix connectivity. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a3c0f0120d3cb9e81daea1d2afa7fbe1fa6eecfba72d12922ee1dead07a0ef3334"></a>GLOBAL&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="a3c0f0120d3cb9e81daea1d2afa7fbe1fa938873bbf7fe69b2f3836e6103f2a323"></a>INDIVIDUAL&#160;</td><td class="fielddoc"></td></tr>
@@ -414,7 +420,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../dd/dd5/synapseMatrixType_8h.html">synapseMatrixType.h</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:43 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:32 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

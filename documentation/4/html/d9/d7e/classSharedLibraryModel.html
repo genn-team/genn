@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -173,6 +173,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a1b4634e44d3942b8577efcaa728ecc91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75f6ae33258b82dc375afc963677a4bf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a75f6ae33258b82dc375afc963677a4bf">stepTime</a> ()</td></tr>
 <tr class="separator:a75f6ae33258b82dc375afc963677a4bf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acb126198e455de0c9b3eb2dc1a99e6c5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#acb126198e455de0c9b3eb2dc1a99e6c5">customUpdate</a> (const std::string &amp;name)</td></tr>
+<tr class="separator:acb126198e455de0c9b3eb2dc1a99e6c5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aced5b47a73c1aaed7e7981106184739f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aced5b47a73c1aaed7e7981106184739f">pullRecordingBuffersFromDevice</a> ()</td></tr>
 <tr class="separator:aced5b47a73c1aaed7e7981106184739f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1de06f0fd6b2af0576ce7f4ccc92641"><td class="memItemLeft" align="right" valign="top">scalar&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aa1de06f0fd6b2af0576ce7f4ccc92641">getTime</a> () const</td></tr>
@@ -195,6 +197,10 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a226ed36c2351ad5ffd2b64e5e93d33fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a25968bab3b4f3053c8ed0a4da5c84005"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a25968bab3b4f3053c8ed0a4da5c84005">getInitSparseTime</a> () const</td></tr>
 <tr class="separator:a25968bab3b4f3053c8ed0a4da5c84005"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a040377da31c1c617c065318828d670d5"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a040377da31c1c617c065318828d670d5">getCustomUpdateTime</a> (const std::string &amp;name) const</td></tr>
+<tr class="separator:a040377da31c1c617c065318828d670d5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a27dfecc25d220cc847ea14d7b2ef9739"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a27dfecc25d220cc847ea14d7b2ef9739">getCustomUpdateTransposeTime</a> (const std::string &amp;name) const</td></tr>
+<tr class="separator:a27dfecc25d220cc847ea14d7b2ef9739"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a90cf228649b4185acea73a378344ed15"><td class="memItemLeft" align="right" valign="top">void *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a90cf228649b4185acea73a378344ed15">getSymbol</a> (const std::string &amp;symbolName, bool allowMissing=false, void *defaultSymbol=nullptr) const</td></tr>
 <tr class="separator:a90cf228649b4185acea73a378344ed15"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -441,6 +447,34 @@ template&lt;typename scalar  = float&gt; </div>
 
 </div>
 </div>
+<a id="acb126198e455de0c9b3eb2dc1a99e6c5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb126198e455de0c9b3eb2dc1a99e6c5">&#9670;&nbsp;</a></span>customUpdate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::customUpdate </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a22329447b2a6ef50ac0bec7e7f79a346"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a22329447b2a6ef50ac0bec7e7f79a346">&#9670;&nbsp;</a></span>freeExtraGlobalParam() <span class="overload">[1/2]</span></h2>
 
@@ -569,6 +603,62 @@ template&lt;typename T &gt; </div>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>varName</em></td><td>)</td>
           <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a040377da31c1c617c065318828d670d5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a040377da31c1c617c065318828d670d5">&#9670;&nbsp;</a></span>getCustomUpdateTime()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::getCustomUpdateTime </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a27dfecc25d220cc847ea14d7b2ef9739"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27dfecc25d220cc847ea14d7b2ef9739">&#9670;&nbsp;</a></span>getCustomUpdateTransposeTime()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename scalar  = float&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">double <a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a>&lt; scalar &gt;::getCustomUpdateTransposeTime </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td> const</td>
         </tr>
       </table>
   </td>
@@ -1683,7 +1773,7 @@ template&lt;typename scalar  = float&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:34 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

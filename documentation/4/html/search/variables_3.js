@@ -5,6 +5,5 @@ var searchData=
   ['deckindex',['deckIndex',['../d6/d5a/structclrngPhilox432StreamState.html#a5e29c990f969d75fd0310b26e52f1c08',1,'clrngPhilox432StreamState']]],
   ['default_5fvar_5flocation',['default_var_location',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#ab76469f3e0329c1bc7827b6b98d276b3',1,'pygenn::genn_model::GeNNModel']]],
   ['deviceselectmethod',['deviceSelectMethod',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e',1,'CodeGenerator::CUDA::Preferences::deviceSelectMethod()'],['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#adf4a869222d34d4d398f36ef47b2f92f',1,'CodeGenerator::OpenCL::Preferences::deviceSelectMethod()']]],
-  ['disableamdflush',['disableAMDFlush',['../dd/d05/structCodeGenerator_1_1OpenCL_1_1Preferences.html#a36922fc4cf845e1f2e40bed0cd97b090',1,'CodeGenerator::OpenCL::Preferences']]],
   ['dt',['dT',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#afa2abcf499adbe2380463cc68ec614db',1,'pygenn::genn_model::GeNNModel']]]
 ];

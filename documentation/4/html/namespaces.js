@@ -2,6 +2,7 @@ var namespaces =
 [
     [ "CodeGenerator", "d0/d02/namespaceCodeGenerator.html", "d0/d02/namespaceCodeGenerator" ],
     [ "CurrentSourceModels", "d6/dd3/namespaceCurrentSourceModels.html", null ],
+    [ "CustomUpdateModels", "d4/d01/namespaceCustomUpdateModels.html", null ],
     [ "filesystem", "d1/d94/namespacefilesystem.html", null ],
     [ "InitSparseConnectivitySnippet", "dc/ddd/namespaceInitSparseConnectivitySnippet.html", null ],
     [ "InitVarSnippet", "d2/dfc/namespaceInitVarSnippet.html", null ],

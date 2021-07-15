@@ -15,11 +15,7 @@ var files =
     ] ],
     [ "opencl/backend.h", "dd/df5/opencl_2backend_8h.html", "dd/df5/opencl_2backend_8h" ],
     [ "backendBase.cc", "d7/df6/backendBase_8cc.html", "d7/df6/backendBase_8cc" ],
-    [ "backendBase.h", "d9/d67/backendBase_8h.html", [
-      [ "PreferencesBase", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html", "d1/d7a/structCodeGenerator_1_1PreferencesBase" ],
-      [ "MemAlloc", "d2/d06/classCodeGenerator_1_1MemAlloc.html", "d2/d06/classCodeGenerator_1_1MemAlloc" ],
-      [ "BackendBase", "d3/d15/classCodeGenerator_1_1BackendBase.html", "d3/d15/classCodeGenerator_1_1BackendBase" ]
-    ] ],
+    [ "backendBase.h", "d9/d67/backendBase_8h.html", "d9/d67/backendBase_8h" ],
     [ "backendExport.h", "d5/d83/backendExport_8h.html", "d5/d83/backendExport_8h" ],
     [ "backendSIMT.cc", "d3/d8e/backendSIMT_8cc.html", null ],
     [ "backendSIMT.h", "d6/db4/backendSIMT_8h.html", "d6/db4/backendSIMT_8h" ],
@@ -44,9 +40,23 @@ var files =
     ] ],
     [ "currentSourceModels.cc", "d4/d8a/currentSourceModels_8cc.html", "d4/d8a/currentSourceModels_8cc" ],
     [ "currentSourceModels.h", "da/d49/currentSourceModels_8h.html", "da/d49/currentSourceModels_8h" ],
+    [ "customUpdate.cc", "dd/dc6/customUpdate_8cc.html", null ],
+    [ "customUpdate.h", "d5/d56/customUpdate_8h.html", [
+      [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html", "da/da9/classCustomUpdateBase" ],
+      [ "CustomUpdate", "d7/d60/classCustomUpdate.html", "d7/d60/classCustomUpdate" ],
+      [ "CustomUpdateWU", "db/dd4/classCustomUpdateWU.html", "db/dd4/classCustomUpdateWU" ]
+    ] ],
+    [ "customUpdateInternal.h", "d8/d04/customUpdateInternal_8h.html", [
+      [ "CustomUpdateInternal", "d7/df7/classCustomUpdateInternal.html", "d7/df7/classCustomUpdateInternal" ],
+      [ "CustomUpdateWUInternal", "da/ddf/classCustomUpdateWUInternal.html", "da/ddf/classCustomUpdateWUInternal" ]
+    ] ],
+    [ "customUpdateModels.cc", "d2/d2c/customUpdateModels_8cc.html", "d2/d2c/customUpdateModels_8cc" ],
+    [ "customUpdateModels.h", "d3/df5/customUpdateModels_8h.html", "d3/df5/customUpdateModels_8h" ],
     [ "gccfeatures.h", "da/dff/gccfeatures_8h.html", "da/dff/gccfeatures_8h" ],
     [ "generateAll.cc", "df/d57/generateAll_8cc.html", null ],
     [ "generateAll.h", "da/da4/generateAll_8h.html", "da/da4/generateAll_8h" ],
+    [ "generateCustomUpdate.cc", "d9/d10/generateCustomUpdate_8cc.html", null ],
+    [ "generateCustomUpdate.h", "d1/d51/generateCustomUpdate_8h.html", "d1/d51/generateCustomUpdate_8h" ],
     [ "generateInit.cc", "d7/dac/generateInit_8cc.html", null ],
     [ "generateInit.h", "d7/d53/generateInit_8h.html", "d7/d53/generateInit_8h" ],
     [ "generateMakefile.cc", "d3/d6c/generateMakefile_8cc.html", null ],
@@ -73,6 +83,7 @@ var files =
     [ "groupMerged.h", "dd/dfd/groupMerged_8h.html", [
       [ "GroupMerged", "df/dfd/classCodeGenerator_1_1GroupMerged.html", "df/dfd/classCodeGenerator_1_1GroupMerged" ],
       [ "NeuronSpikeQueueUpdateGroupMerged", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged.html", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged" ],
+      [ "NeuronPrevSpikeTimeUpdateGroupMerged", "d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged.html", "d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged" ],
       [ "NeuronGroupMergedBase", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase" ],
       [ "NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged" ],
       [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged" ],
@@ -84,7 +95,15 @@ var files =
       [ "SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged" ],
       [ "SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged" ],
       [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged" ],
-      [ "SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged" ]
+      [ "SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged" ],
+      [ "CustomUpdateGroupMerged", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged" ],
+      [ "CustomUpdateWUGroupMergedBase", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase" ],
+      [ "CustomUpdateWUGroupMerged", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged" ],
+      [ "CustomUpdateTransposeWUGroupMerged", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged" ],
+      [ "CustomUpdateInitGroupMergedBase", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase" ],
+      [ "CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged" ],
+      [ "CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged" ],
+      [ "CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged" ]
     ] ],
     [ "initSparseConnectivitySnippet.cc", "d4/d88/initSparseConnectivitySnippet_8cc.html", "d4/d88/initSparseConnectivitySnippet_8cc" ],
     [ "initSparseConnectivitySnippet.h", "de/d51/initSparseConnectivitySnippet_8h.html", "de/d51/initSparseConnectivitySnippet_8h" ],
@@ -121,6 +140,7 @@ var files =
     [ "model_preprocessor.py", "d2/d3e/model__preprocessor_8py.html", "d2/d3e/model__preprocessor_8py" ],
     [ "modelProperty.cc", "d2/d42/modelProperty_8cc.html", null ],
     [ "modelProperty.h", "d8/df1/modelProperty_8h.html", "d8/df1/modelProperty_8h" ],
+    [ "models.cc", "dd/d5a/models_8cc.html", null ],
     [ "models.h", "d4/d13/models_8h.html", "d4/d13/models_8h" ],
     [ "modelSpec.cc", "d7/dfd/modelSpec_8cc.html", null ],
     [ "modelSpec.h", "dc/de1/modelSpec_8h.html", "dc/de1/modelSpec_8h" ],
@@ -220,6 +240,7 @@ var files =
     ] ],
     [ "cuda/utils.h", "d3/dcc/cuda_2utils_8h.html", "d3/dcc/cuda_2utils_8h" ],
     [ "opencl/utils.h", "da/d2b/opencl_2utils_8h.html", "da/d2b/opencl_2utils_8h" ],
+    [ "varAccess.h", "de/dfb/varAccess_8h.html", "de/dfb/varAccess_8h" ],
     [ "variableMode.h", "d6/d8f/variableMode_8h.html", "d6/d8f/variableMode_8h" ],
     [ "weightUpdateModels.cc", "da/dd6/weightUpdateModels_8cc.html", "da/dd6/weightUpdateModels_8cc" ],
     [ "weightUpdateModels.h", "dc/dab/weightUpdateModels_8h.html", "dc/dab/weightUpdateModels_8h" ]

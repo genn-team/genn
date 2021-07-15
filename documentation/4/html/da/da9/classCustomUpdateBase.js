@@ -1,0 +1,25 @@
+var classCustomUpdateBase =
+[
+    [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#aad47959474b3b3b16a600abd6ca6e0f3", null ],
+    [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#a42ac348785fa7113e0ef8685575e2e8c", null ],
+    [ "CustomUpdateBase", "da/da9/classCustomUpdateBase.html#abb63e2c199fd58ebf8152e0bd7a085c2", null ],
+    [ "checkVarReferenceTypes", "da/da9/classCustomUpdateBase.html#a02c7a17fb51c1e2c2e9d5dc3aa8482da", null ],
+    [ "finalizeBatched", "da/da9/classCustomUpdateBase.html#a89f89969b57c47ed74e8b3c5e0c381e0", null ],
+    [ "getCustomUpdateModel", "da/da9/classCustomUpdateBase.html#ab9802e15bf999e14d3074099f5327324", null ],
+    [ "getDerivedParams", "da/da9/classCustomUpdateBase.html#ab7389840388acb8b146f877c4337fe58", null ],
+    [ "getName", "da/da9/classCustomUpdateBase.html#a35919a4e5d5d865c3678534fa987e8a8", null ],
+    [ "getParams", "da/da9/classCustomUpdateBase.html#a18de527e24453617ab10c333c22159bb", null ],
+    [ "getUpdateGroupName", "da/da9/classCustomUpdateBase.html#a9764365eec5330eb9f92e475be1b55d0", null ],
+    [ "getVarInitialisers", "da/da9/classCustomUpdateBase.html#a3421ada538f8e6faf7fe7d14ae6d2c5b", null ],
+    [ "getVarLocation", "da/da9/classCustomUpdateBase.html#a33214cfbb70918d02dfc288037f6a2b8", null ],
+    [ "getVarLocation", "da/da9/classCustomUpdateBase.html#a6fda4b8c6e6e93496f58ccb837dfcf95", null ],
+    [ "getVarLocationHashDigest", "da/da9/classCustomUpdateBase.html#a8aec4f7a9c857562bf79bd9b9188cd1b", null ],
+    [ "initDerivedParams", "da/da9/classCustomUpdateBase.html#a2b57c046eda3a4675b78f39769ab8cdf", null ],
+    [ "isBatched", "da/da9/classCustomUpdateBase.html#a70d7ff78782d9978c1501b7d2598ff6d", null ],
+    [ "isInitRNGRequired", "da/da9/classCustomUpdateBase.html#a2c67f76c6f65556e1e263bd036f4a296", null ],
+    [ "isVarInitRequired", "da/da9/classCustomUpdateBase.html#a45266a406a10eb283660f66042af13bf", null ],
+    [ "isZeroCopyEnabled", "da/da9/classCustomUpdateBase.html#abaf93f6fbceea11013ddac8d46c6831f", null ],
+    [ "setVarLocation", "da/da9/classCustomUpdateBase.html#a07ae72c62ddb9e1b8c66f46d42e5c163", null ],
+    [ "updateHash", "da/da9/classCustomUpdateBase.html#a88d3c1572240717c7f94e8330b7a2f9a", null ],
+    [ "updateInitHash", "da/da9/classCustomUpdateBase.html#ac38c2950058bf76b8acb1d380826a4be", null ]
+];

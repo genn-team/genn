@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -97,6 +97,9 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 <div class="textblock">Here is a list of all class members with links to the classes they belong to:</div>
 
 <h3><a id="index_p"></a>- p -</h3><ul>
+<li>padKernelSize()
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a256d7519de033de9091e53e56edb94e4">CodeGenerator::BackendSIMT</a>
+</li>
 <li>ParamVal()
 : <a class="el" href="d7/dda/structSnippet_1_1Base_1_1ParamVal.html#a94f25c6633f15c25c66248cffe7e20f8">Snippet::Base::ParamVal</a>
 </li>
@@ -134,6 +137,7 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 </li>
 <li>pop
 : <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a8559a76c85d0c217d97c7797b38e8411">pygenn.genn_groups.CurrentSource</a>
+, <a class="el" href="d5/dc7/classpygenn_1_1genn__groups_1_1CustomUpdate.html#a4018a76ad346a229cea68b68efbfe2e7">pygenn.genn_groups.CustomUpdate</a>
 , <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a4a569b27b4c1517027d02a588079091b">pygenn.genn_groups.NeuronGroup</a>
 , <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a29fb9f595bd4e6e4289139f6c9cfb502">pygenn.genn_groups.SynapseGroup</a>
 </li>
@@ -188,6 +192,12 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 <li>PresynapticUpdateGroupMergedHandler
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">CodeGenerator::BackendBase</a>
 </li>
+<li>prev_spike_event_times
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a14f6fe0c9b18107a45243fe83df778e0">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>prev_spike_times
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a34ab7aa2513f17a512b89e9112c31519">pygenn.genn_groups.NeuronGroup</a>
+</li>
 <li>PreVarValues
 : <a class="el" href="d7/da1/classCurrentSourceModels_1_1DC.html#a979def8db5dd3d0bd585afe965f93698">CurrentSourceModels::DC</a>
 , <a class="el" href="d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html#a077dd38255bda0c91be7b343ba71b72c">CurrentSourceModels::GaussianNoise</a>
@@ -226,11 +236,29 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 , <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a3ea2a76a16f5aa01ac244d3a4eb289f4">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>pull_extra_global_param_from_device()
-: <a class="el" href="d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a5f675fb5d704334c8277bd01d3e698fd">pygenn.genn_groups.Group</a>
-, <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a414b34f9e91be639135b4b37658ebbf5">pygenn.genn_model.GeNNModel</a>
+: <a class="el" href="d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a9abd87a3db3db2edc600bb1a66e95039">pygenn.genn_groups.Group</a>
+, <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#af9c46456f2802ff0362a3ff0ac959e54">pygenn.genn_model.GeNNModel</a>
+</li>
+<li>pull_in_syn_from_device()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a39ac41eeb45afb0050f2d9ddd2956eea">pygenn.genn_groups.SynapseGroup</a>
+</li>
+<li>pull_prev_spike_event_times_from_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a2f23ec7723f3b4ae2f3aaadfafdf09f3">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>pull_prev_spike_times_from_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#ae17b8b1bea76356876b37fcc3bad3e8a">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>pull_psm_extra_global_param_from_device()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af366111954258048aacaa0f0a03850b4">pygenn.genn_groups.SynapseGroup</a>
 </li>
 <li>pull_recording_buffers_from_device()
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a9c5fc9394f573e6e464fa3a6add748f0">pygenn.genn_model.GeNNModel</a>
+</li>
+<li>pull_spike_event_times_from_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a3c2ac5273c361c2fca28df6af8794a5d">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>pull_spike_times_from_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a9f556e930c05350f1b32e017969da7b6">pygenn.genn_groups.NeuronGroup</a>
 </li>
 <li>pull_spikes_from_device()
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a663d93bc0412391b5b349ce1ddb7495e">pygenn.genn_groups.NeuronGroup</a>
@@ -251,7 +279,7 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#af6c7b50f91a08ddaf3f6c62553cc3707">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pullExtraGlobalParam()
-: <a class="el" href="d9/d7e/classSharedLibraryModel.html#aaf7929b9a306315df2b774feda4edb04">SharedLibraryModel&lt; scalar &gt;</a>
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a56dc227e9e1273ce52da0f199e305945">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pullFromDevice()
 : <a class="el" href="dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#a2a562a5ba0478fdfbeedd6007b9f3306">SpineMLSimulator::ModelProperty::Base</a>
@@ -283,8 +311,26 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 , <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a02586b0bf4c6969e7013778ced108194">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>push_extra_global_param_to_device()
-: <a class="el" href="d1/db3/classpygenn_1_1genn__groups_1_1Group.html#aec3457d8b792fd86162f259434fbf1ef">pygenn.genn_groups.Group</a>
-, <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a94ccfe8b242fe621d60a1e705376101f">pygenn.genn_model.GeNNModel</a>
+: <a class="el" href="d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a3188ff3433c560f7b49c89e9a5df2ca9">pygenn.genn_groups.Group</a>
+, <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a6b6eb8faf228d32045ae3a1322ee6cec">pygenn.genn_model.GeNNModel</a>
+</li>
+<li>push_in_syn_to_device()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a6bf1937409f558325ee0bc913ec9e451">pygenn.genn_groups.SynapseGroup</a>
+</li>
+<li>push_prev_spike_event_times_to_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a701fc1b78f7e168248edb52e2164ab46">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>push_prev_spike_times_to_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#accdefedf10284acdc43f4f672d4676da">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>push_psm_extra_global_param_to_device()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a718f52c41f6623d7a237c15d9cb4a104">pygenn.genn_groups.SynapseGroup</a>
+</li>
+<li>push_spike_event_times_to_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#ab549e76dd34d1be73a475684da7d2f5c">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>push_spike_times_to_device()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#acd0c57f22d4f76df23fc76e3d341f887">pygenn.genn_groups.NeuronGroup</a>
 </li>
 <li>push_spikes_to_device()
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a69ff22a73e811a1fbe0b0791a64ec0ac">pygenn.genn_groups.NeuronGroup</a>
@@ -308,7 +354,7 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#a554acb235be4a8267b80108c8e673b4e">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pushExtraGlobalParam()
-: <a class="el" href="d9/d7e/classSharedLibraryModel.html#ade6903395fd342e4b3b1e47c43f44f5f">SharedLibraryModel&lt; scalar &gt;</a>
+: <a class="el" href="d9/d7e/classSharedLibraryModel.html#a54daca8dbff14e01c1bfd76510de5f44">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>pushSpikesToDevice()
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#a38b5f014414ec355b06d60349797df22">SharedLibraryModel&lt; scalar &gt;</a>
@@ -329,7 +375,7 @@ $(document).ready(function(){initNavTree('functions_p.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Jan 5 2021 09:30:00 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:47 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

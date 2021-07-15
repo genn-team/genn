@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -105,6 +105,15 @@ $(document).ready(function(){initNavTree('df/dfd/classCodeGenerator_1_1GroupMerg
 <div class="contents">
 
 <p><code>#include &lt;<a class="el" href="../../dd/dfd/groupMerged_8h_source.html">groupMerged.h</a>&gt;</code></p>
+<div class="dynheader">
+Inheritance diagram for CodeGenerator::GroupMerged&lt; G &gt;:</div>
+<div class="dyncontent">
+ <div class="center">
+  <img src="../../df/dfd/classCodeGenerator_1_1GroupMerged.png" usemap="#CodeGenerator::GroupMerged_3C_20G_20_3E_map" alt=""/>
+  <map id="CodeGenerator::GroupMerged_3C_20G_20_3E_map" name="CodeGenerator::GroupMerged_3C_20G_20_3E_map">
+<area href="../../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html" alt="CodeGenerator::CustomUpdateInitGroupMergedBase&lt; G &gt;" shape="rect" coords="0,56,341,80"/>
+</map>
+ </div></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
@@ -130,6 +139,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a37df4b84d064002b92f5478cfc71e18d"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a37df4b84d064002b92f5478cfc71e18d">getArchetype</a> () const</td></tr>
 <tr class="memdesc:a37df4b84d064002b92f5478cfc71e18d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups.  <a href="#a37df4b84d064002b92f5478cfc71e18d">More...</a><br /></td></tr>
 <tr class="separator:a37df4b84d064002b92f5478cfc71e18d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51a4f3f463244f3150e16dbe0066d88a"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a51a4f3f463244f3150e16dbe0066d88a">getMemorySpace</a> () const</td></tr>
+<tr class="memdesc:a51a4f3f463244f3150e16dbe0066d88a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get name of memory space assigned to group.  <a href="#a51a4f3f463244f3150e16dbe0066d88a">More...</a><br /></td></tr>
+<tr class="separator:a51a4f3f463244f3150e16dbe0066d88a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26f1cfd1cea50675f49e6163bff47ee1"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::reference_wrapper&lt; const <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac1a0699268480acddd635f2dac745c0b">GroupInternal</a> &gt; &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a26f1cfd1cea50675f49e6163bff47ee1">getGroups</a> () const</td></tr>
 <tr class="memdesc:a26f1cfd1cea50675f49e6163bff47ee1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets access to underlying vector of neuron groups which have been merged.  <a href="#a26f1cfd1cea50675f49e6163bff47ee1">More...</a><br /></td></tr>
 <tr class="separator:a26f1cfd1cea50675f49e6163bff47ee1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,17 +158,19 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aae68697044f258f736cca9c753bcedfb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9736f70187bdb4b9def628a4c9adc570"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a9736f70187bdb4b9def628a4c9adc570">getStructArraySize</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
 <tr class="separator:a9736f70187bdb4b9def628a4c9adc570"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af92aaeb21f030deb215087d03e6039ae"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#af92aaeb21f030deb215087d03e6039ae">assignMemorySpaces</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">BackendBase::MemorySpaces</a> &amp;memorySpaces)</td></tr>
+<tr class="memdesc:af92aaeb21f030deb215087d03e6039ae"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assign memory spaces to group.  <a href="#af92aaeb21f030deb215087d03e6039ae">More...</a><br /></td></tr>
+<tr class="separator:af92aaeb21f030deb215087d03e6039ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
+<tr class="memitem:a55919084b08d84b5c618a797473652ee"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a55919084b08d84b5c618a797473652ee">isParamReferenced</a> (const std::vector&lt; std::string &gt; &amp;codeStrings, const std::string &amp;paramName) const</td></tr>
+<tr class="memdesc:a55919084b08d84b5c618a797473652ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to test whether parameter is referenced in vector of codestrings.  <a href="#a55919084b08d84b5c618a797473652ee">More...</a><br /></td></tr>
+<tr class="separator:a55919084b08d84b5c618a797473652ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab81dc8060e3208107a635b805ea75798"><td class="memTemplParams" colspan="2">template&lt;typename P &gt; </td></tr>
 <tr class="memitem:ab81dc8060e3208107a635b805ea75798"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ab81dc8060e3208107a635b805ea75798">isParamValueHeterogeneous</a> (size_t index, P getParamValuesFn) const</td></tr>
 <tr class="memdesc:ab81dc8060e3208107a635b805ea75798"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to test whether parameter values are heterogeneous within merged group.  <a href="#ab81dc8060e3208107a635b805ea75798">More...</a><br /></td></tr>
 <tr class="separator:ab81dc8060e3208107a635b805ea75798"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6c4acb65e6fc248a9a3302ee0785f189"><td class="memTemplParams" colspan="2">template&lt;typename P &gt; </td></tr>
-<tr class="memitem:a6c4acb65e6fc248a9a3302ee0785f189"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a6c4acb65e6fc248a9a3302ee0785f189">isParamValueHeterogeneous</a> (const std::vector&lt; std::string &gt; &amp;codeStrings, const std::string &amp;paramName, size_t index, P getParamValuesFn) const</td></tr>
-<tr class="memdesc:a6c4acb65e6fc248a9a3302ee0785f189"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to test whether parameter values are heterogeneous within merged group.  <a href="#a6c4acb65e6fc248a9a3302ee0785f189">More...</a><br /></td></tr>
-<tr class="separator:a6c4acb65e6fc248a9a3302ee0785f189"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac65000c419542a6ba724132ee1cefc7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#aac65000c419542a6ba724132ee1cefc7">addField</a> (const std::string &amp;type, const std::string &amp;name, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">GetFieldValueFunc</a> getFieldValue, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aef">FieldType</a> fieldType=<a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aefaeb6d8ae6f20283755b339c0dc273988b">FieldType::Standard</a>)</td></tr>
 <tr class="separator:aac65000c419542a6ba724132ee1cefc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb64eb31f8ecb21a5fdebf31b8df918e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#afb64eb31f8ecb21a5fdebf31b8df918e">addScalarField</a> (const std::string &amp;name, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac4a09a15d5da285569e09c010399f2f0">GetFieldValueFunc</a> getFieldValue, <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aef">FieldType</a> fieldType=<a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aefaeb6d8ae6f20283755b339c0dc273988b">FieldType::Standard</a>)</td></tr>
@@ -165,6 +179,9 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a13180928229e33ec72a6b0896f132c2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af0f0a4dba7b2fdd7244227385bcc6954"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#af0f0a4dba7b2fdd7244227385bcc6954">addVars</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;vars, const std::string &amp;arrayPrefix)</td></tr>
 <tr class="separator:af0f0a4dba7b2fdd7244227385bcc6954"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a17cd1c220f55b51848d406e4e32cf11d"><td class="memTemplParams" colspan="2">template&lt;typename V &gt; </td></tr>
+<tr class="memitem:a17cd1c220f55b51848d406e4e32cf11d"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a17cd1c220f55b51848d406e4e32cf11d">addVarReferences</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a">Models::Base::VarRefVec</a> &amp;varReferences, const std::string &amp;arrayPrefix, V getVarRefFn)</td></tr>
+<tr class="separator:a17cd1c220f55b51848d406e4e32cf11d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0cc9b236456bcdd0c56d743481cf0592"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a0cc9b236456bcdd0c56d743481cf0592">addEGPs</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6">Snippet::Base::EGPVec</a> &amp;egps, const std::string &amp;arrayPrefix, const std::string &amp;varName=&quot;&quot;)</td></tr>
 <tr class="separator:a0cc9b236456bcdd0c56d743481cf0592"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aafb3f01bc3e45d60454dc1ed6f045849"><td class="memTemplParams" colspan="2">template&lt;typename T , typename P , typename H &gt; </td></tr>
@@ -179,6 +196,19 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:adc2261f0481b557368c2f52a089a5dce"><td class="memTemplParams" colspan="2">template&lt;typename T , typename V , typename H &gt; </td></tr>
 <tr class="memitem:adc2261f0481b557368c2f52a089a5dce"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#adc2261f0481b557368c2f52a089a5dce">addHeterogeneousVarInitDerivedParams</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">Models::Base::VarVec</a> &amp;vars, V getVarInitialisers, H isHeterogeneous)</td></tr>
 <tr class="separator:adc2261f0481b557368c2f52a089a5dce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0e8075c0b3900c64eac9ae89701d2bd"><td class="memTemplParams" colspan="2">template&lt;typename H &gt; </td></tr>
+<tr class="memitem:ab0e8075c0b3900c64eac9ae89701d2bd"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ab0e8075c0b3900c64eac9ae89701d2bd">updateHash</a> (H getHashableFn, boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="memdesc:ab0e8075c0b3900c64eac9ae89701d2bd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to update hash with the hash of calling getHashableFn on each group.  <a href="#ab0e8075c0b3900c64eac9ae89701d2bd">More...</a><br /></td></tr>
+<tr class="separator:ab0e8075c0b3900c64eac9ae89701d2bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7be7b638dd4bd85467ec5af89852cef4"><td class="memTemplParams" colspan="2">template&lt;typename T , typename V , typename R &gt; </td></tr>
+<tr class="memitem:a7be7b638dd4bd85467ec5af89852cef4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a7be7b638dd4bd85467ec5af89852cef4">updateParamHash</a> (R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="separator:a7be7b638dd4bd85467ec5af89852cef4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbf5991703bb949583ec14a78ee4a7af"><td class="memTemplParams" colspan="2">template&lt;typename T , typename V , typename R &gt; </td></tr>
+<tr class="memitem:afbf5991703bb949583ec14a78ee4a7af"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#afbf5991703bb949583ec14a78ee4a7af">updateVarInitParamHash</a> (V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="separator:afbf5991703bb949583ec14a78ee4a7af"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afcec8eb78ea3e7d0a1bc18344f7391ce"><td class="memTemplParams" colspan="2">template&lt;typename T , typename V , typename R &gt; </td></tr>
+<tr class="memitem:afcec8eb78ea3e7d0a1bc18344f7391ce"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#afcec8eb78ea3e7d0a1bc18344f7391ce">updateVarInitDerivedParamHash</a> (V getVarInitialisers, R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="separator:afcec8eb78ea3e7d0a1bc18344f7391ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac77f91d8484a2c12b56e94dc23d89003"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#ac77f91d8484a2c12b56e94dc23d89003">generateRunnerBase</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalFunc, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalVar, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerVarDecl, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerMergedStructAlloc, const std::string &amp;name, bool host=false) const</td></tr>
 <tr class="separator:ac77f91d8484a2c12b56e94dc23d89003"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -686,6 +716,52 @@ template&lt;typename G&gt; </div>
 
 </div>
 </div>
+<a id="a17cd1c220f55b51848d406e4e32cf11d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a17cd1c220f55b51848d406e4e32cf11d">&#9670;&nbsp;</a></span>addVarReferences()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<div class="memtemplate">
+template&lt;typename V &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::addVarReferences </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a">Models::Base::VarRefVec</a> &amp;&#160;</td>
+          <td class="paramname"><em>varReferences</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>arrayPrefix</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">V&#160;</td>
+          <td class="paramname"><em>getVarRefFn</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="af0f0a4dba7b2fdd7244227385bcc6954"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af0f0a4dba7b2fdd7244227385bcc6954">&#9670;&nbsp;</a></span>addVars()</h2>
 
@@ -721,6 +797,47 @@ template&lt;typename G&gt; </div>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="af92aaeb21f030deb215087d03e6039ae"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af92aaeb21f030deb215087d03e6039ae">&#9670;&nbsp;</a></span>assignMemorySpaces()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::assignMemorySpaces </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
+          <td class="paramname"><em>backend</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">BackendBase::MemorySpaces</a> &amp;&#160;</td>
+          <td class="paramname"><em>memorySpaces</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Assign memory spaces to group. </p>
+<p>Memory spaces are given out on a first-come, first-serve basis so this should be called on groups in preferential order </p>
 
 </div>
 </div>
@@ -1002,6 +1119,35 @@ template&lt;typename G&gt; </div>
 
 </div>
 </div>
+<a id="a51a4f3f463244f3150e16dbe0066d88a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a51a4f3f463244f3150e16dbe0066d88a">&#9670;&nbsp;</a></span>getMemorySpace()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::string&amp; <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::getMemorySpace </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get name of memory space assigned to group. </p>
+
+</div>
+</div>
 <a id="afbc43d1b9ce4c99ce6c9720db09f4d31"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#afbc43d1b9ce4c99ce6c9720db09f4d31">&#9670;&nbsp;</a></span>getSortedFields()</h2>
 
@@ -1060,63 +1206,19 @@ template&lt;typename G&gt; </div>
 
 </div>
 </div>
-<a id="ab81dc8060e3208107a635b805ea75798"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab81dc8060e3208107a635b805ea75798">&#9670;&nbsp;</a></span>isParamValueHeterogeneous() <span class="overload">[1/2]</span></h2>
+<a id="a55919084b08d84b5c618a797473652ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55919084b08d84b5c618a797473652ee">&#9670;&nbsp;</a></span>isParamReferenced()</h2>
 
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
 template&lt;typename G&gt; </div>
-<div class="memtemplate">
-template&lt;typename P &gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">bool <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::isParamValueHeterogeneous </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>index</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">P&#160;</td>
-          <td class="paramname"><em>getParamValuesFn</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Helper to test whether parameter values are heterogeneous within merged group. </p>
-
-</div>
-</div>
-<a id="a6c4acb65e6fc248a9a3302ee0785f189"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a6c4acb65e6fc248a9a3302ee0785f189">&#9670;&nbsp;</a></span>isParamValueHeterogeneous() <span class="overload">[2/2]</span></h2>
-
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename G&gt; </div>
-<div class="memtemplate">
-template&lt;typename P &gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::isParamValueHeterogeneous </td>
+          <td class="memname">bool <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::isParamReferenced </td>
           <td>(</td>
           <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
           <td class="paramname"><em>codeStrings</em>, </td>
@@ -1125,11 +1227,41 @@ template&lt;typename P &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>paramName</em>, </td>
+          <td class="paramname"><em>paramName</em>&#160;</td>
         </tr>
         <tr>
-          <td class="paramkey"></td>
           <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper to test whether parameter is referenced in vector of codestrings. </p>
+
+</div>
+</div>
+<a id="ab81dc8060e3208107a635b805ea75798"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab81dc8060e3208107a635b805ea75798">&#9670;&nbsp;</a></span>isParamValueHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<div class="memtemplate">
+template&lt;typename P &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::isParamValueHeterogeneous </td>
+          <td>(</td>
           <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>index</em>, </td>
         </tr>
@@ -1153,6 +1285,186 @@ template&lt;typename P &gt; </div>
 </div><div class="memdoc">
 
 <p>Helper to test whether parameter values are heterogeneous within merged group. </p>
+
+</div>
+</div>
+<a id="ab0e8075c0b3900c64eac9ae89701d2bd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab0e8075c0b3900c64eac9ae89701d2bd">&#9670;&nbsp;</a></span>updateHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<div class="memtemplate">
+template&lt;typename H &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::updateHash </td>
+          <td>(</td>
+          <td class="paramtype">H&#160;</td>
+          <td class="paramname"><em>getHashableFn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper to update hash with the hash of calling getHashableFn on each group. </p>
+
+</div>
+</div>
+<a id="a7be7b638dd4bd85467ec5af89852cef4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7be7b638dd4bd85467ec5af89852cef4">&#9670;&nbsp;</a></span>updateParamHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<div class="memtemplate">
+template&lt;typename T , typename V , typename R &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::updateParamHash </td>
+          <td>(</td>
+          <td class="paramtype">R&#160;</td>
+          <td class="paramname"><em>isParamReferencedFn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">V&#160;</td>
+          <td class="paramname"><em>getValueFn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afcec8eb78ea3e7d0a1bc18344f7391ce"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afcec8eb78ea3e7d0a1bc18344f7391ce">&#9670;&nbsp;</a></span>updateVarInitDerivedParamHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<div class="memtemplate">
+template&lt;typename T , typename V , typename R &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::updateVarInitDerivedParamHash </td>
+          <td>(</td>
+          <td class="paramtype">V&#160;</td>
+          <td class="paramname"><em>getVarInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">R&#160;</td>
+          <td class="paramname"><em>isDerivedParamReferencedFn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="afbf5991703bb949583ec14a78ee4a7af"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbf5991703bb949583ec14a78ee4a7af">&#9670;&nbsp;</a></span>updateVarInitParamHash()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename G&gt; </div>
+<div class="memtemplate">
+template&lt;typename T , typename V , typename R &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged</a>&lt; G &gt;::updateVarInitParamHash </td>
+          <td>(</td>
+          <td class="paramtype">V&#160;</td>
+          <td class="paramname"><em>getVarInitialisers</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">R&#160;</td>
+          <td class="paramname"><em>isParamReferencedFn</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">boost::uuids::detail::sha1 &amp;&#160;</td>
+          <td class="paramname"><em>hash</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -1166,7 +1478,7 @@ template&lt;typename P &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">GroupMerged</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:47 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:36 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

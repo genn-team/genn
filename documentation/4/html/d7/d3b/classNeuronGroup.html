@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -291,12 +291,18 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:aea0036098408c4e451602ff91396d426"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0334b1ef880461db1959fd2210e0837"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">isVarQueueRequired</a> (size_t index) const</td></tr>
 <tr class="separator:aa0334b1ef880461db1959fd2210e0837"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a651fd70a96b7793c0a76a1a29ab4c323"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a651fd70a96b7793c0a76a1a29ab4c323">canBeMerged</a> (const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a651fd70a96b7793c0a76a1a29ab4c323"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this neuron group be merged with other? i.e. can they be simulated using same generated code.  <a href="#a651fd70a96b7793c0a76a1a29ab4c323">More...</a><br /></td></tr>
-<tr class="separator:a651fd70a96b7793c0a76a1a29ab4c323"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5f8d74a9b26c9f3c3b54f6d13d9e4209"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a5f8d74a9b26c9f3c3b54f6d13d9e4209">canInitBeMerged</a> (const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &amp;other) const</td></tr>
-<tr class="memdesc:a5f8d74a9b26c9f3c3b54f6d13d9e4209"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code.  <a href="#a5f8d74a9b26c9f3c3b54f6d13d9e4209">More...</a><br /></td></tr>
-<tr class="separator:a5f8d74a9b26c9f3c3b54f6d13d9e4209"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33def3267138044355f18cffe3b48f2e"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a33def3267138044355f18cffe3b48f2e">getHashDigest</a> () const</td></tr>
+<tr class="memdesc:a33def3267138044355f18cffe3b48f2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with neuron group.  <a href="#a33def3267138044355f18cffe3b48f2e">More...</a><br /></td></tr>
+<tr class="separator:a33def3267138044355f18cffe3b48f2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ee55aceb612586322524904c7cc7529"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a1ee55aceb612586322524904c7cc7529">getInitHashDigest</a> () const</td></tr>
+<tr class="memdesc:a1ee55aceb612586322524904c7cc7529"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with neuron group initialisation.  <a href="#a1ee55aceb612586322524904c7cc7529">More...</a><br /></td></tr>
+<tr class="separator:a1ee55aceb612586322524904c7cc7529"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acdc5463576c8f959bdb00e785fb5c55b"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#acdc5463576c8f959bdb00e785fb5c55b">getSpikeQueueUpdateHashDigest</a> () const</td></tr>
+<tr class="separator:acdc5463576c8f959bdb00e785fb5c55b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4196552d03b596b6401342f5c6553e7"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ae4196552d03b596b6401342f5c6553e7">getPrevSpikeTimeUpdateHashDigest</a> () const</td></tr>
+<tr class="separator:ae4196552d03b596b6401342f5c6553e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a954ac1dce1347c1bc7de0375ab316c40"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a954ac1dce1347c1bc7de0375ab316c40">getVarLocationHashDigest</a> () const</td></tr>
+<tr class="separator:a954ac1dce1347c1bc7de0375ab316c40"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aa2b21c7c696a54bb3824c6843a0d5bb1"></a>
@@ -505,64 +511,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a651fd70a96b7793c0a76a1a29ab4c323"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a651fd70a96b7793c0a76a1a29ab4c323">&#9670;&nbsp;</a></span>canBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool NeuronGroup::canBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can this neuron group be merged with other? i.e. can they be simulated using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
-<a id="a5f8d74a9b26c9f3c3b54f6d13d9e4209"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5f8d74a9b26c9f3c3b54f6d13d9e4209">&#9670;&nbsp;</a></span>canInitBeMerged()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool NeuronGroup::canInitBeMerged </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> &amp;&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code. </p>
-<p>NOTE: this can only be called after model is finalized </p>
-
-</div>
-</div>
 <a id="a5e4a7f08a6b572f6a7c7b2b24e7bf7ce"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce">&#9670;&nbsp;</a></span>checkNumDelaySlots()</h2>
 
@@ -690,6 +638,62 @@ Protected Member Functions</h2></td></tr>
 
 <p>Get location of neuron model extra global parameter by omdex. </p>
 <p>This is only used by extra global parameters which are pointers </p>
+
+</div>
+</div>
+<a id="a33def3267138044355f18cffe3b48f2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a33def3267138044355f18cffe3b48f2e">&#9670;&nbsp;</a></span>getHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with neuron group. </p>
+<p>NOTE: this can only be called after model is finalized </p>
+
+</div>
+</div>
+<a id="a1ee55aceb612586322524904c7cc7529"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1ee55aceb612586322524904c7cc7529">&#9670;&nbsp;</a></span>getInitHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Updates hash with neuron group initialisation. </p>
+<p>NOTE: this can only be called after model is finalized </p>
 
 </div>
 </div>
@@ -1063,6 +1067,31 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="ae4196552d03b596b6401342f5c6553e7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4196552d03b596b6401342f5c6553e7">&#9670;&nbsp;</a></span>getPrevSpikeTimeUpdateHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type NeuronGroup::getPrevSpikeTimeUpdateHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="acc6ecb4f2adb3e38676e9a24e66b3789"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acc6ecb4f2adb3e38676e9a24e66b3789">&#9670;&nbsp;</a></span>getSpikeEventCondition()</h2>
 
@@ -1169,6 +1198,31 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="acdc5463576c8f959bdb00e785fb5c55b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acdc5463576c8f959bdb00e785fb5c55b">&#9670;&nbsp;</a></span>getSpikeQueueUpdateHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a65601133dc934a9c46462e43e6d096dc"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a65601133dc934a9c46462e43e6d096dc">&#9670;&nbsp;</a></span>getSpikeTimeLocation()</h2>
 
@@ -1266,6 +1320,31 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Get location of neuron model state variable by index. </p>
+
+</div>
+</div>
+<a id="a954ac1dce1347c1bc7de0375ab316c40"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a954ac1dce1347c1bc7de0375ab316c40">&#9670;&nbsp;</a></span>getVarLocationHashDigest()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
 
 </div>
 </div>
@@ -2017,7 +2096,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:46 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:34 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

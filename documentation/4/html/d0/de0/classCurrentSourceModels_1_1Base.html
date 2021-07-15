@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -112,7 +112,7 @@ Inheritance diagram for CurrentSourceModels::Base:</div>
  <div class="center">
   <img src="../../d0/de0/classCurrentSourceModels_1_1Base.png" usemap="#CurrentSourceModels::Base_map" alt=""/>
   <map id="CurrentSourceModels::Base_map" name="CurrentSourceModels::Base_map">
-<area href="../../d6/d97/classModels_1_1Base.html" title="Base class for all models - in addition to the parameters snippets have, models can have state variab..." alt="Models::Base" shape="rect" coords="237,56,464,80"/>
+<area href="../../d6/d97/classModels_1_1Base.html" alt="Models::Base" shape="rect" coords="237,56,464,80"/>
 <area href="../../db/d97/classSnippet_1_1Base.html" title="Base class for all code snippets. " alt="Snippet::Base" shape="rect" coords="237,0,464,24"/>
 <area href="../../d7/da1/classCurrentSourceModels_1_1DC.html" title="DC source. " alt="CurrentSourceModels::DC" shape="rect" coords="0,168,227,192"/>
 <area href="../../d0/d7d/classCurrentSourceModels_1_1GaussianNoise.html" title="Noisy current source with noise drawn from normal distribution. " alt="CurrentSourceModels::GaussianNoise" shape="rect" coords="237,168,464,192"/>
@@ -125,9 +125,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:aa1e8f581137f0415dae669e985df99c2"><td class="memItemLeft" align="right" valign="top">virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html#aa1e8f581137f0415dae669e985df99c2">getInjectionCode</a> () const</td></tr>
 <tr class="memdesc:aa1e8f581137f0415dae669e985df99c2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the code that defines current injected each timestep.  <a href="#aa1e8f581137f0415dae669e985df99c2">More...</a><br /></td></tr>
 <tr class="separator:aa1e8f581137f0415dae669e985df99c2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9aab44024e4c640d35ae4176068a3823"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html#a9aab44024e4c640d35ae4176068a3823">canBeMerged</a> (const <a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html">Base</a> *other) const</td></tr>
-<tr class="memdesc:a9aab44024e4c640d35ae4176068a3823"><td class="mdescLeft">&#160;</td><td class="mdescRight">Can this neuron model be merged with other? i.e. can they be simulated using same generated code.  <a href="#a9aab44024e4c640d35ae4176068a3823">More...</a><br /></td></tr>
-<tr class="separator:a9aab44024e4c640d35ae4176068a3823"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a86cd6524ed007e38d87ca7eea9c8b597"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html#a86cd6524ed007e38d87ca7eea9c8b597">getHashDigest</a> () const</td></tr>
+<tr class="memdesc:a86cd6524ed007e38d87ca7eea9c8b597"><td class="mdescLeft">&#160;</td><td class="mdescRight">Update hash from model.  <a href="#a86cd6524ed007e38d87ca7eea9c8b597">More...</a><br /></td></tr>
+<tr class="separator:a86cd6524ed007e38d87ca7eea9c8b597"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d6/d97/classModels_1_1Base.html">Models::Base</a></td></tr>
 <tr class="memitem:a5da12b4e51f0b969510dd97d45ad285a inherit pub_methods_classModels_1_1Base"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">VarVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d97/classModels_1_1Base.html#a5da12b4e51f0b969510dd97d45ad285a">getVars</a> () const</td></tr>
 <tr class="memdesc:a5da12b4e51f0b969510dd97d45ad285a inherit pub_methods_classModels_1_1Base"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names and types (as strings) of model variables.  <a href="../../d6/d97/classModels_1_1Base.html#a5da12b4e51f0b969510dd97d45ad285a">More...</a><br /></td></tr>
@@ -154,6 +154,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pub_types_classModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../d6/d97/classModels_1_1Base.html">Models::Base</a></td></tr>
 <tr class="memitem:a5a6bc95969a38ac1ac68ab4a0ba94c75 inherit pub_types_classModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="../../d5/d42/structModels_1_1Base_1_1Var.html">Var</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75">VarVec</a></td></tr>
 <tr class="separator:a5a6bc95969a38ac1ac68ab4a0ba94c75 inherit pub_types_classModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55f5a6512bf3fbc71dc753a7f914783a inherit pub_types_classModels_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="../../d1/daf/structModels_1_1Base_1_1VarRef.html">VarRef</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a">VarRefVec</a></td></tr>
+<tr class="separator:a55f5a6512bf3fbc71dc753a7f914783a inherit pub_types_classModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_types_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_types_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Types inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a></td></tr>
 <tr class="separator:a06cd0f6da1424a20163e12b6fec62519 inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -164,11 +166,11 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:ad14217cebf11eddffa751a4d5c4792cb inherit pub_types_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; <a class="el" href="../../d9/d0c/structSnippet_1_1Base_1_1DerivedParam.html">DerivedParam</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#ad14217cebf11eddffa751a4d5c4792cb">DerivedParamVec</a></td></tr>
 <tr class="separator:ad14217cebf11eddffa751a4d5c4792cb inherit pub_types_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classModels_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classModels_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../d6/d97/classModels_1_1Base.html">Models::Base</a></td></tr>
-<tr class="memitem:adfe960ccca143dd5a374cbc21c87d652 inherit pro_methods_classModels_1_1Base"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d97/classModels_1_1Base.html#adfe960ccca143dd5a374cbc21c87d652">canBeMerged</a> (const <a class="el" href="../../d6/d97/classModels_1_1Base.html">Base</a> *other) const</td></tr>
-<tr class="separator:adfe960ccca143dd5a374cbc21c87d652 inherit pro_methods_classModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0278f97a8bbcf2928c563c08ec99a2a5 inherit pro_methods_classModels_1_1Base"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d97/classModels_1_1Base.html#a0278f97a8bbcf2928c563c08ec99a2a5">updateHash</a> (boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="separator:a0278f97a8bbcf2928c563c08ec99a2a5 inherit pro_methods_classModels_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
-<tr class="memitem:a9d722773e634fc452ddc257027f85faf inherit pro_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a9d722773e634fc452ddc257027f85faf">canBeMerged</a> (const <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Base</a> *other) const</td></tr>
-<tr class="separator:a9d722773e634fc452ddc257027f85faf inherit pro_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae09ab9858d5752c76803fcc876a1ca60 inherit pro_methods_classSnippet_1_1Base"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#ae09ab9858d5752c76803fcc876a1ca60">updateHash</a> (boost::uuids::detail::sha1 &amp;hash) const</td></tr>
+<tr class="separator:ae09ab9858d5752c76803fcc876a1ca60 inherit pro_methods_classSnippet_1_1Base"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_static_methods_classSnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pro_static_methods_classSnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Static Protected Member Functions inherited from <a class="el" href="../../db/d97/classSnippet_1_1Base.html">Snippet::Base</a></td></tr>
 <tr class="memitem:a971c6611ab5994a31d6f21badb54c975 inherit pro_static_methods_classSnippet_1_1Base"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:a971c6611ab5994a31d6f21badb54c975 inherit pro_static_methods_classSnippet_1_1Base"><td class="memTemplItemLeft" align="right" valign="top">static size_t&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../db/d97/classSnippet_1_1Base.html#a971c6611ab5994a31d6f21badb54c975">getNamedVecIndex</a> (const std::string &amp;name, const std::vector&lt; T &gt; &amp;vec)</td></tr>
@@ -177,23 +179,22 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html" title="Base class for all current source models. ">Base</a> class for all current source models. </p>
 </div><h2 class="groupheader">Member Function Documentation</h2>
-<a id="a9aab44024e4c640d35ae4176068a3823"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9aab44024e4c640d35ae4176068a3823">&#9670;&nbsp;</a></span>canBeMerged()</h2>
+<a id="a86cd6524ed007e38d87ca7eea9c8b597"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a86cd6524ed007e38d87ca7eea9c8b597">&#9670;&nbsp;</a></span>getHashDigest()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">bool CurrentSourceModels::Base::canBeMerged </td>
+          <td class="memname">boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest </td>
           <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html">Base</a> *&#160;</td>
-          <td class="paramname"><em>other</em></td><td>)</td>
+          <td class="paramname"></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Can this neuron model be merged with other? i.e. can they be simulated using same generated code. </p>
+<p>Update hash from model. </p>
 
 </div>
 </div>
@@ -235,7 +236,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d6/dd3/namespaceCurrentSourceModels.html">CurrentSourceModels</a></li><li class="navelem"><a class="el" href="../../d0/de0/classCurrentSourceModels_1_1Base.html">Base</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:50 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:38 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

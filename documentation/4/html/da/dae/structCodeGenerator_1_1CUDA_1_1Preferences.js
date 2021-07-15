@@ -1,6 +1,7 @@
 var structCodeGenerator_1_1CUDA_1_1Preferences =
 [
     [ "Preferences", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a81d2f28e0431fcbb375e6c0c547a879d", null ],
+    [ "updateHash", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a69125f7b6557f37ea17b5871864757c3", null ],
     [ "blockSizeSelectMethod", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ad9ddce1e46c8707bf1c30116f9a799be", null ],
     [ "constantCacheOverhead", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a4fec7ae3b7712a4d60d1cd3ff31c34c1", null ],
     [ "deviceSelectMethod", "da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#ab3f7e871cfa06d52cdff493f80a9289e", null ],

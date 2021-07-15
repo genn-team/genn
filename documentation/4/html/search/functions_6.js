@@ -1,6 +1,7 @@
 var searchData=
 [
-  ['finalize',['finalize',['../da/dfd/classModelSpec.html#ad5166bfbc1a19f2d829be2ed1d8973cc',1,'ModelSpec']]],
+  ['finalize',['finalize',['../d7/d60/classCustomUpdate.html#a4e357e11a354b05ab0d437910b72688a',1,'CustomUpdate::finalize()'],['../db/dd4/classCustomUpdateWU.html#a25f4696112572ebd7f2e0be0a80132b1',1,'CustomUpdateWU::finalize()'],['../da/dfd/classModelSpec.html#ad5166bfbc1a19f2d829be2ed1d8973cc',1,'ModelSpec::finalize()']]],
+  ['finalizebatched',['finalizeBatched',['../da/da9/classCustomUpdateBase.html#a89f89969b57c47ed74e8b3c5e0c381e0',1,'CustomUpdateBase']]],
   ['findcurrentsource',['findCurrentSource',['../da/dfd/classModelSpec.html#a1f9d972f4f93c65dd254a27992980600',1,'ModelSpec']]],
   ['findneurongroup',['findNeuronGroup',['../da/dfd/classModelSpec.html#a7508ff35c5957bf8a4385168fed50e2c',1,'ModelSpec']]],
   ['findsynapsegroup',['findSynapseGroup',['../da/dfd/classModelSpec.html#ac61c646d1c4e5a56a8e1b5cf81de9088',1,'ModelSpec']]],

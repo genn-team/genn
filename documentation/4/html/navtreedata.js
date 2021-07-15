@@ -95,7 +95,7 @@ var NAVTREE =
       [ "File List", "files.html", "files" ],
       [ "File Members", "globals.html", [
         [ "All", "globals.html", "globals_dup" ],
-        [ "Functions", "globals_func.html", null ],
+        [ "Functions", "globals_func.html", "globals_func" ],
         [ "Variables", "globals_vars.html", null ],
         [ "Typedefs", "globals_type.html", null ],
         [ "Enumerations", "globals_enum.html", null ],
@@ -110,17 +110,18 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d1/de3/classCodeGenerator_1_1BackendSIMT.html#aa910e35cd13326f7a963102f48f8a0db",
-"d3/d15/classCodeGenerator_1_1BackendBase.html#a5b0f6ecb339e4e8598b0fcc72b4ccef1",
-"d4/de6/classSpineMLSimulator_1_1Input_1_1Analogue.html#a49a674f2bdf809c2849e984cc65d9eff",
-"d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a136217d93d2f194135f9cc874ff18f78",
-"d7/d63/lfsr113_8h.html#addcdc87c21c29d3ed1c156f1ab508bcd",
-"d9/d7e/classSharedLibraryModel.html#a5a9558f98933a4fe9ff2c7d7dcc054a1",
-"db/d3e/classSpineMLSimulator_1_1Simulator.html#a2ffb23b30e50de0edff076dc308fd967",
-"dc/dab/weightUpdateModels_8h.html#a611a9113f742a9d07d3def4298a0ea68",
-"dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html#a31ccb0b1aaffe89728ffad4d9830f68f",
-"df/d0d/philox432_8h.html#a2e7fb97a09ee3e77a97d76c7bd0481ed",
-"pages.html"
+"d1/db8/classCodeGenerator_1_1SupportCodeMerged.html",
+"d2/dfd/openclfeatures_8h.html#a5aca32f95a4630a011ee076c1cb12650",
+"d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html#ac06ab959cf839d2660c7ced4f0b02262",
+"d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7cf7c23440db65582ddac36f903fcd5e",
+"d7/d3b/classNeuronGroup.html#a1ee55aceb612586322524904c7cc7529",
+"d8/d0c/classSpineMLSimulator_1_1InputValue_1_1Constant.html#ab67148bac8b6248c2a253e4df58fa125",
+"da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#a9af0c16aa535ae2cfd25ec4444deb537",
+"db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#aa1091124ace7cd0f4cdfe09e16ab0294",
+"dc/db2/classSpineMLSimulator_1_1StateVar.html#adb46f517e10a5a315509959ed175f25e",
+"dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html#a7f11a514db5c989aaea023a20da928d7",
+"de/db4/classCustomUpdateModels_1_1Base.html#a6ac30b8f437200d82d0e565d9e319733",
+"functions_func_o.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

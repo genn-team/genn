@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -120,6 +120,9 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 <li>create_custom_current_source_class()
 : <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#a1cd795d295c4cc4f05968f04dbf5b9d3">pygenn.genn_model</a>
 </li>
+<li>create_custom_custom_update_class()
+: <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#a9914061f9946583d9c2fd4959fa8bff1">pygenn.genn_model</a>
+</li>
 <li>create_custom_init_var_snippet_class()
 : <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#ab404f74c9628546ff3dc41feab504833">pygenn.genn_model</a>
 </li>
@@ -141,10 +144,25 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 <li>create_dpf_class()
 : <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#a4877194a4aa6f04ecbc8768ec1c2de21">pygenn.genn_model</a>
 </li>
+<li>create_psm_var_ref()
+: <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#a909a0153a1bdd03bc878aabd80851505">pygenn.genn_model</a>
+</li>
+<li>create_var_ref()
+: <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#a58d69fc68a1745c3aff4fecd4e6e456e">pygenn.genn_model</a>
+</li>
+<li>create_wu_post_var_ref()
+: <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#a76a9e68c8ab998734058a6ddd629b2bb">pygenn.genn_model</a>
+</li>
+<li>create_wu_pre_var_ref()
+: <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#aecd5b6795a09e26bee8ad28c193b512d">pygenn.genn_model</a>
+</li>
+<li>create_wu_var_ref()
+: <a class="el" href="de/d6e/namespacepygenn_1_1genn__model.html#ac420218045517b46a8361512b1769098">pygenn.genn_model</a>
+</li>
 <li>createBackend()
-: <a class="el" href="d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html#a6b3dc28b69e78b03b8e0e79f08c9f712">CodeGenerator::CUDA::Optimiser</a>
-, <a class="el" href="d2/d26/namespaceCodeGenerator_1_1OpenCL_1_1Optimiser.html#aded5283ead5b586056cc1e12e5801472">CodeGenerator::OpenCL::Optimiser</a>
-, <a class="el" href="d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser.html#a9f20a959ab6e2a4832bfb40f7ab48e12">CodeGenerator::SingleThreadedCPU::Optimiser</a>
+: <a class="el" href="d9/d85/namespaceCodeGenerator_1_1CUDA_1_1Optimiser.html#ae8f0b722d559eaa3764a08618b5d50e3">CodeGenerator::CUDA::Optimiser</a>
+, <a class="el" href="d2/d26/namespaceCodeGenerator_1_1OpenCL_1_1Optimiser.html#a71033855ad85f8274c789032d6ea500b">CodeGenerator::OpenCL::Optimiser</a>
+, <a class="el" href="d0/de6/namespaceCodeGenerator_1_1SingleThreadedCPU_1_1Optimiser.html#acf8953f4dbe3a8fa354d0da71e1afef6">CodeGenerator::SingleThreadedCPU::Optimiser</a>
 </li>
 </ul>
 
@@ -172,10 +190,13 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 
 <h3><a id="index_g"></a>- g -</h3><ul>
 <li>generateAll()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a5c321a0d9b96a7d047b46b28491e1739">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a1cfc27bd653ccbdff8b137fc6495ed0f">CodeGenerator</a>
+</li>
+<li>generateCustomUpdate()
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a63e33d5874a608e7d8ab9ce82c84284a">CodeGenerator</a>
 </li>
 <li>generateInit()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a8c6c1e18ea1552815c5cc53bab86b4eb">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#ab5e509e11d4f503a9356d1242bf955cb">CodeGenerator</a>
 </li>
 <li>generateMakefile()
 : <a class="el" href="d0/d02/namespaceCodeGenerator.html#a48a0efb8eb40969e45c54f39c6a6aa8d">CodeGenerator</a>
@@ -184,16 +205,16 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 : <a class="el" href="d0/d02/namespaceCodeGenerator.html#a09921f5dc44e788c7060f559b5469802">CodeGenerator</a>
 </li>
 <li>generateNeuronUpdate()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#adb4357eb1fb3ad0d363c8cc54a802e90">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a7592cc1b91147dace6e1b6cb164dfd0d">CodeGenerator</a>
 </li>
 <li>generateRunner()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#aa0476ddd9cfe7de530b70f7b875db147">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#ab3313dcbbdce1208f0c11dbdf6987ddb">CodeGenerator</a>
 </li>
 <li>generateSupportCode()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a12fd1a071e80419b0643e081e3fe3440">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a4e2cf82c49aa182e7a3d4cdad38477dd">CodeGenerator</a>
 </li>
 <li>generateSynapseUpdate()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a7a09a5ffe25d8b0b224c89867e10536e">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#ad0c54d9a8334a468d1791cfaf6940feb">CodeGenerator</a>
 </li>
 <li>genKernelIndex()
 : <a class="el" href="d0/d02/namespaceCodeGenerator.html#ab9ac4aa28b161c2e570ff624567e4278">CodeGenerator</a>
@@ -234,14 +255,17 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 
 <h3><a id="index_n"></a>- n -</h3><ul>
 <li>neuronSubstitutionsInSynapticCode()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a035de640591d2df3e88e4dbeb124faf8">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a52d256322f6e1b81e974344c03f93e3d">CodeGenerator</a>
 </li>
 </ul>
 
 
 <h3><a id="index_o"></a>- o -</h3><ul>
 <li>operator&lt;&lt;()
-: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a950a9d11a55f077e3a144728fc0a7ff0">CodeGenerator</a>
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a244f566b0779f0036ed24c03a3dd99b8">CodeGenerator</a>
+</li>
+<li>operator&gt;&gt;()
+: <a class="el" href="d0/d02/namespaceCodeGenerator.html#a65bde06491dceb677cd09bfbc7b07a7b">CodeGenerator</a>
 </li>
 </ul>
 
@@ -263,7 +287,7 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 : <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#aa3a43765e294bbd7fe4976a3b377b733">pygenn.model_preprocessor</a>
 </li>
 <li>prepare_model()
-: <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#a698da20e6a95c9e0624aaba819b4a71b">pygenn.model_preprocessor</a>
+: <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#a03a19192b9fe6502a9cfc2dbdd5b5736">pygenn.model_preprocessor</a>
 </li>
 <li>prepare_snippet()
 : <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#aef83afc60aa51f177264dcb416a6035c">pygenn.model_preprocessor</a>
@@ -288,7 +312,22 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 </ul>
 
 
+<h3><a id="index_u"></a>- u -</h3><ul>
+<li>updateHash()
+: <a class="el" href="dd/d20/namespaceModels.html#a894a4d3698fd28cb70725dcf018af320">Models</a>
+, <a class="el" href="df/daa/namespaceSnippet.html#a046ec5d02f45d58eff76b06b6cba2a0e">Snippet</a>
+, <a class="el" href="d4/d3d/namespaceUtils.html#ae55486e13e7ed81c88358cf9ce4cf014">Utils</a>
+</li>
+</ul>
+
+
 <h3><a id="index_v"></a>- v -</h3><ul>
+<li>var_ref_space_to_var_refs()
+: <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#a32ed4952819c43baa62d0c2249805326">pygenn.model_preprocessor</a>
+</li>
+<li>var_ref_space_to_wu_var_refs()
+: <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#abb3b54fcdc5a58707dc46b21f04a89d7">pygenn.model_preprocessor</a>
+</li>
 <li>var_space_to_vals()
 : <a class="el" href="d0/d17/namespacepygenn_1_1model__preprocessor.html#a4ece878baa9619ecfcbdf5770e5a4eec">pygenn.model_preprocessor</a>
 </li>
@@ -306,7 +345,7 @@ $(document).ready(function(){initNavTree('namespacemembers_func.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:59 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:47 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

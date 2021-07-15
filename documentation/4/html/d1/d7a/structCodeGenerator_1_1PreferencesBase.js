@@ -1,5 +1,6 @@
 var structCodeGenerator_1_1PreferencesBase =
 [
+    [ "updateHash", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a165faff676d0f5259970391f0ff1ca74", null ],
     [ "automaticCopy", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html#abef79921cc8510fe8b50b3f0fe971346", null ],
     [ "debugCode", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a58b816a5e133a98fa9aa88ec71890a89", null ],
     [ "enableBitmaskOptimisations", "d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8", null ],

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.4.0</span>
+   &#160;<span id="projectnumber">4.5.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -112,6 +112,7 @@ $(document).ready(function(){initNavTree('dc/de1/modelSpec_8h.html','../../');})
 <code>#include &lt;string&gt;</code><br />
 <code>#include &lt;vector&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../d2/d1a/currentSourceInternal_8h_source.html">currentSourceInternal.h</a>&quot;</code><br />
+<code>#include &quot;<a class="el" href="../../d8/d04/customUpdateInternal_8h_source.html">customUpdateInternal.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d1/d8e/gennExport_8h_source.html">gennExport.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../d2/dfe/neuronGroupInternal_8h_source.html">neuronGroupInternal.h</a>&quot;</code><br />
 <code>#include &quot;<a class="el" href="../../de/d80/synapseGroupInternal_8h_source.html">synapseGroupInternal.h</a>&quot;</code><br />
@@ -155,7 +156,7 @@ Functions</h2></td></tr>
 <tr class="memdesc:a82512da3fc2cd603ff00f8f5b7f2f1ce"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise a variable using an initialisation snippet.  <a href="#a82512da3fc2cd603ff00f8f5b7f2f1ce">More...</a><br /></td></tr>
 <tr class="separator:a82512da3fc2cd603ff00f8f5b7f2f1ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae71c7ad7d12a64c251ea45c5e3ff8af8"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
-<tr class="memitem:ae71c7ad7d12a64c251ea45c5e3ff8af8"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#ae71c7ad7d12a64c251ea45c5e3ff8af8">initVar</a> ()</td></tr>
+<tr class="memitem:ae71c7ad7d12a64c251ea45c5e3ff8af8"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#ae71c7ad7d12a64c251ea45c5e3ff8af8">initVar</a> ()</td></tr>
 <tr class="memdesc:ae71c7ad7d12a64c251ea45c5e3ff8af8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise a variable using an initialisation snippet with no parameters.  <a href="#ae71c7ad7d12a64c251ea45c5e3ff8af8">More...</a><br /></td></tr>
 <tr class="separator:ae71c7ad7d12a64c251ea45c5e3ff8af8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6bd7d3c3ead0a4d0ffb15d2a4c67d043"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043">uninitialisedVar</a> ()</td></tr>
@@ -166,12 +167,30 @@ Functions</h2></td></tr>
 <tr class="memdesc:aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise connectivity using a sparse connectivity snippet.  <a href="#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2">More...</a><br /></td></tr>
 <tr class="separator:aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaf0972f2313fc4e5f9395458b67306a0"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
-<tr class="memitem:aaf0972f2313fc4e5f9395458b67306a0"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0">initConnectivity</a> ()</td></tr>
+<tr class="memitem:aaf0972f2313fc4e5f9395458b67306a0"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0">initConnectivity</a> ()</td></tr>
 <tr class="memdesc:aaf0972f2313fc4e5f9395458b67306a0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise connectivity using a sparse connectivity snippet with no parameters.  <a href="#aaf0972f2313fc4e5f9395458b67306a0">More...</a><br /></td></tr>
 <tr class="separator:aaf0972f2313fc4e5f9395458b67306a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a367c112babcc14b58db730731b798073"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073">uninitialisedConnectivity</a> ()</td></tr>
 <tr class="memdesc:a367c112babcc14b58db730731b798073"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark a synapse group's sparse connectivity as uninitialised.  <a href="#a367c112babcc14b58db730731b798073">More...</a><br /></td></tr>
 <tr class="separator:a367c112babcc14b58db730731b798073"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae926ed9264cd23650134184f0e3f5fc5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#ae926ed9264cd23650134184f0e3f5fc5">createVarRef</a> (const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *ng, const std::string &amp;varName)</td></tr>
+<tr class="memdesc:ae926ed9264cd23650134184f0e3f5fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a neuron group variable.  <a href="#ae926ed9264cd23650134184f0e3f5fc5">More...</a><br /></td></tr>
+<tr class="separator:ae926ed9264cd23650134184f0e3f5fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aadacc03a42894a55df7a5001f84617cb"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aadacc03a42894a55df7a5001f84617cb">createVarRef</a> (const <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> *cs, const std::string &amp;varName)</td></tr>
+<tr class="memdesc:aadacc03a42894a55df7a5001f84617cb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a current source variable.  <a href="#aadacc03a42894a55df7a5001f84617cb">More...</a><br /></td></tr>
+<tr class="separator:aadacc03a42894a55df7a5001f84617cb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae3122b4c3014543014ba3ae069dea3b3"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#ae3122b4c3014543014ba3ae069dea3b3">createPSMVarRef</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const std::string &amp;varName)</td></tr>
+<tr class="memdesc:ae3122b4c3014543014ba3ae069dea3b3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a postsynaptic model variable.  <a href="#ae3122b4c3014543014ba3ae069dea3b3">More...</a><br /></td></tr>
+<tr class="separator:ae3122b4c3014543014ba3ae069dea3b3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af363b46a26aa7e1467d6888d350df204"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#af363b46a26aa7e1467d6888d350df204">createWUPreVarRef</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const std::string &amp;varName)</td></tr>
+<tr class="memdesc:af363b46a26aa7e1467d6888d350df204"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a weight update model presynaptic variable.  <a href="#af363b46a26aa7e1467d6888d350df204">More...</a><br /></td></tr>
+<tr class="separator:af363b46a26aa7e1467d6888d350df204"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a128802a0e427a69687694b86ed4d14f4"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a128802a0e427a69687694b86ed4d14f4">createWUPostVarRef</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const std::string &amp;varName)</td></tr>
+<tr class="memdesc:a128802a0e427a69687694b86ed4d14f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a weight update model postsynapticvariable.  <a href="#a128802a0e427a69687694b86ed4d14f4">More...</a><br /></td></tr>
+<tr class="separator:a128802a0e427a69687694b86ed4d14f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aabcee1c89bab0de8c4ffba3038b86a0a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">Models::WUVarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aabcee1c89bab0de8c4ffba3038b86a0a">createWUVarRef</a> (const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *sg, const std::string &amp;varName, const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *transposeSG=nullptr, const std::string &amp;transposeVarName=&quot;&quot;)</td></tr>
+<tr class="memdesc:aabcee1c89bab0de8c4ffba3038b86a0a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a weight update model variable.  <a href="#aabcee1c89bab0de8c4ffba3038b86a0a">More...</a><br /></td></tr>
+<tr class="separator:aabcee1c89bab0de8c4ffba3038b86a0a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Header file that contains the class (struct) definition of neuronModel for defining a neuron model and the class definition of <a class="el" href="../../da/dfd/classModelSpec.html" title="Object used for specifying a neuronal network model. ">ModelSpec</a> for defining a neuronal network model. Part of the code generation and generated code sections. </p>
@@ -260,6 +279,246 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a id="ae3122b4c3014543014ba3ae069dea3b3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae3122b4c3014543014ba3ae069dea3b3">&#9670;&nbsp;</a></span>createPSMVarRef()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> createPSMVarRef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a reference to a postsynaptic model variable. </p>
+
+</div>
+</div>
+<a id="ae926ed9264cd23650134184f0e3f5fc5"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae926ed9264cd23650134184f0e3f5fc5">&#9670;&nbsp;</a></span>createVarRef() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> createVarRef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *&#160;</td>
+          <td class="paramname"><em>ng</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a reference to a neuron group variable. </p>
+
+</div>
+</div>
+<a id="aadacc03a42894a55df7a5001f84617cb"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aadacc03a42894a55df7a5001f84617cb">&#9670;&nbsp;</a></span>createVarRef() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> createVarRef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d1/d48/classCurrentSource.html">CurrentSource</a> *&#160;</td>
+          <td class="paramname"><em>cs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a reference to a current source variable. </p>
+
+</div>
+</div>
+<a id="a128802a0e427a69687694b86ed4d14f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a128802a0e427a69687694b86ed4d14f4">&#9670;&nbsp;</a></span>createWUPostVarRef()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> createWUPostVarRef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a reference to a weight update model postsynapticvariable. </p>
+
+</div>
+</div>
+<a id="af363b46a26aa7e1467d6888d350df204"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af363b46a26aa7e1467d6888d350df204">&#9670;&nbsp;</a></span>createWUPreVarRef()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> createWUPreVarRef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a reference to a weight update model presynaptic variable. </p>
+
+</div>
+</div>
+<a id="aabcee1c89bab0de8c4ffba3038b86a0a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aabcee1c89bab0de8c4ffba3038b86a0a">&#9670;&nbsp;</a></span>createWUVarRef()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">Models::WUVarReference</a> createWUVarRef </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>varName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> *&#160;</td>
+          <td class="paramname"><em>transposeSG</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>transposeVarName</em> = <code>&quot;&quot;</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Creates a reference to a weight update model variable. </p>
+
+</div>
+</div>
 <a id="aa65f6eb60b9d3e3f3c2d4b14d0ebcae2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2">&#9670;&nbsp;</a></span>initConnectivity() <span class="overload">[1/2]</span></h2>
 
@@ -315,7 +574,7 @@ template&lt;typename S &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a>&gt;::type initConnectivity </td>
+          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a>&gt;::type initConnectivity </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -394,7 +653,7 @@ template&lt;typename S &gt; </div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../da/d76/classSnippet_1_1ValueBase.html">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a>&gt;::type initVar </td>
+          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a>&gt;::type initVar </td>
           <td>(</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
@@ -481,7 +740,7 @@ template&lt;typename S &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../dc/de1/modelSpec_8h.html">modelSpec.h</a></li>
-    <li class="footer">Generated on Tue Jan 5 2021 09:29:42 for GeNN by
+    <li class="footer">Generated on Thu Jul 15 2021 12:25:31 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

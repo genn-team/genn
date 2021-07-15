@@ -14,5 +14,20 @@ var searchData=
   ['constantarray',['ConstantArray',['../dd/d78/classSpineMLSimulator_1_1InputValue_1_1ConstantArray.html',1,'SpineMLSimulator::InputValue']]],
   ['conv2d',['Conv2D',['../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html',1,'InitSparseConnectivitySnippet']]],
   ['currentsource',['CurrentSource',['../da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html',1,'pygenn.genn_groups.CurrentSource'],['../d1/d48/classCurrentSource.html',1,'CurrentSource']]],
-  ['currentsourceinternal',['CurrentSourceInternal',['../d6/de6/classCurrentSourceInternal.html',1,'']]]
+  ['currentsourceinternal',['CurrentSourceInternal',['../d6/de6/classCurrentSourceInternal.html',1,'']]],
+  ['customupdate',['CustomUpdate',['../d5/dc7/classpygenn_1_1genn__groups_1_1CustomUpdate.html',1,'pygenn.genn_groups.CustomUpdate'],['../d7/d60/classCustomUpdate.html',1,'CustomUpdate']]],
+  ['customupdatebase',['CustomUpdateBase',['../da/da9/classCustomUpdateBase.html',1,'']]],
+  ['customupdategroupmerged',['CustomUpdateGroupMerged',['../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html',1,'CodeGenerator']]],
+  ['customupdateinitgroupmerged',['CustomUpdateInitGroupMerged',['../df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html',1,'CodeGenerator']]],
+  ['customupdateinitgroupmergedbase',['CustomUpdateInitGroupMergedBase',['../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html',1,'CodeGenerator']]],
+  ['customupdateinitgroupmergedbase_3c_20customupdateinternal_20_3e',['CustomUpdateInitGroupMergedBase&lt; CustomUpdateInternal &gt;',['../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html',1,'CodeGenerator']]],
+  ['customupdateinitgroupmergedbase_3c_20customupdatewuinternal_20_3e',['CustomUpdateInitGroupMergedBase&lt; CustomUpdateWUInternal &gt;',['../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html',1,'CodeGenerator']]],
+  ['customupdateinternal',['CustomUpdateInternal',['../d7/df7/classCustomUpdateInternal.html',1,'']]],
+  ['customupdatetransposewugroupmerged',['CustomUpdateTransposeWUGroupMerged',['../da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html',1,'CodeGenerator']]],
+  ['customupdatewu',['CustomUpdateWU',['../db/dd4/classCustomUpdateWU.html',1,'']]],
+  ['customupdatewugroupmerged',['CustomUpdateWUGroupMerged',['../de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html',1,'CodeGenerator']]],
+  ['customupdatewugroupmergedbase',['CustomUpdateWUGroupMergedBase',['../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html',1,'CodeGenerator']]],
+  ['customupdatewuinternal',['CustomUpdateWUInternal',['../da/ddf/classCustomUpdateWUInternal.html',1,'']]],
+  ['customwuupdatedenseinitgroupmerged',['CustomWUUpdateDenseInitGroupMerged',['../db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html',1,'CodeGenerator']]],
+  ['customwuupdatesparseinitgroupmerged',['CustomWUUpdateSparseInitGroupMerged',['../d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html',1,'CodeGenerator']]]
 ];

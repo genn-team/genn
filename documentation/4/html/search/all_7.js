@@ -18,5 +18,5 @@ var searchData=
   ['external',['External',['../df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html',1,'SpineMLSimulator::InputValue::External'],['../df/dd5/classSpineMLSimulator_1_1InputValue_1_1External.html#afde7de455083870a30430db574a677e4',1,'SpineMLSimulator::InputValue::External::External()']]],
   ['externalnetwork',['ExternalNetwork',['../d2/d70/classSpineMLSimulator_1_1InputValue_1_1ExternalNetwork.html',1,'SpineMLSimulator::InputValue::ExternalNetwork'],['../d2/d70/classSpineMLSimulator_1_1InputValue_1_1ExternalNetwork.html#a115eb9df7933970fc7876da123fc1087',1,'SpineMLSimulator::InputValue::ExternalNetwork::ExternalNetwork()']]],
   ['extra_5fglobal_5fparams',['extra_global_params',['../d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a646ab45304e93c1cec854df96e8fb197',1,'pygenn.genn_groups.Group.extra_global_params()'],['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#a375b5da401e7a8e22a2f69263c59ac24',1,'pygenn.model_preprocessor.Variable.extra_global_params()']]],
-  ['extraglobalvariable',['ExtraGlobalVariable',['../d2/d80/classpygenn_1_1model__preprocessor_1_1ExtraGlobalVariable.html',1,'pygenn::model_preprocessor']]]
+  ['extraglobalparameter',['ExtraGlobalParameter',['../d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html',1,'pygenn::model_preprocessor']]]
 ];
