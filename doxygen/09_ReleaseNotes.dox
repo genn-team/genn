@@ -20,7 +20,7 @@ User Side Changes
 Bug fixes:
 ----
 1. ``cudaFree`` was incorrectly called twice on zero-copy variables, causing crashes on exit
-2. Buit in Izhikevich neurons incorrectly used auto-refractory mechanism, limiting their maximum firing rate
+2. Build in Izhikevich neurons incorrectly used auto-refractory mechanism, limiting their maximum firing rate
 3. On Windows, 64-bit version of compiler is now always used
 4. Fixed issues with CUDA 9.0 and 9.1 introduced in v4.4.0 release
 5. Fixed race condition relating to accessing previous spike times
