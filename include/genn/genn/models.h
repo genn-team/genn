@@ -235,6 +235,7 @@ class GENN_EXPORT WUVarReference : public VarReferenceBase
 public:
     WUVarReference(const SynapseGroup *sg, const std::string &varName,
                    const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    WUVarReference(const CustomUpdateWU *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
     // Public API

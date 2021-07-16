@@ -152,6 +152,12 @@ inline Models::WUVarReference createWUVarRef(const SynapseGroup *sg, const std::
     return Models::WUVarReference(sg, varName, transposeSG, transposeVarName);
 }
 
+//! Creates a reference to a custom weight update variable
+inline Models::WUVarReference createWUVarRef(const CustomUpdateWU *cu, const std::string &varName)
+{
+    return Models::WUVarReference(cu, varName);
+}
+
 //----------------------------------------------------------------------------
 // ModelSpec
 //----------------------------------------------------------------------------

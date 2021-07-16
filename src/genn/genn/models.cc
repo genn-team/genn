@@ -1,6 +1,5 @@
 #include "models.h"
 
-
 // GeNN includes
 #include "customUpdateInternal.h"
 #include "currentSourceInternal.h"
@@ -145,9 +144,17 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
     }
 }
 //----------------------------------------------------------------------------
-const SynapseGroup *WUVarReference::getSynapseGroup() const 
-{ 
-    return m_SG; 
+WUVarReference::WUVarReference(const CustomUpdateWU *cu, const std::string &varName)
+:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+    m_SG(static_cast<const CustomUpdateWUInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr),
+    m_TransposeVarIndex(0)
+{
+
+}
+//----------------------------------------------------------------------------
+const SynapseGroup *WUVarReference::getSynapseGroup() const
+{
+    return m_SG;
 }
 //----------------------------------------------------------------------------
 const SynapseGroup *WUVarReference::getTransposeSynapseGroup() const 
