@@ -40,6 +40,8 @@ TEST_F(SimTest, CustomUpdate)
             pullVNeuronFromDevice();
             pullVCurrentSourceSetTimeFromDevice();
             pullCCurrentSourceFromDevice();
+            pullVCustomUpdateSetTimeFromDevice();
+            pullCCustomUpdateFromDevice();
             pullVPSMSetTimeFromDevice();
             pullPDenseFromDevice();
             pullVWUPreSetTimeFromDevice();
@@ -62,7 +64,12 @@ TEST_F(SimTest, CustomUpdate)
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&CCurrentSource[0], &CCurrentSource[100],
                         [](scalar v) { return v == t; }));
-
+            
+            EXPECT_TRUE(std::all_of(&VCustomUpdateSetTime[0], &VCustomUpdateSetTime[100],
+                        [](scalar v) { return v == t; }));
+            EXPECT_TRUE(std::all_of(&CCustomUpdate[0], &CCustomUpdate[100],
+                        [](scalar v) { return v == t; }));
+                        
             EXPECT_TRUE(std::all_of(&VPSMSetTime[0], &VPSMSetTime[100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&PDense[0], &PDense[100],
