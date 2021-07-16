@@ -2,6 +2,7 @@
 
 
 // GeNN includes
+#include "customUpdateInternal.h"
 #include "currentSourceInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
@@ -29,6 +30,11 @@ VarReference VarReference::createVarRef(const NeuronGroup *ng, const std::string
 VarReference VarReference::createVarRef(const CurrentSource *cs, const std::string &varName)
 {
     return VarReference(static_cast<const CurrentSourceInternal *>(cs), varName);
+}
+//----------------------------------------------------------------------------
+VarReference VarReference::createVarRef(const CustomUpdate *cu, const std::string &varName)
+{
+    return VarReference(static_cast<const CustomUpdateInternal *>(cu), varName);
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
@@ -74,6 +80,13 @@ VarReference::VarReference(const NeuronGroupInternal *ng, const std::string &var
 VarReference::VarReference(const CurrentSourceInternal *cs, const std::string &varName)
 :   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), [cs]() { return cs->getName(); }),
     m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_GetDelayNeuronGroup([]() { return nullptr; })
+{
+
+}
+//----------------------------------------------------------------------------
+VarReference::VarReference(const CustomUpdate *cu, const std::string &varName)
+:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+    m_Size(cu->getSize()), m_GetDelayNeuronGroup([]() { return nullptr; })
 {
 
 }

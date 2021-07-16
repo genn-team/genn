@@ -121,6 +121,12 @@ inline Models::VarReference createVarRef(const CurrentSource *cs, const std::str
     return Models::VarReference::createVarRef(cs, varName);
 }
 
+//! Creates a reference to a custom update variable
+inline Models::VarReference createVarRef(const CustomUpdate *cu, const std::string &varName)
+{
+    return Models::VarReference::createVarRef(cu, varName);
+}
+
 //! Creates a reference to a postsynaptic model variable
 inline Models::VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
 {
