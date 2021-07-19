@@ -53,6 +53,8 @@ TEST_F(SimTest, CustomUpdate)
             pullVWUSparseSetTimeFromDevice();
             pullgSparseFromDevice();
             pullSparseConnectivityFromDevice();
+            pullVCustomWUUpdateSetTimeFromDevice();
+            pullCCustomWUUpdateFromDevice();
 
             // Check all values match time of update
             EXPECT_TRUE(std::all_of(&VNeuron[0], &VNeuron[100],
@@ -93,6 +95,11 @@ TEST_F(SimTest, CustomUpdate)
             EXPECT_TRUE(std::all_of(&VWUDenseSetTime[0], &VWUDenseSetTime[100 * 100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&gDense[0], &gDense[100 * 100],
+                        [](scalar v) { return v == t; }));
+
+            EXPECT_TRUE(std::all_of(&VCustomWUUpdateSetTime[0], &VCustomWUUpdateSetTime[100 * 100],
+                        [](scalar v) { return v == t; }));
+            EXPECT_TRUE(std::all_of(&CCustomWUUpdate[0], &CCustomWUUpdate[100 * 100],
                         [](scalar v) { return v == t; }));
 
             for(unsigned int i = 0; i < 100; i++) {

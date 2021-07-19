@@ -103,6 +103,9 @@ void modelDefinition(ModelSpec &model)
     TestCU::VarReferences cuTestVarReferences(createVarRef(ng, "V"));
     auto *cu = model.addCustomUpdate<TestCU>("CustomUpdate", "Test2", {}, {0.0}, cuTestVarReferences);
     
+    TestCU::WUVarReferences cuTestWUVarReferences(createWUVarRef(denseSG, "g"));
+    auto *cuWU = model.addCustomUpdate<TestCU>("CustomWUUpdate", "Test2", {}, {0.0}, cuTestWUVarReferences);
+    
     //---------------------------------------------------------------------------
     // Custom updates
     //---------------------------------------------------------------------------
@@ -137,4 +140,8 @@ void modelDefinition(ModelSpec &model)
     SetTime::WUVarReferences wuSparseVarReferences(createWUVarRef(sparseSG, "g")); // R
     model.addCustomUpdate<SetTime>("WUSparseSetTime", "Test",
                                    {}, {0.0}, wuSparseVarReferences);
+    
+    SetTime::WUVarReferences wuCUVarReferences(createWUVarRef(cuWU, "C")); // R
+    model.addCustomUpdate<SetTime>("CustomWUUpdateSetTime", "Test",
+                                   {}, {0.0}, wuCUVarReferences);
 }
