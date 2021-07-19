@@ -456,7 +456,7 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigModuleHeadline()
         mg.addSwigEnableUnderCaseConvert()
         mg.addSwigInclude('<exception.i>')
-
+        mg.addSwigInclude('<std_string.i>')
         # Add exception handler
         mg.addStandardExceptionHandler()
 
