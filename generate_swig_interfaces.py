@@ -39,7 +39,6 @@ import os  # to work with paths nicely
 from itertools import product
 from string import Template # for better text substitutions
 from argparse import ArgumentParser # to parse command line args
-from six import iteritems
 from textwrap import dedent
 
 # module attributes
@@ -374,7 +373,7 @@ def generateStlContainersInterface( swigPath ):
         functionTypes = {'DP': 'function<double(const std::vector<double> &, double)>',
                          'CKS': 'function<std::vector<unsigned int>(const std::vector<double>&)>',
                          'CML': 'function<unsigned int( unsigned int, unsigned int, const std::vector<double> &)>'}
-        for name, spec in iteritems(functionTypes):
+        for name, spec in functionTypes.items():
             # Find brackets defining function arguments
             firstBracketIdx = spec.find('(')
             lastBracketIdx = spec.rfind(')')
