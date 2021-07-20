@@ -60,7 +60,7 @@ protected:
         // Validate names
         Utils::validateVarPopName(name, "Custom update");
         Utils::validateVarPopName(updateGroupName, "Custom update group name");
-        getCustomUpdateModel()->validateNames();
+        getCustomUpdateModel()->validate();
     }
 
     //------------------------------------------------------------------------

@@ -215,7 +215,7 @@ protected:
     }
 
     //! Validate names of parameters etc
-    void validateNames() const
+    void validate() const
     {
         Utils::validateParamNames(getParamNames());
         Utils::validateVecNames(getDerivedParams(), "Derived parameter");
@@ -254,7 +254,7 @@ public:
         : m_Snippet(snippet), m_Params(params)
     {
         // Validate names
-        getSnippet()->validateNames();
+        getSnippet()->validate();
     }
 
     //----------------------------------------------------------------------------

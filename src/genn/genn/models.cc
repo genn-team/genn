@@ -19,10 +19,10 @@ void Base::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getVars(), hash);
 }
 //----------------------------------------------------------------------------
-void Base::validateNames() const
+void Base::validate() const
 {
     // Superclass
-    Snippet::Base::validateNames();
+    Snippet::Base::validate();
 
     Utils::validateVecNames(getVars(), "Variable");
 }

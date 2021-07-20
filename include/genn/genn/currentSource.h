@@ -71,7 +71,7 @@ protected:
     {
         // Validate names
         Utils::validateVarPopName(name, "Current source");
-        getCurrentSourceModel()->validateNames();
+        getCurrentSourceModel()->validate();
     }
 
     //------------------------------------------------------------------------

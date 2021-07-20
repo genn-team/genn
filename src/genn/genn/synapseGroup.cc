@@ -441,8 +441,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validateVarPopName(name, "Synapse group");
-    getWUModel()->validateNames();
-    getPSModel()->validateNames();
+    getWUModel()->validate();
+    getPSModel()->validate();
 
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {

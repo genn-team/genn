@@ -208,7 +208,7 @@ protected:
     {
         // Validate names
         Utils::validateVarPopName(name, "Neuron group");
-        getNeuronModel()->validateNames();
+        getNeuronModel()->validate();
     }
 
     //------------------------------------------------------------------------
