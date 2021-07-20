@@ -645,10 +645,12 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
                        [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
         {
-            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
+            genFilteredMergedKernelDataStructures(os, totalConstMem,
+                                                  modelMerged.getMergedCustomUpdateGroups(),
                                                   [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); },
                                                   [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
-            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
+
+                                                  modelMerged.getMergedCustomUpdateWUGroups(),
                                                   [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
                                                   [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
 
