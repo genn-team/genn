@@ -746,13 +746,13 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
 std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
 }
 //--------------------------------------------------------------------------
 std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     if(delay) {
-        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset + " : "readBatchDelayOffset + ") + index;
+        return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "readDelayOffset + " : "readBatchDelayOffset + ") + index;
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
@@ -762,7 +762,7 @@ std::string NeuronUpdateGroupMerged::getReadVarIndex(bool delay, unsigned int ba
 std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     if(delay) {
-        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset + " : "writeBatchDelayOffset + ") + index;
+        return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "writeDelayOffset + " : "writeBatchDelayOffset + ") + index;
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
@@ -1234,7 +1234,7 @@ std::string SynapseGroupMergedBase::getPostDenDelayIndex(unsigned int batchSize,
 //----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
-    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     if(delay) {
         return (singleBatch ? "preDelayOffset + " : "preBatchDelayOffset + ") + index;
     }
@@ -1245,7 +1245,7 @@ std::string SynapseGroupMergedBase::getPreVarIndex(bool delay, unsigned int batc
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
-    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     if(delay) {
         return (singleBatch ? "postDelayOffset + " : "postBatchDelayOffset + ") + index;
     }
@@ -1256,7 +1256,7 @@ std::string SynapseGroupMergedBase::getPostVarIndex(bool delay, unsigned int bat
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
-    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
    
     if(delay) {
         return (singleBatch ? "prePrevSpikeTimeDelayOffset + " : "prePrevSpikeTimeBatchDelayOffset + ") + index;
@@ -1268,7 +1268,7 @@ std::string SynapseGroupMergedBase::getPrePrevSpikeTimeIndex(bool delay, unsigne
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
-    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
    
     if(delay) {
         return (singleBatch ? "postPrevSpikeTimeDelayOffset + " : "postPrevSpikeTimeBatchDelayOffset + ") + index;
@@ -1280,7 +1280,7 @@ std::string SynapseGroupMergedBase::getPostPrevSpikeTimeIndex(bool delay, unsign
 //--------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
-    const bool singleBatch = (varDuplication & VarAccessDuplication::SHARED || batchSize == 1);
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     return (singleBatch ? "" : "synBatchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
@@ -1927,14 +1927,14 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If variable is shared, the batch size is one or this custom update isn't batched, batch offset isn't required
-    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
-        return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
+        return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
     }
     else {
         return getVarIndex(batchSize, varDuplication, index);
@@ -1983,13 +1983,13 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
 std::string CustomUpdateWUGroupMergedBase::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication & VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,

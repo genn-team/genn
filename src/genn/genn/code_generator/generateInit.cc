@@ -23,7 +23,7 @@ void genVariableFill(CodeStream &os, const std::string &fieldName, const std::st
                      VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varDuplication & VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDuplication == VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -43,7 +43,7 @@ void genScalarFill(CodeStream &os, const std::string &fieldName, const std::stri
                    VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varDuplication & VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDuplication == VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
