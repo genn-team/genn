@@ -80,8 +80,32 @@ private:
     const bool m_TimingEnabled;
     const bool m_SynchroniseOnStop;
 };
+//-----------------------------------------------------------------------
+template<typename T, typename G>
+void genGroupStartID(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                     const T &m, G getPaddedNumThreads)
+{
+    // Calculate size of array
+    const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
 
+    // If there is enough constant memory left for group, declare it in constant memory space
+    if(sizeBytes < totalConstMem) {
+        os << "__device__ __constant__ ";
+        totalConstMem -= sizeBytes;
+    }
+    // Otherwise, declare it in global memory space
+    else {
+        os << "__device__ ";
+    }
 
+    // Declare array of starting thread indices for each neuron group
+    os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
+    for(const auto &ng : m.getGroups()) {
+        os << idStart << ", ";
+        idStart += getPaddedNumThreads(ng.get());
+    }
+    os << "};" << std::endl;
+}
 //-----------------------------------------------------------------------
 void genGroupStartIDs(CodeStream &, size_t&, size_t&)
 {
@@ -94,26 +118,7 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
 {
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
-        // Calculate size of array
-        const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
-
-        // If there is enough constant memory left for group, declare it in constant memory space
-        if(sizeBytes < totalConstMem) {
-            os << "__device__ __constant__ ";
-            totalConstMem -= sizeBytes;
-        }
-        // Otherwise, declare it in global memory space
-        else {
-            os << "__device__ ";
-        }
-
-        // Declare array of starting thread indices for each neuron group
-        os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
-        for(const auto &ng : m.getGroups()) {
-            os << idStart << ", ";
-            idStart += getPaddedNumThreads(ng.get());
-        }
-        os << "};" << std::endl;
+        genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
     }
 
     // Generate any remaining groups
@@ -128,7 +133,35 @@ void genMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
 }
+//-----------------------------------------------------------------------
+void genFilteredGroupStartIDs(CodeStream &, size_t&, size_t&)
+{
+}
+//-----------------------------------------------------------------------
+template<typename T, typename G, typename F, typename ...Args>
+void genFilteredGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                      const std::vector<T> &mergedGroups, G getPaddedNumThreads, F filter,
+                      Args... args)
+{
+    // Loop through merged groups
+    for(const auto &m : mergedGroups) {
+        if(filter(m)) {
+            genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
+        }
+    }
 
+    // Generate any remaining groups
+    genFilteredGroupStartIDs(os, idStart, totalConstMem, args...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+void genFilteredMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
+                                           Args... args)
+{
+    // Generate group start id arrays
+    size_t idStart = 0;
+    genFilteredGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
+}
 //-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
@@ -593,12 +626,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                              getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
-                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
-                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
-                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
@@ -618,6 +645,13 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
                        [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
+                                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); },
+                                                  [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
@@ -641,6 +675,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
                        [&g](const CustomUpdateTransposeWUGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateTransposeWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
