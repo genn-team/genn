@@ -648,7 +648,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             genFilteredMergedKernelDataStructures(os, totalConstMem,
                                                   modelMerged.getMergedCustomUpdateGroups(),
                                                   [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); },
-                                                  [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+                                                  [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
 
                                                   modelMerged.getMergedCustomUpdateWUGroups(),
                                                   [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
