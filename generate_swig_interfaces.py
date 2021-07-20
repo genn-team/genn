@@ -369,25 +369,38 @@ def generateStlContainersInterface( swigPath ):
         mg.addSwigInclude( '<std_string.i>' )
         mg.addSwigInclude( '<std_pair.i>' )
         mg.addSwigInclude( '<std_vector.i>' )
-
-        dpfunc_template_spec = 'function<double( const std::vector<double> &, double )>'
-        mg.write( '\n// wrap std::function in a callable struct with the same name\n' )
-        mg.write( '// and enable directors feature for it, so that a new class can\n' )
-        mg.write( '// be derived from it in python. swig magic.\n')
-        mg.addSwigRename( 'std::' + dpfunc_template_spec,
-                'STD_DPFunc' )
-        mg.addSwigRename(
-                'std::' + dpfunc_template_spec + '::operator()',
-                '__call__',
-                '// rename operator() as __call__ so that it works correctly in python' )
-        mg.addSwigFeatureDirector( 'std::' + dpfunc_template_spec )
-        mg.write('namespace std{\n'
-                 '    struct ' + dpfunc_template_spec + ' {\n'
-                 '        // copy ctor\n' +
-                 '        {0}( const std::{0}&);\n'.format( dpfunc_template_spec ) +
-                 '        double operator()( const std::vector<double> &, double ) const;\n'
-                 '    };\n'
-                 '}\n' )
+    
+        functionTypes = {'DP': 'function<double(const std::vector<double> &, double)>',
+                         'CKS': 'function<std::vector<unsigned int>(const std::vector<double>&)>',
+                         'CML': 'function<unsigned int( unsigned int, unsigned int, const std::vector<double> &)>'}
+        for name, spec in functionTypes.items():
+            # Find brackets defining function arguments
+            firstBracketIdx = spec.find('(')
+            lastBracketIdx = spec.rfind(')')
+            assert firstBracketIdx != -1
+            assert lastBracketIdx != -1
+            assert firstBracketIdx < lastBracketIdx
+            
+            # Use to extract function arguments and return type
+            functionArgs = spec[firstBracketIdx + 1:lastBracketIdx]
+            functionRet = spec[9:firstBracketIdx]
+            
+            # Rename this std::function specialisation
+            mg.addSwigRename('std::' + spec, name + 'Function')
+            
+            mg.addSwigRename(
+                    'std::' + spec + '::operator()',
+                    '__call__',
+                    '// rename operator() as __call__ so that it works correctly in python' )
+                    
+            # Write SWIG-parsable version of std::function specialisation
+            mg.write('namespace std{\n'
+                     '    struct ' + spec + ' {\n'
+                     '        // copy ctor\n' +
+                     '        {0}( const std::{0}&);\n'.format( spec ) +
+                     '        ' + functionRet + ' operator()(' + functionArgs + ') const;\n'
+                     '    };\n'
+                     '}\n' )
 
         mg.write( '\n// add template specifications for various STL containers\n' )
         mg.addSwigTemplate( 'std::vector<std::string>', 'StringVector' )
@@ -443,7 +456,7 @@ def generateBackend(swigPath, folder, namespace):
         mg.addSwigModuleHeadline()
         mg.addSwigEnableUnderCaseConvert()
         mg.addSwigInclude('<exception.i>')
-
+        mg.addSwigInclude('<std_string.i>')
         # Add exception handler
         mg.addStandardExceptionHandler()
 

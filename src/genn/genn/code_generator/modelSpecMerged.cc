@@ -211,6 +211,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
     // Concatenate hash digest of backend properties
     Utils::updateHash(backend.getHashDigest(), hash);
 
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
+
     // Concatenate hash digest of neuron update groups
     for(const auto &g : m_MergedNeuronUpdateGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
@@ -313,6 +320,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getNeuronUpdateArchetyp
     // Add hash of model batch size
     Utils::updateHash(getModel().getBatchSize(), hash);
 
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
+
     // Concatenate hash digest of archetype neuron update group
     for(const auto &g : m_MergedNeuronUpdateGroups) {
         Utils::updateHash(g.getArchetype().getHashDigest(), hash);
@@ -330,6 +344,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getSynapseUpdateArchety
 
     // Add hash of model batch size
     Utils::updateHash(getModel().getBatchSize(), hash);
+
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
 
     // Concatenate hash digest of archetype presynaptic update group
     for(const auto &g : m_MergedPresynapticUpdateGroups) {
@@ -360,6 +381,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getCustomUpdateArchetyp
     // Add hash of model batch size
     Utils::updateHash(getModel().getBatchSize(), hash);
     
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
+
     // Concatenate hash digest of archetype custom update group
     for(const auto &g : m_MergedCustomUpdateGroups) {
         Utils::updateHash(g.getArchetype().getHashDigest(), hash);
@@ -385,6 +413,13 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
     // Add hash of model batch size
     Utils::updateHash(getModel().getBatchSize(), hash);
     
+    // Concatenate hash digest of GeNN version
+    Utils::updateHash(GENN_VERSION, hash);
+
+    // Concatenate hash digest of git hash
+    // **NOTE** it would be nicer to actually treat git hash as a hash but not really important
+    Utils::updateHash(GIT_HASH, hash);
+
     // Concatenate hash digest of archetype neuron init group
     for(const auto &g : m_MergedNeuronInitGroups) {
         Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);

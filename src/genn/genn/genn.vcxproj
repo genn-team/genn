@@ -152,4 +152,17 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
+  <Target Name="ReadGitHashAndVersion" BeforeTargets="PrepareForBuild">
+    <Exec Command="git -C $(MSBuildThisFileDirectory) rev-parse HEAD 2> NUL" ConsoleToMsBuild="true" EchoOff="true" IgnoreExitCode="true">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GitHash" />
+    </Exec>
+    <ReadLinesFromFile File="..\..\..\version.txt">
+        <Output TaskParameter="Lines" PropertyName="GeNNVersion" />
+    </ReadLinesFromFile>
+    <ItemGroup>
+      <ClCompile>
+       <PreprocessorDefinitions>%(PreprocessorDefinitions);GIT_HASH="$(GitHash)";GENN_VERSION="$(GeNNVersion)"</PreprocessorDefinitions>
+      </ClCompile>
+    </ItemGroup>
+  </Target>
 </Project>
