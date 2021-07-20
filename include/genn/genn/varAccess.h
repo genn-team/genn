@@ -26,8 +26,8 @@ enum class VarAccessMode : unsigned int
 //! Flags defining how variables should be duplicated across multiple batches
 enum class VarAccessDuplication : unsigned int
 {
-    DUPLICATE   = (1 << 4),     //! This variable should be duplicated in each batch
-    SHARED      = (1 << 5),     //! This variable should be shared between batches
+    DUPLICATE   = (1 << 5),     //! This variable should be duplicated in each batch
+    SHARED      = (1 << 6),     //! This variable should be shared between batches
 };
 
 //! Supported combinations of VarAccessMode and VarAccessDuplication
