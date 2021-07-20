@@ -439,28 +439,6 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
-
-    // If any variables have a reduction access mode, give an error
-    const auto wuVars = getWUModel()->getVars();
-    const auto wuPreVars = getWUModel()->getPreVars();
-    const auto wuPostVars = getWUModel()->getPostVars();
-    if(std::any_of(wuVars.cbegin(), wuVars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(wuPreVars.cbegin(), wuPreVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); })
-       || std::any_of(wuPostVars.cbegin(), wuPostVars.cend(),
-                      [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
-
-    const auto psmVars = getPSModel()->getVars();
-    if(std::any_of(psmVars.cbegin(), psmVars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Postsynaptic models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
-
     // Validate names
     Utils::validateVarPopName(name, "Synapse group");
     getWUModel()->validate();

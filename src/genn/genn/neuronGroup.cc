@@ -280,14 +280,6 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
     // Validate names
     Utils::validateVarPopName(name, "Neuron group");
     getNeuronModel()->validate();
-
-    // If any variables have a reduction access mode, give an error
-    const auto vars = getNeuronModel()->getVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Neuron models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)

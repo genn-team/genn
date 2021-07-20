@@ -45,14 +45,6 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     // Validate names
     Utils::validateVarPopName(name, "Current source");
     getCurrentSourceModel()->validate();
-
-    // If any variables have a reduction access mode, give an error
-    const auto vars = getCurrentSourceModel()->getVars();
-    if(std::any_of(vars.cbegin(), vars.cend(),
-                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
-    {
-        throw std::runtime_error("Current source models cannot include variables with REDUCE access modes - they are only supported by custom update models");
-    }
 }
 //----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)
