@@ -34,6 +34,23 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
     return m_ExtraGlobalParamLocation[getCurrentSourceModel()->getExtraGlobalParamIndex(varName)];
 }
 //----------------------------------------------------------------------------
+CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
+                             const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                             const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
+                             VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
+    m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+{
+    // If any variables have a reduction access mode, give an error
+    const auto vars = getCurrentSourceModel()->getVars();
+    if(std::any_of(vars.cbegin(), vars.cend(),
+                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
+    {
+        throw std::runtime_error("Current source models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+    }
+}
+//----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();

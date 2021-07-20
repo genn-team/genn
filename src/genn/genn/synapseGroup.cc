@@ -396,7 +396,7 @@ bool SynapseGroup::isHostInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
-    // If this synapse group has per-synapse state variables and isn't a 
+    // If this synapse group has per-synapse state variables and isn't a
     // weight sharing slave, return true if any of them have initialisation code which doesn't require a kernel
     if (!isWeightSharingSlave() && (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
@@ -439,6 +439,27 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
+    // If any variables have a reduction access mode, give an error
+    const auto wuVars = getWUModel()->getVars();
+    const auto wuPreVars = getWUModel()->getPreVars();
+    const auto wuPostVars = getWUModel()->getPostVars();
+    if(std::any_of(wuVars.cbegin(), wuVars.cend(),
+                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); })
+       || std::any_of(wuPreVars.cbegin(), wuPreVars.cend(),
+                      [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); })
+       || std::any_of(wuPostVars.cbegin(), wuPostVars.cend(),
+                      [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
+    {
+        throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+    }
+
+    const auto psmVars = getPSModel()->getVars();
+    if(std::any_of(psmVars.cbegin(), psmVars.cend(),
+                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
+    {
+        throw std::runtime_error("Postsynaptic models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+    }
+
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
         // If there's no row build code, give an error
