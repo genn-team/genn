@@ -55,6 +55,27 @@ GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);
 
 //--------------------------------------------------------------------------
+//! \brief Is the variable/population name valid? GeNN variables and population names must obey C variable naming rules
+//--------------------------------------------------------------------------
+GENN_EXPORT void validateVarPopName(const std::string &name, const std::string &description);
+
+//--------------------------------------------------------------------------
+//! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
+//--------------------------------------------------------------------------
+GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
+
+//--------------------------------------------------------------------------
+//! \brief Are the 'name' fields of all structs in vector valid? GeNN variables and population names must obey C variable naming rules
+//--------------------------------------------------------------------------
+template<typename T>
+void validateVecNames(const std::vector<T> &vec, const std::string &description)
+{
+    for(const auto &v : vec) {
+        validateVarPopName(v.name, description);
+    }
+}
+
+//--------------------------------------------------------------------------
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost
 //--------------------------------------------------------------------------
 template<class T, typename std::enable_if<std::is_floating_point<T>::value>::type * = nullptr>

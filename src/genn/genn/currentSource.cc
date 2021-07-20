@@ -42,6 +42,10 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
     m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
 {
+    // Validate names
+    Utils::validateVarPopName(name, "Current source");
+    getCurrentSourceModel()->validate();
+
     // If any variables have a reduction access mode, give an error
     const auto vars = getCurrentSourceModel()->getVars();
     if(std::any_of(vars.cbegin(), vars.cend(),

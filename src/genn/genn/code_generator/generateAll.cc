@@ -108,7 +108,7 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     MemAlloc mem = MemAlloc::zero();
     if(forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)) {
         // Generate modules
-        mem += generateRunner(outputPath, modelMerged, backend);
+        mem = generateRunner(outputPath, modelMerged, backend);
         generateSynapseUpdate(outputPath, modelMerged, backend);
         generateNeuronUpdate(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);

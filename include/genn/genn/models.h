@@ -119,6 +119,9 @@ protected:
     // Protected methods
     //------------------------------------------------------------------------
     void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Validate names of parameters etc
+    void validate() const;
 };
 
 

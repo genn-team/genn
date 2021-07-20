@@ -277,6 +277,10 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
     m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
+    // Validate names
+    Utils::validateVarPopName(name, "Neuron group");
+    getNeuronModel()->validate();
+
     // If any variables have a reduction access mode, give an error
     const auto vars = getNeuronModel()->getVars();
     if(std::any_of(vars.cbegin(), vars.cend(),

@@ -439,6 +439,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
+
     // If any variables have a reduction access mode, give an error
     const auto wuVars = getWUModel()->getVars();
     const auto wuPreVars = getWUModel()->getPreVars();
@@ -459,6 +460,11 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     {
         throw std::runtime_error("Postsynaptic models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
+
+    // Validate names
+    Utils::validateVarPopName(name, "Synapse group");
+    getWUModel()->validate();
+    getPSModel()->validate();
 
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
