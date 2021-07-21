@@ -50,6 +50,11 @@ GENN_EXPORT bool isTypePointer(const std::string &type);
 GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
 
 //--------------------------------------------------------------------------
+//! \brief Function to determine whether a string containing a type is floating point
+//--------------------------------------------------------------------------
+GENN_EXPORT bool isTypeFloatingPoint(const std::string &type);
+
+//--------------------------------------------------------------------------
 //! \brief Assuming type is a string containing a pointer type, function to return the underlying type
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);

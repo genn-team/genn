@@ -79,6 +79,12 @@ bool isTypePointerToPointer(const std::string &type)
     return (type[len - 1] == '*' && type[len - 2] == '*');
 }
 //--------------------------------------------------------------------------
+bool isTypeFloatingPoint(const std::string &type)
+{
+    assert(!isTypePointer(type));
+    return ((type == "float") || (type == "double") || (type == "half") || (type == "scalar"));
+}
+//--------------------------------------------------------------------------
 std::string getUnderlyingType(const std::string &type)
 {
     // Check that type is a pointer type

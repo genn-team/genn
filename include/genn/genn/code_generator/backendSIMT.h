@@ -212,7 +212,7 @@ protected:
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
-    void addDeviceType(const std::string &type, size_t size);
+    void addDeviceType(const std::string &type, size_t size, const std::string &maxValue = "");
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;

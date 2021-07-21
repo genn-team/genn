@@ -20,13 +20,13 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
     return std::accumulate(
         groups.cbegin(), groups.cend(), size_t{0},
         [getNumThreads](size_t acc, const T &n)
+    {
+        return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
+                               [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
         {
-            return std::accumulate(n.getGroups().cbegin(), n.getGroups().cend(), acc,
-                                   [getNumThreads](size_t acc, std::reference_wrapper<const typename T::GroupInternal> g)
-            {
-                return acc + getNumThreads(g.get());
-            });
+            return acc + getNumThreads(g.get());
         });
+    });
 }
 }
 
@@ -167,7 +167,7 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
 size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-    const size_t numCopies = cg.isBatched() ? batchSize : 1;
+    const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
 
     if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         // **THINK** like for synapse dynamics kernels, this isn't really correct but correct value isn't known
@@ -817,7 +817,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
         [&modelMerged, this](const CustomUpdateInternal &cu) 
         {
-            const unsigned int numCopies = cu.isBatched() ? modelMerged.getModel().getBatchSize() : 1;
+            const unsigned int numCopies = (cu.isBatched() && !cu.isReduction()) ? modelMerged.getModel().getBatchSize() : 1;
             return numCopies * padKernelSize(cu.getSize(), KernelCustomUpdate); 
         },
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
@@ -825,32 +825,86 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
 
-            // If update is batched
+            // If update is a reduction
             Substitutions cuSubs(&popSubs);
-            if(cg.getArchetype().isBatched()) {
-                // Split ID into intra-batch ID and batch
-                // **TODO** fast-divide style optimisations here
-                os << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
-                os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
-                os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+            if(cg.getArchetype().isReduction()) {
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << cuSubs["id"] << " < group->size)";
+                {
+                    CodeStream::Scope b(os);
 
-                // Replace id in substitution with intra-batch ID and add batch
-                cuSubs.addVarSubstitution("id", "bid", true);
-                cuSubs.addVarSubstitution("batch", "batch");
+                    // Loop through variables
+                    std::vector<std::tuple<std::string, std::string, VarAccessMode>> reductionTargets;
+                    const auto *cm = cg.getArchetype().getCustomUpdateModel();
+                    for(const auto &v : cm->getVars()) {
+                        // If variable is a reduction target, define variable initialised to correct initial value for reduction
+                        if(v.access & VarAccessModeAttribute::REDUCE) {
+                            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, getVarAccessMode(v.access), v.type) << ";" << std::endl;
+                            reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access));
+                        }
+                    }
+
+                    // Loop through variable references
+                    for(const auto &v : cm->getVarRefs()) {
+                        // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
+                        if(v.access & VarAccessModeAttribute::REDUCE) {
+                            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, v.access, v.type) << ";" << std::endl;
+                            reductionTargets.emplace_back(v.name, v.type, v.access);
+                        }
+                    }
+
+                    // Loop through batches
+                    // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
+                    // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
+                    os << "for(unsigned int batch = 0; batch < " << modelMerged.getModel().getBatchSize() << "; batch++)";
+                    {
+                        CodeStream::Scope b(os);
+                        cuSubs.addVarSubstitution("batch", "batch");
+
+                        genCustomUpdateIndexCalculation(os, cg);
+                        customUpdateHandler(os, cg, cuSubs);
+
+                        // Loop through reduction targets and generate reduction
+                        for(const auto &r : reductionTargets) {
+                            os << getReductionOperation("lr" + std::get<0>(r), "l" + std::get<0>(r), std::get<2>(r), std::get<1>(r)) << ";" << std::endl;
+                        }
+                    }
+
+                    // Loop through reduction targets
+                    for(const auto &r : reductionTargets) {
+                        os << "group->" << std::get<0>(r) << " = lr" << std::get<0>(r) << ";" << std::endl;
+                    }
+                }
             }
-            // Otherwise, just substitute "batch" for 0
+            // Otherwise
             else {
-                cuSubs.addVarSubstitution("batch", "0");
+                if(cg.getArchetype().isBatched()) {
+                    // Split ID into intra-batch ID and batch
+                    // **TODO** fast-divide style optimisations here
+                    os << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
+                    os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
+                    os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+
+                    // Replace id in substitution with intra-batch ID and add batch
+                    cuSubs.addVarSubstitution("id", "bid", true);
+                    cuSubs.addVarSubstitution("batch", "batch");
+                }
+                // Otherwise, just substitute "batch" for 0
+                else {
+                    cuSubs.addVarSubstitution("batch", "0");
+                }
+
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << cuSubs["id"] << " < group->size)";
+                {
+                    CodeStream::Scope b(os);
+
+                    genCustomUpdateIndexCalculation(os, cg);
+                    customUpdateHandler(os, cg, cuSubs);
+                }
             }
 
-            os << "// only do this for existing neurons" << std::endl;
-            os << "if(" << cuSubs["id"] << " < group->size)";
-            {
-                CodeStream::Scope b(os);
-
-                genCustomUpdateIndexCalculation(os, cg);
-                customUpdateHandler(os, cg, cuSubs);
-            }
+            
         });
 }
 //--------------------------------------------------------------------------
@@ -1510,9 +1564,9 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::addDeviceType(const std::string &type, size_t size)
+void BackendSIMT::addDeviceType(const std::string &type, size_t size, const std::string &maxValue)
 {
-    addType(type, size);
+    addType(type, size, maxValue);
     m_DeviceTypes.emplace(type);
 }
 //--------------------------------------------------------------------------

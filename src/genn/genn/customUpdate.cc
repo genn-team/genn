@@ -69,6 +69,7 @@ void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(isBatched(), hash);
+    Utils::updateHash(isReduction(), hash);
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
@@ -137,7 +138,7 @@ void CustomUpdate::finalize(unsigned int batchSize)
     }
 
     // Determine whether custom update is batched
-    finalizeBatched(batchSize, m_VarReferences);
+    CustomUpdateBase::finalize(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
@@ -223,7 +224,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 //----------------------------------------------------------------------------
 void CustomUpdateWU::finalize(unsigned int batchSize)
 {
-    finalizeBatched(batchSize, m_VarReferences);
+    CustomUpdateBase::finalize(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const
