@@ -70,6 +70,9 @@ public:
     //------------------------------------------------------------------------
     //! Update hash from snippet
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Validate names of parameters etc
+    void validate() const;
 };
 
 //----------------------------------------------------------------------------

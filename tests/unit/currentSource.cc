@@ -87,3 +87,19 @@ TEST(CurrentSource, CompareSameParameters)
     CurrentSourceInternal *cs1Internal = static_cast<CurrentSourceInternal*>(cs1);
     ASSERT_EQ(cs0Internal->getHashDigest(), cs1Internal->getHashDigest());
 }
+
+TEST(CurrentSource, InvalidName)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    
+    ModelSpec model;
+    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
+    
+    try {
+        model.addCurrentSource<CurrentSourceModels::DC>("6CS", "Pop", {1.0}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}

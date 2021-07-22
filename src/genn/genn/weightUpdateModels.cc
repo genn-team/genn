@@ -36,3 +36,12 @@ boost::uuids::detail::sha1::digest_type WeightUpdateModels::Base::getHashDigest(
     // Return digest
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+void WeightUpdateModels::Base::validate() const
+{
+    // Superclass
+    Models::Base::validate();
+
+    Utils::validateVecNames(getPreVars(), "Presynaptic variable");
+    Utils::validateVecNames(getPostVars(), "Presynaptic variable");
+}

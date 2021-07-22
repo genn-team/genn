@@ -41,6 +41,9 @@ public:
     //----------------------------------------------------------------------------
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Validate names of parameters etc
+    void validate() const;
 };
 
 //----------------------------------------------------------------------------

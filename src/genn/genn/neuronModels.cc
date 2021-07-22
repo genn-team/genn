@@ -31,3 +31,11 @@ boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() cons
     Utils::updateHash(getAdditionalInputVars(), hash);
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+void NeuronModels::Base::validate() const
+{
+    // Superclass
+    Models::Base::validate();
+
+    Utils::validateVecNames(getAdditionalInputVars(), "Additional input variable");
+}

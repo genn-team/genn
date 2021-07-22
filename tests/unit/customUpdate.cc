@@ -582,3 +582,45 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().size() == 1);
 }
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, InvalidName)
+{
+    ModelSpec model;
+    
+     // Add neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
+    
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+
+    try {
+        model.addCustomUpdate<Sum>("1Sum", "CustomUpdate",
+                                   {}, sumVarValues, sumVarReferences1);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, InvalidUpdateGroupName)
+{
+    ModelSpec model;
+    
+     // Add neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
+    
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+
+    try {
+        model.addCustomUpdate<Sum>("Sum", "1CustomUpdate",
+                                   {}, sumVarValues, sumVarReferences1);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}

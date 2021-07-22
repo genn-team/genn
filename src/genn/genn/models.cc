@@ -19,6 +19,15 @@ void Base::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getVars(), hash);
 }
 //----------------------------------------------------------------------------
+void Base::validate() const
+{
+    // Superclass
+    Snippet::Base::validate();
+
+    Utils::validateVecNames(getVars(), "Variable");
+}
+
+//----------------------------------------------------------------------------
 // VarReference
 //----------------------------------------------------------------------------
 VarReference VarReference::createVarRef(const NeuronGroup *ng, const std::string &varName)

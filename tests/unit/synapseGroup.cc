@@ -692,6 +692,26 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
 }
 
+TEST(SynapseGroup, InvalidName)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    
+    ModelSpec model;
+    auto *pre = model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    try {
+        model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+            "6Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, {1.0},
+            {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+
 TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
 {
     ModelSpecInternal model;

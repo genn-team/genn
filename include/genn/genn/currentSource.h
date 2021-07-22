@@ -9,6 +9,7 @@
 // GeNN includes
 #include "currentSourceModels.h"
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -68,6 +69,9 @@ protected:
         m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
     {
+        // Validate names
+        Utils::validateVarPopName(name, "Current source");
+        getCurrentSourceModel()->validate();
     }
 
     //------------------------------------------------------------------------

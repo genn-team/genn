@@ -26,3 +26,11 @@ boost::uuids::detail::sha1::digest_type InitSparseConnectivitySnippet::Base::get
     Utils::updateHash(getHostInitCode(), hash);
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+void InitSparseConnectivitySnippet::Base::validate() const
+{
+    // Superclass
+    Snippet::Base::validate();
+    Utils::validateVecNames(getRowBuildStateVars(), "Row building state variable");
+    Utils::validateVecNames(getColBuildStateVars(), "Column building state variable");
+}
