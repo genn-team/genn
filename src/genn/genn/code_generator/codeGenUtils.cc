@@ -500,6 +500,7 @@ std::string getReductionOperation(const std::string &reduction, const std::strin
     }
     else {
         assert(false);
+        return "";
     }
 }
 //--------------------------------------------------------------------------

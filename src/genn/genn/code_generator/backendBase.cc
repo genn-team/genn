@@ -57,7 +57,7 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
     }
 }
 //--------------------------------------------------------------------------
-const std::string &CodeGenerator::BackendBase::getLowestValue(const std::string &type) const
+std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) const
 {
     assert(!Utils::isTypePointer(type));
 

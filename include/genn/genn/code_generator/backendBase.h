@@ -484,7 +484,7 @@ public:
     size_t getSize(const std::string &type) const;
 
     //! Get the lowest value of a type
-    const std::string &getLowestValue(const std::string &type) const;
+    std::string getLowestValue(const std::string &type) const;
 
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
