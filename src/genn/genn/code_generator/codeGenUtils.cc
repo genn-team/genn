@@ -478,6 +478,7 @@ std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode a
     }
     else {
         assert(false);
+        return "";
     }
 }
 
