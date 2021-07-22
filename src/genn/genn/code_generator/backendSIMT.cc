@@ -28,6 +28,31 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
         });
     });
 }
+//-----------------------------------------------------------------------
+template<typename G>
+std::vector<std::tuple<std::string, std::string, VarAccessMode>> initReductionTargets(CodeStream &os, const BackendBase &backend, const G &cg)
+{
+    // Loop through variables
+    std::vector<std::tuple<std::string, std::string, VarAccessMode>> reductionTargets;
+    const auto *cm = cg.getArchetype().getCustomUpdateModel();
+    for(const auto &v : cm->getVars()) {
+        // If variable is a reduction target, define variable initialised to correct initial value for reduction
+        if(v.access & VarAccessModeAttribute::REDUCE) {
+            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(backend, getVarAccessMode(v.access), v.type) << ";" << std::endl;
+            reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access));
+        }
+    }
+
+    // Loop through variable references
+    for(const auto &v : cm->getVarRefs()) {
+        // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
+        if(v.access & VarAccessModeAttribute::REDUCE) {
+            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(backend, v.access, v.type) << ";" << std::endl;
+            reductionTargets.emplace_back(v.name, v.type, v.access);
+        }
+    }
+    return reductionTargets;
+}
 }
 
 //--------------------------------------------------------------------------
@@ -833,25 +858,8 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                 {
                     CodeStream::Scope b(os);
 
-                    // Loop through variables
-                    std::vector<std::tuple<std::string, std::string, VarAccessMode>> reductionTargets;
-                    const auto *cm = cg.getArchetype().getCustomUpdateModel();
-                    for(const auto &v : cm->getVars()) {
-                        // If variable is a reduction target, define variable initialised to correct initial value for reduction
-                        if(v.access & VarAccessModeAttribute::REDUCE) {
-                            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, getVarAccessMode(v.access), v.type) << ";" << std::endl;
-                            reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access));
-                        }
-                    }
-
-                    // Loop through variable references
-                    for(const auto &v : cm->getVarRefs()) {
-                        // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
-                        if(v.access & VarAccessModeAttribute::REDUCE) {
-                            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, v.access, v.type) << ";" << std::endl;
-                            reductionTargets.emplace_back(v.name, v.type, v.access);
-                        }
-                    }
+                    // Initialise reduction targets
+                    const auto reductionTargets = initReductionTargets(os, *this, cg);
 
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
@@ -925,26 +933,29 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             // Calculate number of threads for update
             os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
 
-            // If update is batched
+            // If update isn't a reduction
             Substitutions cuSubs(&popSubs);
-            if(cg.getArchetype().isBatched()) {
-                os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
-                
-                // Split ID into intra-batch ID and batch
-                // **TODO** fast-divide style optimisations here
-                os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
-                os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
+            if(!cg.getArchetype().isReduction()) {
+                // If it's batched
+                if(cg.getArchetype().isBatched()) {
+                    os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
 
-                // Replace id in substitution with intra-batch ID and add batch
-                cuSubs.addVarSubstitution("id", "bid", true);
-                cuSubs.addVarSubstitution("batch", "batch");
+                    // Split ID into intra-batch ID and batch
+                    // **TODO** fast-divide style optimisations here
+                    os << "const unsigned int bid = " << cuSubs["id"] << " % paddedSize;" << std::endl;
+                    os << "const unsigned int batch = " << cuSubs["id"] << " / paddedSize;" << std::endl;
 
-                // Calculate batch offset
-                os << "const unsigned int batchOffset = size * batch;" << std::endl;
-            }
-            // Otherwise, just substitute "batch" for 0
-            else {
-                cuSubs.addVarSubstitution("batch", "0");
+                    // Replace id in substitution with intra-batch ID and add batch
+                    cuSubs.addVarSubstitution("id", "bid", true);
+                    cuSubs.addVarSubstitution("batch", "batch");
+
+                    // Calculate batch offset
+                    os << "const unsigned int batchOffset = size * batch;" << std::endl;
+                }
+                // Otherwise, just substitute "batch" for 0
+                else {
+                    cuSubs.addVarSubstitution("batch", "0");
+                }
             }
 
             if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -955,6 +966,20 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             }
             {
                 CodeStream::Scope b(os);
+
+                // Initialise reduction targets
+                const auto reductionTargets = (cg.getArchetype().isReduction() ? initReductionTargets(os, *this, cg) 
+                                               : std::vector<std::tuple<std::string, std::string, VarAccessMode>>{});
+
+                // If this is a reduction
+                if(cg.getArchetype().isReduction()) {
+                    // Loop through batches
+                    // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
+                    // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
+                    os << "for(unsigned int batch = 0; batch < " << modelMerged.getModel().getBatchSize() << "; batch++)";
+                    os << CodeStream::OB(1);
+                    cuSubs.addVarSubstitution("batch", "batch");
+                }
 
                 if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // Determine synapse and presynaptic indices for this thread
@@ -972,6 +997,22 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 customUpdateWUHandler(os, cg, cuSubs);
+
+                // If this is a reduction
+                if(cg.getArchetype().isReduction()) {
+                    // Loop through reduction targets and generate reduction
+                    for(const auto &r : reductionTargets) {
+                        os << getReductionOperation("lr" + std::get<0>(r), "l" + std::get<0>(r), std::get<2>(r), std::get<1>(r)) << ";" << std::endl;
+                    }
+
+                    // End for loop through batches
+                    os << CodeStream::CB(1);
+
+                    // Loop through reduction targets
+                    for(const auto &r : reductionTargets) {
+                        os << "group->" << std::get<0>(r) << " = lr" << std::get<0>(r) << ";" << std::endl;
+                    }
+                }
             }
         });
 }
