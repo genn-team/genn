@@ -103,6 +103,40 @@ void genMergedKernelDataStructures(CodeStream &os, Args... args)
     genGroupStartIDs(os, std::ref(idStart), args...);
 }
 //-----------------------------------------------------------------------
+void genFilteredGroupStartIDs(CodeStream &, size_t &)
+{
+}
+//-----------------------------------------------------------------------
+template<typename T, typename G, typename F, typename ...Args>
+void genFilteredGroupStartIDs(CodeStream &os, size_t &idStart,
+                      const std::vector<T> &mergedGroups, G getPaddedNumThreads, F filter,
+                      Args... args)
+{
+    // Loop through merged groups
+    for(const auto &m : mergedGroups) {
+        if(filter(m)) {
+            // Declare array of starting thread indices for each neuron group
+            os << "__constant unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
+            for(const auto &ng : m.getGroups()) {
+                os << idStart << ", ";
+                idStart += getPaddedNumThreads(ng.get());
+            }
+            os << "};" << std::endl;
+        }
+    }
+
+    // Generate any remaining groups
+    genFilteredGroupStartIDs(os, idStart, args...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+void genFilteredMergedKernelDataStructures(CodeStream &os, Args... args)
+{
+    // Generate group start id arrays
+    size_t idStart = 0;
+    genFilteredGroupStartIDs(os, std::ref(idStart), args...);
+}
+//-----------------------------------------------------------------------
 void genReadEventTiming(CodeStream &os, const std::string &name)
 {
     os << "const cl_ulong tmpStart = " << name << "Event.getProfilingInfo<CL_PROFILING_COMMAND_START>();" << std::endl;
@@ -845,13 +879,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
    
 
     // Generate data structure for accessing merged groups from within custom update kernels
-    genMergedKernelDataStructures(
-        customUpdateKernels, 
-        modelMerged.getMergedCustomUpdateGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelCustomUpdate); },
-        modelMerged.getMergedCustomUpdateWUGroups(), [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
-    genMergedKernelDataStructures(
-        customUpdateKernels,
-        modelMerged.getMergedCustomUpdateTransposeWUGroups(), [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
     customUpdateKernels << std::endl;
 
     // Generate kernels used to populate merged structs
@@ -867,6 +894,17 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
                           [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
+            genFilteredMergedKernelDataStructures(
+                customUpdateKernels,
+                modelMerged.getMergedCustomUpdateGroups(),
+                [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelCustomUpdate); },
+                [g](const CustomUpdateGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g.first); },
+
+                modelMerged.getMergedCustomUpdateWUGroups(),
+                [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
+                [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); });
+
+
             customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 1, 1)))" << std::endl;
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomUpdate] << g.first << "(";
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateGroups(), true);
@@ -897,6 +935,12 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
                        [&g](const CustomUpdateTransposeWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); }))
         {
+            genFilteredMergedKernelDataStructures(
+                customUpdateKernels,
+                modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                [&model, this](const CustomUpdateWUInternal &cg) { return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); },
+                [&g](const CustomUpdateTransposeWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g.first); });
+
             customUpdateKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelCustomUpdate) << ", 8, 1)))" << std::endl;
             customUpdateKernels << "__kernel void " << KernelNames[KernelCustomTransposeUpdate] << g.first << "(";
             genMergedGroupKernelParams(customUpdateKernels, modelMerged.getMergedCustomUpdateTransposeWUGroups(), true);
