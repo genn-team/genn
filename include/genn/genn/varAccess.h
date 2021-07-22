@@ -5,20 +5,21 @@
 // Enumerations
 //----------------------------------------------------------------------------
 //! Flags defining attributes of var access models
+//! **NOTE** Read-only and read-write are seperate flags rather than read and write so you can test mode & VarAccessMode::READ_ONLY
 enum class VarAccessModeAttribute : unsigned int
 {
-    READ    = (1 << 0), //! This variable can be read
-    WRITE   = (1 << 1), //! This variable can be written
-    REDUCE  = (1 << 2), //! This variable is a reduction target
-    SUM     = (1 << 3), //! This variable's reduction operation is a summation
-    MAX     = (1 << 4), //! This variable's reduction operation is a maximum
+    READ_ONLY   = (1 << 0), //! This variable is read only
+    READ_WRITE  = (1 << 1), //! This variable is read-write
+    REDUCE      = (1 << 2), //! This variable is a reduction target
+    SUM         = (1 << 3), //! This variable's reduction operation is a summation
+    MAX         = (1 << 4), //! This variable's reduction operation is a maximum
 };
 
 //! Supported combination of VarAccessModeAttribute
 enum class VarAccessMode : unsigned int
 {
-    READ_WRITE  = static_cast<unsigned int>(VarAccessModeAttribute::READ) | static_cast<unsigned int>(VarAccessModeAttribute::WRITE),
-    READ_ONLY   = static_cast<unsigned int>(VarAccessModeAttribute::READ),
+    READ_WRITE  = static_cast<unsigned int>(VarAccessModeAttribute::READ_WRITE),
+    READ_ONLY   = static_cast<unsigned int>(VarAccessModeAttribute::READ_ONLY),
     REDUCE_SUM  = static_cast<unsigned int>(VarAccessModeAttribute::REDUCE) | static_cast<unsigned int>(VarAccessModeAttribute::SUM),
     REDUCE_MAX  = static_cast<unsigned int>(VarAccessModeAttribute::REDUCE) | static_cast<unsigned int>(VarAccessModeAttribute::MAX),
 };
