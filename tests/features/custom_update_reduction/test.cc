@@ -28,31 +28,58 @@ public:
     virtual void Init()
     {
         // Initialise variables to reduce
-        std::iota(&VNeuron[0], &VNeuron[50 * 5], 0);
+        std::iota(&VNeuron[0], &VNeuron[50 * 5], 0.0f);
+        std::iota(&VDense[0], &VDense[50 * 50 * 5], 0.0f);
+        
+        pullSparseConnectivityFromDevice();
+        for(unsigned int b = 0; b < 5; b++) {
+            const unsigned int batchStart = (b * 50 * maxRowLengthSparse);
+            for(unsigned int i = 0; i < 50; i++) {
+                const unsigned rowStartIdx = batchStart + (i * maxRowLengthSparse);
+                for(unsigned int j = 0 ; j < rowLengthSparse[i]; j++) {
+                    const unsigned int synIdx = rowStartIdx + j;
+                    VSparse[synIdx] = (scalar)synIdx;
+                }
+            }
+        }
     }
 };
 
-template<typename Predicate>
-void checkSparseVar(scalar *var, Predicate predicate)
+int getIntegerRangeSum(int num, int first, int last)
 {
-    for(unsigned int i = 0; i < 50; i++) {
-        const unsigned int rowStart = maxRowLengthSparse * i;
-        const unsigned int rowLength = rowLengthSparse[i];
-        ASSERT_TRUE(std::all_of(&var[rowStart], &var[rowStart + rowLength], predicate));
-    }
+    return num * (first + last) / 2;
 }
 
 TEST_F(SimTest, CustomUpdateReduction)
 {
     // Launch reduction
     updateTest();
-    
+
     // Download reductions
-    pullSumNeuronReduceAddFromDevice();
-    pullMaxNeuronReduceMaxFromDevice();
-    
+    pullNeuronReduceStateFromDevice();
+    pullWUMDenseReduceStateFromDevice();
+    pullWUMSparseReduceStateFromDevice();
+
+    // Check neuron reductions
     for(unsigned int i = 0; i < 50; i++) {
-        ASSERT_EQ(SumNeuronReduceAdd[i], (5 * (i + (4 * 50) + i)) / 2);
+        ASSERT_EQ(SumNeuronReduce[i], (float)getIntegerRangeSum(5, i, (4 * 50) + i));
+        ASSERT_EQ(MaxNeuronReduce[i], (float)((4 * 50) + i));
+    }
+
+    // Check dense weight reductions
+    for(unsigned int i = 0; i < (50 * 50); i++) {
+        ASSERT_EQ(SumWUMDenseReduce[i], (float)getIntegerRangeSum(5, i, (4 * 50 * 50) + i));
+        ASSERT_EQ(MaxWUMDenseReduce[i], (float)((4 * 50 * 50) + i));
+    }
+
+    // Check sparse weight reductions
+    for(unsigned int i = 0; i < 50; i++) {
+        const unsigned rowStartIdx = i * maxRowLengthSparse;
+        for(unsigned int j = 0 ; j < rowLengthSparse[i]; j++) {
+            const unsigned int synIdx = rowStartIdx + j;
+            ASSERT_EQ(SumWUMSparseReduce[synIdx], (float)getIntegerRangeSum(5, synIdx, (4 * 50 * maxRowLengthSparse) + synIdx));
+            ASSERT_EQ(MaxWUMSparseReduce[synIdx], (float)((4 * 50 * maxRowLengthSparse) + synIdx));
+        }
     }
 }
 

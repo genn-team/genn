@@ -27,29 +27,19 @@ public:
 };
 IMPLEMENT_MODEL(TestWUM);
 
-class ReduceAdd : public CustomUpdateModels::Base
+class Reduce : public CustomUpdateModels::Base
 {
 public:
-    DECLARE_CUSTOM_UPDATE_MODEL(ReduceAdd, 0, 1, 1);
+    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 2, 1);
     
-    SET_UPDATE_CODE("$(Sum) = $(V);\n");
+    SET_UPDATE_CODE(
+        "$(Sum) = $(V);\n"
+        "$(Max) = $(V);\n");
 
-    SET_VARS({{"Sum", "scalar", VarAccess::REDUCE_BATCH_SUM}});
+    SET_VARS({{"Sum", "scalar", VarAccess::REDUCE_BATCH_SUM}, {"Max", "scalar", VarAccess::REDUCE_BATCH_MAX}});
     SET_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}})
 };
-IMPLEMENT_MODEL(ReduceAdd);
-
-class ReduceMax : public CustomUpdateModels::Base
-{
-public:
-    DECLARE_CUSTOM_UPDATE_MODEL(ReduceMax, 0, 1, 1);
-    
-    SET_UPDATE_CODE("$(Max) = $(V);\n");
-
-    SET_VARS({{"Max", "scalar", VarAccess::REDUCE_BATCH_MAX}});
-    SET_VAR_REFS({{"V", "scalar", VarAccessMode::READ_ONLY}})
-};
-IMPLEMENT_MODEL(ReduceMax);
+IMPLEMENT_MODEL(Reduce);
 
 void modelDefinition(ModelSpec &model)
 {
@@ -68,43 +58,30 @@ void modelDefinition(ModelSpec &model)
 
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 50, {}, {});
     auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 50, {}, {uninitialisedVar()});
-    /*auto *denseSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+    auto *denseSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
         "Dense", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
-        {}, {0.0, 0.0},
+        {}, {uninitialisedVar()},
         {}, {});
     auto *sparseSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
-        {}, {0.0, 0.0},
+        {}, {uninitialisedVar()},
         {}, {},
-        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));*/
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
     
     //---------------------------------------------------------------------------
     // Custom updates
     //---------------------------------------------------------------------------
-    ReduceAdd::VarReferences neuronReduceAddVarReferences(createVarRef(ng, "V")); // V
-    model.addCustomUpdate<ReduceAdd>("NeuronReduceAdd", "Test",
-                                     {}, {0.0}, neuronReduceAddVarReferences);
+    Reduce::VarReferences neuronReduceVarReferences(createVarRef(ng, "V")); // V
+    model.addCustomUpdate<Reduce>("NeuronReduce", "Test",
+                                  {}, {0.0, 0.0}, neuronReduceVarReferences);
     
-    ReduceMax::VarReferences neuronReduceMaxVarReferences(createVarRef(ng, "V")); // V
-    model.addCustomUpdate<ReduceMax>("NeuronReduceMax", "Test",
-                                     {}, {0.0}, neuronReduceMaxVarReferences);
-    
-    /*SetTimeBatch::WUVarReferences wumDenseDuplicateVarReferences(createWUVarRef(denseSG, "V")); // R
-    model.addCustomUpdate<SetTimeBatch>("WUMDenseDuplicateSetTime", "Test",
-                                        {}, {0.0}, wumDenseDuplicateVarReferences);
-    
-    SetTime::WUVarReferences wumDenseSharedVarReferences(createWUVarRef(denseSG, "U")); // R
-    model.addCustomUpdate<SetTime>("WUMDenseSharedSetTime", "Test",
-                                   {}, {0.0}, wumDenseSharedVarReferences);
+    Reduce::WUVarReferences wumDenseReduceVarReferences(createWUVarRef(denseSG, "V")); // V
+    model.addCustomUpdate<Reduce>("WUMDenseReduce", "Test",
+                                  {}, {0.0, 0.0}, wumDenseReduceVarReferences);
    
-    SetTimeBatch::WUVarReferences wumSparseDuplicateVarReferences(createWUVarRef(sparseSG, "V")); // R
-    model.addCustomUpdate<SetTimeBatch>("WUMSparseDuplicateSetTime", "Test",
-                                        {}, {0.0}, wumSparseDuplicateVarReferences);
-    
-    SetTime::WUVarReferences wumSparseSharedVarReferences(createWUVarRef(sparseSG, "U")); // R
-    model.addCustomUpdate<SetTime>("WUMSparseSharedSetTime", "Test",
-                                   {}, {0.0}, wumSparseSharedVarReferences);*/
-
+    Reduce::WUVarReferences wumSparseReduceVarReferences(createWUVarRef(sparseSG, "V")); // V
+    model.addCustomUpdate<Reduce>("WUMSparseReduce", "Test",
+                                  {}, {0.0, 0.0}, wumSparseReduceVarReferences);
 }
