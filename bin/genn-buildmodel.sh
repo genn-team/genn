@@ -56,11 +56,11 @@ fi
 # Use pushd to get an absolute path and symbolic links in /tmp to avoid problems
 # with spaces in the path names 
 pushd "$OUT_PATH" > /dev/null
-OUT_PATH=/tmp/genn_outpath$RANDOM
+OUT_PATH=$(mktemp -u /tmp/genn.XXXXXXXX)
 ln -s "$PWD" $OUT_PATH
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MODEL_PATH=/tmp/genn_modelpath$RANDOM
+MODEL_PATH=$(mktemp -u /tmp/genn.XXXXXXXX)
 ln -s "$PWD" $MODEL_PATH
 MACROS="MODEL=$MODEL_PATH/$(basename $MODEL) GENERATOR_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE CXX_STANDARD=$CXX_STANDARD"
 GENERATOR=./generator
