@@ -346,8 +346,8 @@ class NeuronGroup(Group):
         """Current spikes from GeNN"""
         # Get current spike queue pointer
         d = self.spike_que_ptr[0]
-        
-        # If batch size is zero, return single slice of spikes
+
+        # If batch size is one, return single slice of spikes
         if self._model.batch_size == 1:
             return self.spikes[0, d, 0:self.spike_count[0, d]]
         # Otherwise, return list of slices
@@ -361,13 +361,20 @@ class NeuronGroup(Group):
         # Get current spike queue pointer
         d = self.spike_que_ptr[0]
 
-        # If batch size is zero, return single slice of spikes
+        # If batch size is one, set single spike count and spike data
         if self._model.batch_size == 1:
             num_spikes = len(spikes)
             self.spike_count[0, d] = num_spikes
             self.spikes[0, d, 0:num_spikes] = spikes
-        # Otherwise, return list of slices
+        # Otherwise
         else:
+            # Check that spikes have been passed for each batch
+            if len(spikes) != self._model.batch_size:
+                raise Exception("When using a batched model, you must "
+                                "set current spikes using a list of spikes "
+                                "for each batch")
+
+            # Loop through batches and set spike counts and spike data
             for b, batch_spikes in enumerate(spikes):
                 num_spikes = len(batch_spikes)
                 self.spike_count[b, d] = num_spikes
