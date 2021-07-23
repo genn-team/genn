@@ -378,7 +378,7 @@ class NeuronGroup(Group):
             for b, batch_spikes in enumerate(spikes):
                 num_spikes = len(batch_spikes)
                 self.spike_count[b, d] = num_spikes
-                self.spikes[b, d, 0:num_spikes] = spikes
+                self.spikes[b, d, 0:num_spikes] = batch_spikes
 
     @property
     def spike_recording_data(self):
