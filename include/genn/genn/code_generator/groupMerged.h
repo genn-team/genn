@@ -1824,7 +1824,7 @@ class CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGro
 {
 public:
     CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                              const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+                                         const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API
@@ -1850,7 +1850,7 @@ class CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionG
 {
 public:
     CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+                                           const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //------------------------------------------------------------------------
     // Public API

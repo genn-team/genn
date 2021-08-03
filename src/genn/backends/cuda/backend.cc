@@ -194,6 +194,84 @@ const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const s
 {
     return (precision == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions;
 }
+//-----------------------------------------------------------------------
+std::string getNCCLReductionType(VarAccessMode mode) 
+{
+    // Convert GeNN reduction types to NCCL
+    if(mode & VarAccessModeAttribute::MAX) {
+        return "ncclMax";
+    }
+    else if(mode & VarAccessModeAttribute::SUM) {
+        return "ncclSum";
+    }
+    else {
+        throw std::runtime_error("Reduction type unsupported by NCCL");
+    }
+}
+//-----------------------------------------------------------------------
+std::string getNCCLType(const std::string &type, const std::string &precision)
+{
+    // Convert GeNN types to NCCL types
+    // **YUCK** GeNN really needs a better type system
+    if(type == "scalar") {
+        return (precision == "float") ? "ncclFloat32" : "ncclFloat64";
+    }
+    else if(type == "char" || type == "signed char" || type == "int8_t") {
+        return "ncclInt8";
+    }
+    else if(type == "unsigned char" || type == "uint8_t") {
+        return "ncclUint8";
+    }
+    else if(type == "int" || type == "signed int" || type == "signed" || type == "int32_t") {
+        return "ncclInt32";
+    }
+    else if(type == "unsigned" || type == "unsigned int" || type == "uint32_t") {
+        return "ncclUint32";
+    }
+    else if(type == "half") {
+        return "ncclFloat16";
+    }
+    else if(type == "float") {
+        return "ncclFloat32";
+    }
+    else if(type == "double") {
+        return "ncclFloat64";
+    }
+    else {
+        throw std::runtime_error("Data type '" + type + "' unsupported by NCCL");
+    }
+}
+//-----------------------------------------------------------------------
+template<typename G>
+void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
+{
+    CodeStream::Scope b(os);
+    os << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
+    os << "for(unsigned int g = 0; g < " << cg.getGroups().size() << "; g++)";
+    {
+        CodeStream::Scope b(os);
+
+        // Get reference to group
+        os << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
+
+        // Loop through variables and add pointers if they are reduction targets
+        const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(getVarAccessMode(v.access)) << ", ncclCommunicator, 0)); " << std::endl;
+            }
+        }
+
+        // Loop through variable references and add pointers if they are reduction targets
+        for(const auto &v : cm->getVarRefs()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
+            }
+        } 
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -727,6 +805,25 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // If NCCL reductions are enabled
+            if(getPreferences<Preferences>().enableNCCLReductions) {
+                // Loop through custom update host reduction groups and
+                // generate reductions for those in this custom update group
+                for(const auto &cg : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
+                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                        genNCCLReduction(os, cg, model.getPrecision());
+                    }
+                }
+
+                // Loop through custom update host reduction groups and
+                // generate reductions for those in this custom update group
+                for(const auto &cg : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
+                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                        genNCCLReduction(os, cg, model.getPrecision());
+                    }
+                }
             }
 
             // If timing is enabled
