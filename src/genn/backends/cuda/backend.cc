@@ -968,6 +968,25 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
+
+    // If NCCL is enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Include NCCL header
+        os << "#include <nccl.h>" << std::endl;
+        os << std::endl;
+        // Define NCCL ID and communicator
+        os << "EXPORT_VAR ncclUniqueId ncclID;" << std::endl;
+        os << "EXPORT_VAR ncclComm_t ncclCommunicator;" << std::endl;
+        os << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Helper macro for error-checking NCCL calls" << std::endl;
+        os << "#define CHECK_NCCL_ERRORS(call) {\\" << std::endl;
+        os << "    ncclResult_t error = call;\\" << std::endl;
+        os << "    if (error != ncclSuccess) {\\" << std::endl;
+        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
+        os << "    }\\" << std::endl;
+    }
+
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking CUDA calls" << std::endl;
@@ -1170,10 +1189,13 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
     os << "#pragma warning(disable: 4297)" << std::endl;
-#else
-    // Prevent unused parameter warning
-    (void)os;
 #endif
+
+     // If NCCL is enabled, declare NCCL ID and communicator
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "ncclUniqueId ncclID;" << std::endl;
+        os << "ncclComm_t ncclCommunicator;" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
@@ -1220,6 +1242,11 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
     
+    // Initialise NCCL communicator
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "CHECK_NCCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
+    }
+
     os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1697,20 +1724,30 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
 std::string Backend::getAllocateMemParams(const ModelSpecMerged &) const
 {
     // If device should be selected at runtime
+    std::string params;
     if(getPreferences<Preferences>().deviceSelectMethod == DeviceSelect::MANUAL_RUNTIME) {
         // If devices should be delected by ID, add an integer parameter
         if(getPreferences<Preferences>().selectGPUByDeviceID) {
-            return "int deviceID";
+            params += "int deviceID";
         }
         // Otherwise, add a pci bus ID parameter
         else {
-            return "const char *pciBusID";
+            params += "const char *pciBusID";
         }
     }
-    // Othewise, no parameters are required
-    else {
-        return "";
+
+    // If NCCL reductions are enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // If there are existing parameters, add comma
+        if(!params.empty()) {
+            params += ", ";
+        }
+
+        // Add num ranks and rank parameter
+        params += "int numRanks, int rank";
     }
+
+    return params;
 }
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const

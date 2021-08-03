@@ -76,6 +76,9 @@ struct Preferences : public PreferencesBase
     //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
     bool selectGPUByDeviceID = false;
 
+    //! Generate corresponding NCCL batch reductions
+    bool enableNCCLReductions = false;
+
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 
