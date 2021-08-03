@@ -142,6 +142,17 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
                            &CustomUpdateWUInternal::getHashDigest);
 
+    if(backend.isHostReductionRequired()) {
+        LOGD_CODE_GEN << "Merging custom weight update groups:";
+        createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
+                               [](const CustomUpdateInternal &cg) { return cg.isReduction(); },
+                               &CustomUpdateInternal::getHashDigest);
+
+        LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
+        createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
+                               [](const CustomUpdateWUInternal &cg) { return cg.isReduction(); },
+                               &CustomUpdateWUInternal::getHashDigest);
+    }
 
     // Get memory spaces available to this backend
     // **NOTE** Memory spaces are given out on a first-come, first-serve basis so subsequent groups are in preferential order

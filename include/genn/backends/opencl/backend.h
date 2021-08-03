@@ -247,6 +247,9 @@ public:
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return false; }
 
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const override { return false; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override { return m_ChosenDevice.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>(); }
     

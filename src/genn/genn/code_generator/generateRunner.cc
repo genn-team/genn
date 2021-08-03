@@ -797,6 +797,18 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
+    // Loop through custom update host reduction groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Loop through custom weight update host reduction groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;

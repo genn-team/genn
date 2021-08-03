@@ -875,7 +875,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(customUpdateKernels, *this);
     modelMerged.genMergedCustomUpdateWUStructs(customUpdateKernels, *this);
-    modelMerged.gemMergedCustomUpdateTransposeWUStructs(customUpdateKernels, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(customUpdateKernels, *this);
    
 
     // Generate data structure for accessing merged groups from within custom update kernels

@@ -113,6 +113,7 @@ struct Preferences : public PreferencesBase
         Utils::updateHash(selectGPUByDeviceID, hash);
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
+        Utils::updateHash(enableNCCLReductions, hash);
     }
 };
 
@@ -271,6 +272,9 @@ public:
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
+
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const override { return getPreferences<Preferences>().enableNCCLReductions; }
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }

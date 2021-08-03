@@ -150,6 +150,9 @@ public:
     virtual bool isSynRemapRequired(const SynapseGroupInternal&) const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const override { return false; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return 0; }
 

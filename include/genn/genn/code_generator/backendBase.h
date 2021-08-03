@@ -437,6 +437,9 @@ public:
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
 
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const = 0;
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
