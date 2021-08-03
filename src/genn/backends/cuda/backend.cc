@@ -959,6 +959,11 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "// Standard C includes" << std::endl;
     os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
+
+    // If NCCL is enabled, export ncclGetUniqueId function
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "extern \"C\" EXPORT_FUNC void ncclGetUniqueId();" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -1191,10 +1196,20 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
     os << "#pragma warning(disable: 4297)" << std::endl;
 #endif
 
-     // If NCCL is enabled, declare NCCL ID and communicator
+     // If NCCL is enabled
     if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Define NCCL ID and communicator
         os << "ncclUniqueId ncclID;" << std::endl;
         os << "ncclComm_t ncclCommunicator;" << std::endl;
+
+        // Define wrapper around ncclGetUniqueId function
+        os << std::endl;
+        os << "void ncclGetUniqueId()";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
+        }
+        os << std::endl;
     }
 }
 //--------------------------------------------------------------------------
