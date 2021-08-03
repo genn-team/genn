@@ -1067,7 +1067,11 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
 
     // If NCCL is enabled, export ncclGetUniqueId function
     if(getPreferences<Preferences>().enableNCCLReductions) {
-        os << "extern \"C\" EXPORT_FUNC void ncclGetUniqueId();" << std::endl;
+        os << "extern \"C\" {" << std::endl;
+        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_FUNC void generateNCCLUniqueID();" << std::endl;
+        os << "EXPORT_FUNC const char *getNCCLUniqueID();" << std::endl;
+        os << "}" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1307,12 +1311,21 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
         os << "ncclUniqueId ncclID;" << std::endl;
         os << "ncclComm_t ncclCommunicator;" << std::endl;
 
-        // Define wrapper around ncclGetUniqueId function
+        // Define constant to expose NCCL_UNIQUE_ID_BYTES
+        os << "const unsigned int ncclUniqueIDBytes = NCCL_UNIQUE_ID_BYTES;" << std::endl;
+
+        // Define wrapper to generate a unique NCCL ID
         os << std::endl;
-        os << "void ncclGetUniqueId()";
+        os << "void generateNCCLUniqueID()";
         {
             CodeStream::Scope b(os);
             os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
+        }
+        os << std::endl;
+        os << "const char *getNCCLUniqueID()";
+        {
+            CodeStream::Scope b(os);
+            os << "return reinterpret_cast<const char*>(&ncclID);" << std::endl;
         }
         os << std::endl;
     }
