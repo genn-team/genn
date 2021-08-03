@@ -1384,6 +1384,14 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << std::endl;
 }
 //--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    // Free NCCL communicator
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "CHECK_NCCL_ERRORS(ncclCommDestroy(ncclCommunicator));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // Synchronise if automatic copying or zero-copy are in use

@@ -1569,7 +1569,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     {
         CodeStream::Scope b(runner);
 
-        // Generate preamble -this is the first bit of generated code called by user simulations
+        // Generate preamble - this is the first bit of generated code called by user simulations
         // so global initialisation is often performed here
         backend.genAllocateMemPreamble(runner, modelMerged, mem);
 
@@ -1586,6 +1586,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     runner << "void freeMem()";
     {
         CodeStream::Scope b(runner);
+
+        // Generate backend-specific preamble
+        backend.genFreeMemPreamble(runner, modelMerged);
 
         // Write variable frees to runner
         runner << runnerVarFreeStream.str();

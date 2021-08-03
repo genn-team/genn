@@ -299,6 +299,10 @@ public:
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
 
+    //! Free memory is called by usercode to free all memory allocatd by GeNN and should only ever be called once.
+    //! This function generates a 'preamble' to this function, for example to free backend-specific objects
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 

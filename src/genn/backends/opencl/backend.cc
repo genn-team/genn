@@ -1774,6 +1774,10 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+}
+//--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // If timing is enabled, synchronise 
