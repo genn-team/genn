@@ -222,6 +222,14 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
         LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
     }
 
+#ifdef _WIN32
+    // If we're on Windows and NCCL is enabled, give error
+    // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        throw std::runtime_error("GeNN doesn't currently support NCCL on Windows");
+    }
+#endif
+
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
     addDeviceType("curandState", 44);
     addDeviceType("curandStatePhilox4_32_10_t", 64);
@@ -1643,7 +1651,11 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-
+    
+    // If NCCL reductions are enabled, link NCCL
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        linkFlags += " -lnccl";
+    }
     // Write variables to preamble
     os << "CUDA_PATH ?=/usr/local/cuda" << std::endl;
     os << "NVCC := $(CUDA_PATH)/bin/nvcc" << std::endl;
