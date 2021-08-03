@@ -1820,7 +1820,7 @@ protected:
 // ----------------------------------------------------------------------------
 // CustomUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
-class CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
+class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
 public:
     CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -1846,7 +1846,7 @@ public:
 // ----------------------------------------------------------------------------
 // CustomWUUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------
-class CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
+class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
     CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
