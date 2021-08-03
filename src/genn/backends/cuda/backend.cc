@@ -1069,8 +1069,9 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     if(getPreferences<Preferences>().enableNCCLReductions) {
         os << "extern \"C\" {" << std::endl;
         os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
-        os << "EXPORT_FUNC void generateNCCLUniqueID();" << std::endl;
-        os << "EXPORT_FUNC const char *getNCCLUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
         os << "}" << std::endl;
     }
 }
@@ -1317,16 +1318,22 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
 
         // Define wrapper to generate a unique NCCL ID
         os << std::endl;
-        os << "void generateNCCLUniqueID()";
+        os << "void ncclGenerateUniqueID()";
         {
             CodeStream::Scope b(os);
             os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
         }
         os << std::endl;
-        os << "const char *getNCCLUniqueID()";
+        os << "unsigned char *ncclGetUniqueID()";
         {
             CodeStream::Scope b(os);
-            os << "return reinterpret_cast<const char*>(&ncclID);" << std::endl;
+            os << "return reinterpret_cast<unsigned char*>(&ncclID);" << std::endl;
+        }
+        os << std::endl;
+        os << "void ncclInitCommunicator(int rank, int numRanks)";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_NCCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
         }
         os << std::endl;
     }
@@ -1375,12 +1382,6 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "));" << std::endl;
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
-    
-    // Initialise NCCL communicator
-    if(getPreferences<Preferences>().enableNCCLReductions) {
-        os << "CHECK_NCCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
-    }
-
     os << std::endl;
 }
 //--------------------------------------------------------------------------
@@ -1870,30 +1871,20 @@ void Backend::genMSBuildImportTarget(std::ostream &os) const
 std::string Backend::getAllocateMemParams(const ModelSpecMerged &) const
 {
     // If device should be selected at runtime
-    std::string params;
     if(getPreferences<Preferences>().deviceSelectMethod == DeviceSelect::MANUAL_RUNTIME) {
         // If devices should be delected by ID, add an integer parameter
         if(getPreferences<Preferences>().selectGPUByDeviceID) {
-            params += "int deviceID";
+            return "int deviceID";
         }
         // Otherwise, add a pci bus ID parameter
         else {
-            params += "const char *pciBusID";
+            return "const char *pciBusID";
         }
     }
-
-    // If NCCL reductions are enabled
-    if(getPreferences<Preferences>().enableNCCLReductions) {
-        // If there are existing parameters, add comma
-        if(!params.empty()) {
-            params += ", ";
-        }
-
-        // Add num ranks and rank parameter
-        params += "int numRanks, int rank";
+    // Othewise, no parameters are required
+    else {
+        return "";
     }
-
-    return params;
 }
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const
