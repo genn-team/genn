@@ -1099,6 +1099,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os << "    if (error != ncclSuccess) {\\" << std::endl;
         os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
         os << "    }\\" << std::endl;
+        os << "}" << std::endl;
     }
 
     os << std::endl;
