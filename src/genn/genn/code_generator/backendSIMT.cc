@@ -28,33 +28,6 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
         });
     });
 }
-//-----------------------------------------------------------------------
-template<typename G>
-std::vector<std::tuple<std::string, std::string, VarAccessMode>> initReductionTargets(CodeStream &os, const BackendBase &backend, const G &cg)
-{
-    // Loop through variables
-    std::vector<std::tuple<std::string, std::string, VarAccessMode>> reductionTargets;
-    const auto *cm = cg.getArchetype().getCustomUpdateModel();
-    for(const auto &v : cm->getVars()) {
-        // If variable is a reduction target, define variable initialised to correct initial value for reduction
-        // **NOTE** by not initialising this, compilers should emit a warning if user code doesn't set it to something
-        if(v.access & VarAccessModeAttribute::REDUCE) {
-            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(backend, getVarAccessMode(v.access), v.type) << ";" << std::endl;
-            reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access));
-        }
-    }
-
-    // Loop through variable references
-    for(const auto &v : cm->getVarRefs()) {
-        // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
-        // **NOTE** by not initialising this, compilers should emit a warning if user code doesn't set it to something
-        if(v.access & VarAccessModeAttribute::REDUCE) {
-            os << v.type << " lr" << v.name << " = " << getReductionInitialValue(backend, v.access, v.type) << ";" << std::endl;
-            reductionTargets.emplace_back(v.name, v.type, v.access);
-        }
-    }
-    return reductionTargets;
-}
 }
 
 //--------------------------------------------------------------------------
@@ -862,7 +835,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     CodeStream::Scope b(os);
 
                     // Initialise reduction targets
-                    const auto reductionTargets = initReductionTargets(os, *this, cg);
+                    const auto reductionTargets = genInitReductionTargets(os, cg);
 
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
@@ -877,13 +850,13 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
 
                         // Loop through reduction targets and generate reduction
                         for(const auto &r : reductionTargets) {
-                            os << getReductionOperation("lr" + std::get<0>(r), "l" + std::get<0>(r), std::get<2>(r), std::get<1>(r)) << ";" << std::endl;
+                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
                         }
                     }
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << std::get<0>(r) << "[" << cuSubs["id"] << "] = lr" << std::get<0>(r) << ";" << std::endl;
+                        os << "group->" << r.name << "[" << cuSubs["id"] << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
             }
@@ -987,8 +960,8 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 // Initialise reduction targets
-                const auto reductionTargets = (cg.getArchetype().isReduction() ? initReductionTargets(os, *this, cg) 
-                                               : std::vector<std::tuple<std::string, std::string, VarAccessMode>>{});
+                const auto reductionTargets = (cg.getArchetype().isReduction() ? genInitReductionTargets(os, cg) 
+                                               : std::vector<ReductionTarget>{});
 
                 // If this is a reduction
                 if(cg.getArchetype().isReduction()) {
@@ -1011,7 +984,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 if(cg.getArchetype().isReduction()) {
                     // Loop through reduction targets and generate reduction
                     for(const auto &r : reductionTargets) {
-                        os << getReductionOperation("lr" + std::get<0>(r), "l" + std::get<0>(r), std::get<2>(r), std::get<1>(r)) << ";" << std::endl;
+                        os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
                     }
 
                     // End for loop through batches
@@ -1019,7 +992,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << std::get<0>(r) << "[" << cuSubs["id_syn"] << "] =  lr" << std::get<0>(r) << ";" << std::endl;
+                        os << "group->" << r.name << "[" << cuSubs["id_syn"] << "] =  lr" << r.name << ";" << std::endl;
                     }
                 }
             }
