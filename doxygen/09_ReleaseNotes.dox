@@ -1,4 +1,14 @@
 /*! \page ReleaseNotes Release Notes
+Release Notes for GeNN v4.5.1 (PyGeNN 0.4.6)
+====
+This release fixes several small issues found in the 4.5.0 release.
+
+Bug fixes:
+----
+1. Fixed cause of the warnings about memory leaks which were generated when sparse connectivity initialisation snippets were defined in PyGeNN.
+2. Fixed bug in model change detection which resulted in memory usage estimate increasing every time the model subsequently changed.
+3. Fixed several bugs effecting the implementation of custom update models in CUDA and OpenCL.
+
 Release Notes for GeNN v4.5.0 (PyGeNN 0.4.5)
 ====
 This release adds a number of significant new features to GeNN as well as several usability improvements for PyGeNN.
