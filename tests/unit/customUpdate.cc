@@ -280,11 +280,9 @@ TEST(CustomUpdates, BatchingWriteShared)
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
-                                  {}, {}, reduceVarReferences);
-
     try {
-        model.finalize();
+        model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
+                                      {}, {}, reduceVarReferences);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -303,11 +301,9 @@ TEST(CustomUpdates, ReduceDuplicate)
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     Sum2::VarValues sum2VarValues(1.0);
     Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
-    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                {}, sum2VarValues, sum2VarReferences);
-
     try {
-        model.finalize();
+        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                    {}, sum2VarValues, sum2VarReferences);
         FAIL();
     }
     catch(const std::runtime_error &) {
