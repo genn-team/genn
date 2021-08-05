@@ -851,6 +851,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         [&modelMerged, this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
             // If update is a reduction
             Substitutions cuSubs(&popSubs);
@@ -866,12 +867,12 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
                     // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
-                    os << "for(unsigned int batch = 0; batch < " << modelMerged.getModel().getBatchSize() << "; batch++)";
+                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
                     {
                         CodeStream::Scope b(os);
                         cuSubs.addVarSubstitution("batch", "batch");
 
-                        genCustomUpdateIndexCalculation(os, cg);
+                        genCustomUpdateIndexCalculation(os, cg, batchSize);
                         customUpdateHandler(os, cg, cuSubs);
 
                         // Loop through reduction targets and generate reduction
@@ -888,7 +889,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             }
             // Otherwise
             else {
-                if(cg.getArchetype().isBatched()) {
+                if(cg.getArchetype().isBatched() && batchSize > 1) {
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
                     os << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
@@ -909,7 +910,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                 {
                     CodeStream::Scope b(os);
 
-                    genCustomUpdateIndexCalculation(os, cg);
+                    genCustomUpdateIndexCalculation(os, cg, batchSize);
                     customUpdateHandler(os, cg, cuSubs);
                 }
             }
@@ -931,6 +932,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
         [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
             // Calculate number of threads for update
             os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
@@ -939,7 +941,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             Substitutions cuSubs(&popSubs);
             if(!cg.getArchetype().isReduction()) {
                 // If it's batched
-                if(cg.getArchetype().isBatched()) {
+                if(cg.getArchetype().isBatched() && batchSize > 1) {
                     os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
 
                     // Split ID into intra-batch ID and batch
@@ -993,13 +995,13 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
                     // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
-                    os << "for(unsigned int batch = 0; batch < " << modelMerged.getModel().getBatchSize() << "; batch++)";
+                    os << "for(unsigned int batch = 0; batch < " << batchSize << "; batch++)";
                     os << CodeStream::OB(1);
                     cuSubs.addVarSubstitution("batch", "batch");
                 }
 
                 // Calculate batch offset if required
-                if(cg.getArchetype().isBatched()) {
+                if(cg.getArchetype().isBatched() && batchSize > 1) {
                     os << "const unsigned int batchOffset = size * batch;" << std::endl;
                 }
 
@@ -1045,6 +1047,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                                                          std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
                                                                       [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
             const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
             // To allow these kernels to be batched, we turn 2D grid into wide 1D grid of 2D block so calculate size
             os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
@@ -1053,7 +1056,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             os << "const unsigned int blockStart = " << popSubs["group_start_id"] << " / " << blockSize << ";" << std::endl;
 
             Substitutions synSubs(&popSubs);
-            if(cg.getArchetype().isBatched()) {
+            if(cg.getArchetype().isBatched() && batchSize > 1) {
                 // If there's multiple batches we also need to know how many Y blocks and hence total blocks there are
                 os << "const unsigned int numYBlocks = (group->numSrcNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
                 os << "const unsigned int numBlocks = numXBlocks * numYBlocks;" << std::endl;
@@ -1132,7 +1135,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                         {
                             CodeStream::Scope b(os);
                             os << "group->" << transposeVarName << "Transpose[";
-                            if(cg.getArchetype().isBatched()) {
+                            if(cg.getArchetype().isBatched() && batchSize > 1) {
                                 os << "batchOffset + ";
                             }
                             os << "((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;

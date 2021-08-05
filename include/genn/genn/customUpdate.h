@@ -55,7 +55,7 @@ protected:
     :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
         m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
         m_ExtraGlobalParamLocation(customUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_Batched(false), m_Reduction(false)
+        m_Batched(false)
     {
         // Validate names
         Utils::validateVarPopName(name, "Custom update");
@@ -82,7 +82,7 @@ protected:
     bool isBatched() const { return m_Batched; }
 
     //! Does this custom update perform a reduction i.e. reduce some variables from DUPLICATE to SHARED
-    bool isReduction() const { return m_Reduction; }
+    bool isReduction() const { return getCustomUpdateModel()->isReduction(); }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
@@ -94,68 +94,40 @@ protected:
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
-    //! Helper function to determine whether a custom update should be batched or treated as a reduction
-    template<typename R>
-    void finalize(unsigned int batchSize, const std::vector<R> &varRefs)
-    {
-        // Loop through variable references and check that no reduction targets reference duplicated variables
-        // **NOTE** whether model is batched or not is irrelevant
-        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
-        for(size_t i = 0; i < modelVarRefs.size(); i++) {
-            if((varRefs.at(i).getVar().access & VarAccessDuplication::DUPLICATE) 
-                && (modelVarRefs.at(i).access & VarAccessModeAttribute::REDUCE))
-            {
-                throw std::runtime_error("Reduction target variable reference must be to SHARED variables.");
-            }
-        }
-
-        // If model has batching at all, custom update should be batched 
-        // if targets of any variable references are duplicated
-        // **THINK** what about variables? 
-        if(batchSize > 1) {
-            m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                    [](const R &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); });
-            
-            // If custom update is batched, check that any variable references to shared variables are read-only
-            // **THINK** what about variables?
-            if(m_Batched) {
-                for(size_t i = 0; i < modelVarRefs.size(); i++) {
-                    if((varRefs.at(i).getVar().access & VarAccessDuplication::SHARED) 
-                       && (modelVarRefs.at(i).access != VarAccessMode::READ_ONLY))
-                    {
-                        throw std::runtime_error("Variable references to SHARED variables in batched custom updates must be read-only.");
-                    }
-                }
-
-                // The custom update is a reduction if any variables or references have the reduce access mode attribute
-                const auto vars = getCustomUpdateModel()->getVars();
-                const auto varRefs = getCustomUpdateModel()->getVarRefs();
-                m_Reduction = (std::any_of(vars.cbegin(), vars.cend(),
-                                           [](const Models::Base::Var &v) { return (v.access & VarAccessModeAttribute::REDUCE); })
-                               || std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                              [](const Models::Base::VarRef &v) { return (v.access & VarAccessModeAttribute::REDUCE); }));
-            }
-        }
-        // Otherwise, update should not be batched and reductions are not required
-        else {
-            m_Batched = false;
-            m_Reduction = false;
-        }
-    }
-
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferenceTypes(const std::vector<V> &varReferences) const
+    void checkVarReferences(const std::vector<V> &varRefs)
     {
+        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
+
+        // If target of any variable references is duplicated, custom update should be batched
+        m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
+                                [](const V &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); });
+
         // Loop through all variable references
-        const auto varRefs = getCustomUpdateModel()->getVarRefs();
-        for(size_t i = 0; i < varReferences.size(); i++) {
-            const auto varRef = varReferences.at(i);
+        for(size_t i = 0; i < varRefs.size(); i++) {
+            const auto varRef = varRefs.at(i);
+            const auto modelVarRef = modelVarRefs.at(i);
 
             // Check types of variable references against those specified in model
             // **THINK** due to GeNN's current string-based type system this is rather conservative
-            if(varRef.getVar().type != varRefs.at(i).type) {
-                throw std::runtime_error("Incompatible type for variable reference '" + getCustomUpdateModel()->getVarRefs().at(i).name + "'");
+            if(varRef.getVar().type != modelVarRef.type) {
+                throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
+            }
+
+            // Check that no reduction targets reference duplicated variables
+            if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
+                && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
+            {
+                throw std::runtime_error("Reduction target variable reference must be to SHARED variables.");
+            }
+
+            // If custom update is batched, check that any variable references to shared variables are read-only
+            // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
+            if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED) 
+                && (modelVarRef.access != VarAccessMode::READ_ONLY))
+            {
+                throw std::runtime_error("Variable references to SHARED variables in batched custom updates must be read-only.");
             }
         }
     }
@@ -180,9 +152,6 @@ private:
 
     //! Is this custom update batched i.e. run in parallel across model batches
     bool m_Batched;
-
-    //! Does this custom update perform a reduction i.e. reduce some variables from DUPLICATE to SHARED
-    bool m_Reduction;
 };
 
 //------------------------------------------------------------------------
@@ -206,7 +175,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
+    void finalize();
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -247,10 +216,6 @@ protected:
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
-    void finalize(unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
