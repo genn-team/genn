@@ -960,8 +960,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 // Initialise reduction targets
-                const auto reductionTargets = (cg.getArchetype().isReduction() ? genInitReductionTargets(os, cg) 
-                                               : std::vector<ReductionTarget>{});
+                const auto reductionTargets = genInitReductionTargets(os, cg);
 
                 // If this is a reduction
                 if(cg.getArchetype().isReduction()) {
@@ -992,7 +991,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << cuSubs["id_syn"] << "] =  lr" << r.name << ";" << std::endl;
+                        os << "group->" << r.name << "[" << cuSubs["id_syn"] << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
             }
