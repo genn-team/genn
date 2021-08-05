@@ -62,6 +62,17 @@ public:
         "$(addToInSyn, ($(g) + $(x)) * $(V_pre));\n");
 };
 IMPLEMENT_MODEL(Cont2);
+
+class Reduce : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 0, 2);
+
+    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+
+    SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}, 
+                  {"reduction", "scalar", VarAccessMode::REDUCE_SUM}});
+};
+IMPLEMENT_MODEL(Reduce);
 }
 //--------------------------------------------------------------------------
 // Tests
@@ -259,6 +270,28 @@ TEST(CustomUpdates, BatchingVars)
 }
 //--------------------------------------------------------------------------
 TEST(CustomUpdates, BatchingWriteShared)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+    
+    // Create custom update which tries to create a read-write refernece to a (which isn't batched)
+    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
+                                  {}, {}, reduceVarReferences);
+
+    try {
+        model.finalize();
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReduceDuplicate)
 {
     ModelSpecInternal model;
     model.setBatchSize(5);

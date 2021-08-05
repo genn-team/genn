@@ -98,6 +98,17 @@ protected:
     template<typename R>
     void finalize(unsigned int batchSize, const std::vector<R> &varRefs)
     {
+        // Loop through variable references and check that no reduction targets reference duplicated variables
+        // **NOTE** whether model is batched or not is irrelevant
+        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
+        for(size_t i = 0; i < modelVarRefs.size(); i++) {
+            if((varRefs.at(i).getVar().access & VarAccessDuplication::DUPLICATE) 
+                && (modelVarRefs.at(i).access & VarAccessModeAttribute::REDUCE))
+            {
+                throw std::runtime_error("Reduction target variable reference must be to SHARED variables.");
+            }
+        }
+
         // If model has batching at all, custom update should be batched 
         // if targets of any variable references are duplicated
         // **THINK** what about variables? 
@@ -108,7 +119,6 @@ protected:
             // If custom update is batched, check that any variable references to shared variables are read-only
             // **THINK** what about variables?
             if(m_Batched) {
-                const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
                 for(size_t i = 0; i < modelVarRefs.size(); i++) {
                     if((varRefs.at(i).getVar().access & VarAccessDuplication::SHARED) 
                        && (modelVarRefs.at(i).access != VarAccessMode::READ_ONLY))
