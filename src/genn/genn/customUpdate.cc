@@ -193,6 +193,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 
     // If this is a transpose operation
     if(isTransposeOperation()) {
+        // Check that it isn't also a reduction
+        if(getCustomUpdateModel()->isReduction()) {
+            throw std::runtime_error("Custom updates cannot perform both transpose and reduction operations.");
+        }
+
         // Give error if any of the variable references aren't dense
         // **NOTE** there's no reason NOT to implement sparse transpose
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
