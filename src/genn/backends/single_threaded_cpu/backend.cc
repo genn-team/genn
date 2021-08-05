@@ -519,7 +519,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             Substitutions popSubs(&funcSubs);
                             popSubs.addVarSubstitution("id", "i");
 
+                            // Generate custom update
                             customUpdateHandler(os, c, popSubs);
+
+                            // Write back reductions
+                            genWriteBackReductions(os, c, popSubs["id"]);
                         }
                     }
                 }
@@ -576,6 +580,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                                 // Call custom update handler
                                 customWUUpdateHandler(os, c, synSubs);
+
+                                // Write back reductions
+                                genWriteBackReductions(os, c, synSubs["id_syn"]);
                             }
                         }
                     }
