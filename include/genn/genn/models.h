@@ -12,6 +12,8 @@
 #include "varAccess.h"
 
 // Forward declarations
+class CustomUpdate;
+class CustomUpdateWU;
 class NeuronGroup;
 class SynapseGroup;
 class CurrentSource;
@@ -198,6 +200,7 @@ public:
     //------------------------------------------------------------------------
     static VarReference createVarRef(const NeuronGroup *ng, const std::string &varName);
     static VarReference createVarRef(const CurrentSource *cs, const std::string &varName);
+    static VarReference createVarRef(const CustomUpdate *su, const std::string &varName);
     static VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
@@ -210,6 +213,7 @@ private:
 
     VarReference(const NeuronGroupInternal *ng, const std::string &varName);
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
+    VarReference(const CustomUpdate *cu, const std::string &varName);
     VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
                  size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
 
@@ -234,6 +238,7 @@ class GENN_EXPORT WUVarReference : public VarReferenceBase
 public:
     WUVarReference(const SynapseGroup *sg, const std::string &varName,
                    const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    WUVarReference(const CustomUpdateWU *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
     // Public API
