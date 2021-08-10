@@ -440,7 +440,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
 {
     // Validate names
-    Utils::validateVarPopName(name, "Synapse group");
+    Utils::validatePopName(name, "Synapse group");
     getWUModel()->validate();
     getPSModel()->validate();
 

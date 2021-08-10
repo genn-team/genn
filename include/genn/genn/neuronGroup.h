@@ -207,7 +207,7 @@ protected:
         m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
     {
         // Validate names
-        Utils::validateVarPopName(name, "Neuron group");
+        Utils::validatePopName(name, "Neuron group");
         getNeuronModel()->validate();
     }
 
