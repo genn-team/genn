@@ -596,7 +596,7 @@ TEST(CustomUpdates, InvalidName)
     Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
 
     try {
-        model.addCustomUpdate<Sum>("1Sum", "CustomUpdate",
+        model.addCustomUpdate<Sum>("Sum-1", "CustomUpdate",
                                    {}, sumVarValues, sumVarReferences1);
         FAIL();
     }
@@ -617,7 +617,7 @@ TEST(CustomUpdates, InvalidUpdateGroupName)
     Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
 
     try {
-        model.addCustomUpdate<Sum>("Sum", "1CustomUpdate",
+        model.addCustomUpdate<Sum>("Sum", "CustomUpdate-1",
                                    {}, sumVarValues, sumVarReferences1);
         FAIL();
     }
