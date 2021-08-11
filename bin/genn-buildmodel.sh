@@ -52,13 +52,20 @@ done
 if [[ -z "$MODEL" ]]; then
     genn_error $LINENO 2 "no model file given"
 fi
-pushd $OUT_PATH > /dev/null
-OUT_PATH="$PWD"
+
+# Use pushd to get an absolute path and symbolic links in /tmp to avoid problems
+# with spaces in the path names 
+pushd "$OUT_PATH" > /dev/null
+OUT_PATH=$(mktemp -u /tmp/genn.XXXXXXXX)
+ln -s "$PWD" $OUT_PATH
 popd > /dev/null
 pushd $(dirname $MODEL) > /dev/null
-MACROS="MODEL=$PWD/$(basename $MODEL) GENERATOR_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE CXX_STANDARD=$CXX_STANDARD"
+MODEL_PATH=$(mktemp -u /tmp/genn.XXXXXXXX)
+ln -s "$PWD" $MODEL_PATH
+MACROS="MODEL=$MODEL_PATH/$(basename $MODEL) GENERATOR_PATH=$OUT_PATH BUILD_MODEL_INCLUDE=$BUILD_MODEL_INCLUDE CXX_STANDARD=$CXX_STANDARD"
 GENERATOR=./generator
 popd > /dev/null
+ 
 if [[ -n "$DEBUG" ]]; then
     MACROS="$MACROS DEBUG=1";
     GENERATOR="$GENERATOR"_debug
@@ -90,5 +97,9 @@ if [[ -n "$DEBUG" ]]; then
 else
     "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
 fi
+
+# Remove the symbolic links in tmp to clean up
+rm $OUT_PATH
+rm $MODEL_PATH
 
 echo "model build complete"

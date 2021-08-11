@@ -7,6 +7,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "varAccess.h"
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
@@ -225,6 +226,23 @@ protected:
 
 private:
     //--------------------------------------------------------------------------
+    // ReductionTarget
+    //--------------------------------------------------------------------------
+    //! Simple struct to hold reduction targets
+    struct ReductionTarget
+    {
+        ReductionTarget(const std::string &n, const std::string &t, VarAccessMode a)
+        : name(n), type(t), access(a)
+        {
+        }
+
+        const std::string name;
+        const std::string type;
+        const VarAccessMode access;
+    };
+
+
+    //--------------------------------------------------------------------------
     // Type definitions
     //--------------------------------------------------------------------------
     template<typename T>
@@ -309,6 +327,32 @@ private:
                 }
             }
         }
+    }
+
+    
+    template<typename G>
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg) const
+    {
+        // Loop through variables
+        std::vector<ReductionTarget> reductionTargets;
+        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            // If variable is a reduction target, define variable initialised to correct initial value for reduction
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, getVarAccessMode(v.access), v.type) << ";" << std::endl;
+                reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access));
+            }
+        }
+
+        // Loop through variable references
+        for(const auto &v : cm->getVarRefs()) {
+            // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, v.access, v.type) << ";" << std::endl;
+                reductionTargets.emplace_back(v.name, v.type, v.access);
+            }
+        }
+        return reductionTargets;
     }
 
     template<typename T, typename S>

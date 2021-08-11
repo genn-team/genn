@@ -69,7 +69,6 @@ void CustomUpdateBase::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getCustomUpdateModel()->getHashDigest(), hash);
     Utils::updateHash(getUpdateGroupName(), hash);
     Utils::updateHash(isBatched(), hash);
-    Utils::updateHash(isReduction(), hash);
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::updateInitHash(boost::uuids::detail::sha1 &hash) const
@@ -106,7 +105,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 
     // Check variable reference types
-    checkVarReferenceTypes(m_VarReferences);
+    checkVarReferences(m_VarReferences);
 
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -116,12 +115,8 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdate::finalize(unsigned int batchSize)
+void CustomUpdate::finalize()
 {
-    // Because batch size might be set at any point and which neuron 
-    // variables are queued is only calculated during Modelspec::finalize, 
-    // these checks cannot be performed in the constructor
-
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
                                  [](const Models::VarReference &v) { return v.getDelayNeuronGroup() != nullptr; });
@@ -136,9 +131,6 @@ void CustomUpdate::finalize(unsigned int batchSize)
             throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
         }
     }
-
-    // Determine whether custom update is batched
-    CustomUpdateBase::finalize(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
@@ -186,7 +178,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 
     // Check variable reference types
-    checkVarReferenceTypes(m_VarReferences);
+    checkVarReferences(m_VarReferences);
 
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense
@@ -201,6 +193,11 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 
     // If this is a transpose operation
     if(isTransposeOperation()) {
+        // Check that it isn't also a reduction
+        if(getCustomUpdateModel()->isReduction()) {
+            throw std::runtime_error("Custom updates cannot perform both transpose and reduction operations.");
+        }
+
         // Give error if any of the variable references aren't dense
         // **NOTE** there's no reason NOT to implement sparse transpose
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
@@ -220,11 +217,6 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
             throw std::runtime_error("Each custom update can only calculate the tranpose of a single variable,");
         }
     }
-}
-//----------------------------------------------------------------------------
-void CustomUpdateWU::finalize(unsigned int batchSize)
-{
-    CustomUpdateBase::finalize(batchSize, m_VarReferences);
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const

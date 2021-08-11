@@ -7,6 +7,7 @@
 
 // GeNN includes
 #include "backendExport.h"
+#include "varAccess.h"
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
@@ -199,6 +200,28 @@ private:
                 for(const auto &f : sortedFields) {
                     os << "merged" << T::name << "Group" << g.getIndex() << "[idx]." << std::get<1>(f) << " = " << std::get<1>(f) << ";" << std::endl;
                 }
+            }
+        }
+    }
+
+    //! Helper to generate code to copy reduced variables back to variables
+    /*! Because reduction operations are unnecessary in unbatched single-threaded CPU models so there's no need to actually reduce */
+    template<typename G>
+    void genWriteBackReductions(CodeStream &os, const G &cg, const std::string &idx) const
+    {
+        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            // If variable is a reduction target, copy value from register straight back into global memory
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "group->" << v.name << "[" << idx << "] = l" << v.name << ";" << std::endl;
+            }
+        }
+
+        // Loop through variable references
+        for(const auto &v : cm->getVarRefs()) {
+            // If variable reference is a reduction target, copy value from register straight back into global memory
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "group->" << v.name << "[" << idx<< "] = l" << v.name << ";" << std::endl;
             }
         }
     }

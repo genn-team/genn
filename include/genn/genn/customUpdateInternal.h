@@ -55,7 +55,6 @@ public:
     using CustomUpdateBase::isReduction;
     using CustomUpdateBase::getVarLocationHashDigest;
     
-    using CustomUpdateWU::finalize;
     using CustomUpdateWU::getHashDigest;
     using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;

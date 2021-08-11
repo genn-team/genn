@@ -97,7 +97,7 @@ TEST(CurrentSource, InvalidName)
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
     
     try {
-        model.addCurrentSource<CurrentSourceModels::DC>("6CS", "Pop", {1.0}, {});
+        model.addCurrentSource<CurrentSourceModels::DC>("CS-2", "Pop", {1.0}, {});
         FAIL();
     }
     catch(const std::runtime_error &) {
