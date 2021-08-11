@@ -42,6 +42,8 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
         os << v.type << " l" << v.name;
         
         // If this isn't a reduction, read value from memory
+        // **NOTE** by not initialising these variables for reductions, 
+        // compilers SHOULD emit a warning if user code doesn't set it to something
         if(!(v.access & VarAccessModeAttribute::REDUCE)) {
             os << " = group->" << v.name << "[";
             os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
@@ -61,6 +63,8 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
         os << varRefs[i].type << " l" << varRefs[i].name;
         
         // If this isn't a reduction, read value from memory
+        // **NOTE** by not initialising these variables for reductions, 
+        // compilers SHOULD emit a warning if user code doesn't set it to something
         if(!(varRefs[i].access & VarAccessModeAttribute::REDUCE)) {
             os << " = " << "group->" << varRefs[i].name << "[";
             os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
