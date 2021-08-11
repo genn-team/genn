@@ -23,6 +23,7 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
+    using CustomUpdateBase::isReduction;
     using CustomUpdateBase::getVarLocationHashDigest;
 
     using CustomUpdate::finalize;
@@ -51,9 +52,9 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
+    using CustomUpdateBase::isReduction;
     using CustomUpdateBase::getVarLocationHashDigest;
     
-    using CustomUpdateWU::finalize;
     using CustomUpdateWU::getHashDigest;
     using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;

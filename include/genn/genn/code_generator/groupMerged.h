@@ -1544,11 +1544,8 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //----------------------------------------------------------------------------
-    // Static API
-    //----------------------------------------------------------------------------
-    static std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
-    static std::string getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
 
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,

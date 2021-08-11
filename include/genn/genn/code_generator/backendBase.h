@@ -483,6 +483,9 @@ public:
     //! Get the size of the type
     size_t getSize(const std::string &type) const;
 
+    //! Get the lowest value of a type
+    std::string getLowestValue(const std::string &type) const;
+
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
     {
@@ -500,9 +503,10 @@ protected:
     //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
-    void addType(const std::string &type, size_t size)
+    void addType(const std::string &type, size_t size, const std::string &lowestValue = "")
     {
-        m_TypeBytes.emplace(type, size);
+        m_Types.emplace(std::piecewise_construct, std::forward_as_tuple(type), 
+                        std::forward_as_tuple(size, lowestValue));
     }
 
     void setPointerBytes(size_t pointerBytes) 
@@ -514,7 +518,7 @@ protected:
 
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
-    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
+    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu, unsigned int batchSize) const;
 
 private:
     //--------------------------------------------------------------------------
@@ -523,8 +527,9 @@ private:
     //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
     size_t m_PointerBytes;
 
-    //! Size of supported types in bytes - used for estimating memory usage
-    std::unordered_map<std::string, size_t> m_TypeBytes;
+    //! Size of supported types in bytes and string containing their lowest value
+    //! used for estimating memory usage and for reduction operations
+    std::unordered_map<std::string, std::pair<size_t, std::string>> m_Types;
 
     //! Preferences
     const PreferencesBase &m_Preferences;
