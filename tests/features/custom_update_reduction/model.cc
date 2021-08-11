@@ -52,9 +52,6 @@ void modelDefinition(ModelSpec &model)
         GENN_PREFERENCES.manualPlatformID = std::atoi(std::getenv("OPENCL_PLATFORM"));
     }
 #endif
-    GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
-    GENN_PREFERENCES.blockSizeSelectMethod = BlockSizeSelect::MANUAL;
-    GENN_PREFERENCES.enableNCCLReductions = true;
     model.setDT(1.0);
     model.setName("custom_update_reduction");
     model.setBatchSize(5);
