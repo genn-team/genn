@@ -1098,7 +1098,7 @@ void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const 
 {
 }
 //--------------------------------------------------------------------------
-void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------
