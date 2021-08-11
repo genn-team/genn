@@ -35,7 +35,8 @@ public:
     :   m_Library(nullptr), m_AllocateMem(nullptr), m_AllocateRecordingBuffers(nullptr),
         m_FreeMem(nullptr), m_Initialize(nullptr), m_InitializeSparse(nullptr), 
         m_StepTime(nullptr), m_PullRecordingBuffersFromDevice(nullptr),
-        m_NCCLGenerateUniqueID(nullptr), m_NCCLGetUniqueID(nullptr), m_NCCLInitCommunicator(nullptr)
+        m_NCCLGenerateUniqueID(nullptr), m_NCCLGetUniqueID(nullptr), 
+        m_NCCLInitCommunicator(nullptr), m_NCCLUniqueIDBytes(nullptr)
     {
     }
 
@@ -95,7 +96,7 @@ public:
             m_NCCLGenerateUniqueID = (VoidFunction)getSymbol("ncclGenerateUniqueID", true);
             m_NCCLGetUniqueID = (UCharPtrFunction)getSymbol("ncclGetUniqueID", true);
             m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)getSymbol("ncclInitCommunicator", true);
-
+            m_NCCLUniqueIDBytes = (unsigned int*)getSymbol("ncclUniqueIDBytes", true);
             return true;
         }
         else {
@@ -387,6 +388,15 @@ public:
         }
         return m_NCCLGetUniqueID();
     }
+    
+    unsigned int ncclGetUniqueIDBytes() const
+    {
+        if(m_NCCLUniqueIDBytes == nullptr) {
+            throw std::runtime_error("Cannot get NCCL unique ID bytes - model may not have been built with NCCL support");
+        }
+        
+        return *m_NCCLUniqueIDBytes;
+    }
 
     void ncclInitCommunicator(int rank, int numRanks)
     {
@@ -395,6 +405,8 @@ public:
         }
         m_NCCLInitCommunicator(rank, numRanks);
     }
+    
+    
      
     void initialize()
     {
@@ -567,12 +579,14 @@ private:
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
+
+    PullFunction m_PullRecordingBuffersFromDevice;
+
     VoidFunction m_NCCLGenerateUniqueID;
     UCharPtrFunction m_NCCLGetUniqueID;
     NCCLInitCommunicatorFunction m_NCCLInitCommunicator;
+    const unsigned int *m_NCCLUniqueIDBytes;
     
-    PullFunction m_PullRecordingBuffersFromDevice;
-
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
     std::unordered_map<std::string, VoidFunction> m_CustomUpdates;

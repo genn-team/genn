@@ -45,7 +45,7 @@ public:
     void ncclAssignExternalUniqueID(unsigned char** varPtr, int* n1)
     {
         *varPtr = ncclGetUniqueID();
-        *n1 = 128;
+        *n1 = ncclGetUniqueIDBytes();
     }
 
 private:
