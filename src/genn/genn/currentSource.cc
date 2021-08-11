@@ -43,7 +43,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
     m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
 {
     // Validate names
-    Utils::validateVarPopName(name, "Current source");
+    Utils::validatePopName(name, "Current source");
     getCurrentSourceModel()->validate();
 }
 //----------------------------------------------------------------------------

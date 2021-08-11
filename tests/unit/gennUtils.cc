@@ -10,10 +10,20 @@
 //--------------------------------------------------------------------------
 namespace
 {
-void validateVarPopNameDeathTest(const std::string &name)
+void validatePopNameDeathTest(const std::string &name)
 {
     try {
-        Utils::validateVarPopName(name, "test");
+        Utils::validatePopName(name, "test");
+        FAIL();
+    }
+
+    catch(const std::runtime_error &) {
+    }
+}
+void validateVarNameDeathTest(const std::string &name)
+{
+    try {
+        Utils::validateVarName(name, "test");
         FAIL();
     }
 
@@ -27,16 +37,26 @@ void validateVarPopNameDeathTest(const std::string &name)
 //--------------------------------------------------------------------------
 TEST(GeNNUtils, ValidateVarPopName)
 {
-    Utils::validateVarPopName("test", "test");
-    Utils::validateVarPopName("Test", "test");
-    Utils::validateVarPopName("test123", "test");
-    Utils::validateVarPopName("test_123", "test");
-    Utils::validateVarPopName("_test_123", "test");
+    Utils::validateVarName("test", "test");
+    Utils::validateVarName("Test", "test");
+    Utils::validateVarName("test123", "test");
+    Utils::validateVarName("test_123", "test");
+    Utils::validateVarName("_test_123", "test");
 
-    validateVarPopNameDeathTest("");
-    validateVarPopNameDeathTest("1test");
-    validateVarPopNameDeathTest("test.test");
-    validateVarPopNameDeathTest("test-test");
+    Utils::validatePopName("test", "test");
+    Utils::validatePopName("Test", "test");
+    Utils::validatePopName("test123", "test");
+    Utils::validatePopName("test_123", "test");
+    Utils::validatePopName("_test_123", "test");
+    Utils::validatePopName("1test", "test");
+
+    validateVarNameDeathTest("");
+    validateVarNameDeathTest("1test");
+    validateVarNameDeathTest("test.test");
+    validateVarNameDeathTest("test-test");
+    validatePopNameDeathTest("");
+    validatePopNameDeathTest("test.test");
+    validatePopNameDeathTest("test-test");
 }
 //--------------------------------------------------------------------------
 TEST(GeNNUtils, ValidateParamNames)

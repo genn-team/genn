@@ -58,8 +58,8 @@ protected:
         m_Batched(false)
     {
         // Validate names
-        Utils::validateVarPopName(name, "Custom update");
-        Utils::validateVarPopName(updateGroupName, "Custom update group name");
+        Utils::validatePopName(name, "Custom update");
+        Utils::validatePopName(updateGroupName, "Custom update group name");
         getCustomUpdateModel()->validate();
     }
 

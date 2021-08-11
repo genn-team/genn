@@ -702,7 +702,7 @@ TEST(SynapseGroup, InvalidName)
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     try {
         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-            "6Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Syn-6", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
             "Pre", "Post",
             {}, {1.0},
             {}, {});
