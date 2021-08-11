@@ -303,9 +303,9 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
 #ifdef _WIN32
     // If we're on Windows and NCCL is enabled, give error
     // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
-    /*if(getPreferences<Preferences>().enableNCCLReductions) {
+    if(getPreferences<Preferences>().enableNCCLReductions) {
         throw std::runtime_error("GeNN doesn't currently support NCCL on Windows");
-    }*/
+    }
 #endif
 
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
