@@ -45,7 +45,7 @@ public:
     void ncclAssignExternalUniqueID(unsigned char** varPtr, int* n1)
     {
         *varPtr = ncclGetUniqueID();
-        *n1 = ncclGetUniqueIDBytes();
+        *n1 = (int)this->ncclGetUniqueIDBytes();
     }
 
 private:
@@ -54,4 +54,5 @@ private:
     using SharedLibraryModel<scalar>::getArray;
     using SharedLibraryModel<scalar>::getScalar;
     using SharedLibraryModel<scalar>::ncclGetUniqueID;
+    using SharedLibraryModel<scalar>::ncclGetUniqueIDBytes;
 };
