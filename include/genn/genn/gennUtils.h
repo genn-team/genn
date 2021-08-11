@@ -55,9 +55,14 @@ GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);
 
 //--------------------------------------------------------------------------
-//! \brief Is the variable/population name valid? GeNN variables and population names must obey C variable naming rules
+//! \brief Is the variable name valid? GeNN variable names must obey C variable naming rules
 //--------------------------------------------------------------------------
-GENN_EXPORT void validateVarPopName(const std::string &name, const std::string &description);
+GENN_EXPORT void validateVarName(const std::string &name, const std::string &description);
+
+//--------------------------------------------------------------------------
+//! \brief Is the population name valid? GeNN population names obey C variable naming rules but can start with a number
+//--------------------------------------------------------------------------
+GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
 
 //--------------------------------------------------------------------------
 //! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
@@ -71,7 +76,7 @@ template<typename T>
 void validateVecNames(const std::vector<T> &vec, const std::string &description)
 {
     for(const auto &v : vec) {
-        validateVarPopName(v.name, description);
+        validateVarName(v.name, description);
     }
 }
 
