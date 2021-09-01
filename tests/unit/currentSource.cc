@@ -94,7 +94,7 @@ TEST(CurrentSource, InvalidName)
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     
     ModelSpec model;
-    auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
     
     try {
         model.addCurrentSource<CurrentSourceModels::DC>("CS-2", "Pop", {1.0}, {});

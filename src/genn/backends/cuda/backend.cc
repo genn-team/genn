@@ -1385,7 +1385,7 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
 {
     // Free NCCL communicator
     if(getPreferences<Preferences>().enableNCCLReductions) {
