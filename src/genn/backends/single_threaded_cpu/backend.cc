@@ -459,7 +459,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
@@ -1095,6 +1095,10 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------

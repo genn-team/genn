@@ -41,10 +41,18 @@ public:
         *varPtr = this->template getScalar<T>(varName);
         *n1 = 1;
     }
+    
+    void ncclAssignExternalUniqueID(unsigned char** varPtr, int* n1)
+    {
+        *varPtr = ncclGetUniqueID();
+        *n1 = (int)this->ncclGetUniqueIDBytes();
+    }
 
 private:
     // Hide C++ based public API
     using SharedLibraryModel<scalar>::getSymbol;
     using SharedLibraryModel<scalar>::getArray;
     using SharedLibraryModel<scalar>::getScalar;
+    using SharedLibraryModel<scalar>::ncclGetUniqueID;
+    using SharedLibraryModel<scalar>::ncclGetUniqueIDBytes;
 };

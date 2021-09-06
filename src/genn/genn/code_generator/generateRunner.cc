@@ -797,6 +797,18 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
+    // Loop through custom update host reduction groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Loop through custom weight update host reduction groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// local neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -1557,7 +1569,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     {
         CodeStream::Scope b(runner);
 
-        // Generate preamble -this is the first bit of generated code called by user simulations
+        // Generate preamble - this is the first bit of generated code called by user simulations
         // so global initialisation is often performed here
         backend.genAllocateMemPreamble(runner, modelMerged, mem);
 
@@ -1574,6 +1586,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     runner << "void freeMem()";
     {
         CodeStream::Scope b(runner);
+
+        // Generate backend-specific preamble
+        backend.genFreeMemPreamble(runner, modelMerged);
 
         // Write variable frees to runner
         runner << runnerVarFreeStream.str();

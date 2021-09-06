@@ -875,7 +875,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(customUpdateKernels, *this);
     modelMerged.genMergedCustomUpdateWUStructs(customUpdateKernels, *this);
-    modelMerged.gemMergedCustomUpdateTransposeWUStructs(customUpdateKernels, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(customUpdateKernels, *this);
    
 
     // Generate data structure for accessing merged groups from within custom update kernels
@@ -1772,6 +1772,10 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
             os << "clrngPhilox432SetBaseCreatorState(philoxStreamCreator, &philoxBaseState);" << std::endl;
         }
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
+{
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const

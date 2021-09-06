@@ -298,12 +298,6 @@ def generateNumpyApplyInArray1D( dataType, varName, sizeName ):
     '''Generates a line which applies numpy IN_ARRAY1 typemap to variable. IN_ARRAY1 is used to pass a numpy array as C array to C code'''
     return Template( '%apply ( ${data_t} IN_ARRAY1, int DIM1 ) {( ${data_t} ${varName}, int ${sizeName} )};\n').substitute( data_t=dataType, varName=varName, sizeName=sizeName )
 
-def generateBuiltInGetter( models ):
-    return Template('''std::vector< std::string > getBuiltInModels() {
-    return std::vector<std::string>{"${MODELS}"};
-}
-''').substitute( MODELS='", "'.join( models ) )
-
 
 def generateSharedLibraryModelInterface( swigPath ):
     '''Generates SharedLibraryModelNumpy.i file'''
