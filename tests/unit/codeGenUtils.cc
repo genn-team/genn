@@ -115,9 +115,9 @@ TEST_P(SingleValueSubstitutionTest, CorrectGeneratedValue)
 //--------------------------------------------------------------------------
 // Instatiations
 //--------------------------------------------------------------------------
-INSTANTIATE_TEST_CASE_P(DoubleValues,
-                        SingleValueSubstitutionTest,
-                        ::testing::Values(std::numeric_limits<double>::min(),
-                                          std::numeric_limits<double>::max(),
-                                          1.0,
-                                          -1.0),);
+INSTANTIATE_TEST_SUITE_P(DoubleValues,
+                         SingleValueSubstitutionTest,
+                         ::testing::Values(std::numeric_limits<double>::min(),
+                                           std::numeric_limits<double>::max(),
+                                           1.0,
+                                           -1.0));
