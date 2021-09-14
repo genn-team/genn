@@ -6,6 +6,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 */
 //--------------------------------------------------------------------------
 // Standard C++ includes
+#include <algorithm>
 #include <array>
 #include <numeric>
 
