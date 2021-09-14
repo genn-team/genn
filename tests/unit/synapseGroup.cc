@@ -879,36 +879,36 @@ TEST(SynapseGroup, CanWUMPreUpdateBeCombined)
     STDPAdditive::VarValues wumVarVals(0.0);
     STDPAdditive::PreVarValues wumConstPreVarVals(0.0);
     STDPAdditive::PreVarValues wumNonConstPreVarVals(initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
-    STDPAdditive::PostVarValues wumConstPostVarVals(0.0);
+    STDPAdditive::PostVarValues wumPostVarVals(0.0);
     
     auto *constPre = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
         "Pre_Post_ConstPre", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        wumParams, wumVarVals, wumConstPreVarVals, wumConstPostVarVals,
+        wumParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
         {}, {});
 
     auto *nonConstPre = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
         "Pre_Post_NonConstPre", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        wumParams, wumVarVals, wumNonConstPreVarVals, wumConstPostVarVals,
+        wumParams, wumVarVals, wumNonConstPreVarVals, wumPostVarVals,
         {}, {});
     
     auto *egpWMinMax = model.addSynapsePopulation<STDPAdditiveEGPWMinMax, PostsynapticModels::DeltaCurr>(
         "Pre_Post_EGPWMinMax", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        wumEGPWMinMaxParams, wumVarVals, wumConstPreVarVals, wumConstPostVarVals,
+        wumEGPWMinMaxParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
         {}, {});
     
     auto *egpSpike = model.addSynapsePopulation<STDPAdditiveEGPSpike, PostsynapticModels::DeltaCurr>(
         "Pre_Post_EGPSpike", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        wumParams, wumVarVals, wumConstPreVarVals, wumConstPostVarVals,
+        wumParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
         {}, {});
     
     auto *egpDynamics = model.addSynapsePopulation<STDPAdditiveEGPDynamics, PostsynapticModels::DeltaCurr>(
         "Pre_Post_EGPDynamics", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        wumEGPDynamicsParams, wumVarVals, wumConstPreVarVals, wumConstPostVarVals,
+        wumEGPDynamicsParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
         {}, {});
 
     ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeCombined());
@@ -920,4 +920,55 @@ TEST(SynapseGroup, CanWUMPreUpdateBeCombined)
 
 TEST(SynapseGroup, CanWUMPostUpdateBeCombined)
 {
+    ModelSpecInternal model;
+
+    // Add pre and post neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    
+    STDPAdditive::ParamValues wumParams(10.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditiveEGPWMinMax::ParamValues wumEGPWMinMaxParams(10.0, 10.0, 0.01, 0.01);
+    STDPAdditiveEGPDynamics::ParamValues wumEGPDynamicsParams(0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::VarValues wumVarVals(0.0);
+    STDPAdditive::PreVarValues wumPreVarVals(0.0);
+    STDPAdditive::PostVarValues wumConstPostVarVals(0.0);
+    STDPAdditive::PostVarValues wumNonConstPostVarVals(initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
+    
+    auto *constPost = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_ConstPost", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+
+    auto *nonConstPost = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_NonConstPost", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumNonConstPostVarVals,
+        {}, {});
+    
+    auto *egpWMinMax = model.addSynapsePopulation<STDPAdditiveEGPWMinMax, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPWMinMax", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumEGPWMinMaxParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+    
+    auto *egpSpike = model.addSynapsePopulation<STDPAdditiveEGPSpike, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPSpike", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+    
+    auto *egpDynamics = model.addSynapsePopulation<STDPAdditiveEGPDynamics, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPDynamics", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumEGPDynamicsParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeCombined());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeCombined());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPostUpdateBeCombined());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPostUpdateBeCombined());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPostUpdateBeCombined());
 }
