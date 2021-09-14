@@ -8,18 +8,18 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
+    ["cuda11", "windows"] as Set,
     ["cuda10", "windows"] as Set,
     ["cuda9", "windows"] as Set,
-    ["opencl", "windows"] as Set,
-    ["cpu_only", "windows"] as Set,
+    ["amd", "windows"] as Set,
+    ["cuda11", "linux"] as Set,
     ["cuda10", "linux"] as Set,
     ["cuda9", "linux"] as Set,
-    ["cpu_only", "linux"] as Set,
-    ["opencl", "linux"] as Set,
+    ["amd", "linux"] as Set,
+    ["cuda11", "mac"] as Set,
     ["cuda10", "mac"] as Set,
     ["cuda9", "mac"] as Set,
-    ["cpu_only", "mac"] as Set,
-    ["opencl", "mac"] as Set]
+    ["amd", "mac"] as Set]
 
 //--------------------------------------------------------------------------
 // Helper functions
@@ -93,7 +93,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
             // Customise this nodes environment so GeNN and googletest environment variables are set and genn binaries are in path
             // **NOTE** these are NOT set directly using env.PATH as this makes the change across ALL nodes which means you get a randomly mangled path depending on node startup order
-            withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.8.1/googletest",
+            withEnv(["GTEST_DIR=" + pwd() + "/googletest-release-1.11.0/googletest",
                      "PATH+GENN=" + pwd() + "/genn/bin"]) {
                 stage(installationStageName) {
                     echo "Checking out GeNN";
@@ -117,14 +117,14 @@ for(b = 0; b < builderNodes.size(); b++) {
                         setBuildStatus(installationStageName, "PENDING");
 
                         // If google test doesn't exist
-                        if(!fileExists("googletest-release-1.8.1")) {
+                        if(!fileExists("googletest-release-1.11.0")) {
                             echo "Downloading google test framework";
 
                             // Download it
-                            httpRequest url:"https://github.com/google/googletest/archive/release-1.8.1.zip", outputFile :"release-1.8.1.zip";
+                            httpRequest url:"https://github.com/google/googletest/archive/refs/tags/release-1.11.0.zip", outputFile :"release-1.11.0.zip";
 
                             // Unarchive it
-                            unzip "release-1.8.1.zip";
+                            unzip "release-1.11.0.zip";
                         }
                     } catch (Exception e) {
                         setBuildStatus(installationStageName, "FAILURE");
