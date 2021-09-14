@@ -8,18 +8,18 @@ properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '',
 
 // All the types of build we'll ideally run if suitable nodes exist
 def desiredBuilds = [
+    ["cuda11", "windows"] as Set,
     ["cuda10", "windows"] as Set,
     ["cuda9", "windows"] as Set,
-    ["opencl", "windows"] as Set,
-    ["cpu_only", "windows"] as Set,
+    ["amd", "windows"] as Set,
+    ["cuda11", "linux"] as Set,
     ["cuda10", "linux"] as Set,
     ["cuda9", "linux"] as Set,
-    ["cpu_only", "linux"] as Set,
-    ["opencl", "linux"] as Set,
+    ["amd", "linux"] as Set,
+    ["cuda11", "mac"] as Set,
     ["cuda10", "mac"] as Set,
     ["cuda9", "mac"] as Set,
-    ["cpu_only", "mac"] as Set,
-    ["opencl", "mac"] as Set]
+    ["amd", "mac"] as Set]
 
 //--------------------------------------------------------------------------
 // Helper functions
