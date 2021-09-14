@@ -62,6 +62,69 @@ void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &
     // Concatenate the digests to the hash
     Utils::updateHash(digests, hash);
 }
+// ------------------------------------------------------------------------
+template<typename M, typename H, typename T>
+void mergeSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bool merge, std::vector<SynapseGroupInternal*> &mergedSyn,
+                        const std::string &mergedTargetPrefix, const std::string &mergedTargetSuffix, const std::string &logDescription,
+                        M isSynMergableFunc, H getSynMergeHashFunc, T setSynMergeTargetFunc)
+{
+    // Create a copy of list of synapse groups
+    std::vector<SynapseGroupInternal*> syn = unmergedSyn;
+
+    // Loop through un-merged synapse groups
+    for(unsigned int i = 0; !syn.empty(); i++) {
+        // Remove last element from vector
+        SynapseGroupInternal *a = syn.back();
+        syn.pop_back();
+
+        // Add A to vector of merged groups
+        mergedSyn.push_back(a);
+
+        // Continue if merging is disabled
+        if(!merge) {
+            continue;
+        }
+
+        // If this synapse group can be merged at all
+        if(!(a->*isSynMergableFunc)()) {
+            continue;
+        }
+
+        // Get hash digest used for checking compatibility
+        const auto aHashDigest = (a->*getSynMergeHashFunc)();
+
+        // Create a name for merged groups
+        const std::string mergedTargetName = mergedTargetPrefix + std::to_string(i) + "_" + mergedTargetSuffix;
+
+        // Loop through remainder of synapse groups
+        bool anyMerged = false;
+        for(auto b = syn.begin(); b != syn.end();) {
+            // If synapse group b can be merged with others and it's compatible with a
+            if(((*b)->*isSynMergableFunc)() && (aHashDigest == ((*b)->*getSynMergeHashFunc)())) {
+                LOGD_GENN << "Merging " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedTargetName << "'";
+
+                // Set b's merge target to our unique name
+                ((*b)->*setSynMergeTargetFunc)(mergedTargetName);
+
+                // Remove from temporary vector
+                b = syn.erase(b);
+
+                // Set flag
+                anyMerged = true;
+            }
+            // Otherwise, advance to next synapse group
+            else {
+                LOGD_GENN << "Unable to merge " << logDescription << " of '" << (*b)->getName() << "' with '" << a->getName() << "'";
+                ++b;
+            }
+        }
+
+        // If synapse group A was successfully merged with anything, set it's merge target to the unique name
+        if(anyMerged) {
+            (a->*setSynMergeTargetFunc)(mergedTargetName);
+        }
+    }
+}
 }   // Anonymous namespace
 
 // ------------------------------------------------------------------------
@@ -320,63 +383,12 @@ void NeuronGroup::initDerivedParams(double dt)
 //----------------------------------------------------------------------------
 void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
 {
+    // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
-        // Create a copy of this neuron groups incoming synapse populations
-        std::vector<SynapseGroupInternal*> inSyn = getInSyn();
-
-        // Loop through un-merged incoming synapse populations
-        for(unsigned int i = 0; !inSyn.empty(); i++) {
-            // Remove last element from vector
-            SynapseGroupInternal *a = inSyn.back();
-            inSyn.pop_back();
-
-            // Add A to vector of merged incoming synape populations
-            m_MergedInSyn.push_back(a);
-
-            // Continue if merging of postsynaptic models is disabled
-            if(!mergePSM) {
-                continue;
-            }
-
-            // If this synapse group's postsynaptic model can be linearly combined with others
-            if(!a->canPSBeLinearlyCombined()) {
-                continue;
-            }
-
-            // Get hash digest used for checking compatibility
-            const auto aHashDigest = a->getPSLinearCombineHashDigest();
-
-            // Create a name for mmerged
-            const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
-
-            // Loop through remainder of incoming synapse populations
-            bool anyMerged = false;
-            for(auto b = inSyn.begin(); b != inSyn.end();) {
-                // If synapse group b's postsynaptic model can be linearly combined with others and it's compatible with a
-                if((*b)->canPSBeLinearlyCombined() && (aHashDigest == (*b)->getPSLinearCombineHashDigest())) {
-                    LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
-
-                    // Set b's merge target to our unique name
-                    (*b)->setPSModelMergeTarget(mergedPSMName);
-
-                    // Remove from temporary vector
-                    b = inSyn.erase(b);
-
-                    // Set flag
-                    anyMerged = true;
-                }
-                // Otherwise, advance to next synapse group
-                else {
-                    LOGD_GENN << "Unable to merge '" << (*b)->getName() << "' with '" << a->getName() << "'";
-                    ++b;
-                }
-            }
-
-            // If synapse group A was successfully merged with anything, set it's merge target to the unique name
-            if(anyMerged) {
-                a->setPSModelMergeTarget(mergedPSMName);
-            }
-        }
+        // Attempt to merge postsynaptic model
+        mergeSynapseGroups(getInSyn(), mergePSM, m_MergedInSyn, "MergedPSM", getName(), "postsynaptic update",
+                           &SynapseGroupInternal::canPSBeLinearlyCombined, &SynapseGroupInternal::getPSLinearCombineHashDigest,
+                           &SynapseGroupInternal::setPSModelMergeTarget);
     }
 }
 //----------------------------------------------------------------------------
