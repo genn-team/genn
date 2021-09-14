@@ -817,6 +817,17 @@ class SynapseGroup(Group):
         """Tests whether synaptic connectivity has
         individual postsynaptic model variables"""
         return (self.matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
+    
+    @property
+    def ps_output_var(self):
+        """Gets name of neuron input variable postsynaptic model will target"""
+        return self.pop.get_psoutput_var()
+
+    @ps_output_var.setter
+    def ps_output_var(self, var):
+        """Sets name of neuron input variable postsynaptic model will target"""
+        self.pop.set_psoutput_var(var)
+
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
