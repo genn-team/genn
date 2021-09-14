@@ -603,6 +603,64 @@ bool SynapseGroup::canPSBeLinearlyCombined() const
     return (getPSVarInitialisers().empty() && getPSModel()->getExtraGlobalParams().empty());
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canWUMPreUpdateBeCombined() const
+{
+    // If any presynaptic variables aren't initialised to constant values, this synapse group's presynaptic update can't be merged
+    // **NOTE** hash check will compare these constant values
+    if(std::any_of(getWUPreVarInitialisers().cbegin(), getWUPreVarInitialisers().cend(), 
+                   [](const Models::VarInit &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr); }))
+    {
+        return false;
+    }
+    
+    // Loop through EGPs
+    const auto wumEGPs = getWUModel()->getExtraGlobalParams();
+    const std::string preSpikeCode = getWUModel()->getPreSpikeCode();
+    const std::string preDynamicsCode = getWUModel()->getPreDynamicsCode();
+    for(const auto &egp : wumEGPs) {
+        // If this EGP is referenced in presynaptic spike code, return false
+        const std::string egpName = "$(" + egp.name + ")";
+        if(preSpikeCode.find(egpName) != std::string::npos) {
+            return false;
+        }
+        
+        // If this EGP is referenced in presynaptic dynamics code, return false
+        if(preDynamicsCode.find(egpName) != std::string::npos) {
+            return false;
+        }
+    }
+    return true;
+}
+//----------------------------------------------------------------------------
+bool SynapseGroup::canWUMPostUpdateBeCombined() const
+{
+    // If any postsynaptic variables aren't initialised to constant values, this synapse group's postsynaptic update can't be merged
+    // **NOTE** hash check will compare these constant values
+    if(std::any_of(getWUPostVarInitialisers().cbegin(), getWUPostVarInitialisers().cend(), 
+                   [](const Models::VarInit &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr); }))
+    {
+        return false;
+    }
+    
+    // Loop through EGPs
+    const auto wumEGPs = getWUModel()->getExtraGlobalParams();
+    const std::string postSpikeCode = getWUModel()->getPostSpikeCode();
+    const std::string postDynamicsCode = getWUModel()->getPostDynamicsCode();
+    for(const auto &egp : wumEGPs) {
+        // If this EGP is referenced in postsynaptic spike code, return false
+        const std::string egpName = "$(" + egp.name + ")";
+        if(postSpikeCode.find(egpName) != std::string::npos) {
+            return false;
+        }
+        
+        // If this EGP is referenced in postsynaptic dynamics code, return false
+        if(postDynamicsCode.find(egpName) != std::string::npos) {
+            return false;
+        }
+    }
+    return true;
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

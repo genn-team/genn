@@ -283,9 +283,14 @@ protected:
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
 
-    //! Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all
-    /*! NOTE: this can only be called after model is finalized */
+    //! Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all?
     bool canPSBeLinearlyCombined() const;
+    
+    //! Can presynaptic update component of this synapse group's weight update model be safely combined with other whose hashes match so only one needs simulating at all?
+    bool canWUMPreUpdateBeCombined() const;
+    
+    //! Can postsynaptic update component of this synapse group's weight update model be safely combined with other whose hashes match so only one needs simulating at all?
+    bool canWUMPostUpdateBeCombined() const;
     
     //! Updates hash with weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */

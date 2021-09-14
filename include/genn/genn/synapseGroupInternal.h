@@ -40,6 +40,8 @@ public:
     using SynapseGroup::getPSModelTargetName;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::canPSBeLinearlyCombined;
+    using SynapseGroup::canWUMPreUpdateBeCombined;
+    using SynapseGroup::canWUMPostUpdateBeCombined;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPreHashDigest;
     using SynapseGroup::getWUPostHashDigest;
