@@ -318,62 +318,64 @@ void NeuronGroup::initDerivedParams(double dt)
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::mergeIncomingPSM(bool merge)
+void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
 {
-    // Create a copy of this neuron groups incoming synapse populations
-    std::vector<SynapseGroupInternal*> inSyn = getInSyn();
+    if(!getInSyn().empty()) {
+        // Create a copy of this neuron groups incoming synapse populations
+        std::vector<SynapseGroupInternal*> inSyn = getInSyn();
 
-    // Loop through un-merged incoming synapse populations
-    for(unsigned int i = 0; !inSyn.empty(); i++) {
-        // Remove last element from vector
-        SynapseGroupInternal *a = inSyn.back();
-        inSyn.pop_back();
+        // Loop through un-merged incoming synapse populations
+        for(unsigned int i = 0; !inSyn.empty(); i++) {
+            // Remove last element from vector
+            SynapseGroupInternal *a = inSyn.back();
+            inSyn.pop_back();
 
-        // Add A to vector of merged incoming synape populations
-        m_MergedInSyn.push_back(a);
+            // Add A to vector of merged incoming synape populations
+            m_MergedInSyn.push_back(a);
 
-        // Continue if merging of postsynaptic models is disabled
-        if(!merge) {
-            continue;
-        }
-
-        // If this synapse group's postsynaptic model can be linearly combined with others
-        if(!a->canPSBeLinearlyCombined()) {
-            continue;
-        }
-
-        // Get hash digest used for checking compatibility
-        const auto aHashDigest = a->getPSLinearCombineHashDigest();
-
-        // Create a name for mmerged
-        const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
-
-        // Loop through remainder of incoming synapse populations
-        bool anyMerged = false;
-        for(auto b = inSyn.begin(); b != inSyn.end();) {
-            // If synapse group b's postsynaptic model can be linearly combined with others and it's compatible with a
-            if((*b)->canPSBeLinearlyCombined() && (aHashDigest == (*b)->getPSLinearCombineHashDigest())) {
-                LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
-
-                // Set b's merge target to our unique name
-                (*b)->setPSModelMergeTarget(mergedPSMName);
-
-                // Remove from temporary vector
-                b = inSyn.erase(b);
-
-                // Set flag
-                anyMerged = true;
+            // Continue if merging of postsynaptic models is disabled
+            if(!mergePSM) {
+                continue;
             }
-            // Otherwise, advance to next synapse group
-            else {
-                LOGD_GENN << "Unable to merge '" << (*b)->getName() << "' with '" << a->getName() << "'";
-                ++b;
-            }
-        }
 
-        // If synapse group A was successfully merged with anything, set it's merge target to the unique name
-        if(anyMerged) {
-            a->setPSModelMergeTarget(mergedPSMName);
+            // If this synapse group's postsynaptic model can be linearly combined with others
+            if(!a->canPSBeLinearlyCombined()) {
+                continue;
+            }
+
+            // Get hash digest used for checking compatibility
+            const auto aHashDigest = a->getPSLinearCombineHashDigest();
+
+            // Create a name for mmerged
+            const std::string mergedPSMName = "Merged" + std::to_string(i) + "_" + getName();
+
+            // Loop through remainder of incoming synapse populations
+            bool anyMerged = false;
+            for(auto b = inSyn.begin(); b != inSyn.end();) {
+                // If synapse group b's postsynaptic model can be linearly combined with others and it's compatible with a
+                if((*b)->canPSBeLinearlyCombined() && (aHashDigest == (*b)->getPSLinearCombineHashDigest())) {
+                    LOGD_GENN << "Merging '" << (*b)->getName() << "' with '" << a->getName() << "' into '" << mergedPSMName << "'";
+
+                    // Set b's merge target to our unique name
+                    (*b)->setPSModelMergeTarget(mergedPSMName);
+
+                    // Remove from temporary vector
+                    b = inSyn.erase(b);
+
+                    // Set flag
+                    anyMerged = true;
+                }
+                // Otherwise, advance to next synapse group
+                else {
+                    LOGD_GENN << "Unable to merge '" << (*b)->getName() << "' with '" << a->getName() << "'";
+                    ++b;
+                }
+            }
+
+            // If synapse group A was successfully merged with anything, set it's merge target to the unique name
+            if(anyMerged) {
+                a->setPSModelMergeTarget(mergedPSMName);
+            }
         }
     }
 }

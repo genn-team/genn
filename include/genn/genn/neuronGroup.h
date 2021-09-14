@@ -220,7 +220,7 @@ protected:
     void initDerivedParams(double dt);
 
     //! Merge incoming postsynaptic models
-    void mergeIncomingPSM(bool merge);
+    void mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM);
 
     //! add input current source
     void injectCurrent(CurrentSourceInternal *source);

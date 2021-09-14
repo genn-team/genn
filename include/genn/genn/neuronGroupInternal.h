@@ -24,7 +24,7 @@ public:
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
     using NeuronGroup::initDerivedParams;
-    using NeuronGroup::mergeIncomingPSM;
+    using NeuronGroup::mergePrePostSynapses;
     using NeuronGroup::injectCurrent;
     using NeuronGroup::getInSyn;
     using NeuronGroup::getMergedInSyn;

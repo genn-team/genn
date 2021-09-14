@@ -218,6 +218,10 @@ public:
     //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
+    
+    //! Should compatible pre and postsynaptic weight update model variables and updates be merged?
+    /*! This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */
+    void setMergePrePostWeightUpdateModels(bool merge){ m_ShouldMergePrePostWeightUpdateModels = merge; }
 
     void setBatchSize(unsigned int batchSize) { m_BatchSize = batchSize;  }
 
@@ -743,6 +747,10 @@ private:
     //! Should compatible postsynaptic models and dendritic delay buffers be merged?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
     bool m_ShouldMergePostsynapticModels; 
+    
+    //! Should compatible pre and postsynaptic weight update model variables and updates be merged?
+    /*! This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */
+    bool m_ShouldMergePrePostWeightUpdateModels;
 
     //! Batch size of this model - efficiently duplicates model
     unsigned int m_BatchSize;
