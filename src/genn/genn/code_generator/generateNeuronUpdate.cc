@@ -258,7 +258,7 @@ void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, con
                 inSynSubs.addVarSubstitution("inSyn", "linSyn");
                 
                 // Allow synapse group's PS output var to override what Isyn points to
-                inSynSubs.addVarSubstitution("Isyn", sg->getPSOutputVar(), true);
+                inSynSubs.addVarSubstitution("Isyn", sg->getPSTargetVar(), true);
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");

@@ -822,10 +822,10 @@ TEST(SynapseGroup, InvalidPSOutputVar)
         {}, { 1.0 },
         {}, {});
 
-    prePost->setPSOutputVar("Isyn");
-    prePost->setPSOutputVar("Isyn2");
+    prePost->setPSTargetVar("Isyn");
+    prePost->setPSTargetVar("Isyn2");
     try {
-        prePost->setPSOutputVar("NonExistent");
+        prePost->setPSTargetVar("NonExistent");
         FAIL();
     }
     catch (const std::runtime_error &) {

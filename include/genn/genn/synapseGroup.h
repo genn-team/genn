@@ -66,7 +66,7 @@ public:
 
     //! Set name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    void setPSOutputVar(const std::string &varName);
+    void setPSTargetVar(const std::string &varName);
     
     //! Set location of sparse connectivity initialiser extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space
@@ -204,7 +204,7 @@ public:
 
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    const std::string &getPSOutputVar() const{ return m_PSOutputVar; }
+    const std::string &getPSTargetVar() const{ return m_PSTargetVar; }
     
     //! Get location of sparse connectivity initialiser extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
@@ -465,5 +465,5 @@ private:
     
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
-    std::string m_PSOutputVar;
+    std::string m_PSTargetVar;
 };
