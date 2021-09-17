@@ -823,7 +823,7 @@ class SynapseGroup(Group):
         """Gets name of neuron input variable postsynaptic model will target"""
         return self.pop.get_pstarget_var()
 
-    @ps_output_var.setter
+    @ps_target_var.setter
     def ps_target_var(self, var):
         """Sets name of neuron input variable postsynaptic model will target"""
         self.pop.set_pstarget_var(var)
