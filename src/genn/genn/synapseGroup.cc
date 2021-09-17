@@ -75,6 +75,21 @@ void SynapseGroup::setPSVarLocation(const std::string &varName, VarLocation loc)
     m_PSVarLocation[getPSModel()->getVarIndex(varName)] = loc;
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setPSTargetVar(const std::string &varName)
+{
+    // If varname is either 'ISyn' or name of target neuron group additional input variable, store
+    const auto additionalInputVars = getTrgNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    if(varName == "Isyn" || 
+       std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
+                    [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
+    {
+        m_PSTargetVar = varName;
+    }
+    else {
+        throw std::runtime_error("Target neuron group has no input variable '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getPSModel()->getExtraGlobalParamIndex(paramName);
@@ -437,7 +452,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
-        m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name)
+        m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name),
+        m_PSTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -713,6 +729,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+    Utils::updateHash(getPSTargetVar(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -722,6 +739,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSLinearCombineHashDige
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
     Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
+    Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
     return hash.get_digest();
