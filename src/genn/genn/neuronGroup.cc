@@ -385,8 +385,8 @@ void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
 {
     // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
-        // Attempt to merge postsynaptic model
-        mergeSynapseGroups(getInSyn(), mergePSM, m_MergedInSyn, "MergedPSM", getName(), "postsynaptic update",
+        // Attempt to merge postsynaptic models
+        mergeSynapseGroups(getInSyn(), mergePSM, m_MergedPSMInSyn, "MergedPSM", getName(), "postsynaptic update",
                            &SynapseGroupInternal::canPSBeLinearlyCombined, &SynapseGroupInternal::getPSLinearCombineHashDigest,
                            &SynapseGroupInternal::setPSVarMergeSuffix);
     }
@@ -485,7 +485,7 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     updateHashList(getOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
 
     // Update hash with hash list built from merged incoming synapses
-    updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
+    updateHashList(getMergedPSMInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
 
     return hash.get_digest();
 }
@@ -516,7 +516,7 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     updateHashList(getOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
 
     // Update hash with hash list built from merged incoming synapses
-    updateHashList(getMergedInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
+    updateHashList(getMergedPSMInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
 
     return hash.get_digest();
 }
