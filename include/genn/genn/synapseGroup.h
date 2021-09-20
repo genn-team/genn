@@ -142,7 +142,16 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
-    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+    //! Has this synapse group's postsynaptic model been merged with those from other synapse groups?
+    bool isPSModelMerged() const{ return m_PSVarMergeSuffix != getName(); }
+    
+    //! Has the presynaptic component of this synapse group's weight update
+    //! model been merged with those from other synapse groups?
+    bool isWUPreModelMerged() const { return m_WUPreVarMergeSuffix != getName(); }
+
+    //! Has the postsynaptic component of this synapse group's weight update
+    //! model been merged with those from other synapse groups?
+    bool isWUPostModelMerged() const { return m_WUPostVarMergeSuffix != getName(); }
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
@@ -261,10 +270,9 @@ protected:
     //! Set if any of this synapse group's weight update model variables referenced by a custom update
     void setWUVarReferencedByCustomUpdate(bool ref) { m_WUVarReferencedByCustomUpdate = ref;  }
 
-    void setPSModelMergeTarget(const std::string &targetName)
-    {
-        m_PSModelTargetName = targetName;
-    }
+    void setPSVarMergeSuffix(const std::string &suffix){ m_PSVarMergeSuffix = suffix; }
+    void setWUPreVarMergeSuffix(const std::string &suffix){ m_WUPreVarMergeSuffix = suffix; }
+    void setWUPostVarMergeSuffix(const std::string &suffix){ m_WUPostVarMergeSuffix = suffix; }
     
     void initDerivedParams(double dt);
 
@@ -283,7 +291,9 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }    
+    const std::string &getPSVarMergeSuffix() const{ return m_PSVarMergeSuffix; }
+    const std::string &getWUPreMergeSuffix() const { return m_WUPreVarMergeSuffix; }
+    const std::string &getWUPostMergeSuffix() const { return m_WUPostVarMergeSuffix; }
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
@@ -464,10 +474,18 @@ private:
     //! Location of connectivity initialiser extra global parameters
     std::vector<VarLocation> m_ConnectivityExtraGlobalParamLocation;
 
-    //! Name of the synapse group in which postsynaptic model is located
-    /*! This may not be the name of this group if it has been merged*/
-    std::string m_PSModelTargetName;
+    //! Suffix for postsynaptic model variable names
+    /*! This may not be the name of this synapse group if it has been merged */
+    std::string m_PSVarMergeSuffix;
+
+    //! Suffix for weight update model presynaptic variable names
+    /*! This may not be the name of this synapse group if it has been merged */
+    std::string m_WUPreVarMergeSuffix;
     
+    //! Suffix for weight update model postsynaptic variable names
+    /*! This may not be the name of this synapse group if it has been merged */
+    std::string m_WUPostVarMergeSuffix;
+
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     std::string m_PSTargetVar;

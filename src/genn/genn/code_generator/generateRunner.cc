@@ -1124,22 +1124,22 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // **NOTE** because of merging we need to loop through postsynaptic models in this
         for(const auto *sg : n.second.getMergedInSyn()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getPrecision(), "inSyn" + sg->getPSModelTargetName(), sg->getInSynLocation(),
+                             model.getPrecision(), "inSyn" + sg->getPSVarMergeSuffix(), sg->getInSynLocation(),
                              sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
 
             if (sg->isDendriticDelayRequired()) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 model.getPrecision(), "denDelay" + sg->getPSModelTargetName(), sg->getDendriticDelayLocation(),
+                                 model.getPrecision(), "denDelay" + sg->getPSVarMergeSuffix(), sg->getDendriticDelayLocation(),
                                  (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
                 genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "denDelayPtr" + sg->getPSModelTargetName(), "0", mem);
+                                    "unsigned int", "denDelayPtr" + sg->getPSVarMergeSuffix(), "0", mem);
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 const auto psmVars = sg->getPSModel()->getVars();
                 for(size_t v = 0; v < psmVars.size(); v++) {
                     backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     psmVars[v].type, psmVars[v].name + sg->getPSModelTargetName(), sg->getPSVarLocation(v),
+                                     psmVars[v].type, psmVars[v].name + sg->getPSVarMergeSuffix(), sg->getPSVarLocation(v),
                                      sg->getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVars[v].access, batchSize), mem);
 
                     // Loop through EGPs required to initialize PSM variable
@@ -1147,7 +1147,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                     for(size_t e = 0; e < extraGlobalParams.size(); e++) {
                         genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                             runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                            extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getPSModelTargetName(),
+                                            extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getPSVarMergeSuffix(),
                                             true, VarLocation::HOST_DEVICE);
                     }
                 }
@@ -1635,7 +1635,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             // Loop through incoming synaptic populations
             for(const auto *sg : n.second.getMergedInSyn()) {
                 if(sg->isDendriticDelayRequired()) {
-                    runner << "denDelayPtr" << sg->getPSModelTargetName() << " = (denDelayPtr" << sg->getPSModelTargetName() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                    runner << "denDelayPtr" << sg->getPSVarMergeSuffix() << " = (denDelayPtr" << sg->getPSVarMergeSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                 }
             }
         }

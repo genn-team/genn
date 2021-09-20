@@ -33,11 +33,15 @@ public:
     using SynapseGroup::getPSDerivedParams;
     using SynapseGroup::setEventThresholdReTestRequired;
     using SynapseGroup::setWUVarReferencedByCustomUpdate;
-    using SynapseGroup::setPSModelMergeTarget;
+    using SynapseGroup::setPSVarMergeSuffix;
+    using SynapseGroup::setWUPreVarMergeSuffix;
+    using SynapseGroup::setWUPostVarMergeSuffix;
     using SynapseGroup::initDerivedParams;
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::areWUVarReferencedByCustomUpdate;
-    using SynapseGroup::getPSModelTargetName;
+    using SynapseGroup::getPSVarMergeSuffix;
+    using SynapseGroup::getWUPreMergeSuffix;
+    using SynapseGroup::getWUPostMergeSuffix;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::canPSBeLinearlyCombined;
     using SynapseGroup::canWUMPreUpdateBeCombined;

@@ -388,7 +388,7 @@ void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
         // Attempt to merge postsynaptic model
         mergeSynapseGroups(getInSyn(), mergePSM, m_MergedInSyn, "MergedPSM", getName(), "postsynaptic update",
                            &SynapseGroupInternal::canPSBeLinearlyCombined, &SynapseGroupInternal::getPSLinearCombineHashDigest,
-                           &SynapseGroupInternal::setPSModelMergeTarget);
+                           &SynapseGroupInternal::setPSVarMergeSuffix);
     }
 }
 //----------------------------------------------------------------------------

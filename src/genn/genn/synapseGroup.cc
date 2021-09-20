@@ -452,8 +452,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
-        m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), m_PSModelTargetName(name),
-        m_PSTargetVar("Isyn")
+        m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
+        m_PSVarMergeSuffix(name), m_WUPreVarMergeSuffix(name), m_WUPostVarMergeSuffix(name), m_PSTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");

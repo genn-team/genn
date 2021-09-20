@@ -315,7 +315,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
                     addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "InSyn",
                                  [var, this](size_t groupIndex, size_t childIndex)
                                  {
-                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSModelTargetName();
+                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSVarMergeSuffix();
                                  });
                 }
             }
@@ -351,7 +351,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
             addChildEGPs(sg->getPSModel()->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), "InSyn",
                          [this](size_t groupIndex, size_t childIndex)
                          {
-                             return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSModelTargetName();
+                             return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSVarMergeSuffix();
                          });
         }
     }
@@ -572,7 +572,7 @@ void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, 
     addField(type + "*", name + std::to_string(archetypeIndex),
              [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
              {
-                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getPSModelTargetName();
+                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getPSVarMergeSuffix();
              });
 }
 
@@ -1032,7 +1032,7 @@ SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(s
     addField("unsigned int*", "denDelayPtr", 
              [&backend](const SynapseGroupInternal &sg, size_t) 
              {
-                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getPSModelTargetName(); 
+                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getPSVarMergeSuffix(); 
              });
 }
 
@@ -1685,7 +1685,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
 void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix)
 {
     assert(!Utils::isTypePointer(type));
-    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getPSModelTargetName(); });
+    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getPSVarMergeSuffix(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)

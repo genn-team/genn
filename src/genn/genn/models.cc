@@ -56,7 +56,7 @@ VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::st
     return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(),
                         []() { return nullptr; },
                         psm->getVarIndex(varName), psm->getVars(),
-                        [sgInternal]() { return sgInternal->getPSModelTargetName(); });
+                        [sgInternal]() { return sgInternal->getPSVarMergeSuffix(); });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
