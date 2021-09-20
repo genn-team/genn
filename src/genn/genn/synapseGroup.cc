@@ -238,6 +238,25 @@ bool SynapseGroup::isSpikeEventRequired() const
      return !getWUModel()->getEventCode().empty();
 }
 //----------------------------------------------------------------------------
+std::string SynapseGroup::getSparseIndType() const
+{
+    // If narrow sparse inds are enabled
+    if(m_NarrowSparseIndEnabled) {
+        // If number of target neurons can be represented using a uint8, use this type
+        const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
+        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
+            return "uint8_t";
+        }
+        // Otherwise, if they can be represented as a uint16, use this type
+        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
+            return "uint16_t";
+        }
+    }
+
+    // Otherwise, use 32-bit int
+    return "uint32_t";
+}
+//----------------------------------------------------------------------------
 const std::vector<double> SynapseGroup::getWUConstInitVals() const
 {
     return getConstInitVals(m_WUVarInitialisers);
@@ -588,26 +607,6 @@ void SynapseGroup::initDerivedParams(double dt)
 
     // Initialise any derived connectivity initialiser parameters
     m_ConnectivityInitialiser.initDerivedParams(dt);
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroup::getSparseIndType() const
-{
-    // If narrow sparse inds are enabled
-    if(m_NarrowSparseIndEnabled) {
-        // If number of target neurons can be represented using a uint8, use this type
-        const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
-        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
-            return "uint8_t";
-        }
-        // Otherwise, if they can be represented as a uint16, use this type
-        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
-            return "uint16_t";
-        }
-    }
-
-    // Otherwise, use 32-bit int
-    return "uint32_t";
-
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPSBeLinearlyCombined() const

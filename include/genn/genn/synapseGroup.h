@@ -142,7 +142,13 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
+    //! Has this synapse group's postsynaptic model been merged with others
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
+    //! Get the type to use for sparse connectivity indices for synapse group
+    //! /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
+    std::string getSparseIndType() const;
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
@@ -283,10 +289,7 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }    
-
-    //! Get the type to use for sparse connectivity indices for synapse group
-    std::string getSparseIndType() const;
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
