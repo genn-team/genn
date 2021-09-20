@@ -310,50 +310,50 @@ protected:
     //! Can postsynaptic update component of this synapse group's weight update model be safely combined with other whose hashes match so only one needs simulating at all?
     bool canWUMPostUpdateBeCombined() const;
     
-    //! Updates hash with weight update component of this synapse group
+    //! Generate hash of weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUHashDigest() const;
 
-    //! Updates hash with presynaptic update component of this synapse group
+    //! Generate hash of presynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPreHashDigest() const;
 
-    //! Updates hash with postsynaptic update component of this synapse group
+    //! Generate hash of postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPostHashDigest() const;
 
-    //! Updates hash with postsynaptic update component of this synapse group
+    //! Generate hash of postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Updates hash with postsynaptic update component of this synapse group with additional components to ensure PSMs 
+    //! Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs 
     //! with matching hashes can not only be simulated using the same code, but combined so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSLinearCombineHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
-    //! Updates hash with initialisation component of this synapse group
+    //! Generate hash of initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUInitHashDigest() const;
 
-     //! Updates hash with presynaptic variable initialisation component of this synapse group
+    //! Generate hash of presynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPreInitHashDigest() const;
 
-    //! Updates hash with postsynaptic variable initialisation component of this synapse group
+    //! Generate hash of postsynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPostInitHashDigest() const;
 
-    //! Updates hash with postsynaptic model variable initialisation component of this synapse group
+    //! Generate hash of postsynaptic model variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
 
-    //! Updates hash with connectivity initialisation of this synapse group
+    //! Generate hash of connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
 
-    //! Updates hash with host connectivity initialisation of this synapse group
+    //! Generate hash of host connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
 
