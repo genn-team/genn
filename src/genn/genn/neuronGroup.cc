@@ -385,10 +385,44 @@ void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
 {
     // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
-        // Attempt to merge postsynaptic models
+        // All incoming synapse groups will have postsynaptic models so attempt to merge these directly
         mergeSynapseGroups(getInSyn(), mergePSM, m_MergedPSMInSyn, "MergedPSM", getName(), "postsynaptic update",
-                           &SynapseGroupInternal::canPSBeLinearlyCombined, &SynapseGroupInternal::getPSLinearCombineHashDigest,
+                           &SynapseGroupInternal::canPSBeMerged, &SynapseGroupInternal::getPSMergeHashDigest,
                            &SynapseGroupInternal::setPSVarMergeSuffix);
+
+        // Copy groups with some form of postsynaptic update into new vector
+        std::vector<SynapseGroupInternal *> inSynWithPostUpdate;
+        std::copy_if(getInSyn().cbegin(), getInSyn().cend(), std::back_inserter(inSynWithPostUpdate),
+                     [](SynapseGroupInternal *sg)
+                     {
+                         return (!sg->getWUModel()->getPostSpikeCode().empty()
+                                 || !sg->getWUModel()->getPostDynamicsCode().empty()
+                                 || !sg->getWUModel()->getPostVars().empty());
+                     });
+
+        // If there are any, merge
+        if(!inSynWithPostUpdate.empty()) {
+            mergeSynapseGroups(inSynWithPostUpdate, mergePrePostWUM, m_MergedWUPostInSyn, "MergedWUPost", getName(), "postsynaptic weight update",
+                               &SynapseGroupInternal::canWUMPostUpdateBeMerged, &SynapseGroupInternal::getWUPostMergeHashDigest,
+                               &SynapseGroupInternal::setWUPostVarMergeSuffix);
+        }
+    }
+
+    // Copy groups with some form of postsynaptic update into new vector
+    std::vector<SynapseGroupInternal *> outSynWithPreUpdate;
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(outSynWithPreUpdate),
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return (!sg->getWUModel()->getPreSpikeCode().empty()
+                             || !sg->getWUModel()->getPreDynamicsCode().empty()
+                             || !sg->getWUModel()->getPreVars().empty());
+                 });
+
+     // If there are any
+    if(!outSynWithPreUpdate.empty()) {
+        mergeSynapseGroups(outSynWithPreUpdate, mergePrePostWUM, m_MergedWUPreOutSyn, "MergedWUPre", getName(), "presynaptic weight update",
+                           &SynapseGroupInternal::canWUMPreUpdateBeMerged, &SynapseGroupInternal::getWUPreMergeHashDigest,
+                           &SynapseGroupInternal::setWUPreVarMergeSuffix);
     }
 }
 //----------------------------------------------------------------------------

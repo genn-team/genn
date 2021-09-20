@@ -610,7 +610,7 @@ std::string SynapseGroup::getSparseIndType() const
 
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canPSBeLinearlyCombined() const
+bool SynapseGroup::canPSBeMerged() const
 {
     // Return true if there are no variables or extra global parameters
     // **NOTE** many models with variables would work fine, but  
@@ -619,7 +619,7 @@ bool SynapseGroup::canPSBeLinearlyCombined() const
     return (getPSVarInitialisers().empty() && getPSModel()->getExtraGlobalParams().empty());
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUMPreUpdateBeCombined() const
+bool SynapseGroup::canWUMPreUpdateBeMerged() const
 {
     // If any presynaptic variables aren't initialised to constant values, this synapse group's presynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
@@ -648,7 +648,7 @@ bool SynapseGroup::canWUMPreUpdateBeCombined() const
     return true;
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUMPostUpdateBeCombined() const
+bool SynapseGroup::canWUMPostUpdateBeMerged() const
 {
     // If any postsynaptic variables aren't initialised to constant values, this synapse group's postsynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
@@ -733,7 +733,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPSLinearCombineHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSMergeHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
@@ -742,6 +742,92 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSLinearCombineHashDige
     Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreMergeHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getDelaySteps(), hash);
+
+    // Loop through presynaptic variable initialisers and hash first parameter.
+    // Due to SynapseGroup::canWUMPreUpdateBeMerged, all initialiser snippets
+    // will be constant and have a single parameter containing the value
+    for(const auto &w : getWUPreVarInitialisers()) {
+        assert(w.getParams().size() == 1);
+        Utils::updateHash(w.getParams().at(0), hash);
+    }
+
+    // Loop through weight update model parameters and, if they are referenced
+    // in presynaptic spike or dynamics code, include their value in hash
+    const auto wuParamNames = getWUModel()->getParamNames();
+    const std::string preSpikeCode = getWUModel()->getPreSpikeCode();
+    const std::string preDynamicsCode = getWUModel()->getPreDynamicsCode();
+    for(size_t i = 0; i < wuParamNames.size(); i++) {
+        const std::string paramName = "$(" + wuParamNames.at(i) + ")";
+        if((preSpikeCode.find(paramName) != std::string::npos)
+           || (preDynamicsCode.find(paramName) != std::string::npos)) 
+        {
+            Utils::updateHash(getWUParams().at(i), hash);
+        }
+    }
+
+    // Loop through weight update model parameters and, if they are referenced
+    // in presynaptic spike or dynamics code, include their value in hash
+    const auto wuDerivedParams = getWUModel()->getDerivedParams();
+    for(size_t i = 0; i < wuDerivedParams.size(); i++) {
+        const std::string derivedParamName = "$(" + wuDerivedParams.at(i).name + ")";
+        if((preSpikeCode.find(derivedParamName) != std::string::npos)
+           || (preDynamicsCode.find(derivedParamName) != std::string::npos)) 
+        {
+            Utils::updateHash(getWUDerivedParams().at(i), hash);
+        }
+    }
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostMergeHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getWUModel()->getHashDigest(), hash);
+    Utils::updateHash(getDelaySteps(), hash);
+
+    // Loop through postsynaptic variable initialisers and hash first parameter.
+    // Due to SynapseGroup::canWUMPostUpdateBeMerged, all initialiser snippets
+    // will be constant and have a single parameter containing the value
+    for(const auto &w : getWUPostVarInitialisers()) {
+        assert(w.getParams().size() == 1);
+        Utils::updateHash(w.getParams().at(0), hash);
+    }
+
+    // Loop through weight update model parameters and, if they are referenced
+    // in presynaptic spike or dynamics code, include their value in hash
+    const auto wuParamNames = getWUModel()->getParamNames();
+    const std::string postSpikeCode = getWUModel()->getPostSpikeCode();
+    const std::string postDynamicsCode = getWUModel()->getPostDynamicsCode();
+    for(size_t i = 0; i < wuParamNames.size(); i++) {
+        const std::string paramName = "$(" + wuParamNames.at(i) + ")";
+        if((postSpikeCode.find(paramName) != std::string::npos)
+           || (postDynamicsCode.find(paramName) != std::string::npos)) 
+        {
+            Utils::updateHash(getWUParams().at(i), hash);
+        }
+    }
+
+    // Loop through weight update model parameters and, if they are referenced
+    // in presynaptic spike or dynamics code, include their value in hash
+    const auto wuDerivedParams = getWUModel()->getDerivedParams();
+    for(size_t i = 0; i < wuDerivedParams.size(); i++) {
+        const std::string derivedParamName = "$(" + wuDerivedParams.at(i).name + ")";
+        if((postSpikeCode.find(derivedParamName) != std::string::npos)
+           || (postDynamicsCode.find(derivedParamName) != std::string::npos)) 
+        {
+            Utils::updateHash(getWUDerivedParams().at(i), hash);
+        }
+    }
+
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

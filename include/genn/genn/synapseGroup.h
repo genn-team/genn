@@ -301,14 +301,14 @@ protected:
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
 
-    //! Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all?
-    bool canPSBeLinearlyCombined() const;
+    //! Can postsynaptic update component of this synapse group be safely merged with others whose hashes match so only one needs simulating at all?
+    bool canPSBeMerged() const;
     
-    //! Can presynaptic update component of this synapse group's weight update model be safely combined with other whose hashes match so only one needs simulating at all?
-    bool canWUMPreUpdateBeCombined() const;
+    //! Can presynaptic update component of this synapse group's weight update model be safely merged with other whose hashes match so only one needs simulating at all?
+    bool canWUMPreUpdateBeMerged() const;
     
-    //! Can postsynaptic update component of this synapse group's weight update model be safely combined with other whose hashes match so only one needs simulating at all?
-    bool canWUMPostUpdateBeCombined() const;
+    //! Can postsynaptic update component of this synapse group's weight update model be safely merged with other whose hashes match so only one needs simulating at all?
+    bool canWUMPostUpdateBeMerged() const;
     
     //! Generate hash of weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
@@ -326,10 +326,20 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs 
-    //! with matching hashes can not only be simulated using the same code, but combined so only one needs simulating at all
+    //! Generate hash of presynaptic weight update component of this synapse group with additional components to ensure those
+    //! with matching hashes can not only be simulated using the same code, but merged so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPSLinearCombineHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getWUPreMergeHashDigest() const;
+
+    //! Generate hash of postsynaptic weight update component of this synapse group with additional components to ensure those
+    //! with matching hashes can not only be simulated using the same code, but merged so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getWUPostMergeHashDigest() const;
+
+    //! Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs 
+    //! with matching hashes can not only be simulated using the same code, but merged so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPSMergeHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
