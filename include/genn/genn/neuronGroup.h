@@ -246,16 +246,16 @@ protected:
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
-    std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
+    std::vector<SynapseGroupInternal*> getMergedInSynWithPostCode() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic update code
-    std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
+    std::vector<SynapseGroupInternal*> getMergedOutSynWithPreCode() const;
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic variables
-    std::vector<SynapseGroupInternal *> getInSynWithPostVars() const;
+    std::vector<SynapseGroupInternal *> getMergedInSynWithPostVars() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic variables
-    std::vector<SynapseGroupInternal *> getOutSynWithPreVars() const;
+    std::vector<SynapseGroupInternal *> getMergedOutSynWithPreVars() const;
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }

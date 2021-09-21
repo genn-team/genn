@@ -33,10 +33,10 @@ public:
     using NeuronGroup::getCurrentSources;
     using NeuronGroup::getDerivedParams;
     using NeuronGroup::getSpikeEventCondition;
-    using NeuronGroup::getInSynWithPostCode;
-    using NeuronGroup::getOutSynWithPreCode;
-    using NeuronGroup::getInSynWithPostVars;
-    using NeuronGroup::getOutSynWithPreVars;
+    using NeuronGroup::getMergedInSynWithPostCode;
+    using NeuronGroup::getMergedOutSynWithPreCode;
+    using NeuronGroup::getMergedInSynWithPostVars;
+    using NeuronGroup::getMergedOutSynWithPreVars;
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
