@@ -587,23 +587,25 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
 {
     // Build vector of vectors containing each child group's incoming synapse groups
     // with postsynaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedInSynWithPostCode, &NeuronGroupInternal::getInSynWithPostCode,
+    orderNeuronGroupChildren(m_SortedInSynWithPostCode, &NeuronGroupInternal::getMergedInSynWithPostCode,
                              &SynapseGroupInternal::getWUPostHashDigest);
 
     // Build vector of vectors containing each child group's outgoing synapse groups
     // with presynaptic synaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedOutSynWithPreCode, &NeuronGroupInternal::getOutSynWithPreCode,
+    orderNeuronGroupChildren(m_SortedOutSynWithPreCode, &NeuronGroupInternal::getMergedOutSynWithPreCode,
                              &SynapseGroupInternal::getWUPreHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic update code
     generateWUVar(backend, "WUPost", m_SortedInSynWithPostCode,
                   &WeightUpdateModels::Base::getPostVars, &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
-                  &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
+                  &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous,
+                  &SynapseGroupInternal::getWUPostVarMergeSuffix);
 
     // Generate struct fields for outgoing synapse groups with presynaptic update code
     generateWUVar(backend, "WUPre", m_SortedOutSynWithPreCode,
                   &WeightUpdateModels::Base::getPreVars, &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
-                  &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
+                  &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous,
+                  &SynapseGroupInternal::getWUPreVarMergeSuffix);
 
     // Loop through neuron groups
     std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
@@ -773,7 +775,8 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
                                             const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                                             Models::Base::VarVec (WeightUpdateModels::Base::*getVars)(void) const,
                                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
-                                            bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const)
+                                            bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const,
+                                            const std::string&(SynapseGroupInternal::*getVarMergeSuffix)(void) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();
@@ -787,9 +790,10 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
             const auto var = vars[v];
             assert(!Utils::isTypePointer(var.type));
             addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
-                     [i, var, &backend, &sortedSyn](const NeuronGroupInternal &, size_t groupIndex)
+                     [i, var, &backend, &sortedSyn, getVarMergeSuffix](const NeuronGroupInternal &, size_t groupIndex)
                      {
-                         return backend.getDeviceVarPrefix() + var.name + sortedSyn.at(groupIndex).at(i)->getName();
+                         const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getVarMergeSuffix)();
+                         return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
                      });
         }
 
@@ -849,26 +853,28 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getInSynWithPostVars,
+    orderNeuronGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getMergedInSynWithPostVars,
                              &SynapseGroupInternal::getWUPostInitHashDigest);
 
     // Build vector of vectors containing each child group's outgoing 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getOutSynWithPreVars,
+    orderNeuronGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getMergedOutSynWithPreVars,
                              &SynapseGroupInternal::getWUPreInitHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic variables
     generateWUVar(backend, "WUPost", m_SortedInSynWithPostVars,
                   &WeightUpdateModels::Base::getPostVars, &SynapseGroupInternal::getWUPostVarInitialisers,
                   &NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous,
-                  &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous);
+                  &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous,
+                  &SynapseGroupInternal::getWUPostVarMergeSuffix);
 
 
     // Generate struct fields for outgoing synapse groups
     generateWUVar(backend, "WUPre", m_SortedOutSynWithPreVars,
                   &WeightUpdateModels::Base::getPreVars, &SynapseGroupInternal::getWUPreVarInitialisers,
                   &NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous,
-                  &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous);
+                  &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous,
+                  &SynapseGroupInternal::getWUPreVarMergeSuffix);
 }
 //----------------------------------------------------------------------------
 bool NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
@@ -956,7 +962,8 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
                                           Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                                           const std::vector<Models::VarInit> &(SynapseGroupInternal:: *getVarInitialiserFn)(void) const,
                                           bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
-                                          bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const)
+                                          bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const,
+                                          const std::string&(SynapseGroupInternal::*getVarMergeSuffix)(void) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();
@@ -972,9 +979,10 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
             if(!varInit.at(v).getSnippet()->getCode().empty()) {
                 assert(!Utils::isTypePointer(var.type));
                 addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
-                         [i, var, &backend, &sortedSyn](const NeuronGroupInternal &, size_t groupIndex)
+                         [i, var, &backend, &sortedSyn, getVarMergeSuffix](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             return backend.getDeviceVarPrefix() + var.name + sortedSyn.at(groupIndex).at(i)->getName();
+                             const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getVarMergeSuffix)();
+                             return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
                          });
             }
 
@@ -1444,9 +1452,17 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); },
             &SynapseGroupMergedBase::isWUDerivedParamHeterogeneous);
 
-        // Add pre and postsynaptic variables to struct
-        addVars(wum->getPreVars(), backend.getDeviceVarPrefix());
-        addVars(wum->getPostVars(), backend.getDeviceVarPrefix());
+        // Add presynaptic variables to struct
+        for(const auto &v : wum->getPreVars()) {
+            const std::string prefix = backend.getDeviceVarPrefix() + v.name;
+            addField(v.type + "*", v.name, [prefix](const SynapseGroupInternal &g, size_t) { return prefix + g.getWUPreVarMergeSuffix(); });
+        }
+        
+        // Add presynaptic variables to struct
+        for(const auto &v : wum->getPostVars()) {
+            const std::string prefix = backend.getDeviceVarPrefix() + v.name;
+            addField(v.type + "*", v.name, [prefix](const SynapseGroupInternal &g, size_t) { return prefix + g.getWUPostVarMergeSuffix(); });
+        }
 
         // Add EGPs to struct
         addEGPs(wum->getExtraGlobalParams(), backend.getDeviceVarPrefix());
