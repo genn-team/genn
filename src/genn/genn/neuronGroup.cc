@@ -16,35 +16,6 @@
 // ------------------------------------------------------------------------
 namespace
 {
-template<typename T, typename M>
-bool checkCompatibleUnordered(const std::vector<T> &ours, std::vector<T> &others, M canMerge)
-{
-     // If both groups have the same number
-    if(ours.size() == others.size()) {
-        // Loop through our groups
-        for(const auto a : ours) {
-            // If a compatible group can be found amongst the other vector, remove it
-            const auto b = std::find_if(others.cbegin(), others.cend(),
-                                        [a, canMerge](T b)
-                                        {
-                                            return canMerge(a, b);
-                                        });
-            if(b != others.cend()) {
-                others.erase(b);
-            }
-            // Otherwise, these can't be merged - return false
-            else {
-                return false;
-            }
-        }
-
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-// ------------------------------------------------------------------------
 template<typename T, typename D>
 void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &hash, D getHashDigestFunc)
 {
