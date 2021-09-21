@@ -292,8 +292,8 @@ protected:
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
     const std::string &getPSVarMergeSuffix() const{ return m_PSVarMergeSuffix; }
-    const std::string &getWUPreMergeSuffix() const { return m_WUPreVarMergeSuffix; }
-    const std::string &getWUPostMergeSuffix() const { return m_WUPostVarMergeSuffix; }
+    const std::string &getWUPreVarMergeSuffix() const { return m_WUPreVarMergeSuffix; }
+    const std::string &getWUPostVarMergeSuffix() const { return m_WUPostVarMergeSuffix; }
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;

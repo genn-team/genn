@@ -40,8 +40,8 @@ public:
     using SynapseGroup::isEventThresholdReTestRequired;
     using SynapseGroup::areWUVarReferencedByCustomUpdate;
     using SynapseGroup::getPSVarMergeSuffix;
-    using SynapseGroup::getWUPreMergeSuffix;
-    using SynapseGroup::getWUPostMergeSuffix;
+    using SynapseGroup::getWUPreVarMergeSuffix;
+    using SynapseGroup::getWUPostVarMergeSuffix;
     using SynapseGroup::getSparseIndType;
     using SynapseGroup::canPSBeMerged;
     using SynapseGroup::canWUMPreUpdateBeMerged;
