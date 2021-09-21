@@ -719,7 +719,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostHashDigest() cons
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getHashDigest(), hash);
-    Utils::updateHash((getDelaySteps() != 0), hash);
+    Utils::updateHash((getBackPropDelaySteps() != 0), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -792,7 +792,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostMergeHashDigest()
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getHashDigest(), hash);
-    Utils::updateHash(getDelaySteps(), hash);
+    Utils::updateHash(getBackPropDelaySteps(), hash);
 
     // Loop through postsynaptic variable initialisers and hash first parameter.
     // Due to SynapseGroup::canWUMPostUpdateBeMerged, all initialiser snippets
