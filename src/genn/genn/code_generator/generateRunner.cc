@@ -1117,11 +1117,10 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << std::endl;
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
-    allVarStreams << "// postsynaptic variables" << std::endl;
+    allVarStreams << "// pre and postsynaptic variables" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
-        // Loop through merged incoming synaptic populations
-        // **NOTE** because of merging we need to loop through postsynaptic models in this
+        // Loop through merged postsynaptic models of incoming synaptic populations
         for(const auto *sg : n.second.getMergedPSMInSyn()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                              model.getPrecision(), "inSyn" + sg->getPSVarMergeSuffix(), sg->getInSynLocation(),
@@ -1153,6 +1152,57 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
             }
         }
+        
+        // Loop through merged postsynaptic weight updates of incoming synaptic populations
+        for(const auto *sg: n.second.getMergedWUPreOutSyn()) {
+            // Loop through presynaptic W.U.M. variables
+            const size_t preSize = (sg->getDelaySteps() == NO_DELAY)
+                    ? sg->getSrcNeuronGroup()->getNumNeurons()
+                    : sg->getSrcNeuronGroup()->getNumNeurons() * sg->getSrcNeuronGroup()->getNumDelaySlots();
+            const auto wuPreVars = sg->getWUModel()->getPreVars();
+            for(size_t i = 0; i < wuPreVars.size(); i++) {
+                const auto *varInitSnippet = sg->getWUPreVarInitialisers()[i].getSnippet();
+                backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 wuPreVars[i].type, wuPreVars[i].name + sg->getWUPreVarMergeSuffix(),
+                                 sg->getWUPreVarLocation(i), preSize * getNumCopies(wuPreVars[i].access, batchSize), mem);
+
+                // Loop through EGPs required to initialize WUM variable
+                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + sg->getWUPreVarMergeSuffix(),
+                                        true, VarLocation::HOST_DEVICE);
+                }
+            }
+
+        }
+        
+        // Loop through merged postsynaptic weight updates of incoming synaptic populations
+        for(const auto *sg: n.second.getMergedWUPostInSyn()) { 
+            // Loop through postsynaptic W.U.M. variables
+            const size_t postSize = (sg->getBackPropDelaySteps() == NO_DELAY)
+                    ? sg->getTrgNeuronGroup()->getNumNeurons()
+                    : sg->getTrgNeuronGroup()->getNumNeurons() * sg->getTrgNeuronGroup()->getNumDelaySlots();
+            const auto wuPostVars = sg->getWUModel()->getPostVars();
+            for(size_t i = 0; i < wuPostVars.size(); i++) {
+                backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 wuPostVars[i].type, wuPostVars[i].name + sg->getWUPostVarMergeSuffix(), sg->getWUPostVarLocation(i),
+                                 postSize * getNumCopies(wuPostVars[i].access, batchSize), mem);
+                
+                // Loop through EGPs required to initialize WUM variable
+                const auto *varInitSnippet = sg->getWUPostVarInitialisers()[i].getSnippet();
+                const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
+                for(size_t e = 0; e < extraGlobalParams.size(); e++) {
+                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + sg->getWUPostVarMergeSuffix(),
+                                        true, VarLocation::HOST_DEVICE);
+                }
+            }
+        }
+        
+        
     }
     allVarStreams << std::endl;
 
@@ -1271,50 +1321,6 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             }
         }
 
-        // Presynaptic W.U.M. variables
-        const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
-                ? s.second.getSrcNeuronGroup()->getNumNeurons()
-                : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
-        const auto wuPreVars = wu->getPreVars();
-        for(size_t i = 0; i < wuPreVars.size(); i++) {
-            const auto *varInitSnippet = s.second.getWUPreVarInitialisers()[i].getSnippet();
-            const bool autoInitialized = !varInitSnippet->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(),
-                        s.second.getWUPreVarLocation(i), autoInitialized, preSize * getNumCopies(wuPreVars[i].access, batchSize), mem, synapseGroupStatePushPullFunctions);
-
-            // Loop through EGPs required to initialize WUM variable
-            const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-            for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                    runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                    extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + s.second.getName(),
-                                    true, VarLocation::HOST_DEVICE);
-            }
-        }
-
-        // Postsynaptic W.U.M. variables
-        const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
-                ? s.second.getTrgNeuronGroup()->getNumNeurons()
-                : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
-        const auto wuPostVars = wu->getPostVars();
-        for(size_t i = 0; i < wuPostVars.size(); i++) {
-            const auto *varInitSnippet = s.second.getWUPostVarInitialisers()[i].getSnippet();
-            const bool autoInitialized = !varInitSnippet->getCode().empty();
-            genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                        runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(), s.second.getWUPostVarLocation(i),
-                        autoInitialized, postSize * getNumCopies(wuPostVars[i].access, batchSize), mem, synapseGroupStatePushPullFunctions);
-
-            // Loop through EGPs required to initialize WUM variable
-            const auto extraGlobalParams = varInitSnippet->getExtraGlobalParams();
-            for(size_t e = 0; e < extraGlobalParams.size(); e++) {
-                genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                    runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                    extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + s.second.getName(),
-                                    true, VarLocation::HOST_DEVICE);
-            }
-        }
-
         // If this synapse group's postsynaptic models hasn't been merged (which makes pulling them somewhat ambiguous)
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isPSModelMerged()) {
@@ -1342,7 +1348,48 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
             }
         }
-
+        
+        // If this synapse group's presynaptic weight updates hasn't been merged (which makes pulling them somewhat ambiguous)
+        // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
+        if(!s.second.isWUPreModelMerged()) {
+            const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
+                ? s.second.getSrcNeuronGroup()->getNumNeurons()
+                : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
+                
+            const auto wuPreVars = wu->getPreVars();
+            for(size_t i = 0; i < wuPreVars.size(); i++) {
+                const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPreVarLocation(i),
+                                    backend.getPreferences().automaticCopy, wuPreVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                    [&]()
+                                    {
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(), s.second.getWUPreVarLocation(i),
+                                                                    autoInitialized, preSize * getNumCopies(wuPreVars[i].access, batchSize));
+                                    });
+            }
+            
+        }
+        
+        // If this synapse group's postsynaptic weight updates hasn't been merged (which makes pulling them somewhat ambiguous)
+        // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
+        if(!s.second.isWUPostModelMerged()) {
+            const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
+                    ? s.second.getTrgNeuronGroup()->getNumNeurons()
+                    : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
+            const auto wuPostVars = s.second.getWUModel()->getPostVars();
+            for(size_t i = 0; i < wuPostVars.size(); i++) {
+                const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPostVarLocation(i),
+                                    backend.getPreferences().automaticCopy, wuPostVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                    [&]()
+                                    {
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(), s.second.getWUPostVarLocation(i),
+                                                                    autoInitialized, postSize * getNumCopies(wuPostVars[i].access, batchSize));
+                                    });
+            }
+            
+        }
+        
         // Add helper function to push and pull entire synapse group state
         if(!backend.getPreferences().automaticCopy) {
             genStatePushPull(definitionsFunc, runnerPushFunc, runnerPullFunc, 

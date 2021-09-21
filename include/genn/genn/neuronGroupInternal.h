@@ -27,6 +27,8 @@ public:
     using NeuronGroup::mergePrePostSynapses;
     using NeuronGroup::injectCurrent;
     using NeuronGroup::getMergedPSMInSyn;
+    using NeuronGroup::getMergedWUPostInSyn;
+    using NeuronGroup::getMergedWUPreOutSyn;
     using NeuronGroup::getOutSyn;
     using NeuronGroup::getCurrentSources;
     using NeuronGroup::getDerivedParams;
