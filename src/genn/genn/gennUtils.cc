@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <algorithm>
 
+// Standard C includes
+#include <cctype>
+
 // GeNN includes
 #include "models.h"
 
