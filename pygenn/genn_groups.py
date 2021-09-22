@@ -1049,7 +1049,7 @@ class SynapseGroup(Group):
                     # Get pointers to ragged data structure members
                     ind = self._assign_ext_ptr_array("ind",
                                                      self.weight_update_var_size,
-                                                     "unsigned int")
+                                                     self.pop.get_sparse_ind_type())
                     row_length = self._assign_ext_ptr_array("rowLength",
                                                             self.src.size,
                                                             "unsigned int")

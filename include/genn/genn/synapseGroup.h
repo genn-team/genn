@@ -143,15 +143,22 @@ public:
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
     //! Has this synapse group's postsynaptic model been merged with those from other synapse groups?
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
     bool isPSModelMerged() const{ return m_PSVarMergeSuffix != getName(); }
     
     //! Has the presynaptic component of this synapse group's weight update
     //! model been merged with those from other synapse groups?
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
     bool isWUPreModelMerged() const { return m_WUPreVarMergeSuffix != getName(); }
 
     //! Has the postsynaptic component of this synapse group's weight update
     //! model been merged with those from other synapse groups?
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
     bool isWUPostModelMerged() const { return m_WUPostVarMergeSuffix != getName(); }
+
+    //! Get the type to use for sparse connectivity indices for synapse group
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
+    std::string getSparseIndType() const;
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
@@ -294,9 +301,6 @@ protected:
     const std::string &getPSVarMergeSuffix() const{ return m_PSVarMergeSuffix; }
     const std::string &getWUPreVarMergeSuffix() const { return m_WUPreVarMergeSuffix; }
     const std::string &getWUPostVarMergeSuffix() const { return m_WUPostVarMergeSuffix; }
-
-    //! Get the type to use for sparse connectivity indices for synapse group
-    std::string getSparseIndType() const;
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }

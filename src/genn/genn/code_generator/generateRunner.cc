@@ -1278,7 +1278,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                                                     s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
                                         // Target indices
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "ind" + s.second.getName(), 
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,  s.second.getSparseIndType(), "ind" + s.second.getName(), 
                                                                     s.second.getSparseConnectivityLocation(), autoInitialized, size);
                                     });
             }
