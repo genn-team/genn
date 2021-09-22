@@ -252,7 +252,7 @@ TEST(NeuronGroup, Poisson)
 TEST(NeuronGroup, MergeWUMPrePost)
 {
     ModelSpecInternal model;
-    model.setMergePrePostWeightUpdateModels(true);
+    model.setFusePrePostWeightUpdateModels(true);
     
     NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
@@ -341,32 +341,32 @@ TEST(NeuronGroup, MergeWUMPrePost)
     auto synBackPropDelayInternal = static_cast<SynapseGroupInternal*>(synBackPropDelay);
     
     // Only postsynaptic update can be merged for synapse groups with different presynaptic parameters 
-    ASSERT_NE(synInternal->getWUPreVarMergeSuffix(), synPreParamInternal->getWUPreVarMergeSuffix());
-    ASSERT_EQ(synInternal->getWUPostVarMergeSuffix(), synPreParamInternal->getWUPostVarMergeSuffix());
+    ASSERT_NE(synInternal->getFusedWUPreVarSuffix(), synPreParamInternal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synPreParamInternal->getFusedWUPostVarSuffix());
     
     // Only presynaptic update can be merged for synapse groups with different postsynaptic parameters 
-    ASSERT_EQ(synInternal->getWUPreVarMergeSuffix(), synPostParamInternal->getWUPreVarMergeSuffix());
-    ASSERT_NE(synInternal->getWUPostVarMergeSuffix(), synPostParamInternal->getWUPostVarMergeSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synPostParamInternal->getFusedWUPreVarSuffix());
+    ASSERT_NE(synInternal->getFusedWUPostVarSuffix(), synPostParamInternal->getFusedWUPostVarSuffix());
     
     // Both types of update can be merged for synapse groups with parameters changes which don't effect pre or post update
-    ASSERT_EQ(synInternal->getWUPreVarMergeSuffix(), synSynParamInternal->getWUPreVarMergeSuffix());
-    ASSERT_EQ(synInternal->getWUPostVarMergeSuffix(), synSynParamInternal->getWUPostVarMergeSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synSynParamInternal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synSynParamInternal->getFusedWUPostVarSuffix());
     
     // Only postsynaptic update can be merged for synapse groups with different presynaptic variable initialisers 
-    ASSERT_NE(synInternal->getWUPreVarMergeSuffix(), synPreVar2Internal->getWUPreVarMergeSuffix());
-    ASSERT_EQ(synInternal->getWUPostVarMergeSuffix(), synPreVar2Internal->getWUPostVarMergeSuffix());
+    ASSERT_NE(synInternal->getFusedWUPreVarSuffix(), synPreVar2Internal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synPreVar2Internal->getFusedWUPostVarSuffix());
     
     // Only presynaptic update can be merged for synapse groups with different postsynaptic variable initialisers 
-    ASSERT_EQ(synInternal->getWUPreVarMergeSuffix(), synPostVar2Internal->getWUPreVarMergeSuffix());
-    ASSERT_NE(synInternal->getWUPostVarMergeSuffix(), synPostVar2Internal->getWUPostVarMergeSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synPostVar2Internal->getFusedWUPreVarSuffix());
+    ASSERT_NE(synInternal->getFusedWUPostVarSuffix(), synPostVar2Internal->getFusedWUPostVarSuffix());
     
     // Only postsynaptic update can be merged for synapse groups with different axonal delays
-    ASSERT_NE(synInternal->getWUPreVarMergeSuffix(), synAxonalDelayInternal->getWUPreVarMergeSuffix());
-    ASSERT_EQ(synInternal->getWUPostVarMergeSuffix(), synAxonalDelayInternal->getWUPostVarMergeSuffix());
+    ASSERT_NE(synInternal->getFusedWUPreVarSuffix(), synAxonalDelayInternal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synAxonalDelayInternal->getFusedWUPostVarSuffix());
     
     // Only presynaptic update can be merged for synapse groups with different back propagation delays
-    ASSERT_EQ(synInternal->getWUPreVarMergeSuffix(), synBackPropDelayInternal->getWUPreVarMergeSuffix());
-    ASSERT_NE(synInternal->getWUPostVarMergeSuffix(), synBackPropDelayInternal->getWUPostVarMergeSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synBackPropDelayInternal->getFusedWUPreVarSuffix());
+    ASSERT_NE(synInternal->getFusedWUPostVarSuffix(), synBackPropDelayInternal->getFusedWUPostVarSuffix());
 }
 
 
@@ -432,16 +432,16 @@ TEST(NeuronGroup, MergePSM)
     auto synDelayInternal = static_cast<SynapseGroupInternal*>(synDelay);
  
     // Check that identically configured PSMs can be merged
-    ASSERT_EQ(synInternal->getPSVarMergeSuffix(), syn2Internal->getPSVarMergeSuffix());
+    ASSERT_EQ(synInternal->getFusedPSVarSuffix(), syn2Internal->getFusedPSVarSuffix());
     
     // Check that PSMs with different parameters cannot be merged
-    ASSERT_NE(synInternal->getPSVarMergeSuffix(), synParamInternal->getPSVarMergeSuffix());
+    ASSERT_NE(synInternal->getFusedPSVarSuffix(), synParamInternal->getFusedPSVarSuffix());
     
     // Check that PSMs targetting different variables cannot be merged
-    ASSERT_NE(synInternal->getPSVarMergeSuffix(), synTargetInternal->getPSVarMergeSuffix());
+    ASSERT_NE(synInternal->getFusedPSVarSuffix(), synTargetInternal->getFusedPSVarSuffix());
     
     // Check that PSMs from synapse groups with different dendritic delay cannot be merged
-    ASSERT_NE(synInternal->getPSVarMergeSuffix(), synDelayInternal->getPSVarMergeSuffix());
+    ASSERT_NE(synInternal->getFusedPSVarSuffix(), synDelayInternal->getFusedPSVarSuffix());
 }
 
 TEST(NeuronGroup, CompareNeuronModels)

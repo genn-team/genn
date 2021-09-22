@@ -472,7 +472,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_PSVarMergeSuffix(name), m_WUPreVarMergeSuffix(name), m_WUPostVarMergeSuffix(name), m_PSTargetVar("Isyn")
+        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_PSTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -609,7 +609,7 @@ void SynapseGroup::initDerivedParams(double dt)
     m_ConnectivityInitialiser.initDerivedParams(dt);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canPSBeMerged() const
+bool SynapseGroup::canPSBeFused() const
 {
     // Return true if there are no variables or extra global parameters
     // **NOTE** many models with variables would work fine, but  
@@ -618,7 +618,7 @@ bool SynapseGroup::canPSBeMerged() const
     return (getPSVarInitialisers().empty() && getPSModel()->getExtraGlobalParams().empty());
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUMPreUpdateBeMerged() const
+bool SynapseGroup::canWUMPreUpdateBeFused() const
 {
     // If any presynaptic variables aren't initialised to constant values, this synapse group's presynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
@@ -647,7 +647,7 @@ bool SynapseGroup::canWUMPreUpdateBeMerged() const
     return true;
 }
 //----------------------------------------------------------------------------
-bool SynapseGroup::canWUMPostUpdateBeMerged() const
+bool SynapseGroup::canWUMPostUpdateBeFused() const
 {
     // If any postsynaptic variables aren't initialised to constant values, this synapse group's postsynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
@@ -687,7 +687,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getNumThreadsPerSpike(), hash);
     Utils::updateHash(isEventThresholdReTestRequired(), hash);
     Utils::updateHash(getSpanType(), hash);
-    Utils::updateHash(isPSModelMerged(), hash);
+    Utils::updateHash(isPSModelFused(), hash);
     Utils::updateHash(getSrcNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getTrgNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getMatrixType(), hash);
@@ -732,7 +732,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getPSMergeHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
@@ -744,14 +744,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSMergeHashDigest() con
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreMergeHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash(getDelaySteps(), hash);
 
     // Loop through presynaptic variable initialisers and hash first parameter.
-    // Due to SynapseGroup::canWUMPreUpdateBeMerged, all initialiser snippets
+    // Due to SynapseGroup::canWUMPreUpdateBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUPreVarInitialisers()) {
         assert(w.getParams().size() == 1);
@@ -787,14 +787,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreMergeHashDigest() 
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostMergeHashDigest() const
+boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getWUModel()->getHashDigest(), hash);
     Utils::updateHash(getBackPropDelaySteps(), hash);
 
     // Loop through postsynaptic variable initialisers and hash first parameter.
-    // Due to SynapseGroup::canWUMPostUpdateBeMerged, all initialiser snippets
+    // Due to SynapseGroup::canWUMPostUpdateBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUPostVarInitialisers()) {
         assert(w.getParams().size() == 1);

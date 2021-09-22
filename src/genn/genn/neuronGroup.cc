@@ -35,7 +35,7 @@ void updateHashList(const std::vector<T*> &objects, boost::uuids::detail::sha1 &
 }
 // ------------------------------------------------------------------------
 template<typename M, typename H, typename T>
-void mergeSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bool merge, std::vector<SynapseGroupInternal*> &mergedSyn,
+void fuseSynapseGroups(const std::vector<SynapseGroupInternal*> &unmergedSyn, bool merge, std::vector<SynapseGroupInternal*> &mergedSyn,
                         const std::string &mergedTargetPrefix, const std::string &mergedTargetSuffix, const std::string &logDescription,
                         M isSynMergableFunc, H getSynMergeHashFunc, T setSynMergeTargetFunc)
 {
@@ -352,14 +352,14 @@ void NeuronGroup::initDerivedParams(double dt)
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
+void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
 {
     // If there are any incoming synapse groups
     if(!getInSyn().empty()) {
         // All incoming synapse groups will have postsynaptic models so attempt to merge these directly
-        mergeSynapseGroups(getInSyn(), mergePSM, m_MergedPSMInSyn, "MergedPSM", getName(), "postsynaptic update",
-                           &SynapseGroupInternal::canPSBeMerged, &SynapseGroupInternal::getPSMergeHashDigest,
-                           &SynapseGroupInternal::setPSVarMergeSuffix);
+        fuseSynapseGroups(getInSyn(), fusePSM, m_FusedPSMInSyn, "FusedPSM", getName(), "postsynaptic update",
+                          &SynapseGroupInternal::canPSBeFused, &SynapseGroupInternal::getPSFuseHashDigest,
+                          &SynapseGroupInternal::setFusedPSVarSuffix);
 
         // Copy groups with some form of postsynaptic update into new vector
         std::vector<SynapseGroupInternal *> inSynWithPostUpdate;
@@ -373,9 +373,9 @@ void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
 
         // If there are any, merge
         if(!inSynWithPostUpdate.empty()) {
-            mergeSynapseGroups(inSynWithPostUpdate, mergePrePostWUM, m_MergedWUPostInSyn, "MergedWUPost", getName(), "postsynaptic weight update",
-                               &SynapseGroupInternal::canWUMPostUpdateBeMerged, &SynapseGroupInternal::getWUPostMergeHashDigest,
-                               &SynapseGroupInternal::setWUPostVarMergeSuffix);
+            fuseSynapseGroups(inSynWithPostUpdate, fusePrePostWUM, m_FusedWUPostInSyn, "FusedWUPost", getName(), "postsynaptic weight update",
+                              &SynapseGroupInternal::canWUMPostUpdateBeFused, &SynapseGroupInternal::getWUPostFuseHashDigest,
+                              &SynapseGroupInternal::setFusedWUPostVarSuffix);
         }
     }
 
@@ -391,16 +391,16 @@ void NeuronGroup::mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM)
 
      // If there are any
     if(!outSynWithPreUpdate.empty()) {
-        mergeSynapseGroups(outSynWithPreUpdate, mergePrePostWUM, m_MergedWUPreOutSyn, "MergedWUPre", getName(), "presynaptic weight update",
-                           &SynapseGroupInternal::canWUMPreUpdateBeMerged, &SynapseGroupInternal::getWUPreMergeHashDigest,
-                           &SynapseGroupInternal::setWUPreVarMergeSuffix);
+        fuseSynapseGroups(outSynWithPreUpdate, fusePrePostWUM, m_FusedWUPreOutSyn, "FusedWUPre", getName(), "presynaptic weight update",
+                          &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
+                          &SynapseGroupInternal::setFusedWUPreVarSuffix);
     }
 }
 //----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getMergedInSynWithPostCode() const
+std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
-    std::copy_if(getMergedWUPostInSyn().cbegin(), getMergedWUPostInSyn().cend(), std::back_inserter(vec),
+    std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
                      return (!sg->getWUModel()->getPostSpikeCode().empty()
@@ -409,10 +409,10 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getMergedInSynWithPostCode() con
     return vec;
 }
 //----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getMergedOutSynWithPreCode() const
+std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreCode() const
 {
     std::vector<SynapseGroupInternal*> vec;
-    std::copy_if(getMergedWUPreOutSyn().cbegin(), getMergedWUPreOutSyn().cend(), std::back_inserter(vec),
+    std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg)
                  {
                      return (!sg->getWUModel()->getPreSpikeCode().empty()
@@ -421,18 +421,18 @@ std::vector<SynapseGroupInternal*> NeuronGroup::getMergedOutSynWithPreCode() con
     return vec;
 }
 //----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getMergedInSynWithPostVars() const
+std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostVars() const
 {
     std::vector<SynapseGroupInternal *> vec;
-    std::copy_if(getMergedWUPostInSyn().cbegin(), getMergedWUPostInSyn().cend(), std::back_inserter(vec),
+    std::copy_if(getFusedWUPostInSyn().cbegin(), getFusedWUPostInSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPostVars().empty(); });
     return vec;
 }
 //----------------------------------------------------------------------------
-std::vector<SynapseGroupInternal*> NeuronGroup::getMergedOutSynWithPreVars() const
+std::vector<SynapseGroupInternal*> NeuronGroup::getFusedOutSynWithPreVars() const
 {
     std::vector<SynapseGroupInternal *> vec;
-    std::copy_if(getMergedWUPreOutSyn().cbegin(), getMergedWUPreOutSyn().cend(), std::back_inserter(vec),
+    std::copy_if(getFusedWUPreOutSyn().cbegin(), getFusedWUPreOutSyn().cend(), std::back_inserter(vec),
                  [](SynapseGroupInternal *sg) { return !sg->getWUModel()->getPreVars().empty(); });
     return vec;
 }
@@ -484,13 +484,13 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
 
     // Update hash with hash list built from incoming synapse groups with post code
-    updateHashList(getMergedInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPostHashDigest);
+    updateHashList(getFusedInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPostHashDigest);
 
     // Update hash with hash list built from outgoing synapse groups with pre code
-    updateHashList(getMergedOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
+    updateHashList(getFusedOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
 
     // Update hash with hash list built from merged incoming synapses
-    updateHashList(getMergedPSMInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
+    updateHashList(getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
 
     return hash.get_digest();
 }
@@ -515,13 +515,13 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
 
     // Update hash with hash list built from incoming synapse groups with post vars
-    updateHashList(getMergedInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPostInitHashDigest);
+    updateHashList(getFusedInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPostInitHashDigest);
 
     // Update hash with hash list built from outgoing synapse groups with pre vars
-    updateHashList(getMergedOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
+    updateHashList(getFusedOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
 
     // Update hash with hash list built from merged incoming synapses
-    updateHashList(getMergedPSMInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
+    updateHashList(getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
 
     return hash.get_digest();
 }

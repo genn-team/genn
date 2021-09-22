@@ -1118,19 +1118,19 @@ class SynapseGroup(Group):
                 self._load_egp(var_data.extra_global_params, v.name)
 
         # If population's presynaptic weight update hasn't been 
-        # merged, load weight update model presynaptic variables
-        if not self.pop.is_wupre_model_merged():
+        # fused, load weight update model presynaptic variables
+        if not self.pop.is_wupre_model_fused():
             self._load_vars(self.w_update.get_pre_vars(), self.src.size,
                             self.pre_vars, self.pop.get_wupre_var_location)
 
         # If population's postsynaptic weight update hasn't been 
-        # merged, load weight update model postsynaptic variables
-        if not self.pop.is_wupost_model_merged():
+        # fused, load weight update model postsynaptic variables
+        if not self.pop.is_wupost_model_fused():
             self._load_vars(self.w_update.get_post_vars(), self.trg.size, 
                             self.post_vars, self.pop.get_wupost_var_location)
         
-        # If this synapse group's postsynaptic model hasn't been merged
-        if not self.pop.is_psmodel_merged():
+        # If this synapse group's postsynaptic model hasn't been fused
+        if not self.pop.is_psmodel_fused():
             # Load postsynaptic update model variables
             if self.has_individual_postsynaptic_vars:
                 self._load_vars(self.postsyn.get_vars(), self.trg.size,

@@ -191,7 +191,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
 :   GroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getMergedPSMInSyn,
+    orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
                              init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
 
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
@@ -315,7 +315,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
                     addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "InSyn",
                                  [var, this](size_t groupIndex, size_t childIndex)
                                  {
-                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSVarMergeSuffix();
+                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getFusedPSVarSuffix();
                                  });
                 }
             }
@@ -351,7 +351,7 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
             addChildEGPs(sg->getPSModel()->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), "InSyn",
                          [this](size_t groupIndex, size_t childIndex)
                          {
-                             return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getPSVarMergeSuffix();
+                             return m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getFusedPSVarSuffix();
                          });
         }
     }
@@ -572,7 +572,7 @@ void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, 
     addField(type + "*", name + std::to_string(archetypeIndex),
              [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
              {
-                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getPSVarMergeSuffix();
+                 return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getFusedPSVarSuffix();
              });
 }
 
@@ -587,25 +587,25 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
 {
     // Build vector of vectors containing each child group's incoming synapse groups
     // with postsynaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedInSynWithPostCode, &NeuronGroupInternal::getMergedInSynWithPostCode,
+    orderNeuronGroupChildren(m_SortedInSynWithPostCode, &NeuronGroupInternal::getFusedInSynWithPostCode,
                              &SynapseGroupInternal::getWUPostHashDigest);
 
     // Build vector of vectors containing each child group's outgoing synapse groups
     // with presynaptic synaptic updates, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedOutSynWithPreCode, &NeuronGroupInternal::getMergedOutSynWithPreCode,
+    orderNeuronGroupChildren(m_SortedOutSynWithPreCode, &NeuronGroupInternal::getFusedOutSynWithPreCode,
                              &SynapseGroupInternal::getWUPreHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic update code
     generateWUVar(backend, "WUPost", m_SortedInSynWithPostCode,
                   &WeightUpdateModels::Base::getPostVars, &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
                   &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getWUPostVarMergeSuffix);
+                  &SynapseGroupInternal::getFusedWUPostVarSuffix);
 
     // Generate struct fields for outgoing synapse groups with presynaptic update code
     generateWUVar(backend, "WUPre", m_SortedOutSynWithPreCode,
                   &WeightUpdateModels::Base::getPreVars, &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
                   &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getWUPreVarMergeSuffix);
+                  &SynapseGroupInternal::getFusedWUPreVarSuffix);
 
     // Loop through neuron groups
     std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
@@ -853,12 +853,12 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getMergedInSynWithPostVars,
+    orderNeuronGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getFusedInSynWithPostVars,
                              &SynapseGroupInternal::getWUPostInitHashDigest);
 
     // Build vector of vectors containing each child group's outgoing 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getMergedOutSynWithPreVars,
+    orderNeuronGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getFusedOutSynWithPreVars,
                              &SynapseGroupInternal::getWUPreInitHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic variables
@@ -866,7 +866,7 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
                   &WeightUpdateModels::Base::getPostVars, &SynapseGroupInternal::getWUPostVarInitialisers,
                   &NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous,
                   &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getWUPostVarMergeSuffix);
+                  &SynapseGroupInternal::getFusedWUPostVarSuffix);
 
 
     // Generate struct fields for outgoing synapse groups
@@ -874,7 +874,7 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
                   &WeightUpdateModels::Base::getPreVars, &SynapseGroupInternal::getWUPreVarInitialisers,
                   &NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous,
                   &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getWUPreVarMergeSuffix);
+                  &SynapseGroupInternal::getFusedWUPreVarSuffix);
 }
 //----------------------------------------------------------------------------
 bool NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const
@@ -1040,7 +1040,7 @@ SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(s
     addField("unsigned int*", "denDelayPtr", 
              [&backend](const SynapseGroupInternal &sg, size_t) 
              {
-                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getPSVarMergeSuffix(); 
+                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 
              });
 }
 
@@ -1455,13 +1455,13 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         // Add presynaptic variables to struct
         for(const auto &v : wum->getPreVars()) {
             const std::string prefix = backend.getDeviceVarPrefix() + v.name;
-            addField(v.type + "*", v.name, [prefix](const SynapseGroupInternal &g, size_t) { return prefix + g.getWUPreVarMergeSuffix(); });
+            addField(v.type + "*", v.name, [prefix](const SynapseGroupInternal &g, size_t) { return prefix + g.getFusedWUPreVarSuffix(); });
         }
         
         // Add presynaptic variables to struct
         for(const auto &v : wum->getPostVars()) {
             const std::string prefix = backend.getDeviceVarPrefix() + v.name;
-            addField(v.type + "*", v.name, [prefix](const SynapseGroupInternal &g, size_t) { return prefix + g.getWUPostVarMergeSuffix(); });
+            addField(v.type + "*", v.name, [prefix](const SynapseGroupInternal &g, size_t) { return prefix + g.getFusedWUPostVarSuffix(); });
         }
 
         // Add EGPs to struct
@@ -1701,7 +1701,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
 void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix)
 {
     assert(!Utils::isTypePointer(type));
-    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getPSVarMergeSuffix(); });
+    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPSVarSuffix(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)

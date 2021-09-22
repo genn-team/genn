@@ -180,7 +180,7 @@ void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, con
             // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
             // OR any incoming synapse groups have post synaptic models which reference $(Isyn), declare it
             if (nm->getSimCode().find("$(Isyn)") != std::string::npos ||
-                std::any_of(ng.getArchetype().getMergedPSMInSyn().cbegin(), ng.getArchetype().getMergedPSMInSyn().cend(),
+                std::any_of(ng.getArchetype().getFusedPSMInSyn().cbegin(), ng.getArchetype().getFusedPSMInSyn().cend(),
                             [](const SynapseGroupInternal *sg)
                             {
                                 return (sg->getPSModel()->getApplyInputCode().find("$(Isyn)") != std::string::npos

@@ -1121,24 +1121,24 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &n : model.getNeuronGroups()) {
         // Loop through merged postsynaptic models of incoming synaptic populations
-        for(const auto *sg : n.second.getMergedPSMInSyn()) {
+        for(const auto *sg : n.second.getFusedPSMInSyn()) {
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                             model.getPrecision(), "inSyn" + sg->getPSVarMergeSuffix(), sg->getInSynLocation(),
+                             model.getPrecision(), "inSyn" + sg->getFusedPSVarSuffix(), sg->getInSynLocation(),
                              sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
 
             if (sg->isDendriticDelayRequired()) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 model.getPrecision(), "denDelay" + sg->getPSVarMergeSuffix(), sg->getDendriticDelayLocation(),
+                                 model.getPrecision(), "denDelay" + sg->getFusedPSVarSuffix(), sg->getDendriticDelayLocation(),
                                  (size_t)sg->getMaxDendriticDelayTimesteps() * (size_t)sg->getTrgNeuronGroup()->getNumNeurons() * batchSize, mem);
                 genHostDeviceScalar(backend, definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "denDelayPtr" + sg->getPSVarMergeSuffix(), "0", mem);
+                                    "unsigned int", "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
             }
 
             if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                 const auto psmVars = sg->getPSModel()->getVars();
                 for(size_t v = 0; v < psmVars.size(); v++) {
                     backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     psmVars[v].type, psmVars[v].name + sg->getPSVarMergeSuffix(), sg->getPSVarLocation(v),
+                                     psmVars[v].type, psmVars[v].name + sg->getFusedPSVarSuffix(), sg->getPSVarLocation(v),
                                      sg->getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVars[v].access, batchSize), mem);
 
                     // Loop through EGPs required to initialize PSM variable
@@ -1146,7 +1146,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                     for(size_t e = 0; e < extraGlobalParams.size(); e++) {
                         genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                             runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                            extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getPSVarMergeSuffix(),
+                                            extraGlobalParams[e].type, extraGlobalParams[e].name + psmVars[v].name + sg->getFusedPSVarSuffix(),
                                             true, VarLocation::HOST_DEVICE);
                     }
                 }
@@ -1154,7 +1154,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
-        for(const auto *sg: n.second.getMergedWUPreOutSyn()) {
+        for(const auto *sg: n.second.getFusedWUPreOutSyn()) {
             // Loop through presynaptic W.U.M. variables
             const size_t preSize = (sg->getDelaySteps() == NO_DELAY)
                     ? sg->getSrcNeuronGroup()->getNumNeurons()
@@ -1163,7 +1163,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             for(size_t i = 0; i < wuPreVars.size(); i++) {
                 const auto *varInitSnippet = sg->getWUPreVarInitialisers()[i].getSnippet();
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 wuPreVars[i].type, wuPreVars[i].name + sg->getWUPreVarMergeSuffix(),
+                                 wuPreVars[i].type, wuPreVars[i].name + sg->getFusedWUPreVarSuffix(),
                                  sg->getWUPreVarLocation(i), preSize * getNumCopies(wuPreVars[i].access, batchSize), mem);
 
                 // Loop through EGPs required to initialize WUM variable
@@ -1171,7 +1171,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 for(size_t e = 0; e < extraGlobalParams.size(); e++) {
                     genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                         runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + sg->getWUPreVarMergeSuffix(),
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPreVars[i].name + sg->getFusedWUPreVarSuffix(),
                                         true, VarLocation::HOST_DEVICE);
                 }
             }
@@ -1179,7 +1179,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
-        for(const auto *sg: n.second.getMergedWUPostInSyn()) { 
+        for(const auto *sg: n.second.getFusedWUPostInSyn()) { 
             // Loop through postsynaptic W.U.M. variables
             const size_t postSize = (sg->getBackPropDelaySteps() == NO_DELAY)
                     ? sg->getTrgNeuronGroup()->getNumNeurons()
@@ -1187,7 +1187,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             const auto wuPostVars = sg->getWUModel()->getPostVars();
             for(size_t i = 0; i < wuPostVars.size(); i++) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                 wuPostVars[i].type, wuPostVars[i].name + sg->getWUPostVarMergeSuffix(), sg->getWUPostVarLocation(i),
+                                 wuPostVars[i].type, wuPostVars[i].name + sg->getFusedWUPostVarSuffix(), sg->getWUPostVarLocation(i),
                                  postSize * getNumCopies(wuPostVars[i].access, batchSize), mem);
                 
                 // Loop through EGPs required to initialize WUM variable
@@ -1196,7 +1196,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 for(size_t e = 0; e < extraGlobalParams.size(); e++) {
                     genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                         runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + sg->getWUPostVarMergeSuffix(),
+                                        extraGlobalParams[e].type, extraGlobalParams[e].name + wuPostVars[i].name + sg->getFusedWUPostVarSuffix(),
                                         true, VarLocation::HOST_DEVICE);
                 }
             }
@@ -1323,7 +1323,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
         // If this synapse group's postsynaptic models hasn't been merged (which makes pulling them somewhat ambiguous)
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
-        if(!s.second.isPSModelMerged()) {
+        if(!s.second.isPSModelFused()) {
             // Add code to push and pull inSyn
             genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
                                 backend.getPreferences().automaticCopy, "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
@@ -1351,7 +1351,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         
         // If this synapse group's presynaptic weight updates hasn't been merged (which makes pulling them somewhat ambiguous)
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
-        if(!s.second.isWUPreModelMerged()) {
+        if(!s.second.isWUPreModelFused()) {
             const size_t preSize = (s.second.getDelaySteps() == NO_DELAY)
                 ? s.second.getSrcNeuronGroup()->getNumNeurons()
                 : s.second.getSrcNeuronGroup()->getNumNeurons() * s.second.getSrcNeuronGroup()->getNumDelaySlots();
@@ -1372,7 +1372,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         
         // If this synapse group's postsynaptic weight updates hasn't been merged (which makes pulling them somewhat ambiguous)
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
-        if(!s.second.isWUPostModelMerged()) {
+        if(!s.second.isWUPostModelFused()) {
             const size_t postSize = (s.second.getBackPropDelaySteps() == NO_DELAY)
                     ? s.second.getTrgNeuronGroup()->getNumNeurons()
                     : s.second.getTrgNeuronGroup()->getNumNeurons() * s.second.getTrgNeuronGroup()->getNumDelaySlots();
@@ -1681,9 +1681,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // Generate code to advance host side dendritic delay buffers
         for(const auto &n : model.getNeuronGroups()) {
             // Loop through incoming synaptic populations
-            for(const auto *sg : n.second.getMergedPSMInSyn()) {
+            for(const auto *sg : n.second.getFusedPSMInSyn()) {
                 if(sg->isDendriticDelayRequired()) {
-                    runner << "denDelayPtr" << sg->getPSVarMergeSuffix() << " = (denDelayPtr" << sg->getPSVarMergeSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                    runner << "denDelayPtr" << sg->getFusedPSVarSuffix() << " = (denDelayPtr" << sg->getFusedPSVarSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                 }
             }
         }

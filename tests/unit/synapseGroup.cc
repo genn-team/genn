@@ -904,7 +904,7 @@ TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
     //setMaxSourceConnections
 }
 
-TEST(SynapseGroup, CanWUMPreUpdateBeCombined)
+TEST(SynapseGroup, CanWUMPreUpdateBeFused)
 {
     ModelSpecInternal model;
 
@@ -952,14 +952,14 @@ TEST(SynapseGroup, CanWUMPreUpdateBeCombined)
         wumEGPDynamicsParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
         {}, {});
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeMerged());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPreUpdateBeMerged());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPreUpdateBeMerged());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPreUpdateBeMerged());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPreUpdateBeMerged());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPreUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPreUpdateBeFused());
 }
 
-TEST(SynapseGroup, CanWUMPostUpdateBeCombined)
+TEST(SynapseGroup, CanWUMPostUpdateBeFused)
 {
     ModelSpecInternal model;
 
@@ -1007,11 +1007,11 @@ TEST(SynapseGroup, CanWUMPostUpdateBeCombined)
         wumEGPDynamicsParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
         {}, {});
 
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeMerged());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeMerged());
-    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPostUpdateBeMerged());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPostUpdateBeMerged());
-    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPostUpdateBeMerged());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPostUpdateBeFused());
 }
 
 TEST(SynapseGroup, InvalidPSOutputVar)

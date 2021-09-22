@@ -219,8 +219,8 @@ protected:
 
     void initDerivedParams(double dt);
 
-    //! Merge incoming postsynaptic models
-    void mergePrePostSynapses(bool mergePSM, bool mergePrePostWUM);
+    //! Fuse incoming postsynaptic models
+    void fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM);
 
     //! add input current source
     void injectCurrent(CurrentSourceInternal *source);
@@ -230,12 +230,12 @@ protected:
     //------------------------------------------------------------------------
     //! Gets pointers to all synapse groups which provide input to this neuron group
     const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
-    const std::vector<SynapseGroupInternal*> &getMergedPSMInSyn() const{ return m_MergedPSMInSyn; }
-    const std::vector<SynapseGroupInternal *> &getMergedWUPostInSyn() const { return m_MergedWUPostInSyn; }
+    const std::vector<SynapseGroupInternal*> &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
+    const std::vector<SynapseGroupInternal *> &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
     
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
-    const std::vector<SynapseGroupInternal *> &getMergedWUPreOutSyn() const { return m_MergedWUPreOutSyn; }
+    const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
 
 
     //! Gets pointers to all current sources which provide input to this neuron group
@@ -246,16 +246,16 @@ protected:
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
-    std::vector<SynapseGroupInternal*> getMergedInSynWithPostCode() const;
+    std::vector<SynapseGroupInternal*> getFusedInSynWithPostCode() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic update code
-    std::vector<SynapseGroupInternal*> getMergedOutSynWithPreCode() const;
+    std::vector<SynapseGroupInternal*> getFusedOutSynWithPreCode() const;
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic variables
-    std::vector<SynapseGroupInternal *> getMergedInSynWithPostVars() const;
+    std::vector<SynapseGroupInternal *> getFusedInSynWithPostVars() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic variables
-    std::vector<SynapseGroupInternal *> getMergedOutSynWithPreVars() const;
+    std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
@@ -294,9 +294,9 @@ private:
     std::vector<Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
-    std::vector<SynapseGroupInternal*> m_MergedPSMInSyn;
-    std::vector<SynapseGroupInternal *> m_MergedWUPostInSyn;
-    std::vector<SynapseGroupInternal *> m_MergedWUPreOutSyn;
+    std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
+    std::vector<SynapseGroupInternal *> m_FusedWUPostInSyn;
+    std::vector<SynapseGroupInternal *> m_FusedWUPreOutSyn;
     std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;

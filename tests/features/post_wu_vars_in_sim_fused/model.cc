@@ -69,7 +69,7 @@ void modelDefinition(ModelSpec &model)
 #endif
     model.setDT(1.0);
     model.setName("post_wu_vars_in_sim_fused");
-    model.setMergePrePostWeightUpdateModels(true);
+    model.setFusePrePostWeightUpdateModels(true);
     
     model.addNeuronPopulation<PreNeuron>("pre1", 10, {}, {});
     model.addNeuronPopulation<PreNeuron>("pre2", 10, {}, {});
