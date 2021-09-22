@@ -986,7 +986,7 @@ private:
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
                        bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const,
-                       const std::string&(SynapseGroupInternal::*getVarMergeSuffix)(void) const);
+                       const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
 
     //! Is the incoming synapse weight update model parameter referenced?
     bool isInSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
@@ -1064,7 +1064,7 @@ private:
                        const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
                        bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
                        bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const,
-                       const std::string&(SynapseGroupInternal::*getVarMergeSuffix)(void) const);
+                       const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
 
     //! Is the incoming synapse weight update model var init parameter referenced?
     bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;

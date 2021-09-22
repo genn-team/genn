@@ -776,7 +776,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
                                             Models::Base::VarVec (WeightUpdateModels::Base::*getVars)(void) const,
                                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
                                             bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const,
-                                            const std::string&(SynapseGroupInternal::*getVarMergeSuffix)(void) const)
+                                            const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();
@@ -790,9 +790,9 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
             const auto var = vars[v];
             assert(!Utils::isTypePointer(var.type));
             addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
-                     [i, var, &backend, &sortedSyn, getVarMergeSuffix](const NeuronGroupInternal &, size_t groupIndex)
+                     [i, var, &backend, &sortedSyn, getFusedVarSuffix](const NeuronGroupInternal &, size_t groupIndex)
                      {
-                         const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getVarMergeSuffix)();
+                         const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
                          return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
                      });
         }
@@ -963,7 +963,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
                                           const std::vector<Models::VarInit> &(SynapseGroupInternal:: *getVarInitialiserFn)(void) const,
                                           bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
                                           bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const,
-                                          const std::string&(SynapseGroupInternal::*getVarMergeSuffix)(void) const)
+                                          const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();
@@ -979,9 +979,9 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
             if(!varInit.at(v).getSnippet()->getCode().empty()) {
                 assert(!Utils::isTypePointer(var.type));
                 addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
-                         [i, var, &backend, &sortedSyn, getVarMergeSuffix](const NeuronGroupInternal &, size_t groupIndex)
+                         [i, var, &backend, &sortedSyn, getFusedVarSuffix](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getVarMergeSuffix)();
+                             const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
                              return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
                          });
             }
