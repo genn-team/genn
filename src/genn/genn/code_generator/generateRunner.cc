@@ -1397,6 +1397,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                              synapseGroupStatePushPullFunctions, statePushPullFunctions);
         }
 
+        // **NOTE** postsynaptic models aren't allowed in merged groups so it's fine to do this here
         const auto psmExtraGlobalParams = psm->getExtraGlobalParams();
         for(size_t i = 0; i < psmExtraGlobalParams.size(); i++) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
