@@ -56,10 +56,10 @@ typedef boost::uuids::detail::sha1::digest_type (ModelSpecMerged::*GetArchetypeH
 
 //! Table of module names to functions to get their archetype hash digests and the kernel IDs they might contain
 const std::vector<std::tuple<std::string, GetArchetypeHashDigestFn, std::vector<Kernel>>> modules = {
-    {"customUpdate",    &ModelSpecMerged::getCustomUpdateArchetypeHashDigest,   {KernelCustomUpdate, KernelCustomTransposeUpdate}},
-    {"init",            &ModelSpecMerged::getInitArchetypeHashDigest,           {KernelInitialize, KernelInitializeSparse}},
-    {"neuronUpdate",    &ModelSpecMerged::getNeuronUpdateArchetypeHashDigest,   {KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}},
-    {"synapseUpdate",   &ModelSpecMerged::getSynapseUpdateArchetypeHashDigest,  {KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate}}
+    std::make_tuple("customUpdate",    &ModelSpecMerged::getCustomUpdateArchetypeHashDigest,   std::vector<Kernel>{KernelCustomUpdate, KernelCustomTransposeUpdate}),
+    std::make_tuple("init",            &ModelSpecMerged::getInitArchetypeHashDigest,           std::vector<Kernel>{KernelInitialize, KernelInitializeSparse}),
+    std::make_tuple("neuronUpdate",    &ModelSpecMerged::getNeuronUpdateArchetypeHashDigest,   std::vector<Kernel>{KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}),
+    std::make_tuple("synapseUpdate",   &ModelSpecMerged::getSynapseUpdateArchetypeHashDigest,  std::vector<Kernel>{KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate})
 };
 
 bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
