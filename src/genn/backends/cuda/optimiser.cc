@@ -54,12 +54,20 @@ typedef std::map<unsigned int, std::pair<bool, size_t>> KernelOptimisationOutput
 //! Pointer to ModelSpecMerged member function for getting archetype hash digest
 typedef boost::uuids::detail::sha1::digest_type (ModelSpecMerged::*GetArchetypeHashDigestFn)(void) const;
 
+//! Module structure containing name, function to get hash and vector of kernels
+struct Module
+{
+    std::string name;
+    GetArchetypeHashDigestFn getArchetypeHashDigest;
+    std::vector<Kernel> kernels;
+};
+
 //! Table of module names to functions to get their archetype hash digests and the kernel IDs they might contain
-const std::vector<std::tuple<std::string, GetArchetypeHashDigestFn, std::vector<Kernel>>> modules = {
-    std::make_tuple("customUpdate",    &ModelSpecMerged::getCustomUpdateArchetypeHashDigest,   std::vector<Kernel>{KernelCustomUpdate, KernelCustomTransposeUpdate}),
-    std::make_tuple("init",            &ModelSpecMerged::getInitArchetypeHashDigest,           std::vector<Kernel>{KernelInitialize, KernelInitializeSparse}),
-    std::make_tuple("neuronUpdate",    &ModelSpecMerged::getNeuronUpdateArchetypeHashDigest,   std::vector<Kernel>{KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}),
-    std::make_tuple("synapseUpdate",   &ModelSpecMerged::getSynapseUpdateArchetypeHashDigest,  std::vector<Kernel>{KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate})
+const std::vector<Module> modules = {
+    {"customUpdate",    &ModelSpecMerged::getCustomUpdateArchetypeHashDigest,   {KernelCustomUpdate, KernelCustomTransposeUpdate}},
+    {"init",            &ModelSpecMerged::getInitArchetypeHashDigest,           {KernelInitialize, KernelInitializeSparse}},
+    {"neuronUpdate",    &ModelSpecMerged::getNeuronUpdateArchetypeHashDigest,   {KernelNeuronSpikeQueueUpdate, KernelNeuronPrevSpikeTimeUpdate, KernelNeuronUpdate}},
+    {"synapseUpdate",   &ModelSpecMerged::getSynapseUpdateArchetypeHashDigest,  {KernelSynapseDendriticDelayUpdate, KernelPresynapticUpdate, KernelPostsynapticUpdate, KernelSynapseDynamicsUpdate}}
 };
 
 bool getKernelResourceUsage(CUmodule module, const std::string &kernelName, int &sharedMemBytes, int &numRegisters)
@@ -222,16 +230,16 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     groupSizes[KernelSynapseDendriticDelayUpdate].push_back(numPreSynapseResetGroups);
 }
 //--------------------------------------------------------------------------
-void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::vector<Kernel>> &module, unsigned int r, CUcontext context, 
+void analyseModule(const Module &module, unsigned int r, CUcontext context, 
                    boost::uuids::detail::sha1::digest_type hashDigest, const filesystem::path &outputPath, const filesystem::path &nvccPath, const Backend &backend,
                    const std::set<std::string> &customUpdateKernels, const std::set<std::string> &customTransposeUpdateKernels, 
                    int (&krnlSharedSizeBytes)[2][KernelMax], int (&krnlNumRegs)[2][KernelMax], KernelOptimisationOutput &kernelsToOptimise, std::mutex &kernelsToOptimiseMutex)
 {
     // Build source and module paths from module name
-    const std::string sourcePath = (outputPath / (std::get<0>(module) + "CUDAOptim.cc")).str();
-    const std::string moduleSHAPath = (outputPath / (std::get<0>(module) + "CUDA" + std::to_string(r) + ".sha")).str();
+    const std::string sourcePath = (outputPath / (module.name + "CUDAOptim.cc")).str();
+    const std::string moduleSHAPath = (outputPath / (module.name + "CUDA" + std::to_string(r) + ".sha")).str();
 
-    LOGD_BACKEND << "\tModule " << std::get<0>(module);
+    LOGD_BACKEND << "\tModule " << module.name;
     try {
         // Open SHA file
         std::ifstream is(moduleSHAPath);
@@ -250,7 +258,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
         if(previousHashDigest == hashDigest) {
             // Loop through kernels in module
             is >> std::dec;
-            for(Kernel k : std::get<2>(module)) {
+            for(Kernel k : module.kernels) {
                 // Read shared memory size and number of registers
                 is >> krnlSharedSizeBytes[r][k] >> krnlNumRegs[r][k];
 
@@ -298,7 +306,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
     CHECK_CU_ERRORS(cuModuleLoad(&loadedModule, (sourcePath + ".cubin").c_str()));
 
     // Loop through kernels that might be in this module
-    for(Kernel k : std::get<2>(module)) {
+    for(Kernel k : module.kernels) {
         // If this kernel is a custom update
         // **YUCK** this mechanism is really not very nice but to fix it properly would require
         // replacing the block sizes std::array with a std::map to handle different custom update kernels
@@ -348,7 +356,7 @@ void analyseModule(const std::tuple<std::string, GetArchetypeHashDigestFn, std::
 
     // Loop through kernels in this module and write shared memory size and number of registers
     os << std::dec;
-    for(Kernel k : std::get<2>(module)) {
+    for(Kernel k : module.kernels) {
         os << krnlSharedSizeBytes[r][k] << " " << krnlNumRegs[r][k] << std::endl;
     }
 
@@ -444,7 +452,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // Calculate module's hash digest
             // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
             // this will call into Python code it would require whole Python interface to be made thread-safe
-            const auto hashDigest = (modelMerged.*std::get<1>(m))();
+            const auto hashDigest = (modelMerged.*m.getArchetypeHashDigest)();
 
             // Launch thread to analyse kernels in this module (if required)
             threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),
