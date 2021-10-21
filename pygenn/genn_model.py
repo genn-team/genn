@@ -194,6 +194,9 @@ class GeNNModel(object):
 
     @use_backend.setter
     def use_backend(self, backend):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         # If no backend is specified
         if backend is None:
             # Check we have managed to import any bagenn_wrapperckends
@@ -212,6 +215,9 @@ class GeNNModel(object):
 
     @timing_enabled.setter
     def timing_enabled(self, timing):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         self._model.set_timing(timing)
 
     @property
@@ -220,6 +226,9 @@ class GeNNModel(object):
 
     @batch_size.setter
     def batch_size(self, batch_size):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         self._model.set_batch_size(batch_size)
 
     @property
