@@ -739,8 +739,8 @@ TEST(SynapseGroup, InvalidName)
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     
     ModelSpec model;
-    auto *pre = model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
-    auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     try {
         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
             "Syn-6", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
