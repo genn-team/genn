@@ -425,10 +425,18 @@ class NeuronGroup(Group):
     def pull_spikes_from_device(self):
         """Wrapper around GeNNModel.pull_spikes_from_device"""
         self._model.pull_spikes_from_device(self.name)
+    
+    def pull_spike_events_from_device(self):
+        """Wrapper around GeNNModel.pull_spike_events_from_device"""
+        self._model.pull_spike_events_from_device(self.name)
 
     def pull_current_spikes_from_device(self):
         """Wrapper around GeNNModel.pull_current_spikes_from_device"""
         self._model.pull_current_spikes_from_device(self.name)
+    
+    def pull_current_spike_events_from_device(self):
+        """Wrapper around GeNNModel.pull_current_spike_events_from_device"""
+        self._model.pull_current_spike_events_from_device(self.name)
 
     def pull_spike_times_from_device(self):
         """Helper to pull spike times from device"""
@@ -453,10 +461,18 @@ class NeuronGroup(Group):
     def push_spikes_to_device(self):
         """Wrapper around GeNNModel.push_spikes_to_device"""
         self._model.push_spikes_to_device(self.name)
-
+    
+    def push_spike_events_to_device(self):
+        """Wrapper around GeNNModel.push_spike_events_to_device"""
+        self._model.push_spike_events_to_device(self.name)
+        
     def push_current_spikes_to_device(self):
         """Wrapper around GeNNModel.push_current_spikes_to_device"""
         self._model.push_current_spikes_to_device(self.name)
+    
+    def push_current_spike_events_to_device(self):
+        """Wrapper around GeNNModel.push_current_spike_events_to_device"""
+        self._model.push_current_spike_events_to_device(self.name)
 
     def push_spike_times_to_device(self):
         """Helper to push spike times to device"""
