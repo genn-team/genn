@@ -655,9 +655,9 @@ class NeuronGroup(Group):
 
             # Loop through batches and set spike counts and spike data
             for b, batch_events in enumerate(current_events):
-                num_events = len(batch_spikes)
+                num_events = len(batch_events)
                 event_count[b, d] = num_events
-                self.spikes[b, d, 0:num_events] = batch_events
+                events[b, d, 0:num_events] = batch_events
 
     def _get_event_recording_data(self, true_spike):
         # Get byte view of data
