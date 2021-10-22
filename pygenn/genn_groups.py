@@ -515,7 +515,7 @@ class NeuronGroup(Group):
         # If this neuron group produces spike events and 
         # spike event data is present on the host
         if (self.pop.is_spike_event_required() and
-                (self.pop.get_event_spike_location() & VarLocation_HOST) != 0):
+                (self.pop.get_spike_event_location() & VarLocation_HOST) != 0):
             self.spike_events = self._assign_ext_ptr_array(
                 "glbSpkEvnt", self.size * self.delay_slots * batch_size,
                 "unsigned int")
