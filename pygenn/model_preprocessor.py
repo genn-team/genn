@@ -35,14 +35,22 @@ def prepare_model(model, group, param_space, var_space, model_family):
     m_instance, m_type = is_model_valid(model, model_family)
     param_names = list(m_instance.get_param_names())
     if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter values for {0}".format(
-            model_family.__name__))
+        raise ValueError(
+            "Invalid parameter values for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
+                model_family.__name__, model.__class__.__name__,
+                sorted(param_names), sorted(iterkeys(param_space))
+            )
+        )
     params = param_space_to_vals(m_instance, param_space)
 
     var_names = [vnt.name for vnt in m_instance.get_vars()]
     if set(iterkeys(var_space)) != set(var_names):
-        raise ValueError("Invalid variable initializers for {0}".format(
-            model_family.__name__))
+        raise ValueError(
+            "Invalid variable initializers for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
+                model_family.__name__, model.__class__.__name__,
+                sorted(var_names), sorted(iterkeys(var_space))
+            )
+        )
     vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
             for vnt in m_instance.get_vars()}
 
