@@ -64,6 +64,10 @@ public:
         and only applies to extra global parameters which are pointers. */
     void setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc);
 
+    //! Set name of neuron input variable postsynaptic model will target
+    /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
+    void setPSTargetVar(const std::string &varName);
+    
     //! Set location of sparse connectivity initialiser extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space
         and only applies to extra global parameters which are pointers. */
@@ -138,7 +142,13 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
+    //! Has this synapse group's postsynaptic model been merged with others
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
     bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+
+    //! Get the type to use for sparse connectivity indices for synapse group
+    //! /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
+    std::string getSparseIndType() const;
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
@@ -198,6 +208,10 @@ public:
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getPSExtraGlobalParamLocation(size_t index) const{ return m_PSExtraGlobalParamLocation.at(index); }
 
+    //! Get name of neuron input variable postsynaptic model will target
+    /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
+    const std::string &getPSTargetVar() const{ return m_PSTargetVar; }
+    
     //! Get location of sparse connectivity initialiser extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
@@ -275,10 +289,7 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }    
-
-    //! Get the type to use for sparse connectivity indices for synapse group
-    std::string getSparseIndType() const;
+    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
@@ -454,4 +465,8 @@ private:
     //! Name of the synapse group in which postsynaptic model is located
     /*! This may not be the name of this group if it has been merged*/
     std::string m_PSModelTargetName;
+    
+    //! Name of neuron input variable postsynaptic model will target
+    /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
+    std::string m_PSTargetVar;
 };

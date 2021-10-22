@@ -466,6 +466,44 @@ std::string ensureFtype(const std::string &oldcode, const std::string &type)
     return code;
 }
 
+std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode access, const std::string &type)
+{
+    // If reduction is a sum, initialise to zero
+    if(access & VarAccessModeAttribute::SUM) {
+        return "0";
+    }
+    // Otherwise, reduction is a maximum operation, return lowest value for type
+    else if(access & VarAccessModeAttribute::MAX) {
+        return backend.getLowestValue(type);
+    }
+    else {
+        assert(false);
+        return "";
+    }
+}
+
+std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access, const std::string &type)
+{
+    // If operation is sum, add output of custom update to sum
+    if(access & VarAccessModeAttribute::SUM) {
+        return reduction + " += " + value;
+    }
+    // Otherwise, if it's max
+    else if(access & VarAccessModeAttribute::MAX) {
+        // If type is floating point, generate fmax call
+        if(Utils::isTypeFloatingPoint(type)) {
+            return reduction + " = " + "fmax(" + reduction + ", " + value + ")";
+        }
+        // Otherwise, generate max call
+        else {
+            return reduction + " = " + "max(" + reduction + ", " + value + ")";
+        }
+    }
+    else {
+        assert(false);
+        return "";
+    }
+}
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found
  */

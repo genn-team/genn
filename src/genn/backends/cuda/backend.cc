@@ -80,8 +80,32 @@ private:
     const bool m_TimingEnabled;
     const bool m_SynchroniseOnStop;
 };
+//-----------------------------------------------------------------------
+template<typename T, typename G>
+void genGroupStartID(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                     const T &m, G getPaddedNumThreads)
+{
+    // Calculate size of array
+    const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
 
+    // If there is enough constant memory left for group, declare it in constant memory space
+    if(sizeBytes < totalConstMem) {
+        os << "__device__ __constant__ ";
+        totalConstMem -= sizeBytes;
+    }
+    // Otherwise, declare it in global memory space
+    else {
+        os << "__device__ ";
+    }
 
+    // Declare array of starting thread indices for each neuron group
+    os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
+    for(const auto &ng : m.getGroups()) {
+        os << idStart << ", ";
+        idStart += getPaddedNumThreads(ng.get());
+    }
+    os << "};" << std::endl;
+}
 //-----------------------------------------------------------------------
 void genGroupStartIDs(CodeStream &, size_t&, size_t&)
 {
@@ -94,26 +118,7 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
 {
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
-        // Calculate size of array
-        const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
-
-        // If there is enough constant memory left for group, declare it in constant memory space
-        if(sizeBytes < totalConstMem) {
-            os << "__device__ __constant__ ";
-            totalConstMem -= sizeBytes;
-        }
-        // Otherwise, declare it in global memory space
-        else {
-            os << "__device__ ";
-        }
-
-        // Declare array of starting thread indices for each neuron group
-        os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
-        for(const auto &ng : m.getGroups()) {
-            os << idStart << ", ";
-            idStart += getPaddedNumThreads(ng.get());
-        }
-        os << "};" << std::endl;
+        genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
     }
 
     // Generate any remaining groups
@@ -128,7 +133,35 @@ void genMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
 }
+//-----------------------------------------------------------------------
+void genFilteredGroupStartIDs(CodeStream &, size_t&, size_t&)
+{
+}
+//-----------------------------------------------------------------------
+template<typename T, typename G, typename F, typename ...Args>
+void genFilteredGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                      const std::vector<T> &mergedGroups, G getPaddedNumThreads, F filter,
+                      Args... args)
+{
+    // Loop through merged groups
+    for(const auto &m : mergedGroups) {
+        if(filter(m)) {
+            genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
+        }
+    }
 
+    // Generate any remaining groups
+    genFilteredGroupStartIDs(os, idStart, totalConstMem, args...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+void genFilteredMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
+                                           Args... args)
+{
+    // Generate group start id arrays
+    size_t idStart = 0;
+    genFilteredGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
+}
 //-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
@@ -161,6 +194,84 @@ const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const s
 {
     return (precision == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions;
 }
+//-----------------------------------------------------------------------
+std::string getNCCLReductionType(VarAccessMode mode) 
+{
+    // Convert GeNN reduction types to NCCL
+    if(mode & VarAccessModeAttribute::MAX) {
+        return "ncclMax";
+    }
+    else if(mode & VarAccessModeAttribute::SUM) {
+        return "ncclSum";
+    }
+    else {
+        throw std::runtime_error("Reduction type unsupported by NCCL");
+    }
+}
+//-----------------------------------------------------------------------
+std::string getNCCLType(const std::string &type, const std::string &precision)
+{
+    // Convert GeNN types to NCCL types
+    // **YUCK** GeNN really needs a better type system
+    if(type == "scalar") {
+        return (precision == "float") ? "ncclFloat32" : "ncclFloat64";
+    }
+    else if(type == "char" || type == "signed char" || type == "int8_t") {
+        return "ncclInt8";
+    }
+    else if(type == "unsigned char" || type == "uint8_t") {
+        return "ncclUint8";
+    }
+    else if(type == "int" || type == "signed int" || type == "signed" || type == "int32_t") {
+        return "ncclInt32";
+    }
+    else if(type == "unsigned" || type == "unsigned int" || type == "uint32_t") {
+        return "ncclUint32";
+    }
+    else if(type == "half") {
+        return "ncclFloat16";
+    }
+    else if(type == "float") {
+        return "ncclFloat32";
+    }
+    else if(type == "double") {
+        return "ncclFloat64";
+    }
+    else {
+        throw std::runtime_error("Data type '" + type + "' unsupported by NCCL");
+    }
+}
+//-----------------------------------------------------------------------
+template<typename G>
+void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
+{
+    CodeStream::Scope b(os);
+    os << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
+    os << "for(unsigned int g = 0; g < " << cg.getGroups().size() << "; g++)";
+    {
+        CodeStream::Scope b(os);
+
+        // Get reference to group
+        os << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
+
+        // Loop through variables and add pointers if they are reduction targets
+        const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(getVarAccessMode(v.access)) << ", ncclCommunicator, 0)); " << std::endl;
+            }
+        }
+
+        // Loop through variable references and add pointers if they are reduction targets
+        for(const auto &v : cm->getVarRefs()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
+            }
+        } 
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -188,6 +299,14 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     if(getPreferences().automaticCopy && m_ChosenDevice.major < 6) {
         LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
     }
+
+#ifdef _WIN32
+    // If we're on Windows and NCCL is enabled, give error
+    // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        throw std::runtime_error("GeNN doesn't currently support NCCL on Windows");
+    }
+#endif
 
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
     addDeviceType("curandState", 44);
@@ -575,7 +694,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
@@ -593,12 +712,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                              getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
-                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
-                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
-                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
@@ -618,6 +731,15 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
                        [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem,
+                                                  modelMerged.getMergedCustomUpdateGroups(),
+                                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); },
+                                                  [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
+
+                                                  modelMerged.getMergedCustomUpdateWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
@@ -641,6 +763,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
                        [&g](const CustomUpdateTransposeWUGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateTransposeWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
@@ -679,6 +805,25 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // If NCCL reductions are enabled
+            if(getPreferences<Preferences>().enableNCCLReductions) {
+                // Loop through custom update host reduction groups and
+                // generate reductions for those in this custom update group
+                for(const auto &cg : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
+                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                        genNCCLReduction(os, cg, model.getPrecision());
+                    }
+                }
+
+                // Loop through custom update host reduction groups and
+                // generate reductions for those in this custom update group
+                for(const auto &cg : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
+                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                        genNCCLReduction(os, cg, model.getPrecision());
+                    }
+                }
             }
 
             // If timing is enabled
@@ -919,6 +1064,16 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "// Standard C includes" << std::endl;
     os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
+
+    // If NCCL is enabled, export ncclGetUniqueId function
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "extern \"C\" {" << std::endl;
+        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
+        os << "}" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -928,6 +1083,26 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
+
+    // If NCCL is enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Include NCCL header
+        os << "#include <nccl.h>" << std::endl;
+        os << std::endl;
+        // Define NCCL ID and communicator
+        os << "EXPORT_VAR ncclUniqueId ncclID;" << std::endl;
+        os << "EXPORT_VAR ncclComm_t ncclCommunicator;" << std::endl;
+        os << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Helper macro for error-checking NCCL calls" << std::endl;
+        os << "#define CHECK_NCCL_ERRORS(call) {\\" << std::endl;
+        os << "    ncclResult_t error = call;\\" << std::endl;
+        os << "    if (error != ncclSuccess) {\\" << std::endl;
+        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
+        os << "    }\\" << std::endl;
+        os << "}" << std::endl;
+    }
+
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking CUDA calls" << std::endl;
@@ -1130,10 +1305,38 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
     os << "#pragma warning(disable: 4297)" << std::endl;
-#else
-    // Prevent unused parameter warning
-    (void)os;
 #endif
+
+     // If NCCL is enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Define NCCL ID and communicator
+        os << "ncclUniqueId ncclID;" << std::endl;
+        os << "ncclComm_t ncclCommunicator;" << std::endl;
+
+        // Define constant to expose NCCL_UNIQUE_ID_BYTES
+        os << "const unsigned int ncclUniqueIDBytes = NCCL_UNIQUE_ID_BYTES;" << std::endl;
+
+        // Define wrapper to generate a unique NCCL ID
+        os << std::endl;
+        os << "void ncclGenerateUniqueID()";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
+        }
+        os << std::endl;
+        os << "unsigned char *ncclGetUniqueID()";
+        {
+            CodeStream::Scope b(os);
+            os << "return reinterpret_cast<unsigned char*>(&ncclID);" << std::endl;
+        }
+        os << std::endl;
+        os << "void ncclInitCommunicator(int rank, int numRanks)";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_NCCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
+        }
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
@@ -1179,8 +1382,15 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "));" << std::endl;
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
-    
     os << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
+{
+    // Free NCCL communicator
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "CHECK_NCCL_ERRORS(ncclCommDestroy(ncclCommunicator));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -1561,7 +1771,11 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-
+    
+    // If NCCL reductions are enabled, link NCCL
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        linkFlags += " -lnccl";
+    }
     // Write variables to preamble
     os << "CUDA_PATH ?=/usr/local/cuda" << std::endl;
     os << "NVCC := $(CUDA_PATH)/bin/nvcc" << std::endl;

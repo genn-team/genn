@@ -74,6 +74,15 @@ GENN_EXPORT void genTypeRange(CodeStream &os, const std::string &precision, cons
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string ensureFtype(const std::string &oldcode, const std::string &type);
 
+//--------------------------------------------------------------------------
+//! \brief Get the initial value to start reduction operations from
+//--------------------------------------------------------------------------
+GENN_EXPORT std::string getReductionInitialValue(const BackendBase &backend, VarAccessMode access, const std::string &type);
+
+//--------------------------------------------------------------------------
+//! \brief Generate a reduction operation to reduce value into reduction
+//--------------------------------------------------------------------------
+GENN_EXPORT std::string getReductionOperation(const std::string &reduction, const std::string &value, VarAccessMode access, const std::string &type);
 
 //--------------------------------------------------------------------------
 /*! \brief This function checks for unknown variable definitions and returns a gennError if any are found

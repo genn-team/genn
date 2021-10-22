@@ -31,3 +31,19 @@ boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() cons
     Utils::updateHash(getAdditionalInputVars(), hash);
     return hash.get_digest();
 }
+//----------------------------------------------------------------------------
+void NeuronModels::Base::validate() const
+{
+    // Superclass
+    Models::Base::validate();
+
+    Utils::validateVecNames(getAdditionalInputVars(), "Additional input variable");
+
+    // If any variables have a reduction access mode, give an error
+    const auto vars = getVars();
+    if(std::any_of(vars.cbegin(), vars.cend(),
+                   [](const Models::Base::Var &v){ return (v.access & VarAccessModeAttribute::REDUCE); }))
+    {
+        throw std::runtime_error("Neuron models cannot include variables with REDUCE access modes - they are only supported by custom update models");
+    }
+}

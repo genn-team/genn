@@ -1544,11 +1544,8 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //----------------------------------------------------------------------------
-    // Static API
-    //----------------------------------------------------------------------------
-    static std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
-    static std::string getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
 
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -1785,6 +1782,86 @@ public:
     }
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+// ----------------------------------------------------------------------------
+// CustomUpdateHostReductionGroupMergedBase
+//----------------------------------------------------------------------------
+template<typename G>
+class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
+{
+protected:
+     CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+                                   const std::vector<std::reference_wrapper<const G>> &groups)
+    :   GroupMerged<G>(index, precision, groups)
+    {
+        // Loop through variables and add pointers if they are reduction targets
+        const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+            }
+        }
+
+        // Loop through variable references and add pointers if they are reduction targets
+        for(const auto &v : cm->getVarRefs()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                this->addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+            }
+        }
+    }
+};
+
+// ----------------------------------------------------------------------------
+// CustomUpdateHostReductionGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
+{
+public:
+    CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                         const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+// ----------------------------------------------------------------------------
+// CustomWUUpdateHostReductionGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
+{
+public:
+    CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                           const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+    }
 
     //----------------------------------------------------------------------------
     // Static constants

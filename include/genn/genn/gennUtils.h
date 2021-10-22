@@ -50,9 +50,40 @@ GENN_EXPORT bool isTypePointer(const std::string &type);
 GENN_EXPORT bool isTypePointerToPointer(const std::string &type);
 
 //--------------------------------------------------------------------------
+//! \brief Function to determine whether a string containing a type is floating point
+//--------------------------------------------------------------------------
+GENN_EXPORT bool isTypeFloatingPoint(const std::string &type);
+
+//--------------------------------------------------------------------------
 //! \brief Assuming type is a string containing a pointer type, function to return the underlying type
 //--------------------------------------------------------------------------
 GENN_EXPORT std::string getUnderlyingType(const std::string &type);
+
+//--------------------------------------------------------------------------
+//! \brief Is the variable name valid? GeNN variable names must obey C variable naming rules
+//--------------------------------------------------------------------------
+GENN_EXPORT void validateVarName(const std::string &name, const std::string &description);
+
+//--------------------------------------------------------------------------
+//! \brief Is the population name valid? GeNN population names obey C variable naming rules but can start with a number
+//--------------------------------------------------------------------------
+GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
+
+//--------------------------------------------------------------------------
+//! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
+//--------------------------------------------------------------------------
+GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
+
+//--------------------------------------------------------------------------
+//! \brief Are the 'name' fields of all structs in vector valid? GeNN variables and population names must obey C variable naming rules
+//--------------------------------------------------------------------------
+template<typename T>
+void validateVecNames(const std::vector<T> &vec, const std::string &description)
+{
+    for(const auto &v : vec) {
+        validateVarName(v.name, description);
+    }
+}
 
 //--------------------------------------------------------------------------
 //! \brief This function writes a floating point value to a stream -setting the precision so no digits are lost

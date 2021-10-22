@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "custom_update_reduction", "custom_update_reduction.vcxproj", "{80AF5494-0D9E-4015-8E2E-F69F27FA5E70}"
+	ProjectSection(ProjectDependencies) = postProject
+		{077CE370-2B04-43DE-B084-B210A0F55C} = {077CE370-2B04-43DE-B084-B210A0F55C}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "custom_update_reduction_CODE\runner.vcxproj", "{077CE370-2B04-43DE-B084-B210A0F55C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{80AF5494-0D9E-4015-8E2E-F69F27FA5E70}.Debug|x64.ActiveCfg = Debug|x64
+		{80AF5494-0D9E-4015-8E2E-F69F27FA5E70}.Debug|x64.Build.0 = Debug|x64
+		{80AF5494-0D9E-4015-8E2E-F69F27FA5E70}.Release|x64.ActiveCfg = Release|x64
+		{80AF5494-0D9E-4015-8E2E-F69F27FA5E70}.Release|x64.Build.0 = Release|x64
+		{077CE370-2B04-43DE-B084-B210A0F55C}.Debug|x64.ActiveCfg = Debug|x64
+		{077CE370-2B04-43DE-B084-B210A0F55C}.Debug|x64.Build.0 = Debug|x64
+		{077CE370-2B04-43DE-B084-B210A0F55C}.Release|x64.ActiveCfg = Release|x64
+		{077CE370-2B04-43DE-B084-B210A0F55C}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

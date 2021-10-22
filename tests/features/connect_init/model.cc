@@ -23,6 +23,7 @@ void modelDefinition(ModelSpec &model)
 #endif
     model.setDT(0.1);
     model.setName("connect_init");
+    model.setDefaultNarrowSparseIndEnabled(true);
 
     NeuronModels::LIF::ParamValues lifParams(
                 0.25,   // 0 - C

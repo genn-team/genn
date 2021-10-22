@@ -346,14 +346,39 @@ class NeuronGroup(Group):
         """Current spikes from GeNN"""
         # Get current spike queue pointer
         d = self.spike_que_ptr[0]
-        
-        # If batch size is zero, return single slice of spikes
+
+        # If batch size is one, return single slice of spikes
         if self._model.batch_size == 1:
             return self.spikes[0, d, 0:self.spike_count[0, d]]
         # Otherwise, return list of slices
         else:
             return [self.spikes[b, d, 0:self.spike_count[b, d]]
                     for b in range(self._model.batch_size)]
+
+    @current_spikes.setter
+    def current_spikes(self, spikes):
+        """Current spikes from GeNN"""
+        # Get current spike queue pointer
+        d = self.spike_que_ptr[0]
+
+        # If batch size is one, set single spike count and spike data
+        if self._model.batch_size == 1:
+            num_spikes = len(spikes)
+            self.spike_count[0, d] = num_spikes
+            self.spikes[0, d, 0:num_spikes] = spikes
+        # Otherwise
+        else:
+            # Check that spikes have been passed for each batch
+            if len(spikes) != self._model.batch_size:
+                raise Exception("When using a batched model, you must "
+                                "set current spikes using a list of spikes "
+                                "for each batch")
+
+            # Loop through batches and set spike counts and spike data
+            for b, batch_spikes in enumerate(spikes):
+                num_spikes = len(batch_spikes)
+                self.spike_count[b, d] = num_spikes
+                self.spikes[b, d, 0:num_spikes] = batch_spikes
 
     @property
     def spike_recording_data(self):
@@ -792,6 +817,17 @@ class SynapseGroup(Group):
         """Tests whether synaptic connectivity has
         individual postsynaptic model variables"""
         return (self.matrix_type & SynapseMatrixWeight_INDIVIDUAL_PSM) != 0
+    
+    @property
+    def ps_target_var(self):
+        """Gets name of neuron input variable postsynaptic model will target"""
+        return self.pop.get_pstarget_var()
+
+    @ps_target_var.setter
+    def ps_target_var(self, var):
+        """Sets name of neuron input variable postsynaptic model will target"""
+        self.pop.set_pstarget_var(var)
+
 
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
@@ -1014,7 +1050,7 @@ class SynapseGroup(Group):
                     # Get pointers to ragged data structure members
                     ind = self._assign_ext_ptr_array("ind",
                                                      self.weight_update_var_size,
-                                                     "unsigned int")
+                                                     self.pop.get_sparse_ind_type())
                     row_length = self._assign_ext_ptr_array("rowLength",
                                                             self.src.size,
                                                             "unsigned int")

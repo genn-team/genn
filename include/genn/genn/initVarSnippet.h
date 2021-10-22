@@ -28,6 +28,9 @@ public:
     //! Update hash from snippet
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
+    //! Validate names of parameters etc
+    using Snippet::Base::validate;
+
     //! Does this var init snippet require kernel-based connectivity
     bool requiresKernel() const;
 };

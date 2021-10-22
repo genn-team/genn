@@ -76,6 +76,9 @@ struct Preferences : public PreferencesBase
     //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
     bool selectGPUByDeviceID = false;
 
+    //! Generate corresponding NCCL batch reductions
+    bool enableNCCLReductions = false;
+
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 
@@ -110,6 +113,7 @@ struct Preferences : public PreferencesBase
         Utils::updateHash(selectGPUByDeviceID, hash);
         Utils::updateHash(deviceSelectMethod, hash);
         Utils::updateHash(constantCacheOverhead, hash);
+        Utils::updateHash(enableNCCLReductions, hash);
     }
 };
 
@@ -188,6 +192,7 @@ public:
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
     virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -268,6 +273,9 @@ public:
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
+
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const override { return getPreferences<Preferences>().enableNCCLReductions; }
 
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }

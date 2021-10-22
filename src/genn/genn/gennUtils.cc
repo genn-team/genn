@@ -3,6 +3,9 @@
 // Standard C++ includes
 #include <algorithm>
 
+// Standard C includes
+#include <cctype>
+
 // GeNN includes
 #include "models.h"
 
@@ -79,6 +82,12 @@ bool isTypePointerToPointer(const std::string &type)
     return (type[len - 1] == '*' && type[len - 2] == '*');
 }
 //--------------------------------------------------------------------------
+bool isTypeFloatingPoint(const std::string &type)
+{
+    assert(!isTypePointer(type));
+    return ((type == "float") || (type == "double") || (type == "half") || (type == "scalar"));
+}
+//--------------------------------------------------------------------------
 std::string getUnderlyingType(const std::string &type)
 {
     // Check that type is a pointer type
@@ -91,6 +100,48 @@ std::string getUnderlyingType(const std::string &type)
     // Otherwise, return string without last character
     else {
         return type.substr(0, type.length() - 1);
+    }
+}
+//--------------------------------------------------------------------------
+void validateVarName(const std::string &name, const std::string &description)
+{
+    // Empty names aren't valid
+    if(name.empty()) {
+        throw std::runtime_error(description + " name invalid: cannot be empty");
+    }
+
+    // If first character's a number, name isn't valid
+    if(std::isdigit(name.front())) {
+        throw std::runtime_error(description + " name invalid: '" + name + "' starts with a digit");
+    }
+    
+    // If any characters aren't underscores or alphanumeric, name isn't valud
+    if(std::any_of(name.cbegin(), name.cend(),
+                   [](char c) { return (c != '_') && !std::isalnum(c); }))
+    {
+        throw std::runtime_error(description + " name invalid: '" + name + "' contains an illegal character");
+    }
+}
+//--------------------------------------------------------------------------
+void validatePopName(const std::string &name, const std::string &description)
+{
+    // Empty names aren't valid
+    if(name.empty()) {
+        throw std::runtime_error(description + " name invalid: cannot be empty");
+    }
+
+    // If any characters aren't underscores or alphanumeric, name isn't valud
+    if(std::any_of(name.cbegin(), name.cend(),
+                   [](char c) { return (c != '_') && !std::isalnum(c); }))
+    {
+        throw std::runtime_error(description + " name invalid: '" + name + "' contains an illegal character");
+    }
+}
+//--------------------------------------------------------------------------
+void validateParamNames(const std::vector<std::string> &paramNames)
+{
+    for(const std::string &p : paramNames) {
+        validateVarName(p, "Parameter");
     }
 }
 }   // namespace utils

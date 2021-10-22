@@ -34,7 +34,9 @@ public:
     SharedLibraryModel()
     :   m_Library(nullptr), m_AllocateMem(nullptr), m_AllocateRecordingBuffers(nullptr),
         m_FreeMem(nullptr), m_Initialize(nullptr), m_InitializeSparse(nullptr), 
-        m_StepTime(nullptr), m_PullRecordingBuffersFromDevice(nullptr)
+        m_StepTime(nullptr), m_PullRecordingBuffersFromDevice(nullptr),
+        m_NCCLGenerateUniqueID(nullptr), m_NCCLGetUniqueID(nullptr), 
+        m_NCCLInitCommunicator(nullptr), m_NCCLUniqueIDBytes(nullptr)
     {
     }
 
@@ -90,7 +92,11 @@ public:
             
             m_T = (scalar*)getSymbol("t");
             m_Timestep = (unsigned long long*)getSymbol("iT");
-
+            
+            m_NCCLGenerateUniqueID = (VoidFunction)getSymbol("ncclGenerateUniqueID", true);
+            m_NCCLGetUniqueID = (UCharPtrFunction)getSymbol("ncclGetUniqueID", true);
+            m_NCCLInitCommunicator = (NCCLInitCommunicatorFunction)getSymbol("ncclInitCommunicator", true);
+            m_NCCLUniqueIDBytes = (unsigned int*)getSymbol("ncclUniqueIDBytes", true);
             return true;
         }
         else {
@@ -366,7 +372,42 @@ public:
     {
         return m_GetFreeDeviceMemBytes();
     }
+    
+    void ncclGenerateUniqueID()
+    {
+        if(m_NCCLGenerateUniqueID == nullptr) {
+            throw std::runtime_error("Cannot generate NCCL unique ID - model may not have been built with NCCL support");
+        }
+        m_NCCLGenerateUniqueID();
+    }
+    
+    unsigned char *ncclGetUniqueID()
+    {
+        if(m_NCCLGetUniqueID == nullptr) {
+            throw std::runtime_error("Cannot get NCCL unique ID - model may not have been built with NCCL support");
+        }
+        return m_NCCLGetUniqueID();
+    }
+    
+    unsigned int ncclGetUniqueIDBytes() const
+    {
+        if(m_NCCLUniqueIDBytes == nullptr) {
+            throw std::runtime_error("Cannot get NCCL unique ID bytes - model may not have been built with NCCL support");
+        }
+        
+        return *m_NCCLUniqueIDBytes;
+    }
 
+    void ncclInitCommunicator(int rank, int numRanks)
+    {
+        if(m_NCCLInitCommunicator == nullptr) {
+            throw std::runtime_error("Cannot initialise NCCL communicator - model may not have been built with NCCL support");
+        }
+        m_NCCLInitCommunicator(rank, numRanks);
+    }
+    
+    
+     
     void initialize()
     {
         m_Initialize();
@@ -462,10 +503,12 @@ private:
     // Typedefines
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
+    typedef unsigned char* (*UCharPtrFunction)(void);
     typedef void (*PushFunction)(bool);
     typedef void (*PullFunction)(void);
     typedef void (*EGPFunction)(unsigned int);
     typedef size_t (*GetFreeMemFunction)(void);
+    typedef void (*NCCLInitCommunicatorFunction)(int, int);
 
     typedef std::pair<PushFunction, PullFunction> PushPullFunc;
     typedef std::tuple<EGPFunction, VoidFunction, EGPFunction, EGPFunction> EGPFunc;
@@ -536,8 +579,14 @@ private:
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
+
     PullFunction m_PullRecordingBuffersFromDevice;
 
+    VoidFunction m_NCCLGenerateUniqueID;
+    UCharPtrFunction m_NCCLGetUniqueID;
+    NCCLInitCommunicatorFunction m_NCCLInitCommunicator;
+    const unsigned int *m_NCCLUniqueIDBytes;
+    
     std::unordered_map<std::string, PushPullFunc> m_PopulationVars;
     std::unordered_map<std::string, EGPFunc> m_PopulationEPGs;
     std::unordered_map<std::string, VoidFunction> m_CustomUpdates;

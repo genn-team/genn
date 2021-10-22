@@ -105,6 +105,47 @@ class Sum : public CustomUpdateModels::Base
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_MODEL(Sum);
+
+class LIFAdditional : public NeuronModels::Base
+{
+public:
+    DECLARE_MODEL(LIFAdditional, 7, 2);
+
+    SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", "$(Ioffset)"}});
+    SET_SIM_CODE(
+        "if ($(RefracTime) <= 0.0) {\n"
+        "  scalar alpha = ($(Isyn2) * $(Rmembrane)) + $(Vrest);\n"
+        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "}\n"
+        "else {\n"
+        "  $(RefracTime) -= DT;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+
+    SET_RESET_CODE(
+        "$(V) = $(Vreset);\n"
+        "$(RefracTime) = $(TauRefrac);\n");
+
+    SET_PARAM_NAMES({
+        "C",          // Membrane capacitance
+        "TauM",       // Membrane time constant [ms]
+        "Vrest",      // Resting membrane potential [mV]
+        "Vreset",     // Reset voltage [mV]
+        "Vthresh",    // Spiking threshold [mV]
+        "Ioffset",    // Offset current
+        "TauRefrac"});
+
+    SET_DERIVED_PARAMS({
+        {"ExpTC", [](const std::vector<double> &pars, double dt) { return std::exp(-dt / pars[1]); }},
+        {"Rmembrane", [](const std::vector<double> &pars, double) { return  pars[1] / pars[0]; }}});
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+IMPLEMENT_MODEL(LIFAdditional);
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -692,6 +733,26 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
 }
 
+TEST(SynapseGroup, InvalidName)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    try {
+        model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+            "Syn-6", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, {1.0},
+            {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+
 TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
 {
     ModelSpecInternal model;
@@ -745,4 +806,28 @@ TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
     }
     //setSparseConnectivityExtraGlobalParamLocation
     //setMaxSourceConnections
+}
+
+TEST(SynapseGroup, InvalidPSOutputVar)
+{
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+    auto *prePost = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "PrePost", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, { 1.0 },
+        {}, {});
+
+    prePost->setPSTargetVar("Isyn");
+    prePost->setPSTargetVar("Isyn2");
+    try {
+        prePost->setPSTargetVar("NonExistent");
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
 }

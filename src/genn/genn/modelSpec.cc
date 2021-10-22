@@ -23,6 +23,7 @@
 #include <cassert>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
@@ -175,13 +176,12 @@ void ModelSpec::finalize()
 
     // Custom update groups
     for(auto &c : m_CustomUpdates) {
-        c.second.finalize(getBatchSize());
+        c.second.finalize();
         c.second.initDerivedParams(m_DT);
     }
 
     // Custom WUM update groups
     for(auto &c : m_CustomWUUpdates) {
-        c.second.finalize(getBatchSize());
         c.second.initDerivedParams(m_DT);
     }
 
@@ -231,10 +231,10 @@ void ModelSpec::finalize()
 std::string ModelSpec::scalarExpr(double val) const
 {
     if (m_Precision == "float") {
-        return std::to_string((float)val) + "f";
+        return Utils::writePreciseString<float>(val) + "f";
     }
     else if (m_Precision == "double") {
-        return std::to_string(val);
+        return Utils::writePreciseString(val);
     }
     else {
         throw std::runtime_error("Unrecognised floating-point type.");

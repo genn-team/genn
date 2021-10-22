@@ -194,6 +194,9 @@ class GeNNModel(object):
 
     @use_backend.setter
     def use_backend(self, backend):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         # If no backend is specified
         if backend is None:
             # Check we have managed to import any bagenn_wrapperckends
@@ -212,6 +215,9 @@ class GeNNModel(object):
 
     @timing_enabled.setter
     def timing_enabled(self, timing):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         self._model.set_timing(timing)
 
     @property
@@ -220,6 +226,9 @@ class GeNNModel(object):
 
     @batch_size.setter
     def batch_size(self, batch_size):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         self._model.set_batch_size(batch_size)
 
     @property
@@ -941,13 +950,13 @@ def create_wu_post_var_ref(sg, var_name):
     """
     return (genn_wrapper.create_wupost_var_ref(sg.pop, var_name), sg)
 
-def create_wu_var_ref(sg, var_name, tp_sg=None, tp_var_name=None):
+def create_wu_var_ref(g, var_name, tp_sg=None, tp_var_name=None):
     """This helper function creates a Models::WUVarReference
     pointing to a weight update model variable for 
     initialising variable references.
 
     Args:
-    sg          -- SynapseGroup object
+    g           -- SynapseGroup or CustomUpdate object
     var_name    -- name of weight update model variable 
                    in synapse group to reference
     tp_sg       -- (optional) SynapseGroup object to 
@@ -956,10 +965,15 @@ def create_wu_var_ref(sg, var_name, tp_sg=None, tp_var_name=None):
                    model variable in tranpose synapse group
                    to copy transpose to
     """
+    
+    # If we're referencing a WU variable in a custom update,
+    # Use it's synapse group for the PyGeNN-level backreference
+    sg = g._synapse_group if isinstance(g, CustomUpdate) else g
+ 
     if tp_sg is None:
-        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name), sg)
+        return (genn_wrapper.create_wuvar_ref(g.pop, var_name), sg)
     else:
-        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name,
+        return (genn_wrapper.create_wuvar_ref(g.pop, var_name,
                                               tp_sg.pop, tp_var_name), sg)
     
 

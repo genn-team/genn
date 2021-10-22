@@ -150,6 +150,17 @@ IMPLEMENT_MODEL(LIFRandom);
 //--------------------------------------------------------------------------
 // Tests
 //--------------------------------------------------------------------------
+TEST(NeuronGroup, InvalidName)
+{
+    ModelSpec model;
+    try {
+        model.addNeuronPopulation<NeuronModels::SpikeSource>("Neurons-0", 10, {}, {});
+     FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+
 TEST(NeuronGroup, ConstantVarIzhikevich)
 {
     ModelSpec model;
