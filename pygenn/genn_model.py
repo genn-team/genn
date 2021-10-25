@@ -712,6 +712,13 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pulling")
 
         self._slm.pull_spikes_from_device(pop_name)
+    
+    def pull_spike_events_from_device(self, pop_name):
+        """Pull spike events from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._slm.pull_spike_events_from_device(pop_name)
 
     def pull_current_spikes_from_device(self, pop_name):
         """Pull spikes from the device for a given population"""
@@ -719,7 +726,14 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pulling")
 
         self._slm.pull_current_spikes_from_device(pop_name)
+    
+    def pull_current_spike_events_from_device(self, pop_name):
+        """Pull spike events from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
 
+        self._slm.pull_current_spike_events_from_device(pop_name)
+        
     def pull_connectivity_from_device(self, pop_name):
         """Pull connectivity from the device for a given population"""
         if not self._loaded:
@@ -759,6 +773,13 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_spikes_to_device(pop_name)
+    
+    def push_spike_events_to_device(self, pop_name):
+        """Push spike events to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_spike_events_to_device(pop_name)
 
     def push_current_spikes_to_device(self, pop_name):
         """Push current spikes to the device for a given population"""
@@ -766,6 +787,13 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_current_spikes_to_device(pop_name)
+    
+    def push_current_spike_events_to_device(self, pop_name):
+        """Push current spike events to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_current_spike_events_to_device(pop_name)
 
     def push_connectivity_to_device(self, pop_name):
         """Push connectivity to the device for a given population"""

@@ -180,6 +180,18 @@ public:
         // Call pull
         pushPull.second();
     }
+    
+    void pullSpikeEventsFromDevice(const std::string &popName)
+    {
+        // Get push and pull spike events functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName + "SpikeEvents");
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull spike events from population '" + popName + "'");
+        }
+
+        // Call pull
+        pushPull.second();
+    }
 
     void pullCurrentSpikesFromDevice(const std::string &popName)
     {
@@ -192,7 +204,19 @@ public:
         // Call pull
         pushPull.second();
     }
+    
+    void pullCurrentSpikesEventsFromDevice(const std::string &popName)
+    {
+        // Get push and pull spike events functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikeEvents");
+        if(pushPull.second == nullptr) {
+            throw std::runtime_error("You cannot pull current spike events from population '" + popName + "'");
+        }
 
+        // Call pull
+        pushPull.second();
+    }
+    
     void pullConnectivityFromDevice(const std::string &popName)
     {
         // Get push and pull connectivity functions and check pull exists
@@ -264,6 +288,18 @@ public:
         // Call push
         pushPull.first(uninitialisedOnly);
     }
+    
+    void pushSpikeEventsToDevice(const std::string &popName, bool uninitialisedOnly = false)
+    {
+        // Get push and pull spike events functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName + "SpikeEvents");
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push spike events to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
+    }
 
     void pushCurrentSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
@@ -271,6 +307,18 @@ public:
         const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikes");
         if(pushPull.first == nullptr) {
             throw std::runtime_error("You cannot push current spikes to population '" + popName + "'");
+        }
+
+        // Call push
+        pushPull.first(uninitialisedOnly);
+    }
+    
+    void pushCurrentSpikeEventsToDevice(const std::string &popName, bool uninitialisedOnly = false)
+    {
+        // Get push and pull spike events functions and check pull exists
+        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikeEvents");
+        if(pushPull.first == nullptr) {
+            throw std::runtime_error("You cannot push current spike events to population '" + popName + "'");
         }
 
         // Call push
