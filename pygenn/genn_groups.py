@@ -918,7 +918,6 @@ class SynapseGroup(Group):
         """Sets name of neuron input variable postsynaptic model will target"""
         self.pop.set_pstarget_var(var)
 
-
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
 
@@ -1208,30 +1207,35 @@ class SynapseGroup(Group):
                 # Load any var initialisation egps associated with this variable
                 self._load_egp(var_data.extra_global_params, v.name)
 
-            # Load weight update model presynaptic variables
+        # If population's presynaptic weight update hasn't been 
+        # fused, load weight update model presynaptic variables
+        if not self.pop.is_wupre_model_fused():
             self._load_vars(self.w_update.get_pre_vars(), self.src.size,
                             self.pre_vars, self.pop.get_wupre_var_location)
 
-            # Load weight update model postsynaptic variables
+        # If population's postsynaptic weight update hasn't been 
+        # fused, load weight update model postsynaptic variables
+        if not self.pop.is_wupost_model_fused():
             self._load_vars(self.w_update.get_post_vars(), self.trg.size, 
                             self.post_vars, self.pop.get_wupost_var_location)
-
+        
+        # If this synapse group's postsynaptic model hasn't been fused
+        if not self.pop.is_psmodel_fused():
             # Load postsynaptic update model variables
             if self.has_individual_postsynaptic_vars:
                 self._load_vars(self.postsyn.get_vars(), self.trg.size,
                                 self.psm_vars, self.pop.get_psvar_location)
-        
-        # If this synapse group's inSyn is accessible on the host
-        if (not self.pop.is_psmodel_merged() and
-            (self.pop.get_in_syn_location() & VarLocation_HOST) != 0):
-            # Get view
-            self.in_syn = self._assign_ext_ptr_array(
-                "inSyn", self.trg.size * self._model.batch_size,
-                "scalar")
+                
+            # If it's inSyn is accessible on the host
+            if (self.pop.get_in_syn_location() & VarLocation_HOST) != 0:
+                # Get view
+                self.in_syn = self._assign_ext_ptr_array(
+                    "inSyn", self.trg.size * self._model.batch_size,
+                    "scalar")
 
-            # Reshape to expose batches
-            self.in_syn = np.reshape(self.in_syn, (self._model.batch_size,
-                                                   self.trg.size))
+                # Reshape to expose batches
+                self.in_syn = np.reshape(self.in_syn, (self._model.batch_size,
+                                                    self.trg.size))
 
         # Load extra global parameters
         self._load_egp()

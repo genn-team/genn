@@ -101,8 +101,6 @@ public:
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 IMPLEMENT_MODEL(LIFAdditional);
-}
-
 
 //----------------------------------------------------------------------------
 // LIFRandom
@@ -146,6 +144,43 @@ public:
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 IMPLEMENT_MODEL(LIFRandom);
+
+class STDPAdditive : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditive, 6, 1, 1, 1);
+    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+                     "Wmin", "Wmax"});
+    SET_DERIVED_PARAMS({
+        {"tauPlusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
+        {"tauMinusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }}});
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preTrace", "scalar"}});
+    SET_POST_VARS({{"postTrace", "scalar"}});
+    
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "const scalar dt = $(t) - $(sT_post); \n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_LEARN_POST_CODE(
+        "const scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
+};
+IMPLEMENT_MODEL(STDPAdditive);
+}
 
 //--------------------------------------------------------------------------
 // Tests
@@ -212,6 +247,201 @@ TEST(NeuronGroup, Poisson)
     ASSERT_FALSE(ng->isZeroCopyEnabled());
     ASSERT_TRUE(ng->isSimRNGRequired());
     ASSERT_FALSE(ng->isInitRNGRequired());
+}
+
+TEST(NeuronGroup, MergeWUMPrePost)
+{
+    ModelSpecInternal model;
+    model.setFusePrePostWeightUpdateModels(true);
+    
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    
+    STDPAdditive::ParamValues wumParams(10.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::ParamValues wumParamsPre(17.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::ParamValues wumParamsPost(10.0, 17.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::ParamValues wumParamsSyn(10.0, 10.0, 0.01, 0.01, 0.0, 2.0);
+    STDPAdditive::VarValues wumVarVals(0.0);
+    STDPAdditive::PreVarValues wumPreVarVals(0.0);
+    STDPAdditive::PostVarValues wumPostVarVals(0.0);
+    STDPAdditive::PreVarValues wumPreVarVals2(2.0);
+    STDPAdditive::PostVarValues wumPostVarVals2(2.0);
+    
+    // Add two neuron groups to model
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    
+    // Create baseline synapse group
+    auto *syn = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    // Create synapse group with different value for parameter accessed in presynaptic code
+    auto *synPreParam = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynPreParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParamsPre, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    // Create synapse group with different value for parameter accessed in presynaptic code
+    auto *synPostParam = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynPostParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParamsPost, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    // Create synapse group with different value for parameter only accessed in synapse code
+    auto *synSynParam = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynSynParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParamsSyn, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    // Create synapse group with different presynaptic variable initialiser
+    auto *synPreVar2 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynPreVar2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals2, wumPostVarVals,
+        {}, {});
+    
+    // Create synapse group with different postsynaptic variable initialiser
+    auto *synPostVar2 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynPostVar2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals2,
+        {}, {});
+    
+    // Create synapse group with axonal delay
+    auto *synAxonalDelay = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynAxonalDelay", SynapseMatrixType::DENSE_INDIVIDUALG, 10,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    // Create synapse group with backprop delay
+    auto *synBackPropDelay = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "SynBackPropDelay", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumPostVarVals,
+        {}, {});
+    synBackPropDelay->setBackPropDelaySteps(10);
+    
+    model.finalize();
+    
+    // Cast synapse groups to internal types
+    auto synInternal = static_cast<SynapseGroupInternal*>(syn);
+    auto synPreParamInternal = static_cast<SynapseGroupInternal*>(synPreParam);
+    auto synPostParamInternal = static_cast<SynapseGroupInternal*>(synPostParam);
+    auto synSynParamInternal = static_cast<SynapseGroupInternal*>(synSynParam);
+    auto synPreVar2Internal = static_cast<SynapseGroupInternal*>(synPreVar2);
+    auto synPostVar2Internal = static_cast<SynapseGroupInternal*>(synPostVar2);
+    auto synAxonalDelayInternal = static_cast<SynapseGroupInternal*>(synAxonalDelay);
+    auto synBackPropDelayInternal = static_cast<SynapseGroupInternal*>(synBackPropDelay);
+    
+    // Only postsynaptic update can be merged for synapse groups with different presynaptic parameters 
+    ASSERT_NE(synInternal->getFusedWUPreVarSuffix(), synPreParamInternal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synPreParamInternal->getFusedWUPostVarSuffix());
+    
+    // Only presynaptic update can be merged for synapse groups with different postsynaptic parameters 
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synPostParamInternal->getFusedWUPreVarSuffix());
+    ASSERT_NE(synInternal->getFusedWUPostVarSuffix(), synPostParamInternal->getFusedWUPostVarSuffix());
+    
+    // Both types of update can be merged for synapse groups with parameters changes which don't effect pre or post update
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synSynParamInternal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synSynParamInternal->getFusedWUPostVarSuffix());
+    
+    // Only postsynaptic update can be merged for synapse groups with different presynaptic variable initialisers 
+    ASSERT_NE(synInternal->getFusedWUPreVarSuffix(), synPreVar2Internal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synPreVar2Internal->getFusedWUPostVarSuffix());
+    
+    // Only presynaptic update can be merged for synapse groups with different postsynaptic variable initialisers 
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synPostVar2Internal->getFusedWUPreVarSuffix());
+    ASSERT_NE(synInternal->getFusedWUPostVarSuffix(), synPostVar2Internal->getFusedWUPostVarSuffix());
+    
+    // Only postsynaptic update can be merged for synapse groups with different axonal delays
+    ASSERT_NE(synInternal->getFusedWUPreVarSuffix(), synAxonalDelayInternal->getFusedWUPreVarSuffix());
+    ASSERT_EQ(synInternal->getFusedWUPostVarSuffix(), synAxonalDelayInternal->getFusedWUPostVarSuffix());
+    
+    // Only presynaptic update can be merged for synapse groups with different back propagation delays
+    ASSERT_EQ(synInternal->getFusedWUPreVarSuffix(), synBackPropDelayInternal->getFusedWUPreVarSuffix());
+    ASSERT_NE(synInternal->getFusedWUPostVarSuffix(), synBackPropDelayInternal->getFusedWUPostVarSuffix());
+}
+
+
+TEST(NeuronGroup, MergePSM)
+{
+    ModelSpecInternal model;
+    model.setMergePostsynapticModels(true);
+    
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+    PostsynapticModels::ExpCurr::ParamValues psmParamVals(5.0);
+    PostsynapticModels::ExpCurr::ParamValues psmParamVals2(10.0);
+    WeightUpdateModels::StaticPulseDendriticDelay::VarValues wumVarVals(0.1, 10);
+    
+    // Add two neuron groups to model
+    model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+
+    // Create baseline synapse group
+    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
+        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, {});
+    
+    // Create second synapse group
+    auto *syn2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
+        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, {});
+    
+    // Create synapse group with different value for PSM parameter
+    auto *synParam = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
+        "SynParam", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals2, {});
+    
+    // Create synapse group with different target variable
+    auto *synTarget = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
+        "SynTarget", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, {});
+    synTarget->setPSTargetVar("Isyn2");
+    
+    // Create synapse group with different max dendritic delay
+    auto *synDelay = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
+        "SynDelay", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        psmParamVals, {});
+    synDelay->setMaxDendriticDelayTimesteps(20);
+    
+    model.finalize();
+    
+    // Cast synapse groups to internal types
+    auto synInternal = static_cast<SynapseGroupInternal*>(syn);
+    auto syn2Internal = static_cast<SynapseGroupInternal*>(syn2);
+    auto synParamInternal = static_cast<SynapseGroupInternal*>(synParam);
+    auto synTargetInternal = static_cast<SynapseGroupInternal*>(synTarget);
+    auto synDelayInternal = static_cast<SynapseGroupInternal*>(synDelay);
+ 
+    // Check that identically configured PSMs can be merged
+    ASSERT_EQ(synInternal->getFusedPSVarSuffix(), syn2Internal->getFusedPSVarSuffix());
+    
+    // Check that PSMs with different parameters cannot be merged
+    ASSERT_NE(synInternal->getFusedPSVarSuffix(), synParamInternal->getFusedPSVarSuffix());
+    
+    // Check that PSMs targetting different variables cannot be merged
+    ASSERT_NE(synInternal->getFusedPSVarSuffix(), synTargetInternal->getFusedPSVarSuffix());
+    
+    // Check that PSMs from synapse groups with different dendritic delay cannot be merged
+    ASSERT_NE(synInternal->getFusedPSVarSuffix(), synDelayInternal->getFusedPSVarSuffix());
 }
 
 TEST(NeuronGroup, CompareNeuronModels)

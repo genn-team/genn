@@ -109,7 +109,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     // Build vector of merged synapse groups which require dendritic delay
     std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
     for(const auto &n : model.getNeuronGroups()) {
-        for(const auto *sg : n.second.getMergedInSyn()) {
+        for(const auto *sg : n.second.getFusedPSMInSyn()) {
             if(sg->isDendriticDelayRequired()) {
                 synapseGroupsWithDendriticDelay.push_back(std::cref(*sg));
             }
@@ -192,7 +192,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
         m_NeuronUpdateSupportCode.addSupportCode(ng.getArchetype().getNeuronModel()->getSupportCode());
 
         // Loop through merged postsynaptic models and add their support code
-        for(const auto &sg : ng.getArchetype().getMergedInSyn()) {
+        for(const auto &sg : ng.getArchetype().getFusedPSMInSyn()) {
             m_PostsynapticDynamicsSupportCode.addSupportCode(sg->getPSModel()->getSupportCode());
         }
     }

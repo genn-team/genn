@@ -142,12 +142,22 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
-    //! Has this synapse group's postsynaptic model been merged with others
+    //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
     /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
-    bool isPSModelMerged() const{ return m_PSModelTargetName != getName(); }
+    bool isPSModelFused() const{ return m_FusedPSVarSuffix != getName(); }
+    
+    //! Has the presynaptic component of this synapse group's weight update
+    //! model been fused with those from other synapse groups?
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
+    bool isWUPreModelFused() const { return m_FusedWUPreVarSuffix != getName(); }
+
+    //! Has the postsynaptic component of this synapse group's weight update
+    //! model been fused with those from other synapse groups?
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
+    bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
 
     //! Get the type to use for sparse connectivity indices for synapse group
-    //! /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
+    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
     std::string getSparseIndType() const;
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
@@ -267,10 +277,9 @@ protected:
     //! Set if any of this synapse group's weight update model variables referenced by a custom update
     void setWUVarReferencedByCustomUpdate(bool ref) { m_WUVarReferencedByCustomUpdate = ref;  }
 
-    void setPSModelMergeTarget(const std::string &targetName)
-    {
-        m_PSModelTargetName = targetName;
-    }
+    void setFusedPSVarSuffix(const std::string &suffix){ m_FusedPSVarSuffix = suffix; }
+    void setFusedWUPreVarSuffix(const std::string &suffix){ m_FusedWUPreVarSuffix = suffix; }
+    void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
     
     void initDerivedParams(double dt);
 
@@ -289,59 +298,76 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getPSModelTargetName() const{ return m_PSModelTargetName; }
+    const std::string &getFusedPSVarSuffix() const{ return m_FusedPSVarSuffix; }
+    const std::string &getFusedWUPreVarSuffix() const { return m_FusedWUPreVarSuffix; }
+    const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
 
-    //! Can postsynaptic update component of this synapse group be safely combined with others whose hashes match so only one needs simulating at all
-    /*! NOTE: this can only be called after model is finalized */
-    bool canPSBeLinearlyCombined() const;
+    //! Can postsynaptic update component of this synapse group be safely fused with others whose hashes match so only one needs simulating at all?
+    bool canPSBeFused() const;
     
-    //! Updates hash with weight update component of this synapse group
+    //! Can presynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canWUMPreUpdateBeFused() const;
+    
+    //! Can postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canWUMPostUpdateBeFused() const;
+    
+    //! Generate hash of weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUHashDigest() const;
 
-    //! Updates hash with presynaptic update component of this synapse group
+    //! Generate hash of presynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPreHashDigest() const;
 
-    //! Updates hash with postsynaptic update component of this synapse group
+    //! Generate hash of postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPostHashDigest() const;
 
-    //! Updates hash with postsynaptic update component of this synapse group
+    //! Generate hash of postsynaptic update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSHashDigest() const;
 
-    //! Updates hash with postsynaptic update component of this synapse group with additional components to ensure PSMs 
-    //! with matching hashes can not only be simulated using the same code, but combined so only one needs simulating at all
+    //! Generate hash of presynaptic weight update component of this synapse group with additional components to ensure those
+    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
-    boost::uuids::detail::sha1::digest_type getPSLinearCombineHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getWUPreFuseHashDigest() const;
+
+    //! Generate hash of postsynaptic weight update component of this synapse group with additional components to ensure those
+    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getWUPostFuseHashDigest() const;
+
+    //! Generate hash of postsynaptic update component of this synapse group with additional components to ensure PSMs 
+    //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPSFuseHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
-    //! Updates hash with initialisation component of this synapse group
+    //! Generate hash of initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUInitHashDigest() const;
 
-     //! Updates hash with presynaptic variable initialisation component of this synapse group
+    //! Generate hash of presynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPreInitHashDigest() const;
 
-    //! Updates hash with postsynaptic variable initialisation component of this synapse group
+    //! Generate hash of postsynaptic variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUPostInitHashDigest() const;
 
-    //! Updates hash with postsynaptic model variable initialisation component of this synapse group
+    //! Generate hash of postsynaptic model variable initialisation component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
 
-    //! Updates hash with connectivity initialisation of this synapse group
+    //! Generate hash of connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
 
-    //! Updates hash with host connectivity initialisation of this synapse group
+    //! Generate hash of host connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
 
@@ -462,10 +488,18 @@ private:
     //! Location of connectivity initialiser extra global parameters
     std::vector<VarLocation> m_ConnectivityExtraGlobalParamLocation;
 
-    //! Name of the synapse group in which postsynaptic model is located
-    /*! This may not be the name of this group if it has been merged*/
-    std::string m_PSModelTargetName;
+    //! Suffix for postsynaptic model variable names
+    /*! This may not be the name of this synapse group if it has been fused */
+    std::string m_FusedPSVarSuffix;
+
+    //! Suffix for weight update model presynaptic variable names
+    /*! This may not be the name of this synapse group if it has been fused */
+    std::string m_FusedWUPreVarSuffix;
     
+    //! Suffix for weight update model postsynaptic variable names
+    /*! This may not be the name of this synapse group if it has been fused */
+    std::string m_FusedWUPostVarSuffix;
+
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     std::string m_PSTargetVar;
