@@ -11,22 +11,19 @@ User Side Changes
 2. Postsynaptic model target
 3. Fuse pre and postsynaptic update 
 4. PyGeNN now shares a version with GeNN itself and this will be accessible via ``pygenn.__version__``. 
-5. Validate population and variable names
-6. Setting spikes manually from PyGeNN
-7. Expose spike-like events to PyGeNN 
-8. Additional useful PyGeNN errors
-9. Automatically find Visual Studio 
-10. Variable references to custom update variables 
-11. Update google test 
+5. The names of populations and variables are now validated to prevent code with invalid variable names being generated.
+6. As well as being able to read the current spikes via the pygenn.NeuronGroup.current_spikes property, they can now also be set
+7. Spike-like events were previously not exposed to PyGeNN. These can now be pushed and pulled via pygenn.NeuronGroup.pull_spike_events_from_device, pygenn.NeuronGroup.push_spike_events_to_device, pygenn.NeuronGroup.pull_current_spike_events_from_device and pygenn.NeuronGroup.push_current_spike_events_to_device and accessed via pygenn.NeuronGroup.current_spike_events.
+8. Added additional error handling to prevent properties of pygenn.GeNNModel that can only be set before the model was built being set afterwards.
+9. Variable references to custom update variables 
+10. Updated the default parameters used in the MBody1 example to be more sensible
 
 Bug fixes:
 ----
-1. Use symbolic links in /tmp to fix "path name spaces problem"
+1. Fixed an issue that was preventing genn-buildmodel.sh correctly handling paths with spaces
 2. Fix multiple issues with sparse synapse index narrowing 
-3. Fixes nasty bug when locale means , is used for decimal point
-4. GCC 5 fix
-5. Missing include breaks compilation on Visual C++ 2017 
-6. Fixed a small problem with the MBody1 example
+3. Fixed issue where, if GeNN is run in a locale where , is used for decimal point, some generated code was incorrectly formated.
+4. Fixed several small issues preventing GeNN from building on GCC 5 Visual C++ 2017 
 
 Release Notes for GeNN v4.5.1 (PyGeNN 0.4.6)
 ====
@@ -45,7 +42,7 @@ It also includes a number of bug fixes that have been identified since the 4.4.0
 
 User Side Changes
 ----
-1. When performing inference on datasets, batching helps fill the GPU and improve performance. This could be previously achieved using "master" and "slave" synapse populations but this didn't scale well. Models can now be automatically batched using ``ModelSpec::setBatchSize`` or ``pygenn.genn_model.GeNNModel.batch_size``. 
+1. When performing inference on datasets, batching helps fill the GPU and improve performance. This could be previously achieved using "master" and "slave" synapse populations but this didn't scale well. Models can now be automatically batched using ``ModelSpec::setBatchSize`` or ``pygenn.GeNNModel.batch_size``. 
 2. As well as more typical neuron, weight update, postsynaptic and current source models, you can now define custom update models which define a process which can be applied to any variable in the model. These can be used for e.g. resetting state variables or implementing optimisers for gradient-based learning (see \ref defining_custom_updates).
 3. Model compilation and CUDA block size optimisation could be rather slow in previous versions. More work is still required in this area but, code will now only be re-generated if the model has actually changed and block sizes will only be re-optimised for modules which have changed. Rebuilding can be forced with the ``-f`` flag to ``genn-buildmodel`` or the ``force_rebuild`` flag to ``pygenn.GeNNModel.build``.
 4. Binary PyGeNN wheels are now always built with Python 3.
@@ -96,7 +93,7 @@ This release fixes several small issues found in the 4.3.2 release.
 Bug fixes:
 ----
 1. Fixed bug in bitmask connectivity and procedural connectivity kernels.
-2. Fixed issues with setting model precision in PyGeNN. Time precision can now be set seperately using the ``time_precision`` option to the ``pygenn.genn_model.GeNNModel`` constructor.
+2. Fixed issues with setting model precision in PyGeNN. Time precision can now be set seperately using the ``time_precision`` option to the ``pygenn.GeNNModel`` constructor.
 
 Release Notes for GeNN v4.3.2 (PyGeNN 0.4.2)
 ====
@@ -133,8 +130,8 @@ User Side Changes
 1. Previously GeNN performed poorly with large numbers of populations. This version includes a new code generator which effectively solves this problem (see \cite Knight2020).
 2. ``InitSparseConnectivitySnippet::Base`` row build state and ``NeuronModels::Base`` additional input variables could previously only be initialised with a numeric value. Now they can be initialised with a code string supporting substitutions etc.
 3. Added GeNN implementation of cortical microcircuit model \cite Potjans2012 to userprojects (discussed further in \cite Knight2018). Also demonstrates how to dynamically load GeNN models rather than linking against them.
-4. Previously one pushed states and spikes to and from device in PyGeNN using methods like ``pygenn.genn_model.GeNNModel.push_current_spikes_to_device`` which was somewhat cumbersome. These have now been wrapped in methods like ``pygenn.genn_groups.NeuronGroup.push_current_spikes_to_device`` which is somewhat nicer.
-5. The ``CodeGenerator::generateAll`` function now returns memory estimates which are, in turn, returned from ``pygenn.genn_model.GeNNModel.build``.
+4. Previously one pushed states and spikes to and from device in PyGeNN using methods like ``pygenn.GeNNModel.push_current_spikes_to_device`` which was somewhat cumbersome. These have now been wrapped in methods like ``pygenn.genn_groups.NeuronGroup.push_current_spikes_to_device`` which is somewhat nicer.
+5. The ``CodeGenerator::generateAll`` function now returns memory estimates which are, in turn, returned from ``pygenn.GeNNModel.build``.
 6. To better support batching of inputs into multiple instances of the same model, added ``ModelSpec::addSlaveSynapsePopulation`` to add synapse populations which share per-synapse state with a 'master' synapse group.
 7. Added extra global parameters to variable initialisation snippets - can be used for lookup table style functionality.
 8. Added support for host initialisation of sparse connectivity initialisation snippet extra global parameters. This allows host-based initialisation to be encapsulated within an ``InitSparseConnectivitySnippet::Base`` class.
@@ -165,9 +162,9 @@ This release adds a number of new features to GeNN and its Python interface as w
 
 User Side Changes
 ----
-1. Kernel timings can now be enabled from python with ``pygenn.genn_model.GeNNModel.timing_enabled`` and subsequently accessed with ``pygenn.genn_model.GeNNModel.neuron_update_time``, ``pygenn.genn_model.GeNNModel.init_time``, ``pygenn.genn_model.GeNNModel.presynaptic_update_time``, ``pygenn.genn_model.GeNNModel.postsynaptic_update_time``, ``pygenn.genn_model.GeNNModel.synapse_dynamics_time`` and ``pygenn.genn_model.GeNNModel.init_sparse_time``.
+1. Kernel timings can now be enabled from python with ``pygenn.GeNNModel.timing_enabled`` and subsequently accessed with ``pygenn.GeNNModel.neuron_update_time``, ``pygenn.GeNNModel.init_time``, ``pygenn.GeNNModel.presynaptic_update_time``, ``pygenn.GeNNModel.postsynaptic_update_time``, ``pygenn.GeNNModel.synapse_dynamics_time`` and ``pygenn.GeNNModel.init_sparse_time``.
 2. Backends now generate ``getFreeDeviceMemBytes()`` function to allow free device memory to be queried from user simulation code. This is also exposed to Python via ``GeNNModel.free_device_mem_bytes`` property.
-3. GeNN preferences are now fully exposed to PyGeNN by passing kwargs to ``pygenn.genn_model.GeNNModel.__init__``.
+3. GeNN preferences are now fully exposed to PyGeNN by passing kwargs to ``pygenn.GeNNModel.__init__``.
 4. Logging level can now be seperately specified for GeNN, the code generator, the SpineML generator and the backend and is accessible from PyGeNN.
 5. ``CodeGenerator::PreferencesBase::enableBitmaskOptimisations`` flag enables an alternative algorithm for updating synaptic matrices implemented with ``SynapseMatrixConnectivity::BITMASK`` which performs better on smaller GPUs and CPUs. If you are manually initialising matrices this adds padding to align words to rows of the matrix.
 6. ``SynapseMatrixConnectivity::PROCEDURAL`` and ``SynapseMatrixWeight::PROCEDURAL`` allow connectivity and synaptic weights to be generated on the fly rather than stored in memory.
@@ -196,7 +193,7 @@ User Side Changes
 8. Add ``CodeGenerator::CUDA::Preferences::generateLineInfo`` option to output CUDA line info for profiling.
 9. CUDA backend supports ``half`` datatype allowing memory savings through reduced precision. Host C++ code does not support half-precision types so such state variables must have their location set to ``VarLocation::DEVICE``.
 10. If ``ModelSpec::setDefaultNarrowSparseIndEnabled`` is set on a model or ``SynapseGroup::setNarrowSparseIndEnabled`` is set on an individual synapse population with sparse connectivity, 16-bit numbers will be used for postsynaptic indices, almost halving memory requirements.
-11. Manual selection of CUDA devices is now exposed to PyGeNN via the ``pygenn.genn_model.GeNNModel.selected_gpu`` property.
+11. Manual selection of CUDA devices is now exposed to PyGeNN via the ``pygenn.GeNNModel.selected_gpu`` property.
 
 Bug fixes:
 ----
@@ -226,7 +223,7 @@ User Side Changes
 
 Bug fixes:
 ----
-1. Fixed typo in ``pygenn.genn_model.GeNNModel.push_var_to_device`` function in PyGeNN.
+1. Fixed typo in ``pygenn.GeNNModel.push_var_to_device`` function in PyGeNN.
 2. Fixed broken support for Visual C++ 2013.
 3. Fixed zero-copy mode.
 4. Fixed typo in tutorial 2.
