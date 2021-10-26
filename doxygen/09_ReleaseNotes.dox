@@ -7,16 +7,16 @@ It also includes a number of bug fixes that have been identified since the 4.5.1
 
 User Side Changes
 ----
-1. Batch reductions, NCCL multi-GPU reductions
-2. Postsynaptic model target
-3. Fuse pre and postsynaptic update 
+1. As well as performing arbitrary updates and calculating transposes of weight update model variables, custom updates can now be used to implement 'reductions' so, for example, duplicated variables can be summed across model batches (see \ref custom_update_reduction).
+2. Previously, to connect a synapse group to a postsynaptic neuron's additional input variable, a custom postsynaptic model had to be used. SynapseGroup::setPSTargetVar and pygenn.SynapseGroup.ps_target_var can now be used to set the target variable of any synapse group.
+3. Previously, weight update model pre and postsynaptic updates and variables got duplicated in the neuron kernel. This was very innefficient and these can now be 'fused' together by setting ModelSpec::setFusePrePostWeightUpdateModels.
 4. PyGeNN now shares a version with GeNN itself and this will be accessible via ``pygenn.__version__``. 
 5. The names of populations and variables are now validated to prevent code with invalid variable names being generated.
-6. As well as being able to read the current spikes via the pygenn.NeuronGroup.current_spikes property, they can now also be set
-7. Spike-like events were previously not exposed to PyGeNN. These can now be pushed and pulled via pygenn.NeuronGroup.pull_spike_events_from_device, pygenn.NeuronGroup.push_spike_events_to_device, pygenn.NeuronGroup.pull_current_spike_events_from_device and pygenn.NeuronGroup.push_current_spike_events_to_device and accessed via pygenn.NeuronGroup.current_spike_events.
+6. As well as being able to read the current spikes via the pygenn.NeuronGroup.current_spikes property, they can now also be set.
+7. Spike-like events were previously not exposed to PyGeNN. These can now be pushed and pulled via pygenn.NeuronGroup.pull_spike_events_from_device, pygenn.NeuronGroup.push_spike_events_to_device, pygenn.NeuronGroup.pull_current_spike_events_from_device and pygenn.NeuronGroup.push_current_spike_events_to_device; and accessed via pygenn.NeuronGroup.current_spike_events.
 8. Added additional error handling to prevent properties of pygenn.GeNNModel that can only be set before the model was built being set afterwards.
-9. Variable references to custom update variables 
-10. Updated the default parameters used in the MBody1 example to be more sensible
+9. Variable references can now reference custom update variables (see \ref sectVariableReferences).
+10. Updated the default parameters used in the MBody1 example to be more sensible.
 
 Bug fixes:
 ----
