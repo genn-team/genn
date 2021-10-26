@@ -60,9 +60,13 @@ Therefore, in order to maximise performance, we recommend you do not use automat
 - pygenn.genn_groups.Group.push_state_to_device
 - pygenn.genn_groups.Group.push_var_to_device
 - pygenn.genn_groups.NeuronGroup.pull_spikes_from_device
+- pygenn.genn_groups.NeuronGroup.pull_spike_events_from_device
 - pygenn.genn_groups.NeuronGroup.pull_current_spikes_from_device
+- pygenn.genn_groups.NeuronGroup.pull_current_spike_events_from_device
 - pygenn.genn_groups.NeuronGroup.push_spikes_to_device
+- pygenn.genn_groups.NeuronGroup.push_spike_events_to_device
 - pygenn.genn_groups.NeuronGroup.push_current_spikes_to_device
+- pygenn.genn_groups.NeuronGroup.push_current_spike_events_to_device
 - pygenn.genn_groups.SynapseGroup.pull_connectivity_from_device
 - pygenn.genn_groups.SynapseGroup.push_connectivity_to_device
 
@@ -187,10 +191,11 @@ In addition to these variables, neuron variables can be referred to in the synap
 \section spikeRecording Spike Recording
 Especially in models simulated with small timesteps, very few spikes may be emitted every timestep, making calling \add_cpp_python_text{``pull<neuron name>CurrentSpikesFromDevice()`` or ``pull<neuron name>SpikesFromDevice()``, pygenn.genn_groups.NeuronGroup.pull_current_spikes_from_device} every timestep very inefficient.
 Instead, the spike recording system allows spikes and spike-like events emitted over a number of timesteps to be collected in GPU memory before transferring to the host.
-Spike recording can be enabled on chosen neuron groups with the \add_cpp_python_text{``NeuronGroup::setSpikeRecordingEnabled`` and ``NeuronGroup::setSpikeEventRecordingEnabled`` methods,pygenn.genn_groups.NeuronGroup.spike_recording_enabled property}.
+Spike recording can be enabled on chosen neuron groups with the \add_cpp_python_text{``NeuronGroup::setSpikeRecordingEnabled`` and ``NeuronGroup::setSpikeEventRecordingEnabled`` methods,pygenn.genn_groups.NeuronGroup.spike_recording_enabled and pygenn.genn_groups.NeuronGroup.spike_event_recording_enabled properties}.
 Remaining GPU memory can then be allocated at runtime for spike recording by\add_cpp_python_text{calling ``allocateRecordingBuffers(<number of timesteps>)`` from user code,using the `num_recording_timesteps` keyword argument to pygenn.genn_model.GeNNModel.load}.
 The data structures can then be copied from the GPU to the host using the \add_cpp_python_text{``pullRecordingBuffersFromDevice()`` function,pygenn.genn_model.GeNNModel.pull_recording_buffers_from_device method} and the spikes emitted by a population can be accessed \add_cpp_python_text{in bitmask form via the ``recordSpk<neuron name>`` variable,via the pygenn.genn_groups.NeuronGroup.spike_recording_data property}
-\add_cpp_text{Similarly, spike-like events emitted by a population can be accessed via the ``recordSpkEvent<neuron name>`` variable. To make decoding the bitmask data structure easier\, the ``::writeBinarySpikeRecording`` and ``::writeTextSpikeRecording`` helper functions can be used by including spikeRecorder.h in the user code.}
+Similarly, spike-like events emitted by a population can be accessed via the \add_cpp_python_text{``recordSpkEvent<neuron name>`` variable,pygenn.genn_groups.NeuronGroup.spike_event_recording_data property}. 
+\add_cpp_text{To make decoding the bitmask data structure easier, the ``::writeBinarySpikeRecording`` and ``::writeTextSpikeRecording`` helper functions can be used by including spikeRecorder.h in the user code.}
 
 \section Debugging Debugging suggestions
 \add_toggle_cpp
