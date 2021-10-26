@@ -205,6 +205,18 @@ where the arguments are
 \arg \add_cpp_python_text{`CustomUpdateModel::VarValues varInitialisers`: The, `var_space`: Dictionary containing the} initial values or initialisation snippets for the custom update model's state variables (see \ref sectVariableInitialisation)
 \arg \add_cpp_python_text{`CustomUpdateModel::VarValues varReferences`: The, `var_ref_space`: Dictionary containing the} variable references for the custom update model (see \ref sectVariableReferences)
 
+\section batching Batching
+When running models on a GPU, smaller models may not fully occupy the device.
+In some scenerios such as gradient-based training and parameter sweeping, this can be overcome by runing multiple copies of the same model at the same time (batching in Machine Learning speak).
+Batching can be enabled on a GeNN model with:
+\add_toggle_code_cpp
+model.setBatchSize(512);
+\end_toggle_code
+\add_toggle_code_python
+model.batch_size = 512
+\end_toggle_code
+Model parameters and sparse connectivity are shared across all batches. 
+Read-write state variables are duplicated for each batch and, by default, read-only state variables are shared across all batches (see section \ref sectNeuronModels for more details).
 
 -----
 \link UserManual Previous\endlink | \link sectDefiningNetwork Top\endlink | \link sectNeuronModels Next\endlink
