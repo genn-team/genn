@@ -1,4 +1,33 @@
 /*! \page ReleaseNotes Release Notes
+
+Release Notes for GeNN v4.6.0
+====
+This release adds a number of significant new features to GeNN as well as several usability improvements for PyGeNN.
+It also includes a number of bug fixes that have been identified since the 4.5.1 release.
+
+User Side Changes
+----
+1. Batch reductions, NCCL multi-GPU reductions
+2. Postsynaptic model target
+3. Fuse pre and postsynaptic update 
+4. PyGeNN now shares a version with GeNN itself and this will be accessible via ``pygenn.__version__``. 
+5. Validate population and variable names
+6. Setting spikes manually from PyGeNN
+7. Expose spike-like events to PyGeNN 
+8. Additional useful PyGeNN errors
+9. Automatically find Visual Studio 
+10. Variable references to custom update variables 
+11. Update google test 
+
+Bug fixes:
+----
+1. Use symbolic links in /tmp to fix "path name spaces problem"
+2. Fix multiple issues with sparse synapse index narrowing 
+3. Fixes nasty bug when locale means , is used for decimal point
+4. GCC 5 fix
+5. Missing include breaks compilation on Visual C++ 2017 
+6. Fixed a small problem with the MBody1 example
+
 Release Notes for GeNN v4.5.1 (PyGeNN 0.4.6)
 ====
 This release fixes several small issues found in the 4.5.0 release.
