@@ -264,6 +264,8 @@ For convenience, \add_cpp_python_text{the methods this class should implement ca
     of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model \add_cpp_python_text{with ModelSpec::setPrecision, from ``pygenn.genn_model.GeNNModel.__init__``}.
     The variables defined here as `NAME` can then be used in the
     syntax \$(NAME) in the code string. If the access mode is set to \add_cpp_python_text{``VarAccess::READ_ONLY``,``VarAccess_READ_ONLY``}, GeNN applies additional optimisations and models should not write to it.
+    By default such read-only variables are shared across all batches (see section \ref batching). 
+    If, instead, a read-only variable should be duplicated across batches, its access mode should be set to \add_cpp_python_text{``VarAccess::READ_ONLY_DUPLICATE``,``VarAccess_READ_ONLY_DUPLICATE``}.
 - \add_cpp_python_text{SET_NEEDS_AUTO_REFRACTORY(), `is_auto_refractory_required`} defines whether the neuron should include an automatic refractory period to prevent it emitting spikes in successive timesteps.
 
 For example, we can define a leaky integrator \f$\tau\frac{dV}{dt}= -V + I_{{\rm syn}}\f$ solved using Euler's method:
