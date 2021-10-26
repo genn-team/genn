@@ -989,13 +989,14 @@ These modes can be set as a model default using ``ModelSpec::setDefaultVarLocati
 //----------------------------------------------------------------------------
 /*! 
 \page sectVariableReferences Variable references
-As well as state variables, custom updates have variable references which are used to reference variables belonging to other neuron and synapse groups.
+As well as state variables, custom updates have variable references which are used to reference variables belonging to other neuron and synapse groups or even other custom updates.
 
 \add_toggle_cpp
 The variable references required by a model called SetTime could be assigned to various types of variable using the following syntax:
 \code
 SetTime::VarReferences neuronVarReferences(createVarRef(ng, "V"));
 SetTime::VarReferences currentSourceVarReferences(createVarRef(cs, "V"));
+SetTime::VarReferences customUpdateVarReferences(createVarRef(cu, "V"));
 SetTime::VarReferences postsynapticModelVarReferences(createPSMVarRef(sg, "V"));
 SetTime::VarReferences wuPreVarReferences(createWUPreVarRef(sg, "Pre")); 
 SetTime::VarReferences wuPostVarReferences(createWUPostVarRef(sg, "Post")); 
@@ -1006,20 +1007,24 @@ A variable reference called R could be assigned to various types of variable usi
 \code
 neuron_var_ref =  {"R": genn_model.create_var_ref(ng, "V")}
 current_source_var_ref =  {"R": genn_model.create_var_ref(cs, "V")}
+custom_update_var_ref = {"R": genn_model.create_var_ref(cu, "V")}
 postsynaptic_model_var_ref =  {"R": genn_model.create_psm_var_ref(sg, "V")}
 wu_pre_var_ref =  {"R": genn_model.create_wu_pre_var_ref(sg, "Pre")}
 wu_post_var_ref =  {"R": genn_model.create_wu_post_var_ref(sg, "Post")}
 \endcode
 \end_toggle
-where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.genn_groups.NeuronGroup (as returned by pygenn.genn_model.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.genn_groups.CurrentSource (as returned by pygenn.genn_model.GeNNModel.add_current_source)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.genn_groups.SynapseGroup (as returned by pygenn.genn_model.GeNNModel.add_synapse_population)}.
+where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.genn_groups.NeuronGroup (as returned by pygenn.genn_model.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.genn_groups.CurrentSource (as returned by pygenn.genn_model.GeNNModel.add_current_source)}, cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.genn_model.GeNNModel.add_custom_update)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.genn_groups.SynapseGroup (as returned by pygenn.genn_model.GeNNModel.add_synapse_population)}.
 
 While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
 \add_toggle_code_cpp
 SetTime::WUVarReferences wuVarReferences(createWUVarRef(sg, "g"));
+SetTime::WUVarReferences cuWUVarReferences(createWUVarRef(cu, "g"));
 \end_toggle_code
 \add_toggle_code_python
 wu_var_ref = {"R": create_wu_var_ref(sg, "g")}
+cu_wu_var_ref = {"R": create_wu_var_ref(cu, "g")}
 \end_toggle_code
+where sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.genn_groups.SynapseGroup (as returned by pygenn.genn_model.GeNNModel.add_synapse_population)} and cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.genn_model.GeNNModel.add_custom_update)} which operates on another synapse group's state variables.
 
 These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
 \add_toggle_code_cpp
