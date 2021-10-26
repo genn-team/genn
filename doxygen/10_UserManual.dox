@@ -155,13 +155,20 @@ where the arguments are
 \arg \add_cpp_python_text{`PostsynapticModel::VarValues postsynapticVarInitialisers`: The, `ps_var_space`: Dictionary containing the} initial values or initialisation snippets for variables for the postsynaptic model's state variables (see \ref sectVariableInitialisation)
 \arg \add_cpp_python_text{`InitSparseConnectivitySnippet::Init connectivityInitialiser`,`connectivity_initialiser`}: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
+\add_toggle_cpp
 The ModelSpec::addSynapsePopulation() function returns a pointer to the newly created SynapseGroup object which can be further configured, namely with:
 - SynapseGroup::setMaxConnections() and SynapseGroup::setMaxSourceConnections() to configure the maximum number of rows and columns respectively allowed in the synaptic matrix - this can improve performance and reduce memory usage when using SynapseMatrixConnectivity::SPARSE connectivity (see \ref subsect34).
 \note
 When using a sparse connectivity initialisation snippet, these values are set automatically.
 - SynapseGroup::setMaxDendriticDelayTimesteps() sets the maximum dendritic delay (in terms of the simulation
      time step `DT`) allowed for synapses in this population. No values larger than this should be passed to the delay parameter of the `addToDenDelay` function in user code (see \ref sect34).
-- SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.
+- SynapseGroup::setSpanType() sets how incoming spike processing is parallelised for this synapse group. The default SynapseGroup::SpanType::POSTSYNAPTIC is nearly always the best option, but SynapseGroup::SpanType::PRESYNAPTIC may perform better when there are large numbers of spikes every timestep or very few postsynaptic neurons.}
+- SynapseGroup::setPSTargetVar() sets the additional input variable (or standard "Isyn") on the postsynaptic neuron population where input from this synapse group is routed (see section \ref neuron_additional_input).
+\end_toggle
+\add_toggle_python
+The pygenn.GeNNModel.add_synapse_population function returns a pygenn.genn_groups.SynapseGroup object which can be further configured, namely with:
+- pygenn.genn_groups.SynapseGroup.ps_target_var sets the additional input variable (or standard "Isyn") on the postsynaptic neuron population where input from this synapse group is routed (see section \ref neuron_additional_input).
+\end_toggle
 
 \note
 If the synapse matrix uses one of the "GLOBALG" types then the global
