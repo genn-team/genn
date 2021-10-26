@@ -741,10 +741,10 @@ For convenience the methods this class should implement can be implemented using
 
 For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a custom update which will set a referenced variable to the value of a custom update model state variable:
 \add_toggle_code_cpp
-class Reset : public CurrentSourceModels::Base
+class Reset : public CustomUpdateModels::Base
 {
 public:
-    DECLARE_MODEL(Reset, 0, 1, 1);
+    DECLARE_CUSTOM_UPDATE_MODEL(Reset, 0, 1, 1);
 
     SET_UPDATE_CODE("$(r) = $(v);");
 
@@ -760,6 +760,42 @@ reset_model = genn_model.create_custom_custom_update_class(
     var_refs=[("r", "scalar")],
     update_code="$(r) = $(v);")
 \end_toggle_code
+
+\subsection custom_update_reduction Batch reduction
+As well as the standard variable access modes described in \ref subsect11, custom updates support variables with several 'reduction' access modes:
+- \add_cpp_python_text{VarAccess::REDUCE_BATCH_SUM, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_BATCH_SUM``}
+- \add_cpp_python_text{VarAccess::REDUCE_BATCH_MAX, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_BATCH_MAX``}
+
+These access modes allow values read from variables duplicated across batches to be reduced into variables that are shared across batches.
+For example, in a gradient-based learning scenario, a model like this could be used to sum gradients from across all batches so they can be used as the input to a learning rule operating on shared synaptic weights:
+
+\add_toggle_code_cpp
+class Reset : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(Reset, 0, 1, 1);
+
+    SET_UPDATE_CODE(
+        "$(reducedGradient) = $(gradient);\n"
+        "$(gradient) = 0;\n");
+
+    SET_VARS({{"reducedGradient", "scalar", VarAccess::REDUCE_BATCH_SUM}});
+    SET_VAR_REFS({{"gradient", "scalar"}, 
+};
+\end_toggle_code
+\add_toggle_code_python
+gradient_batch_reduce_model = genn_model.create_custom_custom_update_class(
+    "gradient_batch_reduce",
+    var_name_types=[("reducedGradient", "scalar", VarAccess_REDUCE_BATCH_SUM)],
+    var_refs=[("gradient", "scalar")],
+    update_code="""
+    $(reducedGradient) = $(gradient);
+    $(gradient) = 0;
+    """)
+\end_toggle_code
+\note
+Reading from variables with a reduction access mode is undefined behaviour.
+
 
 -----
 \link sectCurrentSourceModels Previous\endlink | \link UserManual Top\endlink | \link subsect34 Next\endlink
@@ -821,7 +857,7 @@ In Python, these matrix types can be selected by their unqualified name e.g. "DE
 /*! 
 \page sectVariableInitialisation Variable initialisation
 
-Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise. 
+Neuron, weight update, postsynaptic and custom update models all have state variables which GeNN can automatically initialise. 
 
 Previously we have shown variables being initialised to constant values such as:
 \add_toggle_code_cpp
