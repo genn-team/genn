@@ -75,7 +75,7 @@ tasks must be completed:
 \add_toggle_python
 A network model is defined as follows:
 \end_toggle
-1. \add_cpp_python_text{The name of the model must be defined,A pygenn.genn_model.GeNNModel must be created with a name and a default precision (see \ref floatPrecision)}:
+1. \add_cpp_python_text{The name of the model must be defined,A pygenn.GeNNModel must be created with a name and a default precision (see \ref floatPrecision)}:
    \add_toggle_code_cpp
    model.setName("MyModel");
    \end_toggle_code
@@ -145,8 +145,8 @@ where the arguments are
 \arg \add_cpp_python_text{`const string &name`,`pop_name`}: The name of the synapse population
 \arg \add_cpp_python_text{`::SynapseMatrixType mType`: How,`matrix_type`: String specifying how} the synaptic matrix is stored. See \ref subsect34 for available options.
 \arg \add_cpp_python_text{`unsigned int delay`,`delay_steps`}: Homogeneous (axonal) delay for synapse population (in terms of the simulation time step `DT`). 
-\arg \add_cpp_python_text{`const string preName`: Name, `source`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) presynaptic neuron population.
-\arg \add_cpp_python_text{`const string postName`: Name, `target`: pygenn.genn_groups.NeuronGroup or name} of the (existing!) postsynaptic neuron population.
+\arg \add_cpp_python_text{`const string preName`: Name, `source`: pygenn.NeuronGroup or name} of the (existing!) presynaptic neuron population.
+\arg \add_cpp_python_text{`const string postName`: Name, `target`: pygenn.NeuronGroup or name} of the (existing!) postsynaptic neuron population.
 \arg \add_cpp_python_text{`WeightUpdateModel::ParamValues weightParamValues`: The, `wu_param_space`: Dictionary containing the} parameter values (common to all synapses of the population) for the weight update model. 
 \arg \add_cpp_python_text{``WeightUpdateModel::VarValues weightVarInitialisers`: The, `wu_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's state variables (see \ref sectVariableInitialisation)
 \arg \add_cpp_python_text{`WeightUpdateModel::PreVarValues weightPreVarInitialisers`: The, `wu_pre_var_space`: Dictionary containing the} initial values or initialisation snippets for the weight update model's presynaptic state variables (see \ref sectVariableInitialisation)
@@ -166,8 +166,8 @@ When using a sparse connectivity initialisation snippet, these values are set au
 - SynapseGroup::setPSTargetVar() sets the additional input variable (or standard "Isyn") on the postsynaptic neuron population where input from this synapse group is routed (see section \ref neuron_additional_input).
 \end_toggle
 \add_toggle_python
-The pygenn.GeNNModel.add_synapse_population function returns a pygenn.genn_groups.SynapseGroup object which can be further configured, namely with:
-- pygenn.genn_groups.SynapseGroup.ps_target_var sets the additional input variable (or standard "Isyn") on the postsynaptic neuron population where input from this synapse group is routed (see section \ref neuron_additional_input).
+The pygenn.GeNNModel.add_synapse_population function returns a pygenn.SynapseGroup object which can be further configured, namely with:
+- pygenn.SynapseGroup.ps_target_var sets the additional input variable (or standard "Isyn") on the postsynaptic neuron population where input from this synapse group is routed (see section \ref neuron_additional_input).
 \end_toggle
 
 \note
@@ -233,7 +233,7 @@ Read-write state variables are duplicated for each batch and, by default, read-o
 //----------------------------------------------------------------------------
 /*! 
 \page sectNeuronModels Neuron models
-There is a number of predefined models which can be used with the \add_cpp_python_text{ModelSpec::addNeuronPopulation,pygenn.genn_model.GeNNModel.add_neuron_population} method:
+There is a number of predefined models which can be used with the \add_cpp_python_text{ModelSpec::addNeuronPopulation,pygenn.GeNNModel.add_neuron_population} method:
 - NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
@@ -268,7 +268,7 @@ For convenience, \add_cpp_python_text{the methods this class should implement ca
     \add_toggle_cpp The length of this list should match the NUM_PARAM specified in DECLARE_MODEL. \end_toggle
     Parameters are assumed to be always of type double.
 - \add_cpp_python_text{SET_VARS(),`var_name_types`} defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
-    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model \add_cpp_python_text{with ModelSpec::setPrecision, from ``pygenn.genn_model.GeNNModel.__init__``}.
+    of the neuron state variables. The type string "scalar" can be used for variables which should be implemented using the precision set globally for the model \add_cpp_python_text{with ModelSpec::setPrecision, from ``pygenn.GeNNModel.__init__``}.
     The variables defined here as `NAME` can then be used in the
     syntax \$(NAME) in the code string. If the access mode is set to \add_cpp_python_text{``VarAccess::READ_ONLY``,``VarAccess_READ_ONLY``}, GeNN applies additional optimisations and models should not write to it.
     By default such read-only variables are shared across all batches (see section \ref batching). 
@@ -833,17 +833,17 @@ Weight update model variables associated with the sparsely connected synaptic po
 - SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` format and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
 - SynapseMatrixConnectivity::PROCEDURAL is a new approach where, rather than being stored in memory, connectivity described using \ref sectSparseConnectivityInitialisation is generated 'on the fly' as spikes are processed (see \cite Knight2020 for more information). Therefore, this approach offers very large memory savings for a small performance cost but does not currently support plasticity.
 
-\add_python_text{In Python\, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.genn_groups.SynapseGroup.set_sparse_connections method.}
+\add_python_text{In Python\, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.SynapseGroup.set_sparse_connections method.}
 Furthermore the SynapseMatrixWeight defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
 Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::INDIVIDUAL_PSM allows each postsynapic neuron to have unique post synaptic model variables.
 Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
-This is automatically initialized to the initial value passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.genn_model.GeNNModel.add_synapse_population}.
+This is automatically initialized to the initial value passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}.
 - SynapseMatrixWeight::PROCEDURAL generates weight update model variable values described using \ref sectVariableInitialisation 'on the fly' as spikes are processed. This is typically used alongside SynapseMatrixConnectivity::PROCEDURAL for large models with static connectivity and weights/delays sampled from probability distributions (see \cite Knight2020 for an example).
 
-Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.genn_model.GeNNModel.add_synapse_population}:
+Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}:
 - SynapseMatrixType::SPARSE_GLOBALG
 - SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::SPARSE_INDIVIDUALG
@@ -1013,7 +1013,7 @@ wu_pre_var_ref =  {"R": genn_model.create_wu_pre_var_ref(sg, "Pre")}
 wu_post_var_ref =  {"R": genn_model.create_wu_post_var_ref(sg, "Post")}
 \endcode
 \end_toggle
-where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.genn_groups.NeuronGroup (as returned by pygenn.genn_model.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.genn_groups.CurrentSource (as returned by pygenn.genn_model.GeNNModel.add_current_source)}, cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.genn_model.GeNNModel.add_custom_update)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.genn_groups.SynapseGroup (as returned by pygenn.genn_model.GeNNModel.add_synapse_population)}.
+where ng is a \add_cpp_python_text{NeuronGroup pointer (as returned by ModelSpec::addNeuronPopulation),pygenn.NeuronGroup (as returned by pygenn.GeNNModel.add_neuron_population)}, cs is a \add_cpp_python_text{CurrentSource pointer (as returned by ModelSpec::addCurrentSource),pygenn.CurrentSource (as returned by pygenn.GeNNModel.add_current_source)}, cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.GeNNModel.add_custom_update)} and sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.SynapseGroup (as returned by pygenn.GeNNModel.add_synapse_population)}.
 
 While references of these types can be used interchangably in the same custom update, as long as all referenced variables have the same delays and belong to populations of the same size, per-synapse weight update model variables must be referenced with slightly different syntax:
 \add_toggle_code_cpp
@@ -1024,7 +1024,7 @@ SetTime::WUVarReferences cuWUVarReferences(createWUVarRef(cu, "g"));
 wu_var_ref = {"R": create_wu_var_ref(sg, "g")}
 cu_wu_var_ref = {"R": create_wu_var_ref(cu, "g")}
 \end_toggle_code
-where sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.genn_groups.SynapseGroup (as returned by pygenn.genn_model.GeNNModel.add_synapse_population)} and cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.genn_model.GeNNModel.add_custom_update)} which operates on another synapse group's state variables.
+where sg is a \add_cpp_python_text{SynapseGroup pointer (as returned by ModelSpec::addSynapsePopulation),pygenn.SynapseGroup (as returned by pygenn.GeNNModel.add_synapse_population)} and cu is a \add_cpp_python_text{CustomUpdate pointer (as returned by ModelSpec::addCustomUpdate),pygenn.genn_groups.CustomUpdate (as returned by pygenn.GeNNModel.add_custom_update)} which operates on another synapse group's state variables.
 
 These 'weight update variable references' also have the additional feature that they can be used to define a link to a 'transpose' variable:
 \add_toggle_code_cpp
@@ -1033,7 +1033,7 @@ SetTime::WUVarReferences wuTransposeVarReferences(createWUVarRef(sg, "g", backSG
 \add_toggle_code_python
 wu_transpose_var_ref = {"R": create_wu_var_ref(sg, "g", back_sg, "g")}
 \end_toggle_code
-where \add_cpp_python_text{backSG is another SynapseGroup pointer,back_sg is another pygenn.genn_groups.SynapseGroup} with tranposed dimensions to sg i.e. its <i>postsynaptic</i> population has the same number of neurons as sg's <i>presynaptic</i> population and vice-versa.
+where \add_cpp_python_text{backSG is another SynapseGroup pointer,back_sg is another pygenn.SynapseGroup} with tranposed dimensions to sg i.e. its <i>postsynaptic</i> population has the same number of neurons as sg's <i>presynaptic</i> population and vice-versa.
 
 After the update has run, any updates made to the 'forward' variable will also be applied to the tranpose variable.
 \note 

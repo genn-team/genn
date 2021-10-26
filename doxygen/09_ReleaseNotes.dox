@@ -49,9 +49,9 @@ User Side Changes
 5. To aid debugging, debug versions of PyGeNN can now be built (see \ref Debugging).
 6. OpenCL performance on AMD devices is improved - this has only been tested on a Radeon RX 5700 XT so any feedback from users with other devices would be much appreciated.
 7. Exceptions raised by GeNN are now correctly passed through PyGeNN to Python.
-8. Spike times (and spike-like event times) can now be accessed, pushed and pulled from PyGeNN (see  ``pygenn.genn_groups.NeuronGroup.spike_times``, ``pygenn.genn_groups.NeuronGroup.push_spike_times_to_device`` and ``pygenn.genn_groups.NeuronGroup.pull_spike_times_from_device`` )
-9. On models where postsynaptic merging isn't enabled, the postsynaptic input current from a synapse group can now be accessed from PyGeNN via ``pygenn.genn_groups.SynapseGroup.in_syn``; and pushed and pulled with ``pygenn.genn_groups.SynapseGroup.push_in_syn_to_device`` and ``pygenn.genn_groups.SynapseGroup.pull_in_syn_from_device`` respectively.
-10. Accessing extra global parameters from PyGeNN was previously rather cumbersome. Now, you don't need to manually pass a size to e.g. ``pygenn.genn_groups.NeuronGroup.pull_extra_global_param_from_device`` and, if you are using non-pointer extra global parameters, you no longer need to call e.g. ``pygenn.genn_groups.NeuronGroup.set_extra_global_param`` before loading your model.
+8. Spike times (and spike-like event times) can now be accessed, pushed and pulled from PyGeNN (see  ``pygenn.NeuronGroup.spike_times``, ``pygenn.NeuronGroup.push_spike_times_to_device`` and ``pygenn.NeuronGroup.pull_spike_times_from_device`` )
+9. On models where postsynaptic merging isn't enabled, the postsynaptic input current from a synapse group can now be accessed from PyGeNN via ``pygenn.SynapseGroup.in_syn``; and pushed and pulled with ``pygenn.SynapseGroup.push_in_syn_to_device`` and ``pygenn.SynapseGroup.pull_in_syn_from_device`` respectively.
+10. Accessing extra global parameters from PyGeNN was previously rather cumbersome. Now, you don't need to manually pass a size to e.g. ``pygenn.NeuronGroup.pull_extra_global_param_from_device`` and, if you are using non-pointer extra global parameters, you no longer need to call e.g. ``pygenn.NeuronGroup.set_extra_global_param`` before loading your model.
 
 Bug fixes:
 ----
@@ -130,7 +130,7 @@ User Side Changes
 1. Previously GeNN performed poorly with large numbers of populations. This version includes a new code generator which effectively solves this problem (see \cite Knight2020).
 2. ``InitSparseConnectivitySnippet::Base`` row build state and ``NeuronModels::Base`` additional input variables could previously only be initialised with a numeric value. Now they can be initialised with a code string supporting substitutions etc.
 3. Added GeNN implementation of cortical microcircuit model \cite Potjans2012 to userprojects (discussed further in \cite Knight2018). Also demonstrates how to dynamically load GeNN models rather than linking against them.
-4. Previously one pushed states and spikes to and from device in PyGeNN using methods like ``pygenn.GeNNModel.push_current_spikes_to_device`` which was somewhat cumbersome. These have now been wrapped in methods like ``pygenn.genn_groups.NeuronGroup.push_current_spikes_to_device`` which is somewhat nicer.
+4. Previously one pushed states and spikes to and from device in PyGeNN using methods like ``pygenn.GeNNModel.push_current_spikes_to_device`` which was somewhat cumbersome. These have now been wrapped in methods like ``pygenn.NeuronGroup.push_current_spikes_to_device`` which is somewhat nicer.
 5. The ``CodeGenerator::generateAll`` function now returns memory estimates which are, in turn, returned from ``pygenn.GeNNModel.build``.
 6. To better support batching of inputs into multiple instances of the same model, added ``ModelSpec::addSlaveSynapsePopulation`` to add synapse populations which share per-synapse state with a 'master' synapse group.
 7. Added extra global parameters to variable initialisation snippets - can be used for lookup table style functionality.
