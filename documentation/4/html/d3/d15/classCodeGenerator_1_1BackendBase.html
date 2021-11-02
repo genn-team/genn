@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -194,6 +194,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a0e55b6eb078c4a7534420890158fc361"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5d2ca51688c8dd7e95f1c83e8c923b9d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a5d2ca51688c8dd7e95f1c83e8c923b9d">genAllocateMemPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const <a class="el" href="../../d2/d06/classCodeGenerator_1_1MemAlloc.html">MemAlloc</a> &amp;memAlloc) const =0</td></tr>
 <tr class="separator:a5d2ca51688c8dd7e95f1c83e8c923b9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b96349acc1446012cf6019c5defdf7d"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a5b96349acc1446012cf6019c5defdf7d">genFreeMemPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
+<tr class="separator:a5b96349acc1446012cf6019c5defdf7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98f39c0d92e366648ce85661bf2884ed"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a98f39c0d92e366648ce85661bf2884ed">genStepTimeFinalisePreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
 <tr class="memdesc:a98f39c0d92e366648ce85661bf2884ed"><td class="mdescLeft">&#160;</td><td class="mdescRight">After all timestep logic is complete.  <a href="#a98f39c0d92e366648ce85661bf2884ed">More...</a><br /></td></tr>
 <tr class="separator:a98f39c0d92e366648ce85661bf2884ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -318,6 +320,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a98d6344fec8a12ae7ea7ac8bece8ed50"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a98d6344fec8a12ae7ea7ac8bece8ed50">isPostsynapticRemapRequired</a> () const =0</td></tr>
 <tr class="memdesc:a98d6344fec8a12ae7ea7ac8bece8ed50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?  <a href="#a98d6344fec8a12ae7ea7ac8bece8ed50">More...</a><br /></td></tr>
 <tr class="separator:a98d6344fec8a12ae7ea7ac8bece8ed50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52e467782d8172123f45af441573d3e0"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a52e467782d8172123f45af441573d3e0">isHostReductionRequired</a> () const =0</td></tr>
+<tr class="memdesc:a52e467782d8172123f45af441573d3e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels.  <a href="#a52e467782d8172123f45af441573d3e0">More...</a><br /></td></tr>
+<tr class="separator:a52e467782d8172123f45af441573d3e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a034f408b28b10f750cd501a4dfecceac"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a034f408b28b10f750cd501a4dfecceac">getDeviceMemoryBytes</a> () const =0</td></tr>
 <tr class="memdesc:a034f408b28b10f750cd501a4dfecceac"><td class="mdescLeft">&#160;</td><td class="mdescRight">How many bytes of memory does 'device' have.  <a href="#a034f408b28b10f750cd501a4dfecceac">More...</a><br /></td></tr>
 <tr class="separator:a034f408b28b10f750cd501a4dfecceac"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -341,6 +346,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a77cff530242ae51c349a7f09bb942b41"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a77cff530242ae51c349a7f09bb942b41">getSize</a> (const std::string &amp;type) const</td></tr>
 <tr class="memdesc:a77cff530242ae51c349a7f09bb942b41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the size of the type.  <a href="#a77cff530242ae51c349a7f09bb942b41">More...</a><br /></td></tr>
 <tr class="separator:a77cff530242ae51c349a7f09bb942b41"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95d9ee4603fbbd87ef3a6360946b7538"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a95d9ee4603fbbd87ef3a6360946b7538">getLowestValue</a> (const std::string &amp;type) const</td></tr>
+<tr class="memdesc:a95d9ee4603fbbd87ef3a6360946b7538"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the lowest value of a type.  <a href="#a95d9ee4603fbbd87ef3a6360946b7538">More...</a><br /></td></tr>
+<tr class="separator:a95d9ee4603fbbd87ef3a6360946b7538"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4e57e4e70ecce1da067c07f9f5a60973"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a4e57e4e70ecce1da067c07f9f5a60973">getScalarAddressPrefix</a> () const</td></tr>
 <tr class="memdesc:a4e57e4e70ecce1da067c07f9f5a60973"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the prefix for accessing the address of 'scalar' variables.  <a href="#a4e57e4e70ecce1da067c07f9f5a60973">More...</a><br /></td></tr>
 <tr class="separator:a4e57e4e70ecce1da067c07f9f5a60973"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -354,16 +362,16 @@ Public Member Functions</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a70d012f95c388904a7ea64a5509ee124"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a70d012f95c388904a7ea64a5509ee124">addType</a> (const std::string &amp;type, size_t size)</td></tr>
-<tr class="separator:a70d012f95c388904a7ea64a5509ee124"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1df97f2b618f1fd1797fcb2811db17ff"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1df97f2b618f1fd1797fcb2811db17ff">addType</a> (const std::string &amp;type, size_t size, const std::string &amp;lowestValue=&quot;&quot;)</td></tr>
+<tr class="separator:a1df97f2b618f1fd1797fcb2811db17ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2fbacdd19c72a8e91dfda79b9cf82b2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab2fbacdd19c72a8e91dfda79b9cf82b2">setPointerBytes</a> (size_t pointerBytes)</td></tr>
 <tr class="separator:ab2fbacdd19c72a8e91dfda79b9cf82b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae65053ff14345bd6a3fde2a616043864"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ae65053ff14345bd6a3fde2a616043864">genNeuronIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a> &amp;ng, unsigned int batchSize) const</td></tr>
 <tr class="separator:ae65053ff14345bd6a3fde2a616043864"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab24ca7a4f8a0bf16643ab0d4cad91f91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab24ca7a4f8a0bf16643ab0d4cad91f91">genSynapseIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a> &amp;sg, unsigned int batchSize) const</td></tr>
 <tr class="separator:ab24ca7a4f8a0bf16643ab0d4cad91f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad32dd406351d26f540dec7f8c59966ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad32dd406351d26f540dec7f8c59966ba">genCustomUpdateIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;cu) const</td></tr>
-<tr class="separator:ad32dd406351d26f540dec7f8c59966ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd5e142961de31bc392edda5e2f2714a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afd5e142961de31bc392edda5e2f2714a">genCustomUpdateIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;cu, unsigned int batchSize) const</td></tr>
+<tr class="separator:afd5e142961de31bc392edda5e2f2714a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="ac7bc5c26f226caf958bfc9f72a833893"></a>
@@ -696,8 +704,8 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a id="a70d012f95c388904a7ea64a5509ee124"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70d012f95c388904a7ea64a5509ee124">&#9670;&nbsp;</a></span>addType()</h2>
+<a id="a1df97f2b618f1fd1797fcb2811db17ff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1df97f2b618f1fd1797fcb2811db17ff">&#9670;&nbsp;</a></span>addType()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -715,7 +723,13 @@ template&lt;typename T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>size</em>&#160;</td>
+          <td class="paramname"><em>size</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>lowestValue</em> = <code>&quot;&quot;</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1340,8 +1354,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="ad32dd406351d26f540dec7f8c59966ba"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad32dd406351d26f540dec7f8c59966ba">&#9670;&nbsp;</a></span>genCustomUpdateIndexCalculation()</h2>
+<a id="afd5e142961de31bc392edda5e2f2714a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afd5e142961de31bc392edda5e2f2714a">&#9670;&nbsp;</a></span>genCustomUpdateIndexCalculation()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1359,7 +1373,13 @@ template&lt;typename T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;&#160;</td>
-          <td class="paramname"><em>cu</em>&#160;</td>
+          <td class="paramname"><em>cu</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>batchSize</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1791,6 +1811,45 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae67789142a85b8a13d9e602f1e938240">CodeGenerator::CUDA::Backend</a>, <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a1f0d4fd5c3ea6ba5aeaff0fea101213c">CodeGenerator::OpenCL::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a6d2f32662530249bdbe35b6fe23bc0af">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
+<a id="a5b96349acc1446012cf6019c5defdf7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b96349acc1446012cf6019c5defdf7d">&#9670;&nbsp;</a></span>genFreeMemPreamble()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual void CodeGenerator::BackendBase::genFreeMemPreamble </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Free memory is called by usercode to free all memory allocatd by GeNN and should only ever be called once. This function generates a 'preamble' to this function, for example to free backend-specific objects </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae2788bf322f25a34a50ff77a40954b0e">CodeGenerator::CUDA::Backend</a>, <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a982953d9d6b6618061ba0286597e6841">CodeGenerator::OpenCL::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a4ff33e3151f608bce8dd273c0780551a">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
 
 </div>
 </div>
@@ -3540,6 +3599,26 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a95d9ee4603fbbd87ef3a6360946b7538"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95d9ee4603fbbd87ef3a6360946b7538">&#9670;&nbsp;</a></span>getLowestValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::BackendBase::getLowestValue </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>type</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the lowest value of a type. </p>
+
+</div>
+</div>
 <a id="abd13817e3a9112d1d4187562c6a694a0"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#abd13817e3a9112d1d4187562c6a694a0">&#9670;&nbsp;</a></span>getMergedGroupFieldHostType()</h2>
 
@@ -3875,6 +3954,35 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a52e467782d8172123f45af441573d3e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52e467782d8172123f45af441573d3e0">&#9670;&nbsp;</a></span>isHostReductionRequired()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool CodeGenerator::BackendBase::isHostReductionRequired </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels. </p>
+
+<p>Implemented in <a class="el" href="../../d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa59d40638566adf41d4f7633a3914985">CodeGenerator::CUDA::Backend</a>, <a class="el" href="../../db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a722a8999e7c2b7446ad061843a46b550">CodeGenerator::OpenCL::Backend</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#adf597a1c300842f60ce25425b91ee61c">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
+
+</div>
+</div>
 <a id="a31bc245e4173e7a3249b8da968203fc7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a31bc245e4173e7a3249b8da968203fc7">&#9670;&nbsp;</a></span>isPopulationRNGInitialisedOnDevice()</h2>
 
@@ -4058,7 +4166,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:36 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

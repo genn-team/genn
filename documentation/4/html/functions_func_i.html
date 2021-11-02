@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -231,6 +231,12 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <li>isHostInitRNGRequired()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#ae91c304f9a8b5c84cb9450e0bafd68cc">SynapseGroup</a>
 </li>
+<li>isHostReductionRequired()
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a52e467782d8172123f45af441573d3e0">CodeGenerator::BackendBase</a>
+, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa59d40638566adf41d4f7633a3914985">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a722a8999e7c2b7446ad061843a46b550">CodeGenerator::OpenCL::Backend</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#adf597a1c300842f60ce25425b91ee61c">CodeGenerator::SingleThreadedCPU::Backend</a>
+</li>
 <li>isInitRNGRequired()
 : <a class="el" href="d1/d48/classCurrentSource.html#a77badded2963f6e73982f6f2c0c4eacc">CurrentSource</a>
 , <a class="el" href="da/da9/classCustomUpdateBase.html#a2c67f76c6f65556e1e263bd036f4a296">CustomUpdateBase</a>
@@ -334,8 +340,8 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <li>isPSMGlobalVarReferenced()
 : <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#ab1cdc6e9ea3c9dbb5970272ff824dfc2">CodeGenerator::NeuronGroupMergedBase</a>
 </li>
-<li>isPSModelMerged()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#aed8d1a858f0731119785fc90394b2220">SynapseGroup</a>
+<li>isPSModelFused()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#acacc44e0dcc099b56391a3f746bf302a">SynapseGroup</a>
 </li>
 <li>isPSMParamHeterogeneous()
 : <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#ac842fba7c71ebb5a1232af8d8e2cfa8d">CodeGenerator::NeuronGroupMergedBase</a>
@@ -360,6 +366,10 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 </li>
 <li>isRecordingInUse()
 : <a class="el" href="da/dfd/classModelSpec.html#ab08bc83824d4efbde2154b8b8985a1c2">ModelSpec</a>
+</li>
+<li>isReduction()
+: <a class="el" href="da/da9/classCustomUpdateBase.html#af1589576f2bb0ef75378db2a2b83f567">CustomUpdateBase</a>
+, <a class="el" href="de/db4/classCustomUpdateModels_1_1Base.html#a99b3baa2674e48801d55877a2359fe24">CustomUpdateModels::Base</a>
 </li>
 <li>isSimRNGRequired()
 : <a class="el" href="d1/d48/classCurrentSource.html#a69ae0ab08a8f9960574199ac40585fe3">CurrentSource</a>
@@ -429,7 +439,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 : <a class="el" href="da/da9/classCustomUpdateBase.html#a45266a406a10eb283660f66042af13bf">CustomUpdateBase</a>
 </li>
 <li>isVarQueueRequired()
-: <a class="el" href="d7/d3b/classNeuronGroup.html#aea0036098408c4e451602ff91396d426">NeuronGroup</a>
+: <a class="el" href="d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">NeuronGroup</a>
 </li>
 <li>isWeightSharingSlave()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a2948d9d9c159d940fe02042b04c81ef3">SynapseGroup</a>
@@ -449,8 +459,14 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <li>isWUPostInitRNGRequired()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a3d3ea40bd76f43bb348ea34e2a17ef38">SynapseGroup</a>
 </li>
+<li>isWUPostModelFused()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a3f06a5a86227ec6fdcc665662a14c2ba">SynapseGroup</a>
+</li>
 <li>isWUPreInitRNGRequired()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#ac8de62a9a567923104dc2097769677d7">SynapseGroup</a>
+</li>
+<li>isWUPreModelFused()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a942a3167dfae91bdd8157b1bede6b4fc">SynapseGroup</a>
 </li>
 <li>isWUVarInitDerivedParamHeterogeneous()
 : <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a756a86ca96d36bd1ae043e2570454caa">CodeGenerator::SynapseGroupMergedBase</a>
@@ -474,7 +490,7 @@ $(document).ready(function(){initNavTree('functions_func_i.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:48 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

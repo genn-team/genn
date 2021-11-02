@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -130,6 +130,10 @@ Classes</h2></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html">CustomUpdateHostReductionGroupMerged</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html">CustomUpdateHostReductionGroupMergedBase</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html">CustomUpdateInitGroupMerged</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html">CustomUpdateInitGroupMergedBase</a></td></tr>
@@ -141,6 +145,8 @@ Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html">CustomUpdateWUGroupMergedBase</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html">CustomWUUpdateDenseInitGroupMerged</a></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html">CustomWUUpdateHostReductionGroupMerged</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">class &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html">CustomWUUpdateSparseInitGroupMerged</a></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -247,6 +253,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a22199ae12a7875826210e2f57ee0b1ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee">ensureFtype</a> (const std::string &amp;oldcode, const std::string &amp;type)</td></tr>
 <tr class="memdesc:a22199ae12a7875826210e2f57ee0b1ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).  <a href="#a22199ae12a7875826210e2f57ee0b1ee">More...</a><br /></td></tr>
 <tr class="separator:a22199ae12a7875826210e2f57ee0b1ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65ba0a2fa4e20300ed3a428937877ad7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a65ba0a2fa4e20300ed3a428937877ad7">getReductionInitialValue</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> access, const std::string &amp;type)</td></tr>
+<tr class="memdesc:a65ba0a2fa4e20300ed3a428937877ad7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the initial value to start reduction operations from.  <a href="#a65ba0a2fa4e20300ed3a428937877ad7">More...</a><br /></td></tr>
+<tr class="separator:a65ba0a2fa4e20300ed3a428937877ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71f64620d1546b7574a2647bdd1b5312"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a71f64620d1546b7574a2647bdd1b5312">getReductionOperation</a> (const std::string &amp;reduction, const std::string &amp;value, <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> access, const std::string &amp;type)</td></tr>
+<tr class="memdesc:a71f64620d1546b7574a2647bdd1b5312"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a reduction operation to reduce value into reduction.  <a href="#a71f64620d1546b7574a2647bdd1b5312">More...</a><br /></td></tr>
+<tr class="separator:a71f64620d1546b7574a2647bdd1b5312"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10af4d74175240a715403e6b5f2103cf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">checkUnreplacedVariables</a> (const std::string &amp;code, const std::string &amp;codeName)</td></tr>
 <tr class="memdesc:a10af4d74175240a715403e6b5f2103cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function checks for unknown variable definitions and returns a gennError if any are found.  <a href="#a10af4d74175240a715403e6b5f2103cf">More...</a><br /></td></tr>
 <tr class="separator:a10af4d74175240a715403e6b5f2103cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -939,6 +951,84 @@ template&lt;typename G &gt; </div>
 
 </div>
 </div>
+<a id="a65ba0a2fa4e20300ed3a428937877ad7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a65ba0a2fa4e20300ed3a428937877ad7">&#9670;&nbsp;</a></span>getReductionInitialValue()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::getReductionInitialValue </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
+          <td class="paramname"><em>backend</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a>&#160;</td>
+          <td class="paramname"><em>access</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the initial value to start reduction operations from. </p>
+
+</div>
+</div>
+<a id="a71f64620d1546b7574a2647bdd1b5312"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a71f64620d1546b7574a2647bdd1b5312">&#9670;&nbsp;</a></span>getReductionOperation()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string CodeGenerator::getReductionOperation </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>reduction</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>value</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a>&#160;</td>
+          <td class="paramname"><em>access</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>type</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Generate a reduction operation to reduce value into reduction. </p>
+
+</div>
+</div>
 <a id="a52d256322f6e1b81e974344c03f93e3d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a52d256322f6e1b81e974344c03f93e3d">&#9670;&nbsp;</a></span>neuronSubstitutionsInSynapticCode()</h2>
 
@@ -1312,7 +1402,7 @@ template&lt;typename P , typename D , typename V , typename S &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:36 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -1,6 +1,24 @@
 var searchData=
 [
-  ['matrix_5felem',['MATRIX_ELEM',['../d0/d1a/device_2modular_8c_8h.html#a98685670f16350be325bd77b33ccf26e',1,'MATRIX_ELEM():&#160;modular.c.h'],['../d8/dcd/modular_8c_8h.html#a98685670f16350be325bd77b33ccf26e',1,'MATRIX_ELEM():&#160;modular.c.h'],['../df/d40/modularHost_8c_8h.html#a98685670f16350be325bd77b33ccf26e',1,'MATRIX_ELEM():&#160;modularHost.c.h']]],
-  ['modmult',['modMult',['../d0/d1a/device_2modular_8c_8h.html#a7cc2d738ccd1dd2a03edd631da0985d8',1,'modMult():&#160;modular.c.h'],['../d8/dcd/modular_8c_8h.html#a7cc2d738ccd1dd2a03edd631da0985d8',1,'modMult():&#160;modular.c.h']]],
-  ['modular_5fch',['MODULAR_CH',['../df/d40/modularHost_8c_8h.html#ac5af0a853b54bffaf91d79fe0feb0cc7',1,'modularHost.c.h']]]
+  ['lfsr113_5fh',['LFSR113_H',['../d7/d63/lfsr113_8h.html#a3acf24258692278438b7805e695b9add',1,'lfsr113.h']]],
+  ['lfsr113_5fnorm_5fcl_5fdouble',['Lfsr113_NORM_cl_double',['../dd/d32/device_2lfsr113_8c_8h.html#ab5e969f133312a152357379a316b5da8',1,'Lfsr113_NORM_cl_double():&#160;lfsr113.c.h'],['../d0/d7f/lfsr113_8c_8h.html#ab5e969f133312a152357379a316b5da8',1,'Lfsr113_NORM_cl_double():&#160;lfsr113.c.h']]],
+  ['lfsr113_5fnorm_5fcl_5ffloat',['Lfsr113_NORM_cl_float',['../dd/d32/device_2lfsr113_8c_8h.html#a227f7e377103fc62bad37a86cf92059f',1,'Lfsr113_NORM_cl_float():&#160;lfsr113.c.h'],['../d0/d7f/lfsr113_8c_8h.html#a227f7e377103fc62bad37a86cf92059f',1,'Lfsr113_NORM_cl_float():&#160;lfsr113.c.h']]],
+  ['logd_5fbackend',['LOGD_BACKEND',['../d5/d77/logging_8h.html#aba3e7de32e43b43111258ce04e7759ea',1,'logging.h']]],
+  ['logd_5fcode_5fgen',['LOGD_CODE_GEN',['../d5/d77/logging_8h.html#a05560273f87cb304a23128d28871b4ad',1,'logging.h']]],
+  ['logd_5fgenn',['LOGD_GENN',['../d5/d77/logging_8h.html#ae2f98bd12265c14d9343bb7eb0ea54d4',1,'logging.h']]],
+  ['loge_5fbackend',['LOGE_BACKEND',['../d5/d77/logging_8h.html#a8e04eab05dd920d000bb424e2e8baddc',1,'logging.h']]],
+  ['loge_5fcode_5fgen',['LOGE_CODE_GEN',['../d5/d77/logging_8h.html#a03e8a73d46668f2f00d06973cbb047b5',1,'logging.h']]],
+  ['loge_5fgenn',['LOGE_GENN',['../d5/d77/logging_8h.html#ad509932fb79cd2027352e3cf44a6d836',1,'logging.h']]],
+  ['logf_5fbackend',['LOGF_BACKEND',['../d5/d77/logging_8h.html#a33fed9e83be10ca1b055ca63feee825c',1,'logging.h']]],
+  ['logf_5fcode_5fgen',['LOGF_CODE_GEN',['../d5/d77/logging_8h.html#a463eb8086a3bdc73e891ac751654438a',1,'logging.h']]],
+  ['logf_5fgenn',['LOGF_GENN',['../d5/d77/logging_8h.html#ae4da71a9b2d357ed5f8623b93bc0d11c',1,'logging.h']]],
+  ['logi_5fbackend',['LOGI_BACKEND',['../d5/d77/logging_8h.html#ac6d00c423f67263000ba93e1bee85ab7',1,'logging.h']]],
+  ['logi_5fcode_5fgen',['LOGI_CODE_GEN',['../d5/d77/logging_8h.html#aa1c7cae0215e882634d26d9a50a9b3f9',1,'logging.h']]],
+  ['logi_5fgenn',['LOGI_GENN',['../d5/d77/logging_8h.html#aba6808383b7b0e04930f357437614144',1,'logging.h']]],
+  ['logv_5fbackend',['LOGV_BACKEND',['../d5/d77/logging_8h.html#aca4c8bbd1dfa0faa7010c0d76a8978cb',1,'logging.h']]],
+  ['logv_5fcode_5fgen',['LOGV_CODE_GEN',['../d5/d77/logging_8h.html#a6969dbb074a0d1d63900ac255e772d48',1,'logging.h']]],
+  ['logv_5fgenn',['LOGV_GENN',['../d5/d77/logging_8h.html#a34ff10577247ba46ac8e5602e802773d',1,'logging.h']]],
+  ['logw_5fbackend',['LOGW_BACKEND',['../d5/d77/logging_8h.html#a3b6759705ef74a51ca5684099d785590',1,'logging.h']]],
+  ['logw_5fcode_5fgen',['LOGW_CODE_GEN',['../d5/d77/logging_8h.html#a920c377378fdddd4fe938acc70b62e15',1,'logging.h']]],
+  ['logw_5fgenn',['LOGW_GENN',['../d5/d77/logging_8h.html#ac3830785f2c6a1238026e10502d210d5',1,'logging.h']]]
 ];

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -172,8 +172,14 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:a8215fd67ea3fa331f9648650904f4a96"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices.  <a href="#a8215fd67ea3fa331f9648650904f4a96">More...</a><br /></td></tr>
 <tr class="separator:a8215fd67ea3fa331f9648650904f4a96"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#ac40ba51579f94af5ca7fa51c4f67fe8f">setMergePostsynapticModels</a> (bool merge)</td></tr>
-<tr class="memdesc:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should compatible postsynaptic models and dendritic delay buffers be merged?  <a href="#ac40ba51579f94af5ca7fa51c4f67fe8f">More...</a><br /></td></tr>
+<tr class="memdesc:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should compatible postsynaptic models and dendritic delay buffers be fused?  <a href="#ac40ba51579f94af5ca7fa51c4f67fe8f">More...</a><br /></td></tr>
 <tr class="separator:ac40ba51579f94af5ca7fa51c4f67fe8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b097c466e712edb633efe8c01dd6f08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a8b097c466e712edb633efe8c01dd6f08">setFusePostsynapticModels</a> (bool fuse)</td></tr>
+<tr class="memdesc:a8b097c466e712edb633efe8c01dd6f08"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should compatible postsynaptic models and dendritic delay buffers be fused?  <a href="#a8b097c466e712edb633efe8c01dd6f08">More...</a><br /></td></tr>
+<tr class="separator:a8b097c466e712edb633efe8c01dd6f08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a914061069d16c900364b8d92976cee0b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a914061069d16c900364b8d92976cee0b">setFusePrePostWeightUpdateModels</a> (bool fuse)</td></tr>
+<tr class="memdesc:a914061069d16c900364b8d92976cee0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should compatible pre and postsynaptic weight update model variables and updates be fused?  <a href="#a914061069d16c900364b8d92976cee0b">More...</a><br /></td></tr>
+<tr class="separator:a914061069d16c900364b8d92976cee0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adb09e23344a1534409756919123b7ab0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#adb09e23344a1534409756919123b7ab0">setBatchSize</a> (unsigned int batchSize)</td></tr>
 <tr class="separator:adb09e23344a1534409756919123b7ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a85d4dd3812220d12c99a35333c9d1803"><td class="memItemLeft" align="right" valign="top">const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/dfd/classModelSpec.html#a85d4dd3812220d12c99a35333c9d1803">getName</a> () const</td></tr>
@@ -2288,6 +2294,64 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 
 </div>
 </div>
+<a id="a8b097c466e712edb633efe8c01dd6f08"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8b097c466e712edb633efe8c01dd6f08">&#9670;&nbsp;</a></span>setFusePostsynapticModels()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ModelSpec::setFusePostsynapticModels </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>fuse</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Should compatible postsynaptic models and dendritic delay buffers be fused? </p>
+<p>This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved </p>
+
+</div>
+</div>
+<a id="a914061069d16c900364b8d92976cee0b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a914061069d16c900364b8d92976cee0b">&#9670;&nbsp;</a></span>setFusePrePostWeightUpdateModels()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ModelSpec::setFusePrePostWeightUpdateModels </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>fuse</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Should compatible pre and postsynaptic weight update model variables and updates be fused? </p>
+<p>This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved </p>
+
+</div>
+</div>
 <a id="ac40ba51579f94af5ca7fa51c4f67fe8f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac40ba51579f94af5ca7fa51c4f67fe8f">&#9670;&nbsp;</a></span>setMergePostsynapticModels()</h2>
 
@@ -2312,7 +2376,7 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Should compatible postsynaptic models and dendritic delay buffers be merged? </p>
+<p>Should compatible postsynaptic models and dendritic delay buffers be fused? </p>
 <p>This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved </p>
 
 </div>
@@ -2488,7 +2552,7 @@ template&lt;typename WeightUpdateModel , typename PostsynapticModel &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dfd/classModelSpec.html">ModelSpec</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:35 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -9,5 +9,6 @@ var searchData=
   ['sparse_5findividualg',['SPARSE_INDIVIDUALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cae7658b74f700d52b421afc540c892d2e',1,'synapseMatrixType.h']]],
   ['sparseinit',['SparseInit',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8',1,'CodeGenerator::SynapseGroupMergedBase']]],
   ['standard',['Standard',['../df/dfd/classCodeGenerator_1_1GroupMerged.html#a27527a1a96384cc16c281cfdbc031aefaeb6d8ae6f20283755b339c0dc273988b',1,'CodeGenerator::GroupMerged']]],
+  ['sum',['SUM',['../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128a6970bdc2201030b9c03fbdcf3973858a',1,'varAccess.h']]],
   ['synapsedynamics',['SynapseDynamics',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a6e619cecc4afcb5a30233e1768c0fb3d',1,'CodeGenerator::SynapseGroupMergedBase']]]
 ];

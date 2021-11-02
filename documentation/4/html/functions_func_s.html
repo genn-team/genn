@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -255,6 +255,21 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="d1/d48/classCurrentSource.html#a43687bec0ce75867db3661b587e2b6b9">CurrentSource</a>
 , <a class="el" href="d7/d3b/classNeuronGroup.html#a9f54ec7c3dbf68196a62c2c953eeccd4">NeuronGroup</a>
 </li>
+<li>setFusedPSVarSuffix()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a7efcc822bc4e38dc3dd5c41c7985794d">SynapseGroup</a>
+</li>
+<li>setFusedWUPostVarSuffix()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#af11b08e0e54b99457829f0a1659026d6">SynapseGroup</a>
+</li>
+<li>setFusedWUPreVarSuffix()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a7df3cd9efcb3a45bec53c4c057dbdf93">SynapseGroup</a>
+</li>
+<li>setFusePostsynapticModels()
+: <a class="el" href="da/dfd/classModelSpec.html#a8b097c466e712edb633efe8c01dd6f08">ModelSpec</a>
+</li>
+<li>setFusePrePostWeightUpdateModels()
+: <a class="el" href="da/dfd/classModelSpec.html#a914061069d16c900364b8d92976cee0b">ModelSpec</a>
+</li>
 <li>setInSynVarLocation()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a871ba5677d4b088443eb43d3c3036114">SynapseGroup</a>
 </li>
@@ -294,8 +309,8 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <li>setPSExtraGlobalParamLocation()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a90b0bda40690467d37ce993f12236e39">SynapseGroup</a>
 </li>
-<li>setPSModelMergeTarget()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a9a9287f2623d68be8ced4c11c42b4528">SynapseGroup</a>
+<li>setPSTargetVar()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ad8d501a0113764179ef7ee46e4111178">SynapseGroup</a>
 </li>
 <li>setPSVarLocation()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#ad394ea032564c35d3228c3e1c1704f54">SynapseGroup</a>
@@ -388,6 +403,12 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="da/d83/classpygenn_1_1genn__groups_1_1CurrentSource.html#ad720bb8e5a3825e186756b21ab02efa1">pygenn.genn_groups.CurrentSource</a>
 , <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a3cd4c9a8da6c73efc7c403c44435cde4">pygenn.genn_groups.NeuronGroup</a>
 </li>
+<li>spike_event_recording_data()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a96d2207709c61a82b7e47774b680657b">pygenn.genn_groups.NeuronGroup</a>
+</li>
+<li>spike_event_recording_enabled()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#ab488a784ad9cfbbf4f521dbd5d2e4544">pygenn.genn_groups.NeuronGroup</a>
+</li>
 <li>spike_recording_data()
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a983894b5a8c49e837820ea7065d17e10">pygenn.genn_groups.NeuronGroup</a>
 </li>
@@ -401,7 +422,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html#ae114cf8baa4915ee18c8dc2ca4a8bc22">NeuronGroup::SpikeEventThreshold</a>
 </li>
 <li>SpikeRecorder()
-: <a class="el" href="dd/d9b/classSpikeRecorder.html#a08ec86ff46469396a8ac081c87b726aa">SpikeRecorder&lt; Writer &gt;</a>
+: <a class="el" href="dd/d9b/classSpikeRecorder.html#a82af209245b907b75bad00d7cd03ba5f">SpikeRecorder&lt; Writer &gt;</a>
 </li>
 <li>SpikeTime()
 : <a class="el" href="da/d40/classSpineMLSimulator_1_1Input_1_1SpikeTime.html#a83f2afcf46b4c94f293b3dfef7e1c8ca">SpineMLSimulator::Input::SpikeTime</a>
@@ -453,7 +474,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 : <a class="el" href="d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html#ada3a2a01a898d2f471fed9e1d0812250">CodeGenerator::SynapseDynamicsGroupMerged</a>
 </li>
 <li>SynapseGroup()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a7a2a79cb1c07b90fb4070aa77c084411">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a6d6697d4dd8b60bc78be702d75d87c75">SynapseGroup</a>
 </li>
 <li>SynapseGroupInternal()
 : <a class="el" href="dd/d48/classSynapseGroupInternal.html#af59e4b3c15fe9d1c3d54390e649c3434">SynapseGroupInternal</a>
@@ -471,7 +492,7 @@ $(document).ready(function(){initNavTree('functions_func_s.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:48 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

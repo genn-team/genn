@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['uint64_5fc',['UINT64_C',['../d2/dfd/openclfeatures_8h.html#a134ae84400d184ed2570e3270d5472c2',1,'openclfeatures.h']]]
+  ['type',['TYPE',['../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78',1,'backendBase.cc']]]
 ];

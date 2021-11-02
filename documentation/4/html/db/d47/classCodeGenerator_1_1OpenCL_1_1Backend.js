@@ -17,6 +17,7 @@ var classCodeGenerator_1_1OpenCL_1_1Backend =
     [ "genExtraGlobalParamImplementation", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a89bf523d4188141d81937d6f5c888ca5", null ],
     [ "genExtraGlobalParamPull", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a40cdfc5350bde9dc12c033107c081d18", null ],
     [ "genExtraGlobalParamPush", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a1f0d4fd5c3ea6ba5aeaff0fea101213c", null ],
+    [ "genFreeMemPreamble", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a982953d9d6b6618061ba0286597e6841", null ],
     [ "genGlobalDeviceRNG", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a111b9e700efdaac4aae07ea10813aeaa", null ],
     [ "genGlobalRNGSkipAhead", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#afcc4e737da20e20871fdb425dc993ed6", null ],
     [ "genInit", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a1258c2bc36b356567ab293a93f080d6d", null ],
@@ -61,6 +62,7 @@ var classCodeGenerator_1_1OpenCL_1_1Backend =
     [ "getPointerPrefix", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#adb46ba3bcab73e4540749b3ef5e9f0c6", null ],
     [ "getSharedPrefix", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a58d0ad4f30725cacec8011d9fe94e0ba", null ],
     [ "getThreadID", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a9e5bfd01c5001a4a685059e275bfaa9c", null ],
+    [ "isHostReductionRequired", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a722a8999e7c2b7446ad061843a46b550", null ],
     [ "isPopulationRNGInitialisedOnDevice", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#afe33e07f9b862b3fa08bb25e77d25932", null ],
     [ "supportsNamespace", "db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a59e23cbc8eadefcf7b79dcdd2c373bcd", null ]
 ];

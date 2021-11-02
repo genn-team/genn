@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -254,20 +254,24 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a4b073fc74ad5b0ba60811487525569ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:affd4e9d0657fe474a7dfe54a8189d634"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#affd4e9d0657fe474a7dfe54a8189d634">initDerivedParams</a> (double dt)</td></tr>
 <tr class="separator:affd4e9d0657fe474a7dfe54a8189d634"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a78122b3ec7116cd38cbb3ad9fca04fbf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a78122b3ec7116cd38cbb3ad9fca04fbf">mergeIncomingPSM</a> (bool merge)</td></tr>
-<tr class="memdesc:a78122b3ec7116cd38cbb3ad9fca04fbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Merge incoming postsynaptic models.  <a href="#a78122b3ec7116cd38cbb3ad9fca04fbf">More...</a><br /></td></tr>
-<tr class="separator:a78122b3ec7116cd38cbb3ad9fca04fbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6da5e4b36449f7db37f359b4fcbcce7e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a6da5e4b36449f7db37f359b4fcbcce7e">fusePrePostSynapses</a> (bool fusePSM, bool fusePrePostWUM)</td></tr>
+<tr class="memdesc:a6da5e4b36449f7db37f359b4fcbcce7e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fuse incoming postsynaptic models.  <a href="#a6da5e4b36449f7db37f359b4fcbcce7e">More...</a><br /></td></tr>
+<tr class="separator:a6da5e4b36449f7db37f359b4fcbcce7e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac9d42e38acf94b10499217596759bbdf"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ac9d42e38acf94b10499217596759bbdf">injectCurrent</a> (<a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a> *source)</td></tr>
 <tr class="memdesc:ac9d42e38acf94b10499217596759bbdf"><td class="mdescLeft">&#160;</td><td class="mdescRight">add input current source  <a href="#ac9d42e38acf94b10499217596759bbdf">More...</a><br /></td></tr>
 <tr class="separator:ac9d42e38acf94b10499217596759bbdf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10befa3a320fdd65a3fd89230737160c"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a10befa3a320fdd65a3fd89230737160c">getInSyn</a> () const</td></tr>
 <tr class="memdesc:a10befa3a320fdd65a3fd89230737160c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all synapse groups which provide input to this neuron group.  <a href="#a10befa3a320fdd65a3fd89230737160c">More...</a><br /></td></tr>
 <tr class="separator:a10befa3a320fdd65a3fd89230737160c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94f9a56a42c986af96c51519be6c12e4"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a94f9a56a42c986af96c51519be6c12e4">getMergedInSyn</a> () const</td></tr>
-<tr class="separator:a94f9a56a42c986af96c51519be6c12e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad8932a5f6f6644bf3390a67919f7537b"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad8932a5f6f6644bf3390a67919f7537b">getFusedPSMInSyn</a> () const</td></tr>
+<tr class="separator:ad8932a5f6f6644bf3390a67919f7537b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af06fdea47e0717b5ab7b9647dc5ea3ee"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#af06fdea47e0717b5ab7b9647dc5ea3ee">getFusedWUPostInSyn</a> () const</td></tr>
+<tr class="separator:af06fdea47e0717b5ab7b9647dc5ea3ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5382014efec01cffac158fe208762f50"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a5382014efec01cffac158fe208762f50">getOutSyn</a> () const</td></tr>
 <tr class="memdesc:a5382014efec01cffac158fe208762f50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all synapse groups emanating from this neuron group.  <a href="#a5382014efec01cffac158fe208762f50">More...</a><br /></td></tr>
 <tr class="separator:a5382014efec01cffac158fe208762f50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4631487ef276fbdb6b6ce0f139ff9218"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a4631487ef276fbdb6b6ce0f139ff9218">getFusedWUPreOutSyn</a> () const</td></tr>
+<tr class="separator:a4631487ef276fbdb6b6ce0f139ff9218"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaae27d14cf95ee9fa8fa8e00051edd41"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aaae27d14cf95ee9fa8fa8e00051edd41">getCurrentSources</a> () const</td></tr>
 <tr class="memdesc:aaae27d14cf95ee9fa8fa8e00051edd41"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets pointers to all current sources which provide input to this neuron group.  <a href="#aaae27d14cf95ee9fa8fa8e00051edd41">More...</a><br /></td></tr>
 <tr class="separator:aaae27d14cf95ee9fa8fa8e00051edd41"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -275,18 +279,18 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:afb126d78de60c93ecb86eee8c8d6cdd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acc6ecb4f2adb3e38676e9a24e66b3789"><td class="memItemLeft" align="right" valign="top">const std::set&lt; <a class="el" href="../../d6/dba/structNeuronGroup_1_1SpikeEventThreshold.html">SpikeEventThreshold</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#acc6ecb4f2adb3e38676e9a24e66b3789">getSpikeEventCondition</a> () const</td></tr>
 <tr class="separator:acc6ecb4f2adb3e38676e9a24e66b3789"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad22d6dfb6b0527f51a8e29a239277636"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#ad22d6dfb6b0527f51a8e29a239277636">getInSynWithPostCode</a> () const</td></tr>
-<tr class="memdesc:ad22d6dfb6b0527f51a8e29a239277636"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of incoming synapse groups which have postsynaptic update code.  <a href="#ad22d6dfb6b0527f51a8e29a239277636">More...</a><br /></td></tr>
-<tr class="separator:ad22d6dfb6b0527f51a8e29a239277636"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8299223e42329546d83f1b34692a16d7"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a8299223e42329546d83f1b34692a16d7">getOutSynWithPreCode</a> () const</td></tr>
-<tr class="memdesc:a8299223e42329546d83f1b34692a16d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of outgoing synapse groups which have presynaptic update code.  <a href="#a8299223e42329546d83f1b34692a16d7">More...</a><br /></td></tr>
-<tr class="separator:a8299223e42329546d83f1b34692a16d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a212e296e2e58db9266d3471f85f52102"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a212e296e2e58db9266d3471f85f52102">getInSynWithPostVars</a> () const</td></tr>
-<tr class="memdesc:a212e296e2e58db9266d3471f85f52102"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of incoming synapse groups which have postsynaptic variables.  <a href="#a212e296e2e58db9266d3471f85f52102">More...</a><br /></td></tr>
-<tr class="separator:a212e296e2e58db9266d3471f85f52102"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a53d9d3102d85ce1c6f70fffe3958c87b"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a53d9d3102d85ce1c6f70fffe3958c87b">getOutSynWithPreVars</a> () const</td></tr>
-<tr class="memdesc:a53d9d3102d85ce1c6f70fffe3958c87b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of outgoing synapse groups which have presynaptic variables.  <a href="#a53d9d3102d85ce1c6f70fffe3958c87b">More...</a><br /></td></tr>
-<tr class="separator:a53d9d3102d85ce1c6f70fffe3958c87b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68c030afa4ea28a82acc115fc6c42855"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a68c030afa4ea28a82acc115fc6c42855">getFusedInSynWithPostCode</a> () const</td></tr>
+<tr class="memdesc:a68c030afa4ea28a82acc115fc6c42855"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of incoming synapse groups which have postsynaptic update code.  <a href="#a68c030afa4ea28a82acc115fc6c42855">More...</a><br /></td></tr>
+<tr class="separator:a68c030afa4ea28a82acc115fc6c42855"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1b3eadafa955cb932279df2a356fb4f1"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#a1b3eadafa955cb932279df2a356fb4f1">getFusedOutSynWithPreCode</a> () const</td></tr>
+<tr class="memdesc:a1b3eadafa955cb932279df2a356fb4f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of outgoing synapse groups which have presynaptic update code.  <a href="#a1b3eadafa955cb932279df2a356fb4f1">More...</a><br /></td></tr>
+<tr class="separator:a1b3eadafa955cb932279df2a356fb4f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afa92e03f70ae1980722077925a2fef03"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#afa92e03f70ae1980722077925a2fef03">getFusedInSynWithPostVars</a> () const</td></tr>
+<tr class="memdesc:afa92e03f70ae1980722077925a2fef03"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of incoming synapse groups which have postsynaptic variables.  <a href="#afa92e03f70ae1980722077925a2fef03">More...</a><br /></td></tr>
+<tr class="separator:afa92e03f70ae1980722077925a2fef03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2a42efd6ec2311b0f7b67d4cf269f3f"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aa2a42efd6ec2311b0f7b67d4cf269f3f">getFusedOutSynWithPreVars</a> () const</td></tr>
+<tr class="memdesc:aa2a42efd6ec2311b0f7b67d4cf269f3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to get vector of outgoing synapse groups which have presynaptic variables.  <a href="#aa2a42efd6ec2311b0f7b67d4cf269f3f">More...</a><br /></td></tr>
+<tr class="separator:aa2a42efd6ec2311b0f7b67d4cf269f3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea0036098408c4e451602ff91396d426"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aea0036098408c4e451602ff91396d426">isVarQueueRequired</a> (const std::string &amp;var) const</td></tr>
 <tr class="separator:aea0036098408c4e451602ff91396d426"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0334b1ef880461db1959fd2210e0837"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">isVarQueueRequired</a> (size_t index) const</td></tr>
@@ -415,7 +419,7 @@ Protected Member Functions</h2></td></tr>
       </table>
   </td>
   <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -539,6 +543,44 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a6da5e4b36449f7db37f359b4fcbcce7e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6da5e4b36449f7db37f359b4fcbcce7e">&#9670;&nbsp;</a></span>fusePrePostSynapses()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroup::fusePrePostSynapses </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>fusePSM</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>fusePrePostWUM</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Fuse incoming postsynaptic models. </p>
+
+</div>
+</div>
 <a id="aaae27d14cf95ee9fa8fa8e00051edd41"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aaae27d14cf95ee9fa8fa8e00051edd41">&#9670;&nbsp;</a></span>getCurrentSources()</h2>
 
@@ -641,6 +683,189 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a68c030afa4ea28a82acc115fc6c42855"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a68c030afa4ea28a82acc115fc6c42855">&#9670;&nbsp;</a></span>getFusedInSynWithPostCode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getFusedInSynWithPostCode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper to get vector of incoming synapse groups which have postsynaptic update code. </p>
+
+</div>
+</div>
+<a id="afa92e03f70ae1980722077925a2fef03"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afa92e03f70ae1980722077925a2fef03">&#9670;&nbsp;</a></span>getFusedInSynWithPostVars()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getFusedInSynWithPostVars </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper to get vector of incoming synapse groups which have postsynaptic variables. </p>
+
+</div>
+</div>
+<a id="a1b3eadafa955cb932279df2a356fb4f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1b3eadafa955cb932279df2a356fb4f1">&#9670;&nbsp;</a></span>getFusedOutSynWithPreCode()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getFusedOutSynWithPreCode </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper to get vector of outgoing synapse groups which have presynaptic update code. </p>
+
+</div>
+</div>
+<a id="aa2a42efd6ec2311b0f7b67d4cf269f3f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa2a42efd6ec2311b0f7b67d4cf269f3f">&#9670;&nbsp;</a></span>getFusedOutSynWithPreVars()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getFusedOutSynWithPreVars </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper to get vector of outgoing synapse groups which have presynaptic variables. </p>
+
+</div>
+</div>
+<a id="ad8932a5f6f6644bf3390a67919f7537b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad8932a5f6f6644bf3390a67919f7537b">&#9670;&nbsp;</a></span>getFusedPSMInSyn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>*&gt;&amp; NeuronGroup::getFusedPSMInSyn </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="af06fdea47e0717b5ab7b9647dc5ea3ee"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af06fdea47e0717b5ab7b9647dc5ea3ee">&#9670;&nbsp;</a></span>getFusedWUPostInSyn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> *&gt;&amp; NeuronGroup::getFusedWUPostInSyn </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a4631487ef276fbdb6b6ce0f139ff9218"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4631487ef276fbdb6b6ce0f139ff9218">&#9670;&nbsp;</a></span>getFusedWUPreOutSyn()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> *&gt;&amp; NeuronGroup::getFusedWUPreOutSyn </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a33def3267138044355f18cffe3b48f2e"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a33def3267138044355f18cffe3b48f2e">&#9670;&nbsp;</a></span>getHashDigest()</h2>
 
@@ -721,85 +946,6 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets pointers to all synapse groups which provide input to this neuron group. </p>
-
-</div>
-</div>
-<a id="ad22d6dfb6b0527f51a8e29a239277636"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ad22d6dfb6b0527f51a8e29a239277636">&#9670;&nbsp;</a></span>getInSynWithPostCode()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getInSynWithPostCode </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Helper to get vector of incoming synapse groups which have postsynaptic update code. </p>
-
-</div>
-</div>
-<a id="a212e296e2e58db9266d3471f85f52102"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a212e296e2e58db9266d3471f85f52102">&#9670;&nbsp;</a></span>getInSynWithPostVars()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getInSynWithPostVars </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Helper to get vector of incoming synapse groups which have postsynaptic variables. </p>
-
-</div>
-</div>
-<a id="a94f9a56a42c986af96c51519be6c12e4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a94f9a56a42c986af96c51519be6c12e4">&#9670;&nbsp;</a></span>getMergedInSyn()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>*&gt;&amp; NeuronGroup::getMergedInSyn </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
 
 </div>
 </div>
@@ -931,60 +1077,6 @@ Protected Member Functions</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Gets pointers to all synapse groups emanating from this neuron group. </p>
-
-</div>
-</div>
-<a id="a8299223e42329546d83f1b34692a16d7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8299223e42329546d83f1b34692a16d7">&#9670;&nbsp;</a></span>getOutSynWithPreCode()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getOutSynWithPreCode </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Helper to get vector of outgoing synapse groups which have presynaptic update code. </p>
-
-</div>
-</div>
-<a id="a53d9d3102d85ce1c6f70fffe3958c87b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a53d9d3102d85ce1c6f70fffe3958c87b">&#9670;&nbsp;</a></span>getOutSynWithPreVars()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; NeuronGroup::getOutSynWithPreVars </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Helper to get vector of outgoing synapse groups which have presynaptic variables. </p>
 
 </div>
 </div>
@@ -1709,34 +1801,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a78122b3ec7116cd38cbb3ad9fca04fbf"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a78122b3ec7116cd38cbb3ad9fca04fbf">&#9670;&nbsp;</a></span>mergeIncomingPSM()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">void NeuronGroup::mergeIncomingPSM </td>
-          <td>(</td>
-          <td class="paramtype">bool&#160;</td>
-          <td class="paramname"><em>merge</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Merge incoming postsynaptic models. </p>
-
-</div>
-</div>
 <a id="a9f54ec7c3dbf68196a62c2c953eeccd4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9f54ec7c3dbf68196a62c2c953eeccd4">&#9670;&nbsp;</a></span>setExtraGlobalParamLocation()</h2>
 
@@ -2096,7 +2160,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:35 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

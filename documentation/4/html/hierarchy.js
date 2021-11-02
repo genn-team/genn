@@ -141,10 +141,14 @@ var hierarchy =
     [ "CodeGenerator::Substitutions::FunctionTemplate", "d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html", null ],
     [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", null ],
     [ "CodeGenerator::GroupMerged< G >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
+      [ "CodeGenerator::CustomUpdateHostReductionGroupMergedBase< G >", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html", null ],
       [ "CodeGenerator::CustomUpdateInitGroupMergedBase< G >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", null ]
     ] ],
     [ "CodeGenerator::GroupMerged< CustomUpdateInternal >", "df/dfd/classCodeGenerator_1_1GroupMerged.html", [
       [ "CodeGenerator::CustomUpdateGroupMerged", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html", null ],
+      [ "CodeGenerator::CustomUpdateHostReductionGroupMergedBase< CustomUpdateInternal >", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html", [
+        [ "CodeGenerator::CustomUpdateHostReductionGroupMerged", "d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html", null ]
+      ] ],
       [ "CodeGenerator::CustomUpdateInitGroupMergedBase< CustomUpdateInternal >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", [
         [ "CodeGenerator::CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", null ]
       ] ]
@@ -153,6 +157,9 @@ var hierarchy =
       [ "CodeGenerator::CustomUpdateWUGroupMergedBase", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html", [
         [ "CodeGenerator::CustomUpdateTransposeWUGroupMerged", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html", null ],
         [ "CodeGenerator::CustomUpdateWUGroupMerged", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html", null ]
+      ] ],
+      [ "CodeGenerator::CustomUpdateHostReductionGroupMergedBase< CustomUpdateWUInternal >", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html", [
+        [ "CodeGenerator::CustomWUUpdateHostReductionGroupMerged", "d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html", null ]
       ] ],
       [ "CodeGenerator::CustomUpdateInitGroupMergedBase< CustomUpdateWUInternal >", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", [
         [ "CodeGenerator::CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", null ],
@@ -242,8 +249,8 @@ var hierarchy =
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", [
       [ "SynapseGroupInternal", "dd/d48/classSynapseGroupInternal.html", null ]
     ] ],
-    [ "Timer", "dc/dea/classTimer.html", null ],
     [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
+    [ "Timer", "dc/dea/classTimer.html", null ],
     [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
     [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
     [ "Models::Base::Var", "d5/d42/structModels_1_1Base_1_1Var.html", null ],

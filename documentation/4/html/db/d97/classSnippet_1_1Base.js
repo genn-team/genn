@@ -12,5 +12,6 @@ var classSnippet_1_1Base =
     [ "getExtraGlobalParamIndex", "db/d97/classSnippet_1_1Base.html#a255afab75f23b3e49f14b13f413b23aa", null ],
     [ "getExtraGlobalParams", "db/d97/classSnippet_1_1Base.html#acae8a5d250c2b75e8c5e1ec944cbe314", null ],
     [ "getParamNames", "db/d97/classSnippet_1_1Base.html#aad4f3bb00c5f29cb9d0e3585db3f4e20", null ],
-    [ "updateHash", "db/d97/classSnippet_1_1Base.html#ae09ab9858d5752c76803fcc876a1ca60", null ]
+    [ "updateHash", "db/d97/classSnippet_1_1Base.html#ae09ab9858d5752c76803fcc876a1ca60", null ],
+    [ "validate", "db/d97/classSnippet_1_1Base.html#adf9c1fd08eadc111d5867a158a33eeea", null ]
 ];

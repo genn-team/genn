@@ -10,5 +10,6 @@ var classInitSparseConnectivitySnippet_1_1Base =
     [ "getHashDigest", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#afcb5a956f72fbbc02458ba87ec6dc7b0", null ],
     [ "getHostInitCode", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ad4684e7647110810a647bcbccbcaaa83", null ],
     [ "getRowBuildCode", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ac2bab66afe84325ad9d1752910d08981", null ],
-    [ "getRowBuildStateVars", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#af9419211b940a9c51fbd6450747e1fc5", null ]
+    [ "getRowBuildStateVars", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#af9419211b940a9c51fbd6450747e1fc5", null ],
+    [ "validate", "d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ad1be788ee0f0188567597eddf27c9229", null ]
 ];

@@ -2,7 +2,7 @@ var searchData=
 [
   ['teebuf',['TeeBuf',['../d8/d5e/classCodeGenerator_1_1TeeBuf.html',1,'CodeGenerator']]],
   ['teestream',['TeeStream',['../d7/d71/classCodeGenerator_1_1TeeStream.html',1,'CodeGenerator']]],
-  ['timer',['Timer',['../dc/dea/classTimer.html',1,'Timer'],['../d0/d02/classSpineMLSimulator_1_1Timer.html',1,'SpineMLSimulator::Timer']]],
+  ['timer',['Timer',['../d0/d02/classSpineMLSimulator_1_1Timer.html',1,'SpineMLSimulator::Timer'],['../dc/dea/classTimer.html',1,'Timer']]],
   ['timeraccumulate',['TimerAccumulate',['../de/d18/classTimerAccumulate.html',1,'TimerAccumulate'],['../d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html',1,'SpineMLSimulator::TimerAccumulate']]],
   ['timevarying',['TimeVarying',['../d5/d39/classSpineMLSimulator_1_1InputValue_1_1TimeVarying.html',1,'SpineMLSimulator::InputValue']]],
   ['timevaryingarray',['TimeVaryingArray',['../d9/d04/classSpineMLSimulator_1_1InputValue_1_1TimeVaryingArray.html',1,'SpineMLSimulator::InputValue']]],

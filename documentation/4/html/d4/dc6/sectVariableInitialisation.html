@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,7 @@ $(document).ready(function(){initNavTree('d4/dc6/sectVariableInitialisation.html
 <div class="title">Variable initialisation </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p>Neuron, weight update and postsynaptic models all have state variables which GeNN can automatically initialise.</p>
+<div class="textblock"><p>Neuron, weight update, postsynaptic and custom update models all have state variables which GeNN can automatically initialise.</p>
 <p>Previously we have shown variables being initialised to constant values such as:  <div class='toggleable_div label_cpp' style='display: none;'></p><div class="fragment"><div class="line"><a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">NeuronModels::TraubMiles::VarValues</a> ini(</div><div class="line">    0.0529324,     <span class="comment">// 1 - prob. for Na channel activation m</span></div><div class="line">    ...</div><div class="line">);</div></div><!-- fragment --><p> </div>  <div class='toggleable_div label_python' style='display: none;'></p><div class="fragment"><div class="line">ini = {<span class="stringliteral">&quot;m&quot;</span>: 0.0529324, ...}</div></div><!-- fragment --><p> </div>  <div class='toggleable_div label_cpp' style='display: none;'> state variables can also be left <em>uninitialised</em> leaving it up to the user code to initialise them between the calls to <code>initialize()</code> and <code>initializeSparse()</code>:</p>
 <div class="fragment"><div class="line"><a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">NeuronModels::TraubMiles::VarValues</a> ini(</div><div class="line">    <a class="code" href="../../dc/de1/modelSpec_8h.html#a6bd7d3c3ead0a4d0ffb15d2a4c67d043">uninitialisedVar</a>(),     <span class="comment">// 1 - prob. for Na channel activation m</span></div><div class="line">    ...</div><div class="line">);</div></div><!-- fragment --><p>  </div>  <div class='toggleable_div label_python' style='display: none;'> state variables can alse be manually initialised to values specified in a numpy array: </p><div class="fragment"><div class="line">ini = {<span class="stringliteral">&quot;m&quot;</span>: np.arange(400.0), ...}</div></div><!-- fragment --><p>  </div> or initialised using one of a number of predefined <em>variable initialisation snippets</em>:</p><ul>
 <li><a class="el" href="../../df/d7b/classInitVarSnippet_1_1Kernel.html" title="Used to initialise synapse variables from a kernel. ">InitVarSnippet::Kernel</a></li>
@@ -141,7 +141,7 @@ Variable locations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:34 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

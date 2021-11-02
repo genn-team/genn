@@ -1,5 +1,9 @@
 var searchData=
 [
+  ['ncclgenerateuniqueid',['ncclGenerateUniqueID',['../d9/d7e/classSharedLibraryModel.html#a31d7457c771aa2b88ab7824da25bd779',1,'SharedLibraryModel']]],
+  ['ncclgetuniqueid',['ncclGetUniqueID',['../d9/d7e/classSharedLibraryModel.html#ae592408953c053c5731dac07b4219a03',1,'SharedLibraryModel']]],
+  ['ncclgetuniqueidbytes',['ncclGetUniqueIDBytes',['../d9/d7e/classSharedLibraryModel.html#a774be8b4029d20a0aad2d850c4dd0448',1,'SharedLibraryModel']]],
+  ['ncclinitcommunicator',['ncclInitCommunicator',['../d9/d7e/classSharedLibraryModel.html#aafcc596cbaced7d2ea45220e751bb138',1,'SharedLibraryModel']]],
   ['networkclient',['NetworkClient',['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#a84aaafa83f567da8b38da44cb083d876',1,'SpineMLSimulator::NetworkClient::NetworkClient()'],['../db/db9/classSpineMLSimulator_1_1NetworkClient.html#ab268d51650edeb38c24961b3125fcac7',1,'SpineMLSimulator::NetworkClient::NetworkClient(const std::string &amp;hostname, unsigned int port, unsigned int size, DataType dataType, Mode mode, const std::string &amp;connectionName)']]],
   ['neuron_5fupdate_5ftime',['neuron_update_time',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4e97c002bdee5922aa7cbe37b6fe47e7',1,'pygenn::genn_model::GeNNModel']]],
   ['neurongroup',['NeuronGroup',['../d7/d3b/classNeuronGroup.html#aa2b21c7c696a54bb3824c6843a0d5bb1',1,'NeuronGroup::NeuronGroup(const NeuronGroup &amp;)=delete'],['../d7/d3b/classNeuronGroup.html#acf9b709abcfb87f8bdc2375796aa8b78',1,'NeuronGroup::NeuronGroup()=delete'],['../d7/d3b/classNeuronGroup.html#a4555779ec20e5f3ca4a1e3b5ff53c8f8',1,'NeuronGroup::NeuronGroup(const std::string &amp;name, int numNeurons, const NeuronModels::Base *neuronModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; Models::VarInit &gt; &amp;varInitialisers, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)']]],

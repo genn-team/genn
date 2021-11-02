@@ -4,6 +4,7 @@ var searchData=
   ['egpfield',['EGPField',['../dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html',1,'CodeGenerator::ModelSpecMerged::EGPField'],['../dc/dcf/structCodeGenerator_1_1ModelSpecMerged_1_1EGPField.html#a235bf72444fc40a2a73eb763f857d87d',1,'CodeGenerator::ModelSpecMerged::EGPField::EGPField()']]],
   ['egpvec',['EGPVec',['../db/d97/classSnippet_1_1Base.html#a43ece29884e2c6cabffe9abf985807c6',1,'Snippet::Base']]],
   ['enablebitmaskoptimisations',['enableBitmaskOptimisations',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ad7d92a75d36e5b44f9b383f3c50dc5d8',1,'CodeGenerator::PreferencesBase']]],
+  ['enablencclreductions',['enableNCCLReductions',['../da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#aa506dfb7972b553982cca137b641cca2',1,'CodeGenerator::CUDA::Preferences']]],
   ['end',['end',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a06269039e7798cafe00f637e5df88410',1,'pygenn::genn_model::GeNNModel']]],
   ['ensureftype',['ensureFtype',['../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee',1,'CodeGenerator']]],
   ['errorstring',['errorString',['../d3/d1a/clRNG_8c.html#adf709b84aa9a04e6ec7725ae355988d9',1,'errorString():&#160;private.c'],['../d7/d07/private_8c.html#adf709b84aa9a04e6ec7725ae355988d9',1,'errorString():&#160;private.c']]],

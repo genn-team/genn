@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -107,10 +107,30 @@ $(document).ready(function(){initNavTree('d7/df6/backendBase_8cc.html','../../')
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a250d7d96debe4c60c4d0449c2a96ba78"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>(T)&#160;&#160;&#160;{#T, sizeof(T)}</td></tr>
+<tr class="memitem:a250d7d96debe4c60c4d0449c2a96ba78"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df6/backendBase_8cc.html#a250d7d96debe4c60c4d0449c2a96ba78">TYPE</a>(T)&#160;&#160;&#160;{#T, {sizeof(T), std::to_string(std::numeric_limits&lt;T&gt;::lowest())}}</td></tr>
 <tr class="separator:a250d7d96debe4c60c4d0449c2a96ba78"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3540099bdf0152901e0595e0b3152421"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/df6/backendBase_8cc.html#a3540099bdf0152901e0595e0b3152421">FLOAT_TYPE</a>(T)&#160;&#160;&#160;{#T, {sizeof(T), <a class="el" href="../../d4/d3d/namespaceUtils.html#ae03fe3aae05bd1f1522bdd541681a785">Utils::writePreciseString</a>(std::numeric_limits&lt;T&gt;::lowest())}}</td></tr>
+<tr class="separator:a3540099bdf0152901e0595e0b3152421"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a3540099bdf0152901e0595e0b3152421"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3540099bdf0152901e0595e0b3152421">&#9670;&nbsp;</a></span>FLOAT_TYPE</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define FLOAT_TYPE</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">T</td><td>)</td>
+          <td>&#160;&#160;&#160;{#T, {sizeof(T), <a class="el" href="../../d4/d3d/namespaceUtils.html#ae03fe3aae05bd1f1522bdd541681a785">Utils::writePreciseString</a>(std::numeric_limits&lt;T&gt;::lowest())}}</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a250d7d96debe4c60c4d0449c2a96ba78"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a250d7d96debe4c60c4d0449c2a96ba78">&#9670;&nbsp;</a></span>TYPE</h2>
 
@@ -122,7 +142,7 @@ Macros</h2></td></tr>
           <td>(</td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">T</td><td>)</td>
-          <td>&#160;&#160;&#160;{#T, sizeof(T)}</td>
+          <td>&#160;&#160;&#160;{#T, {sizeof(T), std::to_string(std::numeric_limits&lt;T&gt;::lowest())}}</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -136,7 +156,7 @@ Macros</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="../../dir_50ec77cb1e446fad877f3e377597ea8d.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_41836ccd157275f9bbab23043f985dae.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_168b0d4666365afeb6b12d79186b0932.html">code_generator</a></li><li class="navelem"><a class="el" href="../../d7/df6/backendBase_8cc.html">backendBase.cc</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:30 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:57 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

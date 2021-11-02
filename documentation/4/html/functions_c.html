@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -106,8 +106,14 @@ $(document).ready(function(){initNavTree('functions_c.html','');});
 <li>calcNumTimesteps()
 : <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#aa8da540022d23b78400ca692ebc13ac0">SpineMLSimulator::Simulator</a>
 </li>
-<li>canPSBeLinearlyCombined()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a05578d73f21f8ff49def3b0823f802db">SynapseGroup</a>
+<li>canPSBeFused()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a267787be0bccb9dc2eb8fdfad357e423">SynapseGroup</a>
+</li>
+<li>canWUMPostUpdateBeFused()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a5ee3c883a40fd3ad8516f44c10582c6a">SynapseGroup</a>
+</li>
+<li>canWUMPreUpdateBeFused()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a90c8fe19be76355bea43dee1dab47e0a">SynapseGroup</a>
 </li>
 <li>CB()
 : <a class="el" href="d4/d3d/structCodeGenerator_1_1CodeStream_1_1CB.html#a1bdb3de24897472fac38d36a60783347">CodeGenerator::CodeStream::CB</a>
@@ -115,8 +121,8 @@ $(document).ready(function(){initNavTree('functions_c.html','');});
 <li>checkNumDelaySlots()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce">NeuronGroup</a>
 </li>
-<li>checkVarReferenceTypes()
-: <a class="el" href="da/da9/classCustomUpdateBase.html#a02c7a17fb51c1e2c2e9d5dc3aa8482da">CustomUpdateBase</a>
+<li>checkVarReferences()
+: <a class="el" href="da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166">CustomUpdateBase</a>
 </li>
 <li>CodeStream()
 : <a class="el" href="d9/df8/classCodeGenerator_1_1CodeStream.html#a04a5a264774068dd66b7cd84d2e7a816">CodeGenerator::CodeStream</a>
@@ -167,6 +173,9 @@ $(document).ready(function(){initNavTree('functions_c.html','');});
 <li>current_sources
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a93daad6952a3dd9e66bc292617ae1830">pygenn.genn_model.GeNNModel</a>
 </li>
+<li>current_spike_events()
+: <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a872c1580a3b8848f6d7685e81a9937b0">pygenn.genn_groups.NeuronGroup</a>
+</li>
 <li>current_spikes()
 : <a class="el" href="dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#af331b05c1525ca3cafc9f006d88d1746">pygenn.genn_groups.NeuronGroup</a>
 </li>
@@ -198,13 +207,19 @@ $(document).ready(function(){initNavTree('functions_c.html','');});
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#acb126198e455de0c9b3eb2dc1a99e6c5">SharedLibraryModel&lt; scalar &gt;</a>
 </li>
 <li>CustomUpdateBase()
-: <a class="el" href="da/da9/classCustomUpdateBase.html#a42ac348785fa7113e0ef8685575e2e8c">CustomUpdateBase</a>
+: <a class="el" href="da/da9/classCustomUpdateBase.html#aad47959474b3b3b16a600abd6ca6e0f3">CustomUpdateBase</a>
 </li>
 <li>CustomUpdateGroupMerged()
 : <a class="el" href="d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html#a1e084d6313723be58d3f427b634c9347">CodeGenerator::CustomUpdateGroupMerged</a>
 </li>
 <li>CustomUpdateGroupMergedHandler
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ac7bc5c26f226caf958bfc9f72a833893">CodeGenerator::BackendBase</a>
+</li>
+<li>CustomUpdateHostReductionGroupMerged()
+: <a class="el" href="d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html#ace4710f730bbc2e6e7a132135dd595af">CodeGenerator::CustomUpdateHostReductionGroupMerged</a>
+</li>
+<li>CustomUpdateHostReductionGroupMergedBase()
+: <a class="el" href="d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html#a6dca559e40a95c46c95c63f9ce7cb398">CodeGenerator::CustomUpdateHostReductionGroupMergedBase&lt; G &gt;</a>
 </li>
 <li>CustomUpdateInitGroupMerged()
 : <a class="el" href="df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html#ab817710843fdb295aba8b4874f7cc1ab">CodeGenerator::CustomUpdateInitGroupMerged</a>
@@ -251,6 +266,9 @@ $(document).ready(function(){initNavTree('functions_c.html','');});
 <li>CustomWUUpdateDenseInitGroupMergedHandler
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a6a2f1cc29216bf24ccccce5e7f624d5e">CodeGenerator::BackendBase</a>
 </li>
+<li>CustomWUUpdateHostReductionGroupMerged()
+: <a class="el" href="d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html#ac0b88aa6d24ec9c98f8f633ce6555fe1">CodeGenerator::CustomWUUpdateHostReductionGroupMerged</a>
+</li>
 <li>CustomWUUpdateSparseInitGroupMerged()
 : <a class="el" href="d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html#af6d31f1287f8ec8bbb8cd30f61ec77d9">CodeGenerator::CustomWUUpdateSparseInitGroupMerged</a>
 </li>
@@ -264,7 +282,7 @@ $(document).ready(function(){initNavTree('functions_c.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:47 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

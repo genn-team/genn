@@ -17,6 +17,7 @@ var classCodeGenerator_1_1CUDA_1_1Backend =
     [ "genExtraGlobalParamImplementation", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a24ee42fcca1d7dc8d8fcb5fdeaa31f54", null ],
     [ "genExtraGlobalParamPull", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a302c5e72df517ee274f846b9e6762fa1", null ],
     [ "genExtraGlobalParamPush", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae67789142a85b8a13d9e602f1e938240", null ],
+    [ "genFreeMemPreamble", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae2788bf322f25a34a50ff77a40954b0e", null ],
     [ "genGlobalDeviceRNG", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a2c4c7990ffd2dcd320458841f4bfe289", null ],
     [ "genGlobalRNGSkipAhead", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a03e3b5772c2f8974b1d2917423cc0d82", null ],
     [ "genInit", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac2756995854b08ac62a2a310c8c0b91f", null ],
@@ -61,6 +62,7 @@ var classCodeGenerator_1_1CUDA_1_1Backend =
     [ "getRuntimeVersion", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae997cc1a24e965c90132162297e190ab", null ],
     [ "getSharedPrefix", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ae72aa5e8013750ede913be70546260d4", null ],
     [ "getThreadID", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a9d81d8a324d8e6a18d3a4e2fa29e1127", null ],
+    [ "isHostReductionRequired", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aa59d40638566adf41d4f7633a3914985", null ],
     [ "isPopulationRNGInitialisedOnDevice", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a3be10625dc21e68b073d419bd3a4b02e", null ],
     [ "supportsNamespace", "d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a479dbb7a30b1c8c18c55b7bff522e3fb", null ]
 ];

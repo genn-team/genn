@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -184,6 +184,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a613ea321669f05642b9496abe305ac3f"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html">CustomUpdateTransposeWUGroupMerged</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a613ea321669f05642b9496abe305ac3f">getMergedCustomUpdateTransposeWUGroups</a> () const</td></tr>
 <tr class="memdesc:a613ea321669f05642b9496abe305ac3f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get merged custom weight update groups where transpose needs to be calculated.  <a href="#a613ea321669f05642b9496abe305ac3f">More...</a><br /></td></tr>
 <tr class="separator:a613ea321669f05642b9496abe305ac3f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3aacc528b88a78039dc3246a4d1cc5ef"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html">CustomUpdateHostReductionGroupMerged</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a3aacc528b88a78039dc3246a4d1cc5ef">getMergedCustomUpdateHostReductionGroups</a> () const</td></tr>
+<tr class="memdesc:a3aacc528b88a78039dc3246a4d1cc5ef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get merged custom update groups where host reduction needs to be performed.  <a href="#a3aacc528b88a78039dc3246a4d1cc5ef">More...</a><br /></td></tr>
+<tr class="separator:a3aacc528b88a78039dc3246a4d1cc5ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8872d2334388f29aaad8cecf939e4f5e"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html">CustomWUUpdateHostReductionGroupMerged</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a8872d2334388f29aaad8cecf939e4f5e">getMergedCustomWUUpdateHostReductionGroups</a> () const</td></tr>
+<tr class="memdesc:a8872d2334388f29aaad8cecf939e4f5e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get merged custom weight update groups where host reduction needs to be performed.  <a href="#a8872d2334388f29aaad8cecf939e4f5e">More...</a><br /></td></tr>
+<tr class="separator:a8872d2334388f29aaad8cecf939e4f5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aabe017b86d463f50f802bde34aac3260"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#aabe017b86d463f50f802bde34aac3260">genMergedNeuronUpdateGroupStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
 <tr class="separator:aabe017b86d463f50f802bde34aac3260"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6652fa240f2241229fb04c612d6b8127"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a6652fa240f2241229fb04c612d6b8127">genMergedPresynapticUpdateGroupStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
@@ -218,8 +224,12 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:acb3cb689524c411aa008e994223234af"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5c8bd57ad3bfaf6c617e978c31d77a6b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a5c8bd57ad3bfaf6c617e978c31d77a6b">genMergedCustomUpdateWUStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
 <tr class="separator:a5c8bd57ad3bfaf6c617e978c31d77a6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0e87565ed23768de1d7e4987f650413b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a0e87565ed23768de1d7e4987f650413b">gemMergedCustomUpdateTransposeWUStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
-<tr class="separator:a0e87565ed23768de1d7e4987f650413b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a605e0fdd135cd6b08abe3fddf58e0118"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a605e0fdd135cd6b08abe3fddf58e0118">genMergedCustomUpdateTransposeWUStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
+<tr class="separator:a605e0fdd135cd6b08abe3fddf58e0118"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3408c0ed218dbe71ee2bd73db740d921"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a3408c0ed218dbe71ee2bd73db740d921">genMergedCustomUpdateHostReductionStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
+<tr class="separator:a3408c0ed218dbe71ee2bd73db740d921"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e93ba1c4b9a4fb27c031f941c326812"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a2e93ba1c4b9a4fb27c031f941c326812">genMergedCustomWUUpdateHostReductionStructs</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend) const</td></tr>
+<tr class="separator:a2e93ba1c4b9a4fb27c031f941c326812"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae9efd827afce23d68699b4fae2934a08"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ae9efd827afce23d68699b4fae2934a08">genNeuronUpdateGroupSupportCode</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, bool supportsNamespace=true) const</td></tr>
 <tr class="separator:ae9efd827afce23d68699b4fae2934a08"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad545bdc5534826ad9a55bd1597f258da"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ad545bdc5534826ad9a55bd1597f258da">genPostsynapticDynamicsSupportCode</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, bool supportsNamespace=true) const</td></tr>
@@ -352,8 +362,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a0e87565ed23768de1d7e4987f650413b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0e87565ed23768de1d7e4987f650413b">&#9670;&nbsp;</a></span>gemMergedCustomUpdateTransposeWUStructs()</h2>
+<a id="a3408c0ed218dbe71ee2bd73db740d921"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3408c0ed218dbe71ee2bd73db740d921">&#9670;&nbsp;</a></span>genMergedCustomUpdateHostReductionStructs()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -362,7 +372,7 @@ Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void CodeGenerator::ModelSpecMerged::gemMergedCustomUpdateTransposeWUStructs </td>
+          <td class="memname">void CodeGenerator::ModelSpecMerged::genMergedCustomUpdateHostReductionStructs </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
           <td class="paramname"><em>os</em>, </td>
@@ -460,6 +470,42 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a605e0fdd135cd6b08abe3fddf58e0118"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a605e0fdd135cd6b08abe3fddf58e0118">&#9670;&nbsp;</a></span>genMergedCustomUpdateTransposeWUStructs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CodeGenerator::ModelSpecMerged::genMergedCustomUpdateTransposeWUStructs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
+          <td class="paramname"><em>backend</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a5c8bd57ad3bfaf6c617e978c31d77a6b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a5c8bd57ad3bfaf6c617e978c31d77a6b">&#9670;&nbsp;</a></span>genMergedCustomUpdateWUStructs()</h2>
 
@@ -507,6 +553,42 @@ Public Member Functions</h2></td></tr>
       <table class="memname">
         <tr>
           <td class="memname">void CodeGenerator::ModelSpecMerged::genMergedCustomWUUpdateDenseInitGroupStructs </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
+          <td class="paramname"><em>backend</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a2e93ba1c4b9a4fb27c031f941c326812"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e93ba1c4b9a4fb27c031f941c326812">&#9670;&nbsp;</a></span>genMergedCustomWUUpdateHostReductionStructs()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CodeGenerator::ModelSpecMerged::genMergedCustomWUUpdateHostReductionStructs </td>
           <td>(</td>
           <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
           <td class="paramname"><em>os</em>, </td>
@@ -1349,6 +1431,33 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
+<a id="a3aacc528b88a78039dc3246a4d1cc5ef"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3aacc528b88a78039dc3246a4d1cc5ef">&#9670;&nbsp;</a></span>getMergedCustomUpdateHostReductionGroups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html">CustomUpdateHostReductionGroupMerged</a>&gt;&amp; CodeGenerator::ModelSpecMerged::getMergedCustomUpdateHostReductionGroups </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get merged custom update groups where host reduction needs to be performed. </p>
+
+</div>
+</div>
 <a id="a7afc2a47f4d07ec349c1d87f1c184166"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7afc2a47f4d07ec349c1d87f1c184166">&#9670;&nbsp;</a></span>getMergedCustomUpdateInitGroups()</h2>
 
@@ -1454,6 +1563,33 @@ template&lt;typename T &gt; </div>
 </div><div class="memdoc">
 
 <p>Get merged custom updategroups with dense connectivity which require initialisation. </p>
+
+</div>
+</div>
+<a id="a8872d2334388f29aaad8cecf939e4f5e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8872d2334388f29aaad8cecf939e4f5e">&#9670;&nbsp;</a></span>getMergedCustomWUUpdateHostReductionGroups()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html">CustomWUUpdateHostReductionGroupMerged</a>&gt;&amp; CodeGenerator::ModelSpecMerged::getMergedCustomWUUpdateHostReductionGroups </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get merged custom weight update groups where host reduction needs to be performed. </p>
 
 </div>
 </div>
@@ -2079,7 +2215,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:37 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

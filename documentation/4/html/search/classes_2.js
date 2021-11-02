@@ -18,6 +18,10 @@ var searchData=
   ['customupdate',['CustomUpdate',['../d5/dc7/classpygenn_1_1genn__groups_1_1CustomUpdate.html',1,'pygenn.genn_groups.CustomUpdate'],['../d7/d60/classCustomUpdate.html',1,'CustomUpdate']]],
   ['customupdatebase',['CustomUpdateBase',['../da/da9/classCustomUpdateBase.html',1,'']]],
   ['customupdategroupmerged',['CustomUpdateGroupMerged',['../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html',1,'CodeGenerator']]],
+  ['customupdatehostreductiongroupmerged',['CustomUpdateHostReductionGroupMerged',['../d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html',1,'CodeGenerator']]],
+  ['customupdatehostreductiongroupmergedbase',['CustomUpdateHostReductionGroupMergedBase',['../d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html',1,'CodeGenerator']]],
+  ['customupdatehostreductiongroupmergedbase_3c_20customupdateinternal_20_3e',['CustomUpdateHostReductionGroupMergedBase&lt; CustomUpdateInternal &gt;',['../d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html',1,'CodeGenerator']]],
+  ['customupdatehostreductiongroupmergedbase_3c_20customupdatewuinternal_20_3e',['CustomUpdateHostReductionGroupMergedBase&lt; CustomUpdateWUInternal &gt;',['../d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html',1,'CodeGenerator']]],
   ['customupdateinitgroupmerged',['CustomUpdateInitGroupMerged',['../df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html',1,'CodeGenerator']]],
   ['customupdateinitgroupmergedbase',['CustomUpdateInitGroupMergedBase',['../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html',1,'CodeGenerator']]],
   ['customupdateinitgroupmergedbase_3c_20customupdateinternal_20_3e',['CustomUpdateInitGroupMergedBase&lt; CustomUpdateInternal &gt;',['../d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html',1,'CodeGenerator']]],
@@ -29,5 +33,6 @@ var searchData=
   ['customupdatewugroupmergedbase',['CustomUpdateWUGroupMergedBase',['../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html',1,'CodeGenerator']]],
   ['customupdatewuinternal',['CustomUpdateWUInternal',['../da/ddf/classCustomUpdateWUInternal.html',1,'']]],
   ['customwuupdatedenseinitgroupmerged',['CustomWUUpdateDenseInitGroupMerged',['../db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html',1,'CodeGenerator']]],
+  ['customwuupdatehostreductiongroupmerged',['CustomWUUpdateHostReductionGroupMerged',['../d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html',1,'CodeGenerator']]],
   ['customwuupdatesparseinitgroupmerged',['CustomWUUpdateSparseInitGroupMerged',['../d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html',1,'CodeGenerator']]]
 ];

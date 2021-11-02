@@ -16,7 +16,7 @@ var genn__model_8py =
     [ "create_var_ref", "de/db7/genn__model_8py.html#a58d69fc68a1745c3aff4fecd4e6e456e", null ],
     [ "create_wu_post_var_ref", "de/db7/genn__model_8py.html#a76a9e68c8ab998734058a6ddd629b2bb", null ],
     [ "create_wu_pre_var_ref", "de/db7/genn__model_8py.html#aecd5b6795a09e26bee8ad28c193b512d", null ],
-    [ "create_wu_var_ref", "de/db7/genn__model_8py.html#ac420218045517b46a8361512b1769098", null ],
+    [ "create_wu_var_ref", "de/db7/genn__model_8py.html#a7f245fe90fc8d6ef57129712df9e6672", null ],
     [ "init_connectivity", "de/db7/genn__model_8py.html#a7fa33c9872ab0cf97d0b60fa41bf17fe", null ],
     [ "init_var", "de/db7/genn__model_8py.html#aa2daf7a01b3f49dcbc5dba9690020bc3", null ],
     [ "backend_modules", "de/db7/genn__model_8py.html#a0378993ab51a2871fc274bddf7b55bcd", null ],

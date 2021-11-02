@@ -22,5 +22,6 @@ var classWeightUpdateModels_1_1Base =
     [ "isPreSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a26c3071dfdf87eaddb857a535894bf7a", null ],
     [ "isPrevPostSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a1aaced8f8f26f219b81fc2e4c55ce9ae", null ],
     [ "isPrevPreSpikeEventTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#a821ad5f4a7036bf16a4ed5ab01a51162", null ],
-    [ "isPrevPreSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#afb029edbaf62060064726b3378b6652c", null ]
+    [ "isPrevPreSpikeTimeRequired", "d2/d05/classWeightUpdateModels_1_1Base.html#afb029edbaf62060064726b3378b6652c", null ],
+    [ "validate", "d2/d05/classWeightUpdateModels_1_1Base.html#a6cfbf632a3f45fcec6a964f7eb95219a", null ]
 ];

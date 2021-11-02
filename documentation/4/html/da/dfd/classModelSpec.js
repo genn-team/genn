@@ -48,6 +48,8 @@ var classModelSpec =
     [ "setDefaultSparseConnectivityLocation", "da/dfd/classModelSpec.html#a9bc61e7c5dce757de3a9b7479852ca72", null ],
     [ "setDefaultVarLocation", "da/dfd/classModelSpec.html#a55c87917355d34463a3c19fc6887e67a", null ],
     [ "setDT", "da/dfd/classModelSpec.html#a329236a3b07044b82bfda5b4f741d8e1", null ],
+    [ "setFusePostsynapticModels", "da/dfd/classModelSpec.html#a8b097c466e712edb633efe8c01dd6f08", null ],
+    [ "setFusePrePostWeightUpdateModels", "da/dfd/classModelSpec.html#a914061069d16c900364b8d92976cee0b", null ],
     [ "setMergePostsynapticModels", "da/dfd/classModelSpec.html#ac40ba51579f94af5ca7fa51c4f67fe8f", null ],
     [ "setName", "da/dfd/classModelSpec.html#ada1aff7a94eeb36dff721f09d5cf94b4", null ],
     [ "setPrecision", "da/dfd/classModelSpec.html#a7548f1bf634884c051e4fbac3cf6212c", null ],

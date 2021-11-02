@@ -6,7 +6,8 @@ var UserManual =
       [ "Defining neuron populations", "df/dc3/sectDefiningNetwork.html#subsect11", null ],
       [ "Defining synapse populations", "df/dc3/sectDefiningNetwork.html#subsect12", null ],
       [ "Defining current sources", "df/dc3/sectDefiningNetwork.html#defining_current_source", null ],
-      [ "Defining custom updates", "df/dc3/sectDefiningNetwork.html#defining_custom_updates", null ]
+      [ "Defining custom updates", "df/dc3/sectDefiningNetwork.html#defining_custom_updates", null ],
+      [ "Batching", "df/dc3/sectDefiningNetwork.html#batching", null ]
     ] ],
     [ "Neuron models", "de/ded/sectNeuronModels.html", [
       [ "Defining your own neuron type", "de/ded/sectNeuronModels.html#sect_own", [
@@ -32,7 +33,9 @@ var UserManual =
       [ "Defining your own current source model", "d0/d1e/sectCurrentSourceModels.html#sect_own_current_source", null ]
     ] ],
     [ "Custom update models", "d7/d98/sectCustomUpdate.html", [
-      [ "Defining your own custom update model", "d7/d98/sectCustomUpdate.html#sect_own_custom_update", null ]
+      [ "Defining your own custom update model", "d7/d98/sectCustomUpdate.html#sect_own_custom_update", [
+        [ "Batch reduction", "d7/d98/sectCustomUpdate.html#custom_update_reduction", null ]
+      ] ]
     ] ],
     [ "Synaptic matrix types", "d5/d39/subsect34.html", null ],
     [ "Variable initialisation", "d4/dc6/sectVariableInitialisation.html", [

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -103,6 +103,7 @@ $(document).ready(function(){initNavTree('d1/d04/gennUtils_8cc.html','../../');}
 <div class="contents">
 <div class="textblock"><code>#include &quot;<a class="el" href="../../d9/d59/gennUtils_8h_source.html">gennUtils.h</a>&quot;</code><br />
 <code>#include &lt;algorithm&gt;</code><br />
+<code>#include &lt;cctype&gt;</code><br />
 <code>#include &quot;<a class="el" href="../../d4/d13/models_8h_source.html">models.h</a>&quot;</code><br />
 </div><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -124,9 +125,21 @@ Functions</h2></td></tr>
 <tr class="memitem:ab6253065242dff081681703366167228"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#ab6253065242dff081681703366167228">Utils::isTypePointerToPointer</a> (const std::string &amp;type)</td></tr>
 <tr class="memdesc:ab6253065242dff081681703366167228"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to determine whether a string containing a type is a pointer to a pointer.  <a href="../../d4/d3d/namespaceUtils.html#ab6253065242dff081681703366167228">More...</a><br /></td></tr>
 <tr class="separator:ab6253065242dff081681703366167228"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b11f4a5af20a9dd41ae83d6ba93a5c8"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a5b11f4a5af20a9dd41ae83d6ba93a5c8">Utils::isTypeFloatingPoint</a> (const std::string &amp;type)</td></tr>
+<tr class="memdesc:a5b11f4a5af20a9dd41ae83d6ba93a5c8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Function to determine whether a string containing a type is floating point.  <a href="../../d4/d3d/namespaceUtils.html#a5b11f4a5af20a9dd41ae83d6ba93a5c8">More...</a><br /></td></tr>
+<tr class="separator:a5b11f4a5af20a9dd41ae83d6ba93a5c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a81b8175ca219ca3b6cee762c38d6013f"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a81b8175ca219ca3b6cee762c38d6013f">Utils::getUnderlyingType</a> (const std::string &amp;type)</td></tr>
 <tr class="memdesc:a81b8175ca219ca3b6cee762c38d6013f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assuming type is a string containing a pointer type, function to return the underlying type.  <a href="../../d4/d3d/namespaceUtils.html#a81b8175ca219ca3b6cee762c38d6013f">More...</a><br /></td></tr>
 <tr class="separator:a81b8175ca219ca3b6cee762c38d6013f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a33cf29ce3af46281463822e4941a9810"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#a33cf29ce3af46281463822e4941a9810">Utils::validateVarName</a> (const std::string &amp;name, const std::string &amp;description)</td></tr>
+<tr class="memdesc:a33cf29ce3af46281463822e4941a9810"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is the variable name valid? GeNN variable names must obey C variable naming rules.  <a href="../../d4/d3d/namespaceUtils.html#a33cf29ce3af46281463822e4941a9810">More...</a><br /></td></tr>
+<tr class="separator:a33cf29ce3af46281463822e4941a9810"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea4839861eb9067ce6b87b550cdf01d7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#aea4839861eb9067ce6b87b550cdf01d7">Utils::validatePopName</a> (const std::string &amp;name, const std::string &amp;description)</td></tr>
+<tr class="memdesc:aea4839861eb9067ce6b87b550cdf01d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is the population name valid? GeNN population names obey C variable naming rules but can start with a number.  <a href="../../d4/d3d/namespaceUtils.html#aea4839861eb9067ce6b87b550cdf01d7">More...</a><br /></td></tr>
+<tr class="separator:aea4839861eb9067ce6b87b550cdf01d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aca01fceeff16cd1d3ccfde0927dfce5c"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d4/d3d/namespaceUtils.html#aca01fceeff16cd1d3ccfde0927dfce5c">Utils::validateParamNames</a> (const std::vector&lt; std::string &gt; &amp;paramNames)</td></tr>
+<tr class="memdesc:aca01fceeff16cd1d3ccfde0927dfce5c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules.  <a href="../../d4/d3d/namespaceUtils.html#aca01fceeff16cd1d3ccfde0927dfce5c">More...</a><br /></td></tr>
+<tr class="separator:aca01fceeff16cd1d3ccfde0927dfce5c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -135,7 +148,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="../../dir_50ec77cb1e446fad877f3e377597ea8d.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_41836ccd157275f9bbab23043f985dae.html">genn</a></li><li class="navelem"><a class="el" href="../../d1/d04/gennUtils_8cc.html">gennUtils.cc</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:31 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:57 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

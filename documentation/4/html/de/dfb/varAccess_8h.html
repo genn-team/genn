@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -106,20 +106,37 @@ $(document).ready(function(){initNavTree('de/dfb/varAccess_8h.html','../../');})
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="enum-members"></a>
 Enumerations</h2></td></tr>
-<tr class="memitem:ac9af5b5dbabe0b411cc7b2bca48ad72b"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> : unsigned int { <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72baa7b843fb734e3b3fea8e5f902d3f4144">VarAccessMode::READ_WRITE</a> = (1 &lt;&lt; 0), 
-<a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72ba47c7e7cb36a953a8c47e02000036bb44">VarAccessMode::READ_ONLY</a> = (1 &lt;&lt; 1)
- }<tr class="memdesc:ac9af5b5dbabe0b411cc7b2bca48ad72b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flags defining variable access models.  <a href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">More...</a><br /></td></tr>
+<tr class="memitem:a32d540eb08af15beb398b0febe15d128"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128">VarAccessModeAttribute</a> : unsigned int { <br />
+&#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128a47c7e7cb36a953a8c47e02000036bb44">VarAccessModeAttribute::READ_ONLY</a> = (1 &lt;&lt; 0), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128aa7b843fb734e3b3fea8e5f902d3f4144">VarAccessModeAttribute::READ_WRITE</a> = (1 &lt;&lt; 1), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128ac26e83d7610e4a0a9307a7bea9aec3d9">VarAccessModeAttribute::REDUCE</a> = (1 &lt;&lt; 2), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128a6970bdc2201030b9c03fbdcf3973858a">VarAccessModeAttribute::SUM</a> = (1 &lt;&lt; 3), 
+<br />
+&#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128a26a4b44a837bf97b972628509912b4a5">VarAccessModeAttribute::MAX</a> = (1 &lt;&lt; 4)
+<br />
+ }</td></tr>
+<tr class="separator:a32d540eb08af15beb398b0febe15d128"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac9af5b5dbabe0b411cc7b2bca48ad72b"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> : unsigned int { <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72baa7b843fb734e3b3fea8e5f902d3f4144">VarAccessMode::READ_WRITE</a> = static_cast&lt;unsigned int&gt;(VarAccessModeAttribute::READ_WRITE), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72ba47c7e7cb36a953a8c47e02000036bb44">VarAccessMode::READ_ONLY</a> = static_cast&lt;unsigned int&gt;(VarAccessModeAttribute::READ_ONLY), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72badc1f40b6ac21ec871b1ada167ac4ad86">VarAccessMode::REDUCE_SUM</a> = static_cast&lt;unsigned int&gt;(VarAccessModeAttribute::REDUCE) | static_cast&lt;unsigned int&gt;(VarAccessModeAttribute::SUM), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72baea079a51906d4a31c2f0d9ad313d9c33">VarAccessMode::REDUCE_MAX</a> = static_cast&lt;unsigned int&gt;(VarAccessModeAttribute::REDUCE) | static_cast&lt;unsigned int&gt;(VarAccessModeAttribute::MAX)
+ }<tr class="memdesc:ac9af5b5dbabe0b411cc7b2bca48ad72b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported combination of VarAccessModeAttribute.  <a href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:ac9af5b5dbabe0b411cc7b2bca48ad72b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afabbd457a93205e571bff448ec134764"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> : unsigned int { <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a5c57b592f6421079706484abebcab81b">VarAccessDuplication::DUPLICATE</a> = (1 &lt;&lt; 2), 
-<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63">VarAccessDuplication::SHARED</a> = (1 &lt;&lt; 3)
+<tr class="memitem:afabbd457a93205e571bff448ec134764"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> : unsigned int { <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a5c57b592f6421079706484abebcab81b">VarAccessDuplication::DUPLICATE</a> = (1 &lt;&lt; 5), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764a049518eb4dc1859c7cebbe15876cfd63">VarAccessDuplication::SHARED</a> = (1 &lt;&lt; 6)
  }<tr class="memdesc:afabbd457a93205e571bff448ec134764"><td class="mdescLeft">&#160;</td><td class="mdescRight">Flags defining how variables should be duplicated across multiple batches.  <a href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:afabbd457a93205e571bff448ec134764"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae8a5891c5d3beb45321e2f850539452f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> : unsigned int { <a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452faa7b843fb734e3b3fea8e5f902d3f4144">VarAccess::READ_WRITE</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_WRITE) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::DUPLICATE), 
+<tr class="memitem:ae8a5891c5d3beb45321e2f850539452f"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> : unsigned int { <br />
+&#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452faa7b843fb734e3b3fea8e5f902d3f4144">VarAccess::READ_WRITE</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_WRITE) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::DUPLICATE), 
 <a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa47c7e7cb36a953a8c47e02000036bb44">VarAccess::READ_ONLY</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_ONLY) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED), 
-<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa5ab0957a4a1eb6967baa754d809e93ae">VarAccess::READ_ONLY_DUPLICATE</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_ONLY) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::DUPLICATE)
- }<tr class="memdesc:ae8a5891c5d3beb45321e2f850539452f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight.  <a href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">More...</a><br /></td></tr>
+<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa5ab0957a4a1eb6967baa754d809e93ae">VarAccess::READ_ONLY_DUPLICATE</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::READ_ONLY) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::DUPLICATE), 
+<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fa209f91e16acd067fe7b41d1fdcfe42f5">VarAccess::REDUCE_BATCH_SUM</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_SUM) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED), 
+<br />
+&#160;&#160;<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86">VarAccess::REDUCE_BATCH_MAX</a> = static_cast&lt;unsigned int&gt;(VarAccessMode::REDUCE_MAX) | static_cast&lt;unsigned int&gt;(VarAccessDuplication::SHARED)
+<br />
+ }<tr class="memdesc:ae8a5891c5d3beb45321e2f850539452f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Supported combinations of VarAccessMode and VarAccessDuplication.  <a href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">More...</a><br /></td></tr>
 </td></tr>
 <tr class="separator:ae8a5891c5d3beb45321e2f850539452f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
@@ -129,8 +146,10 @@ Functions</h2></td></tr>
 <tr class="separator:a3988e58c32473b26ae0f8f4e96c2c7e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae113a2fc9eb99b84cea5c07a6ed20530"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#ae113a2fc9eb99b84cea5c07a6ed20530">operator&amp;</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> type, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> duplication)</td></tr>
 <tr class="separator:ae113a2fc9eb99b84cea5c07a6ed20530"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8b4ac50e55b4ea175599ce4a9f3f8d08"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#a8b4ac50e55b4ea175599ce4a9f3f8d08">operator&amp;</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> a, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> b)</td></tr>
-<tr class="separator:a8b4ac50e55b4ea175599ce4a9f3f8d08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52cc08db07e5a56fa029cd023765425f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#a52cc08db07e5a56fa029cd023765425f">operator&amp;</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> type, <a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128">VarAccessModeAttribute</a> modeAttribute)</td></tr>
+<tr class="separator:a52cc08db07e5a56fa029cd023765425f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07513a14d40e209be2c8c9b3de558290"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#a07513a14d40e209be2c8c9b3de558290">operator&amp;</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> mode, <a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128">VarAccessModeAttribute</a> modeAttribute)</td></tr>
+<tr class="separator:a07513a14d40e209be2c8c9b3de558290"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a56f91f6d6c80b29684fd489a3b1dc018"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#a56f91f6d6c80b29684fd489a3b1dc018">getVarAccessMode</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> type)</td></tr>
 <tr class="separator:a56f91f6d6c80b29684fd489a3b1dc018"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7b3d03425043f62a04d741bc43e58d17"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/dfb/varAccess_8h.html#a7b3d03425043f62a04d741bc43e58d17">getVarAccessDuplication</a> (<a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a> type)</td></tr>
@@ -157,11 +176,13 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight. </p>
+<p>Supported combinations of VarAccessMode and VarAccessDuplication. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452faa7b843fb734e3b3fea8e5f902d3f4144"></a>READ_WRITE&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa47c7e7cb36a953a8c47e02000036bb44"></a>READ_ONLY&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa5ab0957a4a1eb6967baa754d809e93ae"></a>READ_ONLY_DUPLICATE&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fa209f91e16acd067fe7b41d1fdcfe42f5"></a>REDUCE_BATCH_SUM&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ae8a5891c5d3beb45321e2f850539452fac48cd0859cd894a5ce16fde3338a4d86"></a>REDUCE_BATCH_MAX&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
 </div>
@@ -215,10 +236,45 @@ Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Flags defining variable access models. </p>
+<p>Supported combination of VarAccessModeAttribute. </p>
 <table class="fieldtable">
 <tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="ac9af5b5dbabe0b411cc7b2bca48ad72baa7b843fb734e3b3fea8e5f902d3f4144"></a>READ_WRITE&#160;</td><td class="fielddoc"></td></tr>
-<tr><td class="fieldname"><a id="ac9af5b5dbabe0b411cc7b2bca48ad72ba47c7e7cb36a953a8c47e02000036bb44"></a>READ_ONLY&#160;</td><td class="fielddoc"><p>This variable is both read and written by the model. </p>
+<tr><td class="fieldname"><a id="ac9af5b5dbabe0b411cc7b2bca48ad72ba47c7e7cb36a953a8c47e02000036bb44"></a>READ_ONLY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac9af5b5dbabe0b411cc7b2bca48ad72badc1f40b6ac21ec871b1ada167ac4ad86"></a>REDUCE_SUM&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="ac9af5b5dbabe0b411cc7b2bca48ad72baea079a51906d4a31c2f0d9ad313d9c33"></a>REDUCE_MAX&#160;</td><td class="fielddoc"></td></tr>
+</table>
+
+</div>
+</div>
+<a id="a32d540eb08af15beb398b0febe15d128"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a32d540eb08af15beb398b0febe15d128">&#9670;&nbsp;</a></span>VarAccessModeAttribute</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">enum <a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128">VarAccessModeAttribute</a> : unsigned int</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<p>Flags defining attributes of var access models <b>NOTE</b> Read-only and read-write are seperate flags rather than read and write so you can test mode &amp; <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72ba47c7e7cb36a953a8c47e02000036bb44">VarAccessMode::READ_ONLY</a> </p>
+<table class="fieldtable">
+<tr><th colspan="2">Enumerator</th></tr><tr><td class="fieldname"><a id="a32d540eb08af15beb398b0febe15d128a47c7e7cb36a953a8c47e02000036bb44"></a>READ_ONLY&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="a32d540eb08af15beb398b0febe15d128aa7b843fb734e3b3fea8e5f902d3f4144"></a>READ_WRITE&#160;</td><td class="fielddoc"><p>This variable is read only. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a32d540eb08af15beb398b0febe15d128ac26e83d7610e4a0a9307a7bea9aec3d9"></a>REDUCE&#160;</td><td class="fielddoc"><p>This variable is read-write. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a32d540eb08af15beb398b0febe15d128a6970bdc2201030b9c03fbdcf3973858a"></a>SUM&#160;</td><td class="fielddoc"><p>This variable is a reduction target. </p>
+</td></tr>
+<tr><td class="fieldname"><a id="a32d540eb08af15beb398b0febe15d128a26a4b44a837bf97b972628509912b4a5"></a>MAX&#160;</td><td class="fielddoc"><p>This variable's reduction operation is a summation. </p>
 </td></tr>
 </table>
 
@@ -278,7 +334,7 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a id="a3988e58c32473b26ae0f8f4e96c2c7e8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3988e58c32473b26ae0f8f4e96c2c7e8">&#9670;&nbsp;</a></span>operator&() <span class="overload">[1/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a3988e58c32473b26ae0f8f4e96c2c7e8">&#9670;&nbsp;</a></span>operator&() <span class="overload">[1/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -314,7 +370,7 @@ Functions</h2></td></tr>
 </div>
 </div>
 <a id="ae113a2fc9eb99b84cea5c07a6ed20530"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae113a2fc9eb99b84cea5c07a6ed20530">&#9670;&nbsp;</a></span>operator&() <span class="overload">[2/3]</span></h2>
+<h2 class="memtitle"><span class="permalink"><a href="#ae113a2fc9eb99b84cea5c07a6ed20530">&#9670;&nbsp;</a></span>operator&() <span class="overload">[2/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -349,8 +405,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a8b4ac50e55b4ea175599ce4a9f3f8d08"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8b4ac50e55b4ea175599ce4a9f3f8d08">&#9670;&nbsp;</a></span>operator&() <span class="overload">[3/3]</span></h2>
+<a id="a52cc08db07e5a56fa029cd023765425f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52cc08db07e5a56fa029cd023765425f">&#9670;&nbsp;</a></span>operator&() <span class="overload">[3/4]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -361,14 +417,50 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">bool operator &amp; </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a>&#160;</td>
-          <td class="paramname"><em>a</em>, </td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f">VarAccess</a>&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a>&#160;</td>
-          <td class="paramname"><em>b</em>&#160;</td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128">VarAccessModeAttribute</a>&#160;</td>
+          <td class="paramname"><em>modeAttribute</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a07513a14d40e209be2c8c9b3de558290"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07513a14d40e209be2c8c9b3de558290">&#9670;&nbsp;</a></span>operator&() <span class="overload">[4/4]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool operator &amp; </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a>&#160;</td>
+          <td class="paramname"><em>mode</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#a32d540eb08af15beb398b0febe15d128">VarAccessModeAttribute</a>&#160;</td>
+          <td class="paramname"><em>modeAttribute</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -392,7 +484,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../de/dfb/varAccess_8h.html">varAccess.h</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:33 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

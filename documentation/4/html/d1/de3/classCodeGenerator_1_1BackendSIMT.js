@@ -9,7 +9,7 @@ var classCodeGenerator_1_1BackendSIMT =
       [ "OR", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a8f14c05ac0d013316a18d606864863e8a1d00e7dce692e8dc3f6877f035e3a616", null ]
     ] ],
     [ "BackendSIMT", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#aa2c768684586cc2a68ca8f46bc37697c", null ],
-    [ "addDeviceType", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a3ba1e00a2594c1af31e22a40a3dd1074", null ],
+    [ "addDeviceType", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#ae32ae31a12d5a40feecd20cad8e2cb21", null ],
     [ "areSharedMemAtomicsSlow", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a546cb441e0845cc25abbdcc8a8de60a1", null ],
     [ "genCustomTransposeUpdateWUKernel", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#af9f838da8f352e11645d3c5c3d36bb30", null ],
     [ "genCustomUpdateKernel", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a976c542ad289ebc3882b60738ca2a4a5", null ],

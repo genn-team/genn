@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -157,8 +157,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classCustomUpdate"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classCustomUpdate')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../d7/d60/classCustomUpdate.html">CustomUpdate</a></td></tr>
 <tr class="memitem:a20a93aa4231102a22595cdc3343d4f06 inherit pro_methods_classCustomUpdate"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d60/classCustomUpdate.html#a20a93aa4231102a22595cdc3343d4f06">CustomUpdate</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html">CustomUpdateModels::Base</a> *customUpdateModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;varInitialisers, const std::vector&lt; <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> &gt; &amp;varReferences, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultVarLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultExtraGlobalParamLocation)</td></tr>
 <tr class="separator:a20a93aa4231102a22595cdc3343d4f06 inherit pro_methods_classCustomUpdate"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4e357e11a354b05ab0d437910b72688a inherit pro_methods_classCustomUpdate"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d60/classCustomUpdate.html#a4e357e11a354b05ab0d437910b72688a">finalize</a> (unsigned int batchSize)</td></tr>
-<tr class="separator:a4e357e11a354b05ab0d437910b72688a inherit pro_methods_classCustomUpdate"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab0b390fb76756553a3ba3cb5f32b2dbe inherit pro_methods_classCustomUpdate"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d60/classCustomUpdate.html#ab0b390fb76756553a3ba3cb5f32b2dbe">finalize</a> ()</td></tr>
+<tr class="separator:ab0b390fb76756553a3ba3cb5f32b2dbe inherit pro_methods_classCustomUpdate"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a221560f977b7a1af7d901df3367e0473 inherit pro_methods_classCustomUpdate"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d60/classCustomUpdate.html#a221560f977b7a1af7d901df3367e0473">getHashDigest</a> () const</td></tr>
 <tr class="memdesc:a221560f977b7a1af7d901df3367e0473 inherit pro_methods_classCustomUpdate"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with custom update.  <a href="../../d7/d60/classCustomUpdate.html#a221560f977b7a1af7d901df3367e0473">More...</a><br /></td></tr>
 <tr class="separator:a221560f977b7a1af7d901df3367e0473 inherit pro_methods_classCustomUpdate"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -182,6 +182,9 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:a70d7ff78782d9978c1501b7d2598ff6d inherit pro_methods_classCustomUpdateBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a70d7ff78782d9978c1501b7d2598ff6d">isBatched</a> () const</td></tr>
 <tr class="memdesc:a70d7ff78782d9978c1501b7d2598ff6d inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is this custom update batched i.e. run in parallel across model batches.  <a href="../../da/da9/classCustomUpdateBase.html#a70d7ff78782d9978c1501b7d2598ff6d">More...</a><br /></td></tr>
 <tr class="separator:a70d7ff78782d9978c1501b7d2598ff6d inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af1589576f2bb0ef75378db2a2b83f567 inherit pro_methods_classCustomUpdateBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#af1589576f2bb0ef75378db2a2b83f567">isReduction</a> () const</td></tr>
+<tr class="memdesc:af1589576f2bb0ef75378db2a2b83f567 inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Does this custom update perform a reduction i.e. reduce some variables from DUPLICATE to SHARED.  <a href="../../da/da9/classCustomUpdateBase.html#af1589576f2bb0ef75378db2a2b83f567">More...</a><br /></td></tr>
+<tr class="separator:af1589576f2bb0ef75378db2a2b83f567 inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88d3c1572240717c7f94e8330b7a2f9a inherit pro_methods_classCustomUpdateBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a88d3c1572240717c7f94e8330b7a2f9a">updateHash</a> (boost::uuids::detail::sha1 &amp;hash) const</td></tr>
 <tr class="memdesc:a88d3c1572240717c7f94e8330b7a2f9a inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Updates hash with custom update.  <a href="../../da/da9/classCustomUpdateBase.html#a88d3c1572240717c7f94e8330b7a2f9a">More...</a><br /></td></tr>
 <tr class="separator:a88d3c1572240717c7f94e8330b7a2f9a inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -190,14 +193,10 @@ Additional Inherited Members</h2></td></tr>
 <tr class="separator:ac38c2950058bf76b8acb1d380826a4be inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8aec4f7a9c857562bf79bd9b9188cd1b inherit pro_methods_classCustomUpdateBase"><td class="memItemLeft" align="right" valign="top">boost::uuids::detail::sha1::digest_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a8aec4f7a9c857562bf79bd9b9188cd1b">getVarLocationHashDigest</a> () const</td></tr>
 <tr class="separator:a8aec4f7a9c857562bf79bd9b9188cd1b inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a89f89969b57c47ed74e8b3c5e0c381e0 inherit pro_methods_classCustomUpdateBase"><td class="memTemplParams" colspan="2">template&lt;typename R &gt; </td></tr>
-<tr class="memitem:a89f89969b57c47ed74e8b3c5e0c381e0 inherit pro_methods_classCustomUpdateBase"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a89f89969b57c47ed74e8b3c5e0c381e0">finalizeBatched</a> (unsigned int batchSize, const std::vector&lt; R &gt; &amp;varRefs)</td></tr>
-<tr class="memdesc:a89f89969b57c47ed74e8b3c5e0c381e0 inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to determine whether a custom update should be batched.  <a href="../../da/da9/classCustomUpdateBase.html#a89f89969b57c47ed74e8b3c5e0c381e0">More...</a><br /></td></tr>
-<tr class="separator:a89f89969b57c47ed74e8b3c5e0c381e0 inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a02c7a17fb51c1e2c2e9d5dc3aa8482da inherit pro_methods_classCustomUpdateBase"><td class="memTemplParams" colspan="2">template&lt;typename V &gt; </td></tr>
-<tr class="memitem:a02c7a17fb51c1e2c2e9d5dc3aa8482da inherit pro_methods_classCustomUpdateBase"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a02c7a17fb51c1e2c2e9d5dc3aa8482da">checkVarReferenceTypes</a> (const std::vector&lt; V &gt; &amp;varReferences) const</td></tr>
-<tr class="memdesc:a02c7a17fb51c1e2c2e9d5dc3aa8482da inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check if variable reference types match those specified in model.  <a href="../../da/da9/classCustomUpdateBase.html#a02c7a17fb51c1e2c2e9d5dc3aa8482da">More...</a><br /></td></tr>
-<tr class="separator:a02c7a17fb51c1e2c2e9d5dc3aa8482da inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="memTemplParams" colspan="2">template&lt;typename V &gt; </td></tr>
+<tr class="memitem:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166">checkVarReferences</a> (const std::vector&lt; V &gt; &amp;varRefs)</td></tr>
+<tr class="memdesc:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check if variable reference types match those specified in model.  <a href="../../da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166">More...</a><br /></td></tr>
+<tr class="separator:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a34c1b40f1152fa9f9e0e2071496f54b6"></a>
@@ -282,7 +281,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:35 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -19,6 +19,8 @@ var classpygenn_1_1genn__groups_1_1SynapseGroup =
     [ "matrix_type", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2f68c883612f6cba26d9ce34a2572c2f", null ],
     [ "max_row_length", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a2208fcc9522823d65c1f95775fa27982", null ],
     [ "num_synapses", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a47259ad1e1fb0b61ec07652dd272cc8e", null ],
+    [ "ps_target_var", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a290bd9f4ba4bddcd743c6adaad66d789", null ],
+    [ "ps_target_var", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a9ee1a8bddf8d5264916e6cc779c79c23", null ],
     [ "pull_connectivity_from_device", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a726e27ca3ff43e9faec20d57fb7d8495", null ],
     [ "pull_in_syn_from_device", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a39ac41eeb45afb0050f2d9ddd2956eea", null ],
     [ "pull_psm_extra_global_param_from_device", "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af366111954258048aacaa0f0a03850b4", null ],

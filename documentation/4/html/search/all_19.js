@@ -16,6 +16,6 @@ var searchData=
   ['writetextspikerecording',['writeTextSpikeRecording',['../d8/d86/spikeRecorder_8h.html#af6739ef4f0b3b6300bf68f4c8f27e456',1,'spikeRecorder.h']]],
   ['wu_5fpost_5fvar_5fnames',['wu_post_var_names',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a04b838195834ada8aa3b582724d99847',1,'pygenn::genn_groups::SynapseGroup']]],
   ['wu_5fpre_5fvar_5fnames',['wu_pre_var_names',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ab033e98cc959663f97752c5c1244995d',1,'pygenn::genn_groups::SynapseGroup']]],
-  ['wuvarreference',['WUVarReference',['../dc/d6d/classModels_1_1WUVarReference.html',1,'Models::WUVarReference'],['../dc/d6d/classModels_1_1WUVarReference.html#a91aab6db587b0fde944bb0bfbc5da99c',1,'Models::WUVarReference::WUVarReference()']]],
+  ['wuvarreference',['WUVarReference',['../dc/d6d/classModels_1_1WUVarReference.html',1,'Models::WUVarReference'],['../dc/d6d/classModels_1_1WUVarReference.html#a91aab6db587b0fde944bb0bfbc5da99c',1,'Models::WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &amp;varName, const SynapseGroup *transposeSG=nullptr, const std::string &amp;transposeVarName=&quot;&quot;)'],['../dc/d6d/classModels_1_1WUVarReference.html#af261d3fd6558a9a72f26eef70bf7f3bc',1,'Models::WUVarReference::WUVarReference(const CustomUpdateWU *cu, const std::string &amp;varName)']]],
   ['wuvarreferencecontainerbase',['WUVarReferenceContainerBase',['../dd/d20/namespaceModels.html#af21fe15595e4e0ded13ecf3a0ef78e42',1,'Models']]]
 ];

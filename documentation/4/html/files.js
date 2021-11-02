@@ -1,6 +1,6 @@
 var files =
 [
-    [ "__init__.py", "d3/d9a/____init_____8py.html", null ],
+    [ "__init__.py", "d3/d9a/____init_____8py.html", "d3/d9a/____init_____8py" ],
     [ "analogueRecorder.h", "de/d8b/analogueRecorder_8h.html", [
       [ "AnalogueRecorder", "dc/d01/classAnalogueRecorder.html", "dc/d01/classAnalogueRecorder" ]
     ] ],
@@ -103,7 +103,10 @@ var files =
       [ "CustomUpdateInitGroupMergedBase", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase" ],
       [ "CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged" ],
       [ "CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged" ],
-      [ "CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged" ]
+      [ "CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged" ],
+      [ "CustomUpdateHostReductionGroupMergedBase", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase" ],
+      [ "CustomUpdateHostReductionGroupMerged", "d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html", "d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged" ],
+      [ "CustomWUUpdateHostReductionGroupMerged", "d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html", "d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged" ]
     ] ],
     [ "initSparseConnectivitySnippet.cc", "d4/d88/initSparseConnectivitySnippet_8cc.html", "d4/d88/initSparseConnectivitySnippet_8cc" ],
     [ "initSparseConnectivitySnippet.h", "de/d51/initSparseConnectivitySnippet_8h.html", "de/d51/initSparseConnectivitySnippet_8h" ],

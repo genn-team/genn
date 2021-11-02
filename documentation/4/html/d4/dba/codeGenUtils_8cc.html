@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.5.1</span>
+   &#160;<span id="projectnumber">4.6.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -139,6 +139,12 @@ Functions</h2></td></tr>
 <tr class="memitem:a22199ae12a7875826210e2f57ee0b1ee"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee">CodeGenerator::ensureFtype</a> (const std::string &amp;oldcode, const std::string &amp;type)</td></tr>
 <tr class="memdesc:a22199ae12a7875826210e2f57ee0b1ee"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function implements a parser that converts any floating point constant in a code snippet to a floating point constant with an explicit precision (by appending "f" or removing it).  <a href="../../d0/d02/namespaceCodeGenerator.html#a22199ae12a7875826210e2f57ee0b1ee">More...</a><br /></td></tr>
 <tr class="separator:a22199ae12a7875826210e2f57ee0b1ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65ba0a2fa4e20300ed3a428937877ad7"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a65ba0a2fa4e20300ed3a428937877ad7">CodeGenerator::getReductionInitialValue</a> (const BackendBase &amp;backend, <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> access, const std::string &amp;type)</td></tr>
+<tr class="memdesc:a65ba0a2fa4e20300ed3a428937877ad7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the initial value to start reduction operations from.  <a href="../../d0/d02/namespaceCodeGenerator.html#a65ba0a2fa4e20300ed3a428937877ad7">More...</a><br /></td></tr>
+<tr class="separator:a65ba0a2fa4e20300ed3a428937877ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a71f64620d1546b7574a2647bdd1b5312"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a71f64620d1546b7574a2647bdd1b5312">CodeGenerator::getReductionOperation</a> (const std::string &amp;reduction, const std::string &amp;value, <a class="el" href="../../de/dfb/varAccess_8h.html#ac9af5b5dbabe0b411cc7b2bca48ad72b">VarAccessMode</a> access, const std::string &amp;type)</td></tr>
+<tr class="memdesc:a71f64620d1546b7574a2647bdd1b5312"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate a reduction operation to reduce value into reduction.  <a href="../../d0/d02/namespaceCodeGenerator.html#a71f64620d1546b7574a2647bdd1b5312">More...</a><br /></td></tr>
+<tr class="separator:a71f64620d1546b7574a2647bdd1b5312"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a10af4d74175240a715403e6b5f2103cf"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/d8e/gennExport_8h.html#a8224d44517aa3e4a332fbd342364f2e7">GENN_EXPORT</a> void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">CodeGenerator::checkUnreplacedVariables</a> (const std::string &amp;code, const std::string &amp;codeName)</td></tr>
 <tr class="memdesc:a10af4d74175240a715403e6b5f2103cf"><td class="mdescLeft">&#160;</td><td class="mdescRight">This function checks for unknown variable definitions and returns a gennError if any are found.  <a href="../../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf">More...</a><br /></td></tr>
 <tr class="separator:a10af4d74175240a715403e6b5f2103cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -168,7 +174,7 @@ Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="../../dir_50ec77cb1e446fad877f3e377597ea8d.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_41836ccd157275f9bbab23043f985dae.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_168b0d4666365afeb6b12d79186b0932.html">code_generator</a></li><li class="navelem"><a class="el" href="../../d4/dba/codeGenUtils_8cc.html">codeGenUtils.cc</a></li>
-    <li class="footer">Generated on Thu Jul 22 2021 13:23:30 for GeNN by
+    <li class="footer">Generated on Tue Nov 2 2021 13:29:57 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
