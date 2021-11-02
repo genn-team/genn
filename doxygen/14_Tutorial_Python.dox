@@ -57,12 +57,12 @@ model.add_synapse_population("Pop1self", "SPARSE_GLOBALG", 10,
     "ExpCond", ps_p, {},
     init_connectivity(ring_model, {}))
 \endcode
-The pygenn.genn_model.GeNNModel.add_synapse_population parameters are
+The pygenn.GeNNModel.add_synapse_population parameters are
 \arg `pop_name`: The name of the synapse population
 \arg `matrix_type`: String specifying how the synaptic matrix is stored. See \ref subsect34 for available options.
 \arg `delay_steps`: Homogeneous (axonal) delay for synapse population (in terms of the simulation time step `DT`). 
-\arg `source`: pygenn.genn_groups.NeuronGroup or name of the (existing!) presynaptic neuron population.
-\arg `target`: pygenn.genn_groups.NeuronGroup or name of the (existing!) postsynaptic neuron population.
+\arg `source`: pygenn.NeuronGroup or name of the (existing!) presynaptic neuron population.
+\arg `target`: pygenn.NeuronGroup or name of the (existing!) postsynaptic neuron population.
 \arg `w_update_model`: The type of weight update model. This should either be a string containing the name of a built in model or user-defined neuron type returned by pygenn.genn_model.create_custom_weight_update_class (see \ref sectSynapseModels).
 \arg `wu_param_space`: Dictionary containing the parameter values (common to all synapses of  the population) for the weight update model. 
 \arg `wu_var_space`: Dictionary containing the initial values or initialisation snippets for the weight update model's state variables
@@ -73,7 +73,7 @@ The pygenn.genn_model.GeNNModel.add_synapse_population parameters are
 \arg `ps_var_space`: Dictionary containing the initial values or initialisation snippets for variables for the postsynaptic model's state variables
 \arg `connectivity_initialiser`: Optional argument, specifying the initialisation snippet for synapse population's sparse connectivity (see \ref sectSparseConnectivityInitialisation).
 
-Adding the pygenn.genn_model.GeNNModel.add_synapse_population command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself with a delay of 10 (0.1 ms) timesteps. 
+Adding the pygenn.GeNNModel.add_synapse_population command to the model definition informs GeNN that there will be synapses between the named neuron populations, here between population `Pop1` and itself with a delay of 10 (0.1 ms) timesteps. 
 At this point our script `tenHHRing.py` should look like this
 \code
 import matplotlib.pyplot as plt
@@ -148,7 +148,7 @@ This is because none of the neurons are spiking so there are no spikes to propag
 
 \section initialConditions Providing initial stimuli
 We can use a NeuronModels::SpikeSourceArray to inject an initial spike into the first neuron in the ring during the first timestep to start spikes propagating. 
-We then need to add it to the network by adding the following before we call pygenn.genn_model.GeNNModel.build:
+We then need to add it to the network by adding the following before we call pygenn.GeNNModel.build:
 
 \code
 stim_ini = {"startSpike": [0], "endSpike": [1]}
