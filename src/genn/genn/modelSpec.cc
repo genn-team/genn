@@ -38,7 +38,7 @@ ModelSpec::ModelSpec()
 :   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
-    m_ShouldMergePostsynapticModels(false), m_BatchSize(1)
+    m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
     setPrecision(GENN_FLOAT);
 }
@@ -187,9 +187,7 @@ void ModelSpec::finalize()
 
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
-        if(!n.second.getInSyn().empty()) {
-            n.second.mergeIncomingPSM(m_ShouldMergePostsynapticModels);
-        }
+        n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
     }
 
     // Loop through neuron populations and their outgoing synapse populations

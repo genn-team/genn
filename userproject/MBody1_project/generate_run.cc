@@ -50,8 +50,10 @@ protected:
 #else
         std::string cmd = "../tools/gen_input_structured ";
 #endif
+        // <nAL> <# classes> <# pattern/ input class> <prob. to be active> <perturbation prob. in class>
+        // <'on' rate> <baseline rate>
         cmd +=  std::to_string(m_NumAL);
-        cmd += " 10 10 0.1 0.05 1000.0 0.2 ";
+        cmd += " 10 10 0.1 0.1 1000.0 0.2 ";   // p_perturb only sensible if >= 1/n_act (where n_act=p_act*nAL); this assumes nAL >= 100
         cmd += getOutDir() + "/" + getExperimentName() + ".inpat 2>&1 ";
 #ifndef _WIN32
         cmd += "|tee " + getOutDir() + "/" + getExperimentName() + ".inpat.msg";
