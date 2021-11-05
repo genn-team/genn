@@ -128,6 +128,27 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
         else {
             os << "const unsigned int synBatchOffset = preBatchOffset * group->rowStride;" << std::endl;
         }
+        
+        // If synapse group has kernel weights
+        const auto &kernelSize = sg.getArchetype().getKernelSize();
+        if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
+            // Loop through kernel dimensions
+            os << "const unsigned int kernBatchOffset = ";
+            for(size_t i = 0; i < kernelSize.size(); i++) {
+                // If kernel size is heterogeneous, multiply by this group's size
+                if(sg.isKernelSizeHeterogeneous(i)) {
+                    os << "group->kernelSize" << i;
+                }
+                // Otherwise by literal
+                else {
+                    os << kernelSize.at(i);
+                }
+                os << " * ";
+            }
+            
+            // And finally by batch
+            os << "batch;" << std::endl;
+        }
     }
 
     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay

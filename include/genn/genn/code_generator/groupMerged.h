@@ -1238,6 +1238,7 @@ public:
     }
 
     static std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
+    static std::string getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
     
 protected:
     //----------------------------------------------------------------------------

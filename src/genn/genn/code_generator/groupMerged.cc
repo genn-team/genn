@@ -1291,6 +1291,12 @@ std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAc
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     return (singleBatch ? "" : "synBatchOffset + ") + index;
 }
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
+    return (singleBatch ? "" : "kernBatchOffset + ") + index;
+}
 //----------------------------------------------------------------------------
 SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)

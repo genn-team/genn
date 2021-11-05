@@ -112,7 +112,11 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
         assert(!sg.getArchetype().getKernelSize().empty());
 
         // Use kernel index to index into variables
-        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", std::string{"[kernelInd]"});
+        synapseSubs.addVarNameSubstitution(wu->getVars(), "", "group->", 
+                                           [&sg, &synapseSubs, batchSize](VarAccess a) 
+                                           { 
+                                               return "[" + sg.getKernelVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_kernel"]) + "]";
+                                           });
     }
     // Otherwise, substitute variables for constant values
     else {
