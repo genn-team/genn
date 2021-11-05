@@ -398,9 +398,7 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localRNG");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
-                              HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -482,7 +480,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         else {
             kernelSubs.addVarSubstitution("batch", "0");
         }
-        genNeuronUpdateKernel(os, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
+        genNeuronUpdateKernel(os, kernelSubs, modelMerged, idStart);
     }
 
     os << "void updateNeurons(" << model.getTimePrecision() << " t";

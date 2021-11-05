@@ -350,8 +350,7 @@ void BackendSIMT::genNeuronSpikeQueueUpdateKernel(CodeStream &os, const ModelSpe
     }
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                        NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const
+void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
@@ -407,7 +406,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     genParallelGroup<NeuronUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
-        [batchSize, simHandler, wuVarUpdateHandler, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
+        [batchSize, &modelMerged, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             genNeuronIndexCalculation(os, ng, batchSize);
             os << std::endl;
@@ -422,17 +421,17 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     genPopulationRNGPreamble(os, popSubs, "group->rng[" + ng.getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) + "]");
                 }
 
-                simHandler(os, ng, popSubs,
-                           // Emit true spikes
-                           [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
-                           {
-                               genEmitSpike(neuronUpdateKernelsBody, subs, "", ng.getArchetype().isSpikeRecordingEnabled());
-                           },
-                           // Emit spike-like events
-                           [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
-                           {
-                               genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
-                           });
+                ng.generateNeuronUpdate(*this, os, modelMerged, popSubs,
+                                        // Emit true spikes
+                                        [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                                        {
+                                            genEmitSpike(neuronUpdateKernelsBody, subs, "", ng.getArchetype().isSpikeRecordingEnabled());
+                                        },
+                                        // Emit spike-like events
+                                        [this](CodeStream &neuronUpdateKernelsBody, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                                        {
+                                            genEmitSpike(neuronUpdateKernelsBody, subs, "Evnt", ng.getArchetype().isSpikeEventRecordingEnabled());
+                                        });
 
                 // Copy local stream back to local
                 if(ng.getArchetype().isSimRNGRequired()) {
@@ -515,7 +514,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                     // Create new substition stack and explicitly replace id with 'n' and perform WU var update
                     Substitutions wuSubs(&popSubs);
                     wuSubs.addVarSubstitution("id", "n", true);
-                    wuVarUpdateHandler(os, ng, wuSubs);
+                    ng.generateWUVarUpdate(*this, os, modelMerged, wuSubs);
 
                     os << "group->spk[" << queueOffsetTrueSpk << "shPosSpk + " << getThreadID() << "] = n;" << std::endl;
                     if(ng.getArchetype().isSpikeTimeRequired()) {

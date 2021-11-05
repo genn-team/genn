@@ -182,7 +182,6 @@ public:
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
 
     //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
-    typedef GroupHandler<NeuronUpdateGroupMerged> NeuronUpdateGroupMergedHandler;
     typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
     typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
     typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
@@ -196,11 +195,6 @@ public:
     typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
     typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
     typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
-    
-    //! Callback function type for generation neuron group simulation code
-    /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronUpdateGroupMerged &, Substitutions&,
-                                NeuronUpdateGroupMergedHandler, NeuronUpdateGroupMergedHandler)> NeuronGroupSimHandler;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
@@ -219,7 +213,6 @@ public:
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes
         \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
     virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses

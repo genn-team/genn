@@ -46,6 +46,12 @@ public:
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
     
+    void generateNeuronUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs,
+                              BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitTrueSpike,
+                              BackendBase::GroupHandler<NeuronUpdateGroupMerged> genEmitSpikeLikeEvent) const;
+    
+    void generateWUVarUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+    
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
@@ -82,6 +88,18 @@ private:
     //! Is the outgoing synapse weight update model derived parameter referenced?
     bool isOutSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
 
+    void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
+    
+    void generateWUVarUpdate(CodeStream &os, const Substitutions &popSubs,
+                             const std::string &fieldPrefixStem, const std::string &precision, const std::string &sourceSuffix, 
+                             bool useLocalNeuronVars, unsigned int batchSize, 
+                             const std::vector<SynapseGroupInternal*> &archetypeSyn,
+                             unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
+                             Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
+                             std::string(WeightUpdateModels::Base::*getCode)(void) const,
+                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
+                             bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const;
+    
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
