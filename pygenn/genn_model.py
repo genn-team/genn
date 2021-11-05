@@ -46,6 +46,7 @@ from platform import system
 from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
+from warnings import warn
 
 # 3rd party imports
 import numpy as np
@@ -113,17 +114,17 @@ class GeNNModel(object):
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
         # **NOTE** all SLM uses its template parameter for is time variable
-        time_precision = precision if time_precision is None else time_precision
-        if time_precision == "float":
+        self._time_precision = precision if time_precision is None else time_precision
+        if self._time_precision == "float":
             self._slm = slm.SharedLibraryModelNumpy_f()
             genn_time_type = "TimePrecision_FLOAT"
-        elif time_precision == "double":
+        elif self._time_precision == "double":
             self._slm = slm.SharedLibraryModelNumpy_d()
             genn_time_type = "TimePrecision_DOUBLE"
         else:
             raise ValueError(
                 "Supported time precisions are float and double, "
-                "but '{1}' was given".format(time_precision))
+                "but '{1}' was given".format(self._time_precision))
 
         # Store precision in class and determine GeNN scalar type
         self._scalar = precision
@@ -193,6 +194,9 @@ class GeNNModel(object):
 
     @use_backend.setter
     def use_backend(self, backend):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         # If no backend is specified
         if backend is None:
             # Check we have managed to import any bagenn_wrapperckends
@@ -211,6 +215,9 @@ class GeNNModel(object):
 
     @timing_enabled.setter
     def timing_enabled(self, timing):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         self._model.set_timing(timing)
 
     @property
@@ -219,6 +226,9 @@ class GeNNModel(object):
 
     @batch_size.setter
     def batch_size(self, batch_size):
+        if self._built:
+            raise Exception("GeNN model already built")
+
         self._model.set_batch_size(batch_size)
 
     @property
@@ -533,12 +543,14 @@ class GeNNModel(object):
 
         return c_update
         
-    def build(self, path_to_model="./"):
+    def build(self, path_to_model="./", force_rebuild=False):
         """Finalize and build a GeNN model
 
         Keyword args:
         path_to_model   --  path where to place the generated model code.
                             Defaults to the local directory.
+        force_rebuild   --  should model be rebuilt even if 
+                            it doesn't appear to be required
         """
 
         if self._built:
@@ -561,12 +573,13 @@ class GeNNModel(object):
                 setattr(preferences, k, v)
 
         # Create backend
-        backend = self._backend_module.create_backend(self._model, share_path, output_path, 
-                                                      self.backend_log_level, preferences);
+        backend = self._backend_module.create_backend(self._model, output_path,
+                                                      self.backend_log_level,
+                                                      preferences)
 
         # Generate code
         mem_alloc = genn_wrapper.generate_code(self._model, backend, 
-                                               share_path, output_path, 0)
+                                               share_path, output_path, force_rebuild)
 
         # **YUCK** SWIG doesn't handle return objects returned by value very well so delete manually
         backend = None
@@ -614,11 +627,11 @@ class GeNNModel(object):
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load_init_egps()
-        
+
         # Loop through custom updates
         for cu_data in itervalues(self.custom_updates):
             cu_data.load_init_egps()
-            
+
         # Initialize model
         self._slm.initialize()
 
@@ -633,11 +646,11 @@ class GeNNModel(object):
         # Loop through current sources
         for src_data in itervalues(self.current_sources):
             src_data.load()
-        
+
         # Loop through custom updates
         for cu_data in itervalues(self.custom_updates):
             cu_data.load()
-            
+
         # Now everything is set up call the sparse initialisation function
         self._slm.initialize_sparse()
 
@@ -699,6 +712,13 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pulling")
 
         self._slm.pull_spikes_from_device(pop_name)
+    
+    def pull_spike_events_from_device(self, pop_name):
+        """Pull spike events from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._slm.pull_spike_events_from_device(pop_name)
 
     def pull_current_spikes_from_device(self, pop_name):
         """Pull spikes from the device for a given population"""
@@ -706,7 +726,14 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pulling")
 
         self._slm.pull_current_spikes_from_device(pop_name)
+    
+    def pull_current_spike_events_from_device(self, pop_name):
+        """Pull spike events from the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
 
+        self._slm.pull_current_spike_events_from_device(pop_name)
+        
     def pull_connectivity_from_device(self, pop_name):
         """Pull connectivity from the device for a given population"""
         if not self._loaded:
@@ -721,8 +748,13 @@ class GeNNModel(object):
 
         self._slm.pull_var_from_device(pop_name, var_name)
 
-    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=1):
+    def pull_extra_global_param_from_device(self, pop_name, egp_name, size=None):
         """Pull extra global parameter from the device for a given population"""
+        if size is None:
+            warn("The default of size=1 is very counter-intuitive and "
+                 "will be removed in future", DeprecationWarning)
+            size = 1
+
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pulling")
 
@@ -741,6 +773,13 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_spikes_to_device(pop_name)
+    
+    def push_spike_events_to_device(self, pop_name):
+        """Push spike events to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_spike_events_to_device(pop_name)
 
     def push_current_spikes_to_device(self, pop_name):
         """Push current spikes to the device for a given population"""
@@ -748,6 +787,13 @@ class GeNNModel(object):
             raise Exception("GeNN model has to be loaded before pushing")
 
         self._slm.push_current_spikes_to_device(pop_name)
+    
+    def push_current_spike_events_to_device(self, pop_name):
+        """Push current spike events to the device for a given population"""
+        if not self._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+
+        self._slm.push_current_spike_events_to_device(pop_name)
 
     def push_connectivity_to_device(self, pop_name):
         """Push connectivity to the device for a given population"""
@@ -763,8 +809,13 @@ class GeNNModel(object):
 
         self._slm.push_var_to_device(pop_name, var_name)
 
-    def push_extra_global_param_to_device(self, pop_name, egp_name, size=1):
+    def push_extra_global_param_to_device(self, pop_name, egp_name, size=None):
         """Push extra global parameter to the device for a given population"""
+        if size is None:
+            warn("The default of size=1 is very counter-intuitive and "
+                 "will be removed in future", DeprecationWarning)
+            size = 1
+
         if not self._loaded:
             raise Exception("GeNN model has to be loaded before pushing")
 
@@ -927,13 +978,13 @@ def create_wu_post_var_ref(sg, var_name):
     """
     return (genn_wrapper.create_wupost_var_ref(sg.pop, var_name), sg)
 
-def create_wu_var_ref(sg, var_name, tp_sg=None, tp_var_name=None):
+def create_wu_var_ref(g, var_name, tp_sg=None, tp_var_name=None):
     """This helper function creates a Models::WUVarReference
     pointing to a weight update model variable for 
     initialising variable references.
 
     Args:
-    sg          -- SynapseGroup object
+    g           -- SynapseGroup or CustomUpdate object
     var_name    -- name of weight update model variable 
                    in synapse group to reference
     tp_sg       -- (optional) SynapseGroup object to 
@@ -942,10 +993,15 @@ def create_wu_var_ref(sg, var_name, tp_sg=None, tp_var_name=None):
                    model variable in tranpose synapse group
                    to copy transpose to
     """
+    
+    # If we're referencing a WU variable in a custom update,
+    # Use it's synapse group for the PyGeNN-level backreference
+    sg = g._synapse_group if isinstance(g, CustomUpdate) else g
+ 
     if tp_sg is None:
-        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name), sg)
+        return (genn_wrapper.create_wuvar_ref(g.pop, var_name), sg)
     else:
-        return (genn_wrapper.create_wuvar_ref(sg.pop, var_name,
+        return (genn_wrapper.create_wuvar_ref(g.pop, var_name,
                                               tp_sg.pop, tp_var_name), sg)
     
 

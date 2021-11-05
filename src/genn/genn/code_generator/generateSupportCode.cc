@@ -1,6 +1,7 @@
 #include "code_generator/generateSupportCode.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <string>
 
 // GeNN code generator includes
@@ -11,28 +12,32 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSupportCode(CodeStream &os, const ModelSpecMerged &modelMerged)
+void CodeGenerator::generateSupportCode(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                        const std::string &suffix)
 {
-    os << "#pragma once" << std::endl;
-    os << std::endl;
+    std::ofstream supportCodeStream((outputPath / ("supportCode" + suffix + ".h")).str());
+    CodeStream supportCode(supportCodeStream);
 
-    os << "// support code for neuron update groups" << std::endl;
-    modelMerged.genNeuronUpdateGroupSupportCode(os);
-    os << std::endl;
+    supportCode << "#pragma once" << std::endl;
+    supportCode << std::endl;
 
-    os << "// support code for postsynaptic dynamics" << std::endl;
-    modelMerged.genPostsynapticDynamicsSupportCode(os);
-    os << std::endl;
+    supportCode << "// support code for neuron update groups" << std::endl;
+    modelMerged.genNeuronUpdateGroupSupportCode(supportCode);
+    supportCode << std::endl;
 
-    os << "// support code for presynaptic update" << std::endl;
-    modelMerged.genPresynapticUpdateSupportCode(os);
-    os << std::endl;
+    supportCode << "// support code for postsynaptic dynamics" << std::endl;
+    modelMerged.genPostsynapticDynamicsSupportCode(supportCode);
+    supportCode << std::endl;
 
-    os << "// support code for postsynaptic update groups" << std::endl;
-    modelMerged.genPostsynapticUpdateSupportCode(os);
-    os << std::endl;
+    supportCode << "// support code for presynaptic update" << std::endl;
+    modelMerged.genPresynapticUpdateSupportCode(supportCode);
+    supportCode << std::endl;
 
-    os << "// support code for synapse dynamics update groups" << std::endl;
-    modelMerged.genSynapseDynamicsSupportCode(os);
-    os << std::endl;
+    supportCode << "// support code for postsynaptic update groups" << std::endl;
+    modelMerged.genPostsynapticUpdateSupportCode(supportCode);
+    supportCode << std::endl;
+
+    supportCode << "// support code for synapse dynamics update groups" << std::endl;
+    modelMerged.genSynapseDynamicsSupportCode(supportCode);
+    supportCode << std::endl;
 }

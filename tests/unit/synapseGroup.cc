@@ -19,47 +19,143 @@ class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
     DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditive, 6, 1, 1, 1);
-
-    SET_PARAM_NAMES({
-      "tauPlus",  // 0 - Potentiation time constant (ms)
-      "tauMinus", // 1 - Depression time constant (ms)
-      "Aplus",    // 2 - Rate of potentiation
-      "Aminus",   // 3 - Rate of depression
-      "Wmin",     // 4 - Minimum weight
-      "Wmax"});   // 5 - Maximum weight
-
+    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+                     "Wmin", "Wmax"});
+    SET_DERIVED_PARAMS({
+        {"tauPlusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
+        {"tauMinusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
-
-    SET_PRE_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
-        "$(preTrace) = ($(preTrace) * exp(-dt / $(tauPlus))) + 1.0;\n");
-
-    SET_POST_SPIKE_CODE(
-        "scalar dt = $(t) - $(sT_post);\n"
-        "$(postTrace) = ($(postTrace) * exp(-dt / $(tauMinus))) + 1.0;\n");
-
+    
     SET_SIM_CODE(
         "$(addToInSyn, $(g));\n"
-        "scalar dt = $(t) - $(sT_post); \n"
+        "const scalar dt = $(t) - $(sT_post); \n"
         "if (dt > 0) {\n"
-        "    const scalar timing = $(postTrace) * exp(-dt / $(tauMinus));\n"
-        "    const scalar newWeight = $(g) - ($(Aminus) * timing);\n"
-        "    $(g) = fmax($(Wmin), newWeight);\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
         "}\n");
     SET_LEARN_POST_CODE(
-        "scalar dt = $(t) - $(sT_pre);\n"
+        "const scalar dt = $(t) - $(sT_pre);\n"
         "if (dt > 0) {\n"
-        "    const scalar timing = $(postTrace) * exp(-dt / $(tauPlus));\n"
-        "    const scalar newWeight = $(g) + ($(Aplus) * timing);\n"
-        "    $(g) = fmin($(Wmax), newWeight);\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
         "}\n");
-
+    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);
 };
 IMPLEMENT_MODEL(STDPAdditive);
+
+class STDPAdditiveEGPWMinMax : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditiveEGPWMinMax, 4, 1, 1, 1);
+    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus"});
+    SET_DERIVED_PARAMS({
+        {"tauPlusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
+        {"tauMinusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }}});
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preTrace", "scalar"}});
+    SET_POST_VARS({{"postTrace", "scalar"}});
+    SET_EXTRA_GLOBAL_PARAMS({{"Wmin", "scalar"}, {"Wmax", "scalar"}});
+    
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "const scalar dt = $(t) - $(sT_post); \n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_LEARN_POST_CODE(
+        "const scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
+};
+IMPLEMENT_MODEL(STDPAdditiveEGPWMinMax);
+
+class STDPAdditiveEGPSpike : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditiveEGPSpike, 6, 1, 1, 1);
+    SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
+                     "Wmin", "Wmax"});
+    SET_DERIVED_PARAMS({
+        {"tauPlusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
+        {"tauMinusDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }}});
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preTrace", "scalar"}});
+    SET_POST_VARS({{"postTrace", "scalar"}});
+    SET_EXTRA_GLOBAL_PARAMS({{"S", "scalar"}});
+    
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "const scalar dt = $(t) - $(sT_post); \n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_LEARN_POST_CODE(
+        "const scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_PRE_SPIKE_CODE("$(preTrace) += $(S);\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += $(S);\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
+};
+IMPLEMENT_MODEL(STDPAdditiveEGPSpike);
+
+class STDPAdditiveEGPDynamics : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditiveEGPDynamics, 4, 1, 1, 1);
+    SET_PARAM_NAMES({"Aplus", "Aminus", "Wmin", "Wmax"});
+    SET_VARS({{"g", "scalar"}});
+    SET_PRE_VARS({{"preTrace", "scalar"}});
+    SET_POST_VARS({{"postTrace", "scalar"}});
+    SET_EXTRA_GLOBAL_PARAMS({{"tauPlusDecay", "scalar"}, {"tauMinusDecay", "scalar"}});
+    
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "const scalar dt = $(t) - $(sT_post); \n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) - ($(Aminus) * $(postTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_LEARN_POST_CODE(
+        "const scalar dt = $(t) - $(sT_pre);\n"
+        "if (dt > 0) {\n"
+        "    const scalar newWeight = $(g) + ($(Aplus) * $(preTrace));\n"
+        "    $(g) = fmax($(Wmin), fmin($(Wmax), newWeight));\n"
+        "}\n");
+    SET_PRE_SPIKE_CODE("$(preTrace) += 1.0;\n");
+    SET_POST_SPIKE_CODE("$(postTrace) += 1.0;\n");
+    SET_PRE_DYNAMICS_CODE("$(preTrace) *= $(tauPlusDecay);\n");
+    SET_POST_DYNAMICS_CODE("$(postTrace) *= $(tauMinusDecay);\n");
+    
+    SET_NEEDS_PRE_SPIKE_TIME(true);
+    SET_NEEDS_POST_SPIKE_TIME(true);
+};
+IMPLEMENT_MODEL(STDPAdditiveEGPDynamics);
 
 class Continuous : public WeightUpdateModels::Base
 {
@@ -105,6 +201,47 @@ class Sum : public CustomUpdateModels::Base
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_MODEL(Sum);
+
+class LIFAdditional : public NeuronModels::Base
+{
+public:
+    DECLARE_MODEL(LIFAdditional, 7, 2);
+
+    SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", "$(Ioffset)"}});
+    SET_SIM_CODE(
+        "if ($(RefracTime) <= 0.0) {\n"
+        "  scalar alpha = ($(Isyn2) * $(Rmembrane)) + $(Vrest);\n"
+        "  $(V) = alpha - ($(ExpTC) * (alpha - $(V)));\n"
+        "}\n"
+        "else {\n"
+        "  $(RefracTime) -= DT;\n"
+        "}\n"
+    );
+
+    SET_THRESHOLD_CONDITION_CODE("$(RefracTime) <= 0.0 && $(V) >= $(Vthresh)");
+
+    SET_RESET_CODE(
+        "$(V) = $(Vreset);\n"
+        "$(RefracTime) = $(TauRefrac);\n");
+
+    SET_PARAM_NAMES({
+        "C",          // Membrane capacitance
+        "TauM",       // Membrane time constant [ms]
+        "Vrest",      // Resting membrane potential [mV]
+        "Vreset",     // Reset voltage [mV]
+        "Vthresh",    // Spiking threshold [mV]
+        "Ioffset",    // Offset current
+        "TauRefrac"});
+
+    SET_DERIVED_PARAMS({
+        {"ExpTC", [](const std::vector<double> &pars, double dt) { return std::exp(-dt / pars[1]); }},
+        {"Rmembrane", [](const std::vector<double> &pars, double) { return  pars[1] / pars[0]; }}});
+
+    SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
+
+    SET_NEEDS_AUTO_REFRACTORY(false);
+};
+IMPLEMENT_MODEL(LIFAdditional);
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -181,9 +318,10 @@ TEST(SynapseGroup, CompareWUDifferentModel)
     // Finalize model
     model.finalize();
 
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
-    ASSERT_FALSE(sg1Internal->canWUBeMerged(*sg0));
-    ASSERT_FALSE(sg1Internal->canWUInitBeMerged(*sg0));
+    ASSERT_NE(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_NE(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -230,8 +368,10 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -282,9 +422,11 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
     // Finalize model
     model.finalize();
 
-    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -339,9 +481,11 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     // Finalize model
     model.finalize();
 
-    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -391,9 +535,11 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
     // Finalize model
     model.finalize();
 
-    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUBeMerged(*sg1));
-    ASSERT_TRUE(!sg0Internal->canWUBeMerged(*sg2));
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_NE(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -446,12 +592,14 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -509,13 +657,14 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
-
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentPostVars)
@@ -554,13 +703,14 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
     model.finalize();
 
     SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPostInitBeMerged(*sg2));
-
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUInitBeMerged(*sg2));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg1));
-    ASSERT_TRUE(sg0Internal->canWUPreInitBeMerged(*sg2));
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal *>(sg2);
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg1Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPostInitHashDigest(), sg2Internal->getWUPostInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg1Internal->getWUPreInitHashDigest());
+    ASSERT_EQ(sg0Internal->getWUPreInitHashDigest(), sg2Internal->getWUPreInitHashDigest());
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
@@ -589,9 +739,10 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     // Finalize model
     model.finalize();
 
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal *>(sg0);
     SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal *>(sg1);
-    ASSERT_TRUE(sg1Internal->canWUBeMerged(*sg0));
-    ASSERT_TRUE(sg1Internal->canWUInitBeMerged(*sg0));
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -678,6 +829,26 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
 }
 
+TEST(SynapseGroup, InvalidName)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    try {
+        model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+            "Syn-6", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, {1.0},
+            {}, {});
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+
 TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
 {
     ModelSpecInternal model;
@@ -731,4 +902,138 @@ TEST(SynapseGroup, SharedWeightSlaveInvalidMethods)
     }
     //setSparseConnectivityExtraGlobalParamLocation
     //setMaxSourceConnections
+}
+
+TEST(SynapseGroup, CanWUMPreUpdateBeFused)
+{
+    ModelSpecInternal model;
+
+    // Add pre and post neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    
+    STDPAdditive::ParamValues wumParams(10.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditiveEGPWMinMax::ParamValues wumEGPWMinMaxParams(10.0, 10.0, 0.01, 0.01);
+    STDPAdditiveEGPDynamics::ParamValues wumEGPDynamicsParams(0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::VarValues wumVarVals(0.0);
+    STDPAdditive::PreVarValues wumConstPreVarVals(0.0);
+    STDPAdditive::PreVarValues wumNonConstPreVarVals(initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
+    STDPAdditive::PostVarValues wumPostVarVals(0.0);
+    
+    auto *constPre = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_ConstPre", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
+        {}, {});
+
+    auto *nonConstPre = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_NonConstPre", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumNonConstPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    auto *egpWMinMax = model.addSynapsePopulation<STDPAdditiveEGPWMinMax, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPWMinMax", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumEGPWMinMaxParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    auto *egpSpike = model.addSynapsePopulation<STDPAdditiveEGPSpike, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPSpike", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
+        {}, {});
+    
+    auto *egpDynamics = model.addSynapsePopulation<STDPAdditiveEGPDynamics, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPDynamics", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumEGPDynamicsParams, wumVarVals, wumConstPreVarVals, wumPostVarVals,
+        {}, {});
+
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPre)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPre)->canWUMPreUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPreUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPreUpdateBeFused());
+}
+
+TEST(SynapseGroup, CanWUMPostUpdateBeFused)
+{
+    ModelSpecInternal model;
+
+    // Add pre and post neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+    
+    STDPAdditive::ParamValues wumParams(10.0, 10.0, 0.01, 0.01, 0.0, 1.0);
+    STDPAdditiveEGPWMinMax::ParamValues wumEGPWMinMaxParams(10.0, 10.0, 0.01, 0.01);
+    STDPAdditiveEGPDynamics::ParamValues wumEGPDynamicsParams(0.01, 0.01, 0.0, 1.0);
+    STDPAdditive::VarValues wumVarVals(0.0);
+    STDPAdditive::PreVarValues wumPreVarVals(0.0);
+    STDPAdditive::PostVarValues wumConstPostVarVals(0.0);
+    STDPAdditive::PostVarValues wumNonConstPostVarVals(initVar<InitVarSnippet::Uniform>({0.0, 1.0}));
+    
+    auto *constPost = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_ConstPost", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+
+    auto *nonConstPost = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_NonConstPost", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumNonConstPostVarVals,
+        {}, {});
+    
+    auto *egpWMinMax = model.addSynapsePopulation<STDPAdditiveEGPWMinMax, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPWMinMax", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumEGPWMinMaxParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+    
+    auto *egpSpike = model.addSynapsePopulation<STDPAdditiveEGPSpike, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPSpike", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+    
+    auto *egpDynamics = model.addSynapsePopulation<STDPAdditiveEGPDynamics, PostsynapticModels::DeltaCurr>(
+        "Pre_Post_EGPDynamics", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        wumEGPDynamicsParams, wumVarVals, wumPreVarVals, wumConstPostVarVals,
+        {}, {});
+
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(constPost)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(nonConstPost)->canWUMPostUpdateBeFused());
+    ASSERT_TRUE(static_cast<SynapseGroupInternal*>(egpWMinMax)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpSpike)->canWUMPostUpdateBeFused());
+    ASSERT_FALSE(static_cast<SynapseGroupInternal*>(egpDynamics)->canWUMPostUpdateBeFused());
+}
+
+TEST(SynapseGroup, InvalidPSOutputVar)
+{
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
+    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+    auto *prePost = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "PrePost", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, { 1.0 },
+        {}, {});
+
+    prePost->setPSTargetVar("Isyn");
+    prePost->setPSTargetVar("Isyn2");
+    try {
+        prePost->setPSTargetVar("NonExistent");
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
 }

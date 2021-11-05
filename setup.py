@@ -177,8 +177,12 @@ for filename, namespace, kwargs in backends:
     ext_modules.append(Extension("_" + namespace + "Backend", ["pygenn/genn_wrapper/generated/" + namespace + "Backend.i"],
                                  **backend_extension_kwargs))
 
+# Read version from txt file
+with open(os.path.join(genn_path, "version.txt")) as version_file:
+    version = version_file.read().strip()
+
 setup(name = "pygenn",
-      version = "0.4.4",
+      version = version,
       packages = find_packages(),
       package_data={"pygenn": package_data},
 
@@ -189,6 +193,7 @@ setup(name = "pygenn",
       ext_modules=ext_modules,
 
       # Requirements
-      install_requires=["numpy>=1.17", "six", "deprecated", "psutil"],
+      install_requires=["numpy>=1.17", "six", "deprecated", "psutil",
+                        "importlib-metadata>=1.0;python_version<'3.8'"],
       zip_safe=False,  # Partly for performance reasons
 )

@@ -23,6 +23,7 @@
 #include <cassert>
 
 // GeNN includes
+#include "gennUtils.h"
 #include "modelSpec.h"
 
 // GeNN code generator includes
@@ -37,7 +38,7 @@ ModelSpec::ModelSpec()
 :   m_TimePrecision(TimePrecision::DEFAULT), m_DT(0.5), m_TimingEnabled(false), m_Seed(0),
     m_DefaultVarLocation(VarLocation::HOST_DEVICE), m_DefaultExtraGlobalParamLocation(VarLocation::HOST_DEVICE),
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
-    m_ShouldMergePostsynapticModels(false), m_BatchSize(1)
+    m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
     setPrecision(GENN_FLOAT);
 }
@@ -175,21 +176,18 @@ void ModelSpec::finalize()
 
     // Custom update groups
     for(auto &c : m_CustomUpdates) {
-        c.second.finalize(getBatchSize());
+        c.second.finalize();
         c.second.initDerivedParams(m_DT);
     }
 
     // Custom WUM update groups
     for(auto &c : m_CustomWUUpdates) {
-        c.second.finalize(getBatchSize());
         c.second.initDerivedParams(m_DT);
     }
 
     // Merge incoming postsynaptic models
     for(auto &n : m_LocalNeuronGroups) {
-        if(!n.second.getInSyn().empty()) {
-            n.second.mergeIncomingPSM(m_ShouldMergePostsynapticModels);
-        }
+        n.second.fusePrePostSynapses(m_ShouldFusePostsynapticModels, m_ShouldFusePrePostWeightUpdateModels);
     }
 
     // Loop through neuron populations and their outgoing synapse populations
@@ -231,10 +229,10 @@ void ModelSpec::finalize()
 std::string ModelSpec::scalarExpr(double val) const
 {
     if (m_Precision == "float") {
-        return std::to_string((float)val) + "f";
+        return Utils::writePreciseString<float>(val) + "f";
     }
     else if (m_Precision == "double") {
-        return std::to_string(val);
+        return Utils::writePreciseString(val);
     }
     else {
         throw std::runtime_error("Unrecognised floating-point type.");
@@ -279,6 +277,21 @@ bool ModelSpec::isRecordingInUse() const
 {
     return std::any_of(m_LocalNeuronGroups.cbegin(), m_LocalNeuronGroups.cend(),
                        [](const NeuronGroupValueType &n) { return n.second.isRecordingEnabled(); });
+}
+
+boost::uuids::detail::sha1::digest_type ModelSpec::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    Utils::updateHash(getName(), hash);
+    Utils::updateHash(getPrecision(), hash);
+    Utils::updateHash(getTimePrecision(), hash);
+    Utils::updateHash(getDT(), hash);
+    Utils::updateHash(isTimingEnabled(), hash);
+    Utils::updateHash(getBatchSize(), hash);
+    Utils::updateHash(getSeed(), hash);
+
+    return hash.get_digest();
 }
 
 NeuronGroupInternal *ModelSpec::findNeuronGroupInternal(const std::string &name)

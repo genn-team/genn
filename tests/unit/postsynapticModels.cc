@@ -25,13 +25,17 @@ public:
 //--------------------------------------------------------------------------
 TEST(PostsynapticModels, CompareBuiltIn)
 {
-    ASSERT_TRUE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(PostsynapticModels::ExpCurr::getInstance()));
-    ASSERT_FALSE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(PostsynapticModels::ExpCond::getInstance()));
-    ASSERT_FALSE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(PostsynapticModels::DeltaCurr::getInstance()));
+    using namespace PostsynapticModels;
+
+    ASSERT_EQ(ExpCurr::getInstance()->getHashDigest(), ExpCurr::getInstance()->getHashDigest());
+    ASSERT_NE(ExpCurr::getInstance()->getHashDigest(), ExpCond::getInstance()->getHashDigest());
+    ASSERT_NE(ExpCurr::getInstance()->getHashDigest(), DeltaCurr::getInstance()->getHashDigest());
 }
 
 TEST(PostsynapticModels, CompareCopyPasted)
 {
+    using namespace PostsynapticModels;
+
     ExpCurrCopy expCurrCopy;
-    ASSERT_TRUE(PostsynapticModels::ExpCurr::getInstance()->canBeMerged(&expCurrCopy));
+    ASSERT_EQ(ExpCurr::getInstance()->getHashDigest(), expCurrCopy.getHashDigest());
 }

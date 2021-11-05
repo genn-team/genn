@@ -6,6 +6,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 */
 //--------------------------------------------------------------------------
 // Standard C++ includes
+#include <algorithm>
 #include <array>
 #include <numeric>
 
@@ -31,8 +32,8 @@ class SimTest : public SimulationTest
 {
 };
 
-template<size_t N>
-void calcHistogram(const unsigned int *rowLength, const uint32_t *ind,
+template<size_t N, typename I>
+void calcHistogram(const unsigned int *rowLength, const I *ind,
                    unsigned int maxRowLength, std::array<unsigned int, N> &histogram)
 {
     // Loop through rows

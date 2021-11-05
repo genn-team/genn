@@ -79,8 +79,8 @@ namespace CodeGenerator
 {
 namespace SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                              HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -91,10 +91,12 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -115,6 +117,60 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         Timer t(os, "neuronUpdate", model.isTimingEnabled());
 
+        // Loop through merged previous spike time update groups
+        for(const auto &n : modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()) {
+            CodeStream::Scope b(os);
+            os << "// merged neuron prev spike update group " << n.getIndex() << std::endl;
+            os << "for(unsigned int g = 0; g < " << n.getGroups().size() << "; g++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Get reference to group
+                os << "const auto *group = &mergedNeuronPrevSpikeTimeUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
+
+                if(n.getArchetype().isDelayRequired()) {
+                    // Calculate delay slot corresponding to last timestep
+                    os << "const unsigned int lastTimestepDelaySlot = (*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
+                    os << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
+
+                    if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                        os << "for(unsigned int i = 0; i < group->spkCnt[lastTimestepDelaySlot]; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                        }
+                    }
+                    if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                        os << "for(unsigned int i = 0; i < group->spkCntEvnt[lastTimestepDelaySlot]; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
+                        }
+                    }
+                }
+                else {
+                    if(n.getArchetype().isPrevSpikeTimeRequired()) {
+                        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                        os << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
+                        }
+                    }
+                    if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
+                        // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
+                        os << "for(unsigned int i = 0; i < group->spkCntEvnt[0]; i++)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "group->prevSET[group->spkEvnt[i]] = t - DT;" << std::endl;
+                        }
+                    }
+                }
+            }
+        }
+
         // Loop through merged neuron spike queue update groups
         for(const auto &n : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
             CodeStream::Scope b(os);
@@ -125,50 +181,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 // Get reference to group
                 os << "const auto *group = &mergedNeuronSpikeQueueUpdateGroup" << n.getIndex() << "[g]; " << std::endl;
-
-                // If previous spikes times are required
-                if(n.getArchetype().isPrevSpikeTimeRequired() || n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                    if(n.getArchetype().isDelayRequired()) {
-                        // Calculate delay slot corresponding to last timestep
-                        os << "const unsigned int lastTimestepDelaySlot = (*group->spkQuePtr + " << (n.getArchetype().getNumDelaySlots() - 1) << ") % " << n.getArchetype().getNumDelaySlots() << ";" << std::endl;
-                        os << "const unsigned int lastTimestepDelayOffset = lastTimestepDelaySlot * group->numNeurons;" << std::endl;
-
-                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            os << "for(unsigned int i = 0; i < group->spkCnt[lastTimestepDelaySlot]; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "group->prevST[lastTimestepDelayOffset + group->spk[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
-                            }
-                        }
-                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            os << "for(unsigned int i = 0; i < group->spkCntEvnt[lastTimestepDelaySlot]; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "group->prevSET[lastTimestepDelayOffset + group->spkEvnt[lastTimestepDelayOffset + i]] = t - DT;" << std::endl;
-                            }
-                        }
-                    }
-                    else {
-                        if(n.getArchetype().isPrevSpikeTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            os << "for(unsigned int i = 0; i < group->spkCnt[0]; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "group->prevST[group->spk[i]] = t - DT;" << std::endl;
-                            }
-                        }
-                        if(n.getArchetype().isPrevSpikeEventTimeRequired()) {
-                            // Loop through neurons which spiked last timestep and set their spike time to time of previous timestep
-                            os << "for(unsigned int i = 0; i < group->spkCntEvnt[0]; i++)";
-                            {
-                                CodeStream::Scope b(os);
-                                os << "group->prevSET[group->spkEvnt[i]] = t - DT;" << std::endl;
-                            }
-                        }
-                    }
-                }
 
                 // Generate spike count reset
                 n.genMergedGroupSpikeCountReset(os, 1);
@@ -239,8 +251,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
@@ -438,7 +450,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &, HostHandler preambleHandler,
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
                               CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
                               CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
 {
@@ -447,7 +459,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
 
     // Generate arrays of merged structs and functions to set them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
@@ -497,7 +509,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         // Get reference to group
                         os << "const auto *group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
 
-                        genCustomUpdateIndexCalculation(os, c);
+                        genCustomUpdateIndexCalculation(os, c, 1);
 
                         // Loop through group members
                         os << "for(unsigned int i = 0; i < group->size; i++)";
@@ -507,7 +519,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             Substitutions popSubs(&funcSubs);
                             popSubs.addVarSubstitution("id", "i");
 
+                            // Generate custom update
                             customUpdateHandler(os, c, popSubs);
+
+                            // Write back reductions
+                            genWriteBackReductions(os, c, popSubs["id"]);
                         }
                     }
                 }
@@ -564,6 +580,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                                 // Call custom update handler
                                 customWUUpdateHandler(os, c, synSubs);
+
+                                // Write back reductions
+                                genWriteBackReductions(os, c, synSubs["id_syn"]);
                             }
                         }
                     }
@@ -626,8 +645,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces&,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                      NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                       CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -1061,7 +1080,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -1075,7 +1094,11 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
+{
+}
+//--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------
@@ -1093,11 +1116,11 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
     os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count, MemAlloc &memAlloc) const
 {
     os << name << " = new " << type << "[" << count << "];" << std::endl;
 
-    return MemAlloc::host(count * getSize(type));
+    memAlloc += MemAlloc::host(count * getSize(type));
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
@@ -1244,17 +1267,14 @@ void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInterna
     assert(!getPreferences().automaticCopy);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
 {
     assert(false);
-    return MemAlloc::host(0);
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genPopulationRNG(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &,
-                                   const std::string&, size_t) const
+void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
+                                   const std::string&, size_t, MemAlloc&) const
 {
-    // No need for population RNGs for single-threaded CPU
-    return MemAlloc::zero();
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
@@ -1377,7 +1397,20 @@ bool Backend::isGlobalDeviceRNGRequired(const ModelSpecMerged &) const
 //--------------------------------------------------------------------------
 Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged &) const
 {
-    return {{"", std::numeric_limits<size_t>::max()}};
+    return {};
+}
+//--------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash was name of backend
+    Utils::updateHash("SingleThreadedCPU", hash);
+    
+    // Update hash with preferences
+    getPreferences<Preferences>().updateHash(hash);
+
+    return hash.get_digest();
 }
 //--------------------------------------------------------------------------
 void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,

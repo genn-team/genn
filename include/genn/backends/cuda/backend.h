@@ -76,6 +76,9 @@ struct Preferences : public PreferencesBase
     //! it was optimized for. However if, for example, you are running on a cluser with NVML this is not desired behaviour.
     bool selectGPUByDeviceID = false;
 
+    //! Generate corresponding NCCL batch reductions
+    bool enableNCCLReductions = false;
+
     //! How to select GPU device
     DeviceSelect deviceSelectMethod = DeviceSelect::OPTIMAL;
 
@@ -96,6 +99,22 @@ struct Preferences : public PreferencesBase
 
     //! NVCC compiler options for all GPU code
     std::string userNvccFlags = "";
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // Superclass 
+        PreferencesBase::updateHash(hash);
+
+        // **NOTE** showPtxInfo, generateLineInfo and userNvccFlags only affect makefiles/msbuild 
+        // **NOTE** block size optimization is also not relevant, the chosen block size is hashed in the backend
+        // **NOTE** while device selection is also not relevant as the chosen device is hashed in the backend, DeviceSelect::MANUAL_OVERRIDE is used in the backend
+
+        //! Update hash with preferences
+        Utils::updateHash(selectGPUByDeviceID, hash);
+        Utils::updateHash(deviceSelectMethod, hash);
+        Utils::updateHash(constantCacheOverhead, hash);
+        Utils::updateHash(enableNCCLReductions, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -148,22 +167,22 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler, 
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
                                  CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
                                  CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                          CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
                          SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -171,13 +190,14 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -225,9 +245,12 @@ public:
         genCurrentSpikePull(os, ng, batchSize, true);
     }
     
-    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
-    virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                      CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
+                                    CodeStream &runner, CodeStream &allocations, CodeStream &free, 
+                                    MemAlloc &memAlloc) const override;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
+                                  CodeStream &runner, CodeStream &allocations, CodeStream &free, 
+                                  const std::string &name, size_t count, MemAlloc &memAlloc) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;
@@ -251,6 +274,9 @@ public:
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
 
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const override { return getPreferences<Preferences>().enableNCCLReductions; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
 
@@ -260,6 +286,9 @@ public:
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     virtual bool supportsNamespace() const override { return true; };
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -274,33 +303,15 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename T>
-    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups, MemorySpaces &memorySpaces) const
+    void genMergedStructArrayPush(CodeStream &os, const std::vector<T> &groups) const
     {
         // Loop through groups
         for(const auto &g : groups) {
-            // Get size of group in bytes
-            const size_t groupBytes = g.getStructArraySize(*this);
+            // Check that a memory space has been assigned
+            assert(!g.getMemorySpace().empty());
 
-            // Loop through memory spaces
-            bool memorySpaceFound = false;
-            for(auto &m : memorySpaces) {
-                // If there is space in this memory space for group
-                if(m.second > groupBytes) {
-                    // Implement merged group array in this memory space
-                    os << m.first << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
-
-                    // Set flag
-                    memorySpaceFound = true;
-
-                    // Subtract
-                    m.second -= groupBytes;
-
-                    // Stop searching
-                    break;
-                }
-            }
-
-            assert(memorySpaceFound);
+            // Implement merged group array in previously assigned memory space
+            os << g.getMemorySpace() << " Merged" << T::name << "Group" << g.getIndex() << " d_merged" << T::name << "Group" << g.getIndex() << "[" << g.getGroups().size() << "];" << std::endl;
 
             // Write function to update
             os << "void pushMerged" << T::name << "Group" << g.getIndex() << "ToDevice(unsigned int idx, ";

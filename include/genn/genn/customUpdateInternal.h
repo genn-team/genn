@@ -23,10 +23,12 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
-    using CustomUpdateBase::canInitBeMerged;
+    using CustomUpdateBase::isReduction;
+    using CustomUpdateBase::getVarLocationHashDigest;
 
     using CustomUpdate::finalize;
-    using CustomUpdate::canBeMerged;
+    using CustomUpdate::getHashDigest;
+    using CustomUpdate::getInitHashDigest;
     using CustomUpdate::getDelayNeuronGroup;
 };
 
@@ -50,10 +52,11 @@ public:
     using CustomUpdateBase::isInitRNGRequired;
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
+    using CustomUpdateBase::isReduction;
+    using CustomUpdateBase::getVarLocationHashDigest;
     
-    using CustomUpdateWU::finalize;
-    using CustomUpdateWU::canBeMerged;
-    using CustomUpdateWU::canInitBeMerged;
+    using CustomUpdateWU::getHashDigest;
+    using CustomUpdateWU::getInitHashDigest;
     using CustomUpdateWU::getSynapseGroup;
     using CustomUpdateWU::isTransposeOperation;
 };

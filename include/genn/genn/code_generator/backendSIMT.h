@@ -7,6 +7,7 @@
 
 // GeNN includes
 #include "gennExport.h"
+#include "varAccess.h"
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
@@ -28,8 +29,9 @@ enum Kernel
     KernelSynapseDynamicsUpdate,
     KernelInitialize,
     KernelInitializeSparse,
-    KernelPreNeuronReset,
-    KernelPreSynapseReset,
+    KernelNeuronSpikeQueueUpdate,
+    KernelNeuronPrevSpikeTimeUpdate,
+    KernelSynapseDendriticDelayUpdate,
     KernelCustomUpdate,
     KernelCustomTransposeUpdate,
     KernelMax
@@ -92,7 +94,7 @@ public:
     //! Get name of atomic operation
     virtual std::string getAtomic(const std::string &type, AtomicOperation op = AtomicOperation::ADD, 
                                   AtomicMemSpace memSpace = AtomicMemSpace::GLOBAL) const = 0;
-    
+
     //! Generate a shared memory barrier
     virtual void genSharedMemBarrier(CodeStream &os) const = 0;
 
@@ -176,11 +178,13 @@ protected:
     //------------------------------------------------------------------------
     // Protected API
     //------------------------------------------------------------------------
-    void genPreNeuronResetKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronSpikeQueueUpdateKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+
     void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler, size_t &idStart) const;
 
-    void genPreSynapseResetKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genSynapseDendriticDelayUpdateKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                     PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                     PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const;
@@ -209,7 +213,7 @@ protected:
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
-    void addDeviceType(const std::string &type, size_t size);
+    void addDeviceType(const std::string &type, size_t size, const std::string &maxValue = "");
 
     //! Is type a a device only type?
     bool isDeviceType(const std::string &type) const;
@@ -217,7 +221,27 @@ protected:
     //! Helper wrapper around padSize to pad size to a kernel size
     size_t padKernelSize(size_t size, Kernel kernel) const;
 
+    //! Get kernel block size
+    const KernelBlockSize &getKernelBlockSize() const { return m_KernelBlockSizes; }
+
 private:
+    //--------------------------------------------------------------------------
+    // ReductionTarget
+    //--------------------------------------------------------------------------
+    //! Simple struct to hold reduction targets
+    struct ReductionTarget
+    {
+        ReductionTarget(const std::string &n, const std::string &t, VarAccessMode a)
+        : name(n), type(t), access(a)
+        {
+        }
+
+        const std::string name;
+        const std::string type;
+        const VarAccessMode access;
+    };
+
+
     //--------------------------------------------------------------------------
     // Type definitions
     //--------------------------------------------------------------------------
@@ -227,52 +251,6 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    template<typename T>
-    void genGroupMergedSearch(CodeStream &os, Substitutions &popSubs, const T &g, size_t idStart) const
-    {
-        if(g.getGroups().size() == 1) {
-            os << getPointerPrefix() << "struct Merged" << T::name << "Group" << g.getIndex() << " *group";
-            os << " = &d_merged" << T::name << "Group" << g.getIndex() << "[0]; " << std::endl;
-            os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
-
-            // Use the starting thread ID of the whole merged group as group_start_id
-            popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
-        }
-        else {
-            // Perform bisect operation to get index of merged struct
-            os << "unsigned int lo = 0;" << std::endl;
-            os << "unsigned int hi = " << g.getGroups().size() << ";" << std::endl;
-            os << "while(lo < hi)" << std::endl;
-            {
-                CodeStream::Scope b(os);
-                os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
-
-                os << "if(id < d_merged" << T::name << "GroupStartID" << g.getIndex() << "[mid])";
-                {
-                    CodeStream::Scope b(os);
-                    os << "hi = mid;" << std::endl;
-                }
-                os << "else";
-                {
-                    CodeStream::Scope b(os);
-                    os << "lo = mid + 1;" << std::endl;
-                }
-            }
-
-            // Use this to get reference to merged group structure
-            os << getPointerPrefix() << "struct Merged" << T::name << "Group" << g.getIndex() << " *group";
-            os << " = &d_merged" << T::name << "Group" << g.getIndex() << "[lo - 1]; " << std::endl;
-
-            // Get group start thread ID and use as group_start_id
-            os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << g.getIndex() << "[lo - 1];" << std::endl;
-            popSubs.addVarSubstitution("group_start_id", "groupStartID");
-
-            // Use this to calculate local id within group
-            os << "const unsigned int lid = id - groupStartID;" << std::endl;
-        }
-        popSubs.addVarSubstitution("id", "lid");
-    }
-
     template<typename T, typename S, typename F>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
                           S getPaddedSizeFunc, F filter, GroupHandler<T> handler) const
@@ -301,7 +279,47 @@ private:
                     CodeStream::Scope b(os);
                     Substitutions popSubs(&kernelSubs);
 
-                    genGroupMergedSearch(os, popSubs, gMerge, idStart);
+                    if(gMerge.getGroups().size() == 1) {
+                        os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                        os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[0]; " << std::endl;
+                        os << "const unsigned int lid = id - " << idStart << ";" << std::endl;
+
+                        // Use the starting thread ID of the whole merged group as group_start_id
+                        popSubs.addVarSubstitution("group_start_id", std::to_string(idStart));
+                    }
+                    else {
+                        // Perform bisect operation to get index of merged struct
+                        os << "unsigned int lo = 0;" << std::endl;
+                        os << "unsigned int hi = " << gMerge.getGroups().size() << ";" << std::endl;
+                        os << "while(lo < hi)" << std::endl;
+                        {
+                            CodeStream::Scope b(os);
+                            os << "const unsigned int mid = (lo + hi) / 2;" << std::endl;
+
+                            os << "if(id < d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[mid])";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "hi = mid;" << std::endl;
+                            }
+                            os << "else";
+                            {
+                                CodeStream::Scope b(os);
+                                os << "lo = mid + 1;" << std::endl;
+                            }
+                        }
+
+                        // Use this to get reference to merged group structure
+                        os << getPointerPrefix() << "struct Merged" << T::name << "Group" << gMerge.getIndex() << " *group";
+                        os << " = &d_merged" << T::name << "Group" << gMerge.getIndex() << "[lo - 1]; " << std::endl;
+
+                        // Get group start thread ID and use as group_start_id
+                        os << "const unsigned int groupStartID = d_merged" << T::name << "GroupStartID" << gMerge.getIndex() << "[lo - 1];" << std::endl;
+                        popSubs.addVarSubstitution("group_start_id", "groupStartID");
+
+                        // Use this to calculate local id within group
+                        os << "const unsigned int lid = id - groupStartID;" << std::endl;
+                    }
+                    popSubs.addVarSubstitution("id", "lid");
 
                     handler(os, gMerge, popSubs);
 
@@ -309,6 +327,32 @@ private:
                 }
             }
         }
+    }
+
+    
+    template<typename G>
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg) const
+    {
+        // Loop through variables
+        std::vector<ReductionTarget> reductionTargets;
+        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            // If variable is a reduction target, define variable initialised to correct initial value for reduction
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, getVarAccessMode(v.access), v.type) << ";" << std::endl;
+                reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access));
+            }
+        }
+
+        // Loop through variable references
+        for(const auto &v : cm->getVarRefs()) {
+            // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, v.access, v.type) << ";" << std::endl;
+                reductionTargets.emplace_back(v.name, v.type, v.access);
+            }
+        }
+        return reductionTargets;
     }
 
     template<typename T, typename S>

@@ -12,6 +12,8 @@
 #include "varAccess.h"
 
 // Forward declarations
+class CustomUpdate;
+class CustomUpdateWU;
 class NeuronGroup;
 class SynapseGroup;
 class CurrentSource;
@@ -116,12 +118,10 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    bool canBeMerged(const Base *other) const
-    {
-        // Return true if vars and egps match
-        return (Snippet::Base::canBeMerged(other)
-                && (getVars() == other->getVars()));
-    }
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
+
+    //! Validate names of parameters etc
+    void validate() const;
 };
 
 
@@ -200,6 +200,7 @@ public:
     //------------------------------------------------------------------------
     static VarReference createVarRef(const NeuronGroup *ng, const std::string &varName);
     static VarReference createVarRef(const CurrentSource *cs, const std::string &varName);
+    static VarReference createVarRef(const CustomUpdate *su, const std::string &varName);
     static VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPreVarRef(const SynapseGroup *sg, const std::string &varName);
     static VarReference createWUPostVarRef(const SynapseGroup *sg, const std::string &varName);
@@ -212,6 +213,7 @@ private:
 
     VarReference(const NeuronGroupInternal *ng, const std::string &varName);
     VarReference(const CurrentSourceInternal *cs, const std::string &varName);
+    VarReference(const CustomUpdate *cu, const std::string &varName);
     VarReference(unsigned int size, GetDelayNeuronGroupFn getDelayNeuronGroup,
                  size_t varIndex, const Models::Base::VarVec &varVec, GetTargetNameFn getTargetNameFn);
 
@@ -236,12 +238,13 @@ class GENN_EXPORT WUVarReference : public VarReferenceBase
 public:
     WUVarReference(const SynapseGroup *sg, const std::string &varName,
                    const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "");
+    WUVarReference(const CustomUpdateWU *cu, const std::string &varName);
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     const SynapseGroup *getSynapseGroup() const;
-    
+
     const SynapseGroup *getTransposeSynapseGroup() const;
     const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
     size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
@@ -263,4 +266,12 @@ private:
 //----------------------------------------------------------------------------
 template<size_t NumVars>
 using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
+
+//----------------------------------------------------------------------------
+// updateHash overrides
+//----------------------------------------------------------------------------
+GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
+GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
 } // Models

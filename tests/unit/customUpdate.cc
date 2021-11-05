@@ -62,6 +62,17 @@ public:
         "$(addToInSyn, ($(g) + $(x)) * $(V_pre));\n");
 };
 IMPLEMENT_MODEL(Cont2);
+
+class Reduce : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 0, 2);
+
+    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+
+    SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}, 
+                  {"reduction", "scalar", VarAccessMode::REDUCE_SUM}});
+};
+IMPLEMENT_MODEL(Reduce);
 }
 //--------------------------------------------------------------------------
 // Tests
@@ -268,13 +279,31 @@ TEST(CustomUpdates, BatchingWriteShared)
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
+    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    try {
+        model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
+                                      {}, {}, reduceVarReferences);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReduceDuplicate)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+    
+    // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     Sum2::VarValues sum2VarValues(1.0);
     Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
-    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                {}, sum2VarValues, sum2VarReferences);
-
     try {
-        model.finalize();
+        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                    {}, sum2VarValues, sum2VarReferences);
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -304,10 +333,12 @@ TEST(CustomUpdates, CompareDifferentModel)
     model.finalize();
 
     CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
-    ASSERT_TRUE(sum0Internal->canBeMerged(*sum1));
-    ASSERT_FALSE(sum0Internal->canBeMerged(*sum2));
-    ASSERT_TRUE(sum0Internal->canInitBeMerged(*sum1));
-    ASSERT_FALSE(sum0Internal->canInitBeMerged(*sum2));
+    CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    ASSERT_EQ(sum0Internal->getHashDigest(), sum1Internal->getHashDigest());
+    ASSERT_NE(sum0Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum1Internal->getInitHashDigest());
+    ASSERT_NE(sum0Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -341,11 +372,13 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     // Finalize model
     model.finalize();
 
-    CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal *>(sum0);
-    ASSERT_FALSE(sum0Internal->canBeMerged(*sum1));
-    ASSERT_TRUE(sum0Internal->canBeMerged(*sum2));
-    ASSERT_TRUE(sum0Internal->canInitBeMerged(*sum1));
-    ASSERT_TRUE(sum0Internal->canInitBeMerged(*sum2));
+    CustomUpdateInternal *sum0Internal = static_cast<CustomUpdateInternal*>(sum0);
+    CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    ASSERT_NE(sum0Internal->getHashDigest(), sum1Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum1Internal->getInitHashDigest());
+    ASSERT_EQ(sum0Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -406,19 +439,22 @@ TEST(CustomUpdates, CompareDifferentDelay)
 
     // No delay group can't be merged with any others
     CustomUpdateInternal *sum1Internal = static_cast<CustomUpdateInternal*>(sum1);
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum3));
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum4));
+    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
+    CustomUpdateInternal *sum3Internal = static_cast<CustomUpdateInternal*>(sum3);
+    CustomUpdateInternal *sum4Internal = static_cast<CustomUpdateInternal*>(sum4);
+
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum3Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getHashDigest(), sum4Internal->getHashDigest());
 
     // Delay groups don't matter for initialisation
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum2));
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum3));
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum4));
-
-    CustomUpdateInternal *sum2Internal = static_cast<CustomUpdateInternal*>(sum2);
-    ASSERT_TRUE(sum2Internal->canBeMerged(*sum3));
-    ASSERT_FALSE(sum2Internal->canBeMerged(*sum4));
-
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum3Internal->getInitHashDigest());
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum4Internal->getInitHashDigest());
+    
+    ASSERT_EQ(sum2Internal->getHashDigest(), sum3Internal->getHashDigest());
+    ASSERT_NE(sum2Internal->getHashDigest(), sum4Internal->getHashDigest());
+    
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -458,9 +494,9 @@ TEST(CustomUpdates, CompareDifferentBatched)
     ASSERT_FALSE(sum2Internal->isBatched());
 
     // Check that this means they can't be merged
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
-    ASSERT_FALSE(sum1Internal->canInitBeMerged(*sum2));
-
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -504,10 +540,11 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 
     // Updates which transpose different variables can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
+    CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
 
     // Again, this doesn't matter for initialisation
-    ASSERT_TRUE(sum1Internal->canInitBeMerged(*sum2));
+    ASSERT_EQ(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
 
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
@@ -557,9 +594,10 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 
     // Updates and initialisation with different connectivity can't be merged with any others
     CustomUpdateWUInternal *sum1Internal = static_cast<CustomUpdateWUInternal*>(sum1);
-    ASSERT_FALSE(sum1Internal->canBeMerged(*sum2));
-    ASSERT_FALSE(sum1Internal->canInitBeMerged(*sum2));
-
+    CustomUpdateWUInternal *sum2Internal = static_cast<CustomUpdateWUInternal*>(sum2);
+    ASSERT_NE(sum1Internal->getHashDigest(), sum2Internal->getHashDigest());
+    ASSERT_NE(sum1Internal->getInitHashDigest(), sum2Internal->getInitHashDigest());
+    
     // Create a backend
     CodeGenerator::SingleThreadedCPU::Preferences preferences;
     CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
@@ -572,4 +610,46 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().size() == 1);
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, InvalidName)
+{
+    ModelSpec model;
+    
+     // Add neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
+    
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+
+    try {
+        model.addCustomUpdate<Sum>("Sum-1", "CustomUpdate",
+                                   {}, sumVarValues, sumVarReferences1);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, InvalidUpdateGroupName)
+{
+    ModelSpec model;
+    
+     // Add neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
+    
+    Sum::VarValues sumVarValues(0.0);
+    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+
+    try {
+        model.addCustomUpdate<Sum>("Sum", "CustomUpdate-1",
+                                   {}, sumVarValues, sumVarReferences1);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    }
 }

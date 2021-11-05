@@ -1,9 +1,12 @@
 #pragma once
 
 // Standard C++ includes
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
+#include "gennExport.h"
+#include "gennUtils.h"
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
@@ -21,7 +24,7 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-class ModelSpecMerged
+class GENN_EXPORT ModelSpecMerged
 {
 public:
     ModelSpecMerged(const ModelSpecInternal &model, const BackendBase &backend);
@@ -129,6 +132,9 @@ public:
     //! Get merged neuron groups which require their spike queues updating
     const std::vector<NeuronSpikeQueueUpdateGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
 
+    //! Get merged neuron groups which require their previous spike times updating
+    const std::vector<NeuronPrevSpikeTimeUpdateGroupMerged> &getMergedNeuronPrevSpikeTimeUpdateGroups() const{ return m_MergedNeuronPrevSpikeTimeUpdateGroups; }
+
     //! Get merged synapse groups which require their dendritic delay updating
     const std::vector<SynapseDendriticDelayUpdateGroupMerged> &getMergedSynapseDendriticDelayUpdateGroups() const { return m_MergedSynapseDendriticDelayUpdateGroups; }
 
@@ -144,6 +150,12 @@ public:
     //! Get merged custom weight update groups where transpose needs to be calculated
     const std::vector<CustomUpdateTransposeWUGroupMerged> &getMergedCustomUpdateTransposeWUGroups() const { return m_MergedCustomUpdateTransposeWUGroups; }
 
+    //! Get merged custom update groups where host reduction needs to be performed
+    const std::vector<CustomUpdateHostReductionGroupMerged> &getMergedCustomUpdateHostReductionGroups() const { return m_MergedCustomUpdateHostReductionGroups; }
+
+    //! Get merged custom weight update groups where host reduction needs to be performed
+    const std::vector<CustomWUUpdateHostReductionGroupMerged> &getMergedCustomWUUpdateHostReductionGroups() const { return m_MergedCustomWUUpdateHostReductionGroups; }
+
     void genMergedNeuronUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronUpdateGroups); }
     void genMergedPresynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPresynapticUpdateGroups); }
     void genMergedPostsynapticUpdateGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedPostsynapticUpdateGroups); }
@@ -156,11 +168,14 @@ public:
     void genMergedSynapseSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseSparseInitGroups); }
     void genMergedCustomWUUpdateSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateSparseInitGroups); }
     void genMergedNeuronSpikeQueueUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronSpikeQueueUpdateGroups); }
+    void genMergedNeuronPrevSpikeTimeUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronPrevSpikeTimeUpdateGroups); }
     void genMergedSynapseDendriticDelayUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDendriticDelayUpdateGroups); }
     void genMergedSynapseConnectivityHostInitStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityHostInitGroups); }
     void genMergedCustomUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateGroups); }
     void genMergedCustomUpdateWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateWUGroups); }
-    void gemMergedCustomUpdateTransposeWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateTransposeWUGroups); }
+    void genMergedCustomUpdateTransposeWUStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateTransposeWUGroups); }
+    void genMergedCustomUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateHostReductionGroups); }
+    void genMergedCustomWUUpdateHostReductionStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateHostReductionGroups); }
 
     void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
     void genPostsynapticDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
@@ -173,6 +188,24 @@ public:
     const std::string &getPresynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PresynapticUpdateSupportCode.getSupportCodeNamespace(code); }
     const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
+
+    //! Get hash digest of entire model
+    boost::uuids::detail::sha1::digest_type getHashDigest(const BackendBase &backend) const;
+
+    //! Get hash digest of neuron update module
+    boost::uuids::detail::sha1::digest_type getNeuronUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of synapse update module
+    boost::uuids::detail::sha1::digest_type getSynapseUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of custom update module
+    boost::uuids::detail::sha1::digest_type getCustomUpdateArchetypeHashDigest() const;
+    
+    //! Get hash digest of init module
+    boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
+
+    //! Does model have any EGPs?
+    bool anyPointerEGPs() const;
 
     //! Get the map of destinations within the merged data structures for a particular extra global parameter
     const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name, const BackendBase &backend) const
@@ -262,51 +295,30 @@ private:
         }
     }
 
-    template<typename Group, typename MergedGroup, typename M>
-    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
-                            std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                            std::vector<MergedGroup> &mergedGroups, M canMerge)
+    template<typename Group, typename MergedGroup, typename D>
+    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
+                                std::vector<MergedGroup> &mergedGroups, D getHashDigest)
     {
-        // Loop through un-merged  groups
-        std::vector<std::vector<std::reference_wrapper<const Group>>> protoMergedGroups;
-        while(!unmergedGroups.empty()) {
-            // Remove last group from vector
-            const Group &group = unmergedGroups.back().get();
-            unmergedGroups.pop_back();
+        // Create a hash map to group together groups with the same SHA1 digest
+        std::unordered_map<boost::uuids::detail::sha1::digest_type, 
+                           std::vector<std::reference_wrapper<const Group>>, 
+                           Utils::SHA1Hash> protoMergedGroups;
 
-            // Loop through existing proto-merged groups
-            bool existingMergedGroupFound = false;
-            for(auto &p : protoMergedGroups) {
-                assert(!p.empty());
-
-                // If our group can be merged with this proto-merged group
-                if(canMerge(p.front().get(), group)) {
-                    // Add group to vector
-                    p.emplace_back(group);
-
-                    // Set flag and stop searching
-                    existingMergedGroupFound = true;
-                    break;
-                }
-            }
-
-            // If no existing merged groups were found, 
-            // create a new proto-merged group containing just this group
-            if(!existingMergedGroupFound) {
-                protoMergedGroups.emplace_back();
-                protoMergedGroups.back().emplace_back(group);
-            }
+        // Add unmerged groups to correct vector
+        for(const auto &g : unmergedGroups) {
+            protoMergedGroups[(g.get().*getHashDigest)()].push_back(g);
         }
 
         // Reserve final merged groups vector
         mergedGroups.reserve(protoMergedGroups.size());
 
         // Loop through resultant merged groups
-        for(size_t i = 0; i < protoMergedGroups.size(); i++) {
-            // Add group to vector, moving vectors of groups into data structure to avoid copying
-            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend,
-                                      std::move(protoMergedGroups[i]));
-     
+        size_t i = 0;
+        for(const auto &p : protoMergedGroups) {
+            // Add group to vector
+            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend, p.second);
+
             // Loop through fields
             for(const auto &f : mergedGroups.back().getFields()) {
                 // If field is an EGP, add record to merged EGPS
@@ -323,13 +335,15 @@ private:
                     }
                 }
             }
+
+            i++;
         }
     }
-    
-    template<typename Group, typename MergedGroup, typename F, typename M>
-    void createMergedGroups(const ModelSpecInternal &model, const BackendBase &backend,
-                            const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                            F filter, M canMerge)
+
+    template<typename Group, typename MergedGroup, typename F, typename U>
+    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
+                                F filter, U updateHash)
     {
         // Build temporary vector of references to groups that pass filter
         std::vector<std::reference_wrapper<const Group>> unmergedGroups;
@@ -340,7 +354,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroups(model, backend, unmergedGroups, mergedGroups, canMerge);
+        createMergedGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash);
     }
 
     //--------------------------------------------------------------------------
@@ -385,6 +399,9 @@ private:
     //! Merged neuron groups which require their spike queues updating
     std::vector<NeuronSpikeQueueUpdateGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;
 
+    //! Merged neuron groups which require their previous spike times updating
+    std::vector<NeuronPrevSpikeTimeUpdateGroupMerged> m_MergedNeuronPrevSpikeTimeUpdateGroups;
+
     //! Merged synapse groups which require their dendritic delay updating
     std::vector<SynapseDendriticDelayUpdateGroupMerged> m_MergedSynapseDendriticDelayUpdateGroups;
 
@@ -399,6 +416,12 @@ private:
 
     //! Merged custom weight update groups where transpose needs to be calculated
     std::vector<CustomUpdateTransposeWUGroupMerged> m_MergedCustomUpdateTransposeWUGroups;
+
+    //! Get merged custom update groups where host reduction needs to be performed
+    std::vector<CustomUpdateHostReductionGroupMerged> m_MergedCustomUpdateHostReductionGroups;
+
+    //! Get merged custom weight update groups where host reduction needs to be performed
+    std::vector<CustomWUUpdateHostReductionGroupMerged> m_MergedCustomWUUpdateHostReductionGroups;
 
     //! Unique support code strings for neuron update
     SupportCodeMerged m_NeuronUpdateSupportCode;

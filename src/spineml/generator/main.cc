@@ -242,12 +242,14 @@ int main(int argc, char *argv[])
         std::string experimentFilename;
         std::string outputDirectory;
         bool timing = false;
+        bool forceRebuild = false;
         unsigned int logLevel = plog::info;
         unsigned int gennLogLevel = plog::warning;
 
         app.add_option("experiment,-e,--experiment", experimentFilename, "Experiment xml file")->required();
         app.add_option("output,-o,--output", outputDirectory, "Output directory for generated code");
         app.add_flag("-t,--timing", timing, "Generate GeNN timing code, allowing more fine-grained profiling");
+        app.add_flag("-f,--force-rebuild", "Force model to be rebuilt even if GeNN doesn't think it's required");
         app.add_flag("--log-error{2},--log-warning{3},--log-info{4},--log-debug{5}", logLevel, "Verbosity of SpineML logging to show");
         app.add_flag("--genn-log-error{2},--genn-log-warning{3},--genn-log-info{4},--genn-log-debug{5}", gennLogLevel, "Verbosity of GeNN logging to show");
 
@@ -617,10 +619,11 @@ int main(int argc, char *argv[])
 
         // Create backend
         auto backend = CodeGenerator::BACKEND_NAMESPACE::Optimiser::createBackend(
-            model, sharePath, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
+            model, codePath, (plog::Severity)gennLogLevel, &consoleAppender, preferences);
 
         // Generate code
-        const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, codePath).first;
+        const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, 
+                                                            codePath, forceRebuild).first;
 
 #ifdef _WIN32
         // Create MSBuild project to compile and link all generated modules

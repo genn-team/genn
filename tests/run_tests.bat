@@ -15,13 +15,13 @@ FOR /D %%F IN (*) DO (
 	PUSHD %%F
 	
 	REM Build model
-	CALL genn-buildmodel.bat %BUILD_FLAGS% model.cc
+	CALL genn-buildmodel.bat -l %BUILD_FLAGS% model.cc
 	
 	REM Build model
 	msbuild "%%F.sln" /m /t:%%F /p:BuildProjectReferences=true /verbosity:minimal /p:Configuration=Release
 	
 	REM Run tests
-	test.exe --gtest_output="xml:test_results.xml"
+	test.exe --test_output="xml:test_results.xml"
 
 	REM pop directory
 	POPD

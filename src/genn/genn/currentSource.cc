@@ -34,6 +34,19 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
     return m_ExtraGlobalParamLocation[getCurrentSourceModel()->getExtraGlobalParamIndex(varName)];
 }
 //----------------------------------------------------------------------------
+CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
+                             const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                             const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
+                             VarLocation defaultExtraGlobalParamLocation)
+:   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
+    m_TrgNeuronGroup(trgNeuronGroup), m_VarLocation(varInitialisers.size(), defaultVarLocation),
+    m_ExtraGlobalParamLocation(currentSourceModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation)
+{
+    // Validate names
+    Utils::validatePopName(name, "Current source");
+    getCurrentSourceModel()->validate();
+}
+//----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();
@@ -79,25 +92,27 @@ bool CurrentSource::isZeroCopyEnabled() const
                        [](VarLocation loc) { return (loc & VarLocation::ZERO_COPY); });
 }
 //----------------------------------------------------------------------------
-bool CurrentSource::canBeMerged(const CurrentSource &other) const
+boost::uuids::detail::sha1::digest_type CurrentSource::getHashDigest() const
 {
-    return getCurrentSourceModel()->canBeMerged(other.getCurrentSourceModel());
+    return getCurrentSourceModel()->getHashDigest();
 }
 //----------------------------------------------------------------------------
-bool CurrentSource::canInitBeMerged(const CurrentSource &other) const
+boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest() const
 {
-     // If both groups have the same number of variables
-    if(getCurrentSourceModel()->getVars() == other.getCurrentSourceModel()->getVars()) {
-        // if any of the variable's initialisers can't be merged, return false
-        for(size_t i = 0; i < getVarInitialisers().size(); i++) {
-            if(!getVarInitialisers()[i].canBeMerged(other.getVarInitialisers()[i])) {
-                return false;
-            }
-        }
-        
-        return true;
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getCurrentSourceModel()->getVars(), hash);
+
+    // Include variable initialiser hashes
+    for(const auto &w : getVarInitialisers()) {
+        Utils::updateHash(w.getHashDigest(), hash);
     }
-    else {
-        return false;
-    }
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CurrentSource::getVarLocationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(m_VarLocation, hash);
+    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    return hash.get_digest();
 }

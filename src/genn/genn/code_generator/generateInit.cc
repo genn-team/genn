@@ -1,6 +1,7 @@
 #include "code_generator/generateInit.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <string>
 
 // GeNN includes
@@ -22,7 +23,7 @@ void genVariableFill(CodeStream &os, const std::string &fieldName, const std::st
                      VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varDuplication & VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDuplication == VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -42,7 +43,7 @@ void genScalarFill(CodeStream &os, const std::string &fieldName, const std::stri
                    VarAccessDuplication varDuplication, unsigned int batchSize, bool delay = false, unsigned int numDelaySlots = 1)
 {
     // Determine number of values to fill in each thread
-    const unsigned int numValues = ((varDuplication & VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
+    const unsigned int numValues = ((varDuplication == VarAccessDuplication::SHARED) ? 1 : batchSize) * ((delay ? numDelaySlots : 1));
 
     // If there's only one, don't generate a loop
     if(numValues == 1) {
@@ -269,15 +270,19 @@ void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const SynapseCo
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                 const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                 const BackendBase &backend, const std::string &suffix)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
+    CodeStream init(initStream);
+
+    init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
 
     // Generate functions to push merged synapse group structures
     const ModelSpecInternal &model = modelMerged.getModel();
 
-    backend.genInit(os, modelMerged, memorySpaces,
+    backend.genInit(init, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -336,10 +341,10 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
                                  [&ng](size_t v, size_t p) { return ng.isVarInitDerivedParamHeterogeneous(v, p); });
 
             // Loop through incoming synaptic populations
-            for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
+            for(size_t i = 0; i < ng.getSortedArchetypeMergedInSyns().size(); i++) {
                 CodeStream::Scope b(os);
 
-                const auto *sg = ng.getArchetype().getMergedInSyn()[i];
+                const auto *sg = ng.getSortedArchetypeMergedInSyns().at(i);
 
                 // If this synapse group's input variable should be initialised on device
                 // Generate target-specific code to initialise variable
@@ -381,9 +386,8 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
             // Loop through incoming synaptic populations with postsynaptic variables
             // **NOTE** number of delay slots is based on the target neuron (for simplicity) but whether delay is required is based on the synapse group
-            const auto inSynWithPostVars = ng.getArchetype().getInSynWithPostVars();
-            for(size_t i = 0; i < inSynWithPostVars.size(); i++) {
-                const auto *sg = inSynWithPostVars.at(i);
+            for(size_t i = 0; i < ng.getSortedArchetypeInSynWithPostVars().size(); i++) {
+                const auto *sg = ng.getSortedArchetypeInSynWithPostVars().at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(), sg->getWUPostVarInitialisers(),
                                      "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),  model.getBatchSize(),
@@ -394,9 +398,8 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
             // Loop through outgoing synaptic populations with presynaptic variables
             // **NOTE** number of delay slots is based on the source neuron (for simplicity) but whether delay is required is based on the synapse group
-            const auto outSynWithPostVars = ng.getArchetype().getOutSynWithPreVars();
-            for(size_t i = 0; i < outSynWithPostVars.size(); i++) {
-                const auto *sg = outSynWithPostVars.at(i);
+            for(size_t i = 0; i < ng.getSortedArchetypeOutSynWithPreVars().size(); i++) {
+                const auto *sg = ng.getSortedArchetypeOutSynWithPreVars().at(i);
                 genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(), sg->getWUPreVarInitialisers(),
                                      "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
                                      i, model.getPrecision(),  model.getBatchSize(),
@@ -407,8 +410,8 @@ void CodeGenerator::generateInit(CodeStream &os, BackendBase::MemorySpaces &memo
 
             // Loop through current sources
             os << "// current source variables" << std::endl;
-            for(size_t i = 0; i < ng.getArchetype().getCurrentSources().size(); i++) {
-                const auto *cs = ng.getArchetype().getCurrentSources()[i];
+            for(size_t i = 0; i < ng.getSortedArchetypeCurrentSources().size(); i++) {
+                const auto *cs = ng.getSortedArchetypeCurrentSources().at(i);
 
                 genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), cs->getVarInitialisers(),
                                      "CS" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),

@@ -13,6 +13,7 @@
 
 // GeNN includes
 #include "backendExport.h"
+#include "gennUtils.h"
 
 // GeNN code generator includes
 #include "code_generator/backendSIMT.h"
@@ -83,10 +84,6 @@ struct Preferences : public PreferencesBase
 
     //! If block size select method is set to BlockSizeSelect::MANUAL, block size to use for each kernel
     KernelBlockSize manualWorkGroupSizes;
-    
-    //! On AMD devices, command queue flushes are inserted after every kernel launch  
-    //! to workaround driver issues. Set this flag to disable this behaviour.
-    bool disableAMDFlush = false;
 };
 
 //--------------------------------------------------------------------------
@@ -139,22 +136,22 @@ public:
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendBase:: virtuals
     //--------------------------------------------------------------------------
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const override;
 
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const override;
 
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler,
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
                                  CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
                                  CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const override;
 
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                          CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler,
                          SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -162,13 +159,14 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &allocations) const override;
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
@@ -216,9 +214,10 @@ public:
         genCurrentSpikePull(os, ng, batchSize, true);
     }
 
-    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const override;
-    virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                      CodeStream &allocations, CodeStream &free, const std::string &name, size_t count) const override;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const override;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations,
+                                  CodeStream &free, const std::string &name, size_t count, MemAlloc &memAlloc) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;
@@ -249,6 +248,9 @@ public:
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return false; }
 
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const override { return false; }
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const override { return m_ChosenDevice.getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>(); }
     
@@ -258,7 +260,10 @@ public:
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const override;
 
     virtual bool supportsNamespace() const override { return false; };
-
+    
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const override;
+    
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -275,6 +280,9 @@ private:
     {
         // Loop through groups
         for(const auto &g : groups) {
+            // Check there's no memory space assigned as OpenCL doesn't currently support them
+            assert(g.getMemorySpace().empty());
+
             // Declare build kernel
             const std::string buildKernelName = "build" + T::name + std::to_string(g.getIndex()) + "Kernel";
             os << "cl::Kernel " << buildKernelName << ";" << std::endl;
@@ -304,7 +312,6 @@ private:
                 os << "const cl::NDRange globalWorkSize(1, 1);" << std::endl;
                 os << "const cl::NDRange localWorkSize(1, 1);" << std::endl;
                 os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueNDRangeKernel(" << buildKernelName << ", cl::NullRange, globalWorkSize, localWorkSize));" << std::endl;
-                genPostKernelFlush(os);
             }
         }
 
@@ -429,8 +436,6 @@ private:
     //! Build a string called "buildProgramFlags" containing flags to pass to cl::Program::build
     void genBuildProgramFlagsString(CodeStream &os) const;
 
-    void genPostKernelFlush(CodeStream &os) const;
-
     void divideKernelStreamInParts(CodeStream &os, const std::stringstream &kernelCode, size_t partLength) const;
 
     //! Tests whether chosen device is AMD    
@@ -444,11 +449,16 @@ private:
         it would seem, doesn't support some functions e.g. inline PTAX */
     bool isChosenPlatformNVIDIA() const;
 
+    //! Should we make all allocations from sub-buffers?
+    /*! This is required for correct functioning on AMD devices */
+    bool shouldUseSubBufferAllocations() const;
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     const unsigned int m_ChosenPlatformIndex;
     const unsigned int m_ChosenDeviceIndex;
+    unsigned int m_AllocationAlignementBytes;
     cl::Device m_ChosenDevice;
     cl::Platform m_ChosenPlatform;
 };

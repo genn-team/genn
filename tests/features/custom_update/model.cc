@@ -48,6 +48,16 @@ public:
 };
 IMPLEMENT_MODEL(TestWUM);
 
+class TestCU : public CustomUpdateModels::Base
+{
+public:
+    DECLARE_CUSTOM_UPDATE_MODEL(TestCU, 0, 1, 1);
+
+    SET_VARS({{"C", "scalar"}});
+    SET_VAR_REFS({{"R", "scalar"}})
+};
+IMPLEMENT_MODEL(TestCU);
+
 class SetTime : public CustomUpdateModels::Base
 {
 public:
@@ -90,6 +100,11 @@ void modelDefinition(ModelSpec &model)
         {}, {0}, {0.0}, {0.0},
         {}, {0},
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
+    TestCU::VarReferences cuTestVarReferences(createVarRef(ng, "V"));
+    auto *cu = model.addCustomUpdate<TestCU>("CustomUpdate", "Test2", {}, {0.0}, cuTestVarReferences);
+    
+    TestCU::WUVarReferences cuTestWUVarReferences(createWUVarRef(denseSG, "g"));
+    auto *cuWU = model.addCustomUpdate<TestCU>("CustomWUUpdate", "Test2", {}, {0.0}, cuTestWUVarReferences);
     
     //---------------------------------------------------------------------------
     // Custom updates
@@ -101,7 +116,11 @@ void modelDefinition(ModelSpec &model)
     SetTime::VarReferences csVarReferences(createVarRef(cs, "C")); // R
     model.addCustomUpdate<SetTime>("CurrentSourceSetTime", "Test",
                                    {}, {0.0}, csVarReferences);
-                                   
+   
+    SetTime::VarReferences cuVarReferences(createVarRef(cu, "C")); // R
+    model.addCustomUpdate<SetTime>("CustomUpdateSetTime", "Test",
+                                   {}, {0.0}, cuVarReferences);
+
     SetTime::VarReferences psmVarReferences(createPSMVarRef(denseSG, "P")); // R
     model.addCustomUpdate<SetTime>("PSMSetTime", "Test",
                                    {}, {0.0}, psmVarReferences);
@@ -121,4 +140,8 @@ void modelDefinition(ModelSpec &model)
     SetTime::WUVarReferences wuSparseVarReferences(createWUVarRef(sparseSG, "g")); // R
     model.addCustomUpdate<SetTime>("WUSparseSetTime", "Test",
                                    {}, {0.0}, wuSparseVarReferences);
+    
+    SetTime::WUVarReferences wuCUVarReferences(createWUVarRef(cuWU, "C")); // R
+    model.addCustomUpdate<SetTime>("CustomWUUpdateSetTime", "Test",
+                                   {}, {0.0}, wuCUVarReferences);
 }

@@ -80,8 +80,32 @@ private:
     const bool m_TimingEnabled;
     const bool m_SynchroniseOnStop;
 };
+//-----------------------------------------------------------------------
+template<typename T, typename G>
+void genGroupStartID(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                     const T &m, G getPaddedNumThreads)
+{
+    // Calculate size of array
+    const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
 
+    // If there is enough constant memory left for group, declare it in constant memory space
+    if(sizeBytes < totalConstMem) {
+        os << "__device__ __constant__ ";
+        totalConstMem -= sizeBytes;
+    }
+    // Otherwise, declare it in global memory space
+    else {
+        os << "__device__ ";
+    }
 
+    // Declare array of starting thread indices for each neuron group
+    os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
+    for(const auto &ng : m.getGroups()) {
+        os << idStart << ", ";
+        idStart += getPaddedNumThreads(ng.get());
+    }
+    os << "};" << std::endl;
+}
 //-----------------------------------------------------------------------
 void genGroupStartIDs(CodeStream &, size_t&, size_t&)
 {
@@ -94,26 +118,7 @@ void genGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
 {
     // Loop through merged groups
     for(const auto &m : mergedGroups) {
-        // Calculate size of array
-        const size_t sizeBytes = m.getGroups().size() * sizeof(unsigned int);
-
-        // If there is enough constant memory left for group, declare it in constant memory space
-        if(sizeBytes < totalConstMem) {
-            os << "__device__ __constant__ ";
-            totalConstMem -= sizeBytes;
-        }
-        // Otherwise, declare it in global memory space
-        else {
-            os << "__device__ ";
-        }
-
-        // Declare array of starting thread indices for each neuron group
-        os << "unsigned int d_merged" << T::name << "GroupStartID" << m.getIndex() << "[] = {";
-        for(const auto &ng : m.getGroups()) {
-            os << idStart << ", ";
-            idStart += getPaddedNumThreads(ng.get());
-        }
-        os << "};" << std::endl;
+        genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
     }
 
     // Generate any remaining groups
@@ -128,7 +133,35 @@ void genMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
     size_t idStart = 0;
     genGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
 }
+//-----------------------------------------------------------------------
+void genFilteredGroupStartIDs(CodeStream &, size_t&, size_t&)
+{
+}
+//-----------------------------------------------------------------------
+template<typename T, typename G, typename F, typename ...Args>
+void genFilteredGroupStartIDs(CodeStream &os, size_t &idStart, size_t &totalConstMem,
+                      const std::vector<T> &mergedGroups, G getPaddedNumThreads, F filter,
+                      Args... args)
+{
+    // Loop through merged groups
+    for(const auto &m : mergedGroups) {
+        if(filter(m)) {
+            genGroupStartID(os, idStart, totalConstMem, m, getPaddedNumThreads);
+        }
+    }
 
+    // Generate any remaining groups
+    genFilteredGroupStartIDs(os, idStart, totalConstMem, args...);
+}
+//-----------------------------------------------------------------------
+template<typename ...Args>
+void genFilteredMergedKernelDataStructures(CodeStream &os, size_t &totalConstMem,
+                                           Args... args)
+{
+    // Generate group start id arrays
+    size_t idStart = 0;
+    genFilteredGroupStartIDs(os, std::ref(idStart), std::ref(totalConstMem), args...);
+}
 //-----------------------------------------------------------------------
 template<typename T, typename G>
 size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
@@ -161,6 +194,84 @@ const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const s
 {
     return (precision == "double") ? cudaDoublePrecisionFunctions : cudaSinglePrecisionFunctions;
 }
+//-----------------------------------------------------------------------
+std::string getNCCLReductionType(VarAccessMode mode) 
+{
+    // Convert GeNN reduction types to NCCL
+    if(mode & VarAccessModeAttribute::MAX) {
+        return "ncclMax";
+    }
+    else if(mode & VarAccessModeAttribute::SUM) {
+        return "ncclSum";
+    }
+    else {
+        throw std::runtime_error("Reduction type unsupported by NCCL");
+    }
+}
+//-----------------------------------------------------------------------
+std::string getNCCLType(const std::string &type, const std::string &precision)
+{
+    // Convert GeNN types to NCCL types
+    // **YUCK** GeNN really needs a better type system
+    if(type == "scalar") {
+        return (precision == "float") ? "ncclFloat32" : "ncclFloat64";
+    }
+    else if(type == "char" || type == "signed char" || type == "int8_t") {
+        return "ncclInt8";
+    }
+    else if(type == "unsigned char" || type == "uint8_t") {
+        return "ncclUint8";
+    }
+    else if(type == "int" || type == "signed int" || type == "signed" || type == "int32_t") {
+        return "ncclInt32";
+    }
+    else if(type == "unsigned" || type == "unsigned int" || type == "uint32_t") {
+        return "ncclUint32";
+    }
+    else if(type == "half") {
+        return "ncclFloat16";
+    }
+    else if(type == "float") {
+        return "ncclFloat32";
+    }
+    else if(type == "double") {
+        return "ncclFloat64";
+    }
+    else {
+        throw std::runtime_error("Data type '" + type + "' unsupported by NCCL");
+    }
+}
+//-----------------------------------------------------------------------
+template<typename G>
+void genNCCLReduction(CodeStream &os, const G &cg, const std::string &precision)
+{
+    CodeStream::Scope b(os);
+    os << "// merged custom update host reduction group " << cg.getIndex() << std::endl;
+    os << "for(unsigned int g = 0; g < " << cg.getGroups().size() << "; g++)";
+    {
+        CodeStream::Scope b(os);
+
+        // Get reference to group
+        os << "const auto *group = &merged" << G::name << "Group" << cg.getIndex() << "[g]; " << std::endl;
+
+        // Loop through variables and add pointers if they are reduction targets
+        const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
+        for(const auto &v : cm->getVars()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(getVarAccessMode(v.access)) << ", ncclCommunicator, 0)); " << std::endl;
+            }
+        }
+
+        // Loop through variable references and add pointers if they are reduction targets
+        for(const auto &v : cm->getVarRefs()) {
+            if(v.access & VarAccessModeAttribute::REDUCE) {
+                os << "CHECK_NCCL_ERRORS(ncclAllReduce(group->" << v.name << ", group->" << v.name << ", group->size";
+                os << ", " << getNCCLType(v.type, precision) << ", " << getNCCLReductionType(v.access) << ", ncclCommunicator, 0));" << std::endl;
+            }
+        } 
+    }
+}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -188,6 +299,14 @@ Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &pre
     if(getPreferences().automaticCopy && m_ChosenDevice.major < 6) {
         LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
     }
+
+#ifdef _WIN32
+    // If we're on Windows and NCCL is enabled, give error
+    // **NOTE** There are several NCCL Windows ports e.g. https://github.com/MyCaffe/NCCL but we don't have access to any suitable systems to test
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        throw std::runtime_error("GeNN doesn't currently support NCCL on Windows");
+    }
+#endif
 
     // Add CUDA-specific types, additionally marking them as 'device types' innaccesible to host code
     addDeviceType("curandState", 44);
@@ -279,20 +398,21 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localRNG");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                              HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                               HostHandler pushEGPHandler) const
 {
-    
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
     modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
     modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
+    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronUpdateGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -304,23 +424,41 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > synapseGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - synapseGroupStartIDSize) : 0;
-    genMergedKernelDataStructures(os, totalConstMem,
-                                  modelMerged.getMergedNeuronUpdateGroups(),
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronUpdateGroups(),
                                   [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); });
+    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(),
+                                  [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronPrevSpikeTimeUpdate); });
     os << std::endl;
 
+    // If any neuron groups require their previous spike times updating
+    size_t idNeuronPrevSpikeTimeUpdate = 0;
+    if(!modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().empty()) {
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "(" << model.getTimePrecision() << " t)";
+        {
+            CodeStream::Scope b(os);
+
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+            os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            if(model.getBatchSize() > 1) {
+                os << "const unsigned int batch = blockIdx.y;" << std::endl;
+                kernelSubs.addVarSubstitution("batch", "batch");
+            }
+            kernelSubs.addVarSubstitution("t", "t");
+
+            genNeuronPrevSpikeTimeUpdateKernel(os, kernelSubs, modelMerged, idNeuronPrevSpikeTimeUpdate);
+        }
+        os << std::endl;
+    }
+
     // Generate reset kernel to be run before the neuron kernel
-    size_t idPreNeuronReset = 0;
-    os << "extern \"C\" __global__ void " << KernelNames[KernelPreNeuronReset] << "(" << model.getTimePrecision() << " t)";
+    size_t idNeuronSpikeQueueUpdate = 0;
+    os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSpikeQueueUpdate] << "()";
     {
         CodeStream::Scope b(os);
 
-        os << "const unsigned int id = " << getKernelBlockSize(KernelPreNeuronReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
+        os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSpikeQueueUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
 
-        Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
-        kernelSubs.addVarSubstitution("t", "t");
-
-        genPreNeuronResetKernel(os, kernelSubs, modelMerged, idPreNeuronReset);
+        genNeuronSpikeQueueUpdateKernel(os, modelMerged, idNeuronSpikeQueueUpdate);
     }
     os << std::endl;
 
@@ -358,10 +496,16 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         // Push any required EGPS
         pushEGPHandler(os);
 
-        if(idPreNeuronReset > 0) {
+        if(idNeuronPrevSpikeTimeUpdate > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreNeuronReset, idPreNeuronReset, 1);
-            os << KernelNames[KernelPreNeuronReset] << "<<<grid, threads>>>(t);" << std::endl;
+            genKernelDimensions(os, KernelNeuronPrevSpikeTimeUpdate, idNeuronPrevSpikeTimeUpdate, model.getBatchSize());
+            os << KernelNames[KernelNeuronPrevSpikeTimeUpdate] << "<<<grid, threads>>>(t);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+        if(idNeuronSpikeQueueUpdate > 0) {
+            CodeStream::Scope b(os);
+            genKernelDimensions(os, KernelNeuronSpikeQueueUpdate, idNeuronSpikeQueueUpdate, 1);
+            os << KernelNames[KernelNeuronSpikeQueueUpdate] << "<<<grid, threads>>>();" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
         if(idStart > 0) {
@@ -380,8 +524,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                               HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                HostHandler pushEGPHandler) const
@@ -393,10 +537,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPresynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedPostsynapticUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDynamicsGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -416,14 +560,14 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
     // If any synapse groups require dendritic delay, a reset kernel is required to be run before the synapse kernel
     const ModelSpecInternal &model = modelMerged.getModel();
-    size_t idPreSynapseReset = 0;
+    size_t idSynapseDendricDelayUpdate = 0;
     if(!modelMerged.getMergedSynapseDendriticDelayUpdateGroups().empty()) {
-        os << "extern \"C\" __global__ void " << KernelNames[KernelPreSynapseReset] << "()";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelSynapseDendriticDelayUpdate] << "()";
         {
             CodeStream::Scope b(os);
 
-            os << "const unsigned int id = " << getKernelBlockSize(KernelPreSynapseReset) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genPreSynapseResetKernel(os, modelMerged, idPreSynapseReset);
+            os << "const unsigned int id = " << getKernelBlockSize(KernelSynapseDendriticDelayUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genSynapseDendriticDelayUpdateKernel(os, modelMerged, idSynapseDendricDelayUpdate);
         }
         os << std::endl;
     }
@@ -502,10 +646,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         pushEGPHandler(os);
 
         // Launch pre-synapse reset kernel if required
-        if(idPreSynapseReset > 0) {
+        if(idSynapseDendricDelayUpdate > 0) {
             CodeStream::Scope b(os);
-            genKernelDimensions(os, KernelPreSynapseReset, idPreSynapseReset, 1);
-            os << KernelNames[KernelPreSynapseReset] << "<<<grid, threads>>>();" << std::endl;
+            genKernelDimensions(os, KernelSynapseDendriticDelayUpdate, idSynapseDendricDelayUpdate, 1);
+            os << KernelNames[KernelSynapseDendriticDelayUpdate] << "<<<grid, threads>>>();" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
 
@@ -541,7 +685,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,HostHandler preambleHandler, 
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
                               CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
                               CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
 {
@@ -550,12 +694,12 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     // Generate struct definitions
     modelMerged.genMergedCustomUpdateStructs(os, *this);
     modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    modelMerged.gemMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateWUGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups());
     
     // Generate preamble
     preambleHandler(os);
@@ -568,12 +712,6 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                              getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateGroups(),
-                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateWUGroups(),
-                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); });
-    genMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
-                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); });
 
     // Build set containing union of all custom update groupsnames
     std::set<std::string> customUpdateGroups;
@@ -593,6 +731,15 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
            || std::any_of(modelMerged.getMergedCustomUpdateWUGroups().cbegin(), modelMerged.getMergedCustomUpdateWUGroups().cend(),
                        [&g](const CustomUpdateWUGroupMerged &c) { return (c.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem,
+                                                  modelMerged.getMergedCustomUpdateGroups(),
+                                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); },
+                                                  [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
+
+                                                  modelMerged.getMergedCustomUpdateWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
@@ -616,6 +763,10 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         if(std::any_of(modelMerged.getMergedCustomUpdateTransposeWUGroups().cbegin(), modelMerged.getMergedCustomUpdateTransposeWUGroups().cend(),
                        [&g](const CustomUpdateTransposeWUGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g); }))
         {
+            genFilteredMergedKernelDataStructures(os, totalConstMem, modelMerged.getMergedCustomUpdateTransposeWUGroups(),
+                                                  [&model, this](const CustomUpdateWUInternal &cg){ return getPaddedNumCustomUpdateTransposeWUThreads(cg, model.getBatchSize()); },
+                                                  [g](const CustomUpdateTransposeWUGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; });
+
             os << "extern \"C\" __global__ void " << KernelNames[KernelCustomTransposeUpdate] << g << "(" << model.getTimePrecision() << " t)" << std::endl;
             {
                 CodeStream::Scope b(os);
@@ -650,10 +801,29 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             if(idCustomTransposeUpdateStart > 0) {
                 CodeStream::Scope b(os);
                 // **TODO** make block height parameterizable
-                genKernelDimensions(os, KernelCustomUpdate, idCustomTransposeUpdateStart, 1, 8);
+                genKernelDimensions(os, KernelCustomTransposeUpdate, idCustomTransposeUpdateStart, 1, 8);
                 Timer t(os, "customUpdate" + g + "Transpose", model.isTimingEnabled());
                 os << KernelNames[KernelCustomTransposeUpdate] << g << "<<<grid, threads>>>(t);" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+            }
+
+            // If NCCL reductions are enabled
+            if(getPreferences<Preferences>().enableNCCLReductions) {
+                // Loop through custom update host reduction groups and
+                // generate reductions for those in this custom update group
+                for(const auto &cg : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
+                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                        genNCCLReduction(os, cg, model.getPrecision());
+                    }
+                }
+
+                // Loop through custom update host reduction groups and
+                // generate reductions for those in this custom update group
+                for(const auto &cg : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
+                    if(cg.getArchetype().getUpdateGroupName() == g) {
+                        genNCCLReduction(os, cg, model.getPrecision());
+                    }
+                }
             }
 
             // If timing is enabled
@@ -682,8 +852,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                      HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                      NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                       CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                       SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -704,13 +874,13 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, Memory
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
-    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups(), memorySpaces);
-    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), memorySpaces);
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
 
     // Generate preamble
     preambleHandler(os);
@@ -894,6 +1064,16 @@ void Backend::genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &) co
     os << "// Standard C includes" << std::endl;
     os << "#include <cassert>" << std::endl;
     os << "#include <cstdint>" << std::endl;
+
+    // If NCCL is enabled, export ncclGetUniqueId function
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "extern \"C\" {" << std::endl;
+        os << "EXPORT_VAR const unsigned int ncclUniqueIDBytes;" << std::endl;
+        os << "EXPORT_FUNC void ncclGenerateUniqueID();" << std::endl;
+        os << "EXPORT_FUNC void ncclInitCommunicator(int rank, int numRanks);" << std::endl;
+        os << "EXPORT_FUNC unsigned char *ncclGetUniqueID();" << std::endl;
+        os << "}" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &) const
@@ -903,6 +1083,26 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     if(getRuntimeVersion() >= 9000) {
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
+
+    // If NCCL is enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Include NCCL header
+        os << "#include <nccl.h>" << std::endl;
+        os << std::endl;
+        // Define NCCL ID and communicator
+        os << "EXPORT_VAR ncclUniqueId ncclID;" << std::endl;
+        os << "EXPORT_VAR ncclComm_t ncclCommunicator;" << std::endl;
+        os << std::endl;
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Helper macro for error-checking NCCL calls" << std::endl;
+        os << "#define CHECK_NCCL_ERRORS(call) {\\" << std::endl;
+        os << "    ncclResult_t error = call;\\" << std::endl;
+        os << "    if (error != ncclSuccess) {\\" << std::endl;
+        os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
+        os << "    }\\" << std::endl;
+        os << "}" << std::endl;
+    }
+
     os << std::endl;
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Helper macro for error-checking CUDA calls" << std::endl;
@@ -1099,19 +1299,47 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const MemAlloc&) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
     // Setting /Ehs SHOULD solve this but CUDA rules don't give this option and it's not clear it gets through to the compiler anyway
     os << "#pragma warning(disable: 4297)" << std::endl;
-#else
-    // Prevent unused parameter warning
-    (void)os;
 #endif
+
+     // If NCCL is enabled
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        // Define NCCL ID and communicator
+        os << "ncclUniqueId ncclID;" << std::endl;
+        os << "ncclComm_t ncclCommunicator;" << std::endl;
+
+        // Define constant to expose NCCL_UNIQUE_ID_BYTES
+        os << "const unsigned int ncclUniqueIDBytes = NCCL_UNIQUE_ID_BYTES;" << std::endl;
+
+        // Define wrapper to generate a unique NCCL ID
+        os << std::endl;
+        os << "void ncclGenerateUniqueID()";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_NCCL_ERRORS(ncclGetUniqueId(&ncclID));" << std::endl;
+        }
+        os << std::endl;
+        os << "unsigned char *ncclGetUniqueID()";
+        {
+            CodeStream::Scope b(os);
+            os << "return reinterpret_cast<unsigned char*>(&ncclID);" << std::endl;
+        }
+        os << std::endl;
+        os << "void ncclInitCommunicator(int rank, int numRanks)";
+        {
+            CodeStream::Scope b(os);
+            os << "CHECK_NCCL_ERRORS(ncclCommInitRank(&ncclCommunicator, numRanks, ncclID, rank));" << std::endl;
+        }
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
     // If the model requires zero-copy
     if(modelMerged.getModel().zeroCopyInUse()) {
@@ -1154,8 +1382,15 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "));" << std::endl;
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
-    
     os << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
+{
+    // Free NCCL communicator
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        os << "CHECK_NCCL_ERRORS(ncclCommDestroy(ncclCommunicator));" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
@@ -1229,19 +1464,17 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
 {
-    auto allocation = MemAlloc::zero();
-
     if(getPreferences().automaticCopy) {
         os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-        allocation += MemAlloc::device(count * getSize(type));
+        memAlloc += MemAlloc::device(count * getSize(type));
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
             os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
-            allocation += MemAlloc::host(count * getSize(type));
+            memAlloc += MemAlloc::host(count * getSize(type));
         }
 
         // If variable is present on device at all
@@ -1249,16 +1482,14 @@ MemAlloc Backend::genVariableAllocation(CodeStream &os, const std::string &type,
             // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
             if(loc & VarLocation::ZERO_COPY) {
                 os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0));" << std::endl;
-                allocation += MemAlloc::zeroCopy(count * getSize(type));
+                memAlloc += MemAlloc::zeroCopy(count * getSize(type));
             }
             else {
                 os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-                allocation += MemAlloc::device(count * getSize(type));
+                memAlloc += MemAlloc::device(count * getSize(type));
             }
         }
     }
-
-    return allocation;
 }
 //--------------------------------------------------------------------------
 void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
@@ -1482,7 +1713,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &) const
+void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &, CodeStream &, MemAlloc &memAlloc) const
 {
     // Define global Phillox RNG
     // **NOTE** this is actually accessed as a global so, unlike other variables, needs device global
@@ -1491,14 +1722,14 @@ MemAlloc Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsIntern
     // Implement global Phillox RNG
     runner << "__device__ curandStatePhilox4_32_10_t d_rng;" << std::endl;
 
-    return MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
+    memAlloc += MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
 }
 //--------------------------------------------------------------------------
-MemAlloc Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                   const std::string &name, size_t count) const
+void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                                   const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
     // Create an array or XORWOW RNGs
-    return genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count);
+    genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count, memAlloc);
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
@@ -1540,7 +1771,11 @@ void Backend::genMakefilePreamble(std::ostream &os) const
 {
     const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
     std::string linkFlags = "--shared -arch " + architecture;
-
+    
+    // If NCCL reductions are enabled, link NCCL
+    if(getPreferences<Preferences>().enableNCCLReductions) {
+        linkFlags += " -lnccl";
+    }
     // Write variables to preamble
     os << "CUDA_PATH ?=/usr/local/cuda" << std::endl;
     os << "NVCC := $(CUDA_PATH)/bin/nvcc" << std::endl;
@@ -1658,11 +1893,31 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
     const size_t groupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                      getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
-                                     getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()));
+                                     getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedCustomUpdateGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedCustomUpdateWUGroups()) +
+                                     getGroupStartIDSize(modelMerged.getMergedCustomUpdateTransposeWUGroups()));
 
     // Return available constant memory and to
     return {{"__device__ __constant__", (groupStartIDSize > getChosenDeviceSafeConstMemBytes()) ? 0 : (getChosenDeviceSafeConstMemBytes() - groupStartIDSize)},
             {"__device__", m_ChosenDevice.totalGlobalMem}};
+}
+//--------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash was name of backend
+    Utils::updateHash("CUDA", hash);
+    
+    // Update hash with chosen device ID and kernel block sizes
+    Utils::updateHash(m_ChosenDeviceID, hash);
+    Utils::updateHash(getKernelBlockSize(), hash);
+
+    // Update hash with preferences
+    getPreferences<Preferences>().updateHash(hash);
+
+    return hash.get_digest();
 }
 //--------------------------------------------------------------------------
 std::string Backend::getNVCCFlags() const
@@ -1677,7 +1932,7 @@ std::string Backend::getNVCCFlags() const
 #ifndef _WIN32
     nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
 #endif
-    if(m_RuntimeVersion >= 9000) {
+    if(m_RuntimeVersion >= 9020) {
         nvccFlags += " -Xcudafe \"--diag_suppress=extern_entity_treated_as_static\"";
     }
 

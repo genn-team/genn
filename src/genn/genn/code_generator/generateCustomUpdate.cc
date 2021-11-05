@@ -1,6 +1,7 @@
 #include "code_generator/generateCustomUpdate.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -33,28 +34,44 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     const CustomUpdateModels::Base *cm = cg.getArchetype().getCustomUpdateModel();
     const auto varRefs = cm->getVarRefs();
 
-    // Read variables into registers
+    // Loop through variables
     for(const auto &v : cm->getVars()) {
         if(v.access & VarAccessMode::READ_ONLY) {
             os << "const ";
         }
-        os << v.type << " l" << v.name << " = " << "group->" << v.name << "[";
-        os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
-                             getVarAccessDuplication(v.access),
-                             updateSubs[index]);
-        os << "];" << std::endl;
+        os << v.type << " l" << v.name;
+        
+        // If this isn't a reduction, read value from memory
+        // **NOTE** by not initialising these variables for reductions, 
+        // compilers SHOULD emit a warning if user code doesn't set it to something
+        if(!(v.access & VarAccessModeAttribute::REDUCE)) {
+            os << " = group->" << v.name << "[";
+            os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
+                                 getVarAccessDuplication(v.access),
+                                 updateSubs[index]);
+            os << "]";
+        }
+        os << ";" << std::endl;
     }
 
-    // Read variables references into registers
+    // Loop through variable references
     for(size_t i = 0; i < varRefs.size(); i++) {
         if(varRefs[i].access == VarAccessMode::READ_ONLY) {
             os << "const ";
         }
        
-        os << varRefs[i].type << " l" << varRefs[i].name << " = " << "group->" << varRefs[i].name << "[";
-        os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
-                             updateSubs[index]);
-        os << "];" << std::endl;
+        os << varRefs[i].type << " l" << varRefs[i].name;
+        
+        // If this isn't a reduction, read value from memory
+        // **NOTE** by not initialising these variables for reductions, 
+        // compilers SHOULD emit a warning if user code doesn't set it to something
+        if(!(varRefs[i].access & VarAccessModeAttribute::REDUCE)) {
+            os << " = " << "group->" << varRefs[i].name << "[";
+            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
+                                 updateSubs[index]);
+            os << "]";
+        }
+        os << ";" << std::endl;
     }
     
     updateSubs.addVarNameSubstitution(cm->getVars(), "", "l");
@@ -98,14 +115,18 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateCustomUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                         const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                         const BackendBase &backend, const std::string &suffix)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
-    os << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
+    CodeStream customUpdate(customUpdateStream);
+
+    customUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    customUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genCustomUpdate(os, modelMerged, memorySpaces,
+    backend.genCustomUpdate(customUpdate, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {

@@ -1,6 +1,7 @@
 #include "code_generator/generateNeuronUpdate.h"
 
 // Standard C++ includes
+#include <fstream>
 #include <iostream>
 #include <string>
 
@@ -116,17 +117,21 @@ void generateWUVarUpdate(CodeGenerator::CodeStream &os, const CodeGenerator::Sub
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpaces &memorySpaces,
-                                         const ModelSpecMerged &modelMerged, const BackendBase &backend)
+void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                         const BackendBase &backend, const std::string &suffix)
 {
-    os << "#include \"definitionsInternal.h\"" << std::endl;
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
+    CodeStream neuronUpdate(neuronUpdateStream);
+
+    neuronUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
     if (backend.supportsNamespace()) {
-        os << "#include \"supportCode.h\"" << std::endl;
+        neuronUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
     }
-    os << std::endl;
+    neuronUpdate << std::endl;
 
     // Neuron update kernel
-    backend.genNeuronUpdate(os, modelMerged, memorySpaces,
+    backend.genNeuronUpdate(neuronUpdate, modelMerged,
         // Preamble handler
         [&modelMerged, &backend](CodeStream &os)
         {
@@ -175,7 +180,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             // If neuron model sim code references ISyn (could still be the case if there are no incoming synapses)
             // OR any incoming synapse groups have post synaptic models which reference $(Isyn), declare it
             if (nm->getSimCode().find("$(Isyn)") != std::string::npos ||
-                std::any_of(ng.getArchetype().getMergedInSyn().cbegin(), ng.getArchetype().getMergedInSyn().cend(),
+                std::any_of(ng.getArchetype().getFusedPSMInSyn().cbegin(), ng.getArchetype().getFusedPSMInSyn().cend(),
                             [](const SynapseGroupInternal *sg)
                             {
                                 return (sg->getPSModel()->getApplyInputCode().find("$(Isyn)") != std::string::npos
@@ -213,10 +218,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             }
 
             // Loop through incoming synapse groups
-            for(size_t i = 0; i < ng.getArchetype().getMergedInSyn().size(); i++) {
+            for(size_t i = 0; i < ng.getSortedArchetypeMergedInSyns().size(); i++) {
                 CodeStream::Scope b(os);
 
-                const auto *sg = ng.getArchetype().getMergedInSyn()[i];
+                const auto *sg = ng.getSortedArchetypeMergedInSyns().at(i);
                 const auto *psm = sg->getPSModel();
 
                 os << "// pull inSyn values in a coalesced access" << std::endl;
@@ -251,6 +256,9 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                 Substitutions inSynSubs(&neuronSubs);
                 inSynSubs.addVarSubstitution("inSyn", "linSyn");
+                
+                // Allow synapse group's PS output var to override what Isyn points to
+                inSynSubs.addVarSubstitution("Isyn", sg->getPSTargetVar(), true);
 
                 if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
                     inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");
@@ -309,8 +317,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             }
 
             // Loop through all of neuron group's current sources
-            for(size_t i = 0; i < ng.getArchetype().getCurrentSources().size(); i++) {
-                const auto *cs = ng.getArchetype().getCurrentSources()[i];
+            for(size_t i = 0; i < ng.getSortedArchetypeCurrentSources().size(); i++) {
+                const auto *cs = ng.getSortedArchetypeCurrentSources().at(i);
 
                 os << "// current source " << i << std::endl;
                 CodeStream::Scope b(os);
@@ -391,7 +399,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             // Generate var update for outgoing synaptic populations with presynaptic update code
             generateWUVarUpdate(os, popSubs, ng, "WUPre", modelMerged.getModel().getPrecision(), "_pre", true, batchSize,
-                                ng.getArchetype().getOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
+                                ng.getSortedArchetypeOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
                                 &WeightUpdateModels::Base::getPreVars, &WeightUpdateModels::Base::getPreDynamicsCode,
                                 &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
                                 &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
@@ -399,7 +407,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             // Generate var update for incoming synaptic populations with postsynaptic code
             generateWUVarUpdate(os, popSubs, ng, "WUPost", modelMerged.getModel().getPrecision(), "_post", true, batchSize,
-                                ng.getArchetype().getInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
+                                ng.getSortedArchetypeInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
                                 &WeightUpdateModels::Base::getPostVars, &WeightUpdateModels::Base::getPostDynamicsCode,
                                 &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
                                 &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
@@ -506,12 +514,10 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                     // **FIXME** there is a corner case here where, if pre or postsynaptic variables have no update code
                     // but there are delays they won't get copied. It might make more sense (and tidy up several things
                     // to instead build merged neuron update groups based on inSynWithPostVars/outSynWithPreVars instead.
-                    const auto outSynWithPreCode = ng.getArchetype().getOutSynWithPreCode();
-                    const auto inSynWithPostCode = ng.getArchetype().getInSynWithPostCode();
-
+                    
                     // Are there any outgoing synapse groups with presynaptic code
                     // which have axonal delay and no presynaptic dynamics
-                    const bool preVars = std::any_of(outSynWithPreCode.cbegin(), outSynWithPreCode.cend(),
+                    const bool preVars = std::any_of(ng.getSortedArchetypeOutSynWithPreCode().cbegin(), ng.getSortedArchetypeOutSynWithPreCode().cend(),
                                                      [](const SynapseGroupInternal *sg)
                                                      {
                                                          return ((sg->getDelaySteps() != NO_DELAY)
@@ -520,7 +526,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
                     // Are there any incoming synapse groups with postsynaptic code
                     // which have back-propagation delay and no postsynaptic dynamics
-                    const bool postVars = std::any_of(inSynWithPostCode.cbegin(), inSynWithPostCode.cend(),
+                    const bool postVars = std::any_of(ng.getSortedArchetypeInSynWithPostCode().cbegin(), ng.getSortedArchetypeInSynWithPostCode().cend(),
                                                       [](const SynapseGroupInternal *sg)
                                                       {
                                                           return ((sg->getBackPropDelaySteps() != NO_DELAY)
@@ -543,8 +549,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                         }
 
                         // Loop through outgoing synapse groups with some sort of presynaptic code
-                        for(size_t i = 0; i < outSynWithPreCode.size(); i++) {
-                            const auto *sg = outSynWithPreCode[i];
+                        for(size_t i = 0; i < ng.getSortedArchetypeOutSynWithPreCode().size(); i++) {
+                            const auto *sg = ng.getSortedArchetypeOutSynWithPreCode().at(i);
                             // If this group has a delay and no presynaptic dynamics (which will already perform this copying)
                             if(sg->getDelaySteps() != NO_DELAY && sg->getWUModel()->getPreDynamicsCode().empty()) {
                                 // Loop through variables and copy between read and write delay slots
@@ -558,8 +564,8 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
                         }
 
                         // Loop through outgoing synapse groups with some sort of postsynaptic code
-                        for(size_t i = 0; i < inSynWithPostCode.size(); i++) {
-                            const auto *sg = inSynWithPostCode[i];
+                        for(size_t i = 0; i < ng.getSortedArchetypeInSynWithPostCode().size(); i++) {
+                            const auto *sg = ng.getSortedArchetypeInSynWithPostCode().at(i);
                             // If this group has a delay and no postsynaptic dynamics (which will already perform this copying)
                             if(sg->getBackPropDelaySteps() != NO_DELAY && sg->getWUModel()->getPostDynamicsCode().empty()) {
                                 // Loop through variables and copy between read and write delay slots
@@ -593,7 +599,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
             // Generate var update for outgoing synaptic populations with presynaptic update code
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
             generateWUVarUpdate(os, popSubs, ng, "WUPre", modelMerged.getModel().getPrecision(), "_pre", false, batchSize,
-                                ng.getArchetype().getOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
+                                ng.getSortedArchetypeOutSynWithPreCode(), &SynapseGroupInternal::getDelaySteps,
                                 &WeightUpdateModels::Base::getPreVars, &WeightUpdateModels::Base::getPreSpikeCode,
                                 &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous, 
                                 &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
@@ -601,7 +607,7 @@ void CodeGenerator::generateNeuronUpdate(CodeStream &os, BackendBase::MemorySpac
 
             // Generate var update for incoming synaptic populations with postsynaptic code
             generateWUVarUpdate(os, popSubs, ng, "WUPost", modelMerged.getModel().getPrecision(), "_post", false, batchSize,
-                                ng.getArchetype().getInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
+                                ng.getSortedArchetypeInSynWithPostCode(), &SynapseGroupInternal::getBackPropDelaySteps,
                                 &WeightUpdateModels::Base::getPostVars, &WeightUpdateModels::Base::getPostSpikeCode,
                                 &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
                                 &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);

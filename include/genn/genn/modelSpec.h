@@ -121,6 +121,12 @@ inline Models::VarReference createVarRef(const CurrentSource *cs, const std::str
     return Models::VarReference::createVarRef(cs, varName);
 }
 
+//! Creates a reference to a custom update variable
+inline Models::VarReference createVarRef(const CustomUpdate *cu, const std::string &varName)
+{
+    return Models::VarReference::createVarRef(cu, varName);
+}
+
 //! Creates a reference to a postsynaptic model variable
 inline Models::VarReference createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
 {
@@ -144,6 +150,12 @@ inline Models::WUVarReference createWUVarRef(const SynapseGroup *sg, const std::
                                              const SynapseGroup *transposeSG = nullptr, const std::string &transposeVarName = "")
 {
     return Models::WUVarReference(sg, varName, transposeSG, transposeVarName);
+}
+
+//! Creates a reference to a custom weight update variable
+inline Models::WUVarReference createWUVarRef(const CustomUpdateWU *cu, const std::string &varName)
+{
+    return Models::WUVarReference(cu, varName);
 }
 
 //----------------------------------------------------------------------------
@@ -203,9 +215,17 @@ public:
     //! Sets default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices
     void setDefaultNarrowSparseIndEnabled(bool enabled){ m_DefaultNarrowSparseIndEnabled = enabled; }
 
-    //! Should compatible postsynaptic models and dendritic delay buffers be merged?
+    //! Should compatible postsynaptic models and dendritic delay buffers be fused?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
-    void setMergePostsynapticModels(bool merge){ m_ShouldMergePostsynapticModels = merge; }
+    void setMergePostsynapticModels(bool merge){ m_ShouldFusePostsynapticModels = merge; }
+
+    //! Should compatible postsynaptic models and dendritic delay buffers be fused?
+    /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
+    void setFusePostsynapticModels(bool fuse) { m_ShouldFusePostsynapticModels = fuse; }
+    
+    //! Should compatible pre and postsynaptic weight update model variables and updates be fused?
+    /*! This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */
+    void setFusePrePostWeightUpdateModels(bool fuse){ m_ShouldFusePrePostWeightUpdateModels = fuse; }
 
     void setBatchSize(unsigned int batchSize) { m_BatchSize = batchSize;  }
 
@@ -656,6 +676,9 @@ protected:
     //! Is recording enabled on any population in this model?
     bool isRecordingInUse() const;
 
+    //! Get hash digest used for detecting changes
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
     //! Get std::map containing local named NeuronGroup objects in model
     const std::map<std::string, NeuronGroupInternal> &getNeuronGroups() const{ return m_LocalNeuronGroups; }
 
@@ -725,9 +748,13 @@ private:
     //! The default for whether narrow i.e. less than 32-bit types are used for sparse matrix indices
     bool m_DefaultNarrowSparseIndEnabled;
 
-    //! Should compatible postsynaptic models and dendritic delay buffers be merged?
+    //! Should compatible postsynaptic models and dendritic delay buffers be fused?
     /*! This can significantly reduce the cost of updating neuron population but means that per-synapse group inSyn arrays can not be retrieved */
-    bool m_ShouldMergePostsynapticModels; 
+    bool m_ShouldFusePostsynapticModels; 
+    
+    //! Should compatible pre and postsynaptic weight update model variables and updates be fused?
+    /*! This can significantly reduce the cost of updating neuron populations but means that per-synaptic group per and postsynaptic variables cannot be retrieved */
+    bool m_ShouldFusePrePostWeightUpdateModels;
 
     //! Batch size of this model - efficiently duplicates model
     unsigned int m_BatchSize;

@@ -198,14 +198,7 @@ public:
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
                 const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
-                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation) :
-        m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-        m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-        m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation),
-        m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
-    {
-    }
+                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
@@ -226,8 +219,8 @@ protected:
 
     void initDerivedParams(double dt);
 
-    //! Merge incoming postsynaptic models
-    void mergeIncomingPSM(bool merge);
+    //! Fuse incoming postsynaptic models
+    void fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM);
 
     //! add input current source
     void injectCurrent(CurrentSourceInternal *source);
@@ -237,10 +230,13 @@ protected:
     //------------------------------------------------------------------------
     //! Gets pointers to all synapse groups which provide input to this neuron group
     const std::vector<SynapseGroupInternal*> &getInSyn() const{ return m_InSyn; }
-    const std::vector<SynapseGroupInternal*> &getMergedInSyn() const{ return m_MergedInSyn; }
-
+    const std::vector<SynapseGroupInternal*> &getFusedPSMInSyn() const{ return m_FusedPSMInSyn; }
+    const std::vector<SynapseGroupInternal *> &getFusedWUPostInSyn() const { return m_FusedWUPostInSyn; }
+    
     //! Gets pointers to all synapse groups emanating from this neuron group
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
+    const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
+
 
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
@@ -250,27 +246,33 @@ protected:
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic update code
-    std::vector<SynapseGroupInternal*> getInSynWithPostCode() const;
+    std::vector<SynapseGroupInternal*> getFusedInSynWithPostCode() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic update code
-    std::vector<SynapseGroupInternal*> getOutSynWithPreCode() const;
+    std::vector<SynapseGroupInternal*> getFusedOutSynWithPreCode() const;
 
     //! Helper to get vector of incoming synapse groups which have postsynaptic variables
-    std::vector<SynapseGroupInternal *> getInSynWithPostVars() const;
+    std::vector<SynapseGroupInternal *> getFusedInSynWithPostVars() const;
 
     //! Helper to get vector of outgoing synapse groups which have presynaptic variables
-    std::vector<SynapseGroupInternal *> getOutSynWithPreVars() const;
+    std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
 
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
-    //! Can this neuron group be merged with other? i.e. can they be simulated using same generated code
+    //! Updates hash with neuron group
     /*! NOTE: this can only be called after model is finalized */
-    bool canBeMerged(const NeuronGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Can the initialisation of these neuron groups be merged together? i.e. can they be initialised using same generated code
+    //! Updates hash with neuron group initialisation
     /*! NOTE: this can only be called after model is finalized */
-    bool canInitBeMerged(const NeuronGroup &other) const;
+    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
+
+    boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
+
+    boost::uuids::detail::sha1::digest_type getPrevSpikeTimeUpdateHashDigest() const;
+
+    boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
 private:
     //------------------------------------------------------------------------
@@ -292,7 +294,9 @@ private:
     std::vector<Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
-    std::vector<SynapseGroupInternal*> m_MergedInSyn;
+    std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;
+    std::vector<SynapseGroupInternal *> m_FusedWUPostInSyn;
+    std::vector<SynapseGroupInternal *> m_FusedWUPreOutSyn;
     std::set<SpikeEventThreshold> m_SpikeEventCondition;
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;

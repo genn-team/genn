@@ -1,12 +1,31 @@
 #include "models.h"
 
-
 // GeNN includes
+#include "customUpdateInternal.h"
 #include "currentSourceInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
 using namespace Models;
+
+//----------------------------------------------------------------------------
+// Models::Base
+//----------------------------------------------------------------------------
+void Base::updateHash(boost::uuids::detail::sha1 &hash) const
+{
+    // Superclass
+    Snippet::Base::updateHash(hash);
+
+    Utils::updateHash(getVars(), hash);
+}
+//----------------------------------------------------------------------------
+void Base::validate() const
+{
+    // Superclass
+    Snippet::Base::validate();
+
+    Utils::validateVecNames(getVars(), "Variable");
+}
 
 //----------------------------------------------------------------------------
 // VarReference
@@ -21,6 +40,11 @@ VarReference VarReference::createVarRef(const CurrentSource *cs, const std::stri
     return VarReference(static_cast<const CurrentSourceInternal *>(cs), varName);
 }
 //----------------------------------------------------------------------------
+VarReference VarReference::createVarRef(const CustomUpdate *cu, const std::string &varName)
+{
+    return VarReference(static_cast<const CustomUpdateInternal *>(cu), varName);
+}
+//----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
 {
     if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
@@ -32,7 +56,7 @@ VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::st
     return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(),
                         []() { return nullptr; },
                         psm->getVarIndex(varName), psm->getVars(),
-                        [sgInternal]() { return sgInternal->getPSModelTargetName(); });
+                        [sgInternal]() { return sgInternal->getFusedPSVarSuffix(); });
 }
 //----------------------------------------------------------------------------
 VarReference VarReference::createWUPreVarRef(const SynapseGroup *sg, const std::string &varName)
@@ -64,6 +88,13 @@ VarReference::VarReference(const NeuronGroupInternal *ng, const std::string &var
 VarReference::VarReference(const CurrentSourceInternal *cs, const std::string &varName)
 :   VarReferenceBase(cs->getCurrentSourceModel()->getVarIndex(varName), cs->getCurrentSourceModel()->getVars(), [cs]() { return cs->getName(); }),
     m_Size(cs->getTrgNeuronGroup()->getNumNeurons()), m_GetDelayNeuronGroup([]() { return nullptr; })
+{
+
+}
+//----------------------------------------------------------------------------
+VarReference::VarReference(const CustomUpdate *cu, const std::string &varName)
+:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+    m_Size(cu->getSize()), m_GetDelayNeuronGroup([]() { return nullptr; })
 {
 
 }
@@ -122,12 +153,51 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
     }
 }
 //----------------------------------------------------------------------------
-const SynapseGroup *WUVarReference::getSynapseGroup() const 
-{ 
-    return m_SG; 
+WUVarReference::WUVarReference(const CustomUpdateWU *cu, const std::string &varName)
+:   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
+    m_SG(static_cast<const CustomUpdateWUInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr),
+    m_TransposeVarIndex(0)
+{
+
+}
+//----------------------------------------------------------------------------
+const SynapseGroup *WUVarReference::getSynapseGroup() const
+{
+    return m_SG;
 }
 //----------------------------------------------------------------------------
 const SynapseGroup *WUVarReference::getTransposeSynapseGroup() const 
 { 
     return m_TransposeSG; 
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Utils::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.name, hash);
+    Utils::updateHash(v.type, hash);
+    Utils::updateHash(v.access, hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.getTargetName(), hash);
+    Utils::updateHash(v.getVarIndex(), hash);
+}
+//----------------------------------------------------------------------------
+void Models::updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash)
+{
+    Utils::updateHash(v.getTargetName(), hash);
+    Utils::updateHash(v.getVarIndex(), hash);
+
+    if(v.getTransposeSynapseGroup() != nullptr) {
+        Utils::updateHash(v.getTransposeTargetName(), hash);
+        Utils::updateHash(v.getTransposeVarIndex(), hash);
+    }
 }

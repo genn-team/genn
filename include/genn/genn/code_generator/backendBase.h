@@ -1,6 +1,7 @@
 #pragma once
 
 // Standard C++ includes
+#include <fstream>
 #include <functional>
 #include <map>
 #include <string>
@@ -16,6 +17,7 @@
 // GeNN includes
 #include "codeStream.h"
 #include "gennExport.h"
+#include "gennUtils.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -81,6 +83,17 @@ struct PreferencesBase
 
     //! Logging level to use for code generation
     plog::Severity logLevel = plog::info;
+
+    void updateHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // **NOTE** optimizeCode, debugCode and various compiler flags only affect makefiles/msbuild 
+
+        //! Update hash with preferences
+        Utils::updateHash(enableBitmaskOptimisations, hash);
+        Utils::updateHash(automaticCopy, hash);
+        Utils::updateHash(generateEmptyStatePushPull, hash);
+        Utils::updateHash(generateExtraGlobalParamPull, hash);
+    }
 };
 
 //--------------------------------------------------------------------------
@@ -130,7 +143,27 @@ private:
     size_t m_HostBytes;
     size_t m_DeviceBytes;
     size_t m_ZeroCopyBytes;
+
+    //--------------------------------------------------------------------------
+    // Friend operators
+    //--------------------------------------------------------------------------
+    friend std::ostream& operator << (std::ostream &out, const MemAlloc &m);
+    friend std::istream& operator >> (std::istream &in,  MemAlloc &m);
 };
+
+inline std::ostream & operator << (std::ostream &out, const MemAlloc &m)
+{
+    out << m.m_HostBytes << " " << m.m_DeviceBytes << " " << m.m_ZeroCopyBytes;
+    return out;
+}
+ 
+inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
+{
+    in >> m.m_HostBytes;
+    in >> m.m_DeviceBytes;
+    in >> m.m_ZeroCopyBytes;
+    return in;
+}
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
@@ -181,19 +214,17 @@ public:
     //! Generate platform-specific function to update the state of all neurons
     /*! \param os                       CodeStream to write function to
         \param modelMerged              merged model to generate code for
-        \param memorySpaces             for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler          callback to write functions for pushing extra-global parameters
         \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
         \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes
         \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, 
-                                 HostHandler preambleHandler, NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
                                  HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
-        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
         \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
@@ -211,8 +242,8 @@ public:
                                             "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
                                             to callback via Substitutions.
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                                  HostHandler preambleHandler, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
+                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
                                   PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
                                   PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
@@ -220,18 +251,16 @@ public:
     //! Generate platform-specific functions to perform custom updates
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
-        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler              callback to write functions for pushing extra-global parameters
       
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces, HostHandler preambleHandler, 
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
                                  CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
                                  CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
-        \param memorySpaces                 for supported backends, data structure containing the remaining space in different named memory spaces
         \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param localNGHandler               callback to write platform-independent code to initialize a merged neuron group
         \param sgDenseInitHandler           callback to write platform-independent code to initialize the synapse variables of
@@ -246,8 +275,8 @@ public:
                                             a merged synapse group with sparse connectivity
         \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
         \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, MemorySpaces &memorySpaces,
-                         HostHandler preambleHandler, NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
+                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
                          CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
                          SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
@@ -264,18 +293,22 @@ public:
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
+
+    //! Free memory is called by usercode to free all memory allocatd by GeNN and should only ever be called once.
+    //! This function generates a 'preamble' to this function, for example to free backend-specific objects
+    virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual MemAlloc genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
+    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
     virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -332,11 +365,12 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual MemAlloc genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
+                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
 
     //! Generate an RNG with a state per population member
-    virtual MemAlloc genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                      const std::string &name, size_t count) const = 0;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations,
+                                  CodeStream &free, const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
 
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
@@ -407,6 +441,9 @@ public:
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
 
+    //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels
+    virtual bool isHostReductionRequired() const = 0;
+
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
@@ -415,7 +452,11 @@ public:
     //! Place arrays in these and their size in preferential order
     virtual MemorySpaces getMergedGroupMemorySpaces(const ModelSpecMerged &modelMerged) const = 0;
 
+    //! Does this backend support namespaces i.e. can C++ implementation of support functions be used
     virtual bool supportsNamespace() const = 0;
+
+    //! Get hash digest of this backends identification and the preferences it has been configured with
+    virtual boost::uuids::detail::sha1::digest_type getHashDigest() const = 0;
 
     //--------------------------------------------------------------------------
     // Public API
@@ -437,17 +478,20 @@ public:
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
-    MemAlloc genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                      const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+                  const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
     {
         genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);
         genVariableFree(free, name, loc);
-        return genVariableAllocation(allocations, type, name, loc, count);
+        genVariableAllocation(allocations, type, name, loc, count, memAlloc);
     }
 
     //! Get the size of the type
     size_t getSize(const std::string &type) const;
+
+    //! Get the lowest value of a type
+    std::string getLowestValue(const std::string &type) const;
 
     //! Get the prefix for accessing the address of 'scalar' variables
     std::string getScalarAddressPrefix() const
@@ -466,9 +510,10 @@ protected:
     //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
-    void addType(const std::string &type, size_t size)
+    void addType(const std::string &type, size_t size, const std::string &lowestValue = "")
     {
-        m_TypeBytes.emplace(type, size);
+        m_Types.emplace(std::piecewise_construct, std::forward_as_tuple(type), 
+                        std::forward_as_tuple(size, lowestValue));
     }
 
     void setPointerBytes(size_t pointerBytes) 
@@ -480,7 +525,7 @@ protected:
 
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
-    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
+    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu, unsigned int batchSize) const;
 
 private:
     //--------------------------------------------------------------------------
@@ -489,8 +534,9 @@ private:
     //! How large is a device pointer? E.g. on some AMD devices this != sizeof(char*)
     size_t m_PointerBytes;
 
-    //! Size of supported types in bytes - used for estimating memory usage
-    std::unordered_map<std::string, size_t> m_TypeBytes;
+    //! Size of supported types in bytes and string containing their lowest value
+    //! used for estimating memory usage and for reduction operations
+    std::unordered_map<std::string, std::pair<size_t, std::string>> m_Types;
 
     //! Preferences
     const PreferencesBase &m_Preferences;
