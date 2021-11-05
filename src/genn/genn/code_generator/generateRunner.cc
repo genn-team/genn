@@ -1320,9 +1320,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                      const size_t size = std::accumulate(s.second.getKernelSize().cbegin(), s.second.getKernelSize().cend(), 
                                                          1, std::multiplies<unsigned int>());
                      // Generate variable
-                    mem += genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                       runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
-                                       false, size * getNumCopies(wuVars[i].access, batchSize), synapseGroupStatePushPullFunctions);
+                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                 runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
+                                 false, size * getNumCopies(wuVars[i].access, batchSize), mem, synapseGroupStatePushPullFunctions);
                 }
 
                 // Loop through EGPs required to initialize WUM variable
