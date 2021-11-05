@@ -33,6 +33,7 @@
     <ClCompile Include="code_generator\generateSupportCode.cc" />
     <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
+    <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
     <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />
     <ClCompile Include="code_generator\substitutions.cc" />
@@ -73,6 +74,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\neuronUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
