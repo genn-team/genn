@@ -1,4 +1,4 @@
-#include "code_generator/generateAll.h"
+#include "code_generator/generateModules.h"
 
 // Standard C++ includes
 #include <fstream>
