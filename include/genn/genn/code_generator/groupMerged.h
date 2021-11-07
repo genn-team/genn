@@ -567,9 +567,9 @@ public:
 //----------------------------------------------------------------------------
 class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
 {
-public:
+protected:
     //------------------------------------------------------------------------
-    // Public API
+    // Protected methods
     //------------------------------------------------------------------------
     //! Should the parameter be implemented heterogeneously?
     bool isParamHeterogeneous(size_t index) const;
@@ -616,10 +616,6 @@ public:
     //! Get sorted vectors of current sources belonging to archetype group
     const std::vector<CurrentSourceInternal*> &getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
 
-protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 

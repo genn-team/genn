@@ -17,24 +17,6 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
-    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
-    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
-    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
-    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
-
-    //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
-
-    //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
-
     //! Get hash digest used for detecting changes
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
@@ -76,6 +58,18 @@ private:
                        bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const,
                        const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
 
+    //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
+    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
+    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
+    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
+    //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
+    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+
     //! Is the incoming synapse weight update model parameter referenced?
     bool isInSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
 
@@ -100,6 +94,12 @@ private:
                              bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
                              bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const;
     
+    //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
+
+    //! Get sorted vectors of outgoing synapse groups with presynaptic code belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreCode() const { return m_SortedOutSynWithPreCode.front(); }
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
