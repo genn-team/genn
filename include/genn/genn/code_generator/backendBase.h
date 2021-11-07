@@ -180,11 +180,6 @@ public:
     
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
-
-    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
-    typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
-    typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
-    typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
@@ -224,9 +219,6 @@ public:
                                             to callback via Substitutions.
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
     virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
-                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
                                   HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific functions to perform custom updates

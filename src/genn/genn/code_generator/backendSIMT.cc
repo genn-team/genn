@@ -590,9 +590,7 @@ void BackendSIMT::genSynapseDendriticDelayUpdateKernel(CodeStream &os, const Mod
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                             PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                             PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler, size_t &idStart) const
+void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // We need shLg if any synapse groups accumulate into shared memory
     // Determine the maximum shared memory outputs 
@@ -638,7 +636,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
     genParallelGroup<PresynapticUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedPresynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPresynapticUpdateThreads(sg, getPreferences()), KernelPresynapticUpdate); },
-        [wumThreshHandler, wumSimHandler, wumEventHandler, wumProceduralConnectHandler, &modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
+        [&modelMerged, this](CodeStream &os, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs)
         {
             // Get presynaptic update strategy to use for this synapse group
             const auto *presynapticUpdateStrategy = getPresynapticUpdateStrategy(sg.getArchetype());
@@ -653,15 +651,13 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
             // If spike events should be processed
             if(sg.getArchetype().isSpikeEventRequired()) {
                 CodeStream::Scope b(os);
-                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, false,
-                                                     wumThreshHandler, wumEventHandler, wumProceduralConnectHandler);
+                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, false);
             }
 
             // If true spikes should be processed
             if(sg.getArchetype().isTrueSpikeRequired()) {
                 CodeStream::Scope b(os);
-                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, true,
-                                                     wumThreshHandler, wumSimHandler, wumProceduralConnectHandler);
+                presynapticUpdateStrategy->genUpdate(os, modelMerged, sg, popSubs, *this, true);
             }
 
             os << std::endl;
@@ -671,8 +667,7 @@ void BackendSIMT::genPresynapticUpdateKernel(CodeStream &os, const Substitutions
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                              PostsynapticUpdateGroupMergedHandler postLearnHandler, size_t &idStart) const
+void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     os << getSharedPrefix() << "unsigned int shSpk[" << getKernelBlockSize(KernelPostsynapticUpdate) << "];" << std::endl;
     if(std::any_of(modelMerged.getModel().getSynapseGroups().cbegin(), modelMerged.getModel().getSynapseGroups().cend(),
@@ -688,7 +683,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
     idStart = 0;
     genParallelGroup<PostsynapticUpdateGroupMerged>(os, kernelSubs, modelMerged.getMergedPostsynapticUpdateGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumPostsynapticUpdateThreads(sg), KernelPostsynapticUpdate); },
-        [&modelMerged, postLearnHandler, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
+        [&modelMerged, this](CodeStream &os, const PostsynapticUpdateGroupMerged &sg, Substitutions &popSubs)
         {
             // Generate index calculation code
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -742,7 +737,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                         synSubs.addVarSubstitution("id_post", "shSpk[j]");
                         synSubs.addVarSubstitution("id_syn", "synAddress");
 
-                        postLearnHandler(os, sg, synSubs);
+                        sg.generateSynapseUpdate(*this, os, modelMerged, synSubs);
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                             os << CodeStream::CB(1540);
@@ -754,15 +749,14 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
     );
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                           SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const
+void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
 {
     // Parallelise over synapse groups whose weight update models have code for synapse dynamics
     idStart = 0;
     genParallelGroup<SynapseDynamicsGroupMerged>(
         os, kernelSubs, modelMerged.getMergedSynapseDynamicsGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumSynapseDynamicsThreads(sg), KernelSynapseDynamicsUpdate); },
-        [synapseDynamicsHandler, &modelMerged, this](CodeStream &os, const SynapseDynamicsGroupMerged &sg, Substitutions &popSubs)
+        [&modelMerged, this](CodeStream &os, const SynapseDynamicsGroupMerged &sg, Substitutions &popSubs)
         {
             // Generate index calculation code
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -804,7 +798,7 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
                     synSubs.addFuncSubstitution("addToInSyn", 1, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
                 }
 
-                synapseDynamicsHandler(os, sg, synSubs);
+                sg.generateSynapseUpdate(*this, os, modelMerged, synSubs);
             }
         });
 }

@@ -29,7 +29,6 @@
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\generateSupportCode.cc" />
-    <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
     <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />
@@ -37,6 +36,7 @@
     <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />
     <ClCompile Include="code_generator\substitutions.cc" />
     <ClCompile Include="binomial.cc" />
+    <ClCompile Include="code_generator\synapseUpdateGroupMerged.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
     <ClCompile Include="customUpdate.cc" />
@@ -69,7 +69,6 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\initGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\neuronUpdateGroupMerged.h" />
@@ -77,6 +76,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\synapseUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />

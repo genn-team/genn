@@ -31,7 +31,6 @@
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateRunner.h"
-#include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/modelSpecMerged.h"
 

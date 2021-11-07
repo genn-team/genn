@@ -17,7 +17,6 @@
 // Code generator includes
 #include "code_generator/codeStream.h"
 #include "code_generator/generateSupportCode.h"
-#include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/generateRunner.h"
 #include "code_generator/modelSpecMerged.h"
 
@@ -233,6 +232,42 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
             modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
         });
 }
+//--------------------------------------------------------------------------
+void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                          const BackendBase &backend, const std::string &suffix)
+{
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
+    CodeStream synapseUpdate(synapseUpdateStream);
+
+    synapseUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    if (backend.supportsNamespace()) {
+        synapseUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
+    }
+    synapseUpdate << std::endl;
+
+    // Generate functions to push merged synapse group structures
+    const ModelSpecInternal &model = modelMerged.getModel();
+
+    // Synaptic update kernels
+    backend.genSynapseUpdate(synapseUpdate, modelMerged,
+        // Preamble handler
+        [&modelMerged, &backend](CodeStream &os)
+        {
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedPresynapticUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedPostsynapticUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDynamicsGroups(), backend);
+        },
+        // Push EGP handler
+        [&backend, &modelMerged](CodeStream &os)
+        {
+            modelMerged.genScalarEGPPush<PresynapticUpdateGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<PostsynapticUpdateGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseDynamicsGroupMerged>(os, backend);
+        });
+}
+//--------------------------------------------------------------------------
 void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
                                  const BackendBase &backend, const std::string &suffix)
 {

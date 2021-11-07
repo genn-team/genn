@@ -1386,23 +1386,6 @@ bool SynapseGroupMergedBase::isTrgNeuronDerivedParamReferenced(size_t paramIndex
     return isParamReferenced({getArchetypeCode()}, derivedParamName);
 }
 
-//----------------------------------------------------------------------------
-// CodeGenerator::PresynapticUpdateGroupMerged
-//----------------------------------------------------------------------------
-const std::string PresynapticUpdateGroupMerged::name = "PresynapticUpdate";
-
-//----------------------------------------------------------------------------
-// CodeGenerator::PostsynapticUpdateGroupMerged
-//----------------------------------------------------------------------------
-const std::string PostsynapticUpdateGroupMerged::name = "PostsynapticUpdate";
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseDynamicsGroupMerged
-//----------------------------------------------------------------------------
-const std::string SynapseDynamicsGroupMerged::name = "SynapseDynamics";
-
-
-
 // ----------------------------------------------------------------------------
 // CustomUpdateHostReductionGroupMerged
 //----------------------------------------------------------------------------

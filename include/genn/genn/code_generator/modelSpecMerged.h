@@ -14,6 +14,7 @@
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
+#include "code_generator/synapseUpdateGroupMerged.h"
 #include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
