@@ -18,7 +18,6 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/generateCustomUpdate.h"
 #include "code_generator/generateInit.h"
-#include "code_generator/generateNeuronUpdate.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/generateRunner.h"
@@ -88,14 +87,15 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 
     return true;
 }
+
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                                                        const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                                                        bool forceRebuild)
+std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                                                         const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                                         bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -175,4 +175,33 @@ std::pair<std::vector<std::string>, CodeGenerator::MemAlloc> CodeGenerator::gene
     // Return list of modules and memory usage
     const std::vector<std::string> modules = {"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
     return std::make_pair(modules, mem);
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                         const BackendBase &backend, const std::string &suffix)
+{
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
+    CodeStream neuronUpdate(neuronUpdateStream);
+
+    neuronUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    if (backend.supportsNamespace()) {
+        neuronUpdate << "#include \"supportCode" << suffix << ".h\"" << std::endl;
+    }
+    neuronUpdate << std::endl;
+
+    // Neuron update kernel
+    backend.genNeuronUpdate(neuronUpdate, modelMerged,
+        // Preamble handler
+        [&modelMerged, &backend](CodeStream &os)
+        {
+            // Generate functions to push merged neuron group structures
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronUpdateGroups(), backend);
+        },
+        // Push EGP handler
+        [&backend, &modelMerged](CodeStream &os)
+        {
+            modelMerged.genScalarEGPPush<NeuronUpdateGroupMerged>(os, backend);
+        });
 }

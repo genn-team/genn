@@ -26,4 +26,7 @@ namespace CodeGenerator
 GENN_EXPORT std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
                                                                       const filesystem::path &sharePath, const filesystem::path &outputPath,
                                                                       bool forceRebuild = false);
+
+GENN_EXPORT void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                      const BackendBase &backend, const std::string &suffix = "");
 }
