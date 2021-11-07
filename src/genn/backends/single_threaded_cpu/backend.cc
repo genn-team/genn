@@ -79,9 +79,8 @@ namespace CodeGenerator
 {
 namespace SingleThreadedCPU
 {
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
-                              HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -229,33 +228,30 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         popSubs.addVarSubstitution("rng", "hostRNG");
                     }
 
-                    simHandler(os, n, popSubs,
-                               // Emit true spikes
-                               [this, wuVarUpdateHandler](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
-                               {
-                                   // Insert code to update WU vars
-                                   wuVarUpdateHandler(os, ng, subs);
+                    n.generateNeuronUpdate(*this, os, modelMerged, popSubs,
+                                           // Emit true spikes
+                                           [&modelMerged, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                                           {
+                                               // Insert code to update WU vars
+                                               ng.generateWUVarUpdate(*this, os, modelMerged, subs);
 
-                                   // Insert code to emit true spikes
-                                   genEmitSpike(os, ng, subs, true, ng.getArchetype().isSpikeRecordingEnabled());
-                               },
-                               // Emit spike-like events
-                               [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
-                               {
-                                   // Insert code to emit spike-like events
-                                   genEmitSpike(os, ng, subs, false, ng.getArchetype().isSpikeEventRecordingEnabled());
-                               });
+                                               // Insert code to emit true spikes
+                                               genEmitSpike(os, ng, subs, true, ng.getArchetype().isSpikeRecordingEnabled());
+                                           },
+                                           // Emit spike-like events
+                                           [this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &subs)
+                                           {
+                                               // Insert code to emit spike-like events
+                                               genEmitSpike(os, ng, subs, false, ng.getArchetype().isSpikeEventRecordingEnabled());
+                                           });
                 }
             }
         }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
-                               HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -347,7 +343,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                             }
 
                             // Call synapse dynamics handler
-                            synapseDynamicsHandler(os, s, synSubs);
+                            s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
                     }
                 }
@@ -371,12 +367,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                     // generate the code for processing spike-like events
                     if (s.getArchetype().isSpikeEventRequired()) {
-                        genPresynapticUpdate(os, modelMerged, s, funcSubs, false, wumThreshHandler, wumEventHandler);
+                        genPresynapticUpdate(os, modelMerged, s, funcSubs, false);
                     }
 
                     // generate the code for processing true spike events
                     if (s.getArchetype().isTrueSpikeRequired()) {
-                        genPresynapticUpdate(os, modelMerged, s, funcSubs, true, wumThreshHandler, wumSimHandler);
+                        genPresynapticUpdate(os, modelMerged, s, funcSubs, true);
                     }
                     os << std::endl;
                 }
@@ -440,7 +436,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                             }
                             synSubs.addVarSubstitution("id_post", "spike");
 
-                            postLearnHandler(os, s, synSubs);
+                            s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
                     }
                     os << std::endl;
@@ -450,9 +446,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
-                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
-                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -520,7 +515,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                             popSubs.addVarSubstitution("id", "i");
 
                             // Generate custom update
-                            customUpdateHandler(os, c, popSubs);
+                            c.generateCustomUpdate(*this, os, modelMerged, popSubs);
 
                             // Write back reductions
                             genWriteBackReductions(os, c, popSubs["id"]);
@@ -579,7 +574,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 synSubs.addVarSubstitution("id_post", "j");
 
                                 // Call custom update handler
-                                customWUUpdateHandler(os, c, synSubs);
+                                c.generateCustomUpdate(*this, os, modelMerged, synSubs);
 
                                 // Write back reductions
                                 genWriteBackReductions(os, c, synSubs["id_syn"]);
@@ -631,7 +626,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                                 synSubs.addVarSubstitution("id_post", "j");
 
                                 // Call custom update handler
-                                customWUTransposeUpdateHandler(os, c, synSubs);
+                                c.generateCustomUpdate(*this, os, modelMerged, synSubs);
 
                                 // Update transpose variable
                                 os << "group->" << transposeVarName << "Transpose[(j * group->numSrcNeurons) + i] = l" << transposeVarName << ";" << std::endl;
@@ -645,12 +640,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                      NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                      CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
-                      CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
     if(model.getBatchSize() != 1) {
@@ -705,7 +696,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                 // Get reference to group
                 os << "const auto *group = &mergedNeuronInitGroup" << n.getIndex() << "[g]; " << std::endl;
                 Substitutions popSubs(&funcSubs);
-                localNGHandler(os, n, popSubs);
+                n.generateInit(*this, os, modelMerged, popSubs);
             }
         }
 
@@ -721,7 +712,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                 // Get reference to group
                 os << "const auto *group = &mergedCustomUpdateInitGroup" <<c.getIndex() << "[g]; " << std::endl;
                 Substitutions popSubs(&funcSubs);
-                cuHandler(os, c, popSubs);
+                c.generateInit(*this, os, modelMerged, popSubs);
             }
         }
 
@@ -737,7 +728,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                 // Get reference to group
                 os << "const auto *group = &mergedCustomWUUpdateDenseInitGroup" << c.getIndex() << "[g]; " << std::endl;
                 Substitutions popSubs(&funcSubs);
-                cuDenseHandler(os, c, popSubs);
+                c.generateInit(*this, os, modelMerged, popSubs);
             }
         }
 
@@ -753,7 +744,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                 // Get reference to group
                 os << "const auto *group = &mergedSynapseDenseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                 Substitutions popSubs(&funcSubs);
-                sgDenseInitHandler(os, s, popSubs);
+                s.generateInit(*this, os, modelMerged, popSubs);
             }
         }
 
@@ -858,7 +849,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                             }
 
                             // Call handler to initialize variables
-                            sgKernelInitHandler(kernelInit, s, kernelInitSubs);
+                            s.generateKernelInit(*this, kernelInit, modelMerged, kernelInitSubs);
                         }
 
                         // If there is row-building code in this snippet
@@ -894,10 +885,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
 
                     // Call appropriate connectivity handler
                     if(!snippet->getRowBuildCode().empty()) {
-                        sgSparseRowConnectHandler(os, s, popSubs);
+                        s.generateSparseRowInit(*this, kernelInit, modelMerged, popSubs);
                     }
                     else {
-                        sgSparseColConnectHandler(os, s, popSubs);
+                        s.generateSparseColumnInit(*this, kernelInit, modelMerged, popSubs);
                     }
                 }
             }
@@ -947,7 +938,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                         Substitutions popSubs(&funcSubs);
                         popSubs.addVarSubstitution("id_pre", "i");
                         popSubs.addVarSubstitution("row_len", "group->rowLength[i]");
-                        sgSparseInitHandler(os, s, popSubs);
+                        s.generateInit(*this, os, modelMerged, popSubs);
                     }
 
                     // If postsynaptic learning is required
@@ -997,7 +988,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
                     Substitutions popSubs(&funcSubs);
                     popSubs.addVarSubstitution("id_pre", "i");
                     popSubs.addVarSubstitution("row_len", "group->rowLength[i]");
-                    cuSparseHandler(os, c, popSubs);
+                    c.generateInit(*this, os, modelMerged, popSubs);
                 }
             }
         }
@@ -1413,8 +1404,7 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     return hash.get_digest();
 }
 //--------------------------------------------------------------------------
-void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs,
-                                   bool trueSpike, PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler) const
+void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg, const Substitutions &popSubs, bool trueSpike) const
 {
     // Get suffix based on type of events
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
@@ -1445,7 +1435,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
             threshSubs.addVarSubstitution("id_pre", "ipre");
 
             // Generate weight update threshold condition
-            wumThreshHandler(os, sg, threshSubs);
+            sg.generateSpikeEventThreshold(*this, os, modelMerged, threshSubs);
 
             os << ")";
             os << CodeStream::OB(10);
@@ -1473,7 +1463,12 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 os << "const unsigned int synAddress = (ipre * group->rowStride) + j;" << std::endl;
                 os << "const unsigned int ipost = group->ind[synAddress];" << std::endl;
 
-                wumSimHandler(os, sg, synSubs);
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                }
             }
         }
         else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
@@ -1512,7 +1507,12 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                     os << "if(ipost < group->numTrgNeurons)";
                     {
                         CodeStream::Scope b(os);
-                        wumSimHandler(os, sg, synSubs);
+                        if(trueSpike) {
+                            sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                        }
+                        else {
+                            sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                        }
                     }
 
                     // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
@@ -1533,7 +1533,12 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
 
                 os << "const unsigned int synAddress = (ipre * group->numTrgNeurons) + ipost;" << std::endl;
 
-                wumSimHandler(os, sg, synSubs);
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                }
 
                 if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
                     os << CodeStream::CB(20);
