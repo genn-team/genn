@@ -268,9 +268,8 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localStream");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
-                              HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -405,8 +404,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         else {
             kernelSubs.addVarSubstitution("batch", "0");
         }
-        genNeuronUpdateKernel(neuronUpdateKernels, kernelSubs, modelMerged, 
-                              simHandler, wuVarUpdateHandler, idStart);
+        genNeuronUpdateKernel(neuronUpdateKernels, kernelSubs, modelMerged, idStart);
     }
     neuronUpdateKernels << std::endl;
 
@@ -520,11 +518,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
-                               HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -637,8 +632,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, wumThreshHandler, 
-                                       wumSimHandler, wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
+            genPresynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, idPresynapticStart);
         }
     }
 
@@ -667,7 +661,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
+            genPostsynapticUpdateKernel(synapseUpdateKernels, kernelSubs, modelMerged, idPostsynapticStart);
         }
     }
  
@@ -695,7 +689,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genSynapseDynamicsKernel(synapseUpdateKernels, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
+            genSynapseDynamicsKernel(synapseUpdateKernels, kernelSubs, modelMerged, idSynapseDynamicsStart);
         }
     }
     synapseUpdateKernels << std::endl;
@@ -834,9 +828,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
-                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler,
-                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -923,11 +916,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 customUpdateKernels << "const unsigned int id = get_global_id(0);" << std::endl;
                 customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
                 customUpdateKernels << "// Custom updates" << std::endl;
-                genCustomUpdateKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customUpdateHandler, g.second.first);
+                genCustomUpdateKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, g.second.first);
 
                 customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
                 customUpdateKernels << "// Custom WU updates" << std::endl;
-                genCustomUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customWUUpdateHandler, g.second.first);
+                genCustomUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, g.second.first);
             }
         }
 
@@ -960,7 +953,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                 customUpdateKernels << "// ------------------------------------------------------------------------" << std::endl;
 
                 customUpdateKernels << "// Custom WU transpose updates" << std::endl;
-                genCustomTransposeUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, customWUTransposeUpdateHandler, g.second.second);
+                genCustomTransposeUpdateWUKernel(customUpdateKernels, kernelSubs, modelMerged, g.first, g.second.second);
             }
         }
 
@@ -1073,12 +1066,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                      NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                      CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
-                      CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     // Generate reset kernel to be run before the neuron kernel
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -1178,9 +1167,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
     {
         CodeStream::Scope b(initializeKernels);
         initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-        genInitializeKernel(initializeKernels, kernelSubs, modelMerged, localNGHandler, cuHandler,
-                            cuDenseHandler, sgDenseInitHandler, sgSparseRowConnectHandler, 
-                            sgSparseColConnectHandler, sgKernelInitHandler, idInitStart);
+        genInitializeKernel(initializeKernels, kernelSubs, modelMerged, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
@@ -1206,8 +1193,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
         {
             CodeStream::Scope b(initializeKernels);
             initializeKernels << "const unsigned int id = get_global_id(0);" << std::endl;
-            genInitializeSparseKernel(initializeKernels, kernelSubs, modelMerged, 
-                                      sgSparseInitHandler, cuSparseHandler, numStaticInitThreads, idSparseInitStart);
+            genInitializeSparseKernel(initializeKernels, kernelSubs, modelMerged, numStaticInitThreads, idSparseInitStart);
             os << std::endl;
         }
     }
