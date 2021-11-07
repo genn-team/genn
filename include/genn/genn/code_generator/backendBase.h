@@ -194,49 +194,34 @@ public:
     /*! \param os                       CodeStream to write function to
         \param modelMerged              merged model to generate code for
         \param preambleHandler          callback to write functions for pushing extra-global parameters
-        \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                                 HostHandler pushEGPHandler) const = 0;
+        \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of neuronUpdate function*/
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
-        \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
-        \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
-                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.
-        \param wumEventHandler              callback to write platform-independent code to process presynaptic spike-like events.
-                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.
-        \param wumProceduralConnectHandler  callback to write platform-indepent code to procedurally generate connectivity
-                                            "id_pre" variable and "addSynapse" function will be provided to callback via Substitutions.
-                                            callback needs to implement loop over synapses in row, providing "synAddress" variable if INDIVIDUALG
-        \param postLearnHandler             callback to write platform-independent code to process postsynaptic spikes.
-                                            "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
-        \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
-                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
-                                  HostHandler pushEGPHandler) const = 0;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                                  HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific functions to perform custom updates
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
-      
-        \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
+        \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of customUpdate function*/
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
         \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
-        \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+        \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initializeSparse function*/
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                         HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
