@@ -758,14 +758,14 @@ void NeuronUpdateGroupMerged::addNeuronModelSubstitutions(Substitutions &substit
 }
 //--------------------------------------------------------------------------
 void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitutions &popSubs,
-                         const std::string &fieldPrefixStem, const std::string &precision, const std::string &sourceSuffix, 
-                         bool useLocalNeuronVars, unsigned int batchSize, 
-                         const std::vector<SynapseGroupInternal*> &archetypeSyn,
-                         unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
-                         Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                         std::string(WeightUpdateModels::Base::*getCode)(void) const,
-                         bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
-                         bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const
+                                                  const std::string &fieldPrefixStem, const std::string &precision, const std::string &sourceSuffix, 
+                                                  bool useLocalNeuronVars, unsigned int batchSize, 
+                                                  const std::vector<SynapseGroupInternal*> &archetypeSyn,
+                                                  unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
+                                                  Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
+                                                  std::string(WeightUpdateModels::Base::*getCode)(void) const,
+                                                  bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
+                                                  bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const
 {
     // Loop through synaptic populations
     for(size_t i = 0; i < archetypeSyn.size(); i++) {
@@ -799,8 +799,8 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
             subs.addVarNameSubstitution(vars, "", "l");
 
             neuronSubstitutionsInSynapticCode(subs, &getArchetype(), "", sourceSuffix, "", "", "", useLocalNeuronVars,
-                                              [this](size_t paramIndex) { return isParamHeterogeneous(paramIndex); },
-                                              [this](size_t derivedParamIndex) { return isDerivedParamHeterogeneous(derivedParamIndex); },
+                                              [this](size_t paramIndex) { return this->isParamHeterogeneous(paramIndex); },
+                                              [this](size_t derivedParamIndex) { return this->isDerivedParamHeterogeneous(derivedParamIndex); },
                                               [&subs, batchSize, this](bool delay, VarAccessDuplication varDuplication) 
                                               {
                                                   return getReadVarIndex(delay, batchSize, varDuplication, subs["id"]); 
