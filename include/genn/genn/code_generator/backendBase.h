@@ -185,13 +185,6 @@ public:
     typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
     typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
     typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
-    typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateInitGroupMerged> CustomUpdateInitGroupMergedHandler;
-    typedef GroupHandler<CustomWUUpdateDenseInitGroupMerged> CustomWUUpdateDenseInitGroupMergedHandler;
-    typedef GroupHandler<CustomWUUpdateSparseInitGroupMerged> CustomWUUpdateSparseInitGroupMergedHandler;
-    typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
-    typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
-    typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
@@ -248,25 +241,10 @@ public:
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
-        \param localNGHandler               callback to write platform-independent code to initialize a merged neuron group
-        \param sgDenseInitHandler           callback to write platform-independent code to initialize the synapse variables of
-                                            a merged synapse group with dense connectivity
-        \param sgSparseRowConnectHandler    callback to write platform-independent code to initialize sparse connectivity
-                                            for a merged synapse group with a row-wise connectivity initialisation snippet
-        \param sgSparseColConnectHandler    callback to write platform-independent code to initialize sparse connectivity
-                                            for a merged synapse group with a column-wise connectivity initialisation snippet
-        \param sgKernelInitHandler          callback to write platform-independent code to initialize the synapse variables  of
-                                            merged synapse group variables which require a kernel
-        \param sgSparseInitHandler          callback to write platform-independent code to initialize the synapse variables of
-                                            a merged synapse group with sparse connectivity
         \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
         \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                         CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
-                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
-                         CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+                         HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;

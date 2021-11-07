@@ -30,7 +30,6 @@
 // GeNN code generator includes
 #include "code_generator/codeGenUtils.h"
 #include "code_generator/generateAll.h"
-#include "code_generator/generateInit.h"
 #include "code_generator/generateRunner.h"
 #include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/generateSupportCode.h"

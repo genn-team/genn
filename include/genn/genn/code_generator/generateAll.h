@@ -32,4 +32,7 @@ GENN_EXPORT void generateNeuronUpdate(const filesystem::path &outputPath, const 
 
 GENN_EXPORT void generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
                                       const BackendBase &backend, const std::string &suffix = "");
+
+GENN_EXPORT void generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                              const BackendBase &backend, const std::string &suffix = "");
 }

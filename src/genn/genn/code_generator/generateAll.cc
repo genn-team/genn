@@ -16,7 +16,6 @@
 
 // Code generator includes
 #include "code_generator/codeStream.h"
-#include "code_generator/generateInit.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateSynapseUpdate.h"
 #include "code_generator/generateRunner.h"
@@ -232,5 +231,44 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
             modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
+        });
+}
+void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                 const BackendBase &backend, const std::string &suffix)
+{
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
+    CodeStream init(initStream);
+
+    init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+
+    // Generate functions to push merged synapse group structures
+    const ModelSpecInternal &model = modelMerged.getModel();
+
+    backend.genInit(init, modelMerged,
+        // Preamble handler
+        [&modelMerged, &backend](CodeStream &os)
+        {
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
+        },
+        // Initialise push EGP handler
+        [&backend, &modelMerged](CodeStream &os)
+        {
+            modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomWUUpdateDenseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseDenseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
+        },
+        // Initialise sparse push EGP handler
+        [&backend, &modelMerged](CodeStream &os)
+        {
+            modelMerged.genScalarEGPPush<SynapseSparseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomWUUpdateSparseInitGroupMerged>(os, backend);
         });
 }

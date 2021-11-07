@@ -12,6 +12,7 @@
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
 #include "code_generator/customUpdateGroupMerged.h"
+#include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 #include "code_generator/supportCodeMerged.h"
 

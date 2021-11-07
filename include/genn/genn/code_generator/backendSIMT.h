@@ -201,14 +201,9 @@ protected:
     void genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                                           const std::string &updateGroup, size_t &idStart) const;
 
-    void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                             NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 
-                             CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler synapseDenseInitHandler, 
-                             SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                             SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, size_t &idStart) const;
+    void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
    
     void genInitializeSparseKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                   SynapseSparseInitGroupMergedHandler synapseSparseInitHandler, CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, 
                                    size_t numInitializeThreads, size_t &idStart) const;
 
     //! Adds a type - both to backend base's list of sized types but also to device types set
