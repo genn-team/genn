@@ -6,6 +6,7 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
+#include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 
 // Macro for simplifying defining type sizes

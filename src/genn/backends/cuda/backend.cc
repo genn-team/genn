@@ -683,9 +683,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
-                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -749,11 +747,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom updates" << std::endl;
-                genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
+                genCustomUpdateKernel(os, kernelSubs, modelMerged, g, idCustomUpdateStart);
 
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom WU updates" << std::endl;
-                genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
+                genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, idCustomUpdateStart);
             }
         }
 
@@ -776,7 +774,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom WU transpose updates" << std::endl;
-                genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUTransposeUpdateHandler, idCustomTransposeUpdateStart);
+                genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, idCustomTransposeUpdateStart);
             }
         }
         os << "void update" << g << "()";

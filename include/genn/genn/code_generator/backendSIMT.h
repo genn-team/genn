@@ -193,13 +193,13 @@ protected:
                                   SynapseDynamicsGroupMergedHandler synapseDynamicsHandler, size_t &idStart) const;
 
     void genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                               const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const;
+                               const std::string &updateGroup, size_t &idStart) const;
 
     void genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                 const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const;
+                                 const std::string &updateGroup, size_t &idStart) const;
     
     void genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                          const std::string &updateGroup, CustomUpdateTransposeWUGroupMergedHandler &customWUTransposeUpdateHandler, size_t &idStart) const;
+                                          const std::string &updateGroup, size_t &idStart) const;
 
     void genInitializeKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
                              NeuronInitGroupMergedHandler neuronInitHandler, CustomUpdateInitGroupMergedHandler cuHandler, 

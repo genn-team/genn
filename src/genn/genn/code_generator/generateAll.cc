@@ -16,7 +16,6 @@
 
 // Code generator includes
 #include "code_generator/codeStream.h"
-#include "code_generator/generateCustomUpdate.h"
 #include "code_generator/generateInit.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateSynapseUpdate.h"
@@ -203,5 +202,35 @@ void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, con
         [&backend, &modelMerged](CodeStream &os)
         {
             modelMerged.genScalarEGPPush<NeuronUpdateGroupMerged>(os, backend);
+        });
+}
+//--------------------------------------------------------------------------
+void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                         const BackendBase &backend, const std::string &suffix)
+{
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
+    CodeStream customUpdate(customUpdateStream);
+
+    customUpdate << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    customUpdate << std::endl;
+
+    // Neuron update kernel
+    backend.genCustomUpdate(customUpdate, modelMerged,
+        // Preamble handler
+        [&modelMerged, &backend](CodeStream &os)
+        {
+            // Generate functions to push merged neuron group structures
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateWUGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateTransposeWUGroups(), backend);
+        },
+        // Push EGP handler
+        // **TODO** this needs to be per-update group
+        [&backend, &modelMerged](CodeStream &os)
+        {
+            modelMerged.genScalarEGPPush<CustomUpdateGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomUpdateWUGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<CustomUpdateTransposeWUGroupMerged>(os, backend);
         });
 }

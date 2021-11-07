@@ -810,7 +810,7 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, 
-                                        const std::string &updateGroup, CustomUpdateGroupMergedHandler &customUpdateHandler, size_t &idStart) const
+                                        const std::string &updateGroup, size_t &idStart) const
 {
     genParallelGroup<CustomUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
@@ -820,7 +820,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             return numCopies * padKernelSize(cu.getSize(), KernelCustomUpdate); 
         },
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [&modelMerged, this, customUpdateHandler](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -845,7 +845,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         cuSubs.addVarSubstitution("batch", "batch");
 
                         genCustomUpdateIndexCalculation(os, cg, batchSize);
-                        customUpdateHandler(os, cg, cuSubs);
+                        cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                         // Loop through reduction targets and generate reduction
                         for(const auto &r : reductionTargets) {
@@ -883,7 +883,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     CodeStream::Scope b(os);
 
                     genCustomUpdateIndexCalculation(os, cg, batchSize);
-                    customUpdateHandler(os, cg, cuSubs);
+                    cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
                 }
             }
 
@@ -892,7 +892,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                          const std::string &updateGroup, CustomUpdateWUGroupMergedHandler &customUpdateWUHandler, size_t &idStart) const
+                                          const std::string &updateGroup, size_t &idStart) const
 {
     genParallelGroup<CustomUpdateWUGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateWUGroups(), idStart,
@@ -901,7 +901,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             return getPaddedNumCustomUpdateWUThreads(cg, modelMerged.getModel().getBatchSize()); 
         },
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [customUpdateWUHandler, &modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -976,7 +976,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                     os << "const unsigned int batchOffset = size * batch;" << std::endl;
                 }
 
-                customUpdateWUHandler(os, cg, cuSubs);
+                cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                 // If this is a reduction
                 if(cg.getArchetype().isReduction()) {
@@ -998,7 +998,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 }
 //--------------------------------------------------------------------------
 void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged,
-                                                   const std::string &updateGroup, CustomUpdateTransposeWUGroupMergedHandler &customWUTransposeUpdateHandler, size_t &idStart) const
+                                                   const std::string &updateGroup, size_t &idStart) const
 {
     // Generate 2D array
     const size_t blockSize = getKernelBlockSize(KernelCustomTransposeUpdate);
@@ -1011,7 +1011,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             return getPaddedNumCustomUpdateTransposeWUThreads(cg, modelMerged.getModel().getBatchSize()); 
         },
         [&updateGroup](const CustomUpdateTransposeWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
-        [customWUTransposeUpdateHandler, &modelMerged, this, blockSize](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
+        [&modelMerged, this, blockSize](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
         {
             // Get index of variable being transposed
             const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
@@ -1078,7 +1078,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                             synSubs.addVarSubstitution("id_pre", "y");
                             synSubs.addVarSubstitution("id_post", "x");
                             synSubs.addVarSubstitution("id_syn", "idx");
-                            customWUTransposeUpdateHandler(os, cg, synSubs);
+                            cg.generateCustomUpdate(*this, os, modelMerged, synSubs);
 
                             // Write forward weight to shared memory
                             os << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
