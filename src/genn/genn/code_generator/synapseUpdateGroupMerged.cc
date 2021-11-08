@@ -214,7 +214,7 @@ void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backen
                               *this, popSubs, modelMerged, backend.supportsNamespace());
 }
 //----------------------------------------------------------------------------
-void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     const auto &connectInit = getArchetype().getConnectivityInitialiser();
 

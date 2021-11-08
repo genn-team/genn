@@ -246,9 +246,6 @@ void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, co
     }
     synapseUpdate << std::endl;
 
-    // Generate functions to push merged synapse group structures
-    const ModelSpecInternal &model = modelMerged.getModel();
-
     // Synaptic update kernels
     backend.genSynapseUpdate(synapseUpdate, modelMerged,
         // Preamble handler
@@ -276,9 +273,6 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
     CodeStream init(initStream);
 
     init << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
-
-    // Generate functions to push merged synapse group structures
-    const ModelSpecInternal &model = modelMerged.getModel();
 
     backend.genInit(init, modelMerged,
         // Preamble handler

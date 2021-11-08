@@ -588,7 +588,7 @@ void SynapseConnectivityInitGroupMerged::generateSparseColumnInit(const BackendB
     genInitConnectivity(os, popSubs, modelMerged.getModel().getPrecision(), false);
 }
 //----------------------------------------------------------------------------
-void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     // Generate kernel index and add to substitutions
     os << "const unsigned int kernelInd = ";
