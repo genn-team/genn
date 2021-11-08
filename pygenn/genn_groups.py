@@ -286,7 +286,13 @@ class Group(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            if egp_data.is_scalar:
+            if egp_data.values is None:
+                cname = self.__class__.__name__
+                mname = self.name
+                raise Exception(f"Extra global parameter {egp_name} "
+                                f"for {mname} ({cname}) can not be set "
+                                f"to None, it should be {egp_data.type}")
+            elif egp_data.is_scalar:
                 # Assign view
                 egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
                                                             egp_data.type)
