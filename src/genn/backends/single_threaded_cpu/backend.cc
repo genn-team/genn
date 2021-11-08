@@ -885,10 +885,10 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
                     // Call appropriate connectivity handler
                     if(!snippet->getRowBuildCode().empty()) {
-                        s.generateSparseRowInit(*this, kernelInit, modelMerged, popSubs);
+                        s.generateSparseRowInit(*this, os, modelMerged, popSubs);
                     }
                     else {
-                        s.generateSparseColumnInit(*this, kernelInit, modelMerged, popSubs);
+                        s.generateSparseColumnInit(*this, os, modelMerged, popSubs);
                     }
                 }
             }
