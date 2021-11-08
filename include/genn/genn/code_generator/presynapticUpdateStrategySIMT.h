@@ -42,10 +42,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const = 0;
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const = 0;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const = 0;
@@ -78,10 +75,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
@@ -114,10 +108,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
@@ -158,10 +149,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;
@@ -194,10 +182,7 @@ public:
 
     //! Generate presynaptic update code
     virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                           BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const override;
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
 
     virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
                               const Substitutions &popSubs, const BackendSIMT &backend) const override;

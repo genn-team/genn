@@ -39,8 +39,8 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
-#include "code_generator/generateAll.h"
 #include "code_generator/generateMakefile.h"
+#include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
 
 // GeNN backend includes

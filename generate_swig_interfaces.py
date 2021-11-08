@@ -559,7 +559,7 @@ def generateConfigs(gennPath, backends):
                            INITVARSNIPPET, SPARSEINITSNIPPET):
                 pygennSmg.addCppInclude( '"' + header + 'Custom.h"' )
             pygennSmg.addCppInclude( '"code_generator/backendBase.h"' )
-            pygennSmg.addCppInclude( '"code_generator/generateAll.h"' )
+            pygennSmg.addCppInclude( '"code_generator/generateModules.h"' )
             pygennSmg.addCppInclude( '"code_generator/generateMakefile.h"' )
             pygennSmg.addCppInclude( '"code_generator/generateMSBuild.h"' )
             pygennSmg.addCppInclude( '"path.h"' )
@@ -579,7 +579,7 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigIgnore("PreferencesBase")
         pygennSmg.addSwigInclude('"code_generator/backendBase.h"')
 
-        # define and wrap three functions which replace main in generateALL.cc
+        # define and wrap code generator
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
             void init_logging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel)

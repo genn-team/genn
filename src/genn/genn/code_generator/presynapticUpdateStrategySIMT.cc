@@ -85,10 +85,7 @@ void PreSpan::genPreamble(CodeStream &, const ModelSpecMerged&, const Presynapti
 }
 //----------------------------------------------------------------------------
 void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                        const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                        BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                        BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                        BackendBase::PresynapticUpdateGroupMergedHandler) const
+                        const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -130,7 +127,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
             threshSubs.addVarSubstitution("id_pre", "preInd");
 
             // Generate weight update threshold condition
-            wumThreshHandler(os, sg, threshSubs);
+            sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
 
             // end code substitutions ----
             os << ")";
@@ -167,7 +164,13 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
                                             backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
             }
 
-            wumSimHandler(os, sg, synSubs);
+            if(trueSpike) {
+                sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
+            }
+            else {
+                sg.generateSpikeEventUpdate(backend, os, modelMerged, synSubs);
+            }
+            
         }
 
         if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
@@ -236,10 +239,7 @@ size_t PostSpan::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg
 }
 //----------------------------------------------------------------------------
 void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                         const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                         BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                         BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                         BackendBase::PresynapticUpdateGroupMergedHandler) const
+                         const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -300,7 +300,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
 
                     // Generate weight update threshold condition
-                    wumThreshHandler(os, sg, threshSubs);
+                    sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
 
                     // end code substitutions ----
                     os << ")";
@@ -351,7 +351,12 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     }
                 }
 
-                wumSimHandler(os, sg, synSubs);
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(backend, os, modelMerged, synSubs);
+                }
 
                 if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(140); // end if (id < npost)
@@ -443,10 +448,7 @@ void PreSpanProcedural::genPreamble(CodeStream&, const ModelSpecMerged&, const P
 }
 //----------------------------------------------------------------------------
 void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                  const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                                  BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler, 
-                                  BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                  BackendBase::PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler) const
+                                  const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const
 {
     // Get suffix based on type of events
     const ModelSpecInternal &model = modelMerged.getModel();
@@ -491,7 +493,7 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
 
             // Generate weight update threshold condition
             Substitutions threshSubs(&synSubs);
-            wumThreshHandler(os, sg, threshSubs);
+            sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
 
             // end code substitutions ----
             os << ")";
@@ -565,13 +567,18 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         // Generate presynaptic simulation code into new stringstream-backed code stream
         std::ostringstream presynapticUpdateStream;
         CodeStream presynapticUpdate(presynapticUpdateStream);
-        wumSimHandler(presynapticUpdate, sg, presynapticUpdateSubs);
+        if(trueSpike) {
+            sg.generateSpikeUpdate(backend, presynapticUpdate, modelMerged, presynapticUpdateSubs);
+        }
+        else {
+            sg.generateSpikeEventUpdate(backend, presynapticUpdate, modelMerged, presynapticUpdateSubs);
+        }
 
         // When a synapse should be 'added', substitute in presynaptic update code
         connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
 
         // Generate procedural connectivity code
-        wumProceduralConnectHandler(os, sg, connSubs);
+        sg.generateProceduralConnectivity(backend, os, modelMerged, connSubs);
 
         if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);
@@ -628,10 +635,7 @@ size_t PostSpanBitmask::getSharedMemoryPerThread(const PresynapticUpdateGroupMer
 }
 //----------------------------------------------------------------------------
 void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike,
-                                BackendBase::PresynapticUpdateGroupMergedHandler wumThreshHandler,
-                                BackendBase::PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                BackendBase::PresynapticUpdateGroupMergedHandler) const
+                                const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const
 {
     // Get suffix based on type of events
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -680,7 +684,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                     threshSubs.addVarSubstitution("id_pre", "shSpk" + eventSuffix + "[j]");
 
                     // Generate weight update threshold condition
-                    wumThreshHandler(os, sg, threshSubs);
+                    sg.generateSpikeEventThreshold(backend, os, modelMerged, threshSubs);
 
                     os << ")";
                     os << CodeStream::OB(130);
@@ -714,7 +718,12 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                     synSubs.addVarSubstitution("id_syn", "synAddress");
                     synSubs.addVarSubstitution("id_post", "ipost");
                     synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
-                    wumSimHandler(os, sg, synSubs);
+                    if(trueSpike) {
+                        sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
+                    }
+                    else {
+                        sg.generateSpikeEventUpdate(backend, os, modelMerged, synSubs);
+                    }
 
                     os << "ibit++;" << std::endl;
                 }
