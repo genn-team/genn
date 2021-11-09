@@ -430,9 +430,9 @@ bool SynapseGroup::isHostInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
-    // If this synapse group has per-synapse state variables and isn't a
+    // If this synapse group has per-synapse or kernel state variables and isn't a
     // weight sharing slave, return true if any of them have initialisation code which doesn't require a kernel
-    if (!isWeightSharingSlave() && (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+    if (!isWeightSharingSlave() && ((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || (getMatrixType() & SynapseMatrixWeight::KERNEL))) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
                            [](const Models::VarInit &init)
                            { 

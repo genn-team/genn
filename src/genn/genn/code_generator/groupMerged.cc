@@ -1093,9 +1093,8 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
-        // If synapse group has a kernel and we're either updating 
-        // with procedural weights or initialising individual weights
-        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (kernelWeights && updateRole) || (connectInitRole && individualWeights))) {
+        // If synapse group has a kernel and has kernel weights or initialising individual weights
+        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || kernelWeights || (connectInitRole && individualWeights))) {
             // Loop through kernel size dimensions
             for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
                 // If this dimension has a heterogeneous size, add it to struct
@@ -1109,7 +1108,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         // If weights are procedural, we're initializing individual variables or we're initialising variables in a kernel
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
         if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty()) 
-           || (varInitRole && individualWeights)) 
+           || (varInitRole && (individualWeights || kernelWeights))) 
         {
             // Add heterogeneous variable initialization parameters and derived parameters
             addHeterogeneousVarInitParams<SynapseGroupMergedBase>(

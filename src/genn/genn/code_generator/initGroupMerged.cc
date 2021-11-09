@@ -573,6 +573,24 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Code
                      });
 }
 
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseKernelInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string SynapseKernelInitGroupMerged::name = "SynapseKernelInit";
+//----------------------------------------------------------------------------
+void SynapseKernelInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
+                     getArchetype().getWUVarInitialisers(), getIndex(),
+                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
+                     [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
+                     [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
+                     [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     {
+                         return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                     });
+}
+
 // ----------------------------------------------------------------------------
 // CodeGenerator::SynapseConnectivityInitGroupMerged
 //----------------------------------------------------------------------------

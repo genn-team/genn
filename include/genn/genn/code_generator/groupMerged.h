@@ -1087,6 +1087,7 @@ protected:
         SynapseDynamics,
         DenseInit,
         SparseInit,
+        KernelInit,
         ConnectivityInit,
     };
 
