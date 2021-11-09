@@ -171,7 +171,7 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SparseInit);
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::KernelInit);
     }
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,

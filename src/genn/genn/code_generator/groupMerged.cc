@@ -856,18 +856,20 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                              || (role == Role::SynapseDynamics));
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
-    addField("unsigned int", "rowStride",
-             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+    if(role != Role::KernelInit) {
+        addField("unsigned int", "rowStride",
+                [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+        addField("unsigned int", "numSrcNeurons",
+             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        addField("unsigned int", "numTrgNeurons",
+                [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+    }
+    
     if(role == Role::PostsynapticUpdate || role == Role::SparseInit) {
         addField("unsigned int", "colStride",
                  [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
     }
-
-    addField("unsigned int", "numSrcNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "numTrgNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-
+    
     // If this role is one where postsynaptic input can be provided
     if(role == Role::PresynapticUpdate || role == Role::SynapseDynamics) {
         if(getArchetype().isDendriticDelayRequired()) {
@@ -1088,7 +1090,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
+        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit || role == Role::KernelInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
@@ -1127,7 +1129,8 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             const auto var = vars[v];
             const auto *snippet = varInit.at(v).getSnippet();
             const bool varInitRequired = ((connectInitRole && snippet->requiresKernel()) 
-                                          || (varInitRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
+                                          || (varInitRole && individualWeights && !snippet->requiresKernel() && !snippet->getCode().empty())
+                                          || (varInitRole && kernelWeights && !snippet->getCode().empty()));
 
             // If we're performing an update with individual weights; or this variable should be initialised
             if((updateRole && individualWeights) || (kernelWeights && updateRole) || varInitRequired) {
@@ -1231,17 +1234,20 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
         const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+        const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
         // If synapse group has a kernel and we're either updating with procedural  
         // weights or initialising individual weights, update hash with kernel size
-        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
+        if(!getArchetype().getKernelSize().empty() && 
+            ((proceduralWeights && updateRole) || (connectInitRole && individualWeights) || (kernelWeights && !updateRole))) 
+        {
             updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
         }
 
         // If weights are procedural, we're initializing individual variables or we're initialising variables in a kernel
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
         if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty())
-           || (varInitRole && individualWeights))
+           || (varInitRole && individualWeights) || (varInitRole && kernelWeights))
         {
             // Update hash with each group's variable initialisation parameters and derived parameters
             updateVarInitParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers, 
