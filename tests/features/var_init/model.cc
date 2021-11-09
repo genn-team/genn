@@ -60,6 +60,18 @@ public:
 IMPLEMENT_MODEL(WeightUpdateModel);
 
 //----------------------------------------------------------------------------
+// WeightUpdateModelNoPrePost
+//----------------------------------------------------------------------------
+class WeightUpdateModelNoPrePost : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModelNoPrePost, 0, 5, 0, 0);
+
+    SET_VARS({{"constant_val", "scalar"}, {"uniform", "scalar"}, {"normal", "scalar"}, {"exponential", "scalar"}, {"gamma", "scalar"}});
+};
+IMPLEMENT_MODEL(WeightUpdateModelNoPrePost);
+
+//----------------------------------------------------------------------------
 // NopCustomUpdateModel
 //----------------------------------------------------------------------------
 class NopCustomUpdateModel : public CustomUpdateModels::Base
@@ -71,6 +83,35 @@ public:
     SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
 };
 IMPLEMENT_MODEL(NopCustomUpdateModel);
+
+class OneToOneKernel : public InitSparseConnectivitySnippet::Base
+{
+public:
+    DECLARE_SNIPPET(OneToOneKernel, 2);
+    
+    SET_PARAM_NAMES({"conv_kh", "conv_kw"});
+        
+    SET_ROW_BUILD_CODE(
+        "for(int i = 0; i < (int)$(conv_kw); i++) {\n"
+        "   if(($(id_pre) + i) < $(num_post)) {\n"
+        "       $(addSynapse, $(id_pre) + i, $(id_pre) % (int)$(conv_kh), i);\n"
+        "   }\n"
+        "}\n"
+        "$(endRow);\n");
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[1];
+        });
+    
+    SET_CALC_KERNEL_SIZE_FUNC(
+        [](const std::vector<double> &pars)->std::vector<unsigned int>
+        {
+            return {(unsigned int)pars[0], (unsigned int)pars[1]};
+        });
+};
+IMPLEMENT_SNIPPET(OneToOneKernel);
 
 void modelDefinition(ModelSpec &model)
 {
@@ -155,6 +196,10 @@ void modelDefinition(ModelSpec &model)
         initVar<InitVarSnippet::Exponential>(exponentialParams),
         initVar<InitVarSnippet::Gamma>(gammaParams));
     
+    OneToOneKernel::ParamValues oneToOneKernelParams(
+        3,
+        3);
+    
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource2", 50000, {}, {});
@@ -176,6 +221,13 @@ void modelDefinition(ModelSpec &model)
         {}, postsynapticInit,
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
     
+    model.addSynapsePopulation<WeightUpdateModelNoPrePost, PostsynapticModels::DeltaCurr>(
+        "Kernel", SynapseMatrixType::PROCEDURAL_KERNELG, NO_DELAY,
+        "SpikeSource1", "Pop",
+        {}, weightUpdateInit, {}, {},
+        {}, {},
+        initConnectivity<OneToOneKernel>(oneToOneKernelParams));
+        
     // Custom updates
     NopCustomUpdateModel::VarReferences neuronVarReferences(createVarRef(ng, "constant_val")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("NeuronCustomUpdate", "Test",

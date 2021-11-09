@@ -76,11 +76,12 @@ TEST_F(SimTest, Vars)
     pullCurrSourceStateFromDevice();
     pullDenseStateFromDevice();
     pullSparseStateFromDevice();
+    pullKernelStateFromDevice();
     pullNeuronCustomUpdateStateFromDevice();
     pullPSMCustomUpdateStateFromDevice();
     pullWUPreCustomUpdateStateFromDevice();
     pullWUPostCustomUpdateStateFromDevice();
-
+    
     // Test host-generated vars
     PROB_TEST(, Pop, 50000);
     PROB_TEST(, CurrSource, 50000);
@@ -89,6 +90,7 @@ TEST_F(SimTest, Vars)
     PROB_TEST(, Sparse, 50000);
     PROB_TEST(pre_, Sparse, 50000);
     PROB_TEST(post_, Sparse, 50000);
+    PROB_TEST(, Kernel, 9);
     PROB_TEST(, NeuronCustomUpdate, 50000);
     PROB_TEST(, CurrentSourceCustomUpdate, 50000);
     PROB_TEST(, PSMCustomUpdate, 50000);
