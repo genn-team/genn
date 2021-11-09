@@ -571,7 +571,10 @@ class GeNNModel(object):
         for k, v in iteritems(self._preferences):
             if hasattr(preferences, k):
                 setattr(preferences, k, v)
-
+        
+        # When using PyGeNN, always include model name in DLL
+        preferences.includeModelNameInDLL = True
+        
         # Create backend
         backend = self._backend_module.create_backend(self._model, output_path,
                                                       self.backend_log_level,
@@ -600,7 +603,7 @@ class GeNNModel(object):
             raise Exception("GeNN model already loaded")
         self._path_to_model = path_to_model
 
-        self._slm.open(self._path_to_model, self.model_name)
+        self._slm.open(self._path_to_model, self.model_name, True)
 
         self._slm.allocate_mem()
 
