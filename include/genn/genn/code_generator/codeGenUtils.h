@@ -174,4 +174,6 @@ void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs, 
         }
     }
 }
+
+
 }   // namespace CodeGenerator

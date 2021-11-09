@@ -719,6 +719,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                           runnerVarDecl, runnerMergedStructAlloc);
     }
+    
+    // Loop through merged kernel synapse init groups
+    for(const auto &m : modelMerged.getMergedSynapseKernelInitGroups()) {
+         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                          runnerVarDecl, runnerMergedStructAlloc);
+    }
 
     // Loop through merged synapse connectivity initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
@@ -1303,26 +1309,21 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             const auto wuVars = wu->getVars();
             for(size_t i = 0; i < wuVars.size(); i++) {
                 const auto *varInitSnippet = s.second.getWUVarInitialisers()[i].getSnippet();
+                const bool autoInitialized = !varInitSnippet->getCode().empty();
                 if(individualWeights) {
                     const size_t size = (size_t)s.second.getSrcNeuronGroup()->getNumNeurons() * (size_t)backend.getSynapticMatrixRowStride(s.second);
-                    const bool autoInitialized = !varInitSnippet->getCode().empty();
                     genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
                                 autoInitialized, size * getNumCopies(wuVars[i].access, batchSize), mem, synapseGroupStatePushPullFunctions);
                 }
                 else if(kernelWeights) {
-                     // If there is a weight initializer
-                     if(!s.second.getWUVarInitialisers()[i].getSnippet()->getCode().empty()) {
-                         throw std::runtime_error("Kernel WUM variables must be manually initialised.");
-                     }
-
                      // Calculate size of kernel
-                     const size_t size = std::accumulate(s.second.getKernelSize().cbegin(), s.second.getKernelSize().cend(), 
-                                                         1, std::multiplies<unsigned int>());
+                     const size_t size = s.second.getKernelSizeFlattened() * getNumCopies(wuVars[i].access, batchSize);
+                     
                      // Generate variable
                      genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                  runnerPushFunc, runnerPullFunc, wuVars[i].type, wuVars[i].name + s.second.getName(), s.second.getWUVarLocation(i),
-                                 false, size * getNumCopies(wuVars[i].access, batchSize), mem, synapseGroupStatePushPullFunctions);
+                                 autoInitialized, size, mem, synapseGroupStatePushPullFunctions);
                 }
 
                 // Loop through EGPs required to initialize WUM variable

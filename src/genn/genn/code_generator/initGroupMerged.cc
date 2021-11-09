@@ -550,7 +550,7 @@ void SynapseDenseInitGroupMerged::generateInit(const BackendBase &backend, CodeS
                          [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
                          [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                          {
-                             return backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
+                             backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
                          });
     }
 }
@@ -569,7 +569,7 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Code
                      [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                      {
-                         return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                         backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
                      });
 }
 
@@ -585,9 +585,9 @@ void SynapseKernelInitGroupMerged::generateInit(const BackendBase &backend, Code
                      modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
                      [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
                      [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
-                     [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     [&backend, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                      {
-                         return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                         backend.genKernelSynapseVariableInit(os, *this, kernelSubs, handler); 
                      });
 }
 

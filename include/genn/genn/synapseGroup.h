@@ -123,7 +123,8 @@ public:
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
     const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
-
+    size_t getKernelSizeFlattened() const;
+    
     //! Get variable mode used for variables used to combine input from this synapse group
     VarLocation getInSynLocation() const { return m_InSynLocation; }
 

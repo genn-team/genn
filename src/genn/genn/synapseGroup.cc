@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 
 // GeNN includes
 #include "gennUtils.h"
@@ -221,6 +222,11 @@ unsigned int SynapseGroup::getMaxSourceConnections() const
     // **NOTE** these get retrived from weight sharing master 
     // as they can be set AFTER creation of synapse group
     return isWeightSharingSlave() ? getWeightSharingMaster()->getMaxSourceConnections() : m_MaxSourceConnections;
+}
+//----------------------------------------------------------------------------
+size_t SynapseGroup::getKernelSizeFlattened() const
+{
+    return std::accumulate(getKernelSize().cbegin(), getKernelSize().cend(), 1, std::multiplies<unsigned int>());
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getSparseConnectivityLocation() const

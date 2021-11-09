@@ -96,6 +96,14 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
                            &CustomUpdateWUInternal::getInitHashDigest);
 
+    LOGD_CODE_GEN << "Merging synapse kernel initialization groups:";
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseKernelInitGroups,
+                           [&backend](const SynapseGroupInternal &sg)
+                           {
+                               return ((sg.getMatrixType() & SynapseMatrixWeight::KERNEL) && sg.isWUVarInitRequired());
+                           },
+                           &SynapseGroupInternal::getWUInitHashDigest);
+    
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                            [](const NeuronGroupInternal &){ return true; },
@@ -206,6 +214,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedNeuronInitGroups, memorySpaces);
     assignGroups(backend, m_MergedSynapseDenseInitGroups, memorySpaces);
     assignGroups(backend, m_MergedSynapseSparseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedSynapseKernelInitGroups, memorySpaces);
     assignGroups(backend, m_MergedSynapseConnectivityInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomUpdateInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomWUUpdateDenseInitGroups, memorySpaces);
