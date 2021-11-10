@@ -398,9 +398,8 @@ void Backend::genGlobalRNGSkipAhead(CodeStream &os, Substitutions &subs, const s
     subs.addVarSubstitution(name, "&localRNG");
 }
 //--------------------------------------------------------------------------
-void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                              NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
-                              HostHandler pushEGPHandler) const
+void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -482,7 +481,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         else {
             kernelSubs.addVarSubstitution("batch", "0");
         }
-        genNeuronUpdateKernel(os, kernelSubs, modelMerged, simHandler, wuVarUpdateHandler, idStart);
+        genNeuronUpdateKernel(os, kernelSubs, modelMerged, idStart);
     }
 
     os << "void updateNeurons(" << model.getTimePrecision() << " t";
@@ -524,11 +523,8 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                               PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                               PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                               PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
-                               HostHandler pushEGPHandler) const
+void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged,
+                               HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     // Generate struct definitions
     modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
@@ -590,8 +586,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genPresynapticUpdateKernel(os, kernelSubs, modelMerged, wumThreshHandler, wumSimHandler, 
-                                       wumEventHandler, wumProceduralConnectHandler, idPresynapticStart);
+            genPresynapticUpdateKernel(os, kernelSubs, modelMerged, idPresynapticStart);
         }
     }
 
@@ -613,7 +608,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, postLearnHandler, idPostsynapticStart);
+            genPostsynapticUpdateKernel(os, kernelSubs, modelMerged, idPostsynapticStart);
         }
     }
 
@@ -634,7 +629,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
             else {
                 kernelSubs.addVarSubstitution("batch", "0");
             }
-            genSynapseDynamicsKernel(os, kernelSubs, modelMerged, synapseDynamicsHandler, idSynapseDynamicsStart);
+            genSynapseDynamicsKernel(os, kernelSubs, modelMerged, idSynapseDynamicsStart);
         }
     }
 
@@ -685,9 +680,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                              CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
-                              CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const
+void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                              HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -751,11 +745,11 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom updates" << std::endl;
-                genCustomUpdateKernel(os, kernelSubs, modelMerged, g, customUpdateHandler, idCustomUpdateStart);
+                genCustomUpdateKernel(os, kernelSubs, modelMerged, g, idCustomUpdateStart);
 
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom WU updates" << std::endl;
-                genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUUpdateHandler, idCustomUpdateStart);
+                genCustomUpdateWUKernel(os, kernelSubs, modelMerged, g, idCustomUpdateStart);
             }
         }
 
@@ -778,7 +772,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                 os << "// ------------------------------------------------------------------------" << std::endl;
                 os << "// Custom WU transpose updates" << std::endl;
-                genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, customWUTransposeUpdateHandler, idCustomTransposeUpdateStart);
+                genCustomTransposeUpdateWUKernel(os, kernelSubs, modelMerged, g, idCustomTransposeUpdateStart);
             }
         }
         os << "void update" << g << "()";
@@ -852,12 +846,8 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                      NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                      CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler, SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                      SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
-                      CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
+void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                      HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const
 {
     os << "#include <iostream>" << std::endl;
     os << "#include <random>" << std::endl;
@@ -930,9 +920,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
         CodeStream::Scope b(os);
 
         os << "const unsigned int id = " << getKernelBlockSize(KernelInitialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-        genInitializeKernel(os, kernelSubs, modelMerged, localNGHandler, cuHandler, cuDenseHandler,
-                            sgDenseInitHandler, sgSparseRowConnectHandler, sgSparseColConnectHandler,
-                            sgKernelInitHandler, idInitStart);
+        genInitializeKernel(os, kernelSubs, modelMerged, idInitStart);
     }
     const size_t numStaticInitThreads = idInitStart;
 
@@ -947,7 +935,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHa
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelInitializeSparse) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genInitializeSparseKernel(os, kernelSubs, modelMerged, sgSparseInitHandler, cuSparseHandler, numStaticInitThreads, idSparseInitStart);
+            genInitializeSparseKernel(os, kernelSubs, modelMerged, numStaticInitThreads, idSparseInitStart);
         }
     }
 
