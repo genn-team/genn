@@ -613,6 +613,9 @@ public:
     //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
 
+    //! Get sorted vectors of merged outgoing synapse groups with presynaptic output belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedPreOutputOutSyns() const { return m_SortedMergedPreOutputSyns.front(); }
+
     //! Get sorted vectors of current sources belonging to archetype group
     const std::vector<CurrentSourceInternal*> &getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
 
@@ -920,6 +923,7 @@ private:
     // Members
     //------------------------------------------------------------------------
     std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedInSyns;
+    std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedPreOutputOutSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
 };
 
@@ -1075,6 +1079,11 @@ public:
     static std::string getPostISynIndex(unsigned int batchSize, const std::string &index)
     {
         return ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
+    }
+
+    static std::string getPreISynIndex(unsigned int batchSize, const std::string &index)
+    {
+        return ((batchSize == 1) ? "" : "preBatchOffset + ") + index;
     }
 
     static std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);

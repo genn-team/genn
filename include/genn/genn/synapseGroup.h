@@ -221,6 +221,10 @@ public:
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     const std::string &getPSTargetVar() const{ return m_PSTargetVar; }
+
+    //! Get name of neuron input variable which a presynaptic output specified with $(addToPre) will target
+    /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
+    const std::string &getPreTargetVar() const{ return m_PreTargetVar; }
     
     //! Get location of sparse connectivity initialiser extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
@@ -280,6 +284,7 @@ protected:
     void setFusedPSVarSuffix(const std::string &suffix){ m_FusedPSVarSuffix = suffix; }
     void setFusedWUPreVarSuffix(const std::string &suffix){ m_FusedWUPreVarSuffix = suffix; }
     void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
+    void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
     
     void initDerivedParams(double dt);
 
@@ -301,6 +306,7 @@ protected:
     const std::string &getFusedPSVarSuffix() const{ return m_FusedPSVarSuffix; }
     const std::string &getFusedWUPreVarSuffix() const { return m_FusedWUPreVarSuffix; }
     const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
+    const std::string &getFusedPreOutputSuffix() const { return m_FusedPreOutputSuffix; }
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
@@ -500,7 +506,15 @@ private:
     /*! This may not be the name of this synapse group if it has been fused */
     std::string m_FusedWUPostVarSuffix;
 
+    //! Suffix for weight update model presynaptic output variable
+    /*! This may not be the name of this synapse group if it has been fused */
+    std::string m_FusedPreOutputSuffix;
+
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     std::string m_PSTargetVar;
+
+    //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
+    /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
+    std::string m_PreTargetVar;
 };

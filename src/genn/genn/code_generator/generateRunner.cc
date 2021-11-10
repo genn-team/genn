@@ -1152,6 +1152,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
             }
         }
+        // Loop through fused outgoing synapse populations with weightupdate models that have presynaptic output 
+        for(const auto *sg : n.second.getFusedPreOuptputOutSyn()) {
+            backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                             model.getPrecision(), "revInSyn" + sg->getFusedPreOutputSuffix(), sg->getInSynLocation(),
+                             sg->getSrcNeuronGroup()->getNumNeurons() * batchSize, mem);
+        }
         
         // Loop through merged postsynaptic weight updates of incoming synaptic populations
         for(const auto *sg: n.second.getFusedWUPreOutSyn()) {

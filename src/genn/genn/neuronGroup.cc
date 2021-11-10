@@ -379,7 +379,7 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
         }
     }
 
-    // Copy groups with some form of postsynaptic update into new vector
+    // Copy groups with some form of presynaptic update into new vector
     std::vector<SynapseGroupInternal *> outSynWithPreUpdate;
     std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(outSynWithPreUpdate),
                  [](SynapseGroupInternal *sg)
@@ -395,6 +395,22 @@ void NeuronGroup::fusePrePostSynapses(bool fusePSM, bool fusePrePostWUM)
                           &SynapseGroupInternal::canWUMPreUpdateBeFused, &SynapseGroupInternal::getWUPreFuseHashDigest,
                           &SynapseGroupInternal::setFusedWUPreVarSuffix);
     }
+
+    // Copy groups with output onto the presynaptic neuron into new vector
+    std::vector<SynapseGroupInternal *> outSynWithPreOutput;
+    std::copy_if(getOutSyn().cbegin(), getOutSyn().cend(), std::back_inserter(outSynWithPreOutput),
+                 [](SynapseGroupInternal *sg)
+                 {
+                     return (sg->isPresynapticOutputRequired());
+                 });
+
+    // If there are any
+    if(!outSynWithPreOutput.empty()) {
+        fuseSynapseGroups(outSynWithPreOutput, fusePSM, m_FusedPreOutputOutSyn, "FusedPreOut", getName(), "presynaptic synapse output",
+                          &SynapseGroupInternal::canPreOutputBeFused, &SynapseGroupInternal::getPreOutputHashDigest,
+                          &SynapseGroupInternal::setFusedPreOutputSuffix);
+    }
+   
 }
 //----------------------------------------------------------------------------
 std::vector<SynapseGroupInternal*> NeuronGroup::getFusedInSynWithPostCode() const

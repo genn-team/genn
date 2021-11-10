@@ -90,6 +90,21 @@ void SynapseGroup::setPSTargetVar(const std::string &varName)
     }
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setPreTargetVar(const std::string &varName)
+{
+    // If varname is either 'ISyn' or name of a presynaptic neuron group additional input variable, store
+    const auto additionalInputVars = getSrcNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    if(varName == "Isyn" || 
+       std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
+                    [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
+    {
+        m_PreTargetVar = varName;
+    }
+    else {
+        throw std::runtime_error("Presynaptic neuron group has no input variable '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getPSModel()->getExtraGlobalParamIndex(paramName);
@@ -388,6 +403,30 @@ bool SynapseGroup::isDendriticDelayRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isPresynapticOutputRequired() const
+{
+    // If addToPre function is used in sim_code, return true
+    if(getWUModel()->getSimCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in learn_post_code, return true
+    if(getWUModel()->getLearnPostCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in event_code, return true
+    if(getWUModel()->getEventCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in synapse_dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+   
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isProceduralConnectivityRNGRequired() const
 {
     return ((m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) &&
@@ -676,6 +715,12 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
     return true;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canPreOutputBeFused() const
+{
+    // There are no variables or other non-constant objects, so these can presumably always be fused
+    return true;
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -741,6 +786,14 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(isPresynapticOutputRequired(), hash);
+    Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

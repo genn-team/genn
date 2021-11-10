@@ -342,6 +342,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + s.getPostISynIndex(1, "j") + "] += $(0)");
                             }
 
+                            synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, "i") + "] += $(0)");
+                            
                             // Call synapse dynamics handler
                             s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
@@ -367,12 +369,12 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                     // generate the code for processing spike-like events
                     if (s.getArchetype().isSpikeEventRequired()) {
-                        genPresynapticUpdate(os, modelMerged, s, funcSubs, false);
+                        genPresynapticUpdate(os, modelMerged, s, synSubs, false);
                     }
 
                     // generate the code for processing true spike events
                     if (s.getArchetype().isTrueSpikeRequired()) {
-                        genPresynapticUpdate(os, modelMerged, s, funcSubs, true);
+                        genPresynapticUpdate(os, modelMerged, s, synSubs, true);
                     }
                     os << std::endl;
                 }
@@ -435,7 +437,8 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 synSubs.addVarSubstitution("id_syn", "((group->numTrgNeurons * i) + spike)");
                             }
                             synSubs.addVarSubstitution("id_post", "spike");
-
+                            synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, "i") + "] += $(0)");        
+                            
                             s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
                     }
@@ -1452,6 +1455,8 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         else {
             synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "ipost") + "] += $(0)");
         }
+
+        synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, "ipre") + "] += $(0)");
 
         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
             os << "const unsigned int npost = group->rowLength[ipre];" << std::endl;
