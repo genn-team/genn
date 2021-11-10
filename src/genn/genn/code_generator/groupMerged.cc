@@ -755,6 +755,18 @@ bool SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) co
                        });
 }
 //----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getKernelSize(size_t dimensionIndex) const
+{
+    // If kernel size if heterogeneous in this dimension, return group structure entry
+    if(isKernelSizeHeterogeneous(dimensionIndex)) {
+        return "group->kernelSize" + std::to_string(dimensionIndex);
+    }
+    // Otherwise, return literal
+    else {
+        return std::to_string(getArchetype().getKernelSize().at(dimensionIndex));
+    }
+}
+//----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
     if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {

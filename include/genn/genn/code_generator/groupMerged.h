@@ -1037,7 +1037,10 @@ public:
 
     //! Is kernel size heterogeneous in this dimension?
     bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
-
+    
+    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
+    std::string getKernelSize(size_t dimensionIndex) const;
+    
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
 

@@ -155,16 +155,9 @@ void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs, 
     const auto &kernelSize = sg.getArchetype().getKernelSize();
     for(size_t i = 0; i < kernelSize.size(); i++) {
         os << "(" << subs["id_kernel_" + std::to_string(i)];
-        // Loop through remainining dimensions of kernel
+        // Loop through remainining dimensions of kernel and multiply
         for(size_t j = i + 1; j < kernelSize.size(); j++) {
-            // If kernel size if heterogeneous in this dimension, multiply by value from group structure
-            if(sg.isKernelSizeHeterogeneous(j)) {
-                os << " * group->kernelSize" << j;
-            }
-            // Otherwise, multiply by literal
-            else {
-                os << " * " << kernelSize.at(j);
-            }
+            os << " * " << sg.getKernelSize(j);
         }
         os << ")";
 

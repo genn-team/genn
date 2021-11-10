@@ -1248,23 +1248,14 @@ void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelIn
     std::function<void(size_t)> generateRecursive =\
         [&handler, &kernelSize, &os, &sg, &varSubs, &generateRecursive](size_t depth)
         {
-            const std::string indexVarName = "k" + std::to_string(depth);
-            os << "for(unsigned int " << indexVarName << " = 0; " << indexVarName << " < ";
-            
-            if(sg.isKernelSizeHeterogeneous(depth)) {
-                os << "group->kernelSize" << depth;
-            }
-            // Otherwise, multiply by literal
-            else {
-                os << kernelSize.at(depth);
-            }
-            os << "; " << indexVarName << "++)";
-            
+            // Loop through this kernel dimensions
+            const std::string idxVar = "k" + std::to_string(depth);
+            os << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << sg.getKernelSize(depth) << "; " << idxVar << "++)";
             {
                 CodeStream::Scope b(os);
 
                 // Add substitution for this kernel index
-                varSubs.addVarSubstitution("id_kernel_" + std::to_string(depth), indexVarName);
+                varSubs.addVarSubstitution("id_kernel_" + std::to_string(depth), idxVar);
                 
                 // If we've recursed through all dimensions
                 if(depth == (kernelSize.size() - 1)) {

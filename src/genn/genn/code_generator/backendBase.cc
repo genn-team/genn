@@ -134,18 +134,10 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
         // If synapse group has kernel weights
         const auto &kernelSize = sg.getArchetype().getKernelSize();
         if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
-            // Loop through kernel dimensions
+            // Loop through kernel dimensions and multiply together
             os << "const unsigned int kernBatchOffset = ";
             for(size_t i = 0; i < kernelSize.size(); i++) {
-                // If kernel size is heterogeneous, multiply by this group's size
-                if(sg.isKernelSizeHeterogeneous(i)) {
-                    os << "group->kernelSize" << i;
-                }
-                // Otherwise by literal
-                else {
-                    os << kernelSize.at(i);
-                }
-                os << " * ";
+                os << sg.getKernelSize(i) << " * ";
             }
             
             // And finally by batch
