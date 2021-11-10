@@ -82,14 +82,14 @@ void BackendSIMT::genVariableInit(CodeStream &os, const std::string &, const std
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const
+void BackendSIMT::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &, const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
     assert(kernelSubs.hasVarSubstitution("id"));
     
     Substitutions varSubs(&kernelSubs);
     varSubs.addVarSubstitution("id_syn", varSubs["id"]);
-    // **TODO** populate id_kernel_XXX
+
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
@@ -1269,15 +1269,10 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             os << "// only do this for existing kernel entries" << std::endl;
             os << "if(" << popSubs["id"] << " < (";
             const auto &kernelSize = sg.getArchetype().getKernelSize();
+            
+            // Loop through kernel dimensions and multiply together
             for(size_t i = 0; i < kernelSize.size(); i++) {
-                // If kernel size if heterogeneous in this dimension, multiply by value from group structure
-                if(sg.isKernelSizeHeterogeneous(i)) {
-                    os << "group->kernelSize" << i;
-                }
-                // Otherwise, multiply by literal
-                else {
-                    os << kernelSize.at(i);
-                }
+                os << sg.getKernelSize(i);
                 
                 if(i != (kernelSize.size() - 1)) {
                     os << " * ";
@@ -1291,6 +1286,36 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
                 // **NOTE** not LOCAL id
                 if(sg.getArchetype().isWUInitRNGRequired()) {
                     genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+                
+                // Loop through kernel dimensions to generate seperate indices
+                for(size_t i = 0; i < kernelSize.size(); i++) {
+                    os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
+                    
+                    // If this isn't the last dimension
+                    if(i < (kernelSize.size() - 1)) {
+                        // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
+                        os << " / (";
+                        for(size_t j = (kernelSize.size() - 1); j > i; j--) {
+                            os << sg.getKernelSize(j);
+                            
+                            if(j != (i + 1)) {
+                                os << " * ";
+                            }
+                        }
+                        os << ")";
+                    }
+                    os << ")";
+                    
+                    // If this isn't the first dimension, take modulus of kernel size
+                    if (i > 0) {
+                        os << " % " << sg.getKernelSize(i);
+                    }
+                    
+                    os << ";" << std::endl;
+                    
+                    // Add substitution
+                    popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
                 }
                 sg.generateInit(*this, os, modelMerged, popSubs);
             }
