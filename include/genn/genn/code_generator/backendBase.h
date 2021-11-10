@@ -76,6 +76,10 @@ struct PreferencesBase
     //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
     bool generateExtraGlobalParamPull = true;
 
+    //! On Windows, should the model name be included in the name of the DLL 
+    //! i.e. runner_test_model_Release.dll rather than runner_Release.dll
+    bool includeModelNameInDLL = false;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 

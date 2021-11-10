@@ -18,6 +18,6 @@ class BackendBase;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-GENN_EXPORT void generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
-                                 const std::vector<std::string> &moduleNames);
+GENN_EXPORT void generateMSBuild(std::ostream &os, const ModelSpecInternal &model, const BackendBase &backend, 
+                                 const std::string &projectGUID, const std::vector<std::string> &moduleNames);
 }

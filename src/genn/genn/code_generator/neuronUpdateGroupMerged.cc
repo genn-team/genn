@@ -113,6 +113,34 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
 
 }
 //----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
+{
+    return (isInSynWUMParamReferenced(childIndex, paramIndex) &&
+            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedInSynWithPostCode,
+                                          [](const SynapseGroupInternal *s) { return s->getWUParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
+{
+    return (isInSynWUMDerivedParamReferenced(childIndex, paramIndex) &&
+            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedInSynWithPostCode,
+                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
+{
+    return (isOutSynWUMParamReferenced(childIndex, paramIndex) &&
+            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedOutSynWithPreCode,
+                                          [](const SynapseGroupInternal *s) { return s->getWUParams(); }));
+}
+//----------------------------------------------------------------------------
+bool NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
+{
+    return (isOutSynWUMDerivedParamReferenced(childIndex, paramIndex) &&
+            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedOutSynWithPreCode,
+                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -617,34 +645,6 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(const BackendBase&, CodeStream
                         &WeightUpdateModels::Base::getPostVars, &WeightUpdateModels::Base::getPostSpikeCode,
                         &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
                         &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
-{
-    return (isInSynWUMParamReferenced(childIndex, paramIndex) &&
-            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedInSynWithPostCode,
-                                          [](const SynapseGroupInternal *s) { return s->getWUParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
-{
-    return (isInSynWUMDerivedParamReferenced(childIndex, paramIndex) &&
-            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedInSynWithPostCode,
-                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const
-{
-    return (isOutSynWUMParamReferenced(childIndex, paramIndex) &&
-            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedOutSynWithPreCode,
-                                          [](const SynapseGroupInternal *s) { return s->getWUParams(); }));
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const
-{
-    return (isOutSynWUMDerivedParamReferenced(childIndex, paramIndex) &&
-            isChildParamValueHeterogeneous(childIndex, paramIndex, m_SortedOutSynWithPreCode,
-                                           [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); }));
 }
 //--------------------------------------------------------------------------
 std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)

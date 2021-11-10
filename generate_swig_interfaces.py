@@ -601,7 +601,7 @@ def generateConfigs(gennPath, backends):
             #ifdef _WIN32
                 // Create MSBuild project to compile and link all generated modules
                 std::ofstream makefile((outputPath / "runner.vcxproj").str());
-                CodeGenerator::generateMSBuild(makefile, backend, "", output.first);
+                CodeGenerator::generateMSBuild(makefile, model, backend, "", output.first);
             #else
                 // Create makefile to compile and link all generated modules
                 std::ofstream makefile((outputPath / "Makefile").str());

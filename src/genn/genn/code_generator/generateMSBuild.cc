@@ -3,14 +3,17 @@
 // Standard C++ includes
 #include <string>
 
+// GeNN includes
+#include "modelSpecInternal.h"
+
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend, const std::string &projectGUID,
-    const std::vector<std::string> &moduleNames)
+void CodeGenerator::generateMSBuild(std::ostream &os, const ModelSpecInternal &model, const BackendBase &backend, 
+                                    const std::string &projectGUID, const std::vector<std::string> &moduleNames)
 {
     // Generate header and targets for release and debug builds
     os << "<?xml version=\"1.0\" encoding=\"utf-8\"?>" << std::endl;
@@ -59,7 +62,12 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const BackendBase &backend
     os << "\t<PropertyGroup>" << std::endl;
     os << "\t\t<LinkIncremental Condition=\"'$(Configuration)'=='Debug'\">true</LinkIncremental>" << std::endl;
     os << "\t\t<OutDir>../</OutDir>" << std::endl;
-    os << "\t\t<TargetName>$(ProjectName)_$(Configuration)</TargetName>" << std::endl;
+    if(backend.getPreferences().includeModelNameInDLL) {
+        os << "\t\t<TargetName>runner_" << model.getName() << "_$(Configuration)</TargetName>" << std::endl;
+    }
+    else {
+        os << "\t\t<TargetName>runner_$(Configuration)</TargetName>" << std::endl;
+    }
     os << "\t\t<TargetExt>.dll</TargetExt>" << std::endl;
     os << "\t</PropertyGroup>" << std::endl;
 
