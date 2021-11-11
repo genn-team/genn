@@ -34,7 +34,7 @@ TEST_F(SimTest, BatchVarInit)
         for(unsigned int j = 0; j < 3; j++) {
             for(unsigned int k = 0; k < 4; k++) {
                 const float check = std::sqrt((scalar)(i * i) + (scalar)(j * j) + (scalar)(k * k));
-                ASSERT_FLOAT_EQ(check, *gKernel++);
+                ASSERT_FLOAT_EQ(check, *kernel++);
             }
         }
     }
