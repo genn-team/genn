@@ -99,14 +99,14 @@ public:
 class Conv2D : public Base
 {
 public:
-    DECLARE_SNIPPET(Conv2D, 12);
+    DECLARE_SNIPPET(Conv2D, 10);
 
     SET_PARAM_NAMES({"conv_kh", "conv_kw",
                      "conv_sh", "conv_sw",
-                     "conv_padh", "conv_padw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-
+    SET_DERIVED_PARAMS({{"conv_bw", [](const std::vector<double> &pars, double){ return (((int)pars[5] + (int)pars[1] - 1) - (int)pars[8]) / 2; }},
+                        {"conv_bh", [](const std::vector<double> &pars, double){ return (((int)pars[4] + (int)pars[0] - 1) - (int)pars[7]) / 2; }}});
 
     SET_DIAGONAL_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
                              {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
@@ -121,14 +121,13 @@ public:
 
     SET_DIAGONAL_BUILD_CODE(
         "// If we haven't gone off edge of output\n"
-        "const int postRow = preRow + $(kernRow) - ConvB;\n"
-        "const int postCol = preCol + $(kernCol) - ConvB;\n"
-        "if(postRow >= 0 && postCol >= 0 && postRow < ConvO && postCol < ConvO) {\n"
-        "    const float kernelVal = d_kernel[kernelInd + (preChan * ConvOC)];\n"
+        "const int postRow = $(preRow) + $(kernRow) - (int)$(conv_bh);\n"
+        "const int postCol = $(preCol) + $(kernCol) - (int)$(conv_bw);\n"
+        "if(postRow >= 0 && postCol >= 0 && postRow < (int)$(conv_oh) && postCol < (int)$(conv_ow)) {\n"
         "    // Calculate postsynaptic index\n"
-        "    const int postInd = ((postRow * ConvO * ConvOC) +\n"
-        "                            (postCol * ConvOC) +\n"
-        "                            kernOutChan);\n"
+        "    const int postInd = ((postRow * (int)$(conv_ow) * (int)$(conv_oc)) +\n"
+        "                         (postCol * (int)$(conv_oc)) +\n"
+        "                         $(kernOutChan));\n"
         "    $(addSynapse, postInd,  $(flipKernRow), $(flipKernCol), $(preChan), $(kernOutChan));\n"
         "}\n");
 
