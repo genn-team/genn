@@ -43,7 +43,11 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
                                            return "[" + sg.getPostWUVarIndex(batchSize, getVarAccessDuplication(a), synapseSubs["id_post"]) + "]";
                                        });
 
-    if(!sg.getArchetype().getKernelSize().empty()) {
+    // If this synapse group has a kernel and weights are either procedural and kernel
+    if (!sg.getArchetype().getKernelSize().empty() && (
+        (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) 
+         || (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL)))
+    {
         // Generate kernel index
         os << "const unsigned int kernelInd = ";
         sg.genKernelIndex(os, synapseSubs);
