@@ -424,7 +424,8 @@ bool SynapseGroup::isPresynapticOutputRequired() const
     if(getWUModel()->getSynapseDynamicsCode().find("$(addToPre") != std::string::npos) {
         return true;
     }
-   
+
+    return false;
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isProceduralConnectivityRNGRequired() const
