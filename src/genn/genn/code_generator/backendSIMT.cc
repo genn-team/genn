@@ -247,7 +247,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Subst
     genParallelGroup<NeuronPrevSpikeTimeUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
-        [batchSize, this](CodeStream &os, const NeuronPrevSpikeTimeUpdateGroupMerged &ng, Substitutions &popSubs)
+        [batchSize,this](CodeStream &os, const NeuronPrevSpikeTimeUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             CodeStream::Scope b(os);
 
