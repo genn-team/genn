@@ -353,8 +353,9 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
     // Loop through outgoing synapse groups with presynaptic output
     for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
         CodeStream::Scope b(os);
-        
-        os << sg->getPreOutputTargetVar() << "+= ";
+        const auto *sg = getSortedArchetypeMergedPreOutputOutSyns().at(i);
+     
+        os << sg->getPreTargetVar() << "+= ";
         os << "group->revInSynOutSyn" << i << "[";
         os << getVarIndex(batchSize, VarAccessDuplication::DUPLICATE, popSubs["id"]) << "];" << std::endl;
         os << "group->revInSynOutSyn" << i << "[";

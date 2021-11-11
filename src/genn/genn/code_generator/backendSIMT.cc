@@ -737,6 +737,11 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                         synSubs.addVarSubstitution("id_post", "shSpk[j]");
                         synSubs.addVarSubstitution("id_syn", "synAddress");
 
+                        if(sg.getArchetype().isPresynapticOutputRequired()) {
+                            synSubs.addFuncSubstitution("addToPre", 1,
+                                                        getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                        }
+                        
                         sg.generateSynapseUpdate(*this, os, modelMerged, synSubs);
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -797,7 +802,12 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
                 else {
                     synSubs.addFuncSubstitution("addToInSyn", 1, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
                 }
-
+                
+                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                    synSubs.addFuncSubstitution("addToPre", 1,
+                                                getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                }
+ 
                 sg.generateSynapseUpdate(*this, os, modelMerged, synSubs);
             }
         });

@@ -68,6 +68,10 @@ public:
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     void setPSTargetVar(const std::string &varName);
     
+    //! Set name of neuron input variable $(addToPre, . ) commands will target
+    /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
+    void setPreTargetVar(const std::string &varName);
+
     //! Set location of sparse connectivity initialiser extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space
         and only applies to extra global parameters which are pointers. */
@@ -237,6 +241,9 @@ public:
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
 
+    //! Does this synapse group define presynaptic output?
+    bool isPresynapticOutputRequired() const;    
+    
     //! Does this synapse group require an RNG to generate procedural connectivity?
     bool isProceduralConnectivityRNGRequired() const;
 
@@ -316,6 +323,9 @@ protected:
     
     //! Can presynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
     bool canWUMPreUpdateBeFused() const;
+
+     //! Can presynaptic output component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canPreOutputBeFused() const;   
     
     //! Can postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
     bool canWUMPostUpdateBeFused() const;
@@ -350,6 +360,10 @@ protected:
     //! with matching hashes can not only be simulated using the same code, but fused so only one needs simulating at all
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSFuseHashDigest() const;
+
+    //! Generate hash of presynaptic output update component of this synapse group 
+     /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPreOutputHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
