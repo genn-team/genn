@@ -43,7 +43,7 @@ void modelDefinition(ModelSpec &model)
     model.setSeed(2346679);
     model.setDT(0.1);
     model.setName("batch_var_init");
-    model.setBatchSize(1);
+    model.setBatchSize(10);
     
     // LIF model parameters
     NeuronModels::LIF::ParamValues lifParams(
