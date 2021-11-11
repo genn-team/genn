@@ -625,7 +625,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
 {
     // Generate kernel index and add to substitutions
     os << "const unsigned int kernelInd = ";
-    genKernelIndex(os, popSubs, *this);
+    genKernelIndex(os, popSubs);
     os << ";" << std::endl;
     popSubs.addVarSubstitution("id_kernel", "kernelInd");
 

@@ -1041,6 +1041,9 @@ public:
     //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
     std::string getKernelSize(size_t dimensionIndex) const;
     
+    // Generate an index into a kernel based on the id_kernel_XXX variables in subs
+    void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const;
+
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
 

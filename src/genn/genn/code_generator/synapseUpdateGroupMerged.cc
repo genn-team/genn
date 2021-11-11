@@ -46,7 +46,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     if(!sg.getArchetype().getKernelSize().empty()) {
         // Generate kernel index
         os << "const unsigned int kernelInd = ";
-        genKernelIndex(os, synapseSubs, sg);
+        sg.genKernelIndex(os, synapseSubs);
         os << ";" << std::endl;
 
         // Add substitution

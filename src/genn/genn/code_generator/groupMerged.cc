@@ -767,6 +767,25 @@ std::string SynapseGroupMergedBase::getKernelSize(size_t dimensionIndex) const
     }
 }
 //----------------------------------------------------------------------------
+void SynapseGroupMergedBase::genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const
+{
+    // Loop through kernel dimensions to calculate array index
+    const auto &kernelSize = getArchetype().getKernelSize();
+    for(size_t i = 0; i < kernelSize.size(); i++) {
+        os << "(" << subs["id_kernel_" + std::to_string(i)];
+        // Loop through remainining dimensions of kernel and multiply
+        for(size_t j = i + 1; j < kernelSize.size(); j++) {
+            os << " * " << getKernelSize(j);
+        }
+        os << ")";
+
+        // If this isn't the last dimension, add +
+        if(i != (kernelSize.size() - 1)) {
+            os << " + ";
+        }
+    }
+}
+//----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
     if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {

@@ -1262,7 +1262,7 @@ void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelIn
                     // Generate kernel index and use as "synapse" index
                     // **TODO** rename
                     os << "const unsigned int kernelInd = ";
-                    genKernelIndex(os, varSubs, sg);
+                    sg.genKernelIndex(os, varSubs);
                     os << ";" << std::endl;
                     varSubs.addVarSubstitution("id_syn", "kernelInd");
                     
