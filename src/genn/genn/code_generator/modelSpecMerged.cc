@@ -288,6 +288,11 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
+    // Update hash with hash digest of synapse sparse init groups
+    for(const auto &g : m_MergedSynapseKernelInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
     // Concatenate hash digest of synapse connectivity init groups
     for(const auto &g : m_MergedSynapseConnectivityInitGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
