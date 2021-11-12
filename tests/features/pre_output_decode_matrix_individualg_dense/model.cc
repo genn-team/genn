@@ -21,7 +21,7 @@ public:
 
     SET_VARS({{"x", "scalar"}});
 
-    SET_THRESHOLD_CONDITION_CODE("std::fabs($(t)/0.2f - (int) ($(t)/0.2f)) < 1e-5"); 
+    SET_THRESHOLD_CONDITION_CODE("fabs($(t)/0.2f - (int) ($(t)/0.2f)) < 1e-5"); 
 
     SET_NEEDS_AUTO_REFRACTORY(false);
 };

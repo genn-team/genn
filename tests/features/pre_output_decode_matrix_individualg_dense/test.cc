@@ -45,7 +45,7 @@ public:
     }
 };
 
-TEST_F(SimTest, DecodeMatrixContIndividualgDense)
+TEST_F(SimTest, PreOutputDecodeMatrixIndividualgDense)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());
