@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------
-/*! \file decode_matrix_cont_individualg_dense/test.cc
+/*! \file pre_output_decode_matrix_post_learn_individualg_dense/test.cc
 
 \brief Main test code that is part of the feature testing
 suite of minimal models with known analytic outcomes that are used for continuous integration testing.
@@ -11,7 +11,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "pre_output_decode_matrix_individualg_dense_CODE/definitions.h"
+#include "pre_output_decode_matrix_post_learn_individualg_dense_CODE/definitions.h"
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
@@ -45,7 +45,7 @@ public:
     }
 };
 
-TEST_F(SimTest, PreOutputDecodeMatrixIndividualgDense)
+TEST_F(SimTest, PreOutputDecodeMatrixPostLearnIndividualgDense)
 {
     // Check total error is less than some tolerance
     EXPECT_TRUE(Simulate());

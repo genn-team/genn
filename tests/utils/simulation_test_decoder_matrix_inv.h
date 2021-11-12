@@ -7,9 +7,9 @@
 #include "simulation_test.h"
 
 //----------------------------------------------------------------------------
-// SimulationTestContDecoderMatrixInv
+// SimulationTestDecoderMatrixInv
 //----------------------------------------------------------------------------
-class SimulationTestContDecoderMatrixInv : public SimulationTest
+class SimulationTestDecoderMatrixInv : public SimulationTest
 {
 public:
     //----------------------------------------------------------------------------

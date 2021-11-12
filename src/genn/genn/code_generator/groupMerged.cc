@@ -894,9 +894,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         else {
             addPSPointerField(precision, "inSyn", backend.getDeviceVarPrefix() + "inSyn");
         }
-        if(getArchetype().isPresynapticOutputRequired()) {
-            addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
-        }
+    }
+    // for all types of roles
+    if(getArchetype().isPresynapticOutputRequired()) {
+      addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
     }
 
     if(role == Role::PresynapticUpdate) {
