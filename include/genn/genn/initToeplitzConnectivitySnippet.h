@@ -16,8 +16,7 @@
 // Macros
 //----------------------------------------------------------------------------
 #define SET_DIAGONAL_BUILD_CODE(CODE) virtual std::string getDiagonalBuildCode() const override{ return CODE; }
-#define SET_DIAGONAL_STATE_VARS(...) virtual ParamValVec getDiagonalStateVars() const override{ return __VA_ARGS__; }
-#define SET_ROW_STATE_VARS(...) virtual ParamValVec getRowStateVars() const override{ return __VA_ARGS__; }
+#define SET_DIAGONAL_BUILD_STATE_VARS(...) virtual ParamValVec getDiagonalBuildStateVars() const override{ return __VA_ARGS__; }
 
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_MAX_COL_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxColLengthFunc() const override{ return FUNC; }
@@ -45,8 +44,7 @@ public:
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getDiagonalBuildCode() const{ return ""; }
-    virtual ParamValVec getDiagonalStateVars() const { return {}; }
-    virtual ParamValVec getRowStateVars() const { return {}; }
+    virtual ParamValVec getDiagonalBuildStateVars() const { return {}; }
 
     //! Get function to calculate the maximum row length of this connector based on the parameters and the size of the pre and postsynaptic population
     virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const{ return CalcMaxLengthFunc(); }
@@ -108,18 +106,17 @@ public:
     SET_DERIVED_PARAMS({{"conv_bw", [](const std::vector<double> &pars, double){ return (((int)pars[5] + (int)pars[1] - 1) - (int)pars[8]) / 2; }},
                         {"conv_bh", [](const std::vector<double> &pars, double){ return (((int)pars[4] + (int)pars[0] - 1) - (int)pars[7]) / 2; }}});
 
-    SET_DIAGONAL_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
-                             {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
-                             {"kernOutChan", "int", "$(id_diag) % (int)$(conv_oc)"},
-                             {"flipKernRow", "int", "(int)$(conv_kh) - $(kernRow) - 1"},
-                             {"flipKernCol", "int", "(int)$(conv_kw) - $(kernCol) - 1"},
-                             {"kernelInd", "int", "($(flipKernRow) * (int)$(conv_kw) * (int)$(conv_ic) * (int)$(conv_oc)) + ($(flipKernCol) * (int)$(conv_ic) * (int)$(conv_oc)) + $(kernOutChan);"}});
-
-    SET_ROW_STATE_VARS({{"preRow", "int", "($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)" },
-                        {"preCol", "int", "($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)" },
-                        {"preChan", "int", "($(id_pre) % (int)$(conv_ic); }})"}});
+    SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
+                                   {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
+                                   {"kernOutChan", "int", "$(id_diag) % (int)$(conv_oc)"},
+                                   {"flipKernRow", "int", "(int)$(conv_kh) - $(kernRow) - 1"},
+                                   {"flipKernCol", "int", "(int)$(conv_kw) - $(kernCol) - 1"},
+                                   {"kernelInd", "int", "($(flipKernRow) * (int)$(conv_kw) * (int)$(conv_ic) * (int)$(conv_oc)) + ($(flipKernCol) * (int)$(conv_ic) * (int)$(conv_oc)) + $(kernOutChan);"}});
 
     SET_DIAGONAL_BUILD_CODE(
+        "const int preRow = ($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)\n"
+        "const int preCol = ($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)\n"
+        "const int preChan = ($(id_pre) % (int)$(conv_ic);\n"
         "// If we haven't gone off edge of output\n"
         "const int postRow = $(preRow) + $(kernRow) - (int)$(conv_bh);\n"
         "const int postCol = $(preCol) + $(kernCol) - (int)$(conv_bw);\n"

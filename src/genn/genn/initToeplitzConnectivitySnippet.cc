@@ -14,8 +14,7 @@ boost::uuids::detail::sha1::digest_type InitToeplitzConnectivitySnippet::Base::g
     Snippet::Base::updateHash(hash);
 
     Utils::updateHash(getDiagonalBuildCode(), hash);
-    Utils::updateHash(getDiagonalStateVars(), hash);
-    Utils::updateHash(getRowStateVars(), hash);
+    Utils::updateHash(getDiagonalBuildStateVars(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -23,6 +22,5 @@ void InitToeplitzConnectivitySnippet::Base::validate() const
 {
     // Superclass
     Snippet::Base::validate();
-    Utils::validateVecNames(getDiagonalStateVars(), "Row building state variable");
-    Utils::validateVecNames(getRowStateVars(), "Column building state variable");
+    Utils::validateVecNames(getDiagonalBuildStateVars(), "Row building state variable");
 }
