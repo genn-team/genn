@@ -8,6 +8,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "initSparseConnectivitySnippet.h"
+#include "initToeplitzConnectivitySnippet.h"
 #include "postsynapticModels.h"
 #include "weightUpdateModels.h"
 #include "synapseMatrixType.h"
@@ -175,7 +176,8 @@ public:
     const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
-    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
+    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
+    const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;
 
@@ -264,6 +266,7 @@ protected:
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                 const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                  VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled);
 
@@ -481,7 +484,10 @@ private:
     std::vector<VarLocation> m_PSExtraGlobalParamLocation;
 
     //! Initialiser used for creating sparse connectivity
-    InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
+    InitSparseConnectivitySnippet::Init m_SparseConnectivityInitialiser;
+
+    //! Initialiser used for creating toeplitz connectivity
+    InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;

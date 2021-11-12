@@ -14,11 +14,12 @@ public:
                          const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                         const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                          VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   SynapseGroup(name, matrixType, delaySteps, wu, wuParams, wuVarInitialisers, wuPreVarInitialisers, wuPostVarInitialisers,
                      ps, psParams, psVarInitialisers, srcNeuronGroup, trgNeuronGroup, weightSharingMaster,
-                     connectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
+                     connectivityInitialiser, toeplitzConnectivityInitialiser, defaultVarLocation, defaultExtraGlobalParamLocation,
                      defaultSparseConnectivityLocation, defaultNarrowSparseIndEnabled)
     {
         // Add references to target and source neuron groups
