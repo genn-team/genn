@@ -11,7 +11,7 @@ suite of minimal models with known analytic outcomes that are used for continuou
 #include "gtest/gtest.h"
 
 // Auto-generated simulation code includess
-#include "decode_matrix_cont_individualg_dense_CODE/definitions.h"
+#include "pre_output_decode_matrix_cont_individualg_dense_CODE/definitions.h"
 
 // **NOTE** base-class for simulation tests must be
 // included after auto-generated globals are includes
@@ -33,13 +33,13 @@ public:
         for(unsigned int i = 0; i < 4; i++)
         {
             // Loop through postsynaptic neurons
-            for(unsigned int i = 0; i < 10; i++)
+            for(unsigned int j = 0; j < 10; j++)
             {
                 // Get value this pre synaptic neuron represents
                 const unsigned int i_value = (1 << i);
 
                 // If this presynaptic neuron should be connected, add 1.0 otherwise 0.0
-                gSyn[c++] = (((i + 1) & j_value) != 0) ? 1.0f : 0.0f;
+                gSyn[c++] = (((j + 1) & i_value) != 0) ? 1.0f : 0.0f;
             }
         }
     }
