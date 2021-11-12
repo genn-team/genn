@@ -648,17 +648,17 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
 {
-    return (isConnectivityInitParamReferenced(paramIndex) &&
+    return (isSparseConnectivityInitParamReferenced(paramIndex) &&
             isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg){ return sg.getConnectivityInitialiser().getParams(); }));
 }
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
 {
-    return (isConnectivityInitDerivedParamReferenced(paramIndex) &&
+    return (isSparseConnectivityInitDerivedParamReferenced(paramIndex) &&
             isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamReferenced(size_t paramIndex) const
+bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamReferenced(size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
@@ -666,7 +666,7 @@ bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamReferenced(s
     return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamReferenced(size_t paramIndex) const
+bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitDerivedParamReferenced(size_t paramIndex) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
     const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
@@ -706,16 +706,28 @@ bool SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous(size_t varInde
             isParamValueHeterogeneous(paramIndex, [varIndex](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varIndex).getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
+bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(size_t paramIndex) const
 {
-    return (isConnectivityInitParamReferenced(paramIndex) &&
+    return (isSparseConnectivityInitParamReferenced(paramIndex) &&
             isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
+bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
 {
-    return (isConnectivityInitDerivedParamReferenced(paramIndex) &&
+    return (isSparseConnectivityInitDerivedParamReferenced(paramIndex) &&
             isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous(size_t paramIndex) const
+{
+    return (isToeplitzConnectivityInitParamReferenced(paramIndex) &&
+            isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
+{
+    return (isToeplitzConnectivityInitDerivedParamReferenced(paramIndex) &&
+            isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous(size_t paramIndex) const
@@ -889,9 +901,9 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
 
     if(role != Role::KernelInit) {
         addField("unsigned int", "rowStride",
-                [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+                 [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
         addField("unsigned int", "numSrcNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
         addField("unsigned int", "numTrgNeurons",
                 [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
     }
@@ -1082,20 +1094,39 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
 
     // If we're updating a group with procedural connectivity or initialising connectivity
     if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
-        // Add heterogeneous connectivity initialiser model parameters
+        // Add heterogeneous sparse connectivity initialiser model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
             getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
-            &SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous);
+            &SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous);
 
 
-        // Add heterogeneous connectivity initialiser derived parameters
+        // Add heterogeneous sparse connectivity initialiser derived parameters
         addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
             getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
-            &SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous);
+            &SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous);
 
         addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
+                backend.getDeviceVarPrefix());
+    }
+
+    // If we're updating a group with Toeplitz connectivity
+    if(updateRole && (getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
+        // Add heterogeneous toeplitz connectivity initialiser model parameters
+        addHeterogeneousParams<SynapseGroupMergedBase>(
+            getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getParamNames(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); },
+            &SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous);
+
+
+        // Add heterogeneous toeplitz initialiser derived parameters
+        addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
+            getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); },
+            &SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous);
+
+        addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
                 backend.getDeviceVarPrefix());
     }
 
@@ -1242,12 +1273,24 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
         // Update hash with connectivity parameters and derived parameters
         updateParamHash<SynapseGroupMergedBase>(
-            &SynapseGroupMergedBase::isConnectivityInitParamReferenced,
+            &SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced,
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
 
         updateParamHash<SynapseGroupMergedBase>(
-            &SynapseGroupMergedBase::isConnectivityInitDerivedParamReferenced,
+            &SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamReferenced,
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+    }
+
+    // If we're updating a hash for a group with Toeplitz connectivity
+    if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) && updateRole) {
+        // Update hash with connectivity parameters and derived parameters
+        updateParamHash<SynapseGroupMergedBase>(
+            &SynapseGroupMergedBase::isToeplitzConnectivityInitParamReferenced,
+            [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); }, hash);
+
+        updateParamHash<SynapseGroupMergedBase>(
+            &SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamReferenced,
+            [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); }, hash);
     }
 
     if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
@@ -1367,7 +1410,7 @@ bool SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced(size_t varIndex, 
     return isParamReferenced({varInitSnippet->getCode()}, derivedParamName);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isConnectivityInitParamReferenced(size_t paramIndex) const
+bool SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced(size_t paramIndex) const
 {
     const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
     const auto rowBuildStateVars = snippet->getRowBuildStateVars();
@@ -1384,7 +1427,7 @@ bool SynapseGroupMergedBase::isConnectivityInitParamReferenced(size_t paramIndex
     return isParamReferenced(codeStrings, paramName);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isConnectivityInitDerivedParamReferenced(size_t paramIndex) const
+bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamReferenced(size_t paramIndex) const
 {
     const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
     const auto rowBuildStateVars = snippet->getRowBuildStateVars();
@@ -1395,6 +1438,34 @@ bool SynapseGroupMergedBase::isConnectivityInitDerivedParamReferenced(size_t par
     std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
                    [](const Snippet::Base::ParamVal &p) { return p.value; });
     std::transform(colBuildStateVars.cbegin(), colBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+
+    const std::string derivedParamName = snippet->getDerivedParams().at(paramIndex).name;
+    return isParamReferenced(codeStrings, derivedParamName);
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamReferenced(size_t paramIndex) const
+{
+    const auto *snippet = getArchetype().getToeplitzConnectivityInitialiser().getSnippet();
+    const auto diagonalBuildStateVars = snippet->getDiagonalBuildStateVars();
+
+    // Build list of code strings containing diagonal build code and any diagonal build state variable values
+    std::vector<std::string> codeStrings{snippet->getDiagonalBuildCode()};
+    std::transform(diagonalBuildStateVars.cbegin(), diagonalBuildStateVars.cend(), std::back_inserter(codeStrings),
+                   [](const Snippet::Base::ParamVal &p) { return p.value; });
+   
+    const std::string paramName = snippet->getParamNames().at(paramIndex);
+    return isParamReferenced(codeStrings, paramName);
+}
+//----------------------------------------------------------------------------
+bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamReferenced(size_t paramIndex) const
+{
+    const auto *snippet = getArchetype().getToeplitzConnectivityInitialiser().getSnippet();
+    const auto diagonalBuildStateVars = snippet->getDiagonalBuildStateVars();
+
+    // Build list of code strings containing diagonal build code and any diagonal build state variable values
+    std::vector<std::string> codeStrings{snippet->getDiagonalBuildCode()};
+    std::transform(diagonalBuildStateVars.cbegin(), diagonalBuildStateVars.cend(), std::back_inserter(codeStrings),
                    [](const Snippet::Base::ParamVal &p) { return p.value; });
 
     const std::string derivedParamName = snippet->getDerivedParams().at(paramIndex).name;

@@ -237,12 +237,13 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
     // Add substitutions
     popSubs.addFuncSubstitution("endRow", 0, "break");
     popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                      [this](size_t i) { return isConnectivityInitParamHeterogeneous(i);  },
+                                      [this](size_t i) { return isSparseConnectivityInitParamHeterogeneous(i);  },
                                       "", "group->");
     popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                    [this](size_t i) { return isConnectivityInitDerivedParamHeterogeneous(i);  },
+                                    [this](size_t i) { return isSparseConnectivityInitDerivedParamHeterogeneous(i);  },
                                     "", "group->");
     popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
+    popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
 
     // Initialise row building state variables for procedural connectivity
     for(const auto &a : connectInit.getSnippet()->getRowBuildStateVars()) {
@@ -260,13 +261,26 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
 
         // Apply substitutions to row building code
         std::string pCode = connectInit.getSnippet()->getRowBuildCode();
-        popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());
+        
         popSubs.applyCheckUnreplaced(pCode, "proceduralSparseConnectivity : merged " + std::to_string(getIndex()));
         pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
 
         // Write out code
         os << pCode << std::endl;
     }
+}
+//----------------------------------------------------------------------------
+void PresynapticUpdateGroupMerged::generateToeplitzConnectivity(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    const auto &connectInit = getArchetype().getToeplitzConnectivityInitialiser();
+    
+    // Apply substitutions to diagonal building code
+    std::string pCode = connectInit.getSnippet()->getDiagonalBuildCode();
+    popSubs.applyCheckUnreplaced(pCode, "toeplitzSparseConnectivity : merged " + std::to_string(getIndex()));
+    pCode = ensureFtype(pCode, modelMerged.getModel().getPrecision());
+
+    // Write out code
+    os << pCode << std::endl;
 }
 
 //----------------------------------------------------------------------------

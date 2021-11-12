@@ -53,7 +53,7 @@ std::vector<PresynapticUpdateStrategySIMT::Base*> BackendSIMT::s_PresynapticUpda
     new PresynapticUpdateStrategySIMT::PostSpan,
     new PresynapticUpdateStrategySIMT::PreSpanProcedural,
     new PresynapticUpdateStrategySIMT::PostSpanBitmask,
-};
+    new PresynapticUpdateStrategySIMT::PostSpanToeplitz};
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {

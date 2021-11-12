@@ -384,7 +384,7 @@ public:
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         auto uninitialisedToeplitz = InitToeplitzConnectivitySnippet::Init(InitToeplitzConnectivitySnippet::Uninitialised::getInstance(), {});
-        return addSynapsePopulation(name, mtype, delayStepss, src, trg,
+        return addSynapsePopulation(name, mtype, delaySteps, src, trg,
                                     wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
                                     psm, postsynapticParamValues, postsynapticVarInitialisers,
                                     uninitialisedConnectivity(), connectivityInitialiser);

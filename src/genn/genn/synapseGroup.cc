@@ -544,6 +544,11 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
             throw std::runtime_error("TOEPLITZ connectivity requires toeplitz connectivity initialisation snippet.");
         }
 
+        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
+        if(!m_WUModel->getLearnPostCode().empty()) {
+            throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
+        }
+
         // If toeplitz initialisation snippet provides a function to calculate kernel size, call it
         auto calcKernelSizeFunc = m_ToeplitzConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
         if(calcKernelSizeFunc) {
@@ -562,6 +567,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         else {
             throw std::runtime_error("TOEPLITZ connectivity requires a toeplitz connectivity initialisation snippet which specifies a max row length.");
         }
+
+        // No postsynaptic update through toeplitz matrices for now
+        m_MaxSourceConnections = 0;
     }
     // Otherwise
     else {

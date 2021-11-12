@@ -105,22 +105,21 @@ public:
                                    {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
                                    {"kernOutChan", "int", "$(id_diag) % (int)$(conv_oc)"},
                                    {"flipKernRow", "int", "(int)$(conv_kh) - $(kernRow) - 1"},
-                                   {"flipKernCol", "int", "(int)$(conv_kw) - $(kernCol) - 1"},
-                                   {"kernelInd", "int", "($(flipKernRow) * (int)$(conv_kw) * (int)$(conv_ic) * (int)$(conv_oc)) + ($(flipKernCol) * (int)$(conv_ic) * (int)$(conv_oc)) + $(kernOutChan);"}});
+                                   {"flipKernCol", "int", "(int)$(conv_kw) - $(kernCol) - 1"}});
 
     SET_DIAGONAL_BUILD_CODE(
-        "const int preRow = ($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)\n"
-        "const int preCol = ($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)\n"
-        "const int preChan = ($(id_pre) % (int)$(conv_ic);\n"
+        "const int preRow = ($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw);\n"
+        "const int preCol = ($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw);\n"
+        "const int preChan = $(id_pre) % (int)$(conv_ic);\n"
         "// If we haven't gone off edge of output\n"
-        "const int postRow = $(preRow) + $(kernRow) - (int)$(conv_bh);\n"
-        "const int postCol = $(preCol) + $(kernCol) - (int)$(conv_bw);\n"
+        "const int postRow = preRow + $(kernRow) - (int)$(conv_bh);\n"
+        "const int postCol = preCol + $(kernCol) - (int)$(conv_bw);\n"
         "if(postRow >= 0 && postCol >= 0 && postRow < (int)$(conv_oh) && postCol < (int)$(conv_ow)) {\n"
         "    // Calculate postsynaptic index\n"
         "    const int postInd = ((postRow * (int)$(conv_ow) * (int)$(conv_oc)) +\n"
         "                         (postCol * (int)$(conv_oc)) +\n"
         "                         $(kernOutChan));\n"
-        "    $(addSynapse, postInd,  $(flipKernRow), $(flipKernCol), $(preChan), $(kernOutChan));\n"
+        "    $(addSynapse, postInd,  $(flipKernRow), $(flipKernCol), preChan, $(kernOutChan));\n"
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(

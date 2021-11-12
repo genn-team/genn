@@ -49,7 +49,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpan
+// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan
 //--------------------------------------------------------------------------
 //! Presynaptic parallelism
 class PreSpan : public Base
@@ -82,7 +82,7 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpan
+// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism
 class PostSpan : public Base
@@ -123,7 +123,7 @@ private:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PostSpanBitmask
+// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask
 //--------------------------------------------------------------------------
 //! Postsynaptic parallelism
 class PostSpanBitmask : public Base
@@ -156,10 +156,43 @@ public:
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::CUDA::PresynapticUpdateStrategy::PreSpanProcedural
+// CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural
 //--------------------------------------------------------------------------
 //! Presynaptic parallelism with procedural connectivity
 class PreSpanProcedural : public Base
+{
+public:
+    //------------------------------------------------------------------------
+    // PresynapticUpdateStrategy::Base virtuals
+    //------------------------------------------------------------------------
+    //! Get the number of threads that presynaptic updates should be parallelised across
+    virtual size_t getNumThreads(const SynapseGroupInternal &sg) const override;
+
+    //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
+    virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const override;
+
+    //! Is this presynaptic update strategy compatible with a given synapse group?
+    virtual bool isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &preferences) const override;
+
+    //! How many neurons does each thread accumulate the outputs of into shared memory
+    virtual size_t getSharedMemoryPerThread(const PresynapticUpdateGroupMerged &sg, const BackendSIMT &backend) const override;
+
+    virtual void genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+                             const Substitutions &popSubs, const BackendSIMT &backend) const override;
+
+    //! Generate presynaptic update code
+    virtual void genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+                           const Substitutions &popSubs, const BackendSIMT &backend, bool trueSpike) const override;
+
+    virtual void genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+                              const Substitutions &popSubs, const BackendSIMT &backend) const override;
+};
+
+//--------------------------------------------------------------------------
+// CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz
+//--------------------------------------------------------------------------
+//! Postsynaptic parallelism for Toeplitz connectivity
+class PostSpanToeplitz : public Base
 {
 public:
     //------------------------------------------------------------------------
