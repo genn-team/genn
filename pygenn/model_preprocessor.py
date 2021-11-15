@@ -57,9 +57,11 @@ def prepare_snippet(snippet, param_space, snippet_family):
     information about parameters
 
     Args:
-    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom or pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom
+    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom,
+                        pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet.Custom
     param_space     --  dict with model parameters
-    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet or pygenn.genn_wrapper.InitSparseConnectivitySnippet
+    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet, pygenn.genn_wrapper.InitSparseConnectivitySnippet
+                        or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet
 
     Returns:
     tuple consisting of (snippet instance, snippet type,

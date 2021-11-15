@@ -723,6 +723,7 @@ class SynapseGroup(Group):
         self.psm_extra_global_params = {}
         self.connectivity_extra_global_params = {}
         self.connectivity_initialiser = None
+        self.toeplitz_connectivity_initialiser = None
         self.weight_sharing_master = weight_sharing_master
         self.in_syn = None
 
@@ -898,7 +899,11 @@ class SynapseGroup(Group):
     def is_dense(self):
         """Tests whether synaptic connectivity uses dense format"""
         return (self.matrix_type & SynapseMatrixConnectivity_DENSE) != 0
-
+    
+    @property
+    def is_toeplitz(self):
+        """Tests whether synaptic connectivity uses toeplitz format"""
+        return (self.matrix_type & SynapseMatrixConnectivity_TOEPLITZ) != 0
     @property
     def has_individual_synapse_vars(self):
         """Tests whether synaptic connectivity has individual weights"""
@@ -1058,14 +1063,20 @@ class SynapseGroup(Group):
             wu_post_var_ini = model_preprocessor.post_var_space_to_vals(
                 self.w_update, {vn: self.post_vars[vn]
                                 for vn in self.wu_post_var_names})
-
+            
             # Use unitialised connectivity initialiser if none has been set
-            connect_init = (genn_wrapper.uninitialised_connectivity()
-                            if self.connectivity_initialiser is None
-                            else self.connectivity_initialiser)
-
-            if self.connectivity_initialiser is not None:
-                snippet = self.connectivity_initialiser.get_snippet()
+            if self.connectivity_initialiser is None and self.toeplitz_connectivity_initialiser is None:
+                connect_init = genn_wrapper.uninitialised_connectivity()
+            # Otherwise
+            else:
+                # Use either sparse or toeplitz initialiser
+                if self.connectivity_initialiser is not None:
+                    connect_init = self.connectivity_initialiser
+                elif self.toeplitz_connectivity_initialiser is not None:
+                    connect_init = self.toeplitz_connectivity_initialiser
+                
+                # Get snippet used for initialisation and extract any EGPs
+                snippet = connect_init.get_snippet()
                 self.connectivity_extra_global_params =\
                     {egp.name: ExtraGlobalParameter(egp.name, egp.type, self)
                      for egp in snippet.get_extra_global_params()}
@@ -1270,7 +1281,7 @@ class SynapseGroup(Group):
     def reinitialise(self):
         """Reinitialise synapse group"""
         # If population has individual synapse variables
-        if self.has_individual_synapse_vars:
+        if self.has_individual_synapse_vars or self.has_kernel_synapse_vars:
             # Loop through weight update model state variables
             for v in self.w_update.get_vars():
                 # Get corresponding data from dictionary
