@@ -218,11 +218,11 @@ Additional Inherited Members</h2></td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a> neurons. </p>
-<p><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a> neurons have constant membrane potential (<code>Vrest</code>) unless they are activated randomly to the <code>Vspike</code> value if (t- <code>SpikeTime</code> ) &gt; <code>trefract</code>.</p>
+<p><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a> neurons have constant membrane potential (<code>Vrest</code>) unless they are activated randomly to the <code>Vspike</code> value if (t- <code>spikeTime</code> ) &gt; <code>trefract</code>.</p>
 <p>It has 2 variables:</p>
 <ul>
 <li><code>V</code> - Membrane potential (mV)</li>
-<li><code>SpikeTime</code> - Time at which the neuron spiked for the last time (ms)</li>
+<li><code>spikeTime</code> - Time at which the neuron spiked for the last time (ms)</li>
 </ul>
 <p>and 4 parameters:</p>
 <ul>
@@ -231,9 +231,13 @@ Additional Inherited Members</h2></td></tr>
 <li><code>Vspike</code> - Membrane potential at spike (mV)</li>
 <li><code>Vrest</code> - Membrane potential at rest (mV)</li>
 </ul>
-<dl class="section note"><dt>Note</dt><dd>The initial values array for the <code><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a></code> type needs two entries for <code>V</code>, and <code>SpikeTime</code> and the parameter array needs four entries for <code>therate</code>, <code>trefract</code>, <code>Vspike</code> and <code>Vrest</code>, <em>in that order</em>.</dd>
-<dd>
-This model uses a linear approximation for the probability of firing a spike in a given time step of size <code>DT</code>, i.e. the probability of firing is <img class="formulaInl" alt="$\lambda$" src="../../form_21.png"/> times <code>DT</code>: <img class="formulaInl" alt="$ p = \lambda \Delta t $" src="../../form_22.png"/>. This approximation is usually very good, especially for typical, quite small time steps and moderate firing rates. However, it is worth noting that the approximation becomes poor for very high firing rates and large time steps. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The initial values array for the <code><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a></code> type needs two entries for <code>V</code>, and <code>spikeTime</code> and the parameter array needs four entries for <code>trefract</code>, <code>tspike</code>, <code>Vspike</code> and <code>Vrest</code>, <em>in that order</em>.</dd></dl>
+<p>It has two extra global parameters:</p>
+<ul>
+<li><code>firingProb</code> - an array of firing probabilities/ average rates; this can extend to $n  N$, where $N$ is the number of neurons, for $n &gt; 0$ firing patterns</li>
+<li><code>offset</code> - an unsigned integer that points to the start of the currently used input pattern; typically taking values of $i  N$, $0  i &lt; n$.</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>This model uses a linear approximation for the probability of firing a spike in a given time step of size <code>DT</code>, i.e. the probability of firing is <img class="formulaInl" alt="$\lambda$" src="../../form_21.png"/> times <code>DT</code>: <img class="formulaInl" alt="$ p = \lambda \Delta t $" src="../../form_22.png"/>, where $$ corresponds to the value of the relevant entry of <code>firingProb</code>. This approximation is usually very good, especially for typical, quite small time steps and moderate firing rates. However, it is worth noting that the approximation becomes poor for very high firing rates and large time steps. </dd></dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="af5af1f4ac77c218dd5f9503636629ca7"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af5af1f4ac77c218dd5f9503636629ca7">&#9670;&nbsp;</a></span>ParamValues</h2>
@@ -473,7 +477,7 @@ This model uses a linear approximation for the probability of firing a spike in 
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dac/namespaceNeuronModels.html">NeuronModels</a></li><li class="navelem"><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html">Poisson</a></li>
-    <li class="footer">Generated on Tue Nov 2 2021 13:29:58 for GeNN by
+    <li class="footer">Generated on Mon Nov 15 2021 18:44:40 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
