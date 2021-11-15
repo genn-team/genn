@@ -247,10 +247,15 @@ There is a number of predefined models which can be used with the \add_cpp_pytho
 - NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesNStep
 
+\add_toggle_code_cpp
+\end_toggle_code
+
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "Izhikevich".
-
-Example: model.add_neuron_population("Neurons", 10, "Izhikevich", pars, ini) 
+\end_toggle
+\add_toggle_code_python
+model.add_neuron_population("Neurons", 10, "Izhikevich", pars, ini) 
+\end_toggle_code
 \end_toggle
 
 \section sect_own Defining your own neuron type 
