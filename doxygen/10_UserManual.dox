@@ -234,20 +234,23 @@ Read-write state variables are duplicated for each batch and, by default, read-o
 /*! 
 \page sectNeuronModels Neuron models
 There is a number of predefined models which can be used with the \add_cpp_python_text{ModelSpec::addNeuronPopulation,pygenn.GeNNModel.add_neuron_population} method:
-- NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
 - NeuronModels::LIF
+- NeuronModels::Poisson
+- NeuronModels::PoissonNew
+- NeuronModels::RulkovMap
 - NeuronModels::SpikeSource
 - NeuronModels::SpikeSourceArray
-- NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
-- NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesAlt
+- NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesNStep
 
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "Izhikevich".
+
+Example: model.add_neuron_population("Neurons", 10, "Izhikevich", pars, ini) 
 \end_toggle
 
 \section sect_own Defining your own neuron type 
