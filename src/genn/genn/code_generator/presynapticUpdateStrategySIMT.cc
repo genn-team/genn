@@ -952,7 +952,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
 }
 //----------------------------------------------------------------------------
 void PostSpanToeplitz::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
-                                    const Substitutions &popSubs, const BackendSIMT &backend) const
+                                    const Substitutions&, const BackendSIMT &backend) const
 {
     // If we should accumulate into shared memory
     if(isSmallSharedMemoryPop(sg, backend)) {
