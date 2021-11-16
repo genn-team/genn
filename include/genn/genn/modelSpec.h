@@ -123,7 +123,7 @@ inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity(const type
 /*! \tparam S       type of toeplitz connectivitiy initialisation snippet (derived from InitToeplitzConnectivitySnippet::Base).
     \return         InitToeplitzConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
-inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::ValueBase<0>>::value, InitToeplitzConnectivitySnippet::Init>::type initConnectivity()
+inline typename std::enable_if<std::is_same<typename S::ParamValues, Snippet::ValueBase<0>>::value, InitToeplitzConnectivitySnippet::Init>::type initToeplitzConnectivity()
 {
     return InitToeplitzConnectivitySnippet::Init(S::getInstance(), {});
 }
