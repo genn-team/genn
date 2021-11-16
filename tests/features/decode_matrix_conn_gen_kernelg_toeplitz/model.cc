@@ -39,7 +39,6 @@ void modelDefinition(ModelSpec &model)
    
     InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParams(
         3, 3,       // conv_kh, conv_kw
-        1, 1,       // conv_sh, conv_sw
         64, 64, 1,  // conv_ih, conv_iw, conv_ic
         62, 62, 1); // conv_oh, conv_ow, conv_oc
         

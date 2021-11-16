@@ -92,14 +92,13 @@ public:
 class Conv2D : public Base
 {
 public:
-    DECLARE_SNIPPET(Conv2D, 10);
+    DECLARE_SNIPPET(Conv2D, 8);
 
     SET_PARAM_NAMES({"conv_kh", "conv_kw",
-                     "conv_sh", "conv_sw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const std::vector<double> &pars, double){ return (((int)pars[5] + (int)pars[1] - 1) - (int)pars[8]) / 2; }},
-                        {"conv_bh", [](const std::vector<double> &pars, double){ return (((int)pars[4] + (int)pars[0] - 1) - (int)pars[7]) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const std::vector<double> &pars, double){ return (((int)pars[3] + (int)pars[1] - 1) - (int)pars[6]) / 2; }},
+                        {"conv_bh", [](const std::vector<double> &pars, double){ return (((int)pars[2] + (int)pars[0] - 1) - (int)pars[5]) / 2; }}});
 
     SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
                                    {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
@@ -127,17 +126,15 @@ public:
         {
             const unsigned int conv_kh = (unsigned int)pars[0];
             const unsigned int conv_kw = (unsigned int)pars[1];
-            const unsigned int conv_sh = (unsigned int)pars[2];
-            const unsigned int conv_sw = (unsigned int)pars[3];
-            const unsigned int conv_oc = (unsigned int)pars[9];
-            return (conv_kh / conv_sh) * (conv_kw / conv_sw) * conv_oc;
+            const unsigned int conv_oc = (unsigned int)pars[7];
+            return (conv_kh * conv_kw * conv_oc);
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
         [](const std::vector<double> &pars)->std::vector<unsigned int>
         {
             return {(unsigned int)pars[0], (unsigned int)pars[1],
-                    (unsigned int)pars[6], (unsigned int)pars[9]};
+                    (unsigned int)pars[4], (unsigned int)pars[7]};
         });
 };
 }   // namespace InitSparseConnectivitySnippet
