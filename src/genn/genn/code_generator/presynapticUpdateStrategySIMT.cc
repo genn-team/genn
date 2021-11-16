@@ -783,7 +783,7 @@ bool PostSpanToeplitz::isCompatible(const SynapseGroupInternal &sg, const Prefer
     return (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ);
 }
 //----------------------------------------------------------------------------
-void PostSpanToeplitz::genPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const PresynapticUpdateGroupMerged &sg,
+void PostSpanToeplitz::genPreamble(CodeStream &os, const ModelSpecMerged &, const PresynapticUpdateGroupMerged &sg,
                            const Substitutions &, const BackendSIMT &backend) const
 {
     if(isSmallSharedMemoryPop(sg, backend)) {
