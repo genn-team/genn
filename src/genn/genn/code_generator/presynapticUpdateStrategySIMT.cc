@@ -770,7 +770,7 @@ void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelM
 //--------------------------------------------------------------------------
 size_t PostSpanToeplitz::getNumThreads(const SynapseGroupInternal &sg) const
 {
-    return sg.getKernelSizeFlattened();
+    return sg.getMaxConnections();
 }
 //----------------------------------------------------------------------------
 size_t PostSpanToeplitz::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
