@@ -769,6 +769,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     if(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
         Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
     }
+
+    // If connectivity is Toepltiz, include Toeplitz connectivitiy initialiser hash
+    if(getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
+        Utils::updateHash(getToeplitzConnectivityInitialiser().getHashDigest(), hash);
+    }
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

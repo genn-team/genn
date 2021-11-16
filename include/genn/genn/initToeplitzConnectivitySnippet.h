@@ -207,4 +207,4 @@ public:
             return {convKH, convKW, poolIC, convOC};
         });
 };
-}   // namespace InitSparseConnectivitySnippet
+}   // namespace InitToeplitzConnectivitySnippet
