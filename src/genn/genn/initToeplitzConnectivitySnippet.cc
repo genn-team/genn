@@ -3,6 +3,7 @@
 // Implement sparse connectivity initialization snippets
 IMPLEMENT_SNIPPET(InitToeplitzConnectivitySnippet::Uninitialised);
 IMPLEMENT_SNIPPET(InitToeplitzConnectivitySnippet::Conv2D);
+IMPLEMENT_SNIPPET(InitToeplitzConnectivitySnippet::AvgPoolConv2D);
 
 //----------------------------------------------------------------------------
 // InitToeplitzConnectivitySnippet::Base

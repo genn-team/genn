@@ -88,7 +88,6 @@ public:
 //! Initialises convolutional connectivity
 //! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
 //! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
-/*! This sparse connectivity snippet does not support multiple threads per neuron */
 class Conv2D : public Base
 {
 public:
@@ -124,17 +123,88 @@ public:
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const std::vector<double> &pars)
         {
-            const unsigned int conv_kh = (unsigned int)pars[0];
-            const unsigned int conv_kw = (unsigned int)pars[1];
-            const unsigned int conv_oc = (unsigned int)pars[7];
-            return (conv_kh * conv_kw * conv_oc);
+            const unsigned int convKH = (unsigned int)pars[0];
+            const unsigned int convKW = (unsigned int)pars[1];
+            const unsigned int convOC = (unsigned int)pars[7];
+            return (convKH * convKW * convOC);
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
         [](const std::vector<double> &pars)->std::vector<unsigned int>
         {
-            return {(unsigned int)pars[0], (unsigned int)pars[1],
-                    (unsigned int)pars[4], (unsigned int)pars[7]};
+            const unsigned int convKH = (unsigned int)pars[0];
+            const unsigned int convKW = (unsigned int)pars[1];
+            const unsigned int convIC = (unsigned int)pars[4];
+            const unsigned int convOC = (unsigned int)pars[7];
+            return {convKH, convKW, convIC, convOC};
+        });
+};
+
+//----------------------------------------------------------------------------
+// InitToeplitzConnectivitySnippet::AvgPoolConv2D
+//----------------------------------------------------------------------------
+//! Initialises convolutional connectivity preceded by averaging pooling
+//! Row build state variables are used to convert presynaptic neuron index to rows, columns and channels and, 
+//! from these, to calculate the range of postsynaptic rows, columns and channels connections will be made within.
+class AvgPoolConv2D : public Base
+{
+public:
+    DECLARE_SNIPPET(AvgPoolConv2D, 12);
+
+    SET_PARAM_NAMES({"conv_kh", "conv_kw",
+                     "pool_kh", "pool_kw",
+                     "pool_sh", "pool_sw",
+                     "pool_ih", "pool_iw", "pool_ic",
+                     "conv_oh", "conv_ow", "conv_oc"});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const std::vector<double> &pars, double){ return (int(ceil((pars[7] - pars[3] + 1.0) / pars[5])) + (int)pars[1] - 1 - (int)pars[10]) / 2; }},
+                        {"conv_bh", [](const std::vector<double> &pars, double){ return (int(ceil((pars[6] - pars[2] + 1.0) / pars[4])) + (int)pars[0] - 1 - (int)pars[9]) / 2; }}});
+
+    SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
+                                   {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
+                                   {"kernOutChan", "int", "$(id_diag) % (int)$(conv_oc)"},
+                                   {"flipKernRow", "int", "(int)$(conv_kh) - $(kernRow) - 1"},
+                                   {"flipKernCol", "int", "(int)$(conv_kw) - $(kernCol) - 1"}});
+
+    SET_DIAGONAL_BUILD_CODE(
+        "// Convert spike ID into row, column and channel going INTO pool\n"
+        "const int prePoolInRow = ($(id_pre) / (int)$(pool_ic)) / (int)$(pool_iw);\n"
+        "const int prePoolInCol = ($(id_pre) / (int)$(pool_ic)) % (int)$(pool_iw);\n"
+        "const int preChan = $(id_pre) % (int)$(pool_ic);\n"
+        "// Calculate row and column going OUT of pool\n"
+        "const int poolPreOutRow = prePoolInRow / (int)$(pool_sh);\n"
+        "const int poolStrideRow = poolPreOutRow * (int)$(pool_sh);\n"
+        "const int poolPreOutCol = prePoolInCol / (int)$(pool_sw);\n"
+        "const int poolStrideCol = poolPreOutCol * (int)$(pool_sw);\n"
+        "if(prePoolInRow < (poolStrideRow + (int)$(pool_kh)) && prePoolInCol < (poolStrideCol + (int)$(pool_kw))) {\n"
+        "   // If we haven't gone off edge of output\n"
+        "   const int postRow = poolPreOutRow + $(kernRow) - (int)$(conv_bh);\n"
+        "   const int postCol = poolPreOutCol + $(kernCol) - (int)$(conv_bw);\n"
+        "   if(postRow >= 0 && postCol >= 0 && postRow < (int)$(conv_oh) && postCol < (int)$(conv_ow)) {\n"
+        "        // Calculate postsynaptic index\n"
+        "       const int postInd = ((postRow * (int)$(conv_ow) * (int)$(conv_oc)) +\n"
+        "                             (postCol * (int)$(conv_oc)) +\n"
+        "                             $(kernOutChan));\n"
+        "       $(addSynapse, postInd,  $(flipKernRow), $(flipKernCol), preChan, $(kernOutChan));\n"
+        "   }\n"
+        "}\n");
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            const unsigned int convKH = (unsigned int)pars[0];
+            const unsigned int convKW = (unsigned int)pars[1];
+            const unsigned int convOC = (unsigned int)pars[11];
+            return (convKH * convKW * convOC);
+        });
+
+    SET_CALC_KERNEL_SIZE_FUNC(
+        [](const std::vector<double> &pars)->std::vector<unsigned int>
+        {
+            const unsigned int convKH = (unsigned int)pars[0];
+            const unsigned int convKW = (unsigned int)pars[1];
+            const unsigned int poolIC = (unsigned int)pars[8];
+            const unsigned int convOC = (unsigned int)pars[11];
+            return {convKH, convKW, poolIC, convOC};
         });
 };
 }   // namespace InitSparseConnectivitySnippet
