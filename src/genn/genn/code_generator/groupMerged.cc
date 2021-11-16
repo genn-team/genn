@@ -362,8 +362,6 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
 
     // Loop through merged output synapses with presynaptic output of archetypical neuron group (0) in sorted order
     for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
-        const SynapseGroupInternal *sg = getSortedArchetypeMergedPreOutputOutSyns().at(i);
-
         // Add pointer to revInSyn
         addMergedPreOutputOutSynPointerField(precision, "revInSynOutSyn", i, backend.getDeviceVarPrefix() + "revInSyn");
     }

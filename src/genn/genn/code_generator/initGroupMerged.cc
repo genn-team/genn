@@ -383,6 +383,17 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                                 [i, this](size_t v, size_t p) { return isOutSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
     }
 
+    // Loop through outgoing synaptic populations with presynaptic output
+    for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
+        // If this synapse group's pre-synaptic input variable should be initialised on device
+	// Generate target-specific code to initialise variable
+	backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+            [&model, i] (CodeStream &os, Substitutions &varSubs)
+            {
+                os << "group->revInSynOutSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+            });
+    }
+    
     // Loop through current sources
     os << "// current source variables" << std::endl;
     for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
