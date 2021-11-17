@@ -793,7 +793,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
 boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(isPresynapticOutputRequired(), hash);
     Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();
 }
@@ -939,6 +938,12 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
     for(const auto &p : getPSVarInitialisers()) {
         Utils::updateHash(p.getHashDigest(), hash);
     }
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

@@ -62,6 +62,7 @@ public:
     using SynapseGroup::getWUPreInitHashDigest;
     using SynapseGroup::getWUPostInitHashDigest;
     using SynapseGroup::getPSInitHashDigest;
+    using SynapseGroup::getPreOutputInitHashDigest;
     using SynapseGroup::getConnectivityInitHashDigest;
     using SynapseGroup::getConnectivityHostInitHashDigest;
     using SynapseGroup::getVarLocationHashDigest;

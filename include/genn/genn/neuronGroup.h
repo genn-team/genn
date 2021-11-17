@@ -237,7 +237,7 @@ protected:
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
 
-     const std::vector<SynapseGroupInternal *> &getFusedPreOuptputOutSyn() const { return m_FusedPreOutputOutSyn; }   
+     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }   
 
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
