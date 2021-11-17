@@ -383,6 +383,10 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
 
+    //! Generate hash of presynaptic output initialization component of this synapse group 
+     /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPreOutputInitHashDigest() const;
+    
     //! Generate hash of connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
@@ -390,7 +394,7 @@ protected:
     //! Generate hash of host connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
-
+    
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 private:
     //------------------------------------------------------------------------

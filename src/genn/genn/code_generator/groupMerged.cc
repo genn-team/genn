@@ -195,9 +195,8 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
                              init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
 
     // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
-    // **NOTE** this hash is only relevant for update, for init we don't care about target variables
     orderNeuronGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
-                             &SynapseGroupInternal::getPreOutputHashDigest);
+                             init ? &SynapseGroupInternal::getPreOutputInitHashDigest : &SynapseGroupInternal::getPreOutputHashDigest);
 
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,

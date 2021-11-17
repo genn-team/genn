@@ -941,6 +941,12 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityInitHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

@@ -499,15 +499,18 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     // Update hash with hash list built from current sources
     updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
 
-    // Update hash with hash list built from incoming synapse groups with post code
+    // Update hash with hash list built from fused incoming synapse groups with post code
     updateHashList(getFusedInSynWithPostCode(), hash, &SynapseGroupInternal::getWUPostHashDigest);
 
-    // Update hash with hash list built from outgoing synapse groups with pre code
+    // Update hash with hash list built from fused outgoing synapse groups with pre code
     updateHashList(getFusedOutSynWithPreCode(), hash, &SynapseGroupInternal::getWUPreHashDigest);
 
-    // Update hash with hash list built from merged incoming synapses
+    // Update hash with hash list built from fused incoming synapses
     updateHashList(getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSHashDigest);
 
+    // Update hash with hash list built from fused outgoing synapses with presynaptic output
+    updateHashList(getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputHashDigest);
+    
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -530,15 +533,17 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     // Update hash with hash list built from current sources
     updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getInitHashDigest);
 
-    // Update hash with hash list built from incoming synapse groups with post vars
+    // Update hash with hash list built from fused incoming synapse groups with post vars
     updateHashList(getFusedInSynWithPostVars(), hash, &SynapseGroupInternal::getWUPostInitHashDigest);
 
-    // Update hash with hash list built from outgoing synapse groups with pre vars
+    // Update hash with hash list built from fusedoutgoing synapse groups with pre vars
     updateHashList(getFusedOutSynWithPreVars(), hash, &SynapseGroupInternal::getWUPreInitHashDigest);
 
-    // Update hash with hash list built from merged incoming synapses
+    // Update hash with hash list built from fused incoming synapses
     updateHashList(getFusedPSMInSyn(), hash, &SynapseGroupInternal::getPSInitHashDigest);
 
+    // Update hash with hash list built from fused outgoing synapses with presynaptic output
+    updateHashList(getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputInitHashDigest);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
