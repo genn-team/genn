@@ -793,7 +793,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
 boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    Utils::updateHash(isPresynapticOutputRequired(), hash);
     Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();
 }
