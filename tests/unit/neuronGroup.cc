@@ -12,6 +12,19 @@
 
 namespace
 {
+class StaticPulseBack : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseBack, 0, 1, 0, 0);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "$(addToPre, $(g));\n");
+};
+IMPLEMENT_MODEL(StaticPulseBack);
+
 class WeightUpdateModelPost : public WeightUpdateModels::Base
 {
 public:
@@ -249,7 +262,7 @@ TEST(NeuronGroup, Poisson)
     ASSERT_FALSE(ng->isInitRNGRequired());
 }
 
-TEST(NeuronGroup, MergeWUMPrePost)
+TEST(NeuronGroup, FuseWUMPrePost)
 {
     ModelSpecInternal model;
     model.setFusePrePostWeightUpdateModels(true);
@@ -370,7 +383,7 @@ TEST(NeuronGroup, MergeWUMPrePost)
 }
 
 
-TEST(NeuronGroup, MergePSM)
+TEST(NeuronGroup, FusePSM)
 {
     ModelSpecInternal model;
     model.setMergePostsynapticModels(true);
@@ -442,6 +455,57 @@ TEST(NeuronGroup, MergePSM)
     
     // Check that PSMs from synapse groups with different dendritic delay cannot be merged
     ASSERT_NE(synInternal->getFusedPSVarSuffix(), synDelayInternal->getFusedPSVarSuffix());
+}
+
+TEST(NeuronGroup, FusePreOutput)
+{
+    ModelSpecInternal model;
+    model.setMergePostsynapticModels(true);
+    
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+    PostsynapticModels::ExpCurr::ParamValues psmParamVals(5.0);
+    PostsynapticModels::ExpCurr::ParamValues psmParamVals2(10.0);
+    StaticPulseBack::VarValues wumVarVals(0.1);
+    
+    // Add two neuron groups to model
+    model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+
+    // Create baseline synapse group
+    auto *syn = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
+        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        {}, {});
+    
+    // Create second synapse group
+    auto *syn2 = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
+        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        {}, {});
+
+    // Create synapse group with different target variable
+    auto *synTarget = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
+        "SynTarget", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        {}, {});
+    synTarget->setPreTargetVar("Isyn2");
+  
+    model.finalize();
+    
+    // Cast synapse groups to internal types
+    auto synInternal = static_cast<SynapseGroupInternal*>(syn);
+    auto syn2Internal = static_cast<SynapseGroupInternal*>(syn2);
+    auto synTargetInternal = static_cast<SynapseGroupInternal*>(synTarget);
+ 
+    // Check that identically configured PSMs can be merged
+    ASSERT_EQ(synInternal->getFusedPreOutputSuffix(), syn2Internal->getFusedPreOutputSuffix());
+    
+    // Check that PSMs targetting different variables cannot be merged
+    ASSERT_NE(synInternal->getFusedPreOutputSuffix(), synTargetInternal->getFusedPreOutputSuffix());
 }
 
 TEST(NeuronGroup, CompareNeuronModels)
