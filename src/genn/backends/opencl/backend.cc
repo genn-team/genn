@@ -1149,15 +1149,15 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     const bool anyCustomUpdateInitGroups = !modelMerged.getMergedCustomUpdateInitGroups().empty();
     const bool anyCustomWUUpdateDenseInitGroups = !modelMerged.getMergedCustomWUUpdateDenseInitGroups().empty();
     const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
-    const bool anyKerneInitGroups = !modelMerged.getMergedSynapseKernelInitGroups().empty();
+    const bool anyKernelInitGroups = !modelMerged.getMergedSynapseKernelInitGroups().empty();
     const bool anyConnectivityInitGroups = !modelMerged.getMergedSynapseConnectivityInitGroups().empty();
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), 
-                               anyCustomUpdateInitGroups || anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyKerneInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyCustomUpdateInitGroups || anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomUpdateInitGroups(), 
-                               anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyKerneInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyCustomWUUpdateDenseInitGroups || anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), 
-                               anyDenseInitGroups || anyKerneInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyKerneInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseKernelInitGroups(), anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), additionalParamsRequired);
     if(globalRNGRequired) {
