@@ -836,19 +836,6 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
         os << d.type << " " << d.name << " = " << value << ";" << std::endl;
     }
 
-    // Calculate kernel size
-    os << "const unsigned int kernelSize = (";
-    // Loop through kernel dimensions and multiply together
-    const auto &kernelSize = sg.getArchetype().getKernelSize();
-    for(size_t i = 0; i < kernelSize.size(); i++) {
-        os << sg.getKernelSize(i);
-                
-        if(i != (kernelSize.size() - 1)) {
-            os << " * ";
-        }
-    }
-    os << ");" << std::endl;
-
     os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
@@ -873,7 +860,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
         {
             CodeStream::Scope b(os);
             os << "// only work on existing neurons" << std::endl;
-            os << "if (" << popSubs["id"] << " < kernelSize)";
+            os << "if (" << popSubs["id"] << " < group->rowStride)";
             {
                 CodeStream::Scope b(os);
               
