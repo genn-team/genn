@@ -448,6 +448,79 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
 }
 
+
+TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 64 * 64, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post1", 62 * 62, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post2", 62 * 62, paramVals, varVals);
+
+    InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParamsA(
+        3, 3,       // conv_kh, conv_kw
+        64, 64, 1,  // conv_ih, conv_iw, conv_ic
+        62, 62, 1); // conv_oh, conv_ow, conv_oc
+
+    InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParamsB(
+        3, 3,       // conv_kh, conv_kw
+        64, 64, 1,  // conv_ih, conv_iw, conv_ic
+        64, 64, 1); // conv_oh, conv_ow, conv_oc
+    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+                                                                                                           "Pre", "Post1",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParamsA));
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses1", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+                                                                                                           "Pre", "Post1",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParamsA));
+    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses2", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+                                                                                                           "Pre", "Post2",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParamsB));
+    // Finalize model
+    model.finalize();
+
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
+    ASSERT_EQ(modelSpecMerged.getMergedPresynapticUpdateGroups().size(), 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
+
+    // Check that connectivity parameter is heterogeneous
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(1));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(2));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(3));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(4));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(5));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(6));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(7));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous(1));
+}
+
 TEST(SynapseGroup, CompareWUDifferentProceduralVars)
 {
     ModelSpecInternal model;
