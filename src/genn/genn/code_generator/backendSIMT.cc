@@ -217,9 +217,9 @@ size_t BackendSIMT::getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdat
     assert(cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE);
     
     const size_t paddedNumPre = padKernelSize(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(), KernelCustomTransposeUpdate);
-	const size_t paddedNumPost = padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelCustomTransposeUpdate);
+    const size_t paddedNumPost = padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelCustomTransposeUpdate);
     const size_t numCopies = cg.isBatched() ? batchSize : 1;
-	return numCopies * paddedNumPre * paddedNumPost / getKernelBlockSize(KernelCustomTransposeUpdate);
+    return numCopies * paddedNumPre * paddedNumPost / getKernelBlockSize(KernelCustomTransposeUpdate);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getNumPresynapticUpdateThreads(const SynapseGroupInternal &sg, const PreferencesBase &preferences)
@@ -278,7 +278,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Subst
     genParallelGroup<NeuronPrevSpikeTimeUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
-        [batchSize, this](CodeStream &os, const NeuronPrevSpikeTimeUpdateGroupMerged &ng, Substitutions &popSubs)
+        [batchSize,this](CodeStream &os, const NeuronPrevSpikeTimeUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             CodeStream::Scope b(os);
 
@@ -768,6 +768,11 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                         synSubs.addVarSubstitution("id_post", "shSpk[j]");
                         synSubs.addVarSubstitution("id_syn", "synAddress");
 
+                        if(sg.getArchetype().isPresynapticOutputRequired()) {
+                            synSubs.addFuncSubstitution("addToPre", 1,
+                                                        getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                        }
+                        
                         sg.generateSynapseUpdate(*this, os, modelMerged, synSubs);
 
                         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -828,7 +833,12 @@ void BackendSIMT::genSynapseDynamicsKernel(CodeStream &os, const Substitutions &
                 else {
                     synSubs.addFuncSubstitution("addToInSyn", 1, getAtomic(modelMerged.getModel().getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, synSubs["id_post"]) + "], $(0))");
                 }
-
+                
+                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                    synSubs.addFuncSubstitution("addToPre", 1,
+                                                getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                }
+ 
                 sg.generateSynapseUpdate(*this, os, modelMerged, synSubs);
             }
         });

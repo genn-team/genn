@@ -194,6 +194,10 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
                              init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
 
+    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
+                             init ? &SynapseGroupInternal::getPreOutputInitHashDigest : &SynapseGroupInternal::getPreOutputHashDigest);
+
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
                              init ? &CurrentSourceInternal::getInitHashDigest : &CurrentSourceInternal::getHashDigest);
@@ -356,6 +360,12 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         }
     }
 
+    // Loop through merged output synapses with presynaptic output of archetypical neuron group (0) in sorted order
+    for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
+        // Add pointer to revInSyn
+        addMergedPreOutputOutSynPointerField(precision, "revInSynOutSyn", i, backend.getDeviceVarPrefix() + "revInSyn");
+    }
+    
     // Loop through current sources to archetypical neuron group in sorted order
     for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
         const auto *cs = getSortedArchetypeCurrentSources().at(i);
@@ -573,6 +583,17 @@ void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, 
              [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
              {
                  return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getFusedPSVarSuffix();
+             });
+}
+//----------------------------------------------------------------------------
+void NeuronGroupMergedBase::addMergedPreOutputOutSynPointerField(const std::string &type, const std::string &name, 
+                                                       size_t archetypeIndex, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    addField(type + "*", name + std::to_string(archetypeIndex),
+             [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
+             {
+                 return prefix + m_SortedMergedPreOutputOutSyns.at(groupIndex).at(archetypeIndex)->getFusedPreOutputSuffix();
              });
 }
 
@@ -922,6 +943,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         else {
             addPSPointerField(precision, "inSyn", backend.getDeviceVarPrefix() + "inSyn");
         }
+    }
+    // for all types of roles
+    if(getArchetype().isPresynapticOutputRequired()) {
+      addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
     }
 
     if(role == Role::PresynapticUpdate) {
@@ -1337,6 +1362,12 @@ void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const st
 {
     assert(!Utils::isTypePointer(type));
     addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPSVarSuffix(); });
+}
+//----------------------------------------------------------------------------
+void SynapseGroupMergedBase::addPreOutputPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPreOutputSuffix(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)

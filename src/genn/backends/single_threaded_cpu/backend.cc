@@ -342,6 +342,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + s.getPostISynIndex(1, "j") + "] += $(0)");
                             }
 
+                            if(s.getArchetype().isPresynapticOutputRequired()) {
+                                synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
+                            }
                             // Call synapse dynamics handler
                             s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
@@ -364,7 +367,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     os << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
 
                     genSynapseIndexCalculation(os, s, 1);
-
+                    
                     // generate the code for processing spike-like events
                     if (s.getArchetype().isSpikeEventRequired()) {
                         genPresynapticUpdate(os, modelMerged, s, funcSubs, false);
@@ -435,7 +438,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 synSubs.addVarSubstitution("id_syn", "((group->numTrgNeurons * i) + spike)");
                             }
                             synSubs.addVarSubstitution("id_post", "spike");
-
+                            if (s.getArchetype().isPresynapticOutputRequired()) {
+                                synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");        
+                            }
+            
                             s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
                     }
@@ -1513,6 +1519,10 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         }
         else {
             synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "ipost") + "] += $(0)");
+        }
+
+        if (sg.getArchetype().isPresynapticOutputRequired()) {
+            synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + sg.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
         }
 
         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

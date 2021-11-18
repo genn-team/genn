@@ -263,7 +263,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
 
     // Loop through send port variables
     std::unordered_set<std::string> excludeAliases;
-    for(const auto s : sendPortVariables) {
+    for(const auto &s : sendPortVariables) {
         // If this is an event send port
         if(std::get<2>(s)) {
             m_ApplyInputCode += std::get<0>(s) + " += $(inSyn); $(inSyn) = 0;\n";
@@ -272,7 +272,7 @@ SpineMLGenerator::PostsynapticModel::PostsynapticModel(const ModelParams::Postsy
         else {
             // If send port is an alias, use alias code as output, otherwise portname
             // **NOTE** this will cause any dependencies of the aliases to be included
-            const std::string port = std::get<1>(s);
+            const std::string &port = std::get<1>(s);
             const bool isSendPortAlias = aliases.isAlias(port);
             std::string inputCode = isSendPortAlias ? aliases.getAliasCode(port) : port;
 
