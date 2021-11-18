@@ -444,8 +444,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
 
     // Check that connectivity parameter is heterogeneous
     // **NOTE** raw parameter is NOT as only derived parameter is used in code
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitParamHeterogeneous(0));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralVars)
@@ -502,8 +502,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitParamHeterogeneous(0));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 1));
 }
@@ -616,8 +616,8 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitParamHeterogeneous(0));
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
 }
 
@@ -760,7 +760,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that fixed number post connectivity row length parameters are heterogeneous
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
 }
 
 TEST(SynapseGroup, InvalidMatrixTypes)
