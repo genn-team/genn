@@ -544,6 +544,11 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
             throw std::runtime_error("TOEPLITZ connectivity requires toeplitz connectivity initialisation snippet.");
         }
 
+        // Give an error if connectivity initialisation snippet uses RNG
+        if(::Utils::isRNGRequired(m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode())) {
+            throw std::runtime_error("TOEPLITZ connectivity cannot currently access RNG.");
+        }
+
         // If the weight update model has code for postsynaptic-spike triggered updating, give an error
         if(!m_WUModel->getLearnPostCode().empty()) {
             throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
