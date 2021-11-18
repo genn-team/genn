@@ -853,7 +853,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
     const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
-     // Create substitution stack for generating procedural connectivity code
+    // Create substitution stack for generating Toeplitz connectivity code
     Substitutions connSubs(&popSubs);
     connSubs.addVarSubstitution("id_diag", connSubs["id"]);
 
@@ -953,6 +953,11 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
                         presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, 
                                                                    backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
                     }
+                }
+
+                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                    presynapticUpdateSubs.addFuncSubstitution("addToPre", 1,
+                                                              backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, presynapticUpdateSubs["id_pre"]) + "], $(0))");
                 }
 
                 // Generate presynaptic simulation code into new stringstream-backed code stream
