@@ -918,6 +918,16 @@ class SynapseGroup(Group):
         """Sets name of neuron input variable postsynaptic model will target"""
         self.pop.set_pstarget_var(var)
 
+    @property
+    def pre_target_var(self):
+        """Gets name of neuron input variable $(addToPre) will target"""
+        return self.pop.get_pre_target_var()
+
+    @pre_target_var.setter
+    def pre_target_var(self, var):
+        """Sets name of neuron input variable $(addToPre) will target"""
+        self.pop.set_pre_target_var(var)
+
     def set_sparse_connections(self, pre_indices, post_indices):
         """Set ragged format connections between two groups of neurons
 

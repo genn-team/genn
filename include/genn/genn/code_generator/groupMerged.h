@@ -613,6 +613,9 @@ public:
     //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
 
+    //! Get sorted vectors of merged outgoing synapse groups with presynaptic output belonging to archetype group
+    const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedPreOutputOutSyns() const { return m_SortedMergedPreOutputOutSyns.front(); }
+
     //! Get sorted vectors of current sources belonging to archetype group
     const std::vector<CurrentSourceInternal*> &getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
 
@@ -914,12 +917,16 @@ protected:
     void addMergedInSynPointerField(const std::string &type, const std::string &name,
                                     size_t archetypeIndex, const std::string &prefix);
 
+    void addMergedPreOutputOutSynPointerField(const std::string &type, const std::string &name,
+                                    size_t archetypeIndex, const std::string &prefix);
+
 
 private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
     std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedInSyns;
+    std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedPreOutputOutSyns;
     std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
 };
 
@@ -1077,6 +1084,11 @@ public:
         return ((batchSize == 1) ? "" : "postBatchOffset + ") + index;
     }
 
+    static std::string getPreISynIndex(unsigned int batchSize, const std::string &index)
+    {
+        return ((batchSize == 1) ? "" : "preBatchOffset + ") + index;
+    }
+
     static std::string getSynVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index);
     
 protected:
@@ -1108,6 +1120,7 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addPreOutputPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
