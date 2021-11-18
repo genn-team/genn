@@ -19,6 +19,7 @@ from .model_preprocessor import ExtraGlobalParameter, Variable
 from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            SynapseMatrixConnectivity_BITMASK,
                            SynapseMatrixConnectivity_DENSE,
+                           SynapseMatrixWeight_KERNEL,
                            SynapseMatrixWeight_INDIVIDUAL,
                            SynapseMatrixWeight_INDIVIDUAL_PSM,
                            VarLocation_HOST,
@@ -740,6 +741,8 @@ class SynapseGroup(Group):
             return self.trg.size * self.src.size
         elif self.is_ragged:
             return self.max_row_length * self.src.size
+        elif self.has_kernel_synapse_vars:
+            return int(np.product(self.pop.get_kernel_size()))
 
     @property
     def max_row_length(self):
@@ -902,6 +905,12 @@ class SynapseGroup(Group):
         return (self.weight_sharing_master is None 
                 and (self.matrix_type & SynapseMatrixWeight_INDIVIDUAL) != 0)
 
+    @property
+    def has_kernel_synapse_vars(self):
+        """Tests whether synaptic connectivity has kernel weights"""
+        return (self.weight_sharing_master is None 
+                and (self.matrix_type & SynapseMatrixWeight_KERNEL) != 0)
+        
     @property
     def has_individual_postsynaptic_vars(self):
         """Tests whether synaptic connectivity has
@@ -1191,7 +1200,7 @@ class SynapseGroup(Group):
                 var_data = self.vars[v.name]
 
                 # If population has individual synapse variables
-                if self.has_individual_synapse_vars:
+                if self.has_individual_synapse_vars or self.has_kernel_synapse_vars:
                     # If variable is located on host
                     var_loc = self.pop.get_wuvar_location(v.name) 
                     if (var_loc & VarLocation_HOST) != 0:
@@ -1303,7 +1312,7 @@ class SynapseGroup(Group):
             # If connectivity is dense,
             # copy variables  directly into view
             # **NOTE** we assume order is row-major
-            if self.is_dense:
+            if self.is_dense or self.has_kernel_synapse_vars:
                 var_data.view[:] = var_data.values
             elif self.is_ragged:
                 # Sort variable to match GeNN order

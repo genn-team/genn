@@ -158,6 +158,38 @@ public:
     static const std::string name;
 };
 
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseKernelInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseKernelInitGroupMerged : public SynapseGroupMergedBase
+{
+public:
+    SynapseKernelInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::KernelInit, "", groups)
+    {}
+
+    boost::uuids::detail::sha1::digest_type getHashDigest() const
+    {
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::KernelInit);
+    }
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
 
 // ----------------------------------------------------------------------------
 // CodeGenerator::SynapseConnectivityInitGroupMerged
