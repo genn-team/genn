@@ -314,11 +314,12 @@ public:
     \note The initial values array for the `Poisson` type needs two entries
     for `V`, and `spikeTime` and the parameter array needs four entries for
     `trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
+    \note The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
 
     It has two extra global parameters:
 
-    - \c firingProb - an array of firing probabilities/ average rates; this can extend to $n \cdot N$, where $N$ is the number of neurons, for $n > 0$ firing patterns
-    - \c offset - an unsigned integer that points to the start of the currently used input pattern; typically taking values of $i \cdot N$, $0 \leq i < n$. 
+    - \c firingProb - an array of firing probabilities/ average rates; this can extend to \f$n \cdot N\f$, where \f$N\f$ is the number of neurons, for \f$n > 0\f$ firing patterns
+    - \c offset - an unsigned integer that points to the start of the currently used input pattern; typically taking values of \f$i \cdot N\f$, \f$0 \leq i < n\f$. 
 
     \note This model uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
