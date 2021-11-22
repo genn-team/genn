@@ -35,3 +35,8 @@
 \form#34:\[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \]
 \form#35:$V$
 \form#36:$E_{pre}$
+\form#37:$n \cdot N$
+\form#38:$N$
+\form#39:$n > 0$
+\form#40:$i \cdot N$
+\form#41:$0 \leq i < n$

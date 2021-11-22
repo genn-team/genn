@@ -231,11 +231,13 @@ Additional Inherited Members</h2></td></tr>
 <li><code>Vspike</code> - Membrane potential at spike (mV)</li>
 <li><code>Vrest</code> - Membrane potential at rest (mV)</li>
 </ul>
-<dl class="section note"><dt>Note</dt><dd>The initial values array for the <code><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a></code> type needs two entries for <code>V</code>, and <code>spikeTime</code> and the parameter array needs four entries for <code>trefract</code>, <code>tspike</code>, <code>Vspike</code> and <code>Vrest</code>, <em>in that order</em>.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>The initial values array for the <code><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html" title="Poisson neurons. ">Poisson</a></code> type needs two entries for <code>V</code>, and <code>spikeTime</code> and the parameter array needs four entries for <code>trefract</code>, <code>tspike</code>, <code>Vspike</code> and <code>Vrest</code>, <em>in that order</em>. </dd>
+<dd>
+The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.</dd></dl>
 <p>It has two extra global parameters:</p>
 <ul>
-<li><code>firingProb</code> - an array of firing probabilities/ average rates; this can extend to $n  N$, where $N$ is the number of neurons, for $n &gt; 0$ firing patterns</li>
-<li><code>offset</code> - an unsigned integer that points to the start of the currently used input pattern; typically taking values of $i  N$, $0  i &lt; n$.</li>
+<li><code>firingProb</code> - an array of firing probabilities/ average rates; this can extend to <img class="formulaInl" alt="$n \cdot N$" src="../../form_37.png"/>, where <img class="formulaInl" alt="$N$" src="../../form_38.png"/> is the number of neurons, for <img class="formulaInl" alt="$n &gt; 0$" src="../../form_39.png"/> firing patterns</li>
+<li><code>offset</code> - an unsigned integer that points to the start of the currently used input pattern; typically taking values of <img class="formulaInl" alt="$i \cdot N$" src="../../form_40.png"/>, <img class="formulaInl" alt="$0 \leq i &lt; n$" src="../../form_41.png"/>.</li>
 </ul>
 <dl class="section note"><dt>Note</dt><dd>This model uses a linear approximation for the probability of firing a spike in a given time step of size <code>DT</code>, i.e. the probability of firing is <img class="formulaInl" alt="$\lambda$" src="../../form_21.png"/> times <code>DT</code>: <img class="formulaInl" alt="$ p = \lambda \Delta t $" src="../../form_22.png"/>, where $$ corresponds to the value of the relevant entry of <code>firingProb</code>. This approximation is usually very good, especially for typical, quite small time steps and moderate firing rates. However, it is worth noting that the approximation becomes poor for very high firing rates and large time steps. </dd></dl>
 </div><h2 class="groupheader">Member Typedef Documentation</h2>
@@ -477,7 +479,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dac/namespaceNeuronModels.html">NeuronModels</a></li><li class="navelem"><a class="el" href="../../de/d1d/classNeuronModels_1_1Poisson.html">Poisson</a></li>
-    <li class="footer">Generated on Mon Nov 15 2021 18:44:40 for GeNN by
+    <li class="footer">Generated on Mon Nov 22 2021 17:37:59 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
