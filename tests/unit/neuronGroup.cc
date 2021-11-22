@@ -12,6 +12,19 @@
 
 namespace
 {
+class StaticPulseBack : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseBack, 0, 1, 0, 0);
+
+    SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
+
+    SET_SIM_CODE(
+        "$(addToInSyn, $(g));\n"
+        "$(addToPre, $(g));\n");
+};
+IMPLEMENT_MODEL(StaticPulseBack);
+
 class WeightUpdateModelPost : public WeightUpdateModels::Base
 {
 public:
@@ -249,7 +262,7 @@ TEST(NeuronGroup, Poisson)
     ASSERT_FALSE(ng->isInitRNGRequired());
 }
 
-TEST(NeuronGroup, MergeWUMPrePost)
+TEST(NeuronGroup, FuseWUMPrePost)
 {
     ModelSpecInternal model;
     model.setFusePrePostWeightUpdateModels(true);
@@ -370,7 +383,7 @@ TEST(NeuronGroup, MergeWUMPrePost)
 }
 
 
-TEST(NeuronGroup, MergePSM)
+TEST(NeuronGroup, FusePSM)
 {
     ModelSpecInternal model;
     model.setMergePostsynapticModels(true);
@@ -442,6 +455,57 @@ TEST(NeuronGroup, MergePSM)
     
     // Check that PSMs from synapse groups with different dendritic delay cannot be merged
     ASSERT_NE(synInternal->getFusedPSVarSuffix(), synDelayInternal->getFusedPSVarSuffix());
+}
+
+TEST(NeuronGroup, FusePreOutput)
+{
+    ModelSpecInternal model;
+    model.setMergePostsynapticModels(true);
+    
+    LIFAdditional::ParamValues paramVals(0.25, 10.0, 0.0, 0.0, 20.0, 0.0, 5.0);
+    LIFAdditional::VarValues varVals(0.0, 0.0);
+    PostsynapticModels::ExpCurr::ParamValues psmParamVals(5.0);
+    PostsynapticModels::ExpCurr::ParamValues psmParamVals2(10.0);
+    StaticPulseBack::VarValues wumVarVals(0.1);
+    
+    // Add two neuron groups to model
+    model.addNeuronPopulation<LIFAdditional>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<LIFAdditional>("Post", 10, paramVals, varVals);
+
+    // Create baseline synapse group
+    auto *syn = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
+        "Syn", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        {}, {});
+    
+    // Create second synapse group
+    auto *syn2 = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
+        "Syn2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        {}, {});
+
+    // Create synapse group with different target variable
+    auto *synTarget = model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>(
+        "SynTarget", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, wumVarVals,
+        {}, {});
+    synTarget->setPreTargetVar("Isyn2");
+  
+    model.finalize();
+    
+    // Cast synapse groups to internal types
+    auto synInternal = static_cast<SynapseGroupInternal*>(syn);
+    auto syn2Internal = static_cast<SynapseGroupInternal*>(syn2);
+    auto synTargetInternal = static_cast<SynapseGroupInternal*>(synTarget);
+ 
+    // Check that identically configured PSMs can be merged
+    ASSERT_EQ(synInternal->getFusedPreOutputSuffix(), syn2Internal->getFusedPreOutputSuffix());
+    
+    // Check that PSMs targetting different variables cannot be merged
+    ASSERT_NE(synInternal->getFusedPreOutputSuffix(), synTargetInternal->getFusedPreOutputSuffix());
 }
 
 TEST(NeuronGroup, CompareNeuronModels)
@@ -763,6 +827,89 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, 0));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, 1));
     ASSERT_TRUE(deltaAlphaMergedInitGroup->isPSMVarInitParamHeterogeneous(alphaInitIndex, 0, 0));
+}
+
+
+TEST(NeuronGroup, ComparePreOutput)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    auto *ngPre0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre0", 10, paramVals, varVals);
+    auto *ngPre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre1", 10, paramVals, varVals);
+    auto *ngPre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre2", 10, paramVals, varVals);
+    auto *ngPre3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre3", 10, paramVals, varVals);
+    
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPost0", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPost1", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPost2", 10, paramVals, varVals);
+
+    // Add two outgoing synapse groups to NeuronsPre0
+    StaticPulseBack::VarValues staticPulseVarVals(0.1);
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG0", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre0", "NeuronsPost0",
+                                                                                {}, staticPulseVarVals,
+                                                                                {}, {});
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG1", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre0", "NeuronsPost1",
+                                                                               {}, staticPulseVarVals,
+                                                                               {}, {});
+
+    // Do the same for NeuronsPre1
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG2", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre1", "NeuronsPost0",
+                                                                                {}, staticPulseVarVals,
+                                                                                {}, {});
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG3", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre1", "NeuronsPost1",
+                                                                               {}, staticPulseVarVals,
+                                                                               {}, {});
+    
+    // Add three outgoing groups to NeuronPre2
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG4", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre2", "NeuronsPost0",
+                                                                                {}, staticPulseVarVals,
+                                                                                {}, {});
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG5", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre2", "NeuronsPost1",
+                                                                               {}, staticPulseVarVals,
+                                                                               {}, {});
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG6", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre2", "NeuronsPost2",
+                                                                               {}, staticPulseVarVals,
+                                                                               {}, {});
+
+    // Add one outgoing groups to NeuronPre3
+    model.addSynapsePopulation<StaticPulseBack, PostsynapticModels::DeltaCurr>("SG7", SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM, NO_DELAY,
+                                                                               "NeuronsPre3", "NeuronsPost0",
+                                                                                {}, staticPulseVarVals,
+                                                                                {}, {});
+
+    model.finalize();
+
+    NeuronGroupInternal *ngPre0Internal = static_cast<NeuronGroupInternal *>(ngPre0);
+    NeuronGroupInternal *ngPre1Internal = static_cast<NeuronGroupInternal *>(ngPre1);
+    NeuronGroupInternal *ngPre2Internal = static_cast<NeuronGroupInternal *>(ngPre2);
+    NeuronGroupInternal *ngPre3Internal = static_cast<NeuronGroupInternal *>(ngPre3);
+    ASSERT_EQ(ngPre0Internal->getHashDigest(), ngPre1Internal->getHashDigest());
+    ASSERT_NE(ngPre0Internal->getHashDigest(), ngPre2Internal->getHashDigest());
+    ASSERT_NE(ngPre0Internal->getHashDigest(), ngPre3Internal->getHashDigest());
+    ASSERT_EQ(ngPre0Internal->getInitHashDigest(), ngPre1Internal->getInitHashDigest());
+    ASSERT_NE(ngPre0Internal->getInitHashDigest(), ngPre2Internal->getInitHashDigest());
+    ASSERT_NE(ngPre0Internal->getInitHashDigest(), ngPre3Internal->getInitHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check neurons are merged into six groups (one for each output group and one for each number of incoming synapses)
+    ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 6);
+    ASSERT_EQ(modelSpecMerged.getMergedNeuronInitGroups().size(), 6);
 }
 
 TEST(NeuronGroup, CompareWUPreUpdate)

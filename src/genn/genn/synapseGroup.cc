@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 
 // GeNN includes
 #include "gennUtils.h"
@@ -87,6 +88,21 @@ void SynapseGroup::setPSTargetVar(const std::string &varName)
     }
     else {
         throw std::runtime_error("Target neuron group has no input variable '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
+void SynapseGroup::setPreTargetVar(const std::string &varName)
+{
+    // If varname is either 'ISyn' or name of a presynaptic neuron group additional input variable, store
+    const auto additionalInputVars = getSrcNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    if(varName == "Isyn" || 
+       std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
+                    [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
+    {
+        m_PreTargetVar = varName;
+    }
+    else {
+        throw std::runtime_error("Presynaptic neuron group has no input variable '" + varName + "'");
     }
 }
 //----------------------------------------------------------------------------
@@ -221,6 +237,11 @@ unsigned int SynapseGroup::getMaxSourceConnections() const
     // **NOTE** these get retrived from weight sharing master 
     // as they can be set AFTER creation of synapse group
     return isWeightSharingSlave() ? getWeightSharingMaster()->getMaxSourceConnections() : m_MaxSourceConnections;
+}
+//----------------------------------------------------------------------------
+size_t SynapseGroup::getKernelSizeFlattened() const
+{
+    return std::accumulate(getKernelSize().cbegin(), getKernelSize().cend(), 1, std::multiplies<unsigned int>());
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getSparseConnectivityLocation() const
@@ -388,6 +409,31 @@ bool SynapseGroup::isDendriticDelayRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isPresynapticOutputRequired() const
+{
+    // If addToPre function is used in sim_code, return true
+    if(getWUModel()->getSimCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in learn_post_code, return true
+    if(getWUModel()->getLearnPostCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in event_code, return true
+    if(getWUModel()->getEventCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in synapse_dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isProceduralConnectivityRNGRequired() const
 {
     return ((m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) &&
@@ -430,9 +476,9 @@ bool SynapseGroup::isHostInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
-    // If this synapse group has per-synapse state variables and isn't a
+    // If this synapse group has per-synapse or kernel state variables and isn't a
     // weight sharing slave, return true if any of them have initialisation code which doesn't require a kernel
-    if (!isWeightSharingSlave() && (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+    if (!isWeightSharingSlave() && ((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || (getMatrixType() & SynapseMatrixWeight::KERNEL))) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
                            [](const Models::VarInit &init)
                            { 
@@ -472,7 +518,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_PSTargetVar("Isyn")
+        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -517,9 +563,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 
     // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
     if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) 
-       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG)) 
+       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG) && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG) ) 
     {
-        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG or SPARSE_INDIVIDUALG connectivity.");
+        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG, PROCEDURAL_KERNELG or SPARSE_INDIVIDUALG connectivity.");
     }
 
     // If connectivity is dense and there is connectivity initialiser code, give error
@@ -532,8 +578,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
     if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
-       m_KernelSize.empty() &&  std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
-                                            [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
+       m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+                                           [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }
@@ -676,6 +722,12 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
     return true;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canPreOutputBeFused() const
+{
+    // There are no variables or other non-constant objects, so these can presumably always be fused
+    return true;
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -741,6 +793,13 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -885,6 +944,12 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
     for(const auto &p : getPSVarInitialisers()) {
         Utils::updateHash(p.getHashDigest(), hash);
     }
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

@@ -28,6 +28,7 @@ public:
     using NeuronGroup::injectCurrent;
     using NeuronGroup::getFusedPSMInSyn;
     using NeuronGroup::getFusedWUPostInSyn;
+    using NeuronGroup::getFusedPreOutputOutSyn;
     using NeuronGroup::getFusedWUPreOutSyn;
     using NeuronGroup::getOutSyn;
     using NeuronGroup::getCurrentSources;

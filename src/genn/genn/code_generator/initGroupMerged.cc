@@ -112,7 +112,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 template<typename P, typename D, typename G>
 void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs, 
                       const Models::Base::VarVec &vars, const std::vector<Models::VarInit> &varInitialisers, 
-                      const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
+                      const std::string &stride, const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
                       P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn, G genSynapseVariableRowInitFn)
 {
     for (size_t k = 0; k < vars.size(); k++) {
@@ -124,7 +124,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 
             // Generate target-specific code to initialise variable
             genSynapseVariableRowInitFn(os, popSubs,
-                [&vars, &varInit, &ftype, batchSize, k, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn]
+                [&vars, &varInit, &ftype, &stride, batchSize, k, groupIndex, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
@@ -145,7 +145,7 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
                     os << code << std::endl;
 
                     // Fill value across all batches
-                    genVariableFill(os,  vars[k].name, "initVal", varSubs["id_syn"], "group->numSrcNeurons * group->rowStride", 
+                    genVariableFill(os,  vars[k].name, "initVal", varSubs["id_syn"], stride,
                                     getVarAccessDuplication(vars[k].access), batchSize);
                 });
         }
@@ -383,6 +383,17 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                                 [i, this](size_t v, size_t p) { return isOutSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
     }
 
+    // Loop through outgoing synaptic populations with presynaptic output
+    for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
+        // If this synapse group's pre-synaptic input variable should be initialised
+        // on device, generate target-specific code to initialise variable
+        backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
+            [&model, i] (CodeStream &os, Substitutions &varSubs)
+            {
+                os << "group->revInSynOutSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+            });
+    }
+    
     // Loop through current sources
     os << "// current source variables" << std::endl;
     for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
@@ -544,13 +555,13 @@ void SynapseDenseInitGroupMerged::generateInit(const BackendBase &backend, CodeS
         CodeStream::Scope b(os);
         popSubs.addVarSubstitution("id_pre", "i");
         genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                         getArchetype().getWUVarInitialisers(), getIndex(),
+                         getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
                          modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
                          [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
                          [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
                          [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                          {
-                             return backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
+                             backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
                          });
     }
 }
@@ -563,13 +574,46 @@ const std::string SynapseSparseInitGroupMerged::name = "SynapseSparseInit";
 void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                     getArchetype().getWUVarInitialisers(), getIndex(),
+                     getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
                      modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
                      [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
                      [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                      {
-                         return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                         backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                     });
+}
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseKernelInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string SynapseKernelInitGroupMerged::name = "SynapseKernelInit";
+//----------------------------------------------------------------------------
+void SynapseKernelInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // If model is batched
+    if(modelMerged.getModel().getBatchSize() > 1) {
+        // Loop through kernel dimensions and multiply together to calculate batch stride
+        os << "const unsigned int batchStride = ";
+        const auto &kernelSize = getArchetype().getKernelSize();
+        for(size_t i = 0; i < kernelSize.size(); i++) {
+            os << getKernelSize(i);
+
+            if(i != (kernelSize.size() - 1)) {
+                os << " * ";
+            }
+        }
+        os << ";" << std::endl;;
+    }
+
+    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
+                     getArchetype().getWUVarInitialisers(), "batchStride", getIndex(),
+                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
+                     [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
+                     [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
+                     [&backend, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     {
+                         backend.genKernelSynapseVariableInit(os, *this, kernelSubs, handler); 
                      });
 }
 
@@ -592,7 +636,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
 {
     // Generate kernel index and add to substitutions
     os << "const unsigned int kernelInd = ";
-    genKernelIndex(os, popSubs, *this);
+    genKernelIndex(os, popSubs);
     os << ";" << std::endl;
     popSubs.addVarSubstitution("id_kernel", "kernelInd");
 
@@ -754,7 +798,7 @@ void CustomWUUpdateDenseInitGroupMerged::generateInit(const BackendBase &backend
         CodeStream::Scope b(os);
         popSubs.addVarSubstitution("id_pre", "i");
         genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
-                         getArchetype().getVarInitialisers(), getIndex(),
+                         getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
                          modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
                          [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
                          [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); },
@@ -823,7 +867,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
 void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
-                     getArchetype().getVarInitialisers(), getIndex(),
+                     getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
                      modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
                      [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
                      [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); },

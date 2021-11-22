@@ -194,6 +194,10 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
                              init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
 
+    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
+    orderNeuronGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
+                             init ? &SynapseGroupInternal::getPreOutputInitHashDigest : &SynapseGroupInternal::getPreOutputHashDigest);
+
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
     orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
                              init ? &CurrentSourceInternal::getInitHashDigest : &CurrentSourceInternal::getHashDigest);
@@ -356,6 +360,12 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         }
     }
 
+    // Loop through merged output synapses with presynaptic output of archetypical neuron group (0) in sorted order
+    for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
+        // Add pointer to revInSyn
+        addMergedPreOutputOutSynPointerField(precision, "revInSynOutSyn", i, backend.getDeviceVarPrefix() + "revInSyn");
+    }
+    
     // Loop through current sources to archetypical neuron group in sorted order
     for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
         const auto *cs = getSortedArchetypeCurrentSources().at(i);
@@ -575,6 +585,17 @@ void NeuronGroupMergedBase::addMergedInSynPointerField(const std::string &type, 
                  return prefix + m_SortedMergedInSyns.at(groupIndex).at(archetypeIndex)->getFusedPSVarSuffix();
              });
 }
+//----------------------------------------------------------------------------
+void NeuronGroupMergedBase::addMergedPreOutputOutSynPointerField(const std::string &type, const std::string &name, 
+                                                       size_t archetypeIndex, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    addField(type + "*", name + std::to_string(archetypeIndex),
+             [prefix, archetypeIndex, this](const NeuronGroupInternal &, size_t groupIndex)
+             {
+                 return prefix + m_SortedMergedPreOutputOutSyns.at(groupIndex).at(archetypeIndex)->getFusedPreOutputSuffix();
+             });
+}
 
 
 //----------------------------------------------------------------------------
@@ -755,6 +776,37 @@ bool SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) co
                        });
 }
 //----------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getKernelSize(size_t dimensionIndex) const
+{
+    // If kernel size if heterogeneous in this dimension, return group structure entry
+    if(isKernelSizeHeterogeneous(dimensionIndex)) {
+        return "group->kernelSize" + std::to_string(dimensionIndex);
+    }
+    // Otherwise, return literal
+    else {
+        return std::to_string(getArchetype().getKernelSize().at(dimensionIndex));
+    }
+}
+//----------------------------------------------------------------------------
+void SynapseGroupMergedBase::genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const
+{
+    // Loop through kernel dimensions to calculate array index
+    const auto &kernelSize = getArchetype().getKernelSize();
+    for(size_t i = 0; i < kernelSize.size(); i++) {
+        os << "(" << subs["id_kernel_" + std::to_string(i)];
+        // Loop through remainining dimensions of kernel and multiply
+        for(size_t j = i + 1; j < kernelSize.size(); j++) {
+            os << " * " << getKernelSize(j);
+        }
+        os << ")";
+
+        // If this isn't the last dimension, add +
+        if(i != (kernelSize.size() - 1)) {
+            os << " + ";
+        }
+    }
+}
+//----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
     if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
@@ -840,6 +892,12 @@ std::string SynapseGroupMergedBase::getSynVarIndex(unsigned int batchSize, VarAc
     const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
     return (singleBatch ? "" : "synBatchOffset + ") + index;
 }
+//--------------------------------------------------------------------------
+std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index)
+{
+    const bool singleBatch = (varDuplication == VarAccessDuplication::SHARED || batchSize == 1);
+    return (singleBatch ? "" : "kernBatchOffset + ") + index;
+}
 //----------------------------------------------------------------------------
 SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
@@ -850,18 +908,20 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                              || (role == Role::SynapseDynamics));
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
-    addField("unsigned int", "rowStride",
-             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+    if(role != Role::KernelInit) {
+        addField("unsigned int", "rowStride",
+                [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+        addField("unsigned int", "numSrcNeurons",
+             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+        addField("unsigned int", "numTrgNeurons",
+                [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+    }
+    
     if(role == Role::PostsynapticUpdate || role == Role::SparseInit) {
         addField("unsigned int", "colStride",
                  [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
     }
-
-    addField("unsigned int", "numSrcNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "numTrgNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-
+    
     // If this role is one where postsynaptic input can be provided
     if(role == Role::PresynapticUpdate || role == Role::SynapseDynamics) {
         if(getArchetype().isDendriticDelayRequired()) {
@@ -871,6 +931,10 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         else {
             addPSPointerField(precision, "inSyn", backend.getDeviceVarPrefix() + "inSyn");
         }
+    }
+    // for all types of roles
+    if(getArchetype().isPresynapticOutputRequired()) {
+      addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
     }
 
     if(role == Role::PresynapticUpdate) {
@@ -1082,13 +1146,13 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
+        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit || role == Role::KernelInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
+        const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
-        // If synapse group has a kernel and we're either updating 
-        // with procedural weights or initialising individual weights
-        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
+        // If synapse group has a kernel and has kernel weights or initialising individual weights
+        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || kernelWeights || (connectInitRole && individualWeights))) {
             // Loop through kernel size dimensions
             for(size_t d = 0; d < getArchetype().getKernelSize().size(); d++) {
                 // If this dimension has a heterogeneous size, add it to struct
@@ -1102,7 +1166,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
         // If weights are procedural, we're initializing individual variables or we're initialising variables in a kernel
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
         if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty()) 
-           || (varInitRole && individualWeights)) 
+           || (varInitRole && (individualWeights || kernelWeights))) 
         {
             // Add heterogeneous variable initialization parameters and derived parameters
             addHeterogeneousVarInitParams<SynapseGroupMergedBase>(
@@ -1121,10 +1185,11 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             const auto var = vars[v];
             const auto *snippet = varInit.at(v).getSnippet();
             const bool varInitRequired = ((connectInitRole && snippet->requiresKernel()) 
-                                          || (varInitRole && !snippet->requiresKernel() && !snippet->getCode().empty()));
+                                          || (varInitRole && individualWeights && !snippet->requiresKernel() && !snippet->getCode().empty())
+                                          || (varInitRole && kernelWeights && !snippet->getCode().empty()));
 
             // If we're performing an update with individual weights; or this variable should be initialised
-            if((updateRole && individualWeights) || varInitRequired) {
+            if((updateRole && individualWeights) || (kernelWeights && updateRole) || varInitRequired) {
                 addWeightSharingPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
             }
 
@@ -1225,17 +1290,20 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
         const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
+        const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
 
         // If synapse group has a kernel and we're either updating with procedural  
         // weights or initialising individual weights, update hash with kernel size
-        if(!getArchetype().getKernelSize().empty() && ((proceduralWeights && updateRole) || (connectInitRole && individualWeights))) {
+        if(!getArchetype().getKernelSize().empty() && 
+            ((proceduralWeights && updateRole) || (connectInitRole && individualWeights) || (kernelWeights && !updateRole))) 
+        {
             updateHash([](const SynapseGroupInternal &g) { return g.getKernelSize(); }, hash);
         }
 
         // If weights are procedural, we're initializing individual variables or we're initialising variables in a kernel
         // **NOTE** some of these won't actually be required - could do this per-variable in loop over vars
         if((proceduralWeights && updateRole) || (connectInitRole && !getArchetype().getKernelSize().empty())
-           || (varInitRole && individualWeights))
+           || (varInitRole && individualWeights) || (varInitRole && kernelWeights))
         {
             // Update hash with each group's variable initialisation parameters and derived parameters
             updateVarInitParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers, 
@@ -1251,6 +1319,12 @@ void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const st
 {
     assert(!Utils::isTypePointer(type));
     addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPSVarSuffix(); });
+}
+//----------------------------------------------------------------------------
+void SynapseGroupMergedBase::addPreOutputPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+{
+    assert(!Utils::isTypePointer(type));
+    addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getFusedPreOutputSuffix(); });
 }
 //----------------------------------------------------------------------------
 void SynapseGroupMergedBase::addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix)

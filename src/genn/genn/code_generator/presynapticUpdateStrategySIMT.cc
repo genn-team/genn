@@ -102,6 +102,10 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
     }
 
+    if(sg.getArchetype().isPresynapticOutputRequired()) {
+        os << "scalar lrevInSyn= 0.0;" << std::endl;
+    }
+    
     os << "if (spike < group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "])";
     {
         CodeStream::Scope b(os);
@@ -164,6 +168,10 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
                                             backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "ipost") + "], $(0))");
             }
 
+            if(sg.getArchetype().isPresynapticOutputRequired()) {
+                synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
+            }
+            
             if(trueSpike) {
                 sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
             }
@@ -176,6 +184,13 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);
         }
+        
+        // Should this be in the Postamble?
+        if(sg.getArchetype().isPresynapticOutputRequired()) {
+            // write lrevInSyn to global memory if not 0
+            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+        }
+        
     }
 }
 //----------------------------------------------------------------------------
@@ -351,6 +366,11 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
                     }
                 }
 
+                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                    synSubs.addFuncSubstitution("addToPre", 1,
+                                                backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                }
+                
                 if(trueSpike) {
                     sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
                 }
@@ -430,10 +450,11 @@ size_t PreSpanProcedural::getSynapticMatrixRowStride(const SynapseGroupInternal 
 bool PreSpanProcedural::isCompatible(const SynapseGroupInternal &sg, const PreferencesBase &) const
 {
     // Presynaptic procedural parallelism can be used when synapse groups have 
-    // procedural connectivity and weights are either GLOBAL or PROCEDURAL
+    // procedural connectivity and weights are either GLOBAL, PROCEDURAL or KERNEL
     const auto matrixType = sg.getMatrixType();
     return ((matrixType & SynapseMatrixConnectivity::PROCEDURAL)
-            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)));
+            && ((matrixType & SynapseMatrixWeight::GLOBAL) || (matrixType & SynapseMatrixWeight::PROCEDURAL)
+                || (matrixType & SynapseMatrixWeight::KERNEL)));
 }
 //----------------------------------------------------------------------------
 size_t PreSpanProcedural::getSharedMemoryPerThread(const PresynapticUpdateGroupMerged&, const BackendSIMT&) const
@@ -469,6 +490,10 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
     }
     else {
         os << "const unsigned int spike = " << popSubs["id"] << ";" << std::endl;
+    }
+
+    if(sg.getArchetype().isPresynapticOutputRequired()) {
+        os << "scalar lrevInSyn= 0.0;" << std::endl;
     }
 
     // If there is a spike for this thread to process
@@ -562,7 +587,11 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
             presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, 
                                                       backend.getAtomic(model.getPrecision()) + "(&group->inSyn[" + sg.getPostISynIndex(batchSize, "$(id_post)") + "], $(0))");
         }
-
+        
+        if(sg.getArchetype().isPresynapticOutputRequired()) {
+            synSubs.addFuncSubstitution("addToPre", 1, "lrevInSyn += $(0)");
+        }
+        
         // Generate presynaptic simulation code into new stringstream-backed code stream
         std::ostringstream presynapticUpdateStream;
         CodeStream presynapticUpdate(presynapticUpdateStream);
@@ -582,6 +611,13 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
         if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
             os << CodeStream::CB(130);
         }
+
+        // Should this be in the Postamble?
+        if(sg.getArchetype().isPresynapticOutputRequired()) {
+            // write lrevInSyn to global memory if not 0
+            os << "if(lrevInSyn != 0.0) " << backend.getAtomic(model.getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, "preInd") + "], lrevInSyn);" << std::endl;
+        }
+
     }
 }
 //----------------------------------------------------------------------------
@@ -717,6 +753,12 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
                     synSubs.addVarSubstitution("id_syn", "synAddress");
                     synSubs.addVarSubstitution("id_post", "ipost");
                     synSubs.addFuncSubstitution("addToInSyn", 1, "shLg[(ibit * " + std::to_string(blockSize) + ") + " + backend.getThreadID() + "] += $(0)");
+
+                    if(sg.getArchetype().isPresynapticOutputRequired()) {
+                        synSubs.addFuncSubstitution("addToPre", 1,
+                                                    backend.getAtomic(modelMerged.getModel().getPrecision()) + "(&group->revInSyn[" + sg.getPreISynIndex(batchSize, synSubs["id_pre"]) + "], $(0))");
+                    }
+ 
                     if(trueSpike) {
                         sg.generateSpikeUpdate(backend, os, modelMerged, synSubs);
                     }

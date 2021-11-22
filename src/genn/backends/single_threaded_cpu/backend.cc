@@ -342,6 +342,9 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + s.getPostISynIndex(1, "j") + "] += $(0)");
                             }
 
+                            if(s.getArchetype().isPresynapticOutputRequired()) {
+                                synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
+                            }
                             // Call synapse dynamics handler
                             s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
@@ -364,7 +367,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                     os << "const auto *group = &mergedPresynapticUpdateGroup" << s.getIndex() << "[g]; " << std::endl;
 
                     genSynapseIndexCalculation(os, s, 1);
-
+                    
                     // generate the code for processing spike-like events
                     if (s.getArchetype().isSpikeEventRequired()) {
                         genPresynapticUpdate(os, modelMerged, s, funcSubs, false);
@@ -435,7 +438,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                 synSubs.addVarSubstitution("id_syn", "((group->numTrgNeurons * i) + spike)");
                             }
                             synSubs.addVarSubstitution("id_post", "spike");
-
+                            if (s.getArchetype().isPresynapticOutputRequired()) {
+                                synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + s.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");        
+                            }
+            
                             s.generateSynapseUpdate(*this, os, modelMerged, synSubs);
                         }
                     }
@@ -653,6 +659,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseKernelInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
@@ -662,6 +669,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseKernelInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
@@ -743,6 +751,22 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
                 // Get reference to group
                 os << "const auto *group = &mergedSynapseDenseInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                Substitutions popSubs(&funcSubs);
+                s.generateInit(*this, os, modelMerged, popSubs);
+            }
+        }
+        
+        os << "// ------------------------------------------------------------------------" << std::endl;
+        os << "// Synapse groups with kernel connectivity" << std::endl;
+        for(const auto &s : modelMerged.getMergedSynapseKernelInitGroups()) {
+            CodeStream::Scope b(os);
+            os << "// merged synapse dense init group " << s.getIndex() << std::endl;
+            os << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Get reference to group
+                os << "const auto *group = &mergedSynapseKernelInitGroup" << s.getIndex() << "[g]; " << std::endl;
                 Substitutions popSubs(&funcSubs);
                 s.generateInit(*this, os, modelMerged, popSubs);
             }
@@ -1218,6 +1242,50 @@ void Backend::genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions
     }
 }
 //--------------------------------------------------------------------------
+void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const
+{
+    Substitutions varSubs(&kernelSubs);
+    
+    // Loop through kernel dimensions
+    const auto &kernelSize = sg.getArchetype().getKernelSize();
+    
+    // Define recursive function to generate nested kernel initialisation loops
+    // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
+    std::function<void(size_t)> generateRecursive =\
+        [&handler, &kernelSize, &os, &sg, &varSubs, &generateRecursive](size_t depth)
+        {
+            // Loop through this kernel dimensions
+            const std::string idxVar = "k" + std::to_string(depth);
+            os << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << sg.getKernelSize(depth) << "; " << idxVar << "++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Add substitution for this kernel index
+                varSubs.addVarSubstitution("id_kernel_" + std::to_string(depth), idxVar);
+                
+                // If we've recursed through all dimensions
+                if(depth == (kernelSize.size() - 1)) {
+                    // Generate kernel index and use as "synapse" index
+                    // **TODO** rename
+                    os << "const unsigned int kernelInd = ";
+                    sg.genKernelIndex(os, varSubs);
+                    os << ";" << std::endl;
+                    varSubs.addVarSubstitution("id_syn", "kernelInd");
+                    
+                    // Call handler
+                    handler(os, varSubs);
+                }
+                // Otherwise, recurse
+                else {
+                    generateRecursive(depth + 1);
+                }
+            }
+        };
+        
+    // Generate loops through kernel indices recursively
+    generateRecursive(0);
+}
+//--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
 {
     assert(!getPreferences().automaticCopy);
@@ -1451,6 +1519,10 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         }
         else {
             synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "ipost") + "] += $(0)");
+        }
+
+        if (sg.getArchetype().isPresynapticOutputRequired()) {
+            synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + sg.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
         }
 
         if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
