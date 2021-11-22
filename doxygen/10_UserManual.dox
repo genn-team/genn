@@ -234,21 +234,59 @@ Read-write state variables are duplicated for each batch and, by default, read-o
 /*! 
 \page sectNeuronModels Neuron models
 There is a number of predefined models which can be used with the \add_cpp_python_text{ModelSpec::addNeuronPopulation,pygenn.GeNNModel.add_neuron_population} method:
-- NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
 - NeuronModels::LIF
+- NeuronModels::Poisson
+- NeuronModels::PoissonNew
+- NeuronModels::RulkovMap
 - NeuronModels::SpikeSource
 - NeuronModels::SpikeSourceArray
-- NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
-- NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesAlt
+- NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesNStep
 
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "Izhikevich".
 \end_toggle
+
+Example usage:
+\add_toggle_code_cpp
+// Izhikevich model parameters - tonic spiking
+NeuronModels::Izhikevich::ParamValues izh_p(
+    0.02,       // 0 - a
+    0.2,        // 1 - b
+    -65,        // 2 - c
+    6           // 3 - d
+); 
+
+// Izhikevich model initial conditions - tonic spiking
+NeuronModels::Izhikevich::VarValues izh_ini(
+    -65,        // 0 - V
+    -20         // 1 - U
+);
+    
+model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", 10, izh_p, izh_ini);
+\end_toggle_code
+
+\add_toggle_code_python
+# Izhikevich model parameters - tonic spiking
+izh_p= {
+    "a": 0.02,
+    "b": 0.2,
+    "c": -65.0,
+    "d": 6.0
+}
+
+# Izhikevich model initial conditions - tonic spiking
+izh_ini= {
+    "V": -65.0,
+    "U": -20.0
+}
+     
+pop1= model.add_neuron_population("pop1", 10, "Izhikevich", izh_p, izh_ini) 
+\end_toggle_code
 
 \section sect_own Defining your own neuron type 
 In order to define a new neuron type for use in a GeNN application,
