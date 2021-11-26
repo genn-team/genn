@@ -1,0 +1,68 @@
+diff --git i/tests/spineml/generator/Makefile w/tests/spineml/generator/Makefile
+index 25e240349..6d0c7aa71 100644
+--- i/tests/spineml/generator/Makefile
++++ w/tests/spineml/generator/Makefile
+@@ -17,8 +17,7 @@ include ../../../src/genn/MakefileCommon
+ # Get simulate SpineML path i.e. directory of this Makefile
+ SPINEML_GEN_TEST_PATH	:=$(GENN_DIR)/tests/spineml/generator
+ 
+-TEST_SOURCES		:= $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
+-TEST_SOURCES		+= $(SPINEML_GEN_TEST_PATH)/*.cc
++TEST_SOURCES		:= $(wildcard $(SPINEML_GEN_TEST_PATH)/*.cc)
+ TEST_SOURCES		+= $(GENN_DIR)/src/spineml/generator/modelCommon.cc
+ 
+ # Add compiler and linker flags to link SpineML simulator and common libraries; and pthreads
+@@ -33,7 +32,7 @@ TEST			:=$(SPINEML_GEN_TEST_PATH)/test$(GENN_PREFIX)
+ all: $(TEST)
+ 
+ $(TEST): $(TEST_SOURCES) genn spineml_common
+-	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
++	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -L$(GTEST_DIR)/lib -lgtest -lgtest_main -o $@ $(LDFLAGS)
+ 
+ genn:
+ 	$(MAKE) -C $(GENN_DIR)/src/genn/genn
+diff --git i/tests/spineml/simulator/Makefile w/tests/spineml/simulator/Makefile
+index 326e2340b..9c4019e78 100644
+--- i/tests/spineml/simulator/Makefile
++++ w/tests/spineml/simulator/Makefile
+@@ -17,8 +17,7 @@ include ../../../src/genn/MakefileCommon
+ # Get simulate SpineML path i.e. directory of this Makefile
+ SPINEML_SIM_TEST_PATH	:=$(GENN_DIR)/tests/spineml/simulator
+ 
+-TEST_SOURCES		:= $(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc
+-TEST_SOURCES		+= $(SPINEML_SIM_TEST_PATH)/*.cc
++TEST_SOURCES		:= $(wildcard $(SPINEML_SIM_TEST_PATH)/*.cc)
+ 
+ # Add compiler and linker flags to link SpineML simulator and common libraries; and pthreads
+ LDFLAGS			+= -L$(GENN_DIR)/lib -lspineml_simulator$(GENN_PREFIX) -lspineml_common$(GENN_PREFIX) -lpthread
+@@ -32,7 +31,7 @@ TEST			:=$(SPINEML_SIM_TEST_PATH)/test$(GENN_PREFIX)
+ all: $(TEST)
+ 
+ $(TEST): $(TEST_SOURCES) spineml_common spineml_simulator
+-	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -o $@ $(LDFLAGS)
++	$(CXX) -std=c++11 $(CXXFLAGS) $(TEST_SOURCES) -L$(GTEST_DIR)/lib -lgtest -lgtest_main -o $@ $(LDFLAGS)
+ 
+ spineml_common:
+ 	$(MAKE) -C $(GENN_DIR)/src/spineml/common
+diff --git c/tests/unit/Makefile w/tests/unit/Makefile
+index 8376deadf..f3a6445b5 100644
+--- c/tests/unit/Makefile
++++ w/tests/unit/Makefile
+@@ -5,7 +5,7 @@ include ../../src/genn/MakefileCommon
+ UNIT_TEST_PATH		:=$(GENN_DIR)/tests/unit
+ OBJECT_DIRECTORY	:=$(OBJECT_DIRECTORY)/tests/unit
+ 
+-SOURCES			:=$(GTEST_DIR)/src/gtest-all.cc $(GTEST_DIR)/src/gtest_main.cc $(wildcard *.cc)
++SOURCES			:=$(wildcard *.cc)
+ OBJECTS			:=$(SOURCES:%.cc=$(OBJECT_DIRECTORY)/%.o)
+ DEPS			:=$(OBJECTS:.o=.d)
+ 
+@@ -21,7 +21,7 @@ TEST			:=$(UNIT_TEST_PATH)/test$(GENN_PREFIX)
+ all: $(TEST)
+ 
+ $(TEST): $(OBJECTS) libgenn backend
+-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
++	$(CXX) $(CXXFLAGS) $(OBJECTS) -L$(GTEST_DIR)/lib -lgtest -lgtest_main -o $@ $(LDFLAGS)
+ 
+ -include $(DEPS)
+ 
