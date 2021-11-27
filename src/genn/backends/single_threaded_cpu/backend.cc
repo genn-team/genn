@@ -1505,6 +1505,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
                 // Apply substitutions to value
                 std::string value = d.value;
                 connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
+                value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
                 os << d.type << " " << d.name << " = " << value << ";" << std::endl;
             }

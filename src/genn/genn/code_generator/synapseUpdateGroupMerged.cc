@@ -250,7 +250,7 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
         // Apply substitutions to value
         std::string value = a.value;
         popSubs.applyCheckUnreplaced(value, "proceduralSparseConnectivity row build state var : merged" + std::to_string(getIndex()));
-
+        value = ensureFtype(value, modelMerged.getModel().getPrecision());
         os << a.type << " " << a.name << " = " << value << ";" << std::endl;
     }
 
