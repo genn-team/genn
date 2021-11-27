@@ -695,6 +695,7 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
         // Apply substitutions to value
         std::string value = a.value;
         popSubs.applyCheckUnreplaced(value, "initSparseConnectivity state var : merged" + std::to_string(getIndex()));
+        value = ensureFtype(value, ftype);
 
         os << a.type << " " << a.name << " = " << value << ";" << std::endl;
     }

@@ -247,6 +247,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         // Apply substitutions to value
         std::string value = a.value;
         neuronSubs.applyCheckUnreplaced(value, "neuron additional input var : merged" + std::to_string(getIndex()));
+        value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
         os << a.type << " " << a.name << " = " << value << ";" << std::endl;
     }
