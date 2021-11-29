@@ -226,7 +226,7 @@ SpineMLSimulator::InputValue::TimeVaryingArray::TimeVaryingArray(double dt, unsi
         }
     }
 
-    for(const auto t : m_TimeArrays) {
+    for(const auto &t : m_TimeArrays) {
         LOGD_SPINEML << "\tTimestep:" << t.first << "," << t.second.size() << " values";
     }
 }
