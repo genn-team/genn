@@ -441,12 +441,12 @@ public:
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const std::vector<double> &pars)
         {
-            const unsigned int conv_kh = (unsigned int)pars[0];
-            const unsigned int conv_kw = (unsigned int)pars[1];
-            const unsigned int conv_sh = (unsigned int)pars[2];
-            const unsigned int conv_sw = (unsigned int)pars[3];
+            const double conv_kh = pars[0];
+            const double conv_kw = pars[1];
+            const double conv_sh = pars[2];
+            const double conv_sw = pars[3];
             const unsigned int conv_oc = (unsigned int)pars[11];
-            return (conv_kh / conv_sh) * (conv_kw / conv_sw) * conv_oc;
+            return (unsigned int)std::ceil(conv_kh / conv_sh) * (unsigned int)std::ceil(conv_kw / conv_sw) * conv_oc;
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
