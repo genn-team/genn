@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+    xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+    xmlns:xhtml="http://www.w3.org/1999/xhtml"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+                        http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+ <url>
+  <loc>http://genn-team.github.io/genn/</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/archive.html</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/blog/</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/categories/</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/galleries/</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/index.src.html</loc>
+  <lastmod>2021-12-21T16:43:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/listings/</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/listings/__pycache__/</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+ <url>
+  <loc>http://genn-team.github.io/genn/listings/hello.py.html</loc>
+  <lastmod>2021-12-21T18:18:00Z</lastmod>
+ </url>
+</urlset>
