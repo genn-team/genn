@@ -3,15 +3,14 @@
 " lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="description" content="Welcome to GeNN">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GeNN</title>
-<link href="../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<title>GeNN · Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices </title>
+<link href="../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=PT+Sans:400,400italic,700%7CAbril+Fatface">
 <meta content="#5670d4" name="theme-color">
-<link rel="alternate" type="application/rss+xml" title="RSS" href="../rss.xml">
-<link rel="canonical" href="http://genn-team.github.io/genn/blog/">
-<!--[if lt IE 9]><script src="../assets/js/html5.js"></script><![endif]-->
+<link rel="alternate" type="application/rss+xml" title="RSS" href="../../rss.xml">
+<link rel="canonical" href="http://genn-team.github.io/genn/posts/sw_blog_toeplitz/">
+<!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="GeNN Team">
 </head>
 <body class="">
     <a href="#content" class="sr-only sr-only-focusable">Skip to main content</a>
@@ -31,9 +30,9 @@
                 <p class="lead">Welcome to GeNN</p>
 
             </div>
-                <nav id="menu" role="navigation" class="sidebar-nav"><a class="sidebar-nav-item" href="../archive.html">Archive</a>
-        <a class="sidebar-nav-item" href="../categories/">Tags</a>
-        <a class="sidebar-nav-item" href="../rss.xml">RSS feed</a>
+                <nav id="menu" role="navigation" class="sidebar-nav"><a class="sidebar-nav-item" href="../../archive.html">Archive</a>
+        <a class="sidebar-nav-item" href="../../categories/">Tags</a>
+        <a class="sidebar-nav-item" href="../../rss.xml">RSS feed</a>
     
     
     </nav><footer id="footer"><span class="copyright">
@@ -46,13 +45,15 @@
     </div>
 
     <div class="content container" id="content">
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><h1 class="post-title p-name"><a href="." class="u-url">Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices</a></h1>
+
+    <span class="post-date">
+      <time class="published dt-published" datetime="2021-12-21T14:39:44Z" itemprop="datePublished" title="2021-12-21 14:39">2021-12-21 14:39</time></span>
+
     
-<div class="post">
-    <article class="post h-entry post-text"><header><h1 class="post-title p-name"><a href="../posts/sw_blog_toeplitz/" class="u-url">Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices</a></h1>
-        <div class="metadata">
-            <span class="post-date dateline"><time class="published dt-published" datetime="2021-12-21T14:39:44Z" title="2021-12-21 14:39">2021-12-21 14:39</time></span>
-        </div>
-    </header><div class="e-content entry-content">
+    
+
+    <div class="e-content entry-content" itemprop="articleBody text">
     <div>
 <h2>How to do convolutions with doubly blocked Toeplitz matrices</h2>
 <p>A few weeks ago, Jamie (@neworderofjamie) asked me on the chat whether I knew what doubly blocked Toeplitz matrices are and how they implement convolutions. I had no clue. Since then we have implemented convolutions using doubly blocked Toeplitz matrices in GeNN and found them to be extremely useful and efficient.
@@ -72,7 +73,7 @@ i_{11} &amp; i_{12} &amp; i_{13} \cr
 i_{21} &amp; i_{22} &amp; i_{23}} \right).
 \]
 Then the convolution in the machine learning use of the term is calculating the cross-correlation of the kernel "moving across" the layer as illustrated in this diagram:
-<img alt="Explanation of machine learning style convolution of a filter with a layer" src="../images/convolution1.png" width="90%">
+<img alt="Explanation of machine learning style convolution of a filter with a layer" src="../../images/convolution1.png" width="90%">
 Green squares illustrate entries of \(I\) and red squares entries of \(K\). The overlapping entries are shown in yellow.</p>
 <p>For the first non-zero entry at \((1,1)\) of the result matrix \(R\), we have the situation of panel a, \(r_{11} = k_{22} i_{11}\).
 Then the kernel moves one over (panel b), and \(r_{12} = k_{21}i_{11} + k_{22} i_{12}\). Then (panel c), \(r_{13} = k_{21}i_{12} + k_{22} i_{13}\) and (panel d), \(r_{14} = k_{21}i_{13} \).</p>
@@ -210,15 +211,11 @@ is then given by turning the matrix \(I\) into a column vector by stacking up it
 <p>There we have it - convolution (in the machine learning sense, i.e. corss-correlation) of a kernel \(K\) with a layer \(I\) expressed as the product of a doubly blocked Toeplitz matrix derived from \(K\) with the column vector of the row-wise unrolled entries from \(I\).</p>
 </div>
     </div>
-    </article>
-</div>
-
-
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha384-3lJUsx1TJHt7BA4udB5KPnDrlkO8T6J6v/op7ui0BbCjvZ9WqV4Xm6DTP6kQ/iBH" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
+    <aside class="postpromonav"><nav></nav></aside><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML" integrity="sha384-3lJUsx1TJHt7BA4udB5KPnDrlkO8T6J6v/op7ui0BbCjvZ9WqV4Xm6DTP6kQ/iBH" crossorigin="anonymous"></script><script type="text/x-mathjax-config">
         MathJax.Hub.Config({tex2jax: {inlineMath: [['$latex ','$'], ['\\(','\\)']]}});
-        </script>
+        </script></article>
 </div>
-            <script src="../assets/js/all-nocdn.js"></script><script>
+            <script src="../../assets/js/all-nocdn.js"></script><script>
     baguetteBox.run('div#content', {
         ignoreClass: 'islink',
         captions: function(element) {
