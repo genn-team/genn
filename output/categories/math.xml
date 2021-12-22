@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>GeNN (Posts about math)</title><link>http://genn-team.github.io/genn/</link><description></description><atom:link href="http://genn-team.github.io/genn/categories/math.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><copyright>Contents © 2021 &lt;a href="mailto:t.nowotny@sussex.ac.uk"&gt;GeNN Team&lt;/a&gt; </copyright><lastBuildDate>Wed, 22 Dec 2021 09:02:03 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices</title><link>http://genn-team.github.io/genn/posts/</link><dc:creator>GeNN Team</dc:creator><description>&lt;div&gt;&lt;h2&gt;How to do convolutions with doubly blocked Toeplitz matrices&lt;/h2&gt;
+&lt;p&gt;A few weeks ago, Jamie (@neworderofjamie) asked me on the chat whether I knew what doubly blocked Toeplitz matrices are and how they implement convolutions. I had no clue. Since then we have implemented convolutions using doubly blocked Toeplitz matrices in GeNN and found them to be extremely useful and efficient.
+1
+In this software blog I will give a brief overview on the why and how convolutions relate to doubly blocked Toeplitz matrices. My blog is based on \cite{Salehi2018} but updated to use machine-learning rather than signal-processing conventions and I am trying to avoid using too many unusual ways of re-arranging rows and columns.&lt;/p&gt;
+&lt;h3&gt;The why&lt;/h3&gt;
+&lt;p&gt;Let us consider the convolution of a \(2\times 2\) kernel with a \(3\times 2\) layer. We denote the kernel as
+\[
+K= \left(\matrix{
+k_{11} &amp;amp; k_{12} \cr
+k_{21} &amp;amp; k_{22}}\right)
+\]
+and the layer as
+\[
+I= \left(\matrix{
+i_{11} &amp;amp; i_{12} &amp;amp; i_{13} \cr
+i_{21} &amp;amp; i_{22} &amp;amp; i_{23}} \right).
+\]
+Then the convolution in the machine learning use of the term is calculating the cross-correlation of the kernel "moving across" the layer as illustrated in this diagram:
+&lt;img alt="Explanation of machine learning style convolution of a filter with a layer" src="http://genn-team.github.io/genn/images/convolution1.png" width="90%"&gt;
+Green squares illustrate entries of \(I\) and red squares entries of \(K\). The overlapping entries are shown in yellow.&lt;/p&gt;
+&lt;p&gt;For the first non-zero entry at \((1,1)\) of the result matrix \(R\), we have the situation of panel a, \(r_{11} = k_{22} i_{11}\).
+Then the kernel moves one over (panel b), and \(r_{12} = k_{21}i_{11} + k_{22} i_{12}\). Then (panel c), \(r_{13} = k_{21}i_{12} + k_{22} i_{13}\) and (panel d), \(r_{14} = k_{21}i_{13} \).&lt;/p&gt;
+&lt;p&gt;For the second row,
+\(r_{21} = k_{12} i_{11} + k_{22} i_{21} \) (panel e), 
+\(r_{22} = k_{11} i_{11} + k_{12} i_{12} + k_{21} i_{21} + k_{22} i_{22} \) (panel f),
+\(r_{23} = k_{11}i_{12} + k_{12} i_{13} + k{21} i_{22} + k_{22} i_{23} \) (panel g), and
+\(r_{24} = k_{11}i_{13} + k_{21} i_{33} \) (panel h).&lt;/p&gt;
+&lt;p&gt;And similar for the third row (panels i-l).&lt;/p&gt;
+&lt;p&gt;If we express this as a matrix multiplication of a matrix formed from the entries of the kernel and a vector, unrolled row-wise, from the layer, we get the formula
+\[
+\left(\matrix{
+k_{22} &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 \cr
+k_{21} &amp;amp; k_{22} &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 \cr
+0 &amp;amp; k_{21} &amp;amp; k_{22} &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 \cr
+0 &amp;amp; 0 &amp;amp; k_{21} &amp;amp; k_{22} &amp;amp; 0 &amp;amp; 0 \cr
+k_{12} &amp;amp; 0 &amp;amp; 0 &amp;amp; k_{22} &amp;amp; 0 &amp;amp; 0 \cr
+k_{11} &amp;amp; k_{12} &amp;amp; 0 &amp;amp; k_{21} &amp;amp; k_{22} &amp;amp; 0 \cr
+0 &amp;amp; k_{11} &amp;amp; k_{12} &amp;amp; 0 &amp;amp; k_{21} &amp;amp; k_{22} \cr
+0 &amp;amp; 0 &amp;amp; k_{11} &amp;amp; 0 &amp;amp; 0 &amp;amp; k_{21} \cr
+0 &amp;amp; 0 &amp;amp; 0 &amp;amp; k_{11} &amp;amp; 0 &amp;amp; 0 \cr
+0 &amp;amp; 0 &amp;amp; 0 &amp;amp; k_{12} &amp;amp; k_{11} &amp;amp; 0 \cr
+0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 &amp;amp; k_{12} &amp;amp; k_{11} \cr
+0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0 &amp;amp; k_{12}}\right)
+\cdot
+\left(\matrix{
+i_{11} \cr
+i_{12} \cr
+i_{13} \cr
+i_{21} \cr
+i_{22} \cr
+i_{23}}\right)
+\]&lt;/p&gt;
+&lt;p&gt;Now one can already see that the matrix formed from the kernel entries has a very peculiar shape - the shape of a doubly blocked Toeplitz matrix&lt;/p&gt;
+&lt;h3&gt;Doubly blocked Toeplitz matrix&lt;/h3&gt;
+&lt;p&gt;A Toeplitz matrix is a matrix where the values along all diagonals are constant, i.e.&lt;/p&gt;
+&lt;p&gt;\[
+\left(
+    \matrix{ 
+        a_{0} &amp;amp; a_{-1} &amp;amp; a_{-2} &amp;amp; \cdots  &amp;amp; \cdots &amp;amp; \cdots &amp;amp; a_{-(N-1)} \cr
+        a_{1} &amp;amp; a_{0} &amp;amp; a_{-1} &amp;amp; a_{-2} &amp;amp;  &amp;amp; &amp;amp; \vdots \cr
+        a_{2} &amp;amp; a_{1} &amp;amp; a_{0} &amp;amp; a_{-1} &amp;amp;  &amp;amp; &amp;amp; \vdots \cr
+        \vdots &amp;amp; \ddots &amp;amp; \ddots &amp;amp; \ddots &amp;amp; \ddots &amp;amp; \ddots &amp;amp; &amp;amp; \vdots \cr
+        \vdots &amp;amp; &amp;amp; &amp;amp; \ddots  &amp;amp; a_{0} &amp;amp; a_{-1} &amp;amp; a_{-2} \cr
+        \vdots &amp;amp; &amp;amp; &amp;amp;  &amp;amp; a_{1} &amp;amp; a_{0} &amp;amp; a_{-1} \cr
+        a_{M-1} &amp;amp; \cdots  &amp;amp; \cdots &amp;amp; \cdots &amp;amp; a_{2} &amp;amp; a_{1} &amp;amp; a_{0} }
+    \right) .
+\]&lt;/p&gt;
+&lt;p&gt;Furthermore, if we build a matrix \(A\) out of Toeplitz sub-matrices \(A_{k}\) \emph{and} the structure of \(A\) with respect to these submatrices is also Toeplitz:&lt;/p&gt;
+&lt;p&gt;\[
+    A = \left(
+    \matrix{ 
+        A_{0} &amp;amp; A_{-1} &amp;amp; \cdots &amp;amp; A_{-(L-1)} \cr
+        A_{1} &amp;amp; A_{0} &amp;amp; \cdots &amp;amp; A_{-(L-2)} \cr
+        \vdots &amp;amp; \vdots &amp;amp; \ddots &amp;amp; \vdots \cr
+        A_{K} &amp;amp; A_{K-1} &amp;amp; \cdots &amp;amp; A_{0}}
+    \right),
+\]&lt;/p&gt;
+&lt;p&gt;then, this matrix is called a doubly-blocked Toeplitz matrix. A standard way to generate a Toeplitz matrix from a vector \(v\) is to use \(v\) as the first column vector, then make one cyclic permutation and use it as the second column vector and so on.&lt;/p&gt;
+&lt;h3&gt;The method&lt;/h3&gt;
+&lt;p&gt;As we have seen on the example above, 2D convolution operations can be expressed as multiplication by a doubly-blocked Toeplitz matrix. As a general method, applied to the example above,
+to convolve \(K\) with \(I\), we first flip \(K\) across the horizontal and vertical axis and pad it to the output size \((I_\text{height} + K_\text{height} - 1) \times (I_\text{width} + K_\text{width} - 1)\) of the convolution.
+For instance, here, the \(2 \times 3\) layer \(I\) covolved by \(K\) above, leads to output size \(3 \times 4\).
+Depending on the padding mode used by the convolution, typically, only part of this output is actually required.
+The flipped and padded kernel \(K\) from above is
+\[
+    K_\text{pad}=
+    \left(
+    \matrix{ 
+        k_{22} &amp;amp; k_{21} &amp;amp; 0 &amp;amp; 0 \cr
+        k_{12} &amp;amp; k_{11} &amp;amp; 0 &amp;amp; 0 \cr
+        0 &amp;amp; 0 &amp;amp; 0 &amp;amp; 0}
+    \right)
+\]&lt;/p&gt;
+&lt;p&gt;We then convert each {\em row vector} of this matrix into Toeplitz matrices \(F_i\) as described above:
+\[
+    F_0=
+    \left(
+    \matrix{ 
+        k_{22} &amp;amp; 0 &amp;amp; 0 \cr
+        k_{21} &amp;amp; k_{22} &amp;amp; 0 \cr
+        0 &amp;amp; k_{21} &amp;amp; k_{22} \cr
+        0 &amp;amp; 0 &amp;amp; k_{21}}
+    \right)
+    \quad
+    F_1=
+    \left(
+    \matrix{ 
+        k_{12} &amp;amp; 0 &amp;amp;  0 \cr
+        k_{11} &amp;amp; k_{12} &amp;amp; 0 \cr
+        0 &amp;amp;  k_{11} &amp;amp; k_{12} \cr
+        0 &amp;amp;  0 &amp;amp;  k_{11}}
+    \right)
+    \quad
+    F_2=
+    \left(
+    \matrix{ 
+        0 &amp;amp; 0  &amp;amp; 0 \cr
+        0 &amp;amp; 0 &amp;amp; 0 \cr
+        0  &amp;amp; 0 &amp;amp; 0 \cr
+        0  &amp;amp; 0  &amp;amp; 0}
+    \right)
+\]
+and, finally, assemble these into a doubly blocked Toeplitz matrix \(F\):&lt;/p&gt;
+&lt;p&gt;\[
+    F=
+    \left(
+    \matrix{ 
+        F_0 &amp;amp; F_2  \cr
+        F_1 &amp;amp; F_0 \cr
+        F_2 &amp;amp; F_1 \cr
+    }
+    \right)
+\]&lt;/p&gt;
+&lt;p&gt;The convolution of \(K\) with \(I\)
+is then given by turning the matrix \(I\) into a column vector by stacking up its row vectors,
+\[
+    I_\text{col} = 
+    \left(
+    \matrix{ 
+        i_{11} \cr
+        i_{12} \cr
+        i_{13} \cr
+        i_{21} \cr
+        i_{22} \cr
+        i_{23}}
+    \right)
+\]&lt;/p&gt;
+&lt;p&gt;and multiplying F from the left,
+\[
+  R_{\text{col}} = F \cdot I  \quad 
+  \Leftrightarrow \quad R_{\text{col},j}= \sum_i F_{ji}I_i 
+  \]&lt;/p&gt;
+&lt;p&gt;Finally, \(R_{\text{col}}\) can be reinterpreted as the output matrix \(R\) by arranging its entries row-wise in a \(3\times 4\) matrix.&lt;/p&gt;
+&lt;p&gt;There we have it - convolution (in the machine learning sense, i.e. corss-correlation) of a kernel \(K\) with a layer \(I\) expressed as the product of a doubly blocked Toeplitz matrix derived from \(K\) with the column vector of the row-wise unrolled entries from \(I\).&lt;/p&gt;&lt;/div&gt;</description><category>convolution</category><category>math</category><category>toeplitz</category><guid>http://genn-team.github.io/genn/posts/</guid><pubDate>Tue, 21 Dec 2021 14:39:44 GMT</pubDate></item></channel></rss>
