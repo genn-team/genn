@@ -85,7 +85,9 @@ i_{31} &amp; i_{32} &amp; i_{33}
 Then the convolution in the machine learning use of the term is calculating the cross-correlation of the kernel "moving across" the layer as illustrated below. The layer \(I\) is in blue, the kernel \(K\) in grey and the result \(R\) in green.</p>
 <table>
 <thead><tr>
-<th align="center"><img alt="Illustration of convolution step" src="../images/blog_00.png"></th>
+<th align="center">
+<sup id="fnref:1"><a class="footnote-ref" href="../posts/sw_blog_toeplitz.html#fn:1">1</a></sup><img alt="Illustration of convolution step" src="../images/blog_00.png">
+</th>
 <th align="center"><img alt="Illustration of convolution step" src="../images/blog_01.png"></th>
 <th align="center"><img alt="Illustration of convolution step" src="../images/blog_02.png"></th>
 <th align="center"><img alt="Illustration of convolution step" src="../images/blog_03.png"></th>
@@ -269,6 +271,15 @@ is then given by multiplying F from the left onto \(I_\text{col}\) as defined ab
   \]</p>
 <p>Finally, \(R_{\text{col}}\) can be reinterpreted as the output matrix \(R\) by arranging its entries row-wise in a \(4\times 4\) matrix.</p>
 <p>There we have it - convolution (in the machine learning sense, i.e. corss-correlation) of a kernel \(K\) with a layer \(I\) expressed as the product of a doubly blocked Toeplitz matrix derived from \(K\) with the column vector of the row-wise unrolled entries from \(I\).</p>
+<div class="footnote">
+<hr>
+<ol>
+<li id="fn:1">
+<p>Convolution images created with software from:
+Vincent Dumoulin and Francesco Visin, A guide to convolution arithmetic for deep learning (2016) ArXiv e-prints 1603.07285; <a href="https://github.com/vdumoulin/conv_arithmetic">Software on github</a> <a class="footnote-backref" href="../posts/sw_blog_toeplitz.html#fnref:1" title="Jump back to footnote 1 in the text">↩</a></p>
+</li>
+</ol>
+</div>
 </div>
     </div>
     </article>

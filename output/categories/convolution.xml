@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>GeNN (Posts about convolution)</title><link>http://genn-team.github.io/genn/</link><description></description><atom:link href="http://genn-team.github.io/genn/categories/convolution.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><copyright>Contents © 2021 &lt;a href="mailto:t.nowotny@sussex.ac.uk"&gt;GeNN Team&lt;/a&gt; </copyright><lastBuildDate>Wed, 22 Dec 2021 10:56:01 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices</title><link>http://genn-team.github.io/genn/posts/sw_blog_toeplitz.html</link><dc:creator>GeNN Team</dc:creator><description>&lt;div&gt;&lt;h2&gt;How to do convolutions with doubly blocked Toeplitz matrices&lt;/h2&gt;
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>GeNN (Posts about convolution)</title><link>http://genn-team.github.io/genn/</link><description></description><atom:link href="http://genn-team.github.io/genn/categories/convolution.xml" rel="self" type="application/rss+xml"></atom:link><language>en</language><copyright>Contents © 2021 &lt;a href="mailto:t.nowotny@sussex.ac.uk"&gt;GeNN Team&lt;/a&gt; </copyright><lastBuildDate>Wed, 22 Dec 2021 11:13:51 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices</title><link>http://genn-team.github.io/genn/posts/sw_blog_toeplitz.html</link><dc:creator>GeNN Team</dc:creator><description>&lt;div&gt;&lt;h2&gt;How to do convolutions with doubly blocked Toeplitz matrices&lt;/h2&gt;
 &lt;p&gt;A few weeks ago, Jamie (@neworderofjamie) asked me on the chat whether I knew what doubly blocked Toeplitz matrices are and how they implement convolutions. I had no clue. Since then we have implemented convolutions using doubly blocked Toeplitz matrices in GeNN and found them to be extremely useful and efficient.
 1
 In this software blog I will give a brief overview on the why and how convolutions relate to doubly blocked Toeplitz matrices. My blog is based on \cite{Salehi2018} but updated to use machine-learning rather than signal-processing conventions and I am trying to avoid using too many unusual ways of re-arranging rows and columns.&lt;/p&gt;
@@ -22,7 +22,7 @@ Then the convolution in the machine learning use of the term is calculating the 
 &lt;table&gt;
 &lt;thead&gt;
 &lt;tr&gt;
-&lt;th align="center"&gt;&lt;img alt="Illustration of convolution step" src="http://genn-team.github.io/genn/images/blog_00.png"&gt;&lt;/th&gt;
+&lt;th align="center"&gt;&lt;sup id="fnref:1"&gt;&lt;a class="footnote-ref" href="http://genn-team.github.io/genn/posts/sw_blog_toeplitz.html#fn:1"&gt;1&lt;/a&gt;&lt;/sup&gt;&lt;img alt="Illustration of convolution step" src="http://genn-team.github.io/genn/images/blog_00.png"&gt;&lt;/th&gt;
 &lt;th align="center"&gt;&lt;img alt="Illustration of convolution step" src="http://genn-team.github.io/genn/images/blog_01.png"&gt;&lt;/th&gt;
 &lt;th align="center"&gt;&lt;img alt="Illustration of convolution step" src="http://genn-team.github.io/genn/images/blog_02.png"&gt;&lt;/th&gt;
 &lt;th align="center"&gt;&lt;img alt="Illustration of convolution step" src="http://genn-team.github.io/genn/images/blog_03.png"&gt;&lt;/th&gt;
@@ -212,4 +212,13 @@ is then given by multiplying F from the left onto \(I_\text{col}\) as defined ab
   \Leftrightarrow \quad R_{\text{col},j}= \sum_i F_{ji}I_i 
   \]&lt;/p&gt;
 &lt;p&gt;Finally, \(R_{\text{col}}\) can be reinterpreted as the output matrix \(R\) by arranging its entries row-wise in a \(4\times 4\) matrix.&lt;/p&gt;
-&lt;p&gt;There we have it - convolution (in the machine learning sense, i.e. corss-correlation) of a kernel \(K\) with a layer \(I\) expressed as the product of a doubly blocked Toeplitz matrix derived from \(K\) with the column vector of the row-wise unrolled entries from \(I\).&lt;/p&gt;&lt;/div&gt;</description><category>convolution</category><category>math</category><category>toeplitz</category><guid>http://genn-team.github.io/genn/posts/sw_blog_toeplitz.html</guid><pubDate>Tue, 21 Dec 2021 14:39:44 GMT</pubDate></item></channel></rss>
+&lt;p&gt;There we have it - convolution (in the machine learning sense, i.e. corss-correlation) of a kernel \(K\) with a layer \(I\) expressed as the product of a doubly blocked Toeplitz matrix derived from \(K\) with the column vector of the row-wise unrolled entries from \(I\).&lt;/p&gt;
+&lt;div class="footnote"&gt;
+&lt;hr&gt;
+&lt;ol&gt;
+&lt;li id="fn:1"&gt;
+&lt;p&gt;Convolution images created with software from:
+Vincent Dumoulin and Francesco Visin, A guide to convolution arithmetic for deep learning (2016) ArXiv e-prints 1603.07285; &lt;a href="https://github.com/vdumoulin/conv_arithmetic"&gt;Software on github&lt;/a&gt; &lt;a class="footnote-backref" href="http://genn-team.github.io/genn/posts/sw_blog_toeplitz.html#fnref:1" title="Jump back to footnote 1 in the text"&gt;↩&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;&lt;/div&gt;</description><category>convolution</category><category>math</category><category>toeplitz</category><guid>http://genn-team.github.io/genn/posts/sw_blog_toeplitz.html</guid><pubDate>Tue, 21 Dec 2021 14:39:44 GMT</pubDate></item></channel></rss>
