@@ -1,5 +1,6 @@
+<!--
 .. title: Software Developer Blog: How to do convolutions with doubly blocked Toeplitz matrices
-.. slug: index
+.. slug: sw_blog_toeplitz
 .. date: 2021-12-21 14:39:44 UTC
 .. tags: math, toeplitz, convolution
 .. category: software blog
@@ -7,6 +8,7 @@
 .. description: 
 .. type: text
 .. has_math: yes
+-->
 
 How to do convolutions with doubly blocked Toeplitz matrices
 ===
