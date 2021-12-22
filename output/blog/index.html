@@ -68,7 +68,7 @@
 1
 In this software blog I will give a brief overview on the why and how convolutions relate to doubly blocked Toeplitz matrices. My blog is based on \cite{Salehi2018} but updated to use machine-learning rather than signal-processing conventions and I am trying to avoid using too many unusual ways of re-arranging rows and columns.</p>
 <h3>The why</h3>
-<p>Let us consider the convolution of a \(2\times 2\) kernel with a \(3\times 2\) layer. We denote the kernel as
+<p>Let us consider the convolution of a \(2\times 2\) kernel with a \(3\times 3\) layer. We denote the kernel as
 \[
 K= \left(\matrix{
 k_{11} &amp; k_{12} \cr
@@ -78,34 +78,83 @@ and the layer as
 \[
 I= \left(\matrix{
 i_{11} &amp; i_{12} &amp; i_{13} \cr
-i_{21} &amp; i_{22} &amp; i_{23}} \right).
+i_{21} &amp; i_{22} &amp; i_{23} \cr
+i_{31} &amp; i_{32} &amp; i_{33}
+} \right).
 \]
-Then the convolution in the machine learning use of the term is calculating the cross-correlation of the kernel "moving across" the layer as illustrated in this diagram:
-<img alt="Explanation of machine learning style convolution of a filter with a layer" src="../images/convolution1.png" width="90%">
-Green squares illustrate entries of \(I\) and red squares entries of \(K\). The overlapping entries are shown in yellow.</p>
-<p>For the first non-zero entry at \((1,1)\) of the result matrix \(R\), we have the situation of panel a, \(r_{11} = k_{22} i_{11}\).
-Then the kernel moves one over (panel b), and \(r_{12} = k_{21}i_{11} + k_{22} i_{12}\). Then (panel c), \(r_{13} = k_{21}i_{12} + k_{22} i_{13}\) and (panel d), \(r_{14} = k_{21}i_{13} \).</p>
-<p>For the second row,
-\(r_{21} = k_{12} i_{11} + k_{22} i_{21} \) (panel e), 
-\(r_{22} = k_{11} i_{11} + k_{12} i_{12} + k_{21} i_{21} + k_{22} i_{22} \) (panel f),
-\(r_{23} = k_{11}i_{12} + k_{12} i_{13} + k{21} i_{22} + k_{22} i_{23} \) (panel g), and
-\(r_{24} = k_{11}i_{13} + k_{21} i_{33} \) (panel h).</p>
-<p>And similar for the third row (panels i-l).</p>
-<p>If we express this as a matrix multiplication of a matrix formed from the entries of the kernel and a vector, unrolled row-wise, from the layer, we get the formula
+Then the convolution in the machine learning use of the term is calculating the cross-correlation of the kernel "moving across" the layer as illustrated below. The layer \(I\) is in blue, the kernel \(K\) in grey and the result \(R\) in green.</p>
+<table>
+<thead><tr>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_00.png"></th>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_01.png"></th>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_02.png"></th>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_03.png"></th>
+</tr></thead>
+<tbody><tr>
+<td align="center">\(r_{11}\)</td>
+<td align="center">\(r_{12}\)</td>
+<td align="center">\(r_{13}\)</td>
+<td align="center">\(3_{14}\)</td>
+</tr></tbody>
+</table>
+<p>For the first non-zero entry at \((1,1)\) of the result matrix \(R\), we therefore have \(r_{11} = k_{22} i_{11}\).
+Then the kernel moves one over and \(r_{12} = k_{21}i_{11} + k_{22} i_{12}\). Then, \(r_{13} = k_{21}i_{12} + k_{22} i_{13}\) and \(r_{14} = k_{21}i_{13} \).</p>
+<table>
+<thead><tr>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_04.png"></th>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_05.png"></th>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_06.png"></th>
+<th align="center"><img alt="Illustration of convolution step" src="../images/blog_07.png"></th>
+</tr></thead>
+<tbody><tr>
+<td align="center">\(r_{21}\)</td>
+<td align="center">\(r_{22}\)</td>
+<td align="center">\(r_{23}\)</td>
+<td align="center">\(r_{24}\)</td>
+</tr></tbody>
+</table>
+<p>So, for the second row,
+\(r_{21} = k_{12} i_{11} + k_{22} i_{21} \), move one over,
+\(r_{22} = k_{11} i_{11} + k_{12} i_{12} + k_{21} i_{21} + k_{22} i_{22} \), one more to the right,
+\(r_{23} = k_{11}i_{12} + k_{12} i_{13} + k_{21} i_{22} + k_{22} i_{23} \), and finally
+\(r_{24} = k_{11}i_{13} + k_{21} i_{23} \).</p>
+<p>It works similar for the remaining two rows.</p>
+<p>If we unroll the layer \(I\) row-wise into a column vector \(I_\text{col}\),
+\[
+    I_\text{col} = 
+    \left(
+    \matrix{ 
+        i_{11} \cr
+        i_{12} \cr
+        i_{13} \cr
+        i_{21} \cr
+        i_{22} \cr
+        i_{23} \cr
+        i_{31} \cr
+        i_{32} \cr
+        i_{33}
+        }
+    \right),
+\]
+then we can express this as a matrix-vector multiplication of a matrix formed from the entries of the kernel \(K\) and the vector\(I_\text{col}\), 
 \[
 \left(\matrix{
-k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
-k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
-0 &amp; k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 \cr
-0 &amp; 0 &amp; k_{21} &amp; k_{22} &amp; 0 &amp; 0 \cr
-k_{12} &amp; 0 &amp; 0 &amp; k_{22} &amp; 0 &amp; 0 \cr
-k_{11} &amp; k_{12} &amp; 0 &amp; k_{21} &amp; k_{22} &amp; 0 \cr
-0 &amp; k_{11} &amp; k_{12} &amp; 0 &amp; k_{21} &amp; k_{22} \cr
-0 &amp; 0 &amp; k_{11} &amp; 0 &amp; 0 &amp; k_{21} \cr
-0 &amp; 0 &amp; 0 &amp; k_{11} &amp; 0 &amp; 0 \cr
-0 &amp; 0 &amp; 0 &amp; k_{12} &amp; k_{11} &amp; 0 \cr
-0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{12} &amp; k_{11} \cr
-0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{12}}\right)
+k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
+k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
+0 &amp; k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
+0 &amp; 0 &amp; k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
+k_{12} &amp; 0 &amp; 0 &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
+k_{11} &amp; k_{12} &amp; 0 &amp; k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 &amp; 0 \cr
+0 &amp; k_{11} &amp; k_{12} &amp; 0 &amp; k_{21} &amp; k_{22} &amp; 0 &amp; 0 &amp; 0 \cr
+0 &amp; 0 &amp; k_{11} &amp; 0 &amp; 0 &amp; k_{21} &amp; 0 &amp; 0 &amp; 0 \cr
+0 &amp; 0 &amp; 0 &amp; k_{12} &amp; 0 &amp; 0 &amp; k_{22} &amp; 0 &amp; 0 \cr
+0 &amp; 0 &amp; 0 &amp; k_{11} &amp; k_{12} &amp; 0 &amp; k_{21} &amp; k_{22} &amp; 0 \cr
+0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{11} &amp; k_{12} &amp; 0 &amp; k_{21} &amp; k_{22} \cr
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{11} &amp; 0 &amp; 0 &amp; k_{21} \cr
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{12} &amp; 0 &amp; 0 \cr
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{11} &amp; k_{12} &amp; 0 \cr
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{11} &amp; k_{12} \cr
+0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; 0 &amp; k_{11} }\right)
 \cdot
 \left(\matrix{
 i_{11} \cr
@@ -113,7 +162,11 @@ i_{12} \cr
 i_{13} \cr
 i_{21} \cr
 i_{22} \cr
-i_{23}}\right)
+i_{23} \cr
+i_{31} \cr
+i_{32} \cr
+i_{33}} 
+\right)
 \]</p>
 <p>Now one can already see that the matrix formed from the kernel entries has a very peculiar shape - the shape of a doubly blocked Toeplitz matrix</p>
 <h3>Doubly blocked Toeplitz matrix</h3>
@@ -130,7 +183,7 @@ i_{23}}\right)
         a_{M-1} &amp; \cdots  &amp; \cdots &amp; \cdots &amp; a_{2} &amp; a_{1} &amp; a_{0} }
     \right) .
 \]</p>
-<p>Furthermore, if we build a matrix \(A\) out of Toeplitz sub-matrices \(A_{k}\) \emph{and} the structure of \(A\) with respect to these submatrices is also Toeplitz:</p>
+<p>Furthermore, if we build a matrix \(A\) out of Toeplitz sub-matrices \(A_{k}\) <em>and</em> the structure of \(A\) with respect to these submatrices is also Toeplitz:</p>
 <p>\[
     A = \left(
     \matrix{ 
@@ -144,7 +197,7 @@ i_{23}}\right)
 <h3>The method</h3>
 <p>As we have seen on the example above, 2D convolution operations can be expressed as multiplication by a doubly-blocked Toeplitz matrix. As a general method, applied to the example above,
 to convolve \(K\) with \(I\), we first flip \(K\) across the horizontal and vertical axis and pad it to the output size \((I_\text{height} + K_\text{height} - 1) \times (I_\text{width} + K_\text{width} - 1)\) of the convolution.
-For instance, here, the \(2 \times 3\) layer \(I\) covolved by \(K\) above, leads to output size \(3 \times 4\).
+For instance, here, the \(3 \times 3\) layer \(I\) covolved by \(K\) above, leads to output size \(4 \times 4\).
 Depending on the padding mode used by the convolution, typically, only part of this output is actually required.
 The flipped and padded kernel \(K\) from above is
 \[
@@ -153,10 +206,11 @@ The flipped and padded kernel \(K\) from above is
     \matrix{ 
         k_{22} &amp; k_{21} &amp; 0 &amp; 0 \cr
         k_{12} &amp; k_{11} &amp; 0 &amp; 0 \cr
-        0 &amp; 0 &amp; 0 &amp; 0}
+        0 &amp; 0 &amp; 0 &amp; 0 \cr
+        0 &amp; 0 &amp; 0 &amp; 0 }
     \right)
 \]</p>
-<p>We then convert each {\em row vector} of this matrix into Toeplitz matrices \(F_i\) as described above:
+<p>We then convert each <em>row vector</em> of this matrix into Toeplitz matrices \(F_i\) as described above:
 \[
     F_0=
     \left(
@@ -175,8 +229,18 @@ The flipped and padded kernel \(K\) from above is
         0 &amp;  k_{11} &amp; k_{12} \cr
         0 &amp;  0 &amp;  k_{11}}
     \right)
-    \quad
+    \]
+    \[
     F_2=
+    \left(
+    \matrix{ 
+        0 &amp; 0  &amp; 0 \cr
+        0 &amp; 0 &amp; 0 \cr
+        0  &amp; 0 &amp; 0 \cr
+        0  &amp; 0  &amp; 0}
+    \right)
+    \quad
+    F_3=
     \left(
     \matrix{ 
         0 &amp; 0  &amp; 0 \cr
@@ -190,32 +254,20 @@ and, finally, assemble these into a doubly blocked Toeplitz matrix \(F\):</p>
     F=
     \left(
     \matrix{ 
-        F_0 &amp; F_2  \cr
-        F_1 &amp; F_0 \cr
-        F_2 &amp; F_1 \cr
+        F_0 &amp; F_3 &amp; F_2 \cr
+        F_1 &amp; F_0 &amp; F_3 \cr
+        F_2 &amp; F_1 &amp; F_0 \cr
+        F_3 &amp; F_2 &amp; F_1
     }
     \right)
 \]</p>
 <p>The convolution of \(K\) with \(I\)
-is then given by turning the matrix \(I\) into a column vector by stacking up its row vectors,
-\[
-    I_\text{col} = 
-    \left(
-    \matrix{ 
-        i_{11} \cr
-        i_{12} \cr
-        i_{13} \cr
-        i_{21} \cr
-        i_{22} \cr
-        i_{23}}
-    \right)
-\]</p>
-<p>and multiplying F from the left,
+is then given by multiplying F from the left onto \(I_\text{col}\) as defined above,
 \[
   R_{\text{col}} = F \cdot I  \quad 
   \Leftrightarrow \quad R_{\text{col},j}= \sum_i F_{ji}I_i 
   \]</p>
-<p>Finally, \(R_{\text{col}}\) can be reinterpreted as the output matrix \(R\) by arranging its entries row-wise in a \(3\times 4\) matrix.</p>
+<p>Finally, \(R_{\text{col}}\) can be reinterpreted as the output matrix \(R\) by arranging its entries row-wise in a \(4\times 4\) matrix.</p>
 <p>There we have it - convolution (in the machine learning sense, i.e. corss-correlation) of a kernel \(K\) with a layer \(I\) expressed as the product of a doubly blocked Toeplitz matrix derived from \(K\) with the column vector of the row-wise unrolled entries from \(I\).</p>
 </div>
     </div>
