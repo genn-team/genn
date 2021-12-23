@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "decode_matrix_conn_gen_kernelg_toeplitz", "decode_matrix_conn_gen_kernelg_toeplitz.vcxproj", "{95FEE151-9137-467F-9009-D1F48926E927}"
+	ProjectSection(ProjectDependencies) = postProject
+		{AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6} = {AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "decode_matrix_conn_gen_kernelg_toeplitz_CODE\runner.vcxproj", "{AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{95FEE151-9137-467F-9009-D1F48926E927}.Debug|x64.ActiveCfg = Debug|x64
+		{95FEE151-9137-467F-9009-D1F48926E927}.Debug|x64.Build.0 = Debug|x64
+		{95FEE151-9137-467F-9009-D1F48926E927}.Release|x64.ActiveCfg = Release|x64
+		{95FEE151-9137-467F-9009-D1F48926E927}.Release|x64.Build.0 = Release|x64
+		{AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6}.Debug|x64.ActiveCfg = Debug|x64
+		{AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6}.Debug|x64.Build.0 = Debug|x64
+		{AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6}.Release|x64.ActiveCfg = Release|x64
+		{AE6C351E-71EE-42CC-B4EE-D14FFD84E6B6}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

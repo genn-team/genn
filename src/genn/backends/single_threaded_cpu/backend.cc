@@ -1021,7 +1021,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 //--------------------------------------------------------------------------
 size_t Backend::getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const
 {
-    if (sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+    if ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) || (sg.getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ)) {
         return sg.getMaxConnections();
     }
     else if(getPreferences().enableBitmaskOptimisations && (sg.getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
@@ -1478,148 +1478,259 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
     const auto *wu = sg.getArchetype().getWUModel();
 
-    // Detect spike events or spikes and do the update
-    os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
-    if (sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-        os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
-    }
-    else {
-        os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
-    }
-    {
-        CodeStream::Scope b(os);
-        if (!wu->getSimSupportCode().empty()) {
-            os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) <<  ";" << std::endl;
-        }
+    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
+        const auto &connectInit = sg.getArchetype().getToeplitzConnectivityInitialiser();
 
-        const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
-        os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
+        // Loop through Toeplitz matrix diagonals
+        os << "for(unsigned int j = 0; j < group->rowStride; j++)";
+        {
+            CodeStream::Scope b(os);
 
-        // If this is a spike-like event, insert threshold check for this presynaptic neuron
-        if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-            os << "if(";
+            // Create substitution stack for generating procedural connectivity code
+            Substitutions connSubs(&popSubs);
+            connSubs.addVarSubstitution("id_diag", "j");
 
-            Substitutions threshSubs(&popSubs);
-            threshSubs.addVarSubstitution("id_pre", "ipre");
+            // Add substitutions
+            connSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                               [&sg](size_t i) { return sg.isToeplitzConnectivityInitParamHeterogeneous(i);  },
+                                               "", "group->");
+            connSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                             [&sg](size_t i) { return sg.isToeplitzConnectivityInitDerivedParamHeterogeneous(i);  },
+                                             "", "group->");
+            connSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
+            connSubs.addVarNameSubstitution(connectInit.getSnippet()->getDiagonalBuildStateVars());
 
-            // Generate weight update threshold condition
-            sg.generateSpikeEventThreshold(*this, os, modelMerged, threshSubs);
+            // Initialise any diagonal build state variables defined
+            for (const auto &d : connectInit.getSnippet()->getDiagonalBuildStateVars()) {
+                // Apply substitutions to value
+                std::string value = d.value;
+                connSubs.applyCheckUnreplaced(value, "toeplitz diagonal build state var : merged" + std::to_string(sg.getIndex()));
+                value = ensureFtype(value, modelMerged.getModel().getPrecision());
 
-            os << ")";
-            os << CodeStream::OB(10);
-        }
+                os << d.type << " " << d.name << " = " << value << ";" << std::endl;
+            }
 
-        Substitutions synSubs(&popSubs);
-        synSubs.addVarSubstitution("id_pre", "ipre");
-        synSubs.addVarSubstitution("id_post", "ipost");
-        synSubs.addVarSubstitution("id_syn", "synAddress");
-
-        if(sg.getArchetype().isDendriticDelayRequired()) {
-            synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + sg.getPostDenDelayIndex(1, "ipost", "$(1)") + "] += $(0)");
-        }
-        else {
-            synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "ipost") + "] += $(0)");
-        }
-
-        if (sg.getArchetype().isPresynapticOutputRequired()) {
-            synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + sg.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
-        }
-
-        if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            os << "const unsigned int npost = group->rowLength[ipre];" << std::endl;
-            os << "for (unsigned int j = 0; j < npost; j++)";
+             // Detect spike events or spikes and do the update
+            os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
+            if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+                os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
+            }
+            else {
+                os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
+            }
             {
                 CodeStream::Scope b(os);
 
-                // **TODO** seperate stride from max connection
-                os << "const unsigned int synAddress = (ipre * group->rowStride) + j;" << std::endl;
-                os << "const unsigned int ipost = group->ind[synAddress];" << std::endl;
+                const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
+                os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
 
-                if(trueSpike) {
-                    sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                // Create another substitution stack for generating presynaptic simulation code
+                Substitutions presynapticUpdateSubs(&popSubs);
+                connSubs.addVarSubstitution("id_pre", "ipre");
+                presynapticUpdateSubs.addVarSubstitution("id_pre", "ipre");
+
+                if(!wu->getSimSupportCode().empty()) {
+                    os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
+                }
+
+                // If this is a spike-like event, insert threshold check for this presynaptic neuron
+                if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
+                    os << "if(";
+
+                    // Generate weight update threshold condition
+                    sg.generateSpikeEventThreshold(*this, os, modelMerged, presynapticUpdateSubs);
+
+                    os << ")";
+                    os << CodeStream::OB(10);
+                }
+
+                // Replace $(id_post) with first 'function' parameter as simulation code is
+                // going to be, in turn, substituted into procedural connectivity generation code
+                presynapticUpdateSubs.addVarSubstitution("id_post", "$(0)");
+
+                // Replace kernel indices with the subsequent 'function' parameters
+                for(size_t i = 0; i < sg.getArchetype().getKernelSize().size(); i++) {
+                    presynapticUpdateSubs.addVarSubstitution("id_kernel_" + std::to_string(i),
+                                                             "$(" + std::to_string(i + 1) + ")");
+                }
+
+                if(sg.getArchetype().isDendriticDelayRequired()) {
+                    presynapticUpdateSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + sg.getPostDenDelayIndex(1, "$(id_post)", "$(1)") + "] += $(0)");
                 }
                 else {
-                    sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                    presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "$(id_post)") + "] += $(0)");
+                }
+
+                if(sg.getArchetype().isPresynapticOutputRequired()) {
+                    presynapticUpdateSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + sg.getPreISynIndex(1, "ipre") + "] += $(0)");
+                }
+
+                // Generate presynaptic simulation code into new stringstream-backed code stream
+                std::ostringstream presynapticUpdateStream;
+                CodeStream presynapticUpdate(presynapticUpdateStream);
+                if(trueSpike) {
+                    sg.generateSpikeUpdate(*this, presynapticUpdate, modelMerged, presynapticUpdateSubs);
+                }
+                else {
+                    sg.generateSpikeEventUpdate(*this, presynapticUpdate, modelMerged, presynapticUpdateSubs);
+                }
+
+                // When a synapse should be 'added', substitute in presynaptic update code
+                connSubs.addFuncSubstitution("addSynapse", 1 + (unsigned int)sg.getArchetype().getKernelSize().size(), presynapticUpdateStream.str());
+
+                // Generate toeplitz connectivity code
+                sg.generateToeplitzConnectivity(*this, os, modelMerged, connSubs);
+
+                if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
+                    os << CodeStream::CB(130); // end if (eCode)
                 }
             }
         }
-        else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
-            throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
+    }
+    else {
+        // Detect spike events or spikes and do the update
+        os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
+        if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
+            os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
         }
-        else if(getPreferences().enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
-            // Determine the number of words in each row
-            os << "const unsigned int rowWords = ((group->numTrgNeurons + 32 - 1) / 32);" << std::endl;
-            os << "for(unsigned int w = 0; w < rowWords; w++)";
-            {
-                CodeStream::Scope b(os);
+        else {
+            os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
+        }
+        {
+            CodeStream::Scope b(os);
+            if(!wu->getSimSupportCode().empty()) {
+                os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
+            }
 
-                // Read row word
-                os << "uint32_t connectivityWord = group->gp[(ipre * rowWords) + w];" << std::endl;
+            const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
+            os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
 
-                // Set ipost to first synapse in connectivity word
-                os << "unsigned int ipost = w * 32;" << std::endl;
+            // If this is a spike-like event, insert threshold check for this presynaptic neuron
+            if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
+                os << "if(";
 
-                // While there any bits left
-                os << "while(connectivityWord != 0)";
+                Substitutions threshSubs(&popSubs);
+                threshSubs.addVarSubstitution("id_pre", "ipre");
+
+                // Generate weight update threshold condition
+                sg.generateSpikeEventThreshold(*this, os, modelMerged, threshSubs);
+
+                os << ")";
+                os << CodeStream::OB(10);
+            }
+
+            Substitutions synSubs(&popSubs);
+            synSubs.addVarSubstitution("id_pre", "ipre");
+            synSubs.addVarSubstitution("id_post", "ipost");
+            synSubs.addVarSubstitution("id_syn", "synAddress");
+
+            if(sg.getArchetype().isDendriticDelayRequired()) {
+                synSubs.addFuncSubstitution("addToInSynDelay", 2, "group->denDelay[" + sg.getPostDenDelayIndex(1, "ipost", "$(1)") + "] += $(0)");
+            }
+            else {
+                synSubs.addFuncSubstitution("addToInSyn", 1, "group->inSyn[" + sg.getPostISynIndex(1, "ipost") + "] += $(0)");
+            }
+
+            if(sg.getArchetype().isPresynapticOutputRequired()) {
+                synSubs.addFuncSubstitution("addToPre", 1, "group->revInSyn[" + sg.getPreISynIndex(1, synSubs["id_pre"]) + "] += $(0)");
+            }
+
+            if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                os << "const unsigned int npost = group->rowLength[ipre];" << std::endl;
+                os << "for (unsigned int j = 0; j < npost; j++)";
                 {
                     CodeStream::Scope b(os);
 
-                    // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
-                    os << "const int numLZ = gennCLZ(connectivityWord);" << std::endl;
+                    // **TODO** seperate stride from max connection
+                    os << "const unsigned int synAddress = (ipre * group->rowStride) + j;" << std::endl;
+                    os << "const unsigned int ipost = group->ind[synAddress];" << std::endl;
 
-                    // Shift off zeros and the one just discovered
-                    // **NOTE** << 32 appears to result in undefined behaviour
-                    os << "connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));" << std::endl;
+                    if(trueSpike) {
+                        sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                    }
+                    else {
+                        sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                    }
+                }
+            }
+            else if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
+                throw std::runtime_error("The single-threaded CPU backend does not support procedural connectivity.");
+            }
+            else if(getPreferences().enableBitmaskOptimisations && (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK)) {
+                // Determine the number of words in each row
+                os << "const unsigned int rowWords = ((group->numTrgNeurons + 32 - 1) / 32);" << std::endl;
+                os << "for(unsigned int w = 0; w < rowWords; w++)";
+                {
+                    CodeStream::Scope b(os);
 
-                    // Add to ipost
-                    os << "ipost += numLZ;" << std::endl;
+                    // Read row word
+                    os << "uint32_t connectivityWord = group->gp[(ipre * rowWords) + w];" << std::endl;
 
-                    // If we aren't in padding region
-                    // **TODO** don't bother checking if there is no padding
-                    os << "if(ipost < group->numTrgNeurons)";
+                    // Set ipost to first synapse in connectivity word
+                    os << "unsigned int ipost = w * 32;" << std::endl;
+
+                    // While there any bits left
+                    os << "while(connectivityWord != 0)";
                     {
                         CodeStream::Scope b(os);
-                        if(trueSpike) {
-                            sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+
+                        // Cound leading zeros (as bits are indexed backwards this is index of next synapse)
+                        os << "const int numLZ = gennCLZ(connectivityWord);" << std::endl;
+
+                        // Shift off zeros and the one just discovered
+                        // **NOTE** << 32 appears to result in undefined behaviour
+                        os << "connectivityWord = (numLZ == 31) ? 0 : (connectivityWord << (numLZ + 1));" << std::endl;
+
+                        // Add to ipost
+                        os << "ipost += numLZ;" << std::endl;
+
+                        // If we aren't in padding region
+                        // **TODO** don't bother checking if there is no padding
+                        os << "if(ipost < group->numTrgNeurons)";
+                        {
+                            CodeStream::Scope b(os);
+                            if(trueSpike) {
+                                sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                            }
+                            else {
+                                sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                            }
                         }
-                        else {
-                            sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
-                        }
+
+                        // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
+                        os << "ipost++;" << std::endl;
+                    }
+                }
+            }
+            // Otherwise (DENSE or BITMASK)
+            else {
+                os << "for (unsigned int ipost = 0; ipost < group->numTrgNeurons; ipost++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                        os << "const uint64_t gid = (ipre * (uint64_t)group->numTrgNeurons + ipost);" << std::endl;
+                        os << "if (B(group->gp[gid / 32], gid & 31))" << CodeStream::OB(20);
                     }
 
-                    // Increment ipost to take into account fact the next CLZ will go from bit AFTER synapse
-                    os << "ipost++;" << std::endl;
+                    os << "const unsigned int synAddress = (ipre * group->numTrgNeurons) + ipost;" << std::endl;
+
+                    if(trueSpike) {
+                        sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
+                    }
+                    else {
+                        sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
+                    }
+
+                    if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
+                        os << CodeStream::CB(20);
+                    }
                 }
             }
-        }
-        // Otherwise (DENSE or BITMASK)
-        else {
-            os << "for (unsigned int ipost = 0; ipost < group->numTrgNeurons; ipost++)";
-            {
-                CodeStream::Scope b(os);
-
-                if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << "const uint64_t gid = (ipre * (uint64_t)group->numTrgNeurons + ipost);" << std::endl;
-                    os << "if (B(group->gp[gid / 32], gid & 31))" << CodeStream::OB(20);
-                }
-
-                os << "const unsigned int synAddress = (ipre * group->numTrgNeurons) + ipost;" << std::endl;
-
-                if(trueSpike) {
-                    sg.generateSpikeUpdate(*this, os, modelMerged, synSubs);
-                }
-                else {
-                    sg.generateSpikeEventUpdate(*this, os, modelMerged, synSubs);
-                }
-
-                if (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-                    os << CodeStream::CB(20);
-                }
+            // If this is a spike-like event, close braces around threshold check
+            if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
+                os << CodeStream::CB(10);
             }
-        }
-        // If this is a spike-like event, close braces around threshold check
-        if (!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {
-            os << CodeStream::CB(10);
         }
     }
 }

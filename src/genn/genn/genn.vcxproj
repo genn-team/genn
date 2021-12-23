@@ -42,6 +42,7 @@
     <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="customUpdateModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
+    <ClCompile Include="initToeplitzConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="logging.cc" />
     <ClCompile Include="models.cc" />
@@ -87,6 +88,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\initToeplitzConnectivitySnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initVarSnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\logging.h" />
     <ClInclude Include="..\..\..\include\genn\genn\models.h" />

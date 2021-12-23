@@ -10,6 +10,9 @@ Generated interface files are:
     -- WeightUpdateModels.i -- interface of the WeightUpdateModels module
     -- currentSourceModels.i -- interface of the CurrentSourceModels module
     -- initVarSnippet.i -- interface of the InitVarSnippet module
+    -- initSparseConnectivitySnippet.i -- interface of the InitSparseConnectivity module
+    -- initToeplitzConnectivitySnippet.i -- interface of the InitToeplitzConnectivity module
+    -- initVarSnippet.i -- interface of the InitVarSnippet module
     -- stl_containers.i -- interface of the StlContainers module which wraps
                            different specialization of std::vector and std::pair
     -- SharedLibraryModel.i -- interface of the SharedLibraryModel module which
@@ -22,6 +25,8 @@ Generated headers and sources are:
     -- newPostsynapticModelsCustom.h/.cc -- header and source files for PostsynapticModels::Custom class
     -- currentSourceModelsCustom.h/.cc -- header and source files for CurrentSourceModels::Custom class
     -- initVarSnippetCustom.h/.cc -- header and source files for InitVarSnippet::Custom class
+    -- initSparseConnectivitySnippetCustom.h/.cc -- header and source files for InitSparseConnectivitySnippet::Custom class
+    -- initToeplitzConnectivitySnippetCustom.h/.cc -- header and source files for InitToeplitzConnectivitySnippet::Custom class
 
 Example:
     $ python generate_swig_interfaces.py path_to_pygenn
@@ -33,6 +38,8 @@ Attrbutes:
     WUPDATEMODELS -- common name of WeightUpdateModels header and interface files without extention
     CURRSOURCEMODELS -- common name of CurrentSourceModels header and interface files without extention
     INITVARSNIPPET -- common name of InitVarSnippet header and interface files without extention
+    SPARSEINITSNIPPET -- common name of InitSparseConnectivitySnippet header and interface files without extention
+    TOEPLITZINITSNIPPET -- common name of InitToeplitzConnectivitySnippet header and interface files without extention
     MAIN_MODULE -- name of the main SWIG module
 """
 import os  # to work with paths nicely
@@ -49,6 +56,7 @@ CURRSOURCEMODELS = 'currentSourceModels'
 CUSTOMUPDATEMODELS = 'customUpdateModels'
 INITVARSNIPPET = 'initVarSnippet'
 SPARSEINITSNIPPET = 'initSparseConnectivitySnippet'
+TOEPLITZINITSNIPPET = 'initToeplitzConnectivitySnippet'
 MAIN_MODULE = 'genn_wrapper'
 
 # Scope classes should be used with 'with' statement. They write code in the
@@ -417,7 +425,7 @@ def generateStlContainersInterface( swigPath ):
 def generateCustomModelDeclImpls(swigPath):
     '''Generates headers/sources with *::Custom classes'''
     models = [NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, CURRSOURCEMODELS, CUSTOMUPDATEMODELS,
-              INITVARSNIPPET, SPARSEINITSNIPPET]
+              INITVARSNIPPET, SPARSEINITSNIPPET, TOEPLITZINITSNIPPET]
     for model in models:
         nSpace = model[0].upper() + model[1:]
         with SwigModuleGenerator( 'decl',
@@ -426,14 +434,14 @@ def generateCustomModelDeclImpls(swigPath):
             mg.write( '#pragma once\n' )
             mg.addCppInclude( '"' + model + '.h"' )
             mg.addCppInclude( '"customParamValues.h"' )
-            if model != INITVARSNIPPET and model != SPARSEINITSNIPPET:
+            if model != INITVARSNIPPET and model != SPARSEINITSNIPPET and model != TOEPLITZINITSNIPPET:
                 mg.addCppInclude( '"customVarValues.h"' )
             
             if model == CUSTOMUPDATEMODELS:
                 mg.addCppInclude( '"customVarReferences.h"' )
                 mg.addCppInclude( '"customWUVarReferences.h"' )
             
-            mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET or model==SPARSEINITSNIPPET, 
+            mg.write(generateCustomClassDeclaration(nSpace, model==INITVARSNIPPET or model==SPARSEINITSNIPPET or model==TOEPLITZINITSNIPPET, 
                                                     model==WUPDATEMODELS, model==CUSTOMUPDATEMODELS))
         with SwigModuleGenerator( 'impl',
                 os.path.join( swigPath, model + 'Custom.cc' ) ) as mg:
@@ -523,6 +531,7 @@ def generateConfigs(gennPath, backends):
             open( os.path.join( includePath, CUSTOMUPDATEMODELS + ".h" ), 'r' ) as customUpdateModels_h, \
             open( os.path.join( includePath, INITVARSNIPPET + ".h" ), 'r' ) as initVarSnippet_h, \
             open( os.path.join( includePath, SPARSEINITSNIPPET + ".h" ), 'r' ) as sparseInitSnippet_h, \
+            open( os.path.join( includePath, TOEPLITZINITSNIPPET + ".h" ), 'r' ) as toeplitzInitSnippet_h, \
             SwigModuleGenerator( MAIN_MODULE, os.path.join( swigPath, MAIN_MODULE + '.i' ) ) as pygennSmg, \
             SwigModuleGenerator( 'NeuronModels', os.path.join( swigPath, 'NeuronModels.i' ) ) as neuronSmg, \
             SwigModuleGenerator( 'PostsynapticModels', os.path.join( swigPath, 'PostsynapticModels.i' ) ) as postsynSmg, \
@@ -530,12 +539,13 @@ def generateConfigs(gennPath, backends):
             SwigModuleGenerator( 'CurrentSourceModels', os.path.join( swigPath, 'CurrentSourceModels.i' ) ) as currSrcSmg, \
             SwigModuleGenerator( 'CustomUpdateModels', os.path.join( swigPath, 'CustomUpdateModels.i' ) ) as customUpdateSrcSmg, \
             SwigModuleGenerator( 'InitVarSnippet', os.path.join( swigPath, 'InitVarSnippet.i' ) ) as iniVarSmg, \
-            SwigModuleGenerator( 'InitSparseConnectivitySnippet', os.path.join( swigPath, 'InitSparseConnectivitySnippet.i' ) ) as iniSparseSmg:
+            SwigModuleGenerator( 'InitSparseConnectivitySnippet', os.path.join( swigPath, 'InitSparseConnectivitySnippet.i' ) ) as iniSparseSmg, \
+            SwigModuleGenerator( 'InitToeplitzConnectivitySnippet', os.path.join( swigPath, 'InitToeplitzConnectivitySnippet.i' ) ) as iniToeplitzSmg:
 
         # pygennSmg generates main SWIG interface file,
         # mgs generate SWIG interfaces for models and InitVarSnippet
 
-        mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg, customUpdateSrcSmg, iniVarSmg, iniSparseSmg]
+        mgs = [ neuronSmg, postsynSmg, wUpdateSmg, currSrcSmg, customUpdateSrcSmg, iniVarSmg, iniSparseSmg, iniToeplitzSmg]
 
         pygennSmg.addAutoGenWarning()
         pygennSmg.addSwigModuleHeadline()
@@ -556,7 +566,7 @@ def generateConfigs(gennPath, backends):
             pygennSmg.addCppInclude( '"modelSpec.h"' )
             for header in (NEURONMODELS, POSTSYNMODELS, WUPDATEMODELS, 
                            CURRSOURCEMODELS, CUSTOMUPDATEMODELS, 
-                           INITVARSNIPPET, SPARSEINITSNIPPET):
+                           INITVARSNIPPET, SPARSEINITSNIPPET, TOEPLITZINITSNIPPET):
                 pygennSmg.addCppInclude( '"' + header + 'Custom.h"' )
             pygennSmg.addCppInclude( '"code_generator/backendBase.h"' )
             pygennSmg.addCppInclude( '"code_generator/generateModules.h"' )
@@ -578,7 +588,7 @@ def generateConfigs(gennPath, backends):
         pygennSmg.addSwigIgnore("BackendBase")
         pygennSmg.addSwigIgnore("PreferencesBase")
         pygennSmg.addSwigInclude('"code_generator/backendBase.h"')
-
+        
         # define and wrap code generator
         with SwigInlineScope( pygennSmg ):
             pygennSmg.write( '''
@@ -615,9 +625,10 @@ def generateConfigs(gennPath, backends):
         for mg, header in zip(mgs, (neuronModels_h, postsynModels_h,
                                     wUpdateModels_h, currSrcModels_h,
                                     customUpdateModels_h, initVarSnippet_h, 
-                                    sparseInitSnippet_h)):
+                                    sparseInitSnippet_h, toeplitzInitSnippet_h)):
             _, headerFilename = os.path.split( header.name )
-            is_snippet = (mg.name == 'InitVarSnippet' or mg.name == 'InitSparseConnectivitySnippet')
+            is_snippet = (mg.name == 'InitVarSnippet' or mg.name == 'InitSparseConnectivitySnippet'
+                          or mg.name == 'InitToeplitzConnectivitySnippet')
             
             pygennSmg.addSwigImport( '"' + mg.name + '.i"' )
             mg.addAutoGenWarning()
@@ -685,8 +696,8 @@ def generateConfigs(gennPath, backends):
                             writeValueMakerFunc( model_name, 'VarReferences', int(num_var_refs), mg )
                             writeValueMakerFunc( model_name, 'WUVarReferences', int(num_var_refs), mg )
 
-        # Add wrapper around InitSparseConnectivitySnippet::Base::CalcMaxLengthFunc
-        iniSparseSmg.write('''
+        # Define wrapper around InitSparseConnectivitySnippet::Base::CalcMaxLengthFunc
+        calcMaxRowWrapper='''
             %feature("director") CalcMaxLengthFunc;
             %rename(__call__) CalcMaxLengthFunc::operator();
             %inline %{
@@ -702,10 +713,10 @@ def generateConfigs(gennPath, backends):
             {
             return std::bind( &CalcMaxLengthFunc::operator(), cmlf, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3 );
             }
-            %}''')
-
-         # Add wrapper around InitSparseConnectivitySnippet::Base::CalcKernelSizeFunc
-        iniSparseSmg.write('''
+            %}'''
+        
+        # Define wrapper around InitSparseConnectivitySnippet::Base::CalcKernelSizeFunc
+        calcKernelSizeWrapper='''
             %feature("director") CalcKernelSizeFunc;
             %rename(__call__) CalcKernelSizeFunc::operator();
             %inline %{
@@ -721,8 +732,14 @@ def generateConfigs(gennPath, backends):
             {
             return std::bind( &CalcKernelSizeFunc::operator(), cksf, std::placeholders::_1 );
             }
-            %}''')
-            
+            %}'''
+        
+        # Write to both sparse and toeplitz modules
+        iniSparseSmg.write(calcMaxRowWrapper)
+        iniSparseSmg.write(calcKernelSizeWrapper)
+        iniToeplitzSmg.write(calcMaxRowWrapper)
+        iniToeplitzSmg.write(calcKernelSizeWrapper)
+         
         # wrap NeuronGroup, SynapseGroup and CurrentSource
         pygennSmg.addSwigInclude( '"neuronGroup.h"' )
         pygennSmg.addSwigInclude( '"synapseGroup.h"' )
@@ -762,11 +779,14 @@ def generateConfigs(gennPath, backends):
                 wu_model, ps_model)
             ignore_wum_pre_post = "WeightUpdateModels::{0}::PreVarValues const &,WeightUpdateModels::{0}::PostVarValues const &".format(wu_model)
             ignore_psm = "PostsynapticModels::{0}::ParamValues const &,PostsynapticModels::{0}::VarValues const &".format(ps_model)
-            ignore_connectivity = "InitSparseConnectivitySnippet::Init const &"
+            ignore_sparse_connectivity = "InitSparseConnectivitySnippet::Init const &"
+            ignore_toeplitz_connectivity = "InitToeplitzConnectivitySnippet::Init const &"
             pygennSmg.addSwigIgnore(ignore_base + "," + ignore_psm + ")")
-            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_psm + "," + ignore_connectivity + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_psm + "," + ignore_sparse_connectivity + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_psm + "," + ignore_toeplitz_connectivity + ")")
             pygennSmg.addSwigIgnore(ignore_base + "," + ignore_wum_pre_post + "," + ignore_psm + ")")
-            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_wum_pre_post + "," + ignore_psm + "," + ignore_connectivity + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_wum_pre_post + "," + ignore_psm + "," + ignore_sparse_connectivity + ")")
+            pygennSmg.addSwigIgnore(ignore_base + "," + ignore_wum_pre_post + "," + ignore_psm + "," + ignore_toeplitz_connectivity + ")")
 
             # Add template expansion
             pygennSmg.addSwigTemplate(

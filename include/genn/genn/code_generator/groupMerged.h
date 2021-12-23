@@ -994,10 +994,10 @@ private:
     // Private methods
     //------------------------------------------------------------------------
      //! Is the connectivity initialization parameter referenced?
-    bool isConnectivityInitParamReferenced(size_t paramIndex) const;
+    bool isSparseConnectivityInitParamReferenced(size_t paramIndex) const;
 
     //! Is the connectivity initialization derived parameter referenced?
-    bool isConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
+    bool isSparseConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
 };
 
 //----------------------------------------------------------------------------
@@ -1024,11 +1024,17 @@ public:
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
     bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const;
 
-    //! Should the connectivity initialization parameter be implemented heterogeneously?
-    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitParamHeterogeneous(size_t paramIndex) const;
 
-    //! Should the connectivity initialization parameter be implemented heterogeneously?
-    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+    //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
+    bool isSparseConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
+    bool isToeplitzConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?
+    bool isToeplitzConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
 
     //! Is presynaptic neuron parameter heterogeneous?
     bool isSrcNeuronParamHeterogeneous(size_t paramIndex) const;
@@ -1148,11 +1154,17 @@ private:
     //! Is the weight update model variable initialization derived parameter referenced?
     bool isWUVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const;
 
-    //! Is the connectivity initialization parameter referenced?
-    bool isConnectivityInitParamReferenced(size_t paramIndex) const;
+    //! Is the sparse connectivity initialization parameter referenced?
+    bool isSparseConnectivityInitParamReferenced(size_t paramIndex) const;
 
-    //! Is the connectivity initialization parameter referenced?
-    bool isConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
+    //! Is the sparse connectivity initialization parameter referenced?
+    bool isSparseConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
+
+    //! Is the toeplitz connectivity initialization parameter referenced?
+    bool isToeplitzConnectivityInitParamReferenced(size_t paramIndex) const;
+
+    //! Is the toeplitz connectivity initialization parameter referenced?
+    bool isToeplitzConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
 
     //! Is presynaptic neuron parameter referenced?
     bool isSrcNeuronParamReferenced(size_t paramIndex) const;

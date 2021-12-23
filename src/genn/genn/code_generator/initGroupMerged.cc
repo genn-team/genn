@@ -681,10 +681,10 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
     // Add substitutions
     popSubs.addFuncSubstitution(rowNotColumns ? "endRow" : "endCol", 0, "break");
     popSubs.addParamValueSubstitution(snippet->getParamNames(), connectInit.getParams(),
-                                      [this](size_t i) { return isConnectivityInitParamHeterogeneous(i);  },
+                                      [this](size_t i) { return isSparseConnectivityInitParamHeterogeneous(i);  },
                                       "", "group->");
     popSubs.addVarValueSubstitution(snippet->getDerivedParams(), connectInit.getDerivedParams(),
-                                    [this](size_t i) { return isConnectivityInitDerivedParamHeterogeneous(i);  },
+                                    [this](size_t i) { return isSparseConnectivityInitDerivedParamHeterogeneous(i);  },
                                     "", "group->");
     popSubs.addVarNameSubstitution(snippet->getExtraGlobalParams(), "", "group->");
 
