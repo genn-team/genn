@@ -1705,3 +1705,78 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     return create_custom_model_class(
         class_name, genn_wrapper.InitSparseConnectivitySnippet.Custom, param_names,
         None, derived_params, body)
+
+def create_custom_toeplitz_connect_init_snippet_class(class_name,
+                                                      param_names=None,
+                                                      derived_params=None,
+                                                      diagonal_build_code=None,
+                                                      diagonal_build_state_vars=None,
+                                                      calc_max_row_len_func=None,
+                                                      calc_kernel_size_func=None,
+                                                      extra_global_params=None,
+                                                      custom_body=None):
+    """This helper function creates a custom
+    InitToeplitzConnectivitySnippet class.
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_postsynaptic_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+
+    Args:
+    class_name                  --  name of the new class
+
+    Keyword args:
+    param_names                 --  list of strings with param names of the model
+    derived_params              --  list of pairs, where the first member is string
+                                    with name of the derived parameter and the
+                                    second MUST be an instance of the class which
+                                    inherits from pygenn.genn_wrapper.DerivedParamFunc
+    diagonal_build_code         --  string with diagonal building initialization code
+    diagonal_build_state_vars   --  list of tuples of state variables, their types
+                                    and their initial values to use across
+                                    diagonal building loop
+    calc_max_row_len_func       --  instance of class inheriting from
+                                    CalcMaxLengthFunc used to calculate maximum
+                                    row length of synaptic matrix
+    calc_kernel_size_func       --  instance of class inheriting from CalcKernelSizeFunc
+                                    used to calculate kernel dimensions
+    extra_global_params         --  list of pairs of strings with names and
+                                    types of additional parameters
+    custom_body                 --  dictionary with additional attributes and
+                                    methods of the new class
+    """
+
+    if not isinstance(custom_body, dict) and custom_body is not None:
+        raise ValueError("custom_body must be an instance of dict or None")
+
+    body = {}
+
+    if diagonal_build_code is not None:
+        body["get_diagonal_build_code"] = lambda self: dedent(diagonal_build_code)
+
+    if diagonal_build_state_vars is not None:
+        body["get_diagonal_build_state_vars"] = \
+            lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
+                                         for r in diagonal_build_state_vars])
+
+    if calc_max_row_len_func is not None:
+        body["get_calc_max_row_length_func"] = \
+            lambda self: make_cmlf(calc_max_row_len_func)
+
+    if calc_kernel_size_func is not None:
+        body["get_calc_kernel_size_func"] = \
+            lambda self: make_cksf(calc_kernel_size_func)
+
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: EGPVector([EGP(egp[0], egp[1])
+                                    for egp in extra_global_params])
+
+    if custom_body is not None:
+        body.update(custom_body)
+
+    return create_custom_model_class(
+        class_name, genn_wrapper.InitToeplitzConnectivitySnippet.Custom, param_names,
+        None, derived_params, body)
