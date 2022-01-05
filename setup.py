@@ -53,7 +53,11 @@ package_data = ["genn_wrapper/genn" + genn_lib_suffix + ".*" if WIN
 # directories so libGeNN and backends can be found wherever package is installed
 if LINUX:
     genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
-
+# Otherwise, if this is Windowst turn off warnings about dll-interface being required 
+# for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
+elif WIN:
+    genn_extension_kwargs["extra_compile_args"] = ["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"]
+    
 # By default build single-threaded CPU backend
 backends = []#[("single_threaded_cpu", "SingleThreadedCPU", {})]
 
