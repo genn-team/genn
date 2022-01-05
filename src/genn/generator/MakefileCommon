@@ -15,8 +15,8 @@ ifndef GENERATOR_PATH
     $(error Environment variable GENERATOR_PATH must be defined)
 endif
 
-# Default to C++11 but allow this to overriden
-CXX_STANDARD			?=c++11
+# Default to C++17 but allow this to overriden
+CXX_STANDARD			?=c++17
 
 # BUILD_MODEL_INCLUDE contains a colon-seperated list of additional include paths.
 # substitute :s for spaces and then prepend each path with -I so it gets turned into an include directory
