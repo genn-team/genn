@@ -37,13 +37,23 @@ genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
 
-genn_extension_kwargs = {
-    "include_dirs": [genn_include, genn_third_party_include, genn_wrapper_include],
+# Define standard kwargs for building all extensions
+extension_kwargs = {
+    "include_dirs": [genn_wrapper_include],
     "library_dirs": [genn_wrapper_path],
-    "libraries": ["genn" + genn_lib_suffix],
-    "define_macros": [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")],
     "cxx_std": 17,
-    "extra_link_args":[]}
+    "extra_link_args": []}
+
+# If this is Windows, turn off warnings about dll-interface being required 
+# for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
+if WIN:
+    extension_kwargs["extra_compile_args"] = ["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"]
+
+# Extend these kwargs for extensions which link against GeNN
+genn_extension_kwargs = deepcopy(extension_kwargs)
+genn_extension_kwargs["include_dirs"].extend([genn_include, genn_third_party_include])
+genn_extension_kwargs["libraries"] = ["genn" + genn_lib_suffix]
+genn_extension_kwargs["define_macros"] = [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")]
 
 # Always package LibGeNN
 package_data = ["genn_wrapper/genn" + genn_lib_suffix + ".*" if WIN 
@@ -53,11 +63,7 @@ package_data = ["genn_wrapper/genn" + genn_lib_suffix + ".*" if WIN
 # directories so libGeNN and backends can be found wherever package is installed
 if LINUX:
     genn_extension_kwargs["runtime_library_dirs"] = ["$ORIGIN"]
-# Otherwise, if this is Windowst turn off warnings about dll-interface being required 
-# for stuff to be used by clients and prevent windows.h exporting TOO many awful macros
-elif WIN:
-    genn_extension_kwargs["extra_compile_args"] = ["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"]
-    
+
 # By default build single-threaded CPU backend
 backends = []#[("single_threaded_cpu", "SingleThreadedCPU", {})]
 
@@ -80,6 +86,9 @@ if cuda_installed:
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if MACOS else []}))
 
 ext_modules = [
+    Pybind11Extension("shared_library_model",
+                      [os.path.join(genn_wrapper_src, "sharedLibraryModel.cc")],
+                      **extension_kwargs),
     Pybind11Extension("genn",
                       [os.path.join(genn_wrapper_src, "genn.cc")],
                       **genn_extension_kwargs),

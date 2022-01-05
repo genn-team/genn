@@ -102,7 +102,7 @@ PYBIND11_MODULE(genn, m)
              pybind11::is_operator());
 
     //------------------------------------------------------------------------
-    // pygenn.ModelSpec
+    // genn.ModelSpec
     //------------------------------------------------------------------------
     pybind11::class_<ModelSpecInternal>(m, "ModelSpecInternal")
         .def(pybind11::init<>())
@@ -131,7 +131,7 @@ PYBIND11_MODULE(genn, m)
         .def("finalize", &ModelSpecInternal::finalize);
     
     //------------------------------------------------------------------------
-    // pygenn.CurrentSource
+    // genn.CurrentSource
     //------------------------------------------------------------------------
     pybind11::class_<CurrentSource>(m, "CurrentSource")
         //--------------------------------------------------------------------
@@ -146,7 +146,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&CurrentSource::getVarLocation, pybind11::const_));
     
     //------------------------------------------------------------------------
-    // pygenn.NeuronGroup
+    // genn.NeuronGroup
     //------------------------------------------------------------------------
     pybind11::class_<NeuronGroup>(m, "NeuronGroup")
         //--------------------------------------------------------------------
@@ -171,7 +171,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_));
         
     //------------------------------------------------------------------------
-    // pygenn.PreferencesBase
+    // genn.PreferencesBase
     //------------------------------------------------------------------------
     pybind11::class_<CodeGenerator::PreferencesBase>(m, "PreferencesBase")
         .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
@@ -181,7 +181,7 @@ PYBIND11_MODULE(genn, m)
         .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
     
     //------------------------------------------------------------------------
-    // pygenn.SnippetBase
+    // genn.SnippetBase
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base, PySnippet<>>(m, "SnippetBase")
         .def("get_param_names", &Snippet::Base::getParamNames)
@@ -189,7 +189,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_extra_global_params", &Snippet::Base::getExtraGlobalParams);
         
     //------------------------------------------------------------------------
-    // pygenn.ModelBase
+    // genn.ModelBase
     //------------------------------------------------------------------------
     pybind11::class_<Models::Base, Snippet::Base, PyModel<>>(m, "ModelBase")
         .def("get_vars", &Models::Base::getVars);
