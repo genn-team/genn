@@ -27,6 +27,12 @@ public:
 
     virtual bool isAutoRefractoryRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_auto_refractory_required", isAutoRefractoryRequired); }
 };
+
+template<typename T>
+const Base *getBaseInstance()
+{
+    return static_cast<const Base*>(T::getInstance());
+}
 }
 
 //----------------------------------------------------------------------------
@@ -48,4 +54,20 @@ PYBIND11_MODULE(neuron_models, m)
         .def("get_support_code", &Base::getSupportCode)
         .def("get_additional_input_vars", &Base::getAdditionalInputVars)
         .def("is_auto_refractory_required", &Base::isAutoRefractoryRequired);
+    
+    //------------------------------------------------------------------------
+    // Free functions
+    //------------------------------------------------------------------------
+    m.def("RulkovMap", &getBaseInstance<RulkovMap>, pybind11::return_value_policy::reference);
+    m.def("Izhikevich", &getBaseInstance<Izhikevich>, pybind11::return_value_policy::reference);
+    m.def("IzhikevichVariable", &getBaseInstance<IzhikevichVariable>, pybind11::return_value_policy::reference);
+    m.def("LIF", &getBaseInstance<LIF>, pybind11::return_value_policy::reference);
+    m.def("SpikeSource", &getBaseInstance<SpikeSource>, pybind11::return_value_policy::reference);
+    m.def("SpikeSourceArray", &getBaseInstance<SpikeSourceArray>, pybind11::return_value_policy::reference);
+    m.def("Poisson", &getBaseInstance<Poisson>, pybind11::return_value_policy::reference);
+    m.def("PoissonNew", &getBaseInstance<PoissonNew>, pybind11::return_value_policy::reference);
+    m.def("TraubMiles", &getBaseInstance<TraubMiles>, pybind11::return_value_policy::reference);
+    m.def("TraubMilesFast", &getBaseInstance<TraubMilesFast>, pybind11::return_value_policy::reference);
+    m.def("TraubMilesAlt", &getBaseInstance<TraubMilesAlt>, pybind11::return_value_policy::reference);
+    m.def("TraubMilesNStep", &getBaseInstance<TraubMilesNStep>, pybind11::return_value_policy::reference);
 }
