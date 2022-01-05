@@ -45,7 +45,7 @@ endif
 
 $(OBJECT_DIRECTORY)/%.o: %.cc $(OBJECT_DIRECTORY)/%.d
 	mkdir -p $(@D)
-	$(CXX) -std=c++11 $(CXXFLAGS) -c -o $@ $<
+	$(CXX) -std=c++17 $(CXXFLAGS) -c -o $@ $<
 
 %.d: ;
 
