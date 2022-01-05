@@ -1,5 +1,6 @@
 // PyBind11 includes
 #include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
 
 // Plog includes
 #include <plog/Severity.h>
@@ -7,16 +8,14 @@
 // GeNN includes
 #include "currentSource.h"
 #include "modelSpecInternal.h"
+#include "snippet.h"
+#include "models.h"
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 
-//----------------------------------------------------------------------------
-// Anonymous namespace
-//----------------------------------------------------------------------------
-namespace
-{
-}
+// PyGeNN includes
+#include "trampolines.h"
 
 //----------------------------------------------------------------------------
 // genn
@@ -165,7 +164,7 @@ PYBIND11_MODULE(genn, m)
         .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
         .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
         
-         //--------------------------------------------------------------------
+        //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
         .def("set_var_location", &NeuronGroup::setVarLocation)
@@ -180,4 +179,18 @@ PYBIND11_MODULE(genn, m)
         .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
         .def_readwrite("generate_extra_global_param_pull", &CodeGenerator::PreferencesBase::generateExtraGlobalParamPull)
         .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
+    
+    //------------------------------------------------------------------------
+    // pygenn.SnippetBase
+    //------------------------------------------------------------------------
+    pybind11::class_<Snippet::Base, PySnippet<>>(m, "SnippetBase")
+        .def("get_param_names", &Snippet::Base::getParamNames)
+        .def("get_derived_params", &Snippet::Base::getDerivedParams)
+        .def("get_extra_global_params", &Snippet::Base::getExtraGlobalParams);
+        
+    //------------------------------------------------------------------------
+    // pygenn.ModelBase
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::Base, Snippet::Base, PyModel<>>(m, "ModelBase")
+        .def("get_vars", &Models::Base::getVars);
 }

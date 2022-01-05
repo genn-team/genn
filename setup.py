@@ -33,11 +33,12 @@ genn_path = os.path.dirname(os.path.abspath(__file__))
 pygenn_path = os.path.join(genn_path, "pygenn")
 genn_wrapper_path = os.path.join(pygenn_path, "genn_wrapper")
 genn_wrapper_src = os.path.join(genn_wrapper_path, "src")
+genn_wrapper_include = os.path.join(genn_wrapper_path, "include")
 genn_include = os.path.join(genn_path, "include", "genn", "genn")
 genn_third_party_include = os.path.join(genn_path, "include", "genn", "third_party")
 
 genn_extension_kwargs = {
-    "include_dirs": [genn_include, genn_third_party_include],
+    "include_dirs": [genn_include, genn_third_party_include, genn_wrapper_include],
     "library_dirs": [genn_wrapper_path],
     "libraries": ["genn" + genn_lib_suffix],
     "define_macros": [("LINKING_GENN_DLL", "1"), ("LINKING_BACKEND_DLL", "1")],
@@ -77,6 +78,9 @@ if cuda_installed:
 ext_modules = [
     Pybind11Extension("genn",
                       [os.path.join(genn_wrapper_src, "genn.cc")],
+                      **genn_extension_kwargs),
+    Pybind11Extension("neuron_models",
+                      [os.path.join(genn_wrapper_src, "neuronModels.cc")],
                       **genn_extension_kwargs)]
     
  # Loop through namespaces of supported backends
@@ -102,7 +106,7 @@ for filename, namespace, kwargs in backends:
 
     # Add extension to list
     ext_modules.append(Pybind11Extension(filename + "_backend", 
-                                         [os.path.join(genn_wrapper_src, filename + "_backend.cc")],
+                                         [os.path.join(genn_wrapper_src, filename + "Backend.cc")],
                                          **backend_extension_kwargs))
 
 setup(
