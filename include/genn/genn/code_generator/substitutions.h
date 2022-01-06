@@ -79,26 +79,24 @@ public:
     }
 
     template<typename T>
-    void addVarValueSubstitution(const std::vector<T> &variables, const std::vector<double> &values,
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values,
                                  const std::string &sourceSuffix = "")
     {
         if(variables.size() != values.size()) {
             throw std::runtime_error("Number of variables does not match number of values");
         }
 
-        auto var = variables.cbegin();
-        auto val = values.cbegin();
-        for (;var != variables.cend() && val != values.cend(); var++, val++) {
-            addVarSubstitution(var->name + sourceSuffix,
-                               "(" + Utils::writePreciseString(*val) + ")");
+        for(const auto &v : variables) {
+            addVarSubstitution(v.name + sourceSuffix,
+                               "(" + Utils::writePreciseString(values.at(v.name)) + ")");
         }
     }
 
-    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values,
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values,
                                    const std::string &sourceSuffix = "");
 
     template<typename G>
-    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const Snippet::ParamValues::ParamMap &values, G isHeterogeneousFn,
+    void addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values, G isHeterogeneousFn,
                                    const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
     {
         if(paramNames.size() != values.size()) {
@@ -138,7 +136,7 @@ public:
     }
 
     template<typename T, typename G>
-    void addVarValueSubstitution(const std::vector<T> &variables, const Snippet::ParamValues::ParamMap &values, G isHeterogeneousFn,
+    void addVarValueSubstitution(const std::vector<T> &variables, const std::unordered_map<std::string, double> &values, G isHeterogeneousFn,
                                  const std::string &sourceSuffix = "", const std::string &destPrefix = "", const std::string &destSuffix = "")
     {
         if(variables.size() != values.size()) {
