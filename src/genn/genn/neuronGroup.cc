@@ -303,7 +303,7 @@ void NeuronGroup::injectCurrent(CurrentSourceInternal *src)
 }
 //----------------------------------------------------------------------------
 NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                         const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                         const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
     m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
@@ -313,13 +313,13 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
 {
     // Validate names
     Utils::validatePopName(name, "Neuron group");
+    Utils::validateParamValues(getNeuronModel()->getParamNames(), getParams(), "Neuron group " + getName());
     getNeuronModel()->validate();
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
 {
-    if (requiredDelay >= getNumDelaySlots())
-    {
+    if (requiredDelay >= getNumDelaySlots()) {
         m_NumDelaySlots = requiredDelay + 1;
     }
 }
@@ -338,12 +338,9 @@ void NeuronGroup::initDerivedParams(double dt)
 {
     auto derivedParams = getNeuronModel()->getDerivedParams();
 
-    // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size());
-
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(m_Params, dt));
+        m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
     }
 
     // Initialise derived parameters for variable initialisers

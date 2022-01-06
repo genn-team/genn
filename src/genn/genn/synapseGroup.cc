@@ -32,7 +32,7 @@ std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInit
                        }
 
                        // Return the first parameter (the value)
-                       return v.getParams()[0];
+                       return v.getParams().at("constant");
                    });
 
     return initVals;
@@ -512,8 +512,8 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const Snippet::ParamValues &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                           const PostsynapticModels::Base *ps, const Snippet::ParamValues &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -534,6 +534,8 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
+    Utils::validateParamValues(getWUModel()->getParamNames(), getWUParams(), "Synapse group " + getName() + " weight update model ");
+    Utils::validateParamValues(getPSModel()->getParamNames(), getPSParams(), "Synapse group " + getName() + " postsynaptic model ");
     getWUModel()->validate();
     getPSModel()->validate();
 
@@ -681,18 +683,14 @@ void SynapseGroup::initDerivedParams(double dt)
     auto wuDerivedParams = getWUModel()->getDerivedParams();
     auto psDerivedParams = getPSModel()->getDerivedParams();
 
-    // Reserve vector to hold derived parameters
-    m_WUDerivedParams.reserve(wuDerivedParams.size());
-    m_PSDerivedParams.reserve(psDerivedParams.size());
-
     // Loop through WU derived parameters
     for(const auto &d : wuDerivedParams) {
-        m_WUDerivedParams.push_back(d.func(m_WUParams, dt));
+        m_WUDerivedParams.emplace(d.name, d.func(m_WUParams, dt));
     }
 
     // Loop through PSM derived parameters
     for(const auto &d : psDerivedParams) {
-        m_PSDerivedParams.push_back(d.func(m_PSParams, dt));
+        m_PSDerivedParams.emplace(d.name, d.func(m_PSParams, dt));
     }
 
     // Initialise derived parameters for WU variable initialisers
@@ -884,32 +882,30 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUPreVarInitialisers()) {
         assert(w.getParams().size() == 1);
-        Utils::updateHash(w.getParams().at(0), hash);
+        Utils::updateHash(w.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuParamNames = getWUModel()->getParamNames();
     const std::string preSpikeCode = getWUModel()->getPreSpikeCode();
     const std::string preDynamicsCode = getWUModel()->getPreDynamicsCode();
-    for(size_t i = 0; i < wuParamNames.size(); i++) {
-        const std::string paramName = "$(" + wuParamNames.at(i) + ")";
+    for(const auto &p : getWUModel()->getParamNames()) {
+        const std::string paramName = "$(" + p + ")";
         if((preSpikeCode.find(paramName) != std::string::npos)
            || (preDynamicsCode.find(paramName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUParams().at(i), hash);
+            Utils::updateHash(getWUParams().at(p), hash);
         }
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuDerivedParams = getWUModel()->getDerivedParams();
-    for(size_t i = 0; i < wuDerivedParams.size(); i++) {
-        const std::string derivedParamName = "$(" + wuDerivedParams.at(i).name + ")";
+    for(const auto &d : getWUModel()->getDerivedParams()) {
+        const std::string derivedParamName = "$(" + d.name + ")";
         if((preSpikeCode.find(derivedParamName) != std::string::npos)
            || (preDynamicsCode.find(derivedParamName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUDerivedParams().at(i), hash);
+            Utils::updateHash(getWUDerivedParams().at(d.name), hash);
         }
     }
 
@@ -932,27 +928,25 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuParamNames = getWUModel()->getParamNames();
     const std::string postSpikeCode = getWUModel()->getPostSpikeCode();
     const std::string postDynamicsCode = getWUModel()->getPostDynamicsCode();
-    for(size_t i = 0; i < wuParamNames.size(); i++) {
-        const std::string paramName = "$(" + wuParamNames.at(i) + ")";
+    for(const auto &p : getWUModel()->getParamNames()) {
+        const std::string paramName = "$(" + p + ")";
         if((postSpikeCode.find(paramName) != std::string::npos)
            || (postDynamicsCode.find(paramName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUParams().at(i), hash);
+            Utils::updateHash(getWUParams().at(p), hash);
         }
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuDerivedParams = getWUModel()->getDerivedParams();
-    for(size_t i = 0; i < wuDerivedParams.size(); i++) {
-        const std::string derivedParamName = "$(" + wuDerivedParams.at(i).name + ")";
+    for(const auto &d : getWUModel()->getDerivedParams()) {
+        const std::string derivedParamName = "$(" + d.name + ")";
         if((postSpikeCode.find(derivedParamName) != std::string::npos)
            || (postDynamicsCode.find(derivedParamName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUDerivedParams().at(i), hash);
+            Utils::updateHash(getWUDerivedParams().at(d.name), hash);
         }
     }
 

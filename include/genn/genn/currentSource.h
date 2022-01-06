@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
@@ -42,7 +43,7 @@ public:
     //! Gets the current source model used by this group
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
-    const std::vector<double> &getParams() const{ return m_Params; }
+    const Snippet::ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
@@ -61,7 +62,7 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                  const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                  const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                   const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                   VarLocation defaultExtraGlobalParamLocation);
 
@@ -75,7 +76,7 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+    const Snippet::ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source require an RNG to simulate
     bool isSimRNGRequired() const;
@@ -94,6 +95,7 @@ protected:
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -101,8 +103,8 @@ private:
     std::string m_Name;
 
     const CurrentSourceModels::Base *m_CurrentSourceModel;
-    std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
+    Snippet::ParamValues m_Params;
+    Snippet::ParamValues::ParamMap m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;

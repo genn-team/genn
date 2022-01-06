@@ -35,7 +35,7 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
 }
 //----------------------------------------------------------------------------
 CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                             const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                             const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                              const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
@@ -44,6 +44,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
 {
     // Validate names
     Utils::validatePopName(name, "Current source");
+    Utils::validateParamValues(getCurrentSourceModel()->getParamNames(), getParams(), "Current source " + getName());
     getCurrentSourceModel()->validate();
 }
 //----------------------------------------------------------------------------
@@ -51,12 +52,9 @@ void CurrentSource::initDerivedParams(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();
 
-    // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size());
-
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(getParams(), dt));
+        m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
     }
 
     // Initialise derived parameters for variable initialisers

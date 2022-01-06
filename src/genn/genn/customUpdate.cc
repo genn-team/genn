@@ -33,12 +33,9 @@ void CustomUpdateBase::initDerivedParams(double dt)
 {
     auto derivedParams = getCustomUpdateModel()->getDerivedParams();
 
-    // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size());
-
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(getParams(), dt));
+        m_DerivedParams.emplace(d.name, d.func(getParams(), dt));
     }
 
     // Initialise derived parameters for variable initialisers
@@ -94,7 +91,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 // CustomUpdate
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                           const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
                            const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
@@ -167,7 +164,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 // CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                               const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
+                               const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
                                const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),

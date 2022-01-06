@@ -305,7 +305,7 @@ public:
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
     const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
-    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams.getValues(); }
+    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
 
     void initDerivedParams(double dt)
     {
@@ -313,7 +313,7 @@ public:
 
         // Loop through derived parameters
         for(const auto &d : derivedParams) {
-            m_DerivedParams.insert(d.func(m_Params, dt));
+            m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
         }
     }
 
@@ -328,7 +328,7 @@ private:
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
     ParamValues m_Params;
-    ParamValues m_DerivedParams;
+    ParamValues::ParamMap m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------

@@ -10,8 +10,8 @@ class SynapseGroupInternal : public SynapseGroup
 {
 public:
     SynapseGroupInternal(const std::string &name, const SynapseGroupInternal *weightSharingMaster, SynapseMatrixType matrixType, unsigned int delaySteps,
-                         const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                         const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                         const WeightUpdateModels::Base *wu, const Snippet::ParamValues &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                         const PostsynapticModels::Base *ps, const Snippet::ParamValues &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                          NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                          const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                          const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser,

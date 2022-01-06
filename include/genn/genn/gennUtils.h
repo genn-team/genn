@@ -24,6 +24,11 @@ namespace Models
 class VarInit;
 }
 
+namespace Snippet
+{
+class ParamValues;
+}
+
 //--------------------------------------------------------------------------
 // Utils
 //--------------------------------------------------------------------------
@@ -68,6 +73,12 @@ GENN_EXPORT void validateVarName(const std::string &name, const std::string &des
 //! \brief Is the population name valid? GeNN population names obey C variable naming rules but can start with a number
 //--------------------------------------------------------------------------
 GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
+
+//--------------------------------------------------------------------------
+//! \brief Are values provided for all of the the parameter names in the vector?
+//--------------------------------------------------------------------------
+GENN_EXPORT void validateParamValues(const std::vector<std::string> &paramNames, const Snippet::ParamValues &paramValues, 
+                                     const std::string &description);
 
 //--------------------------------------------------------------------------
 //! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
@@ -159,6 +170,17 @@ inline void updateHash(const std::vector<bool> &vector, boost::uuids::detail::sh
 {
     for(bool v : vector) {
         updateHash(v, hash);
+    }
+}
+
+
+//! Hash unordered maps of types which can, themselves, be hashed
+template<typename K, typename V>
+inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail::sha1 &hash)
+{
+    for(const auto &v : map) {
+        updateHash(v.first, hash);
+        updateHash(v.second, hash);
     }
 }
 
