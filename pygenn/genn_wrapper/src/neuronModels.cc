@@ -41,20 +41,20 @@ const Base *getBaseInstance()
 PYBIND11_MODULE(neuron_models, m) 
 {
     pybind11::module_::import("genn_wrapper.genn");
-    
+
     //------------------------------------------------------------------------
     // neuron_models.Base
     //------------------------------------------------------------------------
     pybind11::class_<Base, Models::Base, PyNeuronBase>(m, "Base")
         .def(pybind11::init<>())
-        
+
         .def("get_sim_code", &Base::getSimCode)
         .def("get_threshold_condition_code", &Base::getThresholdConditionCode)
         .def("get_reset_code", &Base::getResetCode)
         .def("get_support_code", &Base::getSupportCode)
         .def("get_additional_input_vars", &Base::getAdditionalInputVars)
         .def("is_auto_refractory_required", &Base::isAutoRefractoryRequired);
-    
+
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------

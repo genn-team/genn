@@ -33,7 +33,7 @@ PYBIND11_MODULE(genn, m)
         .value("INFO", plog::Severity::info)
         .value("DEBUG", plog::Severity::debug)
         .value("VERBOSE", plog::Severity::verbose);
-    
+
     pybind11::enum_<SynapseMatrixConnectivity>(m, "SynapseMatrixConnectivity")
         .value("DENSE", SynapseMatrixConnectivity::DENSE)
         .value("BITMASK", SynapseMatrixConnectivity::BITMASK)
@@ -58,12 +58,12 @@ PYBIND11_MODULE(genn, m)
         .value("PROCEDURAL_PROCEDURALG", SynapseMatrixType::PROCEDURAL_PROCEDURALG)
         .value("PROCEDURAL_KERNELG", SynapseMatrixType::PROCEDURAL_KERNELG)
         .value("TOEPLITZ_KERNELG", SynapseMatrixType::TOEPLITZ_KERNELG)
-        
+
         .def("__and__", [](SynapseMatrixType a, SynapseMatrixConnectivity b){ return a & b; }, 
              pybind11::is_operator())
         .def("__and__", [](SynapseMatrixType a, SynapseMatrixWeight b){ return a & b; }, 
              pybind11::is_operator());
-    
+
     pybind11::enum_<VarAccessModeAttribute>(m, "VarAccessModeAttribute")
         .value("READ_ONLY", VarAccessModeAttribute::READ_ONLY)
         .value("READ_WRITE", VarAccessModeAttribute::READ_WRITE)
@@ -77,7 +77,7 @@ PYBIND11_MODULE(genn, m)
         .value("READ_ONLY", VarAccessMode::READ_ONLY)
         .value("REDUCE_SUM", VarAccessMode::REDUCE_SUM)
         .value("REDUCE_MAX", VarAccessMode::REDUCE_MAX)
-        
+
         .def("__and__", [](VarAccessMode a, VarAccessModeAttribute b){ return a & b; }, 
              pybind11::is_operator());
 
@@ -93,7 +93,7 @@ PYBIND11_MODULE(genn, m)
         .value("READ_ONLY_DUPLICATE", VarAccess::READ_ONLY_DUPLICATE)
         .value("REDUCE_BATCH_SUM", VarAccess::REDUCE_BATCH_SUM)
         .value("REDUCE_BATCH_MAX", VarAccess::REDUCE_BATCH_MAX)
-        
+
         .def("__and__", [](VarAccess a, VarAccessModeAttribute b){ return a & b; }, 
              pybind11::is_operator())
         .def("__and__", [](VarAccess a, VarAccessMode b){ return a & b; }, 
@@ -116,20 +116,20 @@ PYBIND11_MODULE(genn, m)
         .def_property("timing_enabled", &ModelSpecInternal::isTimingEnabled, &ModelSpecInternal::setTiming)
         .def_property("batch_size", &ModelSpecInternal::getBatchSize, &ModelSpecInternal::setBatchSize)
         .def_property("seed", &ModelSpecInternal::getSeed, &ModelSpecInternal::setSeed)
-        
+
         .def_property("default_var_location", nullptr, &ModelSpecInternal::setDefaultVarLocation)
         .def_property("default_sparse_connectivity_location", nullptr, &ModelSpecInternal::setDefaultSparseConnectivityLocation)
         .def_property("default_narrow_sparse_ind_enabled", nullptr, &ModelSpecInternal::setDefaultNarrowSparseIndEnabled)
         .def_property("fuse_postsynaptic_models", nullptr, &ModelSpecInternal::setFusePostsynapticModels)
         .def_property("fuse_pre_post_weight_update_models", nullptr, &ModelSpecInternal::setFusePrePostWeightUpdateModels)
-        
+
         .def_property_readonly("num_neurons", &ModelSpecInternal::getNumNeurons)
-        
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
         .def("finalize", &ModelSpecInternal::finalize);
-    
+
     //------------------------------------------------------------------------
     // genn.CurrentSource
     //------------------------------------------------------------------------
@@ -138,13 +138,13 @@ PYBIND11_MODULE(genn, m)
         // Properties
         //--------------------------------------------------------------------
         .def_property_readonly("name", &CurrentSource::getName)
-        
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
         .def("set_var_location", &CurrentSource::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&CurrentSource::getVarLocation, pybind11::const_));
-    
+
     //------------------------------------------------------------------------
     // genn.NeuronGroup
     //------------------------------------------------------------------------
@@ -154,7 +154,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property_readonly("name", &NeuronGroup::getName)
         .def_property_readonly("num_neurons", &NeuronGroup::getNumNeurons)
-        
+
         .def_property("spike_location", &NeuronGroup::getSpikeLocation, &NeuronGroup::setSpikeLocation)
         .def_property("spike_event_location", &NeuronGroup::getSpikeEventLocation, &NeuronGroup::setSpikeEventLocation)
         .def_property("spike_time_location", &NeuronGroup::getSpikeTimeLocation, &NeuronGroup::setSpikeTimeLocation)
@@ -163,13 +163,13 @@ PYBIND11_MODULE(genn, m)
         .def_property("prev_spike_event_time_location", &NeuronGroup::getPrevSpikeEventTimeLocation, &NeuronGroup::setPrevSpikeEventTimeLocation)
         .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
         .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
-        
+
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
         .def("set_var_location", &NeuronGroup::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_));
-        
+
     //------------------------------------------------------------------------
     // genn.PreferencesBase
     //------------------------------------------------------------------------
@@ -179,7 +179,7 @@ PYBIND11_MODULE(genn, m)
         .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
         .def_readwrite("generate_extra_global_param_pull", &CodeGenerator::PreferencesBase::generateExtraGlobalParamPull)
         .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
-    
+
     //------------------------------------------------------------------------
     // genn.SnippetBase
     //------------------------------------------------------------------------
@@ -187,7 +187,7 @@ PYBIND11_MODULE(genn, m)
         .def("get_param_names", &Snippet::Base::getParamNames)
         .def("get_derived_params", &Snippet::Base::getDerivedParams)
         .def("get_extra_global_params", &Snippet::Base::getExtraGlobalParams);
-        
+
     //------------------------------------------------------------------------
     // genn.ModelBase
     //------------------------------------------------------------------------
