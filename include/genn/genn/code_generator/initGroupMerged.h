@@ -18,16 +18,16 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Should the incoming synapse weight update model var init parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isInSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Should the incoming synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Should the outgoing synapse weight update model var init parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isOutSynWUMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Should the outgoing synapse weight update model var init derived parameter be implemented heterogeneously?
-    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Get sorted vectors of incoming synapse groups with postsynaptic variables belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostVars() const { return m_SortedInSynWithPostVars.front(); }
@@ -62,21 +62,21 @@ private:
                        const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        const std::vector<Models::VarInit>&(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
-                       bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, size_t) const,
-                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, size_t) const,
+                       bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, size_t, const std::string&) const,
+                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, size_t, const std::string&) const,
                        const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
 
     //! Is the incoming synapse weight update model var init parameter referenced?
-    bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isInSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Is the incoming synapse weight update model var init derived parameter referenced?
-    bool isInSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isInSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Is the outgoing synapse weight update model var init parameter referenced?
-    bool isOutSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isOutSynWUMVarInitParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     //! Is the outgoing synapse weight update model var init derived parameter referenced?
-    bool isOutSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, size_t paramIndex) const;
+    bool isOutSynWUMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
 
     void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                            bool spikeEvent, unsigned int batchSize) const;
@@ -243,17 +243,17 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+    bool isVarInitParamHeterogeneous(size_t varIndex, const std::string &paramName) const
     {
-        return (isVarInitParamReferenced(varIndex, paramIndex) &&
-                this->isParamValueHeterogeneous(paramIndex, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getParams(); }));
+        return (isVarInitParamReferenced(varIndex, paramName) &&
+                this->isParamValueHeterogeneous(paramName, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getParams(); }));
     }
 
     //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, const std::string &paramName) const
     {
-        return (isVarInitDerivedParamReferenced(varIndex, paramIndex) &&
-                this->isParamValueHeterogeneous(paramIndex, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getDerivedParams(); }));
+        return (isVarInitDerivedParamReferenced(varIndex, paramName) &&
+                this->isParamValueHeterogeneous(paramName, [varIndex](const G &cg) { return cg.getVarInitialisers().at(varIndex).getDerivedParams(); }));
     }
 
 protected:
@@ -307,21 +307,17 @@ private:
     // Private methods
     //----------------------------------------------------------------------------
     //! Is the var init parameter referenced?
-    bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const
+    bool isVarInitParamReferenced(size_t varIndex, const std::string &paramName) const
     {
-        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
         const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
-        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
         return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
 
     //! Is the var init derived parameter referenced?
-    bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const
+    bool isVarInitDerivedParamReferenced(size_t varIndex, const std::string &paramName) const
     {
-        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
         const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(varIndex).getSnippet();
-        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
-        return this->isParamReferenced({varInitSnippet->getCode()}, derivedParamName);
+        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
     }
 };
 

@@ -18,16 +18,16 @@ public:
     // Public API
     //------------------------------------------------------------------------
     //! Should the incoming synapse weight update model parameter be implemented heterogeneously?
-    bool isInSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    bool isInSynWUMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
     //! Should the incoming synapse weight update model derived parameter be implemented heterogeneously?
-    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    bool isInSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
     //! Should the outgoing synapse weight update model parameter be implemented heterogeneously?
-    bool isOutSynWUMParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    bool isOutSynWUMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
     //! Should the outgoing synapse weight update model derived parameter be implemented heterogeneously?
-    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    bool isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
     //! Get sorted vectors of incoming synapse groups with postsynaptic code belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostCode() const { return m_SortedInSynWithPostCode.front(); }
@@ -72,21 +72,21 @@ private:
     void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
                        const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
-                       bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
-                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const,
+                       bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
+                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const,
                        const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
 
     //! Is the incoming synapse weight update model parameter referenced?
-    bool isInSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
+    bool isInSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the incoming synapse weight update model derived parameter referenced?
-    bool isInSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
+    bool isInSynWUMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the outgoing synapse weight update model parameter referenced?
-    bool isOutSynWUMParamReferenced(size_t childIndex, size_t paramIndex) const;
+    bool isOutSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the outgoing synapse weight update model derived parameter referenced?
-    bool isOutSynWUMDerivedParamReferenced(size_t childIndex, size_t paramIndex) const;
+    bool isOutSynWUMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
     
@@ -97,8 +97,8 @@ private:
                              unsigned int(SynapseGroupInternal::*getDelaySteps)(void) const,
                              Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                              std::string(WeightUpdateModels::Base::*getCode)(void) const,
-                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, size_t) const,
-                             bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, size_t) const) const;
+                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
+                             bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const) const;
     
     //------------------------------------------------------------------------
     // Members

@@ -63,10 +63,10 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     updateSubs.addVarNameSubstitution(cm->getVars(), "", "l");
     updateSubs.addVarNameSubstitution(cm->getVarRefs(), "", "l");
     updateSubs.addParamValueSubstitution(cm->getParamNames(), cg.getArchetype().getParams(),
-                                         [&cg](size_t i) { return cg.isParamHeterogeneous(i);  },
+                                         [&cg](const std::string &p) { return cg.isParamHeterogeneous(p);  },
                                          "", "group->");
     updateSubs.addVarValueSubstitution(cm->getDerivedParams(), cg.getArchetype().getDerivedParams(),
-                                       [&cg](size_t i) { return cg.isDerivedParamHeterogeneous(i);  },
+                                       [&cg](const std::string &p) { return cg.isDerivedParamHeterogeneous(p);  },
                                        "", "group->");
     updateSubs.addVarNameSubstitution(cm->getExtraGlobalParams(), "", "group->");
 
@@ -143,14 +143,14 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
 //----------------------------------------------------------------------------
-bool CustomUpdateGroupMerged::isParamHeterogeneous(size_t index) const
+bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(index, [](const CustomUpdateInternal &cg) { return cg.getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const CustomUpdateInternal &cg) { return cg.getParams(); });
 }
 //----------------------------------------------------------------------------    
-bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(size_t index) const
+bool CustomUpdateGroupMerged::isDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(index, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const CustomUpdateInternal &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest() const
@@ -203,14 +203,14 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int bat
 // ----------------------------------------------------------------------------
 // CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(size_t index) const
+bool CustomUpdateWUGroupMergedBase::isParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
+    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getParams(); });
 }
 //----------------------------------------------------------------------------
-bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(size_t index) const
+bool CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return isParamValueHeterogeneous(index, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
+    return isParamValueHeterogeneous(paramName, [](const CustomUpdateWUInternal &cg) { return cg.getDerivedParams(); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDigest() const
