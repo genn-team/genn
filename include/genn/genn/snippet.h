@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // Standard C includes
@@ -16,7 +17,7 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_SNIPPET(TYPE, NUM_PARAMS)               \
+#define DECLARE_SNIPPET(TYPE)                           \
 private:                                                \
     GENN_EXPORT static TYPE *s_Instance;                \
 public:                                                 \
@@ -27,8 +28,7 @@ public:                                                 \
             s_Instance = new TYPE;                      \
         }                                               \
         return s_Instance;                              \
-    }                                                   \
-    typedef Snippet::ValueBase<NUM_PARAMS> ParamValues  \
+    }
 
 
 #define IMPLEMENT_SNIPPET(TYPE) TYPE *TYPE::s_Instance = NULL
@@ -114,6 +114,49 @@ template<size_t NumVars>
 using ValueBase = InitialiserContainerBase<double, NumVars>;
 
 //----------------------------------------------------------------------------
+// Snippet::ParamValues
+//----------------------------------------------------------------------------
+//! Container for parameter (and derived parameter) values
+/*! We don't use std::unordered_map directly both to save typing and because it doesn't have a const [] operator */
+class ParamValues
+{
+public:
+    //----------------------------------------------------------------------------
+    // Typedefines
+    //----------------------------------------------------------------------------
+    typedef std::unordered_map<std::string, double> ParamMap;
+
+    ParamValues()
+    {
+    }
+
+    ParamValues(const ParamMap &values)
+    :   m_Values(values)
+    {}
+
+    ParamValues(std::initializer_list<ParamMap::value_type> values)
+    :   m_Values(values)
+    {}
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    double operator[](const std::string &name) const
+    {
+        return m_Values.at(name);
+    }
+
+    ParamMap &getValues() { return m_Values; }
+    const ParamMap &getValues() const { return m_Values; }
+
+private:
+    //----------------------------------------------------------------------------
+    // Members
+    //----------------------------------------------------------------------------
+    ParamMap m_Values;
+};
+
+//----------------------------------------------------------------------------
 // Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
@@ -168,7 +211,7 @@ public:
         }
 
         std::string name;
-        std::function<double(const std::vector<double> &, double)> func;
+        std::function<double(const ParamValues &, double)> func;
     };
 
 
@@ -250,7 +293,7 @@ template<typename SnippetBase>
 class Init
 {
 public:
-    Init(const SnippetBase *snippet, const std::vector<double> &params)
+    Init(const SnippetBase *snippet, const ParamValues &params)
         : m_Snippet(snippet), m_Params(params)
     {
         // Validate names
@@ -261,19 +304,16 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
-    const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+    const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
+    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams.getValues(); }
 
     void initDerivedParams(double dt)
     {
         auto derivedParams = m_Snippet->getDerivedParams();
 
-        // Reserve vector to hold derived parameters
-        m_DerivedParams.reserve(derivedParams.size());
-
         // Loop through derived parameters
         for(const auto &d : derivedParams) {
-            m_DerivedParams.push_back(d.func(m_Params, dt));
+            m_DerivedParams.insert(d.func(m_Params, dt));
         }
     }
 
@@ -287,8 +327,8 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
-    std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
+    ParamValues m_Params;
+    ParamValues m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------

@@ -7,8 +7,8 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_CUSTOM_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS)   \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                          \
+#define DECLARE_CUSTOM_UPDATE_MODEL(TYPE, NUM_VARS, NUM_VAR_REFS)               \
+    DECLARE_SNIPPET(TYPE);                                                      \
     typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                   \
     typedef Models::VarReferenceContainerBase<NUM_VAR_REFS> VarReferences;      \
     typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> WUVarReferences
@@ -55,7 +55,7 @@ public:
 //! Minimal custom update model for calculating tranpose
 class Transpose : public Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Transpose, 0, 0, 1);
+    DECLARE_CUSTOM_UPDATE_MODEL(Transpose, 0, 1);
 
     SET_VAR_REFS({{"variable", "scalar", VarAccessMode::READ_WRITE}});
 };

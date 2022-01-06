@@ -42,7 +42,7 @@ public:
 class Uninitialised : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Uninitialised, 0);
+    DECLARE_SNIPPET(InitVarSnippet::Uninitialised);
 };
 
 //----------------------------------------------------------------------------
@@ -58,7 +58,7 @@ public:
 class Constant : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Constant, 1);
+    DECLARE_SNIPPET(InitVarSnippet::Constant);
 
     SET_CODE("$(value) = $(constant);");
 
@@ -71,7 +71,7 @@ public:
 //! Used to initialise synapse variables from a kernel
 class Kernel : public Base
 {
-    DECLARE_SNIPPET(InitVarSnippet::Kernel, 0);
+    DECLARE_SNIPPET(InitVarSnippet::Kernel);
 
     SET_CODE("$(value) = $(kernel)[$(id_kernel)];");
 
@@ -89,7 +89,7 @@ class Kernel : public Base
 class Uniform : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Uniform, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Uniform);
 
     SET_CODE(
         "const scalar scale = $(max) - $(min);\n"
@@ -109,7 +109,7 @@ public:
 class Normal : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Normal, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Normal);
 
     SET_CODE("$(value) = $(mean) + ($(gennrand_normal) * $(sd));");
 
@@ -130,7 +130,7 @@ public:
 class NormalClipped : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::NormalClipped, 4);
+    DECLARE_SNIPPET(InitVarSnippet::NormalClipped);
 
     SET_CODE(
         "scalar normal;\n"
@@ -159,7 +159,7 @@ public:
 class NormalClippedDelay : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::NormalClippedDelay, 4);
+    DECLARE_SNIPPET(InitVarSnippet::NormalClippedDelay);
 
     SET_CODE(
         "scalar normal;\n"
@@ -171,10 +171,10 @@ public:
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
-        {"meanTimestep", [](const std::vector<double> &pars, double dt){ return pars[0] / dt; }},
-        {"sdTimestep", [](const std::vector<double> &pars, double dt){ return pars[1] / dt; }},
-        {"minTimestep", [](const std::vector<double> &pars, double dt){ return pars[2] / dt; }},
-        {"maxTimestep", [](const std::vector<double> &pars, double dt){ return pars[3] / dt; }}});
+        {"meanTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["mean"] / dt; }},
+        {"sdTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["sd"] / dt; }},
+        {"minTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["min"] / dt; }},
+        {"maxTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["max"] / dt; }}});
 };
 
 //----------------------------------------------------------------------------
@@ -187,7 +187,7 @@ public:
 class Exponential : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Exponential, 1);
+    DECLARE_SNIPPET(InitVarSnippet::Exponential);
 
     SET_CODE("$(value) = $(lambda) * $(gennrand_exponential);");
 
@@ -204,7 +204,7 @@ public:
 class Gamma : public Base
 {
 public:
-    DECLARE_SNIPPET(InitVarSnippet::Gamma, 2);
+    DECLARE_SNIPPET(InitVarSnippet::Gamma);
 
     SET_CODE("$(value) = $(b) * $(gennrand_gamma, $(a));");
 

@@ -6,8 +6,8 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS)    \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                                          \
+#define DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS)    \
+    DECLARE_SNIPPET(TYPE);                                                          \
     typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                                \
     typedef Models::VarInitContainerBase<NUM_PRE_VARS> PreVarValues;                         \
     typedef Models::VarInitContainerBase<NUM_POST_VARS> PostVarValues
@@ -174,7 +174,7 @@ public:
 class StaticPulse : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 1, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
@@ -200,7 +200,7 @@ public:
 class StaticPulseDendriticDelay : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 0, 2, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 2, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
@@ -236,7 +236,7 @@ public:
 class StaticGraded : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 2, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 1, 0, 0);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
@@ -306,10 +306,10 @@ public:
 class PiecewiseSTDP : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 10, 2, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 2, 0, 0);
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-        "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
+                     "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
@@ -339,13 +339,13 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const std::vector<double> &pars, double){ return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]); }},
-        {"lim1", [](const std::vector<double> &pars, double){ return  -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1])); }},
-        {"slope0", [](const std::vector<double> &pars, double){ return  -2*pars[5]/(pars[1]*pars[0]); }},
-        {"slope1", [](const std::vector<double> &pars, double){ return  2*pars[5]/(pars[1]*pars[0]); }},
-        {"off0", [](const std::vector<double> &pars, double){ return  pars[5] / pars[4]; }},
-        {"off1", [](const std::vector<double> &pars, double){ return  pars[5] / pars[1]; }},
-        {"off2", [](const std::vector<double> &pars, double){ return  pars[5] / pars[3]; }}});
+        {"lim0", [](const Snippet::ParamValues &pars, double){ return (1/pars["tPunish01"] + 1/pars["tChng"]) * pars["tLrn"] / (2/pars["tChng"]); }},
+        {"lim1", [](const Snippet::ParamValues &pars, double){ return  -((1/pars["tPunish10"] + 1/pars["tChng"]) * pars["tLrn"] / (2/pars["tChng"])); }},
+        {"slope0", [](const Snippet::ParamValues &pars, double){ return  -2*pars["gMax"]/(pars["tChng"]*pars["tLrn"]); }},
+        {"slope1", [](const Snippet::ParamValues &pars, double){ return  2*pars["gMax"]/(pars["tChng"]*pars["tLrn"]); }},
+        {"off0", [](const Snippet::ParamValues &pars, double){ return  pars["gMax"] / pars["tPunish01"]; }},
+        {"off1", [](const Snippet::ParamValues &pars, double){ return  pars["gMax"] / pars["tChng"]; }},
+        {"off2", [](const Snippet::ParamValues &pars, double){ return  pars["gMax"] / pars["tPunish10"]; }}});
 
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);

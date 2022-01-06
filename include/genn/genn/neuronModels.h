@@ -103,7 +103,7 @@ public:
 class RulkovMap : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::RulkovMap, 4, 2);
+    DECLARE_MODEL(NeuronModels::RulkovMap, 2);
 
     SET_SIM_CODE(
         "if ($(V) <= 0) {\n"
@@ -127,9 +127,9 @@ public:
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const std::vector<double> &pars, double){ return pars[0] * pars[0] * pars[1]; }},
-        {"ip1", [](const std::vector<double> &pars, double){ return pars[0] * pars[2]; }},
-        {"ip2", [](const std::vector<double> &pars, double){ return (pars[0] * pars[1]) + (pars[0] * pars[2]); }}});
+        {"ip0", [](const Snippet::ParamValues &pars, double){ return pars["Vspike"] * pars["Vspike"] * pars["alpha"]; }},
+        {"ip1", [](const Snippet::ParamValues &pars, double){ return pars["Vspike"] * pars["y"]; }},
+        {"ip2", [](const Snippet::ParamValues &pars, double){ return (pars["Vspike"] * pars["alpha"]) + (pars["Vspike"] * pars["y"]); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -156,7 +156,7 @@ public:
 class Izhikevich : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Izhikevich, 4, 2);
+    DECLARE_MODEL(NeuronModels::Izhikevich, 2);
 
     SET_SIM_CODE(
         "if ($(V) >= 30.0){\n"
@@ -198,7 +198,7 @@ public:
 class IzhikevichVariable : public Izhikevich
 {
 public:
-    DECLARE_MODEL(NeuronModels::IzhikevichVariable, 0, 6);
+    DECLARE_MODEL(NeuronModels::IzhikevichVariable, 6);
 
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
@@ -212,7 +212,7 @@ public:
 class LIF : public Base
 {
 public:
-    DECLARE_MODEL(LIF, 7, 2);
+    DECLARE_MODEL(LIF, 2);
 
     SET_SIM_CODE(
         "if ($(RefracTime) <= 0.0) {\n"
@@ -240,8 +240,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+        {"ExpTC", [](const Snippet::ParamValues &pars, double dt){ return std::exp(-dt / pars["TauM"]); }},
+        {"Rmembrane", [](const Snippet::ParamValues &pars, double){ return  pars["TauM"] / pars["C"]; }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -257,7 +257,7 @@ public:
 class SpikeSource : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::SpikeSource, 0, 0);
+    DECLARE_MODEL(NeuronModels::SpikeSource, 0);
 
     SET_THRESHOLD_CONDITION_CODE("0");
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -281,7 +281,7 @@ public:
 class SpikeSourceArray : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::SpikeSourceArray, 0, 2);
+    DECLARE_MODEL(NeuronModels::SpikeSourceArray, 2);
     SET_SIM_CODE("")
     SET_THRESHOLD_CONDITION_CODE(
         "$(startSpike) != $(endSpike) && "
@@ -332,7 +332,7 @@ public:
 class Poisson : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Poisson, 4, 2);
+    DECLARE_MODEL(NeuronModels::Poisson, 2);
 
     SET_SIM_CODE(
         "if(($(t) - $(spikeTime)) > $(tspike) && $(V) > $(Vrest)){\n"
@@ -371,7 +371,7 @@ public:
 class PoissonNew : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::PoissonNew, 1, 1);
+    DECLARE_MODEL(NeuronModels::PoissonNew, 1);
 
     SET_SIM_CODE(
         "if($(timeStepToSpike) <= 0.0f) {\n"
@@ -384,7 +384,7 @@ public:
 
     SET_PARAM_NAMES({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const std::vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const Snippet::ParamValues &pars, double dt){ return 1000.0 / (pars["rate"] * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
@@ -439,7 +439,7 @@ public:
 class TraubMiles : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMiles, 7, 4);
+    DECLARE_MODEL(NeuronModels::TraubMiles, 4);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -494,7 +494,7 @@ public:
 class TraubMilesFast : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesFast, 7, 4);
+    DECLARE_MODEL(NeuronModels::TraubMilesFast, 4);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -527,7 +527,7 @@ public:
 class TraubMilesAlt : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesAlt, 7, 4);
+    DECLARE_MODEL(NeuronModels::TraubMilesAlt, 4);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -563,7 +563,7 @@ public:
 class TraubMilesNStep : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesNStep, 8, 4);
+    DECLARE_MODEL(NeuronModels::TraubMilesNStep, 4);
 
     SET_SIM_CODE(
         "scalar Imem;\n"

@@ -28,8 +28,8 @@ class BackendBase;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)                       \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                  \
+#define DECLARE_MODEL(TYPE, NUM_VARS)                                \
+    DECLARE_SNIPPET(TYPE);                                           \
     typedef Models::VarInitContainerBase<NUM_VARS> VarValues;        \
     typedef Models::VarInitContainerBase<0> PreVarValues;            \
     typedef Models::VarInitContainerBase<0> PostVarValues
@@ -134,13 +134,13 @@ protected:
 class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
-    VarInit(const InitVarSnippet::Base *snippet, const std::vector<double> &params)
+    VarInit(const InitVarSnippet::Base *snippet, const Snippet::ParamValues &params)
         : Snippet::Init<InitVarSnippet::Base>(snippet, params)
     {
     }
 
     VarInit(double constant)
-        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
+        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {{"constant", constant}})
     {
     }
 };
