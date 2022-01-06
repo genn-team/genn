@@ -58,6 +58,8 @@ PYBIND11_MODULE(neuron_models, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
+    // **THINK** with some cunning, standard macros could maybe populate
+    // an array with instance pointers that we could loop over
     m.def("RulkovMap", &getBaseInstance<RulkovMap>, pybind11::return_value_policy::reference);
     m.def("Izhikevich", &getBaseInstance<Izhikevich>, pybind11::return_value_policy::reference);
     m.def("IzhikevichVariable", &getBaseInstance<IzhikevichVariable>, pybind11::return_value_policy::reference);
