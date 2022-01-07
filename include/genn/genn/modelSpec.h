@@ -56,7 +56,7 @@ enum class TimePrecision
 
 //! Initialise a variable using an initialisation snippet
 /*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
-    \param params   parameters for snippet wrapped in S::ParamValues object.
+    \param params   parameters for snippet wrapped in Snippet::ParamValues object.
     \return         Models::VarInit object for use within model's VarValues*/
 template<typename S>
 inline Models::VarInit initVar(const Snippet::ParamValues &params)
@@ -64,6 +64,14 @@ inline Models::VarInit initVar(const Snippet::ParamValues &params)
     return Models::VarInit(S::getInstance(), params);
 }
 
+//! Initialise a variable using an initialisation snippet
+/*! \tparam S       type of variable initialisation snippet (derived from InitVarSnippet::Base).
+    \return         Models::VarInit object for use within model's VarValues*/
+template<typename S>
+inline Models::VarInit initVar()
+{
+    return Models::VarInit(S::getInstance(), {});
+}
 
 //! Mark a variable as uninitialised
 /*! This means that the backend will not generate any automatic initialization code, but will instead
@@ -75,12 +83,21 @@ inline Models::VarInit uninitialisedVar()
 
 //! Initialise connectivity using a sparse connectivity snippet
 /*! \tparam S       type of sparse connectivitiy initialisation snippet (derived from InitSparseConnectivitySnippet::Base).
-    \param params   parameters for snippet wrapped in S::ParamValues object.
+    \param params   parameters for snippet wrapped in Snippet::ParamValues object.
     \return         InitSparseConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline InitSparseConnectivitySnippet::Init initConnectivity(const Snippet::ParamValues &params)
 {
     return InitSparseConnectivitySnippet::Init(S::getInstance(), params);
+}
+
+//! Initialise connectivity using a sparse connectivity snippet
+/*! \tparam S       type of sparse connectivitiy initialisation snippet (derived from InitSparseConnectivitySnippet::Base).
+    \return         InitSparseConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
+template<typename S>
+inline InitSparseConnectivitySnippet::Init initConnectivity()
+{
+    return InitSparseConnectivitySnippet::Init(S::getInstance(), {});
 }
 
 //! Mark a synapse group's sparse connectivity as uninitialised
@@ -94,12 +111,21 @@ inline InitSparseConnectivitySnippet::Init uninitialisedConnectivity()
 
 //! Initialise toeplitz connectivity using a toeplitz connectivity snippet
 /*! \tparam S       type of toeplitz connectivitiy initialisation snippet (derived from InitToeplitzConnectivitySnippet::Base).
-    \param params   parameters for snippet wrapped in S::ParamValues object.
+    \param params   parameters for snippet wrapped in Snippet::ParamValues object.
     \return         InitToeplitzConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
 template<typename S>
 inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity(const Snippet::ParamValues &params)
 {
     return InitToeplitzConnectivitySnippet::Init(S::getInstance(), params);
+}
+
+//! Initialise toeplitz connectivity using a toeplitz connectivity snippet
+/*! \tparam S       type of toeplitz connectivitiy initialisation snippet (derived from InitToeplitzConnectivitySnippet::Base).
+    \return         InitToeplitzConnectivitySnippet::Init object for passing to ``ModelSpec::addSynapsePopulation``*/
+template<typename S>
+inline InitToeplitzConnectivitySnippet::Init initToeplitzConnectivity()
+{
+    return InitToeplitzConnectivitySnippet::Init(S::getInstance(), {});
 }
 
 //! Creates a reference to a neuron group variable
@@ -404,17 +430,17 @@ public:
         \param delaySteps                   integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
         \param src                          string specifying name of presynaptic (source) population
         \param trg                          string specifying name of postsynaptic (target) population
-        \param weightParamValues            parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param weightParamValues            parameters for weight update model wrapped in Snippet::ParamValues object.
         \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param postsynapticParamValues      parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+        \param postsynapticParamValues      parameters for postsynaptic model wrapped in Snippet::ParamValues object.
         \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \param connectivityInitialiser      toeplitz connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const typename WeightUpdateModel::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const typename PostsynapticModel::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const Snippet::ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
+                                       const Snippet::ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         // Create empty pre and postsynaptic weight update variable initialisers
@@ -466,11 +492,11 @@ public:
         \param delaySteps                   integer specifying number of timesteps delay this synaptic connection should incur (or NO_DELAY for none)
         \param src                          string specifying name of presynaptic (source) population
         \param trg                          string specifying name of postsynaptic (target) population
-        \param weightParamValues            parameters for weight update model wrapped in WeightUpdateModel::ParamValues object.
+        \param weightParamValues            parameters for weight update model wrapped in Snippet::ParamValues object.
         \param weightVarInitialisers        weight update model per-synapse state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
         \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
         \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param postsynapticParamValues      parameters for postsynaptic model wrapped in PostsynapticModel::ParamValues object.
+        \param postsynapticParamValues      parameters for postsynaptic model wrapped in Snippet::ParamValues object.
         \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
         \param connectivityInitialiser      toeplitz connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
