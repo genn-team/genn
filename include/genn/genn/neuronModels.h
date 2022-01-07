@@ -127,9 +127,9 @@ public:
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const ParamValues &pars, double){ return pars["Vspike"] * pars["Vspike"] * pars["alpha"]; }},
-        {"ip1", [](const ParamValues &pars, double){ return pars["Vspike"] * pars["y"]; }},
-        {"ip2", [](const ParamValues &pars, double){ return (pars["Vspike"] * pars["alpha"]) + (pars["Vspike"] * pars["y"]); }}});
+        {"ip0", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("Vspike") * pars.at("alpha"); }},
+        {"ip1", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("y"); }},
+        {"ip2", [](const std::unordered_map<std::string, double> &pars, double){ return (pars.at("Vspike") * pars.at("alpha")) + (pars.at("Vspike") * pars.at("y")); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -240,8 +240,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["TauM"]); }},
-        {"Rmembrane", [](const ParamValues &pars, double){ return  pars["TauM"] / pars["C"]; }}});
+        {"ExpTC", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
+        {"Rmembrane", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -384,7 +384,7 @@ public:
 
     SET_PARAM_NAMES({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const ParamValues &pars, double dt){ return 1000.0 / (pars["rate"] * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const std::unordered_map<std::string, double> &pars, double dt){ return 1000.0 / (pars.at("rate") * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 

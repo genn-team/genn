@@ -27,6 +27,7 @@ Part of the code generation and generated code sections.
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
@@ -35,9 +36,11 @@ Part of the code generation and generated code sections.
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
-#include "valueContainers.h"
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
+
+using ParamValues = std::unordered_map<std::string, double>;
+using VarValues = std::unordered_map<std::string, Models::VarInit>;
 
 //! Floating point precision to use for models
 enum FloatType

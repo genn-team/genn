@@ -168,7 +168,7 @@ public:
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
-    const ParamValues::MapType &getWUParams() const{ return m_WUParams.getValues(); }
+    const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
     const std::vector<Models::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
@@ -176,7 +176,7 @@ public:
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
-    const ParamValues::MapType &getPSParams() const{ return m_PSParams.getValues(); }
+    const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
     const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
@@ -273,8 +273,8 @@ public:
 
 protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                 const WeightUpdateModels::Base *wu, const ParamValues &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                 const PostsynapticModels::Base *ps, const ParamValues &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                 const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                 const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -305,8 +305,8 @@ protected:
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const ParamValues::MapType &getWUDerivedParams() const{ return m_WUDerivedParams; }
-    const ParamValues::MapType &getPSDerivedParams() const{ return m_PSDerivedParams; }
+    const std::unordered_map<std::string, double> &getWUDerivedParams() const{ return m_WUDerivedParams; }
+    const std::unordered_map<std::string, double> &getPSDerivedParams() const{ return m_PSDerivedParams; }
 
     const SynapseGroupInternal *getWeightSharingMaster() const { return m_WeightSharingMaster; }
 
@@ -463,10 +463,10 @@ private:
     const WeightUpdateModels::Base *m_WUModel;
 
     //! Parameters of weight update model
-    const ParamValues m_WUParams;
+    const std::unordered_map<std::string, double> m_WUParams;
 
     //! Derived parameters for weight update model
-    ParamValues::MapType m_WUDerivedParams;
+    std::unordered_map<std::string, double> m_WUDerivedParams;
 
     //! Initialisers for weight update model per-synapse variables
     std::vector<Models::VarInit> m_WUVarInitialisers;
@@ -481,10 +481,10 @@ private:
     const PostsynapticModels::Base *m_PSModel;
 
     //! Parameters of post synapse model
-    const ParamValues m_PSParams;
+    const std::unordered_map<std::string, double> m_PSParams;
 
     //! Derived parameters for post synapse model
-    ParamValues::MapType m_PSDerivedParams;
+    std::unordered_map<std::string, double> m_PSDerivedParams;
 
     //! Initialisers for post synapse model variables
     std::vector<Models::VarInit> m_PSVarInitialisers;

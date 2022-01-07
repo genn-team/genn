@@ -36,7 +36,7 @@ public:
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
-    const ParamValues::MapType &getParams() const{ return m_Params.getValues(); }
+    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for custom update model state variable
@@ -49,9 +49,8 @@ public:
     bool isVarInitRequired() const;
 
 protected:
-    CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
-                     const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
-                     const std::vector<Models::VarInit> &varInitialisers,
+    CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
+                     const std::unordered_map<std::string, double> &params, const std::vector<Models::VarInit> &varInitialisers,
                      VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
         m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
@@ -73,7 +72,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const ParamValues::MapType &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
@@ -142,8 +141,8 @@ private:
     const std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    const ParamValues m_Params;
-    ParamValues::MapType m_DerivedParams;
+    const std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     //! Location of individual state variables
@@ -170,7 +169,7 @@ public:
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
+                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
                  const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -214,7 +213,7 @@ public:
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
+                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 

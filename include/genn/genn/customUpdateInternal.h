@@ -10,7 +10,7 @@ class CustomUpdateInternal : public CustomUpdate
 {
 public:
     CustomUpdateInternal(const std::string &name, const std::string &updateGroupName,
-                         const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params, 
+                         const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params, 
                          const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences, 
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdate(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 
@@ -39,7 +39,7 @@ class CustomUpdateWUInternal : public CustomUpdateWU
 {
 public:
     CustomUpdateWUInternal(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params, 
+                           const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params, 
                            const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences, 
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   CustomUpdateWU(name, updateGroupName, customUpdateModel, params, varInitialisers, varReferences, 

@@ -134,7 +134,7 @@ protected:
 class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
-    VarInit(const InitVarSnippet::Base *snippet, const ParamValues &params)
+    VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params)
         : Snippet::Init<InitVarSnippet::Base>(snippet, params)
     {
     }

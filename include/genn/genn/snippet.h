@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // Standard C includes
@@ -12,7 +13,6 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
-#include "valueContainers.h"
 
 //----------------------------------------------------------------------------
 // Macros
@@ -106,13 +106,6 @@ public:
         return {};
     }
 };
-
-//----------------------------------------------------------------------------
-// Snippet::ValueBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using ValueBase = InitialiserContainerBase<double, NumVars>;
-
 //----------------------------------------------------------------------------
 // Snippet::Base
 //----------------------------------------------------------------------------
@@ -168,7 +161,7 @@ public:
         }
 
         std::string name;
-        std::function<double(const ParamValues &, double)> func;
+        std::function<double(const std::unordered_map<std::string, double>&, double)> func;
     };
 
 
@@ -250,7 +243,7 @@ template<typename SnippetBase>
 class Init
 {
 public:
-    Init(const SnippetBase *snippet, const ParamValues &params)
+    Init(const SnippetBase *snippet, const std::unordered_map<std::string, double> &params)
         : m_Snippet(snippet), m_Params(params)
     {
         // Validate names
@@ -261,8 +254,8 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
-    const ParamValues::MapType &getParams() const{ return m_Params.getValues(); }
-    const ParamValues::MapType &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
     void initDerivedParams(double dt)
     {
@@ -284,8 +277,8 @@ private:
     // Members
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
-    ParamValues m_Params;
-    ParamValues::MapType m_DerivedParams;
+    std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------

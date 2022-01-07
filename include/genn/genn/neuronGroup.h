@@ -135,7 +135,7 @@ public:
     //! Gets the neuron model used by this group
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
-    const ParamValues::MapType &getParams() const{ return m_Params.getValues(); }
+    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
@@ -198,7 +198,7 @@ public:
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
+                const std::unordered_map<std::string, double> &params, const std::vector<Models::VarInit> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -243,7 +243,7 @@ protected:
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
 
-    const ParamValues::MapType &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
@@ -291,8 +291,8 @@ private:
     const unsigned int m_NumNeurons;
 
     const NeuronModels::Base *m_NeuronModel;
-    const ParamValues m_Params;
-    ParamValues::MapType m_DerivedParams;
+    const std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;

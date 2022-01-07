@@ -171,10 +171,10 @@ public:
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
-        {"meanTimestep", [](const ParamValues &pars, double dt){ return pars["mean"] / dt; }},
-        {"sdTimestep", [](const ParamValues &pars, double dt){ return pars["sd"] / dt; }},
-        {"minTimestep", [](const ParamValues &pars, double dt){ return pars["min"] / dt; }},
-        {"maxTimestep", [](const ParamValues &pars, double dt){ return pars["max"] / dt; }}});
+        {"meanTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("mean") / dt; }},
+        {"sdTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("sd") / dt; }},
+        {"minTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("min") / dt; }},
+        {"maxTimestep", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("max") / dt; }}});
 };
 
 //----------------------------------------------------------------------------
