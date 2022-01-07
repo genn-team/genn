@@ -28,14 +28,6 @@ class BackendBase;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_MODEL(TYPE, NUM_VARS)                                \
-    DECLARE_SNIPPET(TYPE);                                           \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;        \
-    typedef Models::VarInitContainerBase<0> PreVarValues;            \
-    typedef Models::VarInitContainerBase<0> PostVarValues
-
-#define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
-
 #define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
 
 
@@ -144,12 +136,6 @@ public:
     {
     }
 };
-
-//----------------------------------------------------------------------------
-// Models::VarInitContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using VarInitContainerBase = Snippet::InitialiserContainerBase<VarInit, NumVars>;
 
 //----------------------------------------------------------------------------
 // Models::VarReferenceBase

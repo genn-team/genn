@@ -1,9 +1,9 @@
 #include "postsynapticModels.h"
 
 // Implement models
-IMPLEMENT_MODEL(PostsynapticModels::ExpCurr);
-IMPLEMENT_MODEL(PostsynapticModels::ExpCond);
-IMPLEMENT_MODEL(PostsynapticModels::DeltaCurr);
+IMPLEMENT_SNIPPET(PostsynapticModels::ExpCurr);
+IMPLEMENT_SNIPPET(PostsynapticModels::ExpCond);
+IMPLEMENT_SNIPPET(PostsynapticModels::DeltaCurr);
 
 
 //----------------------------------------------------------------------------

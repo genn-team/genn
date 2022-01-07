@@ -103,7 +103,7 @@ public:
 class RulkovMap : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::RulkovMap, 2);
+    DECLARE_SNIPPET(NeuronModels::RulkovMap);
 
     SET_SIM_CODE(
         "if ($(V) <= 0) {\n"
@@ -156,7 +156,7 @@ public:
 class Izhikevich : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Izhikevich, 2);
+    DECLARE_SNIPPET(NeuronModels::Izhikevich);
 
     SET_SIM_CODE(
         "if ($(V) >= 30.0){\n"
@@ -198,7 +198,7 @@ public:
 class IzhikevichVariable : public Izhikevich
 {
 public:
-    DECLARE_MODEL(NeuronModels::IzhikevichVariable, 6);
+    DECLARE_SNIPPET(NeuronModels::IzhikevichVariable);
 
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
@@ -212,7 +212,7 @@ public:
 class LIF : public Base
 {
 public:
-    DECLARE_MODEL(LIF, 2);
+    DECLARE_SNIPPET(LIF);
 
     SET_SIM_CODE(
         "if ($(RefracTime) <= 0.0) {\n"
@@ -257,7 +257,7 @@ public:
 class SpikeSource : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::SpikeSource, 0);
+    DECLARE_SNIPPET(NeuronModels::SpikeSource);
 
     SET_THRESHOLD_CONDITION_CODE("0");
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -281,7 +281,7 @@ public:
 class SpikeSourceArray : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::SpikeSourceArray, 2);
+    DECLARE_SNIPPET(NeuronModels::SpikeSourceArray);
     SET_SIM_CODE("")
     SET_THRESHOLD_CONDITION_CODE(
         "$(startSpike) != $(endSpike) && "
@@ -332,7 +332,7 @@ public:
 class Poisson : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Poisson, 2);
+    DECLARE_SNIPPET(NeuronModels::Poisson);
 
     SET_SIM_CODE(
         "if(($(t) - $(spikeTime)) > $(tspike) && $(V) > $(Vrest)){\n"
@@ -371,7 +371,7 @@ public:
 class PoissonNew : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::PoissonNew, 1);
+    DECLARE_SNIPPET(NeuronModels::PoissonNew);
 
     SET_SIM_CODE(
         "if($(timeStepToSpike) <= 0.0f) {\n"
@@ -439,7 +439,7 @@ public:
 class TraubMiles : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMiles, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMiles);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -494,7 +494,7 @@ public:
 class TraubMilesFast : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesFast, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMilesFast);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -527,7 +527,7 @@ public:
 class TraubMilesAlt : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesAlt, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMilesAlt);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -563,7 +563,7 @@ public:
 class TraubMilesNStep : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesNStep, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMilesNStep);
 
     SET_SIM_CODE(
         "scalar Imem;\n"

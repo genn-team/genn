@@ -49,7 +49,7 @@ public:
 class ExpCurr : public Base
 {
 public:
-    DECLARE_MODEL(ExpCurr, 0);
+    DECLARE_SNIPPET(ExpCurr);
 
     SET_DECAY_CODE("$(inSyn) *= $(expDecay);");
 
@@ -74,7 +74,7 @@ public:
 class ExpCond : public Base
 {
 public:
-    DECLARE_MODEL(ExpCond, 0);
+    DECLARE_SNIPPET(ExpCond);
 
     SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
 
@@ -93,7 +93,7 @@ public:
 class DeltaCurr : public Base
 {
 public:
-    DECLARE_MODEL(DeltaCurr, 0);
+    DECLARE_SNIPPET(DeltaCurr);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 };

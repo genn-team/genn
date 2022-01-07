@@ -51,7 +51,7 @@ public:
 */
 class DC : public Base
 {
-    DECLARE_MODEL(DC, 0);
+    DECLARE_SNIPPET(DC);
 
     SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
 
@@ -68,7 +68,7 @@ class DC : public Base
 */
 class GaussianNoise : public Base
 {
-    DECLARE_MODEL(GaussianNoise, 0);
+    DECLARE_SNIPPET(GaussianNoise);
 
     SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
 
@@ -87,7 +87,7 @@ class GaussianNoise : public Base
 */
 class PoissonExp : public Base
 {
-    DECLARE_MODEL(PoissonExp, 1);
+    DECLARE_SNIPPET(PoissonExp);
 
     SET_INJECTION_CODE(
         "scalar p = 1.0f;\n"

@@ -1,9 +1,9 @@
 #include "currentSourceModels.h"
 
 // Implement models
-IMPLEMENT_MODEL(CurrentSourceModels::DC);
-IMPLEMENT_MODEL(CurrentSourceModels::GaussianNoise);
-IMPLEMENT_MODEL(CurrentSourceModels::PoissonExp);
+IMPLEMENT_SNIPPET(CurrentSourceModels::DC);
+IMPLEMENT_SNIPPET(CurrentSourceModels::GaussianNoise);
+IMPLEMENT_SNIPPET(CurrentSourceModels::PoissonExp);
 
 //----------------------------------------------------------------------------
 // CurrentSourceModels::Base
