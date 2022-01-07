@@ -300,7 +300,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         }
         else {
             inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals(),
-                                                [i, this](size_t p) { return isPSMGlobalVarHeterogeneous(i, p); },
+                                                [i, this](const std::string &v) { return isPSMGlobalVarHeterogeneous(i, v); },
                                                 "", "group->", "InSyn" + std::to_string(i));
         }
 

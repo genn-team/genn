@@ -2,7 +2,7 @@
 
 
 // Implement models
-IMPLEMENT_MODEL(CustomUpdateModels::Transpose);
+IMPLEMENT_SNIPPET(CustomUpdateModels::Transpose);
 
 //----------------------------------------------------------------------------
 // CustomUpdateModels::Base

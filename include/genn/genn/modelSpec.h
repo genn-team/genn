@@ -302,7 +302,7 @@ public:
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
                                      const ParamValues &paramValues, const VarValues &varInitialisers)
     {
-        return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers);
+        return addNeuronPopulation(name, size, NeuronModel::getInstance(), paramValues, varInitialisers);
     }
 
     // PUBLIC SYNAPSE FUNCTIONS

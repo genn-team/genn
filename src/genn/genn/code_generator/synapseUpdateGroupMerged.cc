@@ -68,29 +68,29 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
         const auto vars = wu->getVars();
-        for(size_t k = 0; k < vars.size(); k++) {
-            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
+        for(const auto &var : vars) {
+            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
 
             // If this variable has any initialisation code
             if(!varInit.getSnippet()->getCode().empty()) {
                 // Configure variable substitutions
                 CodeGenerator::Substitutions varSubs(&synapseSubs);
-                varSubs.addVarSubstitution("value", "l" + vars[k].name);
+                varSubs.addVarSubstitution("value", "l" + var.name);
                 varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                  [k, &sg](const std::string &p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
-                                                  "", "group->", vars[k].name);
+                                                  [&var, &sg](const std::string &p) { return sg.isWUVarInitParamHeterogeneous(var.name, p); },
+                                                  "", "group->", var.name);
                 varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                [k, &sg](const std::string &p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
-                                                "", "group->", vars[k].name);
+                                                [&var, &sg](const std::string &p) { return sg.isWUVarInitDerivedParamHeterogeneous(var.name, p); },
+                                                "", "group->", var.name);
                 varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                               "", "group->", vars[k].name);
+                                               "", "group->", var.name);
 
                 // Generate variable initialization code
                 std::string code = varInit.getSnippet()->getCode();
-                varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
+                varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(sg.getIndex()));
 
                 // Declare local variable
-                os << vars[k].type << " " << "l" << vars[k].name << ";" << std::endl;
+                os << var.type << " " << "l" << var.name << ";" << std::endl;
 
                 // Insert code to initialize variable into scope
                 {
@@ -117,7 +117,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // Otherwise, substitute variables for constant values
     else {
         synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals(),
-                                            [&sg](size_t v) { return sg.isWUGlobalVarHeterogeneous(v); },
+                                            [&sg](const std::string &v) { return sg.isWUGlobalVarHeterogeneous(v); },
                                             "", "group->");
     }
 

@@ -321,19 +321,18 @@ protected:
     }
 
     template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
+    void addHeterogeneousVarInitParams(V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(const auto &p : varInit.getSnippet()->getParamNames()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(v, p)) {
-                    addScalarField(p + vars[v].name,
-                                   [p, v, getVarInitialisers](const G &g, size_t)
+            for(const auto &p : varInit.second.getSnippet()->getParamNames()) {
+                if((static_cast<const T*>(this)->*isHeterogeneous)(varInit.first, p)) {
+                    addScalarField(p + varInit.first,
+                                   [p, varInit, getVarInitialisers](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)()[v].getParams();
+                                       const auto &values = (g.*getVarInitialisers)().at(varInit.first).getParams();
                                        return Utils::writePreciseString(values.at(p));
                                    });
                 }
@@ -342,19 +341,18 @@ protected:
     }
 
     template<typename T, typename V, typename H>
-    void addHeterogeneousVarInitDerivedParams(const Models::Base::VarVec &vars, V getVarInitialisers, H isHeterogeneous)
+    void addHeterogeneousVarInitDerivedParams(V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(const auto &d : varInit.getSnippet()->getDerivedParams()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(v, d.name)) {
-                    addScalarField(d.name + vars[v].name,
-                                   [d, v, getVarInitialisers](const G &g, size_t)
+            for(const auto &d : varInit.second.getSnippet()->getDerivedParams()) {
+                if((static_cast<const T*>(this)->*isHeterogeneous)(varInit.first, d.name)) {
+                    addScalarField(d.name + varInit.first,
+                                   [d, varInit, getVarInitialisers](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)()[v].getDerivedParams();
+                                       const auto &values = (g.*getVarInitialisers)().at(varInit.first).getDerivedParams();
                                        return Utils::writePreciseString(values.at(d.name));
                                    });
                 }
@@ -389,36 +387,18 @@ protected:
     }
 
     template<typename T, typename V, typename R>
-    void updateGlobalHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        const auto &archetypeParams = getValueFn(getArchetype());
-        for(size_t p = 0; p < archetypeParams.size(); p++) {
-            // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isParamReferencedFn)(p)) {
-                // Loop through groups
-                for(const auto &g : getGroups()) {
-                    // Update hash with parameter value
-                    Utils::updateHash(getValueFn(g.get()).at(p), hash);
-                }
-            }
-        }
-    }
-
-    template<typename T, typename V, typename R>
     void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(const auto &p : varInit.getParams()) {
+            for(const auto &p : varInit.second.getParams()) {
                 // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isParamReferencedFn)(v, p.first)) {
+                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)()[v].getParams();
+                        const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(p.first), hash);
@@ -432,16 +412,15 @@ protected:
     void updateVarInitDerivedParamHash(V getVarInitialisers, R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const std::vector<Models::VarInit> &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
-        for(size_t v = 0; v < archetypeVarInitialisers.size(); v++) {
+        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
-            const Models::VarInit &varInit = archetypeVarInitialisers[v];
-            for(const auto &d : varInit.getDerivedParams()) {
+            for(const auto &d : varInit.second.getDerivedParams()) {
                 // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(v, d.first)) {
+                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)()[v].getDerivedParams();
+                        const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getDerivedParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(d.first), hash);
@@ -610,10 +589,10 @@ public:
     bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //! Should the var init parameter be implemented heterogeneously?
-    bool isVarInitParamHeterogeneous(size_t varIndex, const std::string &paramName) const;
+    bool isVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
     //! Should the var init derived parameter be implemented heterogeneously?
-    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, const std::string &paramName) const;
+    bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
     //! Should the current source parameter be implemented heterogeneously?
     bool isCurrentSourceParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
@@ -622,10 +601,10 @@ public:
     bool isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
     //! Should the current source var init parameter be implemented heterogeneously?
-    bool isCurrentSourceVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isCurrentSourceVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Should the current source var init derived parameter be implemented heterogeneously?
-    bool isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Should the postsynaptic model parameter be implemented heterogeneously?
     bool isPSMParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
@@ -634,13 +613,13 @@ public:
     bool isPSMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
     //! Should the GLOBALG postsynaptic model variable be implemented heterogeneously?
-    bool isPSMGlobalVarHeterogeneous(size_t childIndex, size_t paramIndex) const;
+    bool isPSMGlobalVarHeterogeneous(size_t childIndex, const std::string &varName) const;
 
     //! Should the postsynaptic model var init parameter be implemented heterogeneously?
-    bool isPSMVarInitParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isPSMVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Should the postsynaptic model var init derived parameter be implemented heterogeneously?
-    bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
     const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
@@ -705,10 +684,10 @@ protected:
     }
 
     //! Is the var init parameter referenced?
-    bool isVarInitParamReferenced(size_t varIndex, const std::string &paramName) const;
+    bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
 
     //! Is the var init derived parameter referenced?
-    bool isVarInitDerivedParamReferenced(size_t varIndex, const std::string &paramName) const;
+    bool isVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const;
 
     //! Is the current source parameter referenced?
     bool isCurrentSourceParamReferenced(size_t childIndex, const std::string &paramName) const;
@@ -717,10 +696,10 @@ protected:
     bool isCurrentSourceDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the current source var init parameter referenced?
-    bool isCurrentSourceVarInitParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isCurrentSourceVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Is the current source var init derived parameter referenced?
-    bool isCurrentSourceVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isCurrentSourceVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Is the postsynaptic model parameter referenced?
     bool isPSMParamReferenced(size_t childIndex, const std::string &paramName) const;
@@ -729,13 +708,13 @@ protected:
     bool isPSMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the GLOBALG postsynaptic model variable referenced?
-    bool isPSMGlobalVarReferenced(size_t childIndex, size_t varIndex) const;
+    bool isPSMGlobalVarReferenced(size_t childIndex, const std::string &varName) const;
 
     //! Is the postsynaptic model var init parameter referenced?
-    bool isPSMVarInitParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isPSMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     //! Is the postsynaptic model var init derived parameter referenced?
-    bool isPSMVarInitDerivedParamReferenced(size_t childIndex, size_t varIndex, const std::string &paramName) const;
+    bool isPSMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     template<typename T, typename G>
     bool isChildParamValueHeterogeneous(size_t childIndex, const std::string &paramName,
@@ -748,24 +727,6 @@ protected:
         for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
             const auto group = sortedGroupChildren[i][childIndex];
             if(getParamValuesFn(group).at(paramName) != firstValue) {
-                return true;
-            }
-        }
-       
-        return false;
-    }
-
-    template<typename T, typename G>
-    bool isChildParamValueHeterogeneous(size_t childIndex, size_t paramIndex,
-                                        const std::vector<std::vector<T>> &sortedGroupChildren, G getParamValuesFn) const
-    {
-        // Get value of archetype derived parameter
-        const double firstValue = getParamValuesFn(sortedGroupChildren[0][childIndex]).at(paramIndex);
-
-        // Loop through groups within merged group
-        for(size_t i = 0; i < sortedGroupChildren.size(); i++) {
-            const auto group = sortedGroupChildren[i][childIndex];
-            if(getParamValuesFn(group).at(paramIndex) != firstValue) {
                 return true;
             }
         }
@@ -816,19 +777,19 @@ protected:
     template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
     void addHeterogeneousChildVarInitParams(const Snippet::Base::StringVec &paramNames, 
                                             const std::vector<std::vector<C>> &sortedGroupChildren,
-                                            size_t childIndex, size_t varIndex, const std::string &prefix,
+                                            size_t childIndex, const std::string &varName, const std::string &prefix,
                                             H isChildParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
         for(const auto &p : paramNames) {
             // If parameter is heterogeneous
-            if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varIndex, p)) {
+            if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varName, p)) {
                 addScalarField(p + prefix + std::to_string(childIndex),
-                               [&sortedGroupChildren, childIndex, varIndex, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varName, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                                   const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
-                                   return Utils::writePreciseString(varInit.at(varIndex).getParams().at(p));
+                                   const auto &varInit = (child->*getVarInitialiserFn)();
+                                   return Utils::writePreciseString(varInit.at(varName).getParams().at(p));
                                });
             }
         }
@@ -837,19 +798,19 @@ protected:
     template<typename T = NeuronGroupMergedBase, typename C, typename H, typename V>
     void addHeterogeneousChildVarInitDerivedParams(const Snippet::Base::DerivedParamVec &derivedParams, 
                                                    const std::vector<std::vector<C>> &sortedGroupChildren,
-                                                   size_t childIndex, size_t varIndex, const std::string &prefix,
+                                                   size_t childIndex, const std::string &varName, const std::string &prefix,
                                                    H isChildDerivedParamHeterogeneousFn, V getVarInitialiserFn)
     {
         // Loop through parameters
         for(const auto &d : derivedParams) {
             // If parameter is heterogeneous
-            if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varIndex, d.name)) {
+            if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varName, d.name)) {
                 addScalarField(d.name + prefix + std::to_string(childIndex),
-                               [&sortedGroupChildren, childIndex, varIndex, d, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varName, d, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                                   const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
-                                   return Utils::writePreciseString(varInit.at(varIndex).getDerivedParams().at(d.name));
+                                   const auto &varInit = (child->*getVarInitialiserFn)();
+                                   return Utils::writePreciseString(varInit.at(varName).getDerivedParams().at(d.name));
                                });
             }
         }
@@ -895,28 +856,6 @@ protected:
     }
 
     template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
-    void updateChildGlobalVarHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                  size_t childIndex, R isChildParamReferencedFn, V getValueFn, 
-                                  boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through parameters
-        const auto &archetypeParamNames = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
-        for(size_t p = 0; p < archetypeParamNames.size(); p++) {
-            // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p)) {
-                // Loop through groups
-                for(size_t g = 0; g < getGroups().size(); g++) {
-                    // Get child group
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-
-                    // Update hash with parameter value
-                    Utils::updateHash((child->*getValueFn)().at(p), hash);
-                }
-            }
-        }
-    }
-
-    template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
     void updateChildDerivedParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
                                      size_t childIndex,  R isChildDerivedParamReferencedFn, V getValueFn, 
                                      boost::uuids::detail::sha1 &hash) const
@@ -940,39 +879,15 @@ protected:
 
     template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
     void updateChildVarInitParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                      size_t childIndex, size_t varIndex, R isChildParamReferencedFn, V getVarInitialiserFn,
+                                      size_t childIndex, const std::string &varName, R isChildParamReferencedFn, V getVarInitialiserFn,
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
         const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
-        const auto &archetypeParams = archetypeVarInit.at(varIndex).getParams();
+        const auto &archetypeParams = archetypeVarInit.at(varName).getParams();
         for(const auto &p : archetypeParams) {
             // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varIndex, p.first)) {
-                // Loop through groups
-                for(size_t g = 0; g < getGroups().size(); g++) {
-                    // Get child group and its variable initialisers
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const std::vector<Models::VarInit> &varInit = (child->*getVarInitialiserFn)();
-
-                    // Update hash with parameter value
-                    Utils::updateHash(varInit.at(varIndex).getParams().at(p.first), hash);
-                }
-            }
-        }
-    }
-
-    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
-    void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                             size_t childIndex, size_t varIndex, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
-                                             boost::uuids::detail::sha1 &hash) const
-    {
-        // Loop through derived parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
-        const auto &archetypeDerivedParams = archetypeVarInit.at(varIndex).getDerivedParams();
-        for(const auto &d : archetypeDerivedParams) {
-            // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varIndex, d.first)) {
+            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varName, p.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
@@ -980,7 +895,31 @@ protected:
                     const auto &varInit = (child->*getVarInitialiserFn)();
 
                     // Update hash with parameter value
-                    Utils::updateHash(varInit.at(varIndex).getDerivedParams().at(d.first), hash);
+                    Utils::updateHash(varInit.at(varName).getParams().at(p.first), hash);
+                }
+            }
+        }
+    }
+
+    template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
+    void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
+                                             size_t childIndex, const std::string &varName, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
+                                             boost::uuids::detail::sha1 &hash) const
+    {
+        // Loop through derived parameters
+        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeDerivedParams = archetypeVarInit.at(varName).getDerivedParams();
+        for(const auto &d : archetypeDerivedParams) {
+            // If parameter is referenced
+            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varName, d.first)) {
+                // Loop through groups
+                for(size_t g = 0; g < getGroups().size(); g++) {
+                    // Get child group and its variable initialisers
+                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
+                    const auto &varInit = (child->*getVarInitialiserFn)();
+
+                    // Update hash with parameter value
+                    Utils::updateHash(varInit.at(varName).getDerivedParams().at(d.first), hash);
                 }
             }
         }
@@ -1088,13 +1027,13 @@ public:
     bool isWUDerivedParamHeterogeneous(const std::string &paramName) const;
 
     //! Should the GLOBALG weight update model variable be implemented heterogeneously?
-    bool isWUGlobalVarHeterogeneous(size_t varIndex) const;
+    bool isWUGlobalVarHeterogeneous(const std::string &varName) const;
 
     //! Should the weight update model variable initialization parameter be implemented heterogeneously?
-    bool isWUVarInitParamHeterogeneous(size_t varIndex, const std::string &paramName) const;
+    bool isWUVarInitParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
     
     //! Should the weight update model variable initialization derived parameter be implemented heterogeneously?
-    bool isWUVarInitDerivedParamHeterogeneous(size_t varIndex, const std::string &paramName) const;
+    bool isWUVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const;
 
     //! Should the sparse connectivity initialization parameter be implemented heterogeneously?
     bool isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const;
@@ -1218,13 +1157,13 @@ private:
     bool isWUDerivedParamReferenced(const std::string &paramName) const;
 
     //! Is the GLOBALG weight update model variable referenced?
-    bool isWUGlobalVarReferenced(size_t varIndex) const;
+    bool isWUGlobalVarReferenced(const std::string &varName) const;
 
     //! Is the weight update model variable initialization parameter referenced?
-    bool isWUVarInitParamReferenced(size_t varIndex, const std::string &paramName) const;
+    bool isWUVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
     
     //! Is the weight update model variable initialization derived parameter referenced?
-    bool isWUVarInitDerivedParamReferenced(size_t varIndex, const std::string &paramName) const;
+    bool isWUVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const;
 
     //! Is the sparse connectivity initialization parameter referenced?
     bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
