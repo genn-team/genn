@@ -1388,7 +1388,6 @@ bool SynapseGroupMergedBase::isWUGlobalVarReferenced(const std::string &varName)
 {
     // If synapse group has global WU variables
     if(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL) {
-        const auto *wum = getArchetype().getWUModel();
         return isParamReferenced({getArchetypeCode()}, varName);
     }
     // Otherwise, return false
