@@ -72,6 +72,23 @@ unsigned int ModelSpec::getNumNeurons() const
                            });
 }
 
+NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
+                                            const ParamValues &paramValues, const VarValues &varInitialisers)
+{
+    // Add neuron group to map
+    auto result = m_LocalNeuronGroups.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, size, model,
+                                paramValues, varInitialisers, 
+                                m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
 
 SynapseGroup *ModelSpec::findSynapseGroup(const std::string &name)
 {
@@ -99,6 +116,27 @@ CurrentSource *ModelSpec::findCurrentSource(const std::string &name)
     // Otherwise, error
     else {
         throw std::runtime_error("current source " + name + " not found, aborting ...");
+    }
+}
+
+CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName, 
+                                           const ParamValues &paramValues, const VarValues &varInitialisers)
+{
+    auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
+
+    // Add current source to map
+    auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
+        std::forward_as_tuple(currentSourceName),
+        std::forward_as_tuple(currentSourceName, model, paramValues,
+                                varInitialisers, targetGroup, 
+                                m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
+    }
+    else {
+        targetGroup->injectCurrent(&result.first->second);
+        return &result.first->second;
     }
 }
 
@@ -319,3 +357,32 @@ SynapseGroupInternal *ModelSpec::findSynapseGroupInternal(const std::string &nam
         throw std::runtime_error("synapse group " + name + " not found, aborting ...");
     }
 }
+
+SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
+                                              const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                              const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                              const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
+{
+        // Get source and target neuron groups
+        auto srcNeuronGrp = findNeuronGroupInternal(src);
+        auto trgNeuronGrp = findNeuronGroupInternal(trg);
+
+        // Add synapse group to map
+        auto result = m_LocalSynapseGroups.emplace(
+            std::piecewise_construct,
+            std::forward_as_tuple(name),
+            std::forward_as_tuple(name, nullptr, mtype, delaySteps,
+                                  wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
+                                  psm, postsynapticParamValues, postsynapticVarInitialisers,
+                                  srcNeuronGrp, trgNeuronGrp,
+                                  connectivityInitialiser, toeplitzConnectivityInitialiser, 
+                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
+                                  m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
+
+        if(!result.second) {
+            throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
+        }
+        else {
+            return &result.first->second;
+        }
+    }

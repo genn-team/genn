@@ -281,43 +281,26 @@ public:
     NeuronGroup *findNeuronGroup(const std::string &name){ return static_cast<NeuronGroup*>(findNeuronGroupInternal(name)); }
 
     //! Adds a new neuron group to the model using a neuron model managed by the user
-    /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
-        \param name string containing unique name of neuron population.
+    /*! \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
         \param model neuron model to use for neuron group.
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created NeuronGroup */
-    template<typename NeuronModel>
-    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModel *model,
+    NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size, const NeuronModels::Base *model,
                                      const ParamValues &paramValues,
-                                     const typename NeuronModel::VarValues &varInitialisers)
-    {
-        // Add neuron group to map
-        auto result = m_LocalNeuronGroups.emplace(std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, size, model,
-                                  paramValues, varInitialisers.getInitialisers(), 
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
-
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
-        }
-        else {
-            return &result.first->second;
-        }
-    }
+                                     const VarValues &varInitialisers);
 
     //! Adds a new neuron group to the model using a singleton neuron model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam NeuronModel type of neuron model (derived from NeuronModels::Base).
         \param name string containing unique name of neuron population.
         \param size integer specifying how many neurons are in the population.
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created NeuronGroup */
     template<typename NeuronModel>
     NeuronGroup *addNeuronPopulation(const std::string &name, unsigned int size,
-                                     const ParamValues &paramValues, const typename NeuronModel::VarValues &varInitialisers)
+                                     const ParamValues &paramValues, const VarValues &varInitialisers)
     {
         return addNeuronPopulation<NeuronModel>(name, size, NeuronModel::getInstance(), paramValues, varInitialisers);
     }
@@ -328,9 +311,7 @@ public:
     SynapseGroup *findSynapseGroup(const std::string &name);    
 
     //! Adds a synapse population to the model using weight update and postsynaptic models managed by the user
-    /*! \tparam WeightUpdateModel           type of weight update model (derived from WeightUpdateModels::Base).
-        \tparam PostsynapticModel           type of postsynaptic model (derived from PostsynapticModels::Base).
-        \param name                         string containing unique name of synapse population.
+    /*! \param name                         string containing unique name of synapse population.
         \param mtype                        how the synaptic matrix associated with this synapse population should be represented.
         \param delaySteps                   integer specifying number of timesteps delay this synaptic connection should incur
                                             (or NO_DELAY for none)
@@ -338,20 +319,19 @@ public:
         \param trg                          string specifying name of postsynaptic (target) population
         \param wum                          weight update model to use for synapse group.
         \param weightParamValues            parameters for weight update model wrapped in ParamValues object.
-        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
         \param psm                          postsynaptic model to use for synapse group.
         \param postsynapticParamValues      parameters for postsynaptic model wrapped in ParamValues object.
-        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param connectivityInitialiser      sparse connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::SPARSE or SynapseMatrixConnectivity::BITMASK.
                                             Typically wrapped with it's parameters using ``initConnectivity`` function
         \return pointer to newly created SynapseGroup */
-    template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const WeightUpdateModel *wum, const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
-                                       const PostsynapticModel *psm, const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         auto uninitialisedToeplitz = InitToeplitzConnectivitySnippet::Init(InitToeplitzConnectivitySnippet::Uninitialised::getInstance(), {});
@@ -372,19 +352,18 @@ public:
         \param trg                          string specifying name of postsynaptic (target) population
         \param wum                          weight update model to use for synapse group.
         \param weightParamValues            parameters for weight update model wrapped in ParamValues object.
-        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
         \param psm                          postsynaptic model to use for synapse group.
         \param postsynapticParamValues      parameters for postsynaptic model wrapped in ParamValues object.
-        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param connectivityInitialiser      toeplitz connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
         \return pointer to newly created SynapseGroup */
-    template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const WeightUpdateModel *wum, const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
-                                       const PostsynapticModel *psm, const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         auto uninitialisedToeplitz = InitToeplitzConnectivitySnippet::Init(InitToeplitzConnectivitySnippet::Uninitialised::getInstance(), {});
@@ -403,25 +382,21 @@ public:
         \param src                          string specifying name of presynaptic (source) population
         \param trg                          string specifying name of postsynaptic (target) population
         \param weightParamValues            parameters for weight update model wrapped in ParamValues object.
-        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param postsynapticParamValues      parameters for postsynaptic model wrapped in ParamValues object.
-        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param connectivityInitialiser      sparse connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::SPARSE or SynapseMatrixConnectivity::BITMASK.
                                             Typically wrapped with it's parameters using ``initConnectivity`` function
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &weightParamValues, const VarValues &weightVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
-        // Create empty pre and postsynaptic weight update variable initialisers
-        typename WeightUpdateModel::PreVarValues weightPreVarInitialisers;
-        typename WeightUpdateModel::PostVarValues weightPostVarInitialisers;
-
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
-                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
+                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, {}, {},
                                     PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
                                     connectivityInitialiser);
     }
@@ -435,24 +410,20 @@ public:
         \param src                          string specifying name of presynaptic (source) population
         \param trg                          string specifying name of postsynaptic (target) population
         \param weightParamValues            parameters for weight update model wrapped in ParamValues object.
-        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers        weight update model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param postsynapticParamValues      parameters for postsynaptic model wrapped in ParamValues object.
-        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param connectivityInitialiser      toeplitz connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &weightParamValues, const VarValues &weightVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
-        // Create empty pre and postsynaptic weight update variable initialisers
-        typename WeightUpdateModel::PreVarValues weightPreVarInitialisers;
-        typename WeightUpdateModel::PostVarValues weightPostVarInitialisers;
-
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
-                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
+                                    WeightUpdateModel::getInstance(), weightParamValues, weightVarInitialisers, {}, {},
                                     PostsynapticModel::getInstance(), postsynapticParamValues, postsynapticVarInitialisers,
                                     connectivityInitialiser);
     }
@@ -466,19 +437,19 @@ public:
         \param src                          string specifying name of presynaptic (source) population
         \param trg                          string specifying name of postsynaptic (target) population
         \param weightParamValues            parameters for weight update model wrapped in ParamValues object.
-        \param weightVarInitialisers        weight update model per-synapse state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers        weight update model per-synapse state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
         \param postsynapticParamValues      parameters for postsynaptic model wrapped in ParamValues object.
-        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param connectivityInitialiser      sparse connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::SPARSE or SynapseMatrixConnectivity::BITMASK.
                                             Typically wrapped with it's parameters using ``initConnectivity`` function
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitSparseConnectivitySnippet::Init &connectivityInitialiser = uninitialisedConnectivity())
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
@@ -507,8 +478,8 @@ public:
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
-                                       const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
+                                       const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const typename VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                       const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
         return addSynapsePopulation(name, mtype, delaySteps, src, trg,
@@ -524,48 +495,25 @@ public:
     CurrentSource *findCurrentSource(const std::string &name);
 
     //! Adds a new current source to the model using a current source model managed by the user
-    /*! \tparam CurrentSourceModel type of current source model (derived from CurrentSourceModels::Base).
-        \param currentSourceName string containing unique name of current source.
+    /*! \param currentSourceName string containing unique name of current source.
         \param model current source model to use for current source.
         \param targetNeuronGroupName string name of the target neuron group
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSource::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
-    template<typename CurrentSourceModel>
-    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModel *model,
-                                    const std::string &targetNeuronGroupName,
-                                    const ParamValues &paramValues,
-                                    const typename CurrentSourceModel::VarValues &varInitialisers)
-    {
-        auto targetGroup = findNeuronGroupInternal(targetNeuronGroupName);
-
-        // Add current source to map
-        auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
-            std::forward_as_tuple(currentSourceName),
-            std::forward_as_tuple(currentSourceName, model, paramValues,
-                                  varInitialisers.getInitialisers(), targetGroup, 
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
-
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
-        }
-        else {
-            targetGroup->injectCurrent(&result.first->second);
-            return &result.first->second;
-        }
-    }
+    CurrentSource *addCurrentSource(const std::string &currentSourceName, const CurrentSourceModels::Base *model, const std::string &targetNeuronGroupName,
+                                    const ParamValues &paramValues, const VarValues &varInitialisers);
 
     //! Adds a new current source to the model using a singleton current source model created using standard DECLARE_MODEL and IMPLEMENT_MODEL macros
     /*! \tparam CurrentSourceModel type of neuron model (derived from CurrentSourceModel::Base).
         \param currentSourceName string containing unique name of current source.
         \param targetNeuronGroupName string name of the target neuron group
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in CurrentSourceModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \return pointer to newly created CurrentSource */
     template<typename CurrentSourceModel>
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const std::string &targetNeuronGroupName,
-                                    const ParamValues &paramValues,
-                                    const typename CurrentSourceModel::VarValues &varInitialisers)
+                                    const ParamValues &paramValues, const VarValues &varInitialisers)
     {
         return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
                                 targetNeuronGroupName, paramValues, varInitialisers);
@@ -583,7 +531,7 @@ public:
     template<typename CustomUpdateModel>
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model,
                                   const ParamValues &paramValues,
-                                  const typename CustomUpdateModel::VarValues &varInitialisers,
+                                  const VarValues &varInitialisers,
                                   const typename CustomUpdateModel::VarReferences &varReferences)
     {
          // Add neuron group to map
@@ -615,14 +563,14 @@ public:
     template<typename CustomUpdateModel>
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                     const CustomUpdateModel *model, const ParamValues &paramValues,
-                                    const typename CustomUpdateModel::VarValues &varInitialisers,
+                                    const VarValues &varInitialisers,
                                     const typename CustomUpdateModel::WUVarReferences &varReferences)
     {
         // Add neuron group to map
         auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, model,
-                                  paramValues, varInitialisers.getInitialisers(), varReferences.getInitialisers(),
+                                  paramValues, varInitialisers, varReferences.getInitialisers(),
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {
@@ -718,35 +666,10 @@ private:
     //! Find a synapse group by name
     SynapseGroupInternal *findSynapseGroupInternal(const std::string &name);
 
-    template<typename WeightUpdateModel, typename PostsynapticModel>
-    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const WeightUpdateModel *wum, const ParamValues &weightParamValues, const typename WeightUpdateModel::VarValues &weightVarInitialisers, const typename WeightUpdateModel::PreVarValues &weightPreVarInitialisers, const typename WeightUpdateModel::PostVarValues &weightPostVarInitialisers,
-                                       const PostsynapticModel *psm, const ParamValues &postsynapticParamValues, const typename PostsynapticModel::VarValues &postsynapticVarInitialisers,
-                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser)
-    {
-        // Get source and target neuron groups
-        auto srcNeuronGrp = findNeuronGroupInternal(src);
-        auto trgNeuronGrp = findNeuronGroupInternal(trg);
-
-        // Add synapse group to map
-        auto result = m_LocalSynapseGroups.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, nullptr, mtype, delaySteps,
-                                  wum, weightParamValues, weightVarInitialisers.getInitialisers(), weightPreVarInitialisers.getInitialisers(), weightPostVarInitialisers.getInitialisers(),
-                                  psm, postsynapticParamValues, postsynapticVarInitialisers.getInitialisers(),
-                                  srcNeuronGrp, trgNeuronGrp,
-                                  connectivityInitialiser, toeplitzConnectivityInitialiser, 
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation,
-                                  m_DefaultSparseConnectivityLocation, m_DefaultNarrowSparseIndEnabled));
-
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a synapse population with duplicate name:" + name);
-        }
-        else {
-            return &result.first->second;
-        }
-    }
+    SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string &src, const std::string &trg,
+                                       const WeightUpdateModels::Base *wum, const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                       const PostsynapticModels::Base *psm, const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
+                                       const InitSparseConnectivitySnippet::Init &connectivityInitialiser, const InitToeplitzConnectivitySnippet::Init &toeplitzConnectivityInitialiser);
 
     //--------------------------------------------------------------------------
     // Private members
