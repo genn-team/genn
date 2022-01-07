@@ -43,7 +43,7 @@ public:
     //! Gets the current source model used by this group
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
-    const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
+    const ParamValues::MapType &getParams() const{ return m_Params.getValues(); }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
@@ -76,7 +76,7 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
+    const ParamValues::MapType &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source require an RNG to simulate
     bool isSimRNGRequired() const;
@@ -104,7 +104,7 @@ private:
 
     const CurrentSourceModels::Base *m_CurrentSourceModel;
     ParamValues m_Params;
-    ParamValues::ParamMap m_DerivedParams;
+    ParamValues::MapType m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;

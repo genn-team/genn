@@ -168,7 +168,7 @@ public:
 
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
-    const ParamValues::ParamMap &getWUParams() const{ return m_WUParams.getValues(); }
+    const ParamValues::MapType &getWUParams() const{ return m_WUParams.getValues(); }
     const std::vector<Models::VarInit> &getWUVarInitialisers() const{ return m_WUVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPreVarInitialisers() const{ return m_WUPreVarInitialisers; }
     const std::vector<Models::VarInit> &getWUPostVarInitialisers() const{ return m_WUPostVarInitialisers; }
@@ -176,7 +176,7 @@ public:
 
     const PostsynapticModels::Base *getPSModel() const{ return m_PSModel; }
 
-    const ParamValues::ParamMap &getPSParams() const{ return m_PSParams.getValues(); }
+    const ParamValues::MapType &getPSParams() const{ return m_PSParams.getValues(); }
     const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
@@ -305,8 +305,8 @@ protected:
     const NeuronGroupInternal *getSrcNeuronGroup() const{ return m_SrcNeuronGroup; }
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const ParamValues::ParamMap &getWUDerivedParams() const{ return m_WUDerivedParams; }
-    const ParamValues::ParamMap &getPSDerivedParams() const{ return m_PSDerivedParams; }
+    const ParamValues::MapType &getWUDerivedParams() const{ return m_WUDerivedParams; }
+    const ParamValues::MapType &getPSDerivedParams() const{ return m_PSDerivedParams; }
 
     const SynapseGroupInternal *getWeightSharingMaster() const { return m_WeightSharingMaster; }
 
@@ -466,7 +466,7 @@ private:
     const ParamValues m_WUParams;
 
     //! Derived parameters for weight update model
-    ParamValues::ParamMap m_WUDerivedParams;
+    ParamValues::MapType m_WUDerivedParams;
 
     //! Initialisers for weight update model per-synapse variables
     std::vector<Models::VarInit> m_WUVarInitialisers;
@@ -484,7 +484,7 @@ private:
     const ParamValues m_PSParams;
 
     //! Derived parameters for post synapse model
-    ParamValues::ParamMap m_PSDerivedParams;
+    ParamValues::MapType m_PSDerivedParams;
 
     //! Initialisers for post synapse model variables
     std::vector<Models::VarInit> m_PSVarInitialisers;

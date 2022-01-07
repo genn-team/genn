@@ -36,7 +36,7 @@ public:
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
-    const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
+    const ParamValues::MapType &getParams() const{ return m_Params.getValues(); }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for custom update model state variable
@@ -73,7 +73,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
+    const ParamValues::MapType &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
@@ -143,7 +143,7 @@ private:
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
     const ParamValues m_Params;
-    ParamValues::ParamMap m_DerivedParams;
+    ParamValues::MapType m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     //! Location of individual state variables

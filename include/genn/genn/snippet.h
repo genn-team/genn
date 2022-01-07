@@ -261,8 +261,8 @@ public:
     // Public API
     //----------------------------------------------------------------------------
     const SnippetBase *getSnippet() const{ return m_Snippet; }
-    const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
-    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
+    const ParamValues::MapType &getParams() const{ return m_Params.getValues(); }
+    const ParamValues::MapType &getDerivedParams() const{ return m_DerivedParams; }
 
     void initDerivedParams(double dt)
     {
@@ -285,7 +285,7 @@ private:
     //----------------------------------------------------------------------------
     const SnippetBase *m_Snippet;
     ParamValues m_Params;
-    ParamValues::ParamMap m_DerivedParams;
+    ParamValues::MapType m_DerivedParams;
 };
 
 //----------------------------------------------------------------------------
