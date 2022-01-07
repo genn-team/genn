@@ -17,8 +17,8 @@ public:
     SET_PARAM_NAMES({"tau"});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const Snippet::ParamValues &pars, double dt){ return std::exp(-dt / pars["tau"]); }},
-        {"init", [](const Snippet::ParamValues &pars, double dt){ return (pars["tau"] * (1.0 - std::exp(-dt / pars["tau"]))) * (1.0 / dt); }}});
+        {"expDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["tau"]); }},
+        {"init", [](const ParamValues &pars, double dt){ return (pars["tau"] * (1.0 - std::exp(-dt / pars["tau"]))) * (1.0 / dt); }}});
 };
 //--------------------------------------------------------------------------
 // Tests

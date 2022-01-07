@@ -45,7 +45,7 @@ public:
     SET_EXTRA_GLOBAL_PARAMS({{"preCalcRowLength", "unsigned int*"}})
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const Snippet::ParamValues &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPre);
@@ -57,7 +57,7 @@ public:
         });
 
     SET_CALC_MAX_COL_LENGTH_FUNC(
-        [](unsigned int numPre, unsigned int numPost, const Snippet::ParamValues &pars)
+        [](unsigned int numPre, unsigned int numPost, const ParamValues &pars)
         {
             // Calculate suitable quantile for 0.9999 change when drawing numPre times
             const double quantile = pow(0.9999, 1.0 / (double)numPost);
@@ -92,8 +92,8 @@ TEST(InitSparseConnectivitySnippet, CompareCopyPasted)
 
 TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
 {
-    Snippet::ParamValues fixedProbParamsA{{"prob", 0.1}};
-    Snippet::ParamValues fixedProbParamsB{{"prob", 0.4}};
+    ParamValues fixedProbParamsA{{"prob", 0.1}};
+    ParamValues fixedProbParamsB{{"prob", 0.4}};
     auto connectivityInit0 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
     auto connectivityInit1 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsA);
     auto connectivityInit2 = initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParamsB);
@@ -108,8 +108,8 @@ TEST(InitSparseConnectivitySnippet, CompareVarInitParameters)
 
 TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
 {
-    Snippet::ParamValues fixedNumberParamsA{{"total", 1000}};
-    Snippet::ParamValues fixedNumberParamsB{{"total", 1200}};
+    ParamValues fixedNumberParamsA{{"total", 1000}};
+    ParamValues fixedNumberParamsB{{"total", 1200}};
 
     auto connectivityInit0 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsA);
     auto connectivityInit1 = initConnectivity<FixedNumberTotalWithReplacement>(fixedNumberParamsB);

@@ -82,7 +82,7 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -116,7 +116,7 @@ TEST(CustomUpdates, VarSizeChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron2", 10, paramVals, varVals);
@@ -148,7 +148,7 @@ TEST(CustomUpdates, VarDelayChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -172,7 +172,7 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
@@ -205,7 +205,7 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -315,7 +315,7 @@ TEST(CustomUpdates, CompareDifferentModel)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     
@@ -357,7 +357,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
@@ -397,7 +397,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
@@ -514,7 +514,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -565,7 +565,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -617,7 +617,7 @@ TEST(CustomUpdates, InvalidName)
     ModelSpec model;
     
      // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
@@ -638,7 +638,7 @@ TEST(CustomUpdates, InvalidUpdateGroupName)
     ModelSpec model;
     
     // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     

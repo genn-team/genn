@@ -12,17 +12,17 @@ TEST(CurrentSource, CompareDifferentModel)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
-    Snippet::ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
+    ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
     CurrentSource *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", "Neurons0",
                                                                                    cs0ParamVals, {});
 
     // Add one DC current source
-    Snippet::ParamValues cs1ParamVals{{"amp", 0.4}};
+    ParamValues cs1ParamVals{{"amp", 0.4}};
     CurrentSource *cs1 = model.addCurrentSource<CurrentSourceModels::DC>("CS1", "Neurons0",
                                                                          cs1ParamVals, {});
 
@@ -39,17 +39,17 @@ TEST(CurrentSource, CompareDifferentParameters)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
-    Snippet::ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
+    ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
     CurrentSource *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", "Neurons0",
                                                                                    cs0ParamVals, {});
 
     // Add second gaussian current source
-    Snippet::ParamValues cs1ParamVals{{"mean", 0.0}, {"sd", 0.5}};
+    ParamValues cs1ParamVals{{"mean", 0.0}, {"sd", 0.5}};
     CurrentSource *cs1 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS1", "Neurons0",
                                                                                     cs1ParamVals, {});
 
@@ -66,17 +66,17 @@ TEST(CurrentSource, CompareSameParameters)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
-    Snippet::ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
+    ParamValues cs0ParamVals{{"mean", 0.0}, {"sd", 0.1}};
     CurrentSource *cs0 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS0", "Neurons0",
                                                                                    cs0ParamVals, {});
 
     // Add second gaussian current source
-    Snippet::ParamValues cs1ParamVals{{"mean", 0.0}, {"sd", 0.1}};
+    ParamValues cs1ParamVals{{"mean", 0.0}, {"sd", 0.1}};
     CurrentSource *cs1 = model.addCurrentSource<CurrentSourceModels::GaussianNoise>("CS1", "Neurons0",
                                                                                     cs1ParamVals, {});
 
@@ -90,7 +90,7 @@ TEST(CurrentSource, CompareSameParameters)
 
 TEST(CurrentSource, InvalidName)
 {
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     
     ModelSpec model;

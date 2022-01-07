@@ -39,8 +39,8 @@ TEST(InitVarSnippet, CompareCopyPasted)
 
 TEST(InitVarSnippet, CompareVarInitParameters)
 {
-    Snippet::ParamValues uniformParamsA{{"min", 0.0}, {"max", 1.0}};
-    Snippet::ParamValues uniformParamsB{{"min", 0.0}, {"max", 0.5}};
+    ParamValues uniformParamsA{{"min", 0.0}, {"max", 1.0}};
+    ParamValues uniformParamsB{{"min", 0.0}, {"max", 0.5}};
 
     const auto varInit0 = initVar<InitVarSnippet::Uniform>(uniformParamsA);
     const auto varInit1 = initVar<InitVarSnippet::Uniform>(uniformParamsA);

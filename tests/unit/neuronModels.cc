@@ -36,8 +36,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const Snippet::ParamValues &pars, double dt){ return std::exp(-dt / pars["TauM"]); }},
-        {"Rmembrane", [](const Snippet::ParamValues &pars, double){ return  pars["TauM"] / pars["C"]; }}});
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["TauM"]); }},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars["TauM"] / pars["C"]; }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 

@@ -25,8 +25,8 @@ public:
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const Snippet::ParamValues &pars, double dt) { return std::exp(-dt / pars["tau"]); }},
-        {"init", [](const Snippet::ParamValues &pars, double) { return (std::exp(1) / pars["tau"]); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars["tau"]); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars["tau"]); }}});
 };
 IMPLEMENT_MODEL(AlphaCurr);
 }
@@ -38,7 +38,7 @@ TEST(ModelSpec, NeuronGroupZeroCopy)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     ng->setSpikeLocation(VarLocation::HOST_DEVICE_ZERO_COPY);
@@ -50,11 +50,11 @@ TEST(ModelSpec, CurrentSourceZeroCopy)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 10, paramVals, varVals);
 
-    Snippet::ParamValues csParamVals{{"weight", 0.1}, {"tauSyn", 5.0}, {"rate", 10.0}};
+    ParamValues csParamVals{{"weight", 0.1}, {"tauSyn", 5.0}, {"rate", 10.0}};
     CurrentSourceModels::PoissonExp::VarValues csVarVals(0.0);
     CurrentSource *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons", csParamVals, csVarVals);
     cs->setVarLocation("current", VarLocation::HOST_DEVICE_ZERO_COPY);
@@ -66,7 +66,7 @@ TEST(ModelSpec, PSMZeroCopy)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
@@ -85,7 +85,7 @@ TEST(ModelSpec, WUZeroCopy)
 {
     ModelSpecInternal model;
 
-    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
