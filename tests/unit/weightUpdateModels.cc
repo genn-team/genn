@@ -41,13 +41,13 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const std::vector<double> &pars, double){ return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]); }},
-        {"lim1", [](const std::vector<double> &pars, double){ return  -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1])); }},
-        {"slope0", [](const std::vector<double> &pars, double){ return  -2*pars[5]/(pars[1]*pars[0]); }},
-        {"slope1", [](const std::vector<double> &pars, double){ return  2*pars[5]/(pars[1]*pars[0]); }},
-        {"off0", [](const std::vector<double> &pars, double){ return  pars[5] / pars[4]; }},
-        {"off1", [](const std::vector<double> &pars, double){ return  pars[5] / pars[1]; }},
-        {"off2", [](const std::vector<double> &pars, double){ return  pars[5] / pars[3]; }}});
+        {"lim0", [](const Snippet::ParamValues &pars, double){ return (1/pars["tPunish01"] + 1/pars["tChng"]) * pars["tLrn"] / (2/pars["tChng"]); }},
+        {"lim1", [](const Snippet::ParamValues &pars, double){ return  -((1/pars["tPunish10"] + 1/pars["tChng"]) * pars["tLrn"] / (2/pars["tChng"])); }},
+        {"slope0", [](const Snippet::ParamValues &pars, double){ return  -2*pars["gMax"]/(pars["tChng"]*pars["tLrn"]); }},
+        {"slope1", [](const Snippet::ParamValues &pars, double){ return  2*pars["gMax"]/(pars["tChng"]*pars["tLrn"]); }},
+        {"off0", [](const Snippet::ParamValues &pars, double){ return  pars["gMax"] / pars["tPunish01"]; }},
+        {"off1", [](const Snippet::ParamValues &pars, double){ return  pars["gMax"] / pars["tChng"]; }},
+        {"off2", [](const Snippet::ParamValues &pars, double){ return  pars["gMax"] / pars["tPunish10"]; }}});
 
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);

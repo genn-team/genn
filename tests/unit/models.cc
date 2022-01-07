@@ -12,7 +12,7 @@ namespace
 class AlphaCurr : public PostsynapticModels::Base
 {
 public:
-    DECLARE_MODEL(AlphaCurr, 1, 1);
+    DECLARE_MODEL(AlphaCurr, 1);
 
     SET_DECAY_CODE(
         "$(x) = (DT * $(expDecay) * $(inSyn) * $(init)) + ($(expDecay) * $(x));\n"
@@ -25,15 +25,15 @@ public:
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const std::vector<double> &pars, double dt) { return std::exp(-dt / pars[0]); }},
-        {"init", [](const std::vector<double> &pars, double) { return (std::exp(1) / pars[0]); }}});
+        {"expDecay", [](const Snippet::ParamValues &pars, double dt) { return std::exp(-dt / pars["tau"]); }},
+        {"init", [](const Snippet::ParamValues &pars, double) { return (std::exp(1) / pars["tau"]); }}});
 };
 IMPLEMENT_MODEL(AlphaCurr);
 
 class StaticPulseUInt : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseUInt, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseUInt, 1, 0, 0);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
@@ -44,7 +44,7 @@ IMPLEMENT_MODEL(StaticPulseUInt);
 class Cont : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(Cont, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(Cont, 1, 0, 0);
 
     SET_VARS({{"g", "scalar"}});
 
@@ -56,7 +56,7 @@ IMPLEMENT_MODEL(Cont);
 class ContPrePost : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(ContPrePost, 0, 1, 1, 1);
+    DECLARE_WEIGHT_UPDATE_MODEL(ContPrePost, 1, 1, 1);
 
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
@@ -84,7 +84,7 @@ TEST(Models, NeuronVarReference)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     const auto *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
@@ -104,7 +104,7 @@ TEST(Models, NeuronVarReferenceDelay)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
@@ -128,12 +128,12 @@ TEST(Models, CurrentSourceVarReference)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one poisson exp current source
-    CurrentSourceModels::PoissonExp::ParamValues cs0ParamVals(0.1, 5.0, 10.0);
+    Snippet::ParamValues cs0ParamVals{{"weight", 0.1}, {"tauSyn", 5.0}, {"rate", 10.0}};
     CurrentSourceModels::PoissonExp::VarValues cs0VarVals(0.0);
     auto *cs0 = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS0", "Neurons0",
                                                                         cs0ParamVals, cs0VarVals);
@@ -154,7 +154,7 @@ TEST(Models, PSMVarReference)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -162,12 +162,12 @@ TEST(Models, PSMVarReference)
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
                                                                                        "Pre", "Post",
                                                                                        {}, {1.0},
-                                                                                       {5.0}, {0.0});
+                                                                                       {{"tau", 5.0}}, {0.0});
 
     auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses2", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
                                                                                        "Pre", "Post",
                                                                                        {}, {1.0},
-                                                                                       {5.0}, {0.0});
+                                                                                       {{"tau", 5.0}}, {0.0});
 
     auto psmX = createPSMVarRef(sg1, "x");
     ASSERT_EQ(psmX.getSize(), 25);
@@ -194,7 +194,7 @@ TEST(Models, WUPreVarReference)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -235,7 +235,7 @@ TEST(Models, WUPostVarReference)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -278,7 +278,7 @@ TEST(Models, WUMVarReference)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -286,12 +286,12 @@ TEST(Models, WUMVarReference)
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
                                                                                        "Pre", "Post",
                                                                                        {}, {1.0},
-                                                                                       {5.0}, {0.0});
+                                                                                       {{"tau", 5.0}}, {0.0});
 
     auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses2", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
                                                                                        "Pre", "Post",
                                                                                        {}, {1.0},
-                                                                                       {5.0}, {0.0});
+                                                                                       {{"tau", 5.0}}, {0.0});
     auto wuG1 = createWUVarRef(sg1, "g");
 
     // Test error if variable doesn't exist
@@ -316,7 +316,7 @@ TEST(Models, WUMTransposeVarReference)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -394,38 +394,6 @@ TEST(Models, WUMTransposeVarReference)
     // Test error if transpose is different type
     try {
         auto wuG2 = createWUVarRef(sgForward, "g", sgBackwardBadType, "g");
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
-}
-//--------------------------------------------------------------------------
-TEST(Models, WUMSlaveVarReference)
-{
-    ModelSpecInternal model;
-
-    // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post1", 25, paramVals, varVals);
-    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post2", 25, paramVals, varVals);
-
-    auto *sgMaster = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
-        "SynapseMaster", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-        "Pre", "Post1",
-        {}, {1.0},
-        {}, {});
-    auto *sgSlave = model.addSlaveSynapsePopulation<PostsynapticModels::DeltaCurr>(
-        "SynapseSlave", "SynapseMaster", NO_DELAY,
-        "Pre", "Post2",
-        {}, {});
-
-    auto wuMaster = createWUVarRef(sgMaster, "g");
-
-    // Test error if referencing slave group
-    try {
-        auto wuSlave = createWUVarRef(sgSlave, "g");
         FAIL();
     }
     catch(const std::runtime_error &) {

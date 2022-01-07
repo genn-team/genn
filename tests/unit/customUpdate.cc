@@ -17,7 +17,7 @@ namespace
 {
 class Sum : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 0, 1, 2);
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 1, 2);
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
@@ -29,7 +29,7 @@ IMPLEMENT_MODEL(Sum);
 
 class Sum2 : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum2, 0, 1, 2);
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum2, 1, 2);
 
     SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
 
@@ -42,7 +42,7 @@ IMPLEMENT_MODEL(Sum2);
 class Cont : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(Cont, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(Cont, 1, 0, 0);
 
     SET_VARS({{"g", "scalar"}});
 
@@ -54,7 +54,7 @@ IMPLEMENT_MODEL(Cont);
 class Cont2 : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(Cont2, 0, 2, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(Cont2, 2, 0, 0);
 
     SET_VARS({{"g", "scalar"}, {"x", "scalar"}});
 
@@ -65,7 +65,7 @@ IMPLEMENT_MODEL(Cont2);
 
 class Reduce : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 0, 2);
+    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 2);
 
     SET_UPDATE_CODE("$(reduction) = $(var);\n");
 
@@ -82,7 +82,7 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -116,7 +116,7 @@ TEST(CustomUpdates, VarSizeChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron2", 10, paramVals, varVals);
@@ -148,7 +148,7 @@ TEST(CustomUpdates, VarDelayChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -172,7 +172,7 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
@@ -205,7 +205,7 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -315,7 +315,7 @@ TEST(CustomUpdates, CompareDifferentModel)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     
@@ -357,7 +357,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
@@ -397,7 +397,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
@@ -514,7 +514,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -565,7 +565,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -579,7 +579,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
         "Syn2", SynapseMatrixType::SPARSE_INDIVIDUALG,
         NO_DELAY, "Pre", "Post",
         {}, {0.0, 0.0}, {}, {},
-        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
 
     // Add two custom updates which transpose different forward variables into backward population
     Sum::WUVarReferences sumVarReferences1(createWUVarRef(syn1, "g"), createWUVarRef(syn1, "x"));
@@ -617,7 +617,7 @@ TEST(CustomUpdates, InvalidName)
     ModelSpec model;
     
      // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
@@ -637,8 +637,8 @@ TEST(CustomUpdates, InvalidUpdateGroupName)
 {
     ModelSpec model;
     
-     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    // Add neuron group to model
+    Snippet::ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
