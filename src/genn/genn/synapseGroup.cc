@@ -923,7 +923,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUPostVarInitialisers()) {
         assert(w.getParams().size() == 1);
-        Utils::updateHash(w.getParams().at(0), hash);
+        Utils::updateHash(w.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
