@@ -468,17 +468,17 @@ public:
         \param src                          string specifying name of presynaptic (source) population
         \param trg                          string specifying name of postsynaptic (target) population
         \param weightParamValues            parameters for weight update model wrapped in ParamValues object.
-        \param weightVarInitialisers        weight update model per-synapse state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
-        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in WeightUpdateModel::VarValues object.
+        \param weightVarInitialisers        weight update model per-synapse state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPreVarInitialisers     weight update model presynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
+        \param weightPostVarInitialisers    weight update model postsynaptic state variable initialiser snippets and parameters wrapped in VarValues object.
         \param postsynapticParamValues      parameters for postsynaptic model wrapped in ParamValues object.
-        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in NeuronModel::VarValues object.
+        \param postsynapticVarInitialisers  postsynaptic model state variable initialiser snippets and parameters wrapped in VarValues object.
         \param connectivityInitialiser      toeplitz connectivity initialisation snippet used to initialise connectivity for
                                             SynapseMatrixConnectivity::TOEPLITZ. Typically wrapped with it's parameters using ``initToeplitzConnectivity`` function
         \return pointer to newly created SynapseGroup */
     template<typename WeightUpdateModel, typename PostsynapticModel>
     SynapseGroup *addSynapsePopulation(const std::string &name, SynapseMatrixType mtype, unsigned int delaySteps, const std::string& src, const std::string& trg,
-                                       const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const typename VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
+                                       const ParamValues &weightParamValues, const VarValues &weightVarInitialisers, const VarValues &weightPreVarInitialisers, const VarValues &weightPostVarInitialisers,
                                        const ParamValues &postsynapticParamValues, const VarValues &postsynapticVarInitialisers,
                                        const InitToeplitzConnectivitySnippet::Init &connectivityInitialiser)
     {
@@ -515,7 +515,7 @@ public:
     CurrentSource *addCurrentSource(const std::string &currentSourceName, const std::string &targetNeuronGroupName,
                                     const ParamValues &paramValues, const VarValues &varInitialisers)
     {
-        return addCurrentSource<CurrentSourceModel>(currentSourceName, CurrentSourceModel::getInstance(),
+        return addCurrentSource(currentSourceName, CurrentSourceModel::getInstance(),
                                 targetNeuronGroupName, paramValues, varInitialisers);
     }
 
@@ -525,20 +525,19 @@ public:
         \param updateGroupName string containing name of group to add this custom update to
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model,
-                                  const ParamValues &paramValues,
-                                  const VarValues &varInitialisers,
+                                  const ParamValues &paramValues, const VarValues &varInitialisers,
                                   const typename CustomUpdateModel::VarReferences &varReferences)
     {
          // Add neuron group to map
         auto result = m_CustomUpdates.emplace(std::piecewise_construct,
             std::forward_as_tuple(name),
             std::forward_as_tuple(name, updateGroupName, model,
-                                  paramValues, varInitialisers.getInitialisers(), varReferences.getInitialisers(),
+                                  paramValues, varInitialisers, varReferences.getInitialisers(),
                                   m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
         if(!result.second) {
@@ -557,13 +556,12 @@ public:
         \param operation CustomUpdate::Operation specifying operation update should be performed within
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
-    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
-                                    const CustomUpdateModel *model, const ParamValues &paramValues,
-                                    const VarValues &varInitialisers,
+    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model, 
+                                    const ParamValues &paramValues, const VarValues &varInitialisers,
                                     const typename CustomUpdateModel::WUVarReferences &varReferences)
     {
         // Add neuron group to map
@@ -587,14 +585,13 @@ public:
         \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
-                                  const ParamValues &paramValues,
-                                  const typename CustomUpdateModel::VarValues &varInitialisers,
-                                   const typename CustomUpdateModel::VarReferences &varReferences)
+                                  const ParamValues &paramValues, const VarValues &varInitialisers,
+                                  const typename CustomUpdateModel::VarReferences &varReferences)
     {
         return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
                                                   paramValues, varInitialisers, varReferences);
@@ -608,13 +605,12 @@ public:
         \param updateGroupName string containing name of group to add this custom update to
         \param operation CustomUpdate::Operation specifying operation update should be performed within
         \param paramValues parameters for model wrapped in ParamValues object.
-        \param varInitialisers state variable initialiser snippets and parameters wrapped in CustomUpdateModel::VarValues object.
+        \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
         \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
-                                    const ParamValues &paramValues,
-                                    const typename CustomUpdateModel::VarValues &varInitialisers,
+                                    const ParamValues &paramValues, const VarValues &varInitialisers,
                                     const typename CustomUpdateModel::WUVarReferences &varReferences)
     {
         return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
