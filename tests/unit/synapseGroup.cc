@@ -18,7 +18,7 @@ namespace
 class STDPAdditive : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditive, 1, 1, 1);
+    DECLARE_SNIPPET(STDPAdditive);
     SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
@@ -49,12 +49,12 @@ public:
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);
 };
-IMPLEMENT_MODEL(STDPAdditive);
+IMPLEMENT_SNIPPET(STDPAdditive);
 
 class STDPAdditiveEGPWMinMax : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditiveEGPWMinMax, 1, 1, 1);
+    DECLARE_SNIPPET(STDPAdditiveEGPWMinMax);
     SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus"});
     SET_DERIVED_PARAMS({
         {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
@@ -85,12 +85,12 @@ public:
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);
 };
-IMPLEMENT_MODEL(STDPAdditiveEGPWMinMax);
+IMPLEMENT_SNIPPET(STDPAdditiveEGPWMinMax);
 
 class STDPAdditiveEGPSpike : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditiveEGPSpike, 1, 1, 1);
+    DECLARE_SNIPPET(STDPAdditiveEGPSpike);
     SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
@@ -122,12 +122,12 @@ public:
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);
 };
-IMPLEMENT_MODEL(STDPAdditiveEGPSpike);
+IMPLEMENT_SNIPPET(STDPAdditiveEGPSpike);
 
 class STDPAdditiveEGPDynamics : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(STDPAdditiveEGPDynamics, 1, 1, 1);
+    DECLARE_SNIPPET(STDPAdditiveEGPDynamics);
     SET_PARAM_NAMES({"Aplus", "Aminus", "Wmin", "Wmax"});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
@@ -155,18 +155,18 @@ public:
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);
 };
-IMPLEMENT_MODEL(STDPAdditiveEGPDynamics);
+IMPLEMENT_SNIPPET(STDPAdditiveEGPDynamics);
 
 class Continuous : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_MODEL(Continuous, 1);
+    DECLARE_SNIPPET(Continuous);
 
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE("$(addToInSyn, $(g) * $(V_pre));\n");
 };
-IMPLEMENT_MODEL(Continuous);
+IMPLEMENT_SNIPPET(Continuous);
 
 class PostRepeatVal : public InitVarSnippet::Base
 {
@@ -192,7 +192,7 @@ IMPLEMENT_SNIPPET(PreRepeatVal);
 
 class Sum : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 1, 2);
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 2);
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
@@ -200,12 +200,12 @@ class Sum : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(Sum);
+IMPLEMENT_SNIPPET(Sum);
 
 class LIFAdditional : public NeuronModels::Base
 {
 public:
-    DECLARE_MODEL(LIFAdditional, 2);
+    DECLARE_SNIPPET(LIFAdditional);
 
     SET_ADDITIONAL_INPUT_VARS({{"Isyn2", "scalar", "$(Ioffset)"}});
     SET_SIM_CODE(
@@ -241,7 +241,7 @@ public:
 
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
-IMPLEMENT_MODEL(LIFAdditional);
+IMPLEMENT_SNIPPET(LIFAdditional);
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -249,19 +249,19 @@ IMPLEMENT_MODEL(LIFAdditional);
 //--------------------------------------------------------------------------
 TEST(SynapseGroup, WUVarReferencedByCustomUpdate)
 {
-     ModelSpecInternal model;
+    ModelSpecInternal model;
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    STDPAdditive::VarValues wumVarVals(0.0);
-    STDPAdditive::PreVarValues wumPreVarVals(0.0);
-    STDPAdditive::PostVarValues wumPostVarVals(0.0);
+    VarValues wumVarVals{{"g", 0.0}};
+    VarValues wumPreVarVals{{"preTrace", 0.0}};
+    VarValues wumPostVarVals{{"postTrace", 0.0}};
 
     auto *sg1 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
         "Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
@@ -280,7 +280,7 @@ TEST(SynapseGroup, WUVarReferencedByCustomUpdate)
         {}, {});
 
     
-    Sum::VarValues sumVarValues(0.0);
+    VarValues sumVarValues{{"sum", 0.0}};
     Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg2, "g"), createWUVarRef(sg2, "g"));
     Sum::VarReferences sumVarReferences3(createWUPreVarRef(sg3, "preTrace"), createWUPreVarRef(sg3, "preTrace"));
 
@@ -301,12 +301,12 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
-    WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticPulseDendriticVarVals(0.1, 1);
+    VarValues staticPulseVarVals{{"g", 0.1}};
+    VarValues staticPulseDendriticVarVals{{"g", 0.1}, {"d", 1}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                                            "Neurons0", "Neurons1",
                                                                                                            {}, staticPulseVarVals,
@@ -346,12 +346,12 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    WeightUpdateModels::StaticPulse::VarValues staticPulseAVarVals(0.1);
-    WeightUpdateModels::StaticPulse::VarValues staticPulseBVarVals(0.2);
+    VarValues staticPulseAVarVals{{"g", 0.1}};
+    VarValues staticPulseBVarVals{{"g", 0.2}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_GLOBALG, NO_DELAY,
                                                                                                            "Neurons0", "Neurons1",
                                                                                                            {}, staticPulseAVarVals,
@@ -397,13 +397,13 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParamsA{{"prob", 0.1}};
     ParamValues fixedProbParamsB{{"prob", 0.4}};
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    VarValues staticPulseVarVals{{"g", 0.1}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
                                                                                                            "Neurons0", "Neurons1",
                                                                                                            {}, staticPulseVarVals,
@@ -455,7 +455,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 64 * 64, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post1", 62 * 62, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post2", 64 * 64, paramVals, varVals);
@@ -469,7 +469,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
         {"conv_kh", 3}, {"conv_kw", 3},
         {"conv_ih", 64}, {"conv_iw", 64}, {"conv_ic", 1},
         {"conv_oh", 64}, {"conv_ow", 64}, {"conv_oc", 1}};
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    VarValues staticPulseVarVals{{"g", 0.1}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
                                                                                                            "Pre", "Post1",
                                                                                                            {}, staticPulseVarVals,
@@ -527,15 +527,15 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues uniformParamsA{{"min", 0.5}, {"max", 1.0}};
     ParamValues uniformParamsB{{"min", 0.25}, {"max", 0.5}};
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarValsA(initVar<InitVarSnippet::Uniform>(uniformParamsA));
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarValsB(initVar<InitVarSnippet::Uniform>(uniformParamsB));
+    VarValues staticPulseVarValsA{{"g", initVar<InitVarSnippet::Uniform>(uniformParamsA)}};
+    VarValues staticPulseVarValsB{{"g", initVar<InitVarSnippet::Uniform>(uniformParamsB)}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::PROCEDURAL_PROCEDURALG, NO_DELAY,
                                                                                                            "Neurons0", "Neurons1",
                                                                                                            {}, staticPulseVarValsA,
@@ -587,12 +587,12 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarValsA(initVar<PostRepeatVal>());
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarValsB(initVar<PreRepeatVal>());
+    VarValues staticPulseVarValsA{{"g", initVar<PostRepeatVal>()}};
+    VarValues staticPulseVarValsB{{"g", initVar<PreRepeatVal>()}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
                                                                                                            "Neurons0", "Neurons1",
                                                                                                            {}, staticPulseVarValsA,
@@ -635,17 +635,16 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    STDPAdditive::VarValues varValsA(0.0);
-    STDPAdditive::VarValues varValsB(1.0);
-    STDPAdditive::PreVarValues preVarVals(0.0);
-    STDPAdditive::PostVarValues postVarVals(0.0);
-
+    VarValues varValsA{{"g", 0.0}};
+    VarValues varValsB{{"g", 1.0}};
+    VarValues preVarVals{{"preTrace", 0.0}};
+    VarValues postVarVals{{"postTrace", 0.0}};
     auto *sg0 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                         "Neurons0", "Neurons1",
                                                                                         params, varValsA, preVarVals, postVarVals,
@@ -700,17 +699,16 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    STDPAdditive::VarValues synVarVals(0.0);
-    STDPAdditive::PreVarValues preVarValsA(0.0);
-    STDPAdditive::PreVarValues preVarValsB(1.0);
-    STDPAdditive::PostVarValues postVarVals(0.0);
-
+    VarValues synVarVals{{"g", 0.0}};
+    VarValues preVarValsA{{"preTrace", 0.0}};
+    VarValues preVarValsB{{"preTrace", 1.0}};
+    VarValues postVarVals{{"postTrace", 0.0}};
     auto *sg0 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                         "Neurons0", "Neurons1",
                                                                                         params, synVarVals, preVarValsA, postVarVals,
@@ -746,17 +744,16 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedProbParams{{"prob", 0.1}};
     ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    STDPAdditive::VarValues synVarVals(0.0);
-    STDPAdditive::PreVarValues preVarVals(0.0);
-    STDPAdditive::PostVarValues postVarValsA(0.0);
-    STDPAdditive::PostVarValues postVarValsB(1.0);
-
+    VarValues synVarVals{{"g", 0.0}};
+    VarValues preVarVals{{"preTrace", 0.0}};
+    VarValues postVarValsA{{"postTrace", 0.0}};
+    VarValues postVarValsB{{"postTrace", 0.0}};
     auto *sg0 = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                         "Neurons0", "Neurons1",
                                                                                         params, synVarVals, preVarVals, postVarValsA,
@@ -792,13 +789,13 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
     ParamValues fixedNumberPostParamsA{{"rowLength", 4}};
     ParamValues fixedNumberPostParamsB{{"rowLength", 8}};
-    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    VarValues staticPulseVarVals{{"g", 0.1}};
     auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
                                                                                                            "Neurons0", "Neurons1",
                                                                                                            {}, staticPulseVarVals,
@@ -842,7 +839,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
 
     // Add four neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsA", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsB", 20, paramVals, varVals);
 
@@ -851,7 +848,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
             "NeuronsA_NeuronsB_1", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
             "NeuronsA", "NeuronsB",
-            {}, {1.0},
+            {}, {{"g", 1.0}},
             {}, {});
         FAIL();
     }
@@ -862,9 +859,9 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     try {
         ParamValues fixedProbParams{{"prob", 0.1}};
         ParamValues params{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-        STDPAdditive::VarValues varVals(0.0);
-        STDPAdditive::PreVarValues preVarVals(0.0);
-        STDPAdditive::PostVarValues postVarVals(0.0);
+        VarValues varVals{{"g", 0.0}};
+        VarValues preVarVals{{"preTrace", 0.0}};
+        VarValues postVarVals{{"postTrace", 0.0}};
 
         model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>("NeuronsA_NeuronsB_2", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
                                                                                 "NeuronsA", "NeuronsB",
@@ -881,7 +878,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
         ParamValues fixedProbParams{{"prob", 0.1}};
         model.addSynapsePopulation<Continuous, PostsynapticModels::DeltaCurr>("NeuronsA_NeuronsB_3", SynapseMatrixType::PROCEDURAL_GLOBALG, NO_DELAY,
                                                                               "NeuronsA", "NeuronsB",
-                                                                              {}, {0.0}, {}, {},
+                                                                              {}, {{"g", 0.0}}, {}, {},
                                                                               {}, {},
                                                                               initConnectivity<InitSparseConnectivitySnippet::FixedProbability>(fixedProbParams));
         FAIL();
@@ -894,7 +891,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
             "NeuronsA_NeuronsB_4", SynapseMatrixType::DENSE_PROCEDURALG, NO_DELAY,
             "NeuronsA", "NeuronsB",
-            {}, {initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}})},
+            {}, {{"g", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}})}},
             {}, {});
         FAIL();
     }
@@ -905,7 +902,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
 TEST(SynapseGroup, InvalidName)
 {
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     
     ModelSpec model;
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
@@ -914,7 +911,7 @@ TEST(SynapseGroup, InvalidName)
         model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
             "Syn-6", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
             "Pre", "Post",
-            {}, {1.0},
+            {}, {{"g", 1.0}},
             {}, {});
         FAIL();
     }
@@ -928,17 +925,17 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
 
     // Add pre and post neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     ParamValues wumEGPWMinMaxParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}};
     ParamValues wumEGPDynamicsParams{{"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    STDPAdditive::VarValues wumVarVals(0.0);
-    STDPAdditive::PreVarValues wumConstPreVarVals(0.0);
-    STDPAdditive::PreVarValues wumNonConstPreVarVals(initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}}));
-    STDPAdditive::PostVarValues wumPostVarVals(0.0);
+    VarValues wumVarVals{{"g", 0.0}};
+    VarValues wumConstPreVarVals{{"preTrace", 0.0}};
+    VarValues wumNonConstPreVarVals{{"preTrace", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}})}};
+    VarValues wumPostVarVals{{"postTrace", 0.0}};
     
     auto *constPre = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
         "Pre_Post_ConstPre", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
@@ -983,17 +980,17 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
 
     // Add pre and post neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     ParamValues wumEGPWMinMaxParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}};
     ParamValues wumEGPDynamicsParams{{"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
-    STDPAdditive::VarValues wumVarVals(0.0);
-    STDPAdditive::PreVarValues wumPreVarVals(0.0);
-    STDPAdditive::PostVarValues wumConstPostVarVals(0.0);
-    STDPAdditive::PostVarValues wumNonConstPostVarVals(initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}}));
+    VarValues wumVarVals{{"g", 0.0}};
+    VarValues wumPreVarVals{{"preTrace", 0.0}};
+    VarValues wumConstPostVarVals{{"postTrace", 0.0}};
+    VarValues wumNonConstPostVarVals{{"postTrace", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 1.0}})}};
     
     auto *constPost = model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
         "Pre_Post_ConstPost", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
@@ -1035,7 +1032,7 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
 TEST(SynapseGroup, InvalidPSOutputVar)
 {
     ParamValues paramVals{{"C", 0.25}, {"TauM", 10.0}, {"Vrest", 0.0}, {"Vreset", 0.0}, {"Vthresh", 20.0}, {"Ioffset", 0.0}, {"TauRefrac", 5.0}};
-    LIFAdditional::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"V", 0.0}, {"RefracTime", 0.0}};
 
     ModelSpec model;
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
@@ -1043,7 +1040,7 @@ TEST(SynapseGroup, InvalidPSOutputVar)
     auto *prePost = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
         "PrePost", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        {}, { 1.0 },
+        {}, {{"g", 1.0}},
         {}, {});
 
     prePost->setPSTargetVar("Isyn");

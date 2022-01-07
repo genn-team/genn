@@ -13,7 +13,7 @@ TEST(CurrentSource, CompareDifferentModel)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
@@ -40,7 +40,7 @@ TEST(CurrentSource, CompareDifferentParameters)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
@@ -67,7 +67,7 @@ TEST(CurrentSource, CompareSameParameters)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one gaussian current source
@@ -91,7 +91,7 @@ TEST(CurrentSource, CompareSameParameters)
 TEST(CurrentSource, InvalidName)
 {
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
     
     ModelSpec model;
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pop", 10, paramVals, varVals);
