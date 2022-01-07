@@ -25,8 +25,8 @@ public:
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars["tau"]); }},
-        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars["tau"]); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau")); }}});
 };
 IMPLEMENT_MODEL(AlphaCurr);
 }

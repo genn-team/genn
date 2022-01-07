@@ -69,8 +69,8 @@ public:
     SET_VARS({{"x", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars["tau"]); }},
-        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars["tau"]); }}});
+        {"expDecay", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("tau")); }},
+        {"init", [](const ParamValues &pars, double) { return (std::exp(1) / pars.at("tau")); }}});
 };
 IMPLEMENT_MODEL(AlphaCurr);
 
@@ -106,8 +106,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars["TauM"]); }},
-        {"Rmembrane", [](const ParamValues &pars, double) { return  pars["TauM"] / pars["C"]; }}});
+        {"ExpTC", [](const ParamValues &pars, double dt) { return std::exp(-dt / pars.at("TauM")); }},
+        {"Rmembrane", [](const ParamValues &pars, double) { return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -149,8 +149,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["TauM"]); }},
-        {"Rmembrane", [](const ParamValues &pars, double){ return  pars["TauM"] / pars["C"]; }}});
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -165,8 +165,8 @@ public:
     SET_PARAM_NAMES({"tauPlus", "tauMinus", "Aplus", "Aminus",
                      "Wmin", "Wmax"});
     SET_DERIVED_PARAMS({
-        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["tauPlus"]); }},
-        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["tauMinus"]); }}});
+        {"tauPlusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauPlus")); }},
+        {"tauMinusDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("tauMinus")); }}});
     SET_VARS({{"g", "scalar"}});
     SET_PRE_VARS({{"preTrace", "scalar"}});
     SET_POST_VARS({{"postTrace", "scalar"}});
