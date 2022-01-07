@@ -138,13 +138,13 @@ void validatePopName(const std::string &name, const std::string &description)
     }
 }
 //--------------------------------------------------------------------------
-void validateParamValues(const std::vector<std::string> &paramNames, const Snippet::ParamValues &paramValues, 
+void validateParamValues(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &paramValues, 
                          const std::string &description) 
 {
     // Loop through names
     for(const auto &n : paramNames) {
         // If there is no values, give error
-        if(paramValues.getValues().find(n) == paramValues.getValues().cend()) {
+        if(paramValues.find(n) == paramValues.cend()) {
             throw std::runtime_error(description + " missing value for parameter: '" + n + "'");
         }
     }

@@ -10,7 +10,7 @@ class CurrentSourceInternal : public CurrentSource
 {
 public:
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                          const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
+                          const ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                           const NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, 
                           VarLocation defaultExtraGlobalParamLocation)
     :   CurrentSource(name, currentSourceModel, params, varInitialisers, targetNeuronGroup, 

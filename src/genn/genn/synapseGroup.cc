@@ -512,8 +512,8 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const Snippet::ParamValues &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const Snippet::ParamValues &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const ParamValues &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
+                           const PostsynapticModels::Base *ps, const ParamValues &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,

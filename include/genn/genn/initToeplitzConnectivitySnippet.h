@@ -22,7 +22,7 @@
 #define SET_CALC_MAX_ROW_LENGTH_FUNC(FUNC) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return FUNC; }
 #define SET_CALC_KERNEL_SIZE_FUNC(...) virtual CalcKernelSizeFunc getCalcKernelSizeFunc() const override{ return __VA_ARGS__; }
 
-#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const Snippet::ParamValues &){ return MAX_ROW_LENGTH; }; }
+#define SET_MAX_ROW_LENGTH(MAX_ROW_LENGTH) virtual CalcMaxLengthFunc getCalcMaxRowLengthFunc() const override{ return [](unsigned int, unsigned int, const ParamValues &){ return MAX_ROW_LENGTH; }; }
 
 //----------------------------------------------------------------------------
 // InitToeplitzConnectivitySnippet::Base
@@ -36,8 +36,8 @@ public:
     //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
-    typedef std::function<unsigned int(unsigned int, unsigned int, const Snippet::ParamValues &)> CalcMaxLengthFunc;
-    typedef std::function<std::vector<unsigned int>(const Snippet::ParamValues &)> CalcKernelSizeFunc;
+    typedef std::function<unsigned int(unsigned int, unsigned int, const ParamValues &)> CalcMaxLengthFunc;
+    typedef std::function<std::vector<unsigned int>(const ParamValues &)> CalcKernelSizeFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals
@@ -67,7 +67,7 @@ public:
 class Init : public Snippet::Init<InitToeplitzConnectivitySnippet::Base>
 {
 public:
-    Init(const Base *snippet, const Snippet::ParamValues &params)
+    Init(const Base *snippet, const ParamValues &params)
         : Snippet::Init<Base>(snippet, params)
     {
     }
@@ -97,8 +97,8 @@ public:
     SET_PARAM_NAMES({"conv_kh", "conv_kw",
                      "conv_ih", "conv_iw", "conv_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const Snippet::ParamValues &pars, double){ return (((int)pars["conv_iw"] + (int)pars["conv_kw"] - 1) - (int)pars["conv_ow"]) / 2; }},
-                        {"conv_bh", [](const Snippet::ParamValues &pars, double){ return (((int)pars["conv_ih"] + (int)pars["conv_kh"] - 1) - (int)pars["conv_oh"]) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return (((int)pars["conv_iw"] + (int)pars["conv_kw"] - 1) - (int)pars["conv_ow"]) / 2; }},
+                        {"conv_bh", [](const ParamValues &pars, double){ return (((int)pars["conv_ih"] + (int)pars["conv_kh"] - 1) - (int)pars["conv_oh"]) / 2; }}});
 
     SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
                                    {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
@@ -122,13 +122,13 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const Snippet::ParamValues &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return ((unsigned int)pars["conv_kh"] * (unsigned int)pars["conv_kw"] * (unsigned int)pars["conv_oc"]);
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const Snippet::ParamValues &pars)->std::vector<unsigned int>
+        [](const ParamValues &pars)->std::vector<unsigned int>
         {
             return {(unsigned int)pars["conv_kh"], (unsigned int)pars["conv_kw"],
                     (unsigned int)pars["conv_ic"], (unsigned int)pars["conv_oc"]};
@@ -151,8 +151,8 @@ public:
                      "pool_sh", "pool_sw",
                      "pool_ih", "pool_iw", "pool_ic",
                      "conv_oh", "conv_ow", "conv_oc"});
-    SET_DERIVED_PARAMS({{"conv_bw", [](const Snippet::ParamValues &pars, double){ return (int(ceil((pars["pool_iw"] - pars["pool_kw"] + 1.0) / pars["pool_sw"])) + (int)pars["conv_kw"] - 1 - (int)pars["conv_ow"]) / 2; }},
-                        {"conv_bh", [](const Snippet::ParamValues &pars, double){ return (int(ceil((pars["pool_ih"] - pars["pool_kh"] + 1.0) / pars["pool_sh"])) + (int)pars["conv_h"] - 1 - (int)pars["conv_oh"]) / 2; }}});
+    SET_DERIVED_PARAMS({{"conv_bw", [](const ParamValues &pars, double){ return (int(ceil((pars["pool_iw"] - pars["pool_kw"] + 1.0) / pars["pool_sw"])) + (int)pars["conv_kw"] - 1 - (int)pars["conv_ow"]) / 2; }},
+                        {"conv_bh", [](const ParamValues &pars, double){ return (int(ceil((pars["pool_ih"] - pars["pool_kh"] + 1.0) / pars["pool_sh"])) + (int)pars["conv_h"] - 1 - (int)pars["conv_oh"]) / 2; }}});
 
     SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "($(id_diag) / (int)$(conv_oc)) / (int)$(conv_kw)"},
                                    {"kernCol", "int", "($(id_diag) / (int)$(conv_oc)) % (int)$(conv_kw)"},
@@ -184,13 +184,13 @@ public:
         "}\n");
 
     SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const Snippet::ParamValues &pars)
+        [](unsigned int, unsigned int, const ParamValues &pars)
         {
             return ((unsigned int)pars["conv_kh"] * (unsigned int)pars["conv_kw"] * (unsigned int)pars["conv_oc"]);
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
-        [](const Snippet::ParamValues &pars)->std::vector<unsigned int>
+        [](const ParamValues &pars)->std::vector<unsigned int>
         {
             return {(unsigned int)pars["conv_kh"], (unsigned int)pars["conv_kw"],
                     (unsigned int)pars["pool_ic"], (unsigned int)pars["conv_oc"]};

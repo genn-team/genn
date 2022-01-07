@@ -35,7 +35,7 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
 }
 //----------------------------------------------------------------------------
 CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                             const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
+                             const ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                              const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),

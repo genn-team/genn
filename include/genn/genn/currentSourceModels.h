@@ -104,8 +104,8 @@ class PoissonExp : public Base
     SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
-        {"ExpDecay", [](const Snippet::ParamValues &pars, double dt){ return std::exp(-dt / pars["tauSyn"]); }},
-        {"Init", [](const Snippet::ParamValues &pars, double dt){ return pars["weight"] * (1.0 - std::exp(-dt / pars["tauSyn"])) * (pars["tauSyn"] / dt); }},
-        {"ExpMinusLambda", [](const Snippet::ParamValues &pars, double dt){ return std::exp(-(pars["rate"] / 1000.0) * dt); }}});
+        {"ExpDecay", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars["tauSyn"]); }},
+        {"Init", [](const ParamValues &pars, double dt){ return pars["weight"] * (1.0 - std::exp(-dt / pars["tauSyn"])) * (pars["tauSyn"] / dt); }},
+        {"ExpMinusLambda", [](const ParamValues &pars, double dt){ return std::exp(-(pars["rate"] / 1000.0) * dt); }}});
 };
 } // CurrentSourceModels

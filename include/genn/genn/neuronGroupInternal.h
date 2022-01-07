@@ -10,7 +10,7 @@ class NeuronGroupInternal : public NeuronGroup
 {
 public:
     NeuronGroupInternal(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                        const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
+                        const ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                         VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   NeuronGroup(name, numNeurons, neuronModel, params, varInitialisers,
                     defaultVarLocation, defaultExtraGlobalParamLocation)

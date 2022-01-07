@@ -134,7 +134,7 @@ protected:
 class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
-    VarInit(const InitVarSnippet::Base *snippet, const Snippet::ParamValues &params)
+    VarInit(const InitVarSnippet::Base *snippet, const ParamValues &params)
         : Snippet::Init<InitVarSnippet::Base>(snippet, params)
     {
     }

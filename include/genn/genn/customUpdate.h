@@ -36,7 +36,7 @@ public:
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
-    const Snippet::ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
+    const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for custom update model state variable
@@ -50,7 +50,7 @@ public:
 
 protected:
     CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
-                     const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
+                     const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
                      const std::vector<Models::VarInit> &varInitialisers,
                      VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
@@ -73,7 +73,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const Snippet::ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
+    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
@@ -142,8 +142,8 @@ private:
     const std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    const Snippet::ParamValues m_Params;
-    Snippet::ParamValues::ParamMap m_DerivedParams;
+    const ParamValues m_Params;
+    ParamValues::ParamMap m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     //! Location of individual state variables
@@ -170,7 +170,7 @@ public:
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
+                 const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
                  const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
@@ -214,7 +214,7 @@ public:
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
+                   const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
                    const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 

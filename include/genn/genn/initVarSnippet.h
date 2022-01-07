@@ -171,10 +171,10 @@ public:
 
     SET_PARAM_NAMES({"mean", "sd", "min", "max"});
     SET_DERIVED_PARAMS({
-        {"meanTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["mean"] / dt; }},
-        {"sdTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["sd"] / dt; }},
-        {"minTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["min"] / dt; }},
-        {"maxTimestep", [](const Snippet::ParamValues &pars, double dt){ return pars["max"] / dt; }}});
+        {"meanTimestep", [](const ParamValues &pars, double dt){ return pars["mean"] / dt; }},
+        {"sdTimestep", [](const ParamValues &pars, double dt){ return pars["sd"] / dt; }},
+        {"minTimestep", [](const ParamValues &pars, double dt){ return pars["min"] / dt; }},
+        {"maxTimestep", [](const ParamValues &pars, double dt){ return pars["max"] / dt; }}});
 };
 
 //----------------------------------------------------------------------------

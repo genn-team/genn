@@ -25,11 +25,6 @@ namespace Models
 class VarInit;
 }
 
-namespace Snippet
-{
-class ParamValues;
-}
-
 //--------------------------------------------------------------------------
 // Utils
 //--------------------------------------------------------------------------
@@ -78,7 +73,7 @@ GENN_EXPORT void validatePopName(const std::string &name, const std::string &des
 //--------------------------------------------------------------------------
 //! \brief Are values provided for all of the the parameter names in the vector?
 //--------------------------------------------------------------------------
-GENN_EXPORT void validateParamValues(const std::vector<std::string> &paramNames, const Snippet::ParamValues &paramValues, 
+GENN_EXPORT void validateParamValues(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &paramValues, 
                                      const std::string &description);
 
 //--------------------------------------------------------------------------

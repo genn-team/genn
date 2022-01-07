@@ -43,7 +43,7 @@ public:
     //! Gets the current source model used by this group
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
-    const Snippet::ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
+    const ParamValues::ParamMap &getParams() const{ return m_Params.getValues(); }
     const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
@@ -62,7 +62,7 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                  const Snippet::ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
+                  const ParamValues &params, const std::vector<Models::VarInit> &varInitialisers,
                   const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                   VarLocation defaultExtraGlobalParamLocation);
 
@@ -76,7 +76,7 @@ protected:
     //------------------------------------------------------------------------
     const NeuronGroupInternal *getTrgNeuronGroup() const{ return m_TrgNeuronGroup; }
 
-    const Snippet::ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
+    const ParamValues::ParamMap &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source require an RNG to simulate
     bool isSimRNGRequired() const;
@@ -103,8 +103,8 @@ private:
     std::string m_Name;
 
     const CurrentSourceModels::Base *m_CurrentSourceModel;
-    Snippet::ParamValues m_Params;
-    Snippet::ParamValues::ParamMap m_DerivedParams;
+    ParamValues m_Params;
+    ParamValues::ParamMap m_DerivedParams;
     std::vector<Models::VarInit> m_VarInitialisers;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;

@@ -91,7 +91,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 // CustomUpdate
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                           const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
+                           const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
                            const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
@@ -164,7 +164,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 // CustomUpdateWU
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                               const CustomUpdateModels::Base *customUpdateModel, const Snippet::ParamValues &params,
+                               const CustomUpdateModels::Base *customUpdateModel, const ParamValues &params,
                                const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
