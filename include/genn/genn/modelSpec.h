@@ -34,8 +34,8 @@ Part of the code generation and generated code sections.
 #include "customUpdateInternal.h"
 #include "gennExport.h"
 #include "neuronGroupInternal.h"
-#include "paramValues.h"
 #include "synapseGroupInternal.h"
+#include "valueContainers.h"
 
 #define NO_DELAY 0 //!< Macro used to indicate no synapse delay for the group (only one queue slot will be generated)
 

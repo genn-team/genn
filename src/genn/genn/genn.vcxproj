@@ -97,7 +97,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\neuronGroup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\neuronGroupInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\neuronModels.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\paramValues.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\valueContainers.h" />
     <ClInclude Include="..\..\..\include\genn\genn\postsynapticModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\snippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\synapseGroup.h" />

@@ -12,7 +12,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "gennUtils.h"
-#include "paramValues.h"
+#include "valueContainers.h"
 
 //----------------------------------------------------------------------------
 // Macros
