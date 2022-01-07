@@ -79,8 +79,8 @@ NeuronGroup *ModelSpec::addNeuronPopulation(const std::string &name, unsigned in
     auto result = m_LocalNeuronGroups.emplace(std::piecewise_construct,
         std::forward_as_tuple(name),
         std::forward_as_tuple(name, size, model,
-                                paramValues, varInitialisers, 
-                                m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+                              paramValues, varInitialisers, 
+                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a neuron population with duplicate name:" + name);
@@ -128,14 +128,53 @@ CurrentSource *ModelSpec::addCurrentSource(const std::string &currentSourceName,
     auto result = m_LocalCurrentSources.emplace(std::piecewise_construct,
         std::forward_as_tuple(currentSourceName),
         std::forward_as_tuple(currentSourceName, model, paramValues,
-                                varInitialisers, targetGroup, 
-                                m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+                              varInitialisers, targetGroup, 
+                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
 
     if(!result.second) {
         throw std::runtime_error("Cannot add a current source with duplicate name:" + currentSourceName);
     }
     else {
         targetGroup->injectCurrent(&result.first->second);
+        return &result.first->second;
+    }
+}
+
+
+CustomUpdate *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
+                                         const ParamValues &paramValues, const VarValues &varInitialisers,
+                                         const VarReferences &varReferences)
+{
+    // Add neuron group to map
+    auto result = m_CustomUpdates.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, updateGroupName, model,
+                              paramValues, varInitialisers, varReferences,
+                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+    else {
+        return &result.first->second;
+    }
+}
+
+CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
+                                           const ParamValues &paramValues, const VarValues &varInitialisers,
+                                           const WUVarReferences &varReferences)
+{
+    // Add neuron group to map
+    auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
+        std::forward_as_tuple(name),
+        std::forward_as_tuple(name, updateGroupName, model,
+                              paramValues, varInitialisers, varReferences,
+                              m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
+
+    if(!result.second) {
+        throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
+    }
+    else {
         return &result.first->second;
     }
 }

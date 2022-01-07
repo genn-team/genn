@@ -1,6 +1,5 @@
 #include "customUpdateModels.h"
 
-
 // Implement models
 IMPLEMENT_SNIPPET(CustomUpdateModels::Transpose);
 

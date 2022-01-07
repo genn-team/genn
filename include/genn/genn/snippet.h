@@ -38,78 +38,11 @@ public:                                                 \
 #define SET_EXTRA_GLOBAL_PARAMS(...) virtual EGPVec getExtraGlobalParams() const override{ return __VA_ARGS__; }
 
 //----------------------------------------------------------------------------
-// Snippet::InitialiserContainerBase
-//----------------------------------------------------------------------------
-//! Wrapper to ensure at compile time that correct 
-//! number of values are used when initialising models
-namespace Snippet
-{
-template<typename V, size_t NumVars>
-class InitialiserContainerBase
-{
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<V, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    InitialiserContainerBase(T&&... vals) : m_Values(std::vector<V>{{std::forward<const V>(vals)...}})
-    {
-        static_assert(sizeof...(vals) == NumVars, "Wrong number of values");
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets values as a vector
-    const std::vector<V> &getInitialisers() const
-    {
-        return m_Values;
-    }
-
-    //----------------------------------------------------------------------------
-    // Operators
-    //----------------------------------------------------------------------------
-    const V &operator[](size_t pos) const
-    {
-        return m_Values[pos];
-    }
-
-private:
-    //----------------------------------------------------------------------------
-    // Members
-    //----------------------------------------------------------------------------
-    std::vector<V> m_Values;
-};
-
-//----------------------------------------------------------------------------
-// Snippet::InitialiserContainerBase<0>
-//----------------------------------------------------------------------------
-//! Template specialisation of InitialiserContainerBase to avoid compiler warnings
-//! in the case when a model requires no parameters or state variables
-template<typename V>
-class InitialiserContainerBase<V, 0>
-{
-public:
-    // **NOTE** other less terrifying forms of constructor won't complain at compile time about
-    // number of parameters e.g. std::array<double, 4> can be initialized with <= 4 elements
-    template<typename... T>
-    InitialiserContainerBase(T&&... vals)
-    {
-        static_assert(sizeof...(vals) == 0, "Wrong number of values");
-    }
-
-    //----------------------------------------------------------------------------
-    // Public API
-    //----------------------------------------------------------------------------
-    //! Gets values as a vector of doubles
-    std::vector<V> getInitialisers() const
-    {
-        return {};
-    }
-};
-//----------------------------------------------------------------------------
 // Snippet::Base
 //----------------------------------------------------------------------------
 //! Base class for all code snippets
+namespace Snippet
+{
 class GENN_EXPORT Base
 {
 public:

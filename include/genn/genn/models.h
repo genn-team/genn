@@ -211,12 +211,6 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// Models::VarReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using VarReferenceContainerBase = Snippet::InitialiserContainerBase<VarReference, NumVars>;
-
-//----------------------------------------------------------------------------
 // Models::WUVarReference
 //----------------------------------------------------------------------------
 class GENN_EXPORT WUVarReference : public VarReferenceBase
@@ -246,12 +240,6 @@ private:
     Models::Base::Var m_TransposeVar;
     GetTargetNameFn m_GetTransposeTargetName;
 };
-
-//----------------------------------------------------------------------------
-// Models::WUVarReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
 
 //----------------------------------------------------------------------------
 // updateHash overrides

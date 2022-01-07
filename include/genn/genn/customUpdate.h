@@ -97,18 +97,17 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferences(const std::vector<V> &varRefs)
+    void checkVarReferences(const std::unordered_map<std::string, V> &varRefs)
     {
         const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
 
         // If target of any variable references is duplicated, custom update should be batched
         m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                [](const V &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); });
+                                [](const auto &v) { return (v.second.getVar().access & VarAccessDuplication::DUPLICATE); });
 
         // Loop through all variable references
-        for(size_t i = 0; i < varRefs.size(); i++) {
-            const auto varRef = varRefs.at(i);
-            const auto modelVarRef = modelVarRefs.at(i);
+        for(const auto &modelVarRef : modelVarRefs) {
+            const auto varRef = varRefs.at(modelVarRef.name);
 
             // Check types of variable references against those specified in model
             // **THINK** due to GeNN's current string-based type system this is rather conservative
@@ -164,13 +163,13 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::unordered_map<std::string, Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
     unsigned int getSize() const { return m_Size; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
                  const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                 const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
+                 const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -195,7 +194,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<Models::VarReference> m_VarReferences;
+    const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
 };
@@ -209,12 +208,12 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                    const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                   const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
+                   const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
 
@@ -237,6 +236,6 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<Models::WUVarReference> m_VarReferences;
+    const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     const SynapseGroupInternal *m_SynapseGroup;
 };

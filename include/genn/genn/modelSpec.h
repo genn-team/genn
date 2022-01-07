@@ -41,6 +41,8 @@ Part of the code generation and generated code sections.
 
 using ParamValues = std::unordered_map<std::string, double>;
 using VarValues = std::unordered_map<std::string, Models::VarInit>;
+using VarReferences = std::unordered_map<std::string, Models::VarReference>;
+using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
 
 //! Floating point precision to use for models
 enum FloatType
@@ -520,64 +522,30 @@ public:
     }
 
     //! Adds a new custom update with references to the model using a custom update model managed by the user
-    /*! \tparam CustomUpdateModel type of custom update model (derived from CustomUpdateModels::Base).
-        \param name string containing unique name of custom update
+    /*! \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
+        \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomUpdateBase */
-    template<typename CustomUpdateModel>
-    CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model,
+    CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const typename CustomUpdateModel::VarReferences &varReferences)
-    {
-         // Add neuron group to map
-        auto result = m_CustomUpdates.emplace(std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, updateGroupName, model,
-                                  paramValues, varInitialisers, varReferences.getInitialisers(),
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
-
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
-        }
-        else {
-            return &result.first->second;
-        }
-    }
+                                  const VarReferences &varReferences);
 
     //! Adds a new custom update with references to weight update model variable to the 
     //! model using a custom update model managed by the user
-    /*! \tparam CustomUpdateModel type of custom update model (derived from CustomUpdateModels::Base).
-        \param name string containing unique name of custom update
+    /*! \param name string containing unique name of custom update
         \param updateGroupName string containing name of group to add this custom update to
         \param operation CustomUpdate::Operation specifying operation update should be performed within
         \param model custom update model to use for custom update.
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param varReferences variable references wrapped in CustomUpdateModel::VarReferences object.
+        \param varReferences variable references wrapped in VarReferences object.
         \return pointer to newly created CustomUpdateBase */
-    template<typename CustomUpdateModel>
-    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModel *model, 
+    CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *model, 
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const typename CustomUpdateModel::WUVarReferences &varReferences)
-    {
-        // Add neuron group to map
-        auto result = m_CustomWUUpdates.emplace(std::piecewise_construct,
-            std::forward_as_tuple(name),
-            std::forward_as_tuple(name, updateGroupName, model,
-                                  paramValues, varInitialisers, varReferences.getInitialisers(),
-                                  m_DefaultVarLocation, m_DefaultExtraGlobalParamLocation));
-
-        if(!result.second) {
-            throw std::runtime_error("Cannot add a custom update with duplicate name:" + name);
-        }
-        else {
-            return &result.first->second;
-        }
-    }
+                                    const WUVarReferences &varReferences);
 
     //! Adds a new custom update to the model using a singleton custom update model 
     //! created using standard DECLARE_CUSTOM_UPDATE_MODEL and IMPLEMENT_MODEL macros
@@ -586,15 +554,15 @@ public:
         \param updateGroupName string containing name of group to add this custom update to
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
+        \param varInitialisers variable references wrapped in VarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdate *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                   const ParamValues &paramValues, const VarValues &varInitialisers,
-                                  const typename CustomUpdateModel::VarReferences &varReferences)
+                                  const VarReferences &varReferences)
     {
-        return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
-                                                  paramValues, varInitialisers, varReferences);
+        return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
+                               paramValues, varInitialisers, varReferences);
     }
 
 
@@ -606,15 +574,15 @@ public:
         \param operation CustomUpdate::Operation specifying operation update should be performed within
         \param paramValues parameters for model wrapped in ParamValues object.
         \param varInitialisers state variable initialiser snippets and parameters wrapped in VarValues object.
-        \param varInitialisers variable references wrapped in CustomUpdateModel::VarReferences object.
+        \param varInitialisers variable references wrapped in WUVarReferences object.
         \return pointer to newly created CustomUpdateBase */
     template<typename CustomUpdateModel>
     CustomUpdateWU *addCustomUpdate(const std::string &name, const std::string &updateGroupName,
                                     const ParamValues &paramValues, const VarValues &varInitialisers,
-                                    const typename CustomUpdateModel::WUVarReferences &varReferences)
+                                    const WUVarReferences &varReferences)
     {
-        return addCustomUpdate<CustomUpdateModel>(name, updateGroupName, CustomUpdateModel::getInstance(),
-                                                  paramValues, varInitialisers, varReferences);
+        return addCustomUpdate(name, updateGroupName, CustomUpdateModel::getInstance(),
+                               paramValues, varInitialisers, varReferences);
     }
 
 protected:

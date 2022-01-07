@@ -93,10 +93,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdateBase::getVarLocationHashDige
 //----------------------------------------------------------------------------
 CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGroupName,
                            const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                           const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
+                           const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.front().getSize()), m_DelayNeuronGroup(nullptr)
+    m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
 {
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
@@ -107,7 +107,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
 
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                   [this](const Models::VarReference &v) { return v.getSize() != m_Size; }))
+                   [this](const auto &v) { return v.second.getSize() != m_Size; }))
     {
         throw std::runtime_error("All referenced variables must have the same size.");
     }
@@ -117,14 +117,14 @@ void CustomUpdate::finalize()
 {
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                                 [](const Models::VarReference &v) { return v.getDelayNeuronGroup() != nullptr; });
+                                 [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
     if(delayRef != m_VarReferences.cend()) {
         // Set the delay neuron group 
-        m_DelayNeuronGroup = delayRef->getDelayNeuronGroup();
+        m_DelayNeuronGroup = delayRef->second.getDelayNeuronGroup();
 
         // If any of the variable references are delayed with a different group, give an error
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [this](const Models::VarReference &v) { return (v.getDelayNeuronGroup() != nullptr) && (v.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
+                       [this](const auto &v) { return (v.second.getDelayNeuronGroup() != nullptr) && (v.second.getDelayNeuronGroup() != m_DelayNeuronGroup); }))
         {
             throw std::runtime_error("Referenced variables with delays in custom update '" + getName() + "' must all refer to same neuron group.");
         }
@@ -148,7 +148,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getHashDigest() const
 
     // Update hash with whether variable references require delay
     for(const auto &v : getVarReferences()) {
-        Utils::updateHash((v.getDelayNeuronGroup() == nullptr), hash);
+        Utils::updateHash((v.second.getDelayNeuronGroup() == nullptr), hash);
     }
     return hash.get_digest();
 }
@@ -166,10 +166,10 @@ boost::uuids::detail::sha1::digest_type CustomUpdate::getInitHashDigest() const
 //----------------------------------------------------------------------------
 CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
                                const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
-                               const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
+                               const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                                VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
-    m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.front().getSynapseGroup()))
+    m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
@@ -181,9 +181,9 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                    [this](const Models::WUVarReference &v) 
+                    [this](const auto &v) 
                     { 
-                        return (v.getSynapseGroup() != m_SynapseGroup); 
+                        return (v.second.getSynapseGroup() != m_SynapseGroup); 
                     }))
     {
         throw std::runtime_error("All referenced variables must belong to the same synapse group.");
@@ -199,9 +199,9 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         // Give error if any of the variable references aren't dense
         // **NOTE** there's no reason NOT to implement sparse transpose
         if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [](const Models::WUVarReference &v) 
+                       [](const auto &v) 
                        {
-                           return !(v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
+                           return !(v.second.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
                        }))
         {
             throw std::runtime_error("Custom updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
@@ -210,7 +210,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         // If there's more than one variable with a transpose give error
         // **NOTE** there's no reason NOT to allow multiple transposes, it just gets a little tricky with shared memory allocations
         if(std::count_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                        [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }) > 1)
+                        [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }) > 1)
         {
             throw std::runtime_error("Each custom update can only calculate the tranpose of a single variable,");
         }
@@ -221,7 +221,7 @@ bool CustomUpdateWU::isTransposeOperation() const
 {
     // Transpose opetation is required if any variable references have a transpose
     return std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
-                       [](const Models::WUVarReference &v) { return (v.getTransposeSynapseGroup() != nullptr); });
+                       [](const auto &v) { return (v.second.getTransposeSynapseGroup() != nullptr); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
@@ -235,7 +235,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWU::getHashDigest() const
 
     // Update hash with whether variable references require transpose
     for(const auto &v : getVarReferences()) {
-        Utils::updateHash((v.getTransposeSynapseGroup() == nullptr), hash);
+        Utils::updateHash((v.second.getTransposeSynapseGroup() == nullptr), hash);
     }
     return hash.get_digest();
 }

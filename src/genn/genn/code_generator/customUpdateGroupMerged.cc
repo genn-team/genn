@@ -41,19 +41,19 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     }
 
     // Loop through variable references
-    for(size_t i = 0; i < varRefs.size(); i++) {
-        if(varRefs[i].access == VarAccessMode::READ_ONLY) {
+    for(const auto &v : varRefs) {
+        if(v.access == VarAccessMode::READ_ONLY) {
             os << "const ";
         }
        
-        os << varRefs[i].type << " l" << varRefs[i].name;
+        os << v.type << " l" << v.name;
         
         // If this isn't a reduction, read value from memory
         // **NOTE** by not initialising these variables for reductions, 
         // compilers SHOULD emit a warning if user code doesn't set it to something
-        if(!(varRefs[i].access & VarAccessModeAttribute::REDUCE)) {
-            os << " = " << "group->" << varRefs[i].name << "[";
-            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
+        if(!(v.access & VarAccessModeAttribute::REDUCE)) {
+            os << " = " << "group->" << v.name << "[";
+            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(v.name),
                                  updateSubs[index]);
             os << "]";
         }
@@ -87,12 +87,12 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     }
 
     // Write read/write variable references back to global memory
-    for(size_t i = 0; i < varRefs.size(); i++) {
-        if(varRefs[i].access == VarAccessMode::READ_WRITE) {
-            os << "group->" << varRefs[i].name << "[";
-            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(i),
+    for(const auto &v : varRefs) {
+        if(v.access == VarAccessMode::READ_WRITE) {
+            os << "group->" << v.name << "[";
+            os << getVarRefIndex(cg.getArchetype().getVarReferences().at(v.name),
                                  updateSubs[index]);
-            os << "] = l" << varRefs[i].name << ";" << std::endl;
+            os << "] = l" << v.name << ";" << std::endl;
         }
     }
 }
@@ -321,17 +321,17 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     // Add variable references to struct
     const auto varRefs = cm->getVarRefs();
     addVarReferences(varRefs, backend.getDeviceVarPrefix(),
-                    [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
+                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
 
      // Loop through variables
-    for(size_t v = 0; v < varRefs.size(); v++) {
+    for(const auto &v : varRefs) {
         // If variable has a transpose 
-        if(getArchetype().getVarReferences().at(v).getTransposeSynapseGroup() != nullptr) {
+        if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
-            addField(varRefs[v].type + "*", varRefs[v].name + "Transpose",
+            addField(v.type + "*", v.name + "Transpose",
                      [&backend, v](const CustomUpdateWUInternal &g, size_t)
                      {
-                         const auto varRef = g.getVarReferences().at(v);
+                         const auto varRef = g.getVarReferences().at(v.name);
                          return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
                      });
             }

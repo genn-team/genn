@@ -261,11 +261,11 @@ protected:
     void addVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
     {
         // Loop through variables
-        for(size_t v = 0; v < varReferences.size(); v++) {
-            addField(varReferences[v].type + "*", varReferences[v].name, 
+        for(const auto &v : varReferences) {
+            addField(v.type + "*", v.name, 
                      [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
                      { 
-                         const auto varRef = getVarRefFn(g).at(v);
+                         const auto varRef = getVarRefFn(g).at(v.name);
                          return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
                      });
         }
