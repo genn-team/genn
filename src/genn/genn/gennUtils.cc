@@ -61,13 +61,13 @@ bool isRNGRequired(const std::string &code)
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
+bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const Models::VarInit &varInit)
+                       [](const auto &varInit)
                        {
-                           return isRNGRequired(varInit.getSnippet()->getCode());
+                           return isRNGRequired(varInit.second.getSnippet()->getCode());
                        });
 }
 //--------------------------------------------------------------------------

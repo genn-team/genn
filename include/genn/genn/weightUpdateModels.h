@@ -6,12 +6,6 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS)    \
-    DECLARE_SNIPPET(TYPE);                                                          \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                                \
-    typedef Models::VarInitContainerBase<NUM_PRE_VARS> PreVarValues;                         \
-    typedef Models::VarInitContainerBase<NUM_POST_VARS> PostVarValues
-
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
 #define SET_EVENT_CODE(EVENT_CODE) virtual std::string getEventCode() const override{ return EVENT_CODE; }
 #define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const override{ return LEARN_POST_CODE; }
@@ -174,7 +168,7 @@ public:
 class StaticPulse : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 1, 0, 0);
+    DECLARE_SNIPPET(StaticPulse);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
@@ -200,7 +194,7 @@ public:
 class StaticPulseDendriticDelay : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 2, 0, 0);
+    DECLARE_SNIPPET(StaticPulseDendriticDelay);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
@@ -236,7 +230,7 @@ public:
 class StaticGraded : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 1, 0, 0);
+    DECLARE_SNIPPET(StaticGraded);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
@@ -306,7 +300,7 @@ public:
 class PiecewiseSTDP : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 2, 0, 0);
+    DECLARE_SNIPPET(PiecewiseSTDP);
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
                      "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});

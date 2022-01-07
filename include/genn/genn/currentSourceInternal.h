@@ -10,7 +10,7 @@ class CurrentSourceInternal : public CurrentSource
 {
 public:
     CurrentSourceInternal(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                          const std::unordered_map<std::string, double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                          const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
                           const NeuronGroupInternal *targetNeuronGroup, VarLocation defaultVarLocation, 
                           VarLocation defaultExtraGlobalParamLocation)
     :   CurrentSource(name, currentSourceModel, params, varInitialisers, targetNeuronGroup, 

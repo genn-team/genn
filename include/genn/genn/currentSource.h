@@ -44,7 +44,7 @@ public:
     const CurrentSourceModels::Base *getCurrentSourceModel() const{ return m_CurrentSourceModel; }
 
     const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
-    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for current source model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -62,7 +62,7 @@ public:
 
 protected:
     CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                  const std::unordered_map<std::string, double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                  const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
                   const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                   VarLocation defaultExtraGlobalParamLocation);
 
@@ -105,7 +105,7 @@ private:
     const CurrentSourceModels::Base *m_CurrentSourceModel;
     std::unordered_map<std::string, double> m_Params;
     std::unordered_map<std::string, double> m_DerivedParams;
-    std::vector<Models::VarInit> m_VarInitialisers;
+    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
 
     const NeuronGroupInternal *m_TrgNeuronGroup;
 
