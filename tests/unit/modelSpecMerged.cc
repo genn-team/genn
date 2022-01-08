@@ -86,7 +86,7 @@ IMPLEMENT_SNIPPET(STDPAdditive);
 
 class Sum : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 1);
+    DECLARE_SNIPPET(Sum);
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
@@ -827,7 +827,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateParamChanges)
              // Add desired number of custom updates
              for(size_t c = 0; c < customUpdateParams.size(); c++) {
                  VarValues vals{{"sum", 0.0}};
-                 Sum::VarReferences varRefs(createVarRef(pre, "V"));
+                 VarReferences varRefs{{"a", createVarRef(pre, "V")}};
                  model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", customUpdateParams[c], vals, varRefs);
              }
          });
@@ -862,7 +862,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarInitParamChanges)
              for(size_t c = 0; c < customUpdateVarInitParams.size(); c++) {
                  ParamValues paramVals{{"b", 1.0}};
                  VarValues vals{{"sum", initVar<InitVarSnippet::Uniform>(customUpdateVarInitParams[c])}};
-                 Sum::VarReferences varRefs(createVarRef(pre, "V"));
+                 VarReferences varRefs{{"a", createVarRef(pre, "V")}};
                  model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
              }
          });
@@ -888,7 +888,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarLocationChanges)
 
             ParamValues paramVals{{"b", 1.0}};
             VarValues vals{{"sum", 0.0}};
-            Sum::VarReferences varRefs(createVarRef(pre, "V"));
+            VarReferences varRefs{{"a", createVarRef(pre, "V")}};
             auto *cu = model.addCustomUpdate<Sum>("CU", "Group", paramVals, vals, varRefs);
             cu->setVarLocation("sum", varLocation);
          });
@@ -919,7 +919,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarRefTargetChanges)
              for(size_t c = 0; c < customUpdateVarRefTargets.size(); c++) {
                  ParamValues paramVals{{"b", 1.0}};
                  VarValues vals{{"sum", 0.0}};
-                 Sum::VarReferences varRefs(createVarRef(pre, customUpdateVarRefTargets[c]));
+                 VarReferences varRefs{{"a", createVarRef(pre, customUpdateVarRefTargets[c])}};
                  model.addCustomUpdate<Sum>("CU" + std::to_string(c), "Group", paramVals, vals, varRefs);
              }
          });

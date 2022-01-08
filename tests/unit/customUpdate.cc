@@ -17,7 +17,7 @@ namespace
 {
 class Sum : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 2);
+    DECLARE_SNIPPET(Sum);
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
@@ -29,7 +29,7 @@ IMPLEMENT_SNIPPET(Sum);
 
 class Sum2 : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum2, 2);
+    DECLARE_SNIPPET(Sum2);
 
     SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
 
@@ -65,7 +65,7 @@ IMPLEMENT_SNIPPET(Cont2);
 
 class Reduce : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 2);
+    DECLARE_SNIPPET(Reduce);
 
     SET_UPDATE_CODE("$(reduction) = $(var);\n");
 
@@ -94,8 +94,8 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
         {}, {});
 
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"));
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "d")}};
 
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
@@ -123,9 +123,9 @@ TEST(CustomUpdates, VarSizeChecks)
     auto *ng3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron3", 25, paramVals, varVals);
 
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
-    Sum::VarReferences sumVarReferences2(createVarRef(ng1, "V"), createVarRef(ng2, "V"));
-    Sum::VarReferences sumVarReferences3(createVarRef(ng1, "V"), createVarRef(ng3, "V"));
+    VarReferences sumVarReferences1{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng1, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng2, "V")}};
+    VarReferences sumVarReferences3{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng3, "V")}};
 
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
@@ -160,7 +160,7 @@ TEST(CustomUpdates, VarDelayChecks)
                                                                     {}, {});
 
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::VarReferences sumVarReferences1(createVarRef(pre1, "V"), createVarRef(post, "V"));
+    VarReferences sumVarReferences1{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(post, "V")}};
 
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
@@ -190,8 +190,7 @@ TEST(CustomUpdates, VarMixedDelayChecks)
                                                                     {}, {});
 
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::VarReferences sumVarReferences2(createVarRef(pre1, "V"), createVarRef(pre2, "V"));
-
+    VarReferences sumVarReferences2{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(pre2, "V")}};
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences2);
 
@@ -226,9 +225,8 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
 
 
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg2, "d"));
-
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg2, "d")}};
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
 
@@ -255,9 +253,9 @@ TEST(CustomUpdates, BatchingVars)
 
     // Create updates where variable is shared and references vary
     VarValues sum2VarValues{{"mult", 1.0}};
-    Sum2::VarReferences sum2VarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum2::VarReferences sum2VarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
-    Sum2::VarReferences sum2VarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    VarReferences sum2VarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sum2VarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
+    VarReferences sum2VarReferences3{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "a")}};
 
     auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                              {}, sum2VarValues, sum2VarReferences1);
@@ -282,7 +280,7 @@ TEST(CustomUpdates, BatchingWriteShared)
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
-    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "U")}};
     try {
         model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
                                       {}, {}, reduceVarReferences);
@@ -303,7 +301,7 @@ TEST(CustomUpdates, ReduceDuplicate)
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     VarValues sum2VarValues{{"mult", 1.0}};
-    Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
+    VarReferences sum2VarReferences{{"var", createVarRef(pop, "a")}, {"reduction", createVarRef(pop, "V")}};
     try {
         model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                     {}, sum2VarValues, sum2VarReferences);
@@ -323,8 +321,8 @@ TEST(CustomUpdates, CompareDifferentModel)
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     
     // Add three custom updates with two different models
-    Sum::VarReferences sumVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum2::VarReferences sum2VarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    VarReferences sumVarReferences{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sum2VarReferences{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     auto *sum0 = model.addCustomUpdate<Sum>("Sum0", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences);
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
@@ -365,7 +363,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add three custom updates in two different update groups
-    Sum::VarReferences sumVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    VarReferences sumVarReferences{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     auto *sum0 = model.addCustomUpdate<Sum>("Sum0", "CustomUpdate1",
                                             {}, {{"sum", 0.0}}, sumVarReferences);
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate2",
@@ -424,10 +422,10 @@ TEST(CustomUpdates, CompareDifferentDelay)
     
 
     // Add three custom updates in two different update groups
-    Sum::VarReferences sumVarReferences1(createVarRef(pre1, "V"), createVarRef(pre1, "U"));
-    Sum::VarReferences sumVarReferences2(createVarRef(pre2, "V"), createVarRef(pre2, "U"));
-    Sum::VarReferences sumVarReferences3(createVarRef(pre3, "V"), createVarRef(pre3, "U"));
-    Sum::VarReferences sumVarReferences4(createVarRef(pre4, "V"), createVarRef(pre4, "U"));
+    VarReferences sumVarReferences1{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(pre1, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(pre2, "V")}, {"b", createVarRef(pre2, "U")}};
+    VarReferences sumVarReferences3{{"a", createVarRef(pre3, "V")}, {"b", createVarRef(pre3, "U")}};
+    VarReferences sumVarReferences4{{"a", createVarRef(pre4, "V")}, {"b", createVarRef(pre4, "U")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
@@ -481,8 +479,8 @@ TEST(CustomUpdates, CompareDifferentBatched)
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Add one custom update which sums duplicated variables (v and u) and another which sums shared variables (a and b)
-    Sum::VarReferences sumVarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum::VarReferences sumVarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
+    VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                             {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
@@ -531,8 +529,8 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
                                                                                      {}, {{"g", 0.0}}, {}, {});
 
     // Add two custom updates which transpose different forward variables into backward population
-    Sum2::WUVarReferences sumVarReferences1(createWUVarRef(fwdSyn, "g", backSyn, "g"), createWUVarRef(fwdSyn, "x"));
-    Sum2::WUVarReferences sumVarReferences2(createWUVarRef(fwdSyn, "g"), createWUVarRef(fwdSyn, "x", backSyn, "g"));
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(fwdSyn, "g", backSyn, "g")}, {"b", createWUVarRef(fwdSyn, "x")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(fwdSyn, "g")}, {"b", createWUVarRef(fwdSyn, "x", backSyn, "g")}};
     auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                             {}, {{"mult", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum2>("Sum2", "CustomUpdate",
@@ -585,8 +583,8 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
 
     // Add two custom updates which transpose different forward variables into backward population
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(syn1, "g"), createWUVarRef(syn1, "x"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(syn2, "g"), createWUVarRef(syn2, "x"));
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(syn1, "g")}, {"b", createWUVarRef(syn1, "x")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(syn2, "g")}, {"b", createWUVarRef(syn2, "x")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Decay1", "CustomUpdate",
                                              {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Decay2", "CustomUpdate",
@@ -625,7 +623,7 @@ TEST(CustomUpdates, InvalidName)
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+    VarReferences sumVarReferences1{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng1, "U")}};
 
     try {
         model.addCustomUpdate<Sum>("Sum-1", "CustomUpdate",
@@ -646,7 +644,7 @@ TEST(CustomUpdates, InvalidUpdateGroupName)
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+    VarReferences sumVarReferences1{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng1, "U")}};
 
     try {
         model.addCustomUpdate<Sum>("Sum", "CustomUpdate-1",

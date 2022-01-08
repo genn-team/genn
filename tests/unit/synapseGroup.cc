@@ -192,7 +192,7 @@ IMPLEMENT_SNIPPET(PreRepeatVal);
 
 class Sum : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 2);
+    DECLARE_SNIPPET(Sum);
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
@@ -281,8 +281,8 @@ TEST(SynapseGroup, WUVarReferencedByCustomUpdate)
 
     
     VarValues sumVarValues{{"sum", 0.0}};
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg2, "g"), createWUVarRef(sg2, "g"));
-    Sum::VarReferences sumVarReferences3(createWUPreVarRef(sg3, "preTrace"), createWUPreVarRef(sg3, "preTrace"));
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg2, "g")}, {"b", createWUVarRef(sg2, "g")}};
+    VarReferences sumVarReferences3{{"a", createWUPreVarRef(sg3, "preTrace")}, {"b", createWUPreVarRef(sg3, "preTrace")}};
 
     model.addCustomUpdate<Sum>("SumWeight2", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences2);
