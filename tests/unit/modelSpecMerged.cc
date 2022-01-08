@@ -154,7 +154,7 @@ void testNeuronVarLocation(S setVarLocationFn)
          {
              // Default neuron parameters
              ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
              auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
                                                                              paramVals, varVals);
 
@@ -177,7 +177,7 @@ void testSynapseVarLocation(S setVarLocationFn)
          [setVarLocationFn](const VarLocation &varLocation, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -246,7 +246,7 @@ TEST(ModelSpecMerged, CompareNeuronPopSizeChanges)
          {
              // Default neuron parameters
              ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-             VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
 
              // Add desired number and size of populations
              for(size_t p = 0; p < popSizes.size(); p++) {
@@ -276,7 +276,7 @@ TEST(ModelSpecMerged, CompareNeuronParamChanges)
          [](const std::vector<ParamValues> &popParams, ModelSpecInternal &model)
          {
              // Default neuron parameters
-             VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues varVals{{"V", 0.0}, {"U", 0.0}};
 
              // Add desired number of populations
              for(size_t p = 0; p < popParams.size(); p++) {
@@ -289,8 +289,8 @@ TEST(ModelSpecMerged, CompareNeuronParamChanges)
 TEST(ModelSpecMerged, CompareNeuronVarInitChanges)
 {
     // Izhikevcih parameter sets
-    const VarValues varInit1{{"v", 0.0}, {"u", 0.0}};
-    const VarValues varInit2{{"v", 30.0}, {"u", 0.0}};
+    const VarValues varInit1{{"V", 0.0}, {"U", 0.0}};
+    const VarValues varInit2{{"V", 30.0}, {"U", 0.0}};
 
     // Make array of population variable initialiesers to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::vector<VarValues>, bool> modelModifiers[] = {
@@ -360,7 +360,7 @@ TEST(ModelSpecMerged, CompareCurrentSourceParamChanges)
          [](const std::vector<ParamValues> &csParams, ModelSpecInternal &model)
          {
              // Add population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -393,7 +393,7 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarInitParamChanges)
          [](const std::vector<ParamValues> &csVarInit, ModelSpecInternal &model)
          {
              // Add population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -421,7 +421,7 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarLocationChanges)
          [](const VarLocation &varLocation, ModelSpecInternal &model)
          {
               // Add population
-              VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+              VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
               ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
               model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -453,7 +453,7 @@ TEST(ModelSpecMerged, ComparePSMParamChanges)
          [](const std::vector<ParamValues> &psmParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -492,7 +492,7 @@ TEST(ModelSpecMerged, ComparePSMVarInitParamChanges)
          [](const std::vector<ParamValues> &psmVarInitParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -541,7 +541,7 @@ TEST(ModelSpecMerged, CompareWUMParamChanges)
          [](const std::vector<ParamValues> &wumParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -581,7 +581,7 @@ TEST(ModelSpecMerged, CompareWUMGlobalGVarChanges)
          [](const std::vector<VarValues> &wumVarVals, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -620,7 +620,7 @@ TEST(ModelSpecMerged, CompareWUMVarInitParamChanges)
          [](const std::vector<ParamValues> &wumVarInitParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -665,7 +665,7 @@ TEST(ModelSpecMerged, CompareWUMPreVarInitParamChanges)
          [](const std::vector<ParamValues> &wumPreVarInitParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -714,7 +714,7 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
          [](const std::vector<ParamValues> &wumPostVarInitParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -727,7 +727,7 @@ TEST(ModelSpecMerged, CompareWUMPostVarInitParamChanges)
                  ParamValues params{{"tauPlus", 20.0}, {"tauMinus", 20.0}, {"Aplus", 0.001}, {"Aminus", -0.001}, {"Wmin", 0.0}, {"Wmax", 1.0}};
                  VarValues varValues{{"g", 0.5}};
                  VarValues preVarValues{{"preTrace", 0.0}};
-                 VarValues postVarValues{{"preTrace", initVar<InitVarSnippet::Uniform>(wumPostVarInitParams[p])}};
+                 VarValues postVarValues{{"postTrace", initVar<InitVarSnippet::Uniform>(wumPostVarInitParams[p])}};
                  
                  model.addSynapsePopulation<STDPAdditive, PostsynapticModels::DeltaCurr>(
                     "Synapse" + std::to_string(p), SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
@@ -763,7 +763,7 @@ TEST(ModelSpecMerged, CompareConnectivityParamChanges)
          [](const std::vector<ParamValues> &connectivityParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                  neuronParamVals, neuronVarVals);
@@ -819,7 +819,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateParamChanges)
          [](const std::vector<ParamValues> &customUpdateParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                              neuronParamVals, neuronVarVals);
@@ -853,7 +853,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarInitParamChanges)
          [](const std::vector<ParamValues> &customUpdateVarInitParams, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                              neuronParamVals, neuronVarVals);
@@ -881,7 +881,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarLocationChanges)
          [](const VarLocation &varLocation, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                              neuronParamVals, neuronVarVals);
@@ -910,7 +910,7 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarRefTargetChanges)
          [](const std::vector<std::string> &customUpdateVarRefTargets, ModelSpecInternal &model)
          {
              // Add pre population
-             VarValues neuronVarVals{{"v", 0.0}, {"u", 0.0}};
+             VarValues neuronVarVals{{"V", 0.0}, {"U", 0.0}};
              ParamValues neuronParamVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
              auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
                                                                              neuronParamVals, neuronVarVals);

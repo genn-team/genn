@@ -214,7 +214,7 @@ TEST(NeuronGroup, ConstantVarIzhikevich)
     ModelSpec model;
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     ASSERT_FALSE(ng->isZeroCopyEnabled());
@@ -268,7 +268,7 @@ TEST(NeuronGroup, FuseWUMPrePost)
     model.setFusePrePostWeightUpdateModels(true);
     
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     
     ParamValues wumParams{{"tauPlus", 10.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
     ParamValues wumParamsPre{{"tauPlus", 17.0}, {"tauMinus", 10.0}, {"Aplus", 0.01}, {"Aminus", 0.01}, {"Wmin", 0.0}, {"Wmax", 1.0}};
@@ -516,9 +516,9 @@ TEST(NeuronGroup, CompareNeuronModels)
     // Add two neuron groups to model
     ParamValues paramValsA{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     ParamValues paramValsB{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 4.0}};
-    VarValues varVals1{{"v", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 30.0}})}, {"u", 0.0}};
-    VarValues varVals2{{"v", initVar<InitVarSnippet::Uniform>({{"min", -10.0}, {"max", 30.0}})}, {"u", 0.0}};
-    VarValues varVals3{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals1{{"V", initVar<InitVarSnippet::Uniform>({{"min", 0.0}, {"max", 30.0}})}, {"U", 0.0}};
+    VarValues varVals2{{"V", initVar<InitVarSnippet::Uniform>({{"min", -10.0}, {"max", 30.0}})}, {"U", 0.0}};
+    VarValues varVals3{{"V", 0.0}, {"U", 0.0}};
     auto *ng0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramValsA, varVals1);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramValsA, varVals2);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramValsB, varVals3);
@@ -557,12 +557,12 @@ TEST(NeuronGroup, CompareNeuronModels)
     ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().at(0).isParamHeterogeneous("d"));
 
     // Check that only 'V' init 'min' parameter is heterogeneous
-    ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("v", "constant"));
-    ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("u", "constant"));
-    ASSERT_TRUE(uniformInitMergedGroup.isVarInitParamHeterogeneous("v", "min"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("v", "max"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("u", "min"));
-    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("u", "max"));
+    ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("V", "constant"));
+    ASSERT_FALSE(constantInitMergedGroup.isVarInitParamHeterogeneous("U", "constant"));
+    ASSERT_TRUE(uniformInitMergedGroup.isVarInitParamHeterogeneous("V", "min"));
+    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("V", "max"));
+    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "min"));
+    ASSERT_FALSE(uniformInitMergedGroup.isVarInitParamHeterogeneous("U", "max"));
 }
 
 TEST(NeuronGroup, CompareHeterogeneousParamVarState)
@@ -634,7 +634,7 @@ TEST(NeuronGroup, CompareCurrentSources)
 
     // Add four neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramVals, varVals);
@@ -721,7 +721,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 10, {}, {});
     auto *ng0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
@@ -829,7 +829,7 @@ TEST(NeuronGroup, ComparePostsynapticModels)
     ASSERT_FALSE(deltaAlphaMergedUpdateGroup->isPSMParamHeterogeneous(alphaUpdateIndex, "tau"));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, "expDecay"));
     ASSERT_TRUE(deltaAlphaMergedUpdateGroup->isPSMDerivedParamHeterogeneous(alphaUpdateIndex, "init"));
-    ASSERT_TRUE(deltaAlphaMergedInitGroup->isPSMVarInitParamHeterogeneous(alphaInitIndex, 0, "constant"));
+    ASSERT_TRUE(deltaAlphaMergedInitGroup->isPSMVarInitParamHeterogeneous(alphaInitIndex, "x", "constant"));
 }
 
 
@@ -839,7 +839,7 @@ TEST(NeuronGroup, ComparePreOutput)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ngPre0 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre0", 10, paramVals, varVals);
     auto *ngPre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre1", 10, paramVals, varVals);
     auto *ngPre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsPre2", 10, paramVals, varVals);
@@ -921,7 +921,7 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramVals, varVals);
@@ -1011,7 +1011,7 @@ TEST(NeuronGroup, CompareWUPreUpdate)
 
     // Check that parameter is heterogeneous
     ASSERT_TRUE(wumPreMergedUpdateGroup->isOutSynWUMParamHeterogeneous(0, "p"));
-    ASSERT_TRUE(wumPreMergedInitGroup->isOutSynWUMVarInitParamHeterogeneous(0, 0, "constant"));
+    ASSERT_TRUE(wumPreMergedInitGroup->isOutSynWUMVarInitParamHeterogeneous(0, "s", "constant"));
 }
 
 TEST(NeuronGroup, CompareWUPostUpdate)
@@ -1023,7 +1023,7 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons2", 10, paramVals, varVals);
@@ -1112,5 +1112,5 @@ TEST(NeuronGroup, CompareWUPostUpdate)
 
     // Check that parameter is heterogeneous
     ASSERT_TRUE(wumPostMergedUpdateGroup->isInSynWUMParamHeterogeneous(0, "p"));
-    ASSERT_TRUE(wumPostMergedInitGroup->isInSynWUMVarInitParamHeterogeneous(0, 0, "constant"));
+    ASSERT_TRUE(wumPostMergedInitGroup->isInSynWUMVarInitParamHeterogeneous(0, "s", "constant"));
 }

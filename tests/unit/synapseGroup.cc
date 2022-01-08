@@ -253,7 +253,7 @@ TEST(SynapseGroup, WUVarReferencedByCustomUpdate)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
@@ -301,7 +301,7 @@ TEST(SynapseGroup, CompareWUDifferentModel)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -346,7 +346,7 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -388,7 +388,7 @@ TEST(SynapseGroup, CompareWUDifferentGlobalG)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that global g var is heterogeneous
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUGlobalVarHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUGlobalVarHeterogeneous("g"));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
@@ -397,7 +397,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -455,7 +455,7 @@ TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 64 * 64, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post1", 62 * 62, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post2", 64 * 64, paramVals, varVals);
@@ -527,7 +527,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -577,8 +577,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     // Check that only synaptic weight initialistion parameters are heterogeneous
     ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitParamHeterogeneous("prob"));
     ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous("probLogRecip"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, "min"));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, "max"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous("g", "min"));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous("g", "max"));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
@@ -587,7 +587,7 @@ TEST(SynapseGroup, CompareWUDifferentProceduralSnippet)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -635,7 +635,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -690,7 +690,7 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     // Check that only synaptic weight initialistion parameters are heterogeneous
     ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous("prob"));
     ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous("prob"));
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isWUVarInitParamHeterogeneous(0, "constant"));
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isWUVarInitParamHeterogeneous("g", "constant"));
 }
 
 TEST(SynapseGroup, InitCompareWUDifferentPreVars)
@@ -699,7 +699,7 @@ TEST(SynapseGroup, InitCompareWUDifferentPreVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -744,7 +744,7 @@ TEST(SynapseGroup, InitCompareWUDifferentPostVars)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -789,7 +789,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
 
     // Add two neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
 
@@ -839,7 +839,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
 
     // Add four neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsA", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("NeuronsB", 20, paramVals, varVals);
 
@@ -902,7 +902,7 @@ TEST(SynapseGroup, InvalidMatrixTypes)
 TEST(SynapseGroup, InvalidName)
 {
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     
     ModelSpec model;
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 10, {}, {});
@@ -925,7 +925,7 @@ TEST(SynapseGroup, CanWUMPreUpdateBeFused)
 
     // Add pre and post neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     
@@ -980,7 +980,7 @@ TEST(SynapseGroup, CanWUMPostUpdateBeFused)
 
     // Add pre and post neuron groups to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
     

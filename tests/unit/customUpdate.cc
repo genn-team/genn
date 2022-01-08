@@ -83,7 +83,7 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
@@ -117,7 +117,7 @@ TEST(CustomUpdates, VarSizeChecks)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron2", 10, paramVals, varVals);
     auto *ng3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron3", 25, paramVals, varVals);
@@ -149,7 +149,7 @@ TEST(CustomUpdates, VarDelayChecks)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
@@ -174,7 +174,7 @@ TEST(CustomUpdates, VarMixedDelayChecks)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -208,7 +208,7 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
@@ -247,7 +247,7 @@ TEST(CustomUpdates, BatchingVars)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    VarValues izkVarVals{{"v", 0.0}, {"u", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
 
@@ -276,7 +276,7 @@ TEST(CustomUpdates, BatchingWriteShared)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    VarValues izkVarVals{{"v", 0.0}, {"u", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
@@ -296,12 +296,12 @@ TEST(CustomUpdates, ReduceDuplicate)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    VarValues izkVarVals{{"v", 0.0}, {"u", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     VarValues sum2VarValues{{"mult", 1.0}};
-    VarReferences sum2VarReferences{{"var", createVarRef(pop, "a")}, {"reduction", createVarRef(pop, "V")}};
+    VarReferences sum2VarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "V")}};
     try {
         model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                     {}, sum2VarValues, sum2VarReferences);
@@ -317,7 +317,7 @@ TEST(CustomUpdates, CompareDifferentModel)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     
     // Add three custom updates with two different models
@@ -359,7 +359,7 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add three custom updates in two different update groups
@@ -399,7 +399,7 @@ TEST(CustomUpdates, CompareDifferentDelay)
     ModelSpecInternal model;
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
     auto *pre3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre3", 10, paramVals, varVals);
@@ -475,7 +475,7 @@ TEST(CustomUpdates, CompareDifferentBatched)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    VarValues izkVarVals{{"v", 0.0}, {"u", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Add one custom update which sums duplicated variables (v and u) and another which sums shared variables (a and b)
@@ -516,7 +516,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     ModelSpecInternal model;
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
@@ -567,7 +567,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     ModelSpecInternal model;
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
@@ -619,7 +619,7 @@ TEST(CustomUpdates, InvalidName)
     
      // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
     VarValues sumVarValues{{"sum", 0.0}};
@@ -640,7 +640,7 @@ TEST(CustomUpdates, InvalidUpdateGroupName)
     
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
     VarValues sumVarValues{{"sum", 0.0}};
