@@ -784,7 +784,7 @@ protected:
         for(const auto &p : paramNames) {
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varName, p)) {
-                addScalarField(p + prefix + std::to_string(childIndex),
+                addScalarField(p + varName + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, varName, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
@@ -805,7 +805,7 @@ protected:
         for(const auto &d : derivedParams) {
             // If parameter is heterogeneous
             if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varName, d.name)) {
-                addScalarField(d.name + prefix + std::to_string(childIndex),
+                addScalarField(d.name + varName + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, varName, d, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);

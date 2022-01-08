@@ -435,9 +435,9 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
 
             // Also add any heterogeneous, derived or extra global parameters required for initializers
             const auto *varInitSnippet = varInit.at(var.name).getSnippet();
-            addHeterogeneousChildVarInitParams<NeuronInitGroupMerged>(varInitSnippet->getParamNames(), sortedSyn, i, var.name, var.name + fieldPrefixStem,
+            addHeterogeneousChildVarInitParams<NeuronInitGroupMerged>(varInitSnippet->getParamNames(), sortedSyn, i, var.name, fieldPrefixStem,
                                                                       isParamHeterogeneousFn, getVarInitialiserFn);
-            addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(varInitSnippet->getDerivedParams(), sortedSyn, i, var.name, var.name + fieldPrefixStem,
+            addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(varInitSnippet->getDerivedParams(), sortedSyn, i, var.name, fieldPrefixStem,
                                                                              isDerivedParamHeterogeneousFn, getVarInitialiserFn);
             addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + fieldPrefixStem,
                          [var, &sortedSyn](size_t groupIndex, size_t childIndex)
