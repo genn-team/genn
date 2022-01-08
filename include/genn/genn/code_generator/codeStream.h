@@ -103,7 +103,7 @@ public:
         ~Scope()
         {
             // If we're not in the middle of handling an uncaught exception
-            if(!std::uncaught_exception()) {
+            if(std::uncaught_exceptions() == 0) {
                 try
                 {
                     m_CodeStream << CodeStream::CB(m_Level);
