@@ -611,7 +611,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         // Get index of variable being transposed
                         const size_t transposeVarIdx = std::distance(c.getArchetype().getVarReferences().cbegin(),
                                                                      std::find_if(c.getArchetype().getVarReferences().cbegin(), c.getArchetype().getVarReferences().cend(),
-                                                                                  [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
+                                                                                  [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
                         const std::string transposeVarName = c.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
 
                         // Loop through presynaptic neurons
