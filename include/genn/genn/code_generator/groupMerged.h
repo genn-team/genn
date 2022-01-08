@@ -409,7 +409,7 @@ protected:
     }
 
     template<typename T, typename V, typename R>
-    void updateVarInitDerivedParamHash(V getVarInitialisers, R isDerivedParamReferencedFn, boost::uuids::detail::sha1 &hash) const
+    void updateVarInitDerivedParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
         const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
@@ -417,7 +417,7 @@ protected:
             // Loop through parameters
             for(const auto &d : varInit.second.getDerivedParams()) {
                 // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isDerivedParamReferencedFn)(varInit.first, d.first)) {
+                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, d.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
                         const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getDerivedParams();
@@ -686,35 +686,20 @@ protected:
     //! Is the var init parameter referenced?
     bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
 
-    //! Is the var init derived parameter referenced?
-    bool isVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const;
-
     //! Is the current source parameter referenced?
     bool isCurrentSourceParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    //! Is the current source derived parameter referenced?
-    bool isCurrentSourceDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the current source var init parameter referenced?
     bool isCurrentSourceVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
-    //! Is the current source var init derived parameter referenced?
-    bool isCurrentSourceVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
-
     //! Is the postsynaptic model parameter referenced?
     bool isPSMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    //! Is the postsynaptic model derived parameter referenced?
-    bool isPSMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     //! Is the GLOBALG postsynaptic model variable referenced?
     bool isPSMGlobalVarReferenced(size_t childIndex, const std::string &varName) const;
 
     //! Is the postsynaptic model var init parameter referenced?
     bool isPSMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
-
-    //! Is the postsynaptic model var init derived parameter referenced?
-    bool isPSMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     template<typename T, typename G>
     bool isChildParamValueHeterogeneous(size_t childIndex, const std::string &paramName,
@@ -857,14 +842,14 @@ protected:
 
     template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
     void updateChildDerivedParamHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                     size_t childIndex,  R isChildDerivedParamReferencedFn, V getValueFn, 
+                                     size_t childIndex,  R isChildParamReferencedFn, V getValueFn, 
                                      boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
         const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
         for(const auto &d : archetypeDerivedParams) {
             // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, d.first)) {
+            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, d.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group
@@ -903,7 +888,7 @@ protected:
 
     template<typename T = NeuronGroupMergedBase, typename C, typename R, typename V>
     void updateChildVarInitDerivedParamsHash(const std::vector<std::vector<C>> &sortedGroupChildren,
-                                             size_t childIndex, const std::string &varName, R isChildDerivedParamReferencedFn, V getVarInitialiserFn,
+                                             size_t childIndex, const std::string &varName, R isChildParamReferencedFn, V getVarInitialiserFn,
                                              boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
@@ -911,7 +896,7 @@ protected:
         const auto &archetypeDerivedParams = archetypeVarInit.at(varName).getDerivedParams();
         for(const auto &d : archetypeDerivedParams) {
             // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildDerivedParamReferencedFn)(childIndex, varName, d.first)) {
+            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varName, d.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
@@ -1006,9 +991,6 @@ private:
     //------------------------------------------------------------------------
      //! Is the connectivity initialization parameter referenced?
     bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
-
-    //! Is the connectivity initialization derived parameter referenced?
-    bool isSparseConnectivityInitDerivedParamReferenced(const std::string &paramName) const;
 };
 
 //----------------------------------------------------------------------------
@@ -1153,41 +1135,23 @@ private:
     //! Is the weight update model parameter referenced?
     bool isWUParamReferenced(const std::string &paramName) const;
 
-    //! Is the weight update model derived parameter referenced?
-    bool isWUDerivedParamReferenced(const std::string &paramName) const;
-
     //! Is the GLOBALG weight update model variable referenced?
     bool isWUGlobalVarReferenced(const std::string &varName) const;
 
     //! Is the weight update model variable initialization parameter referenced?
     bool isWUVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
-    
-    //! Is the weight update model variable initialization derived parameter referenced?
-    bool isWUVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const;
 
     //! Is the sparse connectivity initialization parameter referenced?
     bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
 
-    //! Is the sparse connectivity initialization parameter referenced?
-    bool isSparseConnectivityInitDerivedParamReferenced(const std::string &paramName) const;
-
     //! Is the toeplitz connectivity initialization parameter referenced?
     bool isToeplitzConnectivityInitParamReferenced(const std::string &paramName) const;
-
-    //! Is the toeplitz connectivity initialization parameter referenced?
-    bool isToeplitzConnectivityInitDerivedParamReferenced(const std::string &paramName) const;
 
     //! Is presynaptic neuron parameter referenced?
     bool isSrcNeuronParamReferenced(const std::string &paramName) const;
 
-    //! Is presynaptic neuron derived parameter referenced?
-    bool isSrcNeuronDerivedParamReferenced(const std::string &paramName) const;
-
     //! Is postsynaptic neuron parameter referenced?
     bool isTrgNeuronParamReferenced(const std::string &paramName) const;
-
-    //! Is postsynaptic neuron derived parameter referenced?
-    bool isTrgNeuronDerivedParamReferenced(const std::string &paramName) const;
 
     //------------------------------------------------------------------------
     // Members

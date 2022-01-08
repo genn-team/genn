@@ -79,14 +79,8 @@ private:
     //! Is the incoming synapse weight update model parameter referenced?
     bool isInSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
 
-    //! Is the incoming synapse weight update model derived parameter referenced?
-    bool isInSynWUMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
-
     //! Is the outgoing synapse weight update model parameter referenced?
     bool isOutSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    //! Is the outgoing synapse weight update model derived parameter referenced?
-    bool isOutSynWUMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const;
 
     void addNeuronModelSubstitutions(Substitutions &substitution, const std::string &sourceSuffix = "", const std::string &destSuffix = "") const;
     

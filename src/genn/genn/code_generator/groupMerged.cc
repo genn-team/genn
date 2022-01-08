@@ -116,7 +116,7 @@ bool NeuronGroupMergedBase::isVarInitParamHeterogeneous(const std::string &varNa
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
 {
-    return (isVarInitDerivedParamReferenced(varName, paramName) &&
+    return (isVarInitParamReferenced(varName, paramName) &&
             isParamValueHeterogeneous(paramName,
                                       [varName](const NeuronGroupInternal &sg){ return sg.getVarInitialisers().at(varName).getDerivedParams(); }));
 }
@@ -130,7 +130,7 @@ bool NeuronGroupMergedBase::isCurrentSourceParamHeterogeneous(size_t childIndex,
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isCurrentSourceDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const
 {
-    return (isCurrentSourceDerivedParamReferenced(childIndex, paramName) &&
+    return (isCurrentSourceParamReferenced(childIndex, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedCurrentSources,
                                            [](const CurrentSourceInternal *cs) { return cs->getDerivedParams(); }));
  
@@ -145,7 +145,7 @@ bool NeuronGroupMergedBase::isCurrentSourceVarInitParamHeterogeneous(size_t chil
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {
-    return (isCurrentSourceVarInitDerivedParamReferenced(childIndex, varName, paramName) &&
+    return (isCurrentSourceVarInitParamReferenced(childIndex, varName, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedCurrentSources,
                                            [varName](const CurrentSourceInternal *cs) { return cs->getVarInitialisers().at(varName).getDerivedParams(); }));
 }
@@ -159,7 +159,7 @@ bool NeuronGroupMergedBase::isPSMParamHeterogeneous(size_t childIndex, const std
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const
 {
-    return (isPSMDerivedParamReferenced(childIndex, paramName) &&
+    return (isPSMParamReferenced(childIndex, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedMergedInSyns, 
                                            [](const SynapseGroupInternal *inSyn) { return inSyn->getPSDerivedParams(); }));
 }
@@ -181,7 +181,7 @@ bool NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous(size_t childIndex, co
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {    
-    return (isPSMVarInitDerivedParamReferenced(childIndex, varName, paramName) &&
+    return (isPSMVarInitParamReferenced(childIndex, varName, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedMergedInSyns,
                                           [varName](const SynapseGroupInternal *inSyn){ return inSyn->getPSVarInitialisers().at(varName).getDerivedParams(); }));
 }
@@ -435,7 +435,7 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
                                              &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, 
                                              &CurrentSourceInternal::getVarInitialisers, hash);
                 updateChildVarInitDerivedParamsHash(m_SortedCurrentSources, c, v.first,
-                                                    &NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamReferenced, 
+                                                    &NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced, 
                                                     &CurrentSourceInternal::getVarInitialisers, hash);
             }
         }
@@ -451,7 +451,7 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
                                                  &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
                                                  &SynapseGroupInternal::getPSVarInitialisers, hash);
                     updateChildVarInitDerivedParamsHash(m_SortedMergedInSyns, c, v.first,
-                                                        &NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced,
+                                                        &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
                                                         &SynapseGroupInternal::getPSVarInitialisers, hash);
                 }
             }
@@ -462,7 +462,7 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
         for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
             updateChildParamHash(m_SortedCurrentSources, i, &NeuronGroupMergedBase::isCurrentSourceParamReferenced, 
                                  &CurrentSourceInternal::getParams, hash);
-            updateChildDerivedParamHash(m_SortedCurrentSources, i, &NeuronGroupMergedBase::isCurrentSourceDerivedParamReferenced, 
+            updateChildDerivedParamHash(m_SortedCurrentSources, i, &NeuronGroupMergedBase::isCurrentSourceParamReferenced, 
                                         &CurrentSourceInternal::getDerivedParams, hash);
         }
 
@@ -472,7 +472,7 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
 
             updateChildParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
                                  &SynapseGroupInternal::getPSParams, hash);
-            updateChildDerivedParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMDerivedParamReferenced, 
+            updateChildDerivedParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
                                         &SynapseGroupInternal::getPSDerivedParams, hash);
 
             if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
@@ -489,19 +489,7 @@ bool NeuronGroupMergedBase::isVarInitParamReferenced(const std::string &varName,
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getArchetype().getVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isCurrentSourceParamReferenced(size_t childIndex, const std::string &paramName) const
-{
-    const auto *csm = getSortedArchetypeCurrentSources().at(childIndex)->getCurrentSourceModel();
-    return isParamReferenced({csm->getInjectionCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceDerivedParamReferenced(size_t childIndex, const std::string &paramName) const
 {
     const auto *csm = getSortedArchetypeCurrentSources().at(childIndex)->getCurrentSourceModel();
     return isParamReferenced({csm->getInjectionCode()}, paramName);
@@ -513,19 +501,7 @@ bool NeuronGroupMergedBase::isCurrentSourceVarInitParamReferenced(size_t childIn
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isCurrentSourceVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getSortedArchetypeCurrentSources().at(childIndex)->getVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMParamReferenced(size_t childIndex, const std::string &paramName) const
-{
-    const auto *psm = getSortedArchetypeMergedInSyns().at(childIndex)->getPSModel();
-    return isParamReferenced({psm->getApplyInputCode(), psm->getDecayCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const
 {
     const auto *psm = getSortedArchetypeMergedInSyns().at(childIndex)->getPSModel();
     return isParamReferenced({psm->getApplyInputCode(), psm->getDecayCode()}, paramName);
@@ -545,12 +521,6 @@ bool NeuronGroupMergedBase::isPSMGlobalVarReferenced(size_t childIndex, const st
 }
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getSortedArchetypeMergedInSyns().at(childIndex)->getPSVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {
     const auto *varInitSnippet = getSortedArchetypeMergedInSyns().at(childIndex)->getPSVarInitialisers().at(varName).getSnippet();
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
@@ -656,7 +626,7 @@ bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneou
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isSparseConnectivityInitDerivedParamReferenced(paramName) &&
+    return (isSparseConnectivityInitParamReferenced(paramName) &&
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -666,13 +636,7 @@ bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamRefere
     const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
     return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
 }
-//----------------------------------------------------------------------------
-bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitDerivedParamReferenced(const std::string &paramName) const
-{
-    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
-}
+
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
@@ -684,7 +648,7 @@ bool SynapseGroupMergedBase::isWUParamHeterogeneous(const std::string &paramName
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isWUDerivedParamReferenced(paramName) &&
+    return (isWUParamReferenced(paramName) &&
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getWUDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -702,7 +666,7 @@ bool SynapseGroupMergedBase::isWUVarInitParamHeterogeneous(const std::string &va
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
 {
-    return (isWUVarInitDerivedParamReferenced(varName, paramName) && 
+    return (isWUVarInitParamReferenced(varName, paramName) && 
             isParamValueHeterogeneous(paramName, [varName](const SynapseGroupInternal &sg) { return sg.getWUVarInitialisers().at(varName).getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -714,7 +678,7 @@ bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(const st
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isSparseConnectivityInitDerivedParamReferenced(paramName) &&
+    return (isSparseConnectivityInitParamReferenced(paramName) &&
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -726,7 +690,7 @@ bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous(const 
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isToeplitzConnectivityInitDerivedParamReferenced(paramName) &&
+    return (isToeplitzConnectivityInitParamReferenced(paramName) &&
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -738,7 +702,7 @@ bool SynapseGroupMergedBase::isSrcNeuronParamHeterogeneous(const std::string &pa
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSrcNeuronDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isSrcNeuronDerivedParamReferenced(paramName) &&  
+    return (isSrcNeuronParamReferenced(paramName) &&  
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSrcNeuronGroup()->getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -750,7 +714,7 @@ bool SynapseGroupMergedBase::isTrgNeuronParamHeterogeneous(const std::string &pa
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous(const std::string &paramName) const
 {
-    return (isTrgNeuronDerivedParamReferenced(paramName) &&
+    return (isTrgNeuronParamReferenced(paramName) &&
             isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
@@ -1257,7 +1221,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
             [](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getParams(); }, hash);
         
         updateParamHash<SynapseGroupMergedBase>(
-            &SynapseGroupMergedBase::isSrcNeuronDerivedParamReferenced, 
+            &SynapseGroupMergedBase::isSrcNeuronParamReferenced, 
             [](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getDerivedParams(); }, hash);
 
         // Update hash with postsynaptic neuron population parameters and derived parameters
@@ -1266,7 +1230,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
             [](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getParams(); }, hash);
         
         updateParamHash<SynapseGroupMergedBase>(
-            &SynapseGroupMergedBase::isTrgNeuronDerivedParamReferenced, 
+            &SynapseGroupMergedBase::isTrgNeuronParamReferenced, 
             [](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getDerivedParams(); }, hash);
     }
 
@@ -1279,7 +1243,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
 
         updateParamHash<SynapseGroupMergedBase>(
-            &SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamReferenced,
+            &SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced,
             [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
     }
 
@@ -1291,7 +1255,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
             [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getParams(); }, hash);
 
         updateParamHash<SynapseGroupMergedBase>(
-            &SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamReferenced,
+            &SynapseGroupMergedBase::isToeplitzConnectivityInitParamReferenced,
             [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); }, hash);
     }
 
@@ -1329,7 +1293,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
             updateVarInitParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers, 
                                                            &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
             updateVarInitDerivedParamHash<SynapseGroupMergedBase>(&SynapseGroupInternal::getWUVarInitialisers,
-                                                                  &SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced, hash);
+                                                                  &SynapseGroupMergedBase::isWUVarInitParamReferenced, hash);
         }
     }
     return hash.get_digest();
@@ -1379,11 +1343,6 @@ bool SynapseGroupMergedBase::isWUParamReferenced(const std::string &paramName) c
     return isParamReferenced({getArchetypeCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isWUDerivedParamReferenced(const std::string &paramName) const
-{
-    return isParamReferenced({getArchetypeCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUGlobalVarReferenced(const std::string &varName) const
 {
     // If synapse group has global WU variables
@@ -1403,30 +1362,7 @@ bool SynapseGroupMergedBase::isWUVarInitParamReferenced(const std::string &varNa
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isWUVarInitDerivedParamReferenced(const std::string &varName, const std::string &paramName) const
-{
-    // If derived parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *varInitSnippet = getArchetype().getWUVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced(const std::string &paramName) const
-{
-    const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
-    const auto rowBuildStateVars = snippet->getRowBuildStateVars();
-    const auto colBuildStateVars = snippet->getColBuildStateVars();
-
-    // Build list of code strings containing row build code and any row build state variable values
-    std::vector<std::string> codeStrings{snippet->getRowBuildCode(), snippet->getColBuildCode()};
-    std::transform(rowBuildStateVars.cbegin(), rowBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-    std::transform(colBuildStateVars.cbegin(), colBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-
-    return isParamReferenced(codeStrings, paramName);
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamReferenced(const std::string &paramName) const
 {
     const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
     const auto rowBuildStateVars = snippet->getRowBuildStateVars();
@@ -1455,35 +1391,12 @@ bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamReferenced(const std
     return isParamReferenced(codeStrings, paramName);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamReferenced(const std::string &paramName) const
-{
-    const auto *snippet = getArchetype().getToeplitzConnectivityInitialiser().getSnippet();
-    const auto diagonalBuildStateVars = snippet->getDiagonalBuildStateVars();
-
-    // Build list of code strings containing diagonal build code and any diagonal build state variable values
-    std::vector<std::string> codeStrings{snippet->getDiagonalBuildCode()};
-    std::transform(diagonalBuildStateVars.cbegin(), diagonalBuildStateVars.cend(), std::back_inserter(codeStrings),
-                   [](const Snippet::Base::ParamVal &p) { return p.value; });
-
-    return isParamReferenced(codeStrings, paramName);
-}
-//----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSrcNeuronParamReferenced(const std::string &paramName) const
 {
     return isParamReferenced({getArchetypeCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isSrcNeuronDerivedParamReferenced(const std::string &paramName) const
-{
-    return isParamReferenced({getArchetypeCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isTrgNeuronParamReferenced(const std::string &paramName) const
-{
-    return isParamReferenced({getArchetypeCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isTrgNeuronDerivedParamReferenced(const std::string &paramName) const
 {
     return isParamReferenced({getArchetypeCode()}, paramName);
 }

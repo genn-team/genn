@@ -197,7 +197,7 @@ bool NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous(size_t childInde
 //----------------------------------------------------------------------------
 bool NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {
-    return (isInSynWUMVarInitDerivedParamReferenced(childIndex, varName, paramName) &&
+    return (isInSynWUMVarInitParamReferenced(childIndex, varName, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedInSynWithPostVars,
                                            [varName](const SynapseGroupInternal *s) { return s->getWUPostVarInitialisers().at(varName).getDerivedParams(); }));
 }
@@ -211,7 +211,7 @@ bool NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous(size_t childInd
 //----------------------------------------------------------------------------
 bool NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {
-    return (isOutSynWUMVarInitDerivedParamReferenced(childIndex, varName, paramName) &&
+    return (isOutSynWUMVarInitParamReferenced(childIndex, varName, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedOutSynWithPreVars,
                                            [varName](const SynapseGroupInternal *s) { return s->getWUPreVarInitialisers().at(varName).getDerivedParams(); }));
 }
@@ -230,7 +230,7 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
     updateVarInitParamHash<NeuronInitGroupMerged>(&NeuronGroupInternal::getVarInitialisers, 
                                                   &NeuronInitGroupMerged::isVarInitParamReferenced, hash);
     updateVarInitDerivedParamHash<NeuronInitGroupMerged>(&NeuronGroupInternal::getVarInitialisers,
-                                                         &NeuronInitGroupMerged::isVarInitDerivedParamReferenced, hash);
+                                                         &NeuronInitGroupMerged::isVarInitParamReferenced, hash);
     
     // Loop through child incoming synapse groups with postsynaptic variables
     for(size_t c = 0; c < getSortedArchetypeInSynWithPostVars().size(); c++) {
@@ -242,7 +242,7 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
                 m_SortedInSynWithPostVars, c, v.first, &NeuronInitGroupMerged::isInSynWUMVarInitParamReferenced, 
                 &SynapseGroupInternal::getWUPostVarInitialisers, hash);
             updateChildVarInitDerivedParamsHash<NeuronInitGroupMerged>(
-                m_SortedInSynWithPostVars, c, v.first, &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamReferenced, 
+                m_SortedInSynWithPostVars, c, v.first, &NeuronInitGroupMerged::isInSynWUMVarInitParamReferenced, 
                 &SynapseGroupInternal::getWUPostVarInitialisers, hash);
         }
     }
@@ -257,7 +257,7 @@ boost::uuids::detail::sha1::digest_type NeuronInitGroupMerged::getHashDigest() c
                 m_SortedOutSynWithPreVars, c, v.first, &NeuronInitGroupMerged::isOutSynWUMVarInitParamReferenced, 
                 &SynapseGroupInternal::getWUPreVarInitialisers, hash);
             updateChildVarInitDerivedParamsHash<NeuronInitGroupMerged>(
-                m_SortedOutSynWithPreVars, c, v.first, &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamReferenced, 
+                m_SortedOutSynWithPreVars, c, v.first, &NeuronInitGroupMerged::isOutSynWUMVarInitParamReferenced, 
                 &SynapseGroupInternal::getWUPreVarInitialisers, hash);
         }
     }
@@ -454,19 +454,7 @@ bool NeuronInitGroupMerged::isInSynWUMVarInitParamReferenced(size_t childIndex, 
     return isParamReferenced({varInitSnippet->getCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getSortedArchetypeInSynWithPostVars().at(childIndex)->getWUPostVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool NeuronInitGroupMerged::isOutSynWUMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
-{
-    const auto *varInitSnippet = getSortedArchetypeOutSynWithPreVars().at(childIndex)->getWUPreVarInitialisers().at(varName).getSnippet();
-    return isParamReferenced({varInitSnippet->getCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {
     const auto *varInitSnippet = getSortedArchetypeOutSynWithPreVars().at(childIndex)->getWUPreVarInitialisers().at(varName).getSnippet();
     return isParamReferenced({varInitSnippet->getCode()}, paramName);

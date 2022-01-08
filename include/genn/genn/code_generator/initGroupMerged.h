@@ -69,14 +69,8 @@ private:
     //! Is the incoming synapse weight update model var init parameter referenced?
     bool isInSynWUMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
-    //! Is the incoming synapse weight update model var init derived parameter referenced?
-    bool isInSynWUMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
-
     //! Is the outgoing synapse weight update model var init parameter referenced?
     bool isOutSynWUMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
-
-    //! Is the outgoing synapse weight update model var init derived parameter referenced?
-    bool isOutSynWUMVarInitDerivedParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
     void genInitSpikeCount(CodeStream &os, const BackendBase &backend, const Substitutions &popSubs,
                            bool spikeEvent, unsigned int batchSize) const;
@@ -253,7 +247,7 @@ public:
     //! Should the var init derived parameter be implemented heterogeneously?
     bool isVarInitDerivedParamHeterogeneous(const std::string &varName, const std::string &paramName) const
     {
-        return (isVarInitDerivedParamReferenced(varName, paramName) &&
+        return (isVarInitParamReferenced(varName, paramName) &&
                 this->isParamValueHeterogeneous(paramName, [varName](const G &cg) { return cg.getVarInitialisers().at(varName).getDerivedParams(); }));
     }
 

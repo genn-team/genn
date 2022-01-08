@@ -122,7 +122,7 @@ bool NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous(size_t childIndex, co
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const
 {
-    return (isInSynWUMDerivedParamReferenced(childIndex, paramName) &&
+    return (isInSynWUMParamReferenced(childIndex, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedInSynWithPostCode,
                                            [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); }));
 }
@@ -136,7 +136,7 @@ bool NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous(size_t childIndex, c
 //----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const
 {
-    return (isOutSynWUMDerivedParamReferenced(childIndex, paramName) &&
+    return (isOutSynWUMParamReferenced(childIndex, paramName) &&
             isChildParamValueHeterogeneous(childIndex, paramName, m_SortedOutSynWithPreCode,
                                            [](const SynapseGroupInternal *s) { return s->getWUDerivedParams(); }));
 }
@@ -159,7 +159,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     for(size_t i = 0; i < getSortedArchetypeInSynWithPostCode().size(); i++) {
         updateChildParamHash<NeuronUpdateGroupMerged>(m_SortedInSynWithPostCode, i, &NeuronUpdateGroupMerged::isInSynWUMParamReferenced, 
                                                       &SynapseGroupInternal::getWUParams, hash);
-        updateChildDerivedParamHash<NeuronUpdateGroupMerged>(m_SortedInSynWithPostCode, i, &NeuronUpdateGroupMerged::isInSynWUMDerivedParamReferenced, 
+        updateChildDerivedParamHash<NeuronUpdateGroupMerged>(m_SortedInSynWithPostCode, i, &NeuronUpdateGroupMerged::isInSynWUMParamReferenced, 
                                                              &SynapseGroupInternal::getWUDerivedParams, hash);
     }
 
@@ -167,7 +167,7 @@ boost::uuids::detail::sha1::digest_type NeuronUpdateGroupMerged::getHashDigest()
     for(size_t i = 0; i < getSortedArchetypeOutSynWithPreCode().size(); i++) {
         updateChildParamHash<NeuronUpdateGroupMerged>(m_SortedOutSynWithPreCode, i, &NeuronUpdateGroupMerged::isOutSynWUMParamReferenced, 
                                                       &SynapseGroupInternal::getWUParams, hash);
-        updateChildDerivedParamHash<NeuronUpdateGroupMerged>( m_SortedOutSynWithPreCode, i, &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamReferenced, 
+        updateChildDerivedParamHash<NeuronUpdateGroupMerged>( m_SortedOutSynWithPreCode, i, &NeuronUpdateGroupMerged::isOutSynWUMParamReferenced, 
                                                              &SynapseGroupInternal::getWUDerivedParams, hash);
     }
 
@@ -735,19 +735,7 @@ bool NeuronUpdateGroupMerged::isInSynWUMParamReferenced(size_t childIndex, const
     return isParamReferenced({wum->getPostSpikeCode(), wum->getPostDynamicsCode()}, paramName);
 }
 //----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isInSynWUMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const
-{
-    const auto *wum = getSortedArchetypeInSynWithPostCode().at(childIndex)->getWUModel();
-    return isParamReferenced({wum->getPostSpikeCode(), wum->getPostDynamicsCode()}, paramName);
-}
-//----------------------------------------------------------------------------
 bool NeuronUpdateGroupMerged::isOutSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const
-{
-    const auto *wum = getSortedArchetypeOutSynWithPreCode().at(childIndex)->getWUModel();
-    return isParamReferenced({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronUpdateGroupMerged::isOutSynWUMDerivedParamReferenced(size_t childIndex, const std::string &paramName) const
 {
     const auto *wum = getSortedArchetypeOutSynWithPreCode().at(childIndex)->getWUModel();
     return isParamReferenced({wum->getPreSpikeCode(), wum->getPreDynamicsCode()}, paramName);
