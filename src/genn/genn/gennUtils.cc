@@ -141,6 +141,11 @@ void validatePopName(const std::string &name, const std::string &description)
 void validateParamValues(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &paramValues, 
                          const std::string &description) 
 {
+    // If there are a different number of sizes than values, give error
+    if(paramNames.size() != paramValues.size()) {
+        throw std::runtime_error(description + " expected " + std::to_string(paramNames.size()) + " parameters but got " + std::to_string(paramValues.size()));
+    }
+
     // Loop through names
     for(const auto &n : paramNames) {
         // If there is no values, give error

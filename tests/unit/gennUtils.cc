@@ -72,6 +72,38 @@ TEST(GeNNUtils, ValidateParamNames)
     }
 }
 //--------------------------------------------------------------------------
+TEST(GeNNUtils, ValidateParamValues) 
+{
+    const std::vector<std::string> paramNames{"a", "b", "c", "d"};
+    const std::unordered_map<std::string, double> paramValsCorrect{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const std::unordered_map<std::string, double> paramValsMisSpelled{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"D", 8.0}};
+    const std::unordered_map<std::string, double> paramValsMissing{{"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const std::unordered_map<std::string, double> paramValsExtra{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}, {"e", 8.0}};
+
+    Utils::validateParamValues(paramNames, paramValsCorrect, "Test");
+
+    try {
+        Utils::validateParamValues(paramNames, paramValsMisSpelled, "Test");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        Utils::validateParamValues(paramNames, paramValsMissing, "Test");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        Utils::validateParamValues(paramNames, paramValsExtra, "Test");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+}
+//--------------------------------------------------------------------------
 TEST(GeNNUtils, ValidateVecNames)
 {
     const Snippet::Base::ParamValVec good{{"test", "scalar", 1.0}, {"Test", "scalar", 0.0}};
