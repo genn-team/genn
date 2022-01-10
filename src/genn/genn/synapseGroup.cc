@@ -404,6 +404,11 @@ bool SynapseGroup::isDendriticDelayRequired() const
         return true;
     }
 
+    // If addToInSynDelay function is used in event code, return true
+    if(getWUModel()->getEventCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
     // If addToInSynDelay function is used in synapse dynamics, return true
     if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
         return true;
