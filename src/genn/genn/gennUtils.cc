@@ -61,13 +61,13 @@ bool isRNGRequired(const std::string &code)
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
+bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const Models::VarInit &varInit)
+                       [](const auto &varInit)
                        {
-                           return isRNGRequired(varInit.getSnippet()->getCode());
+                           return isRNGRequired(varInit.second.getSnippet()->getCode());
                        });
 }
 //--------------------------------------------------------------------------
@@ -130,11 +130,28 @@ void validatePopName(const std::string &name, const std::string &description)
         throw std::runtime_error(description + " name invalid: cannot be empty");
     }
 
-    // If any characters aren't underscores or alphanumeric, name isn't valud
+    // If any characters aren't underscores or alphanumeric, name isn't valid
     if(std::any_of(name.cbegin(), name.cend(),
                    [](char c) { return (c != '_') && !std::isalnum(c); }))
     {
         throw std::runtime_error(description + " name invalid: '" + name + "' contains an illegal character");
+    }
+}
+//--------------------------------------------------------------------------
+void validateParamValues(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &paramValues, 
+                         const std::string &description) 
+{
+    // If there are a different number of sizes than values, give error
+    if(paramNames.size() != paramValues.size()) {
+        throw std::runtime_error(description + " expected " + std::to_string(paramNames.size()) + " parameters but got " + std::to_string(paramValues.size()));
+    }
+
+    // Loop through names
+    for(const auto &n : paramNames) {
+        // If there is no values, give error
+        if(paramValues.find(n) == paramValues.cend()) {
+            throw std::runtime_error(description + " missing value for parameter: '" + n + "'");
+        }
     }
 }
 //--------------------------------------------------------------------------

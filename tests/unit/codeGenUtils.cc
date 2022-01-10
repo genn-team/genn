@@ -83,7 +83,7 @@ protected:
 
         // Substitute test parameter for value
         Substitutions subs;
-        subs.addParamValueSubstitution({"test"}, { GetParam() });
+        subs.addParamValueSubstitution({"test"}, {{"test", GetParam()}});
         subs.apply(m_Code);
 
         // For safety, value_substitutions adds brackets around substituted values - trim these out

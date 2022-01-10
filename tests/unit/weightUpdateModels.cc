@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 // GeNN includes
+#include "modelSpec.h"
 #include "weightUpdateModels.h"
 
 //--------------------------------------------------------------------------
@@ -41,13 +42,13 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const std::vector<double> &pars, double){ return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]); }},
-        {"lim1", [](const std::vector<double> &pars, double){ return  -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1])); }},
-        {"slope0", [](const std::vector<double> &pars, double){ return  -2*pars[5]/(pars[1]*pars[0]); }},
-        {"slope1", [](const std::vector<double> &pars, double){ return  2*pars[5]/(pars[1]*pars[0]); }},
-        {"off0", [](const std::vector<double> &pars, double){ return  pars[5] / pars[4]; }},
-        {"off1", [](const std::vector<double> &pars, double){ return  pars[5] / pars[1]; }},
-        {"off2", [](const std::vector<double> &pars, double){ return  pars[5] / pars[3]; }}});
+        {"lim0", [](const ParamValues &pars, double){ return (1/pars.at("tPunish01") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng")); }},
+        {"lim1", [](const ParamValues &pars, double){ return  -((1/pars.at("tPunish10") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng"))); }},
+        {"slope0", [](const ParamValues &pars, double){ return  -2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
+        {"slope1", [](const ParamValues &pars, double){ return  2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
+        {"off0", [](const ParamValues &pars, double){ return  pars.at("gMax") / pars.at("tPunish01"); }},
+        {"off1", [](const ParamValues &pars, double){ return  pars.at("gMax") / pars.at("tChng"); }},
+        {"off2", [](const ParamValues &pars, double){ return  pars.at("gMax") / pars.at("tPunish10"); }}});
 
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);

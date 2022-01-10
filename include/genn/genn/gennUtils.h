@@ -7,6 +7,7 @@
 #include <sstream>
 #include <string>
 #include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 // Standard C includes
@@ -37,7 +38,7 @@ GENN_EXPORT bool isRNGRequired(const std::string &code);
 //--------------------------------------------------------------------------
 //! \brief Does the model with the vectors of variable initialisers and modes require an RNG for the specified init location i.e. host or device
 //--------------------------------------------------------------------------
-GENN_EXPORT bool isRNGRequired(const std::vector<Models::VarInit> &varInitialisers);
+GENN_EXPORT bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers);
 
 //--------------------------------------------------------------------------
 //! \brief Function to determine whether a string containing a type is a pointer
@@ -68,6 +69,12 @@ GENN_EXPORT void validateVarName(const std::string &name, const std::string &des
 //! \brief Is the population name valid? GeNN population names obey C variable naming rules but can start with a number
 //--------------------------------------------------------------------------
 GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
+
+//--------------------------------------------------------------------------
+//! \brief Are values provided for all of the the parameter names in the vector?
+//--------------------------------------------------------------------------
+GENN_EXPORT void validateParamValues(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &paramValues, 
+                                     const std::string &description);
 
 //--------------------------------------------------------------------------
 //! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
@@ -159,6 +166,17 @@ inline void updateHash(const std::vector<bool> &vector, boost::uuids::detail::sh
 {
     for(bool v : vector) {
         updateHash(v, hash);
+    }
+}
+
+
+//! Hash unordered maps of types which can, themselves, be hashed
+template<typename K, typename V>
+inline void updateHash(const std::unordered_map<K, V> &map, boost::uuids::detail::sha1 &hash)
+{
+    for(const auto &v : map) {
+        updateHash(v.first, hash);
+        updateHash(v.second, hash);
     }
 }
 

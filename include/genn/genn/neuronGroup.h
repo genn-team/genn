@@ -4,6 +4,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
@@ -134,8 +135,8 @@ public:
     //! Gets the neuron model used by this group
     const NeuronModels::Base *getNeuronModel() const{ return m_NeuronModel; }
 
-    const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     bool isSpikeTimeRequired() const;
     bool isPrevSpikeTimeRequired() const;
@@ -197,7 +198,7 @@ public:
 
 protected:
     NeuronGroup(const std::string &name, int numNeurons, const NeuronModels::Base *neuronModel,
-                const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
                 VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -237,12 +238,12 @@ protected:
     const std::vector<SynapseGroupInternal*> &getOutSyn() const{ return m_OutSyn; }
     const std::vector<SynapseGroupInternal *> &getFusedWUPreOutSyn() const { return m_FusedWUPreOutSyn; }
 
-     const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }   
+    const std::vector<SynapseGroupInternal *> &getFusedPreOutputOutSyn() const { return m_FusedPreOutputOutSyn; }   
 
     //! Gets pointers to all current sources which provide input to this neuron group
     const std::vector<CurrentSourceInternal*> &getCurrentSources() const { return m_CurrentSources; }
 
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
     const std::set<SpikeEventThreshold> &getSpikeEventCondition() const{ return m_SpikeEventCondition; }
 
@@ -290,9 +291,9 @@ private:
     const unsigned int m_NumNeurons;
 
     const NeuronModels::Base *m_NeuronModel;
-    const std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
-    std::vector<Models::VarInit> m_VarInitialisers;
+    const std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_DerivedParams;
+    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
     std::vector<SynapseGroupInternal*> m_InSyn;
     std::vector<SynapseGroupInternal*> m_OutSyn;
     std::vector<SynapseGroupInternal*> m_FusedPSMInSyn;

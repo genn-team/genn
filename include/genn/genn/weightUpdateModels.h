@@ -6,12 +6,6 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_WEIGHT_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS)    \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                                          \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                                \
-    typedef Models::VarInitContainerBase<NUM_PRE_VARS> PreVarValues;                         \
-    typedef Models::VarInitContainerBase<NUM_POST_VARS> PostVarValues
-
 #define SET_SIM_CODE(SIM_CODE) virtual std::string getSimCode() const override{ return SIM_CODE; }
 #define SET_EVENT_CODE(EVENT_CODE) virtual std::string getEventCode() const override{ return EVENT_CODE; }
 #define SET_LEARN_POST_CODE(LEARN_POST_CODE) virtual std::string getLearnPostCode() const override{ return LEARN_POST_CODE; }
@@ -174,7 +168,7 @@ public:
 class StaticPulse : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulse, 0, 1, 0, 0);
+    DECLARE_SNIPPET(StaticPulse);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
 
@@ -200,7 +194,7 @@ public:
 class StaticPulseDendriticDelay : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDendriticDelay, 0, 2, 0, 0);
+    DECLARE_SNIPPET(StaticPulseDendriticDelay);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}, {"d", "uint8_t", VarAccess::READ_ONLY}});
 
@@ -236,7 +230,7 @@ public:
 class StaticGraded : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticGraded, 2, 1, 0, 0);
+    DECLARE_SNIPPET(StaticGraded);
 
     SET_PARAM_NAMES({"Epre", "Vslope"});
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY}});
@@ -306,10 +300,10 @@ public:
 class PiecewiseSTDP : public Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(PiecewiseSTDP, 10, 2, 0, 0);
+    DECLARE_SNIPPET(PiecewiseSTDP);
 
     SET_PARAM_NAMES({"tLrn", "tChng", "tDecay", "tPunish10", "tPunish01",
-        "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
+                     "gMax", "gMid", "gSlope", "tauShift", "gSyn0"});
     SET_VARS({{"g", "scalar"}, {"gRaw", "scalar"}});
 
     SET_SIM_CODE(
@@ -339,13 +333,13 @@ public:
         "$(g)=$(gMax)/2.0 *(tanh($(gSlope)*($(gRaw) - ($(gMid))))+1); \n");
 
     SET_DERIVED_PARAMS({
-        {"lim0", [](const std::vector<double> &pars, double){ return (1/pars[4] + 1/pars[1]) * pars[0] / (2/pars[1]); }},
-        {"lim1", [](const std::vector<double> &pars, double){ return  -((1/pars[3] + 1/pars[1]) * pars[0] / (2/pars[1])); }},
-        {"slope0", [](const std::vector<double> &pars, double){ return  -2*pars[5]/(pars[1]*pars[0]); }},
-        {"slope1", [](const std::vector<double> &pars, double){ return  2*pars[5]/(pars[1]*pars[0]); }},
-        {"off0", [](const std::vector<double> &pars, double){ return  pars[5] / pars[4]; }},
-        {"off1", [](const std::vector<double> &pars, double){ return  pars[5] / pars[1]; }},
-        {"off2", [](const std::vector<double> &pars, double){ return  pars[5] / pars[3]; }}});
+        {"lim0", [](const std::unordered_map<std::string, double> &pars, double){ return (1/pars.at("tPunish01") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng")); }},
+        {"lim1", [](const std::unordered_map<std::string, double> &pars, double){ return  -((1/pars.at("tPunish10") + 1/pars.at("tChng")) * pars.at("tLrn") / (2/pars.at("tChng"))); }},
+        {"slope0", [](const std::unordered_map<std::string, double> &pars, double){ return  -2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
+        {"slope1", [](const std::unordered_map<std::string, double> &pars, double){ return  2*pars.at("gMax")/(pars.at("tChng")*pars.at("tLrn")); }},
+        {"off0", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish01"); }},
+        {"off1", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tChng"); }},
+        {"off2", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("gMax") / pars.at("tPunish10"); }}});
 
     SET_NEEDS_PRE_SPIKE_TIME(true);
     SET_NEEDS_POST_SPIKE_TIME(true);

@@ -860,10 +860,10 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
     
     // Add substitutions
     connSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                       [&sg](size_t i) { return sg.isToeplitzConnectivityInitParamHeterogeneous(i);  },
+                                       [&sg](const std::string &p) { return sg.isToeplitzConnectivityInitParamHeterogeneous(p);  },
                                        "", "group->");
     connSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                     [&sg](size_t i) { return sg.isToeplitzConnectivityInitDerivedParamHeterogeneous(i);  },
+                                     [&sg](const std::string &p) { return sg.isToeplitzConnectivityInitDerivedParamHeterogeneous(p);  },
                                      "", "group->");
     connSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
     connSubs.addVarNameSubstitution(connectInit.getSnippet()->getDiagonalBuildStateVars());

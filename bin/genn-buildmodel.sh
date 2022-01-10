@@ -29,7 +29,7 @@ trap 'genn_error $LINENO 50 "command failure"' ERR
 OUT_PATH="$PWD";
 BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
-CXX_STANDARD="c++11"
+CXX_STANDARD="c++17"
 FORCE_REBUILD=0
 while [[ -n "${!OPTIND}" ]]; do
     while getopts "cldvfs:o:i:h" option; do

@@ -49,7 +49,7 @@ public:
 class ExpCurr : public Base
 {
 public:
-    DECLARE_MODEL(ExpCurr, 1, 0);
+    DECLARE_SNIPPET(ExpCurr);
 
     SET_DECAY_CODE("$(inSyn) *= $(expDecay);");
 
@@ -58,8 +58,8 @@ public:
     SET_PARAM_NAMES({"tau"});
 
     SET_DERIVED_PARAMS({
-        {"expDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }},
-        {"init", [](const std::vector<double> &pars, double dt){ return (pars[0] * (1.0 - std::exp(-dt / pars[0]))) * (1.0 / dt); }}});
+        {"expDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tau")); }},
+        {"init", [](const std::unordered_map<std::string, double> &pars, double dt){ return (pars.at("tau") * (1.0 - std::exp(-dt / pars.at("tau")))) * (1.0 / dt); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -74,7 +74,7 @@ public:
 class ExpCond : public Base
 {
 public:
-    DECLARE_MODEL(ExpCond, 2, 0);
+    DECLARE_SNIPPET(ExpCond);
 
     SET_DECAY_CODE("$(inSyn)*=$(expDecay);");
 
@@ -82,7 +82,7 @@ public:
 
     SET_PARAM_NAMES({"tau", "E"});
 
-    SET_DERIVED_PARAMS({{"expDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[0]); }}});
+    SET_DERIVED_PARAMS({{"expDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tau")); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -93,7 +93,7 @@ public:
 class DeltaCurr : public Base
 {
 public:
-    DECLARE_MODEL(DeltaCurr, 0, 0);
+    DECLARE_SNIPPET(DeltaCurr);
 
     SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
 };
