@@ -168,6 +168,28 @@ public:
 };
 IMPLEMENT_MODEL(Continuous);
 
+class ContinuousDenDelay : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(ContinuousDenDelay, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+
+    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSynDelay, $(g) * $(V_pre), 1);\n");
+};
+IMPLEMENT_MODEL(ContinuousDenDelay);
+
+class GradedDenDelay : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(GradedDenDelay, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+    SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) >= 0.1");
+    SET_EVENT_CODE("$(addToInSynDelay, $(g)*$(V_pre), 1);");
+};
+IMPLEMENT_MODEL(GradedDenDelay);
+
 class PostRepeatVal : public InitVarSnippet::Base
 {
 public:
@@ -900,6 +922,42 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
     catch(const std::runtime_error &) {
     }
+}
+
+TEST(SynapseGroup, IsDendriticDelayRequired)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticPulseDendriticVarVals(0.1, 1);
+    GradedDenDelay::VarValues gradedDenDelayVarVars(0.1);
+    ContinuousDenDelay::VarValues contDenDelayVarVars(0.1);
+
+    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+            "Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, staticPulseDendriticVarVals,
+            {}, {});
+
+    auto *synGraded = model.addSynapsePopulation<GradedDenDelay, PostsynapticModels::DeltaCurr>(
+            "SynGraded", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, gradedDenDelayVarVars,
+            {}, {});
+
+    auto *synContinuous = model.addSynapsePopulation<ContinuousDenDelay, PostsynapticModels::DeltaCurr>(
+            "SynContinuous", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, contDenDelayVarVars,
+            {}, {});
+
+    ASSERT_TRUE(syn->isDendriticDelayRequired());
+    ASSERT_TRUE(synGraded->isDendriticDelayRequired());
+    ASSERT_TRUE(synContinuous->isDendriticDelayRequired());
 }
 
 TEST(SynapseGroup, InvalidName)
