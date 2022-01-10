@@ -7,6 +7,8 @@
 
 // GeNN includes
 #include "currentSource.h"
+#include "initSparseConnectivitySnippet.h"
+#include "initToeplitzConnectivitySnippet.h"
 #include "modelSpecInternal.h"
 #include "snippet.h"
 #include "models.h"
@@ -133,6 +135,11 @@ PYBIND11_MODULE(genn, m)
         .def("__and__", [](VarAccess a, VarAccessDuplication b){ return a & b; }, 
              pybind11::is_operator());
     
+    //! Paralllelism hints for synapse groups
+    pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
+        .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)
+        .value("PRESYNAPTIC", SynapseGroup::SpanType::PRESYNAPTIC);
+        
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
@@ -165,7 +172,31 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
-        .def("add_neuron_population",  static_cast<NeuronGroup* (ModelSpecInternal::*)(const std::string&, unsigned int, const NeuronModels::Base*, const ParamValues&, const VarValues&)>(&ModelSpecInternal::addNeuronPopulation), pybind11::return_value_policy::reference)
+        .def("add_current_source",  
+             static_cast<CurrentSource* (ModelSpecInternal::*)(
+                const std::string&, const CurrentSourceModels::Base*, const std::string&, 
+                const ParamValues&, const VarValues&)>(&ModelSpecInternal::addCurrentSource), 
+            pybind11::return_value_policy::reference)
+        .def("add_neuron_population",  
+             static_cast<NeuronGroup* (ModelSpecInternal::*)(
+                const std::string&, unsigned int, const NeuronModels::Base*, 
+                const ParamValues&, const VarValues&)>(&ModelSpecInternal::addNeuronPopulation), 
+            pybind11::return_value_policy::reference)
+        .def("add_synapse_population",
+            static_cast<SynapseGroup* (ModelSpecInternal::*)(
+                const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
+                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&,
+                const PostsynapticModels::Base*, const ParamValues&, const VarValues&,
+                const InitSparseConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation),
+            pybind11::return_value_policy::reference)
+        .def("add_synapse_population",
+            static_cast<SynapseGroup* (ModelSpecInternal::*)(
+                const std::string&, SynapseMatrixType, unsigned int, const std::string&, const std::string&,
+                const WeightUpdateModels::Base*, const ParamValues&, const VarValues&, const VarValues&, const VarValues&,
+                const PostsynapticModels::Base*, const ParamValues&, const VarValues&,
+                const InitToeplitzConnectivitySnippet::Init&)>(&ModelSpecInternal::addSynapsePopulation), 
+            pybind11::return_value_policy::reference)
+
         .def("finalize", &ModelSpecInternal::finalize);
 
     //------------------------------------------------------------------------
@@ -207,7 +238,36 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def("set_var_location", &NeuronGroup::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_));
+    
+    //------------------------------------------------------------------------
+    // genn.SynapseGroup
+    //------------------------------------------------------------------------
+    pybind11::class_<SynapseGroup>(m, "SynapseGroup")
+        //--------------------------------------------------------------------
+        // Properties
+        //--------------------------------------------------------------------
+        .def_property_readonly("name", &SynapseGroup::getName)
+        .def_property("ps_target_var", &SynapseGroup::getPSTargetVar, &SynapseGroup::setPSTargetVar)
+        .def_property("pre_target_var", &SynapseGroup::getPreTargetVar, &SynapseGroup::setPreTargetVar)
+         .def_property("in_syn_location", &SynapseGroup::getInSynLocation, &SynapseGroup::setInSynVarLocation)
+         .def_property("sparse_connectivity_location", &SynapseGroup::getSparseConnectivityLocation, &SynapseGroup::setSparseConnectivityLocation)
+         .def_property("dendritic_delay_location",&SynapseGroup::getDendriticDelayLocation, &SynapseGroup::setDendriticDelayLocation)
+         .def_property("max_connections",&SynapseGroup::getMaxConnections, &SynapseGroup::setMaxConnections)
+         .def_property("max_source_connections",&SynapseGroup::getMaxSourceConnections, &SynapseGroup::setMaxSourceConnections)
+         .def_property("max_dendritic_delay_timesteps",&SynapseGroup::getMaxDendriticDelayTimesteps, &SynapseGroup::setMaxDendriticDelayTimesteps)
+         .def_property("span_type",&SynapseGroup::getSpanType, &SynapseGroup::setSpanType)
+         .def_property("num_threads_per_spike",&SynapseGroup::getNumThreadsPerSpike, &SynapseGroup::setNumThreadsPerSpike)
+         .def_property("back_prop_delay_steps",&SynapseGroup::getBackPropDelaySteps, &SynapseGroup::setBackPropDelaySteps)
+         .def_property("narrow_sparse_ind_enabled",nullptr, &SynapseGroup::setNarrowSparseIndEnabled)
 
+        //--------------------------------------------------------------------
+        // Methods
+        //--------------------------------------------------------------------
+        .def("set_wu_var_location", &SynapseGroup::setWUVarLocation)
+        .def("set_wu_pre_var_location", &SynapseGroup::setWUPreVarLocation)
+        .def("set_wu_post_var_location", &SynapseGroup::setWUPostVarLocation)
+        .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
+        
     //------------------------------------------------------------------------
     // genn.SnippetBase
     //------------------------------------------------------------------------
@@ -228,7 +288,19 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<Models::VarInit>(m, "VarInit")
         .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
         .def(pybind11::init<double>());
-
+    
+    //------------------------------------------------------------------------
+    // genn.ToeplitzConnectivityInit
+    //------------------------------------------------------------------------
+    pybind11::class_<InitToeplitzConnectivitySnippet::Init>(m, "ToeplitzConnectivityInit")
+        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>());
+    
+    //------------------------------------------------------------------------
+    // genn.SparseConnectivityInit
+    //------------------------------------------------------------------------
+    pybind11::class_<InitSparseConnectivitySnippet::Init>(m, "SparseConnectivityInit")
+        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>());
+    
     //------------------------------------------------------------------------
     // genn.PreferencesBase
     //------------------------------------------------------------------------

@@ -29,14 +29,14 @@ const Base *getBaseInstance()
 }
 
 //----------------------------------------------------------------------------
-// neuron_models
+// init_var_snippets
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(init_var_snippets, m) 
 {
     pybind11::module_::import("genn_wrapper.genn");
 
     //------------------------------------------------------------------------
-    // neuron_models.Base
+    // init_var_snippets.Base
     //------------------------------------------------------------------------
     pybind11::class_<Base, Snippet::Base, PyInitVarSnippetBase>(m, "Base")
         .def(pybind11::init<>())
