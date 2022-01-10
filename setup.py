@@ -92,6 +92,9 @@ ext_modules = [
     Pybind11Extension("genn",
                       [os.path.join(genn_wrapper_src, "genn.cc")],
                       **genn_extension_kwargs),
+    Pybind11Extension("init_var_snippets",
+                      [os.path.join(genn_wrapper_src, "initVarSnippets.cc")],
+                      **genn_extension_kwargs),
     Pybind11Extension("neuron_models",
                       [os.path.join(genn_wrapper_src, "neuronModels.cc")],
                       **genn_extension_kwargs)]

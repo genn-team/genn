@@ -13,9 +13,41 @@
 
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
+#include "code_generator/generateMakefile.h"
+#include "code_generator/generateModules.h"
+#include "code_generator/generateMSBuild.h"
 
 // PyGeNN includes
 #include "trampolines.h"
+
+//----------------------------------------------------------------------------
+// Anonymous namespace
+//----------------------------------------------------------------------------
+namespace
+{
+CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
+                                     const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
+{
+    const filesystem::path outputPath(outputPathStr);
+
+    // Generate code, returning list of module names that must be build
+    const auto output = CodeGenerator::generateAll(
+        model, backend, 
+        filesystem::path(sharePathStr), outputPath, 
+        forceRebuild);
+
+#ifdef _WIN32
+    // Create MSBuild project to compile and link all generated modules
+    std::ofstream makefile((outputPath / "runner.vcxproj").str());
+    CodeGenerator::generateMSBuild(makefile, model, backend, "", output.first);
+#else
+    // Create makefile to compile and link all generated modules
+    std::ofstream makefile((outputPath / "Makefile").str());
+    CodeGenerator::generateMakefile(makefile, backend, output.first);
+#endif
+    return output.second;
+}
+}
 
 //----------------------------------------------------------------------------
 // genn
@@ -100,6 +132,11 @@ PYBIND11_MODULE(genn, m)
              pybind11::is_operator())
         .def("__and__", [](VarAccess a, VarAccessDuplication b){ return a & b; }, 
              pybind11::is_operator());
+    
+    //------------------------------------------------------------------------
+    // Free functions
+    //------------------------------------------------------------------------
+    m.def("generate_code", &generateCode, pybind11::return_value_policy::move);
 
     //------------------------------------------------------------------------
     // genn.ModelSpec
@@ -128,6 +165,7 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("add_neuron_population",  static_cast<NeuronGroup* (ModelSpecInternal::*)(const std::string&, unsigned int, const NeuronModels::Base*, const ParamValues&, const VarValues&)>(&ModelSpecInternal::addNeuronPopulation), pybind11::return_value_policy::reference)
         .def("finalize", &ModelSpecInternal::finalize);
 
     //------------------------------------------------------------------------
@@ -171,16 +209,6 @@ PYBIND11_MODULE(genn, m)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&NeuronGroup::getVarLocation, pybind11::const_));
 
     //------------------------------------------------------------------------
-    // genn.PreferencesBase
-    //------------------------------------------------------------------------
-    pybind11::class_<CodeGenerator::PreferencesBase>(m, "PreferencesBase")
-        .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
-        .def_readwrite("debug_code", &CodeGenerator::PreferencesBase::debugCode)
-        .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
-        .def_readwrite("generate_extra_global_param_pull", &CodeGenerator::PreferencesBase::generateExtraGlobalParamPull)
-        .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
-
-    //------------------------------------------------------------------------
     // genn.SnippetBase
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base, PySnippet<>>(m, "SnippetBase")
@@ -193,4 +221,38 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     pybind11::class_<Models::Base, Snippet::Base, PyModel<>>(m, "ModelBase")
         .def("get_vars", &Models::Base::getVars);
+    
+    //------------------------------------------------------------------------
+    // genn.VarInit
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::VarInit>(m, "VarInit")
+        .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
+        .def(pybind11::init<double>());
+
+    //------------------------------------------------------------------------
+    // genn.PreferencesBase
+    //------------------------------------------------------------------------
+    pybind11::class_<CodeGenerator::PreferencesBase>(m, "PreferencesBase")
+        .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
+        .def_readwrite("debug_code", &CodeGenerator::PreferencesBase::debugCode)
+        .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
+        .def_readwrite("generate_extra_global_param_pull", &CodeGenerator::PreferencesBase::generateExtraGlobalParamPull)
+        .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
+
+    //------------------------------------------------------------------------
+    // genn.BackendBase
+    //------------------------------------------------------------------------
+    pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase");
+    
+    //------------------------------------------------------------------------
+    // genn.MemAlloc
+    //------------------------------------------------------------------------
+    pybind11::class_<CodeGenerator::MemAlloc>(m, "MemAlloc")
+        .def_property_readonly("host_bytes", &CodeGenerator::MemAlloc::getHostBytes)
+        .def_property_readonly("device_bytes", &CodeGenerator::MemAlloc::getDeviceBytes)
+        .def_property_readonly("zero_copy_bytes", &CodeGenerator::MemAlloc::getZeroCopyBytes)
+        .def_property_readonly("host_mbytes", &CodeGenerator::MemAlloc::getHostMBytes)
+        .def_property_readonly("device_mbytes", &CodeGenerator::MemAlloc::getDeviceMBytes)
+        .def_property_readonly("zero_copy_mbytes", &CodeGenerator::MemAlloc::getZeroCopyMBytes);
+
 }

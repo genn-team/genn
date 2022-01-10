@@ -61,6 +61,11 @@ PYBIND11_MODULE(cuda_backend, m)
         .def_readwrite("constant_cache_overhead", &Preferences::constantCacheOverhead);
     
     //------------------------------------------------------------------------
+    // cuda_backend.Backend
+    //------------------------------------------------------------------------
+    pybind11::class_<Backend, CodeGenerator::BackendBase>(m, "Backend");
+    
+    //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
     m.def("create_backend", &createBackend, pybind11::return_value_policy::move);
