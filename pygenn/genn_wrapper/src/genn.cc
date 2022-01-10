@@ -168,7 +168,8 @@ PYBIND11_MODULE(genn, m)
         .def_property("fuse_pre_post_weight_update_models", nullptr, &ModelSpecInternal::setFusePrePostWeightUpdateModels)
 
         .def_property_readonly("num_neurons", &ModelSpecInternal::getNumNeurons)
-
+        .def_property_readonly("recording_in_use", &ModelSpecInternal::isRecordingInUse)
+    
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
@@ -202,7 +203,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.CurrentSource
     //------------------------------------------------------------------------
-    pybind11::class_<CurrentSource>(m, "CurrentSource")
+    pybind11::class_<CurrentSource>(m, "CurrentSource", pybind11::dynamic_attr())
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
@@ -217,7 +218,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.NeuronGroup
     //------------------------------------------------------------------------
-    pybind11::class_<NeuronGroup>(m, "NeuronGroup")
+    pybind11::class_<NeuronGroup>(m, "NeuronGroup", pybind11::dynamic_attr())
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
@@ -242,7 +243,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.SynapseGroup
     //------------------------------------------------------------------------
-    pybind11::class_<SynapseGroup>(m, "SynapseGroup")
+    pybind11::class_<SynapseGroup>(m, "SynapseGroup", pybind11::dynamic_attr())
         //--------------------------------------------------------------------
         // Properties
         //--------------------------------------------------------------------
