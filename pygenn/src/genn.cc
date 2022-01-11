@@ -135,6 +135,17 @@ PYBIND11_MODULE(genn, m)
         .def("__and__", [](VarAccess a, VarAccessDuplication b){ return a & b; }, 
              pybind11::is_operator());
     
+    //! Locations of variables
+    pybind11::enum_<VarLocation>(m, "VarLocation")
+        .value("HOST", VarLocation::HOST)
+        .value("DEVICE", VarLocation::DEVICE)
+        .value("ZERO_COPY", VarLocation::ZERO_COPY)
+        .value("HOST_DEVICE", VarLocation::HOST_DEVICE)
+        .value("HOST_DEVICE_ZERO_COPY", VarLocation::HOST_DEVICE_ZERO_COPY)
+        
+        .def("__and__", [](VarLocation a, VarLocation b){ return a & b; }, 
+             pybind11::is_operator());
+        
     //! Paralllelism hints for synapse groups
     pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
         .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)

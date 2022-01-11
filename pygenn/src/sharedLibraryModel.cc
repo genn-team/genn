@@ -3,7 +3,7 @@
 #include <pybind11/numpy.h>
 
 // GeNN includes
-#include "../../../userproject/include/sharedLibraryModel.h"
+#include "../../userproject/include/sharedLibraryModel.h"
 
 //----------------------------------------------------------------------------
 // Macros
