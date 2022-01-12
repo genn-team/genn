@@ -13,6 +13,11 @@ from six import iteritems, iterkeys, itervalues
 from warnings import warn
 import numpy as np
 
+#from . import neuron_models
+from .genn import VarAccessDuplication, VarLocation
+from .model_preprocessor import prepare_model
+
+"""
 from . import genn_wrapper
 from . import model_preprocessor
 from .model_preprocessor import ExtraGlobalParameter, Variable
@@ -25,19 +30,18 @@ from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
                            VarLocation_HOST,
                            SynapseMatrixConnectivity_PROCEDURAL)
 from .genn_wrapper.Models import VarAccessDuplication_SHARED, WUVarReference
+"""
+class GroupMixin(object):
 
-class Group(object):
+    """Parent class of NeuronGroupMixin, 
+    SynapseGroupMixin and CurrentSourceMixin"""
 
-    """Parent class of NeuronGroup, SynapseGroup and CurrentSource"""
-
-    def __init__(self, name, model):
+    def _init_group(self, model):
         """Init Group
 
         Args:
-        name    -- string name of the Group
         model   -- pygenn.genn_model.GeNNModel this group is part of
         """
-        self.name = name
         self._model = proxy(model)
         self.vars = {}
         self.extra_global_params = {}
@@ -51,16 +55,6 @@ class Group(object):
         """
         self.vars[var_name].set_values(values)
 
-    @deprecated("This function was poorly named, use 'set_extra_global_param' instead")
-    def add_extra_global_param(self, param_name, param_values):
-        """Set extra global parameter
-
-        Args:
-        param_name      --  string with the name of the extra global parameter
-        param_values    --  iterable or a single value
-        """
-        self.set_extra_global_param(param_name, param_values)
-
     def set_extra_global_param(self, param_name, param_values):
         """Set extra global parameter
 
@@ -71,47 +65,55 @@ class Group(object):
         self.extra_global_params[param_name].set_values(param_values)
 
     def pull_state_from_device(self):
-        """Wrapper around GeNNModel.pull_state_from_device"""
-        self._model.pull_state_from_device(self.name)
+        """Pull state from the device for a given population"""
+        if not self._model._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
+
+        self._model._slm.pull_state_from_device(self.name)
 
     def pull_var_from_device(self, var_name):
-        """Wrapper around GeNNModel.pull_var_from_device
+        """Pull variable from the device for a given population
 
         Args:
         var_name    --  string with the name of the variable
         """
-        self._model.pull_var_from_device(self.name, var_name)
+        if not self._model._loaded:
+            raise Exception("GeNN model has to be loaded before pulling")
 
-    def pull_extra_global_param_from_device(self, egp_name, size=None):
-        """Wrapper around GeNNModel.pull_extra_global_param_from_device
+        self._model._slm.pull_var_from_device(self.name, var_name)
+
+    def pull_extra_global_param_from_device(self, egp_name):
+        """Pull extra global parameter from device
 
         Args:
         egp_name    --  string with the name of the variable
         size        --  number of entries in EGP array
         """
-        self._pull_extra_global_param_from_device(egp_name, size)
+        self._pull_extra_global_param_from_device(egp_name)
 
     def push_state_to_device(self):
-        """Wrapper around GeNNModel.push_state_to_device"""
-        self._model.push_state_to_device(self.name)
+        """Push all population state variables to the device"""
+        if not self._model._loaded:
+            raise Exception("GeNN model has to be loaded before pushing")
+        
+        self._model._slm.push_state_to_device(self.name)
 
     def push_var_to_device(self, var_name):
-        """Wrapper around GeNNModel.push_var_to_device
+        """Push population state variable to the device
 
         Args:
         var_name    --  string with the name of the variable
         """
-        self._model.push_var_to_device(self.name, var_name)
+        self._model._slm.push_var_to_device(self.name, var_name)
 
-    def push_extra_global_param_to_device(self, egp_name, size=None):
-        """Wrapper around GeNNModel.push_extra_global_param_to_device
+    def push_extra_global_param_to_device(self, egp_name):
+        """Push extra global parameter to device
 
         Args:
         egp_name    --  string with the name of the variable
-        size        --  number of entries in EGP array
         """
-        self._push_extra_global_param_to_device(egp_name, size)
-
+        self._push_extra_global_param_to_device(egp_name)
+    
     def _assign_ext_ptr_array(self, var_name, var_size, var_type):
         """Assign a variable to an external numpy array
 
@@ -134,8 +136,15 @@ class Group(object):
         if var_type == "scalar":
             var_type = self._model._scalar
 
-        return self._model.genn_types[var_type].assign_ext_ptr_array(
-            internal_var_name, var_size)
+        # Get numpy data type corresponding to type string
+        dtype = self._model.genn_types[var_type]
+        
+        # Calculate bytes
+        num_bytes = np.dtype(dtype).itemsize * var_size
+        
+        # Get dtype view of array memoryview
+        return self._model._slm.get_array(internal_var_name, 
+                                          num_bytes).view(dtype)
 
     def _assign_ext_ptr_single(self, var_name, var_type):
         """Assign a variable to an external scalar value containing one element
@@ -158,16 +167,18 @@ class Group(object):
         if var_type == "scalar":
             var_type = self._model._scalar
 
-        return self._model.genn_types[var_type].assign_ext_ptr_single(
-            internal_var_name)
+        # Get numpy data type corresponding to type string
+        dtype = self._model.genn_types[var_type]
+        
+        # Get dtype view of scalar memoryview
+        return self._model._slm.get_array(internal_var_name, 
+                                          np.dtype(dtype).itemsize).view(dtype)
 
-    def _push_extra_global_param_to_device(self, egp_name, size=None,
-                                           egp_dict=None):
+    def _push_extra_global_param_to_device(self, egp_name, egp_dict=None):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
 
         Args:
         egp_name    --  string with the name of the variable
-        size        --  number of entries in EGP array
         """
         # If no extra global parameters dictionary
         # is specified, use standard one
@@ -182,24 +193,14 @@ class Group(object):
             raise Exception("Only pointer-type extra global parameters "
                             "need to be pushed")
 
-        # If deprecated size parameter is passed, give warning and
-        if size is not None:
-            warn("The size parameter is no longer "
-                 "required and will be removed", DeprecationWarning)
-            if size != len(egp.values):
-                raise ValueError("The size parameter doesn't match the "
-                                 "size of the extra global parameter data")
+        self._model._slm.push_extra_global_param_to_device(self.name, egp_name,
+                                                           len(egp.values))
 
-        self._model.push_extra_global_param_to_device(self.name, egp_name,
-                                                      len(egp.values))
-
-    def _pull_extra_global_param_from_device(self, egp_name, size=None,
-                                           egp_dict=None):
+    def _pull_extra_global_param_from_device(self, egp_name, egp_dict=None):
         """Wrapper around GeNNModel.pull_extra_global_param_from_device
 
         Args:
         egp_name    --  string with the name of the variable
-        size        --  number of entries in EGP array
         """
         # If no extra global parameters dictionary
         # is specified, use standard one
@@ -214,16 +215,8 @@ class Group(object):
             raise Exception("Only pointer-type extra global parameters "
                             "need to be pulled")
 
-        # If deprecated size parameter is passed, give warning and
-        if size is not None:
-            warn("The size parameter is no longer "
-                 "required and will be removed", DeprecationWarning)
-            if size != len(egp.values):
-                raise ValueError("The size parameter doesn't match the "
-                                 "size of the extra global parameter data")
-
-        self._model.pull_extra_global_param_from_device(self.name, egp_name,
-                                                        len(egp.values))
+        self._model._slm.pull_extra_global_param_from_device(self.name, egp_name,
+                                                             len(egp.values))
 
     def _load_vars(self, vars, size=None, var_dict=None, get_location_fn=None):
         # If no size is specified, use standard size
@@ -236,7 +229,7 @@ class Group(object):
 
         # If no location getter function is specified, use standard one
         if get_location_fn is None:
-            get_location_fn = self.pop.get_var_location
+            get_location_fn = self.get_var_location
 
         # Loop through variables
         for v in vars:
@@ -245,9 +238,9 @@ class Group(object):
 
             # If variable is located on host
             var_loc = get_location_fn(v.name) 
-            if (var_loc & VarLocation_HOST) != 0:
+            if (var_loc & VarLocation.HOST) != 0:
                 # Determine how many copies of this variable are present
-                num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                num_copies = (1 if (v.access & VarAccessDuplication.SHARED) != 0
                               else self._model.batch_size)
 
                 # Get view
@@ -264,21 +257,6 @@ class Group(object):
             else:
                 assert not var_data.init_required
                 var_data.view = None
-
-    def _reinitialise_vars(self, size=None, var_dict=None):
-        # If no size is specified, use standard size
-        if size is None:
-            size = self.size
-
-        # If no variable dictionary is specified, use standard one
-        if var_dict is None:
-            var_dict = self.vars
-
-        # Loop through variables
-        for var_name, var_data in iteritems(var_dict):
-            # If manual initialisation is required, copy over variables
-            if var_data.init_required:
-                var_data.view[:] = var_data.values
 
     def _load_egp(self, egp_dict=None, egp_suffix=""):
         # If no EGP dictionary is specified, use standard one
@@ -320,49 +298,22 @@ class Group(object):
             self._load_egp(var_data.extra_global_params, var_name)
 
 
-class NeuronGroup(Group):
+class NeuronGroupMixin(GroupMixin):
 
     """Class representing a group of neurons"""
 
-    def __init__(self, name, model):
+    def _init_group(self, model):
         """Init NeuronGroup
 
         Args:
         name    -- string name of the group
         model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
-        super(NeuronGroup, self).__init__(name, model)
-        self.neuron = None
-        self.spikes = None
-        self.spike_count = None
-        self.spike_events = None
-        self.spike_event_count = None
+        super(NeuronGroupMixin, self)._init_group(model)
         self.spike_que_ptr = [0]
-        self._max_delay_steps = 0
-        self.spike_times = None
-        self.prev_spike_times = None
-        self.spike_event_times = None
-        self.prev_spike_event_times = None
-
-    @property
-    def current_spikes(self):
-        """Current spikes from GeNN"""
-        return self._get_current_events(True)
-
-    @current_spikes.setter
-    def current_spikes(self, spikes):
-        """Current spikes from GeNN"""
-        self._set_current_events(spikes, True)
-
-    @property
-    def current_spike_events(self):
-        """Current spike events from GeNN"""
-        return self._get_current_events(False)
-
-    @current_spike_events.setter
-    def current_spike_events(self, spike_events):
-        """Current spike events from GeNN"""
-        self._set_current_events(spike_events, False)
+        
+        self.vars, self.extra_global_params = self.prepare_model(
+            self.neuron_model, self, self.params, self.var_initialisers, model_module)
 
     @property
     def spike_recording_data(self):
@@ -372,192 +323,15 @@ class NeuronGroup(Group):
     def spike_event_recording_data(self):
         return self._get_event_recording_data(False)
 
-    @property
-    def delay_slots(self):
-        """Maximum delay steps needed for this group"""
-        return self.pop.get_num_delay_slots()
-
+    # **TODO** deprecated
     @property
     def size(self):
-        return self.pop.get_num_neurons()
-
-    @property
-    def spike_recording_enabled(self):
-        return self.pop.is_spike_recording_enabled()
-
-    @spike_recording_enabled.setter
-    def spike_recording_enabled(self, enabled):
-        return self.pop.set_spike_recording_enabled(enabled)
-    
-    @property
-    def spike_event_recording_enabled(self):
-        return self.pop.is_spike_event_recording_enabled()
-
-    @spike_event_recording_enabled.setter
-    def spike_event_recording_enabled(self, enabled):
-        return self.pop.set_spike_event_recording_enabled(enabled)
-
-    def set_neuron(self, model, param_space, var_space):
-        """Set neuron, its parameters and initial variables
-
-        Args:
-        model       --  type as string of intance of the model
-        param_space --  dict with model parameters
-        var_space   --  dict with model variables
-        """
-        (self.neuron, self.type, self.param_names, self.params,
-         self.var_names, self.vars, self.extra_global_params) =\
-             model_preprocessor.prepare_model(
-                model, self, param_space, var_space,
-                model_family=genn_wrapper.NeuronModels)
-
-    def add_to(self, num_neurons):
-        """Add this NeuronGroup to a model
-
-        Args:
-        num_neurons --  int number of neurons
-        """
-        add_fct = getattr(self._model._model, "add_neuron_population_" + self.type)
-
-        var_ini = model_preprocessor.var_space_to_vals(self.neuron, self.vars)
-        self.pop = add_fct(self.name, num_neurons, self.neuron,
-                           self.params, var_ini)
-
-    def pull_spikes_from_device(self):
-        """Wrapper around GeNNModel.pull_spikes_from_device"""
-        self._model.pull_spikes_from_device(self.name)
-    
-    def pull_spike_events_from_device(self):
-        """Wrapper around GeNNModel.pull_spike_events_from_device"""
-        self._model.pull_spike_events_from_device(self.name)
-
-    def pull_current_spikes_from_device(self):
-        """Wrapper around GeNNModel.pull_current_spikes_from_device"""
-        self._model.pull_current_spikes_from_device(self.name)
-    
-    def pull_current_spike_events_from_device(self):
-        """Wrapper around GeNNModel.pull_current_spike_events_from_device"""
-        self._model.pull_current_spike_events_from_device(self.name)
-
-    def pull_spike_times_from_device(self):
-        """Helper to pull spike times from device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.pull_var_from_device("SpikeTimes", self.name)
-
-    def pull_spike_event_times_from_device(self):
-        """Helper to pull spike event times from device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.pull_var_from_device("SpikeEventTimes", self.name)
-
-    def pull_prev_spike_times_from_device(self):
-        """Helper to pull previous spike times from device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.pull_var_from_device("PreviousSpikeTimes", self.name)
-
-    def pull_prev_spike_event_times_from_device(self):
-        """Helper to pull previous spike event times from device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.pull_var_from_device("PreviousSpikeEventTimes", self.name)
-
-    def push_spikes_to_device(self):
-        """Wrapper around GeNNModel.push_spikes_to_device"""
-        self._model.push_spikes_to_device(self.name)
-    
-    def push_spike_events_to_device(self):
-        """Wrapper around GeNNModel.push_spike_events_to_device"""
-        self._model.push_spike_events_to_device(self.name)
-        
-    def push_current_spikes_to_device(self):
-        """Wrapper around GeNNModel.push_current_spikes_to_device"""
-        self._model.push_current_spikes_to_device(self.name)
-    
-    def push_current_spike_events_to_device(self):
-        """Wrapper around GeNNModel.push_current_spike_events_to_device"""
-        self._model.push_current_spike_events_to_device(self.name)
-
-    def push_spike_times_to_device(self):
-        """Helper to push spike times to device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.push_var_to_device("SpikeTimes", self.name)
-
-    def push_spike_event_times_to_device(self):
-        """Helper to push spike event times to device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.push_var_to_device("SpikeEventTimes", self.name)
-
-    def push_prev_spike_times_to_device(self):
-        """Helper to push previous spike times to device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.push_var_to_device("PreviousSpikeTimes", self.name)
-
-    def push_prev_spike_event_times_to_device(self):
-        """Helper to push previous spike event times to device"""
-        # **YUCK** these variables are named inconsistently
-        self._model.push_var_to_device("PreviousSpikeEventTimes", self.name)
+        return self.num_neurons()
 
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
         # If spike data is present on the host
         batch_size = self._model.batch_size
-        if (self.pop.get_spike_location() & VarLocation_HOST) != 0:
-            self.spikes = self._assign_ext_ptr_array(
-                "glbSpk", self.size * self.delay_slots * batch_size,
-                "unsigned int")
-            self.spike_count = self._assign_ext_ptr_array(
-                "glbSpkCnt", self.delay_slots * batch_size, "unsigned int")
-
-            # Reshape to expose delay slots and batches
-            self.spikes = np.reshape(self.spikes, (batch_size, 
-                                                   self.delay_slots, 
-                                                   self.size))
-            self.spike_count = np.reshape(self.spike_count, (batch_size,
-                                                             self.delay_slots))
-        
-        # If this neuron group produces spike events and 
-        # spike event data is present on the host
-        if (self.pop.is_spike_event_required() and
-                (self.pop.get_spike_event_location() & VarLocation_HOST) != 0):
-            self.spike_events = self._assign_ext_ptr_array(
-                "glbSpkEvnt", self.size * self.delay_slots * batch_size,
-                "unsigned int")
-            self.spike_event_count = self._assign_ext_ptr_array(
-                "glbSpkCntEvnt", self.delay_slots * batch_size, "unsigned int")
-
-            # Reshape to expose delay slots and batches
-            self.spike_events = np.reshape(self.spike_events, (batch_size, 
-                                                               self.delay_slots,
-                                                               self.size))
-            self.spike_event_count = np.reshape(self.spike_event_count, (batch_size,
-                                                                         self.delay_slots))
-        
-        
-        # If this neuron group generates spike times 
-        # and they are accesible on the host
-        if (self.pop.is_spike_time_required() and
-            (self.pop.get_spike_time_location() & VarLocation_HOST) != 0):
-            
-            self.spike_times = self._get_event_time_view("sT")
-        
-        # If this neuron group generates spike event times 
-        # and they are accesible on the host
-        if (self.pop.is_spike_event_time_required() and
-            (self.pop.get_spike_event_time_location() & VarLocation_HOST) != 0):
-            
-            self.spike_event_times = self._get_event_time_view("seT")
-        
-        # If this neuron group generates previous spike times 
-        # and they are accesible on the host
-        if (self.pop.is_prev_spike_time_required() and
-            (self.pop.get_prev_spike_time_location() & VarLocation_HOST) != 0):
-            
-            self.prev_spike_times = self._get_event_time_view("prevST")
-        
-        # If this neuron group generates previous spike event times 
-        # and they are accesible on the host
-        if (self.pop.is_prev_spike_event_time_required() and
-            (self.pop.get_prev_spike_event_time_location() & VarLocation_HOST) != 0):
-            
-            self.prev_spike_event_times = self._get_event_time_view("prevSET")
 
         # If spike recording is enabled
         if self.spike_recording_enabled:
@@ -584,7 +358,7 @@ class NeuronGroup(Group):
                 "spkQuePtr" + self.name)
 
         # Load neuron state variables
-        self._load_vars(self.neuron.get_vars())
+        self._load_vars(self.neuron_model.get_vars())
 
         # Load neuron extra global params
         self._load_egp()
@@ -592,12 +366,6 @@ class NeuronGroup(Group):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
-
-    def reinitialise(self):
-        """Reinitialise neuron group"""
-
-        # Reinitialise neuron state variables
-        self._reinitialise_vars()
 
     @property
     def _event_recording_words(self):
@@ -608,57 +376,12 @@ class NeuronGroup(Group):
         batch_size = self._model.batch_size
         view = self._assign_ext_ptr_array(
             name, self.size * self.delay_slots * batch_size,
-            self._model._time_precision)
+            self._model.time_precision)
 
         # Reshape to expose delay slots and batches
         view = np.reshape(view, (batch_size, self.delay_slots,
                                  self.size))
         return view
-    
-    def _get_current_events(self, true_spike):
-        # Get current spike queue pointer
-        d = self.spike_que_ptr[0]
-        
-        # Get event data
-        event_count = self.spike_count if true_spike else self.spike_event_count
-        events = self.spikes if true_spike else self.spike_events
-        
-        # If batch size is one, return single slice of spikes
-        if self._model.batch_size == 1:
-            return events[0, d, 0:event_count[0, d]]
-        # Otherwise, return list of slices
-        else:
-            return [events[b, d, 0:event_count[b, d]]
-                    for b in range(self._model.batch_size)]
-
-    def _set_current_events(self, current_events, true_spike):
-        """Current spikes from GeNN"""
-        # Get current spike queue pointer
-        d = self.spike_que_ptr[0]
-
-        # Get event data
-        event_count = self.spike_count if true_spike else self.spike_event_count
-        events = self.spikes if true_spike else self.spike_events
-        description = "spikes" if true_spike else "spike-events"
-        
-        # If batch size is one, set single event count and event data
-        if self._model.batch_size == 1:
-            num_events = len(current_events)
-            event_count[0, d] = num_events
-            events[0, d, 0:num_events] = current_events
-        # Otherwise
-        else:
-            # Check that events have been passed for each batch
-            if len(current_events) != self._model.batch_size:
-                raise Exception("When using a batched model, you must "
-                                "set current %s using a list of %s "
-                                "for each batch" % description)
-
-            # Loop through batches and set spike counts and spike data
-            for b, batch_events in enumerate(current_events):
-                num_events = len(batch_events)
-                event_count[b, d] = num_events
-                events[b, d, 0:num_events] = batch_events
 
     def _get_event_recording_data(self, true_spike):
         # Get byte view of data
@@ -696,10 +419,11 @@ class NeuronGroup(Group):
             event_data.append((event_times, events[1]))
 
         # If batch size is 1, return 1st population's events otherwise list
+        # **TODO** API fiddling
         return event_data[0] if self._model.batch_size == 1 else event_data
 
 
-class SynapseGroup(Group):
+class SynapseGroupMixin(GroupMixin):
 
     """Class representing synaptic connection between two groups of neurons"""
 
@@ -712,7 +436,7 @@ class SynapseGroup(Group):
         weight_sharing_master   -- SynapseGroup this synapse group is a slave of
         """
         self.connections_set = False
-        super(SynapseGroup, self).__init__(name, model)
+        super(SynapseGroupMixin, self).__init__(name, model)
         self.w_update = None
         self.postsyn = None
         self.src = None
@@ -1164,7 +888,7 @@ class SynapseGroup(Group):
         if not self.is_dense and self.weight_sharing_master is None:
             if self.is_ragged:
                 # If connectivity is located on host
-                conn_loc = self.pop.get_sparse_connectivity_location()
+                conn_loc = self.sparse_connectivity_location
                 if (conn_loc & VarLocation_HOST) != 0:
                     # Get pointers to ragged data structure members
                     ind = self._assign_ext_ptr_array("ind",
@@ -1346,7 +1070,7 @@ class SynapseGroup(Group):
             else:
                 raise Exception("Matrix format not supported")
 
-class CurrentSource(Group):
+class CurrentSourceMixin(GroupMixin):
 
     """Class representing a current injection into a group of neurons"""
 
@@ -1357,7 +1081,7 @@ class CurrentSource(Group):
         name    -- string name of the current source
         model   -- pygenn.genn_model.GeNNModel this current source is part of
         """
-        super(CurrentSource, self).__init__(name, model)
+        super(CurrentSourceMixin, self).__init__(name, model)
         self.current_source_model = None
         self.target_pop = None
 
@@ -1416,7 +1140,7 @@ class CurrentSource(Group):
         # Reinitialise current source state variables
         self._reinitialise_vars()
 
-class CustomUpdate(Group):
+class CustomUpdateMixin(GroupMixin):
 
     """Class representing a custom update"""
 
@@ -1427,7 +1151,7 @@ class CustomUpdate(Group):
         name    -- string name of the custom update
         model   -- pygenn.genn_model.GeNNModel this custom update is part of
         """
-        super(CustomUpdate, self).__init__(name, model)
+        super(CustomUpdateMixin, self).__init__(name, model)
         self.custom_update_model = None
         self.var_refs = {}
         self.custom_wu_update = False

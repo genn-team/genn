@@ -7,13 +7,14 @@ from numbers import Number
 from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iterkeys, itervalues
+"""
 from . import genn_wrapper
 from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
                                   VarInitVector, VarRefVector, 
                                   VarReferenceVector, WUVarReferenceVector)
 from .genn_wrapper.StlContainers import DoubleVector
-
-def prepare_model(model, group, param_space, var_space, model_family):
+"""
+def prepare_model(model, group, param_space, var_space, model_module):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
 
@@ -22,35 +23,22 @@ def prepare_model(model, group, param_space, var_space, model_family):
     group           --  group model will belong to
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
-    var_ref_space   --  optional dict with (custom update) model
-                        variable references
-    model_family    --  pygenn.genn_wrapper.NeuronModels or pygenn.genn_wrapper.WeightUpdateModels or pygenn.genn_wrapper.CurrentSourceModels
+    model_module    --  Module which should contain base class for models and functions to get built in models
 
     Returns:
-    tuple consisting of (model instance, model type, model parameter names,
-                         model parameters, list of variable names,
-                         dict mapping names of variables to instances of class Variable)
+    tuple consisting of (model instance, dict mapping names of variables to 
+    instances of class Variable, dict mapping names of egps to class ExtraGlobalParameter)
 
     """
-    m_instance, m_type = is_model_valid(model, model_family)
-    param_names = list(m_instance.get_param_names())
-    if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter values for {0}".format(
-            model_family.__name__))
-    params = param_space_to_vals(m_instance, param_space)
+    m_instance = is_model_valid(model, model_module)
 
-    var_names = [vnt.name for vnt in m_instance.get_vars()]
-    if set(iterkeys(var_space)) != set(var_names):
-        raise ValueError("Invalid variable initializers for {0}".format(
-            model_family.__name__))
     vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
             for vnt in m_instance.get_vars()}
 
     egps = {egp.name: ExtraGlobalParameter(egp.name, egp.type, group)
             for egp in m_instance.get_extra_global_params()}
 
-    return (m_instance, m_type, param_names, params,
-            var_names, vars, egps)
+    return (m_instance, vars, egps)
 
 def prepare_snippet(snippet, param_space, snippet_family):
     """Prepare a snippet by checking its validity and extracting
@@ -77,7 +65,7 @@ def prepare_snippet(snippet, param_space, snippet_family):
     return (s_instance, s_type, param_names, params)
 
 
-def is_model_valid(model, model_family):
+def is_model_valid(model, model_module):
     """Check whether the model is valid, i.e is native or derived
     from model_family.Custom
 
@@ -92,23 +80,15 @@ def is_model_valid(model, model_family):
     Raises ValueError if model is not valid (i.e. is not custom and is
     not natively available)
     """
-
-    if not isinstance(model, str):
-        if not isinstance(model, model_family.Custom):
-            model_type = type(model).__name__
-            if not hasattr(model_family, model_type):
-                raise ValueError("model '{0}' is not "
-                                 "supported".format(model_type))
-        else:
-            model_type = "Custom"
+    
+    # If model is a string
+    if isinstance(model, str):
+        # Get function with this name from module and call it 
+        return getattr(model_module, model_type)()
+    elif isinstance(model, model_module.Base):
+        return model
     else:
-        model_type = model
-        if not hasattr(model_family, model_type):
-            raise ValueError("model '{0}' is not supported".format(model_type))
-        else:
-            model = getattr(model_family, model_type).get_instance()
-    return model, model_type
-
+        raise Exception("Invalid model")
 
 def param_space_to_vals(model, param_space):
     """Convert a param_space dict to ParamValues
@@ -272,7 +252,7 @@ class Variable(object):
                 iter(values)
                 self.init_val = genn_wrapper.uninitialised_var()
                 self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type].np_dtype)
+                    values, dtype=self.group._model.genn_types[self.type])
                 self.init_required = True
                 self.extra_global_params = {}
             # Otherwise - they can be initialised on device as a scalar
@@ -327,7 +307,7 @@ class ExtraGlobalParameter(object):
             try:
                 iter(values)
                 self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type].np_dtype)
+                    values, dtype=self.group._model.genn_types[self.type])
             # Otherwise give an error
             except TypeError:
                 raise ValueError("extra global variables can only be "
