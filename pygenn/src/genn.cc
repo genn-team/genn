@@ -235,7 +235,10 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def_property_readonly("name", &NeuronGroup::getName)
         .def_property_readonly("num_neurons", &NeuronGroup::getNumNeurons)
-
+        .def_property_readonly("neuron_model", &NeuronGroup::getNeuronModel)
+        .def_property_readonly("params", &NeuronGroup::getParams)
+        .def_property_readonly("var_initialisers", &NeuronGroup::getVarInitialisers)
+        
         .def_property("spike_location", &NeuronGroup::getSpikeLocation, &NeuronGroup::setSpikeLocation)
         .def_property("spike_event_location", &NeuronGroup::getSpikeEventLocation, &NeuronGroup::setSpikeEventLocation)
         .def_property("spike_time_location", &NeuronGroup::getSpikeTimeLocation, &NeuronGroup::setSpikeTimeLocation)
@@ -244,7 +247,7 @@ PYBIND11_MODULE(genn, m)
         .def_property("prev_spike_event_time_location", &NeuronGroup::getPrevSpikeEventTimeLocation, &NeuronGroup::setPrevSpikeEventTimeLocation)
         .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
         .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
-
+        
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
