@@ -121,7 +121,7 @@ class GroupMixin(object):
         internal_var_name = var_name + self.name
 
         if var_type == "scalar":
-            var_type = self._model._scalar
+            var_type = self._model.precision
 
         # Get numpy data type corresponding to type string
         dtype = self._model.genn_types[var_type]
@@ -130,8 +130,10 @@ class GroupMixin(object):
         num_bytes = np.dtype(dtype).itemsize * var_size
         
         # Get dtype view of array memoryview
-        return self._model._slm.get_array(internal_var_name, 
-                                          num_bytes).view(dtype)
+        array = np.asarray(self._model._slm.get_array(
+            internal_var_name, num_bytes)).view(dtype)
+        assert not array.flags["OWNDATA"]
+        return array
 
     def _assign_ext_ptr_single(self, var_name, var_type):
         """Assign a variable to an external scalar value containing one element
@@ -152,14 +154,16 @@ class GroupMixin(object):
         internal_var_name = var_name + self.name
 
         if var_type == "scalar":
-            var_type = self._model._scalar
+            var_type = self._model.precision
 
         # Get numpy data type corresponding to type string
         dtype = self._model.genn_types[var_type]
         
-        # Get dtype view of scalar memoryview
-        return self._model._slm.get_array(internal_var_name, 
-                                          np.dtype(dtype).itemsize).view(dtype)
+        # Get dtype view of array memoryview
+        array = np.asarray(self._model._slm.get_scalar(
+            internal_var_name, np.dtype(dtype).itemsize)).view(dtype)
+        assert not array.flags["OWNDATA"]
+        return array
 
     def _push_extra_global_param_to_device(self, egp_name, egp_dict=None):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
@@ -289,7 +293,7 @@ class NeuronGroupMixin(GroupMixin):
 
     """Class representing a group of neurons"""
 
-    def _init_group(self, model):
+    def _init_group(self, model, var_space):
         """Init NeuronGroup
 
         Args:
@@ -300,7 +304,7 @@ class NeuronGroupMixin(GroupMixin):
         self.spike_que_ptr = [0]
         
         self.vars, self.extra_global_params = prepare_model(
-            self.neuron_model, self, self.params, self.var_initialisers)
+            self.neuron_model, self, self.params, var_space)
 
     @property
     def spike_recording_data(self):
@@ -313,7 +317,7 @@ class NeuronGroupMixin(GroupMixin):
     # **TODO** deprecated
     @property
     def size(self):
-        return self.num_neurons()
+        return self.num_neurons
 
     def load(self, num_recording_timesteps):
         """Loads neuron group"""
@@ -340,7 +344,7 @@ class NeuronGroupMixin(GroupMixin):
             self._spike_event_recording_data = self._assign_ext_ptr_array(
                 "recordSpkEvent", recording_words, "uint32_t")
 
-        if self.delay_slots > 1:
+        if self.num_delay_slots > 1:
             self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
                 "spkQuePtr" + self.name)
 
@@ -362,11 +366,11 @@ class NeuronGroupMixin(GroupMixin):
         # Get view
         batch_size = self._model.batch_size
         view = self._assign_ext_ptr_array(
-            name, self.size * self.delay_slots * batch_size,
+            name, self.size * self.num_delay_slots * batch_size,
             self._model.time_precision)
 
         # Reshape to expose delay slots and batches
-        view = np.reshape(view, (batch_size, self.delay_slots,
+        view = np.reshape(view, (batch_size, self.num_delay_slots,
                                  self.size))
         return view
 
@@ -1061,55 +1065,23 @@ class CurrentSourceMixin(GroupMixin):
 
     """Class representing a current injection into a group of neurons"""
 
-    def __init__(self, name, model):
-        """Init CurrentSource
+    def _init_group(self, model, var_space, target_pop):
+        """Init NeuronGroup
 
         Args:
-        name    -- string name of the current source
-        model   -- pygenn.genn_model.GeNNModel this current source is part of
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
-        super(CurrentSourceMixin, self).__init__(name, model)
-        self.current_source_model = None
-        self.target_pop = None
-
+        super(CurrentSourceMixin, self)._init_group(model)
+        self.target_pop = target_pop
+        self.vars, self.extra_global_params = prepare_model(
+            self.current_source_model, self, self.params, var_space)
+        
     @property
     def size(self):
         """Number of neuron in the injected population"""
         return self.target_pop.size
 
-    @size.setter
-    def size(self, _):
-        pass
-
-    def set_current_source_model(self, model, param_space, var_space):
-        """Set current source model, its parameters and initial variables
-
-        Args:
-        model       --  type as string of intance of the model
-        param_space --  dict with model parameters
-        var_space   --  dict with model variables
-        """
-        (self.current_source_model, self.type, self.param_names, self.params,
-         self.var_names, self.vars, self.extra_global_params) =\
-             model_preprocessor.prepare_model(
-                model, self, param_space, var_space,
-                model_family=genn_wrapper.CurrentSourceModels)
-
-    def add_to(self, pop):
-        """Attach this CurrentSource to NeuronGroup and
-        add it to the pygenn.genn_model.GeNNModel
-
-        Args:
-        pop         --  instance of NeuronGroup into which this CurrentSource
-                        should be injected
-        """
-        add_fct = getattr(self._model._model, "add_current_source_" + self.type)
-        self.target_pop = pop
-
-        var_ini = model_preprocessor.var_space_to_vals(
-            self.current_source_model, self.vars)
-        self.pop = add_fct(self.name, self.current_source_model, pop.name,
-                           self.params, var_ini)
 
     def load(self):
         # Load current source variables
@@ -1121,11 +1093,6 @@ class CurrentSourceMixin(GroupMixin):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
-
-    def reinitialise(self):
-        """Reinitialise current source"""
-        # Reinitialise current source state variables
-        self._reinitialise_vars()
 
 class CustomUpdateMixin(GroupMixin):
 

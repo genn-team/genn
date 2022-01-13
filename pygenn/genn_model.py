@@ -40,6 +40,7 @@ run a simulation using GeNNModel::
 """
 # python imports
 from collections import OrderedDict
+from deprecated import deprecated
 from importlib import import_module
 from os import path
 from platform import system
@@ -54,14 +55,16 @@ import numpy as np
 from six import iteritems, itervalues, string_types
 
 # pygenn imports
-from .genn import (CurrentSource, ModelSpecInternal, NeuronGroup, PlogSeverity,
-                   SynapseGroup, VarLocation)
+from .genn import (generate_code, init_logging, CurrentSource, 
+                   CurrentSourceModelBase, ModelSpecInternal, NeuronGroup,
+                   NeuronModelBase, PlogSeverity, ScalarPrecision, 
+                   SynapseGroup, TimePrecision, VarLocation)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
-from .genn_groups import NeuronGroupMixin
-from .model_preprocessor import get_model
-from . import neuron_models
+from .genn_groups import CurrentSourceMixin, NeuronGroupMixin
+from .model_preprocessor import get_model, get_var_init
+from . import current_source_models, neuron_models
 
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
@@ -81,6 +84,7 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
 
 # Dynamically add Python mixin to wrapped class
 NeuronGroup.__bases__ += (NeuronGroupMixin,)
+CurrentSource.__bases__ += (CurrentSourceMixin,)
 
 class GeNNModel(ModelSpecInternal):
     """GeNNModel class
@@ -113,43 +117,37 @@ class GeNNModel(ModelSpecInternal):
         # Based on time precision, create correct type 
         # of SLM class and determine GeNN time type 
         # **NOTE** all SLM uses its template parameter for is time variable
-        self._time_precision = precision if time_precision is None else time_precision
-        if self._time_precision == "float":
+        time_precision = precision if time_precision is None else time_precision
+        if time_precision == "float":
             self._slm = SharedLibraryModelFloat()
-            genn_time_type = "TimePrecision_FLOAT"
-        elif self._time_precision == "double":
+            self.time_precision = TimePrecision.FLOAT
+        elif time_precision == "double":
             self._slm = SharedLibraryModelDouble()
-            genn_time_type = "TimePrecision_DOUBLE"
+            self.time_precision = TimePrecision.DOUBLE
         else:
             raise ValueError(
                 "Supported time precisions are float and double, "
                 "but '{1}' was given".format(self._time_precision))
 
-        # Store precision in class and determine GeNN scalar type
-        """
-        TODO
-        self._scalar = precision
+        # Set scalar type from precision
         if precision == "float":
-            genn_scalar_type = "GENN_FLOAT"
+            self.precision = ScalarPrecision.FLOAT
         elif precision == "double":
-            genn_scalar_type = "GENN_DOUBLE"
+            self.precision = ScalarPrecision.DOUBLE
         else:
             raise ValueError(
                 "Supported precisions are float and double, "
                 "but '{1}' was given".format(precision))
 
         # Initialise GeNN logging
-        genn_wrapper.init_logging(genn_log_level, code_gen_log_level)
-        """
+        init_logging(genn_log_level, code_gen_log_level)
+        
         self._built = False
         self._loaded = False
         self.backend_name = backend
         self._preferences = preference_kwargs
         self.backend_log_level = backend_log_level
-        #self._model = genn_wrapper.ModelSpecInternal()
-        #self._model.set_precision(getattr(genn_wrapper, genn_scalar_type))
-        #self._model.set_time_precision(getattr(genn_wrapper, genn_time_type))
-        
+
         # Set model properties
         self.name = model_name
         
@@ -204,29 +202,39 @@ class GeNNModel(ModelSpecInternal):
         else:
             self._backend_name = backend_name
             self._backend_module = backend_modules[backend_name]
-
+    
+    @property
+    @deprecated("The name of this property was inconsistent, use dt instead")
+    def dT(self):
+        return self.dt
+    
+    @dT.setter
+    @deprecated("The name of this property was inconsistent, use dt instead")
+    def dT(self, dt):
+        self.dt = dt
+    
     # **TODO** is there a better way of exposing inner class properties?
     @property
     def t(self):
         """Simulation time in ms"""
-        return self._slm.get_time()
+        return self._slm.time
 
     @t.setter
     def t(self, t):
-        self._slm.set_time(t)
+        self._slm.time = t
 
     @property
     def timestep(self):
         """Simulation time step"""
-        return self._slm.get_timestep()
+        return self._slm.timestep
 
     @timestep.setter
     def timestep(self, timestep):
-        self._slm.set_timestep(timestep)
+        self._slm.timestep = timestep
 
     @property
     def free_device_mem_bytes(self):
-        return self._slm.get_free_device_mem_bytes();
+        return self._slm.free_device_mem_bytes;
 
     @property
     def neuron_update_time(self):
@@ -277,15 +285,17 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already built")
 
         # Resolve neuron model
-        neuron = get_model(neuron, neuron_models)
-
+        neuron = get_model(neuron, NeuronModelBase, neuron_models)
+        
+        # Extract parts of var_space which should be initialised by GeNN
+        var_init = get_var_init(var_space)
+        
         # Use superclass to add population
         n_group = super(GeNNModel, self).add_neuron_population(
-            pop_name, int(num_neurons), neuron, param_space, var_space)
+            pop_name, int(num_neurons), neuron, param_space, var_init)
         
         # Initialise group, store group in dictionary and return
-        n_group._init_group(self)
-        n_group._model = proxy(self)
+        n_group._init_group(self, var_space)
         self.neuron_populations[pop_name] = n_group
         return n_group
 
@@ -375,13 +385,19 @@ class GeNNModel(ModelSpecInternal):
         # **TODO** remove once underlying 
         pop = self._validate_neuron_group(pop, "pop")
 
+        # Resolve current source model
+        current_source_model = get_model(current_source_model, CurrentSourceModelBase,
+                                         current_source_models)
+        
+        # Extract parts of var_space which should be initialised by GeNN
+        var_init = get_var_init(var_space)
+        
         # Use superclass to add population
         c_source = super(GeNNModel, self).add_current_source(
-            cs_name, current_source_model, pop,
-            param_space, var_space)
+            cs_name, current_source_model, pop.name, param_space, var_init)
         
-        # Setup back-reference, store group in dictionary and return
-        c_source._model = proxy(self)
+        # Initialise group, store group in dictionary and return
+        c_source._init_group(self, var_space, pop)
         self.current_sources[cs_name] = c_source
         return c_source
     
@@ -432,7 +448,7 @@ class GeNNModel(ModelSpecInternal):
         self._path_to_model = path_to_model
 
         # Create output path
-        output_path = path.join(path_to_model, self.model_name + "_CODE")
+        output_path = path.join(path_to_model, self.name + "_CODE")
         share_path = path.join(path.split(__file__)[0], "share")
 
         # Finalize model
@@ -452,8 +468,8 @@ class GeNNModel(ModelSpecInternal):
                                                       preferences)
 
         # Generate code
-        mem_alloc = genn.generate_code(self, backend, 
-                                       share_path, output_path, force_rebuild)
+        mem_alloc = generate_code(self, backend, share_path,
+                                  output_path, force_rebuild)
 
         # Build code
         if system() == "Windows":
@@ -471,7 +487,7 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already loaded")
         self._path_to_model = path_to_model
 
-        self._slm.open(self._path_to_model, self.model_name)
+        self._slm.open(self._path_to_model, self.name)
 
         self._slm.allocate_mem()
 

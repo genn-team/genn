@@ -4,6 +4,7 @@
 
 // Plog includes
 #include <plog/Severity.h>
+#include <plog/Appenders/ConsoleAppender.h>
 
 // GeNN includes
 #include "currentSource.h"
@@ -190,6 +191,12 @@ CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::Ba
 #endif
     return output.second;
 }
+
+void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel)
+{
+    auto *consoleAppender = new plog::ConsoleAppender<plog::TxtFormatter>;
+    Logging::init(gennLevel, codeGeneratorLevel, consoleAppender, consoleAppender);
+}
 }
 
 //----------------------------------------------------------------------------
@@ -291,11 +298,24 @@ PYBIND11_MODULE(genn, m)
     pybind11::enum_<SynapseGroup::SpanType>(m, "SpanType")
         .value("POSTSYNAPTIC", SynapseGroup::SpanType::POSTSYNAPTIC)
         .value("PRESYNAPTIC", SynapseGroup::SpanType::PRESYNAPTIC);
-        
+    
+    //! Precision to use for scalar type variables 
+    pybind11::enum_<ScalarPrecision>(m, "ScalarPrecision")
+        .value("FLOAT", ScalarPrecision::FLOAT)
+        .value("DOUBLE", ScalarPrecision::DOUBLE)
+        .value("LONG_DOUBLE", ScalarPrecision::LONG_DOUBLE);
+
+    //! Precision to use for variables which store time
+    pybind11::enum_<TimePrecision>(m, "TimePrecision")
+        .value("DEFAULT", TimePrecision::DEFAULT)
+        .value("FLOAT", TimePrecision::FLOAT)
+        .value("DOUBLE", TimePrecision::DOUBLE);
+    
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
     m.def("generate_code", &generateCode, pybind11::return_value_policy::move);
+    m.def("init_logging", &initLogging);
 
     //------------------------------------------------------------------------
     // genn.ModelSpec
@@ -360,6 +380,9 @@ PYBIND11_MODULE(genn, m)
         // Properties
         //--------------------------------------------------------------------
         .def_property_readonly("name", &CurrentSource::getName)
+        .def_property_readonly("current_source_model", &CurrentSource::getCurrentSourceModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("params", &CurrentSource::getParams)
+        .def_property_readonly("var_initialisers", &CurrentSource::getVarInitialisers)
 
         //--------------------------------------------------------------------
         // Methods
@@ -379,13 +402,8 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("neuron_model", &NeuronGroup::getNeuronModel, pybind11::return_value_policy::reference)
         .def_property_readonly("params", &NeuronGroup::getParams)
         .def_property_readonly("var_initialisers", &NeuronGroup::getVarInitialisers)
+        .def_property_readonly("num_delay_slots", &NeuronGroup::getNumDelaySlots)
         
-        .def_property("spike_location", &NeuronGroup::getSpikeLocation, &NeuronGroup::setSpikeLocation)
-        .def_property("spike_event_location", &NeuronGroup::getSpikeEventLocation, &NeuronGroup::setSpikeEventLocation)
-        .def_property("spike_time_location", &NeuronGroup::getSpikeTimeLocation, &NeuronGroup::setSpikeTimeLocation)
-        .def_property("prev_spike_time_location", &NeuronGroup::getPrevSpikeTimeLocation, &NeuronGroup::setPrevSpikeTimeLocation)
-        .def_property("spike_event_time_location", &NeuronGroup::getSpikeEventTimeLocation, &NeuronGroup::setSpikeEventTimeLocation)
-        .def_property("prev_spike_event_time_location", &NeuronGroup::getPrevSpikeEventTimeLocation, &NeuronGroup::setPrevSpikeEventTimeLocation)
         .def_property("spike_recording_enabled", &NeuronGroup::isSpikeRecordingEnabled, &NeuronGroup::setSpikeRecordingEnabled)
         .def_property("spike_event_recording_enabled", &NeuronGroup::isSpikeEventRecordingEnabled, &NeuronGroup::setSpikeEventRecordingEnabled)
         
