@@ -421,6 +421,19 @@ PYBIND11_MODULE(genn, m)
         // Properties
         //--------------------------------------------------------------------
         .def_property_readonly("name", &SynapseGroup::getName)
+        .def_property_readonly("wu_model", &SynapseGroup::getWUModel)
+        .def_property_readonly("wu_params", &SynapseGroup::getWUParams)
+        .def_property_readonly("wu_var_initialisers", &SynapseGroup::getWUVarInitialisers)
+        .def_property_readonly("wu_pre_var_initialisers", &SynapseGroup::getWUPreVarInitialisers)
+        .def_property_readonly("wu_post_var_initialisers", &SynapseGroup::getWUPostVarInitialisers)
+        .def_property_readonly("ps_model", &SynapseGroup::getPSModel)
+        .def_property_readonly("ps_params", &SynapseGroup::getPSParams)
+        .def_property_readonly("ps_var_initialisers", &SynapseGroup::getPSVarInitialisers)
+        .def_property_readonly("kernel_size", &SynapseGroup::getKernelSize)
+        .def_property_readonly("matrix_type", &SynapseGroup::getMatrixType)
+        .def_property_readonly("sparse_connectivity_initialiser", &SynapseGroup::getConnectivityInitialiser)
+        .def_property_readonly("toeplitz_connectivity_initialiser", &SynapseGroup::getToeplitzConnectivityInitialiser)
+    
         .def_property("ps_target_var", &SynapseGroup::getPSTargetVar, &SynapseGroup::setPSTargetVar)
         .def_property("pre_target_var", &SynapseGroup::getPreTargetVar, &SynapseGroup::setPreTargetVar)
         .def_property("in_syn_location", &SynapseGroup::getInSynLocation, &SynapseGroup::setInSynVarLocation)
@@ -433,13 +446,22 @@ PYBIND11_MODULE(genn, m)
         .def_property("num_threads_per_spike",&SynapseGroup::getNumThreadsPerSpike, &SynapseGroup::setNumThreadsPerSpike)
         .def_property("back_prop_delay_steps",&SynapseGroup::getBackPropDelaySteps, &SynapseGroup::setBackPropDelaySteps)
         .def_property("narrow_sparse_ind_enabled",nullptr, &SynapseGroup::setNarrowSparseIndEnabled)
-
+        // **NOTE** we use the 'publicist' pattern to expose some protected properties
+        .def_property_readonly("_ps_model_fused", &SynapseGroupInternal::isPSModelFused)
+        .def_property_readonly("_wu_pre_model_fused", &SynapseGroupInternal::isWUPreModelFused)
+        .def_property_readonly("_wu_post_model_fused", &SynapseGroupInternal::isWUPostModelFused)
+        .def_property_readonly("_sparse_ind_type", &SynapseGroupInternal::getSparseIndType)
+        
         //--------------------------------------------------------------------
         // Methods
         //--------------------------------------------------------------------
+        .def("get_wu_var_location", &SynapseGroup::getWUVarLocation)
         .def("set_wu_var_location", &SynapseGroup::setWUVarLocation)
+        .def("get_wu_pre_var_location", &SynapseGroup::getWUPreVarLocation)
         .def("set_wu_pre_var_location", &SynapseGroup::setWUPreVarLocation)
+        .def("get_wu_post_var_location", &SynapseGroup::getWUPostVarLocation)
         .def("set_wu_post_var_location", &SynapseGroup::setWUPostVarLocation)
+        .def("get_ps_var_location", &SynapseGroup::getPSVarLocation)
         .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
     
     //------------------------------------------------------------------------

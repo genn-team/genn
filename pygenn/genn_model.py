@@ -59,12 +59,15 @@ from .genn import (generate_code, init_logging, CurrentSource,
                    CurrentSourceModelBase, InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                    ModelSpecInternal, NeuronGroup, NeuronModelBase, 
-                   PlogSeverity, ScalarPrecision, SynapseGroup, TimePrecision,
-                   VarInit, VarLocation)
+                   PlogSeverity, PostsynapticModelBase, ScalarPrecision, 
+                   SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
+                   TimePrecision, ToeplitzConnectivityInit, VarInit, 
+                   VarLocation, WeightUpdateModelBase)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
-from .genn_groups import CurrentSourceMixin, NeuronGroupMixin
+from .genn_groups import (CurrentSourceMixin, NeuronGroupMixin, 
+                          SynapseGroupMixin)
 from .model_preprocessor import get_snippet, get_var_init
 from . import (current_source_models, init_sparse_connectivity_snippets,
                init_toeplitz_connectivity_snippets, init_var_snippets,
@@ -87,8 +90,9 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
         backend_modules[b] = m
 
 # Dynamically add Python mixin to wrapped class
-NeuronGroup.__bases__ += (NeuronGroupMixin,)
 CurrentSource.__bases__ += (CurrentSourceMixin,)
+NeuronGroup.__bases__ += (NeuronGroupMixin,)
+SynapseGroup.__bases__ += (SynapseGroupMixin,)
 
 class GeNNModel(ModelSpecInternal):
     """GeNNModel class
@@ -313,15 +317,15 @@ class GeNNModel(ModelSpecInternal):
 
         Args:
         pop_name                    --  name of the new population
-        matrix_type                 --  type of the matrix as string
+        matrix_type                 --  SynapseMatrixType describing type of the matrix
         delay_steps                 --  delay in number of steps
         source                      --  source neuron group (either name or NeuronGroup object)
         target                      --  target neuron group (either name or NeuronGroup object)
         w_update_model              --  type of the WeightUpdateModels class
                                         as string or instance of weight update
                                         model class derived from
-                                        ``pygenn.genn_wrapper.WeightUpdateModels.Custom`` (see also
-                                        pygenn.genn_model.create_custom_weight_update_class)
+                                        ``WeightUpdateModelBase`` (see also
+                                        pygenn.create_custom_weight_update_class)
         wu_param_space              --  dict with param values for the
                                         WeightUpdateModels class
         wu_var_space                --  dict with initial values for
@@ -333,14 +337,15 @@ class GeNNModel(ModelSpecInternal):
         postsyn_model               --  type of the PostsynapticModels class
                                         as string or instance of postsynaptic
                                         model class derived from
-                                        ``pygenn.genn_wrapper.PostsynapticModels.Custom`` (see also
-                                        pygenn.genn_model.create_custom_postsynaptic_class)
+                                        ``PostsynapticModelBase`` (see also
+                                        pygenn.create_custom_postsynaptic_class)
         ps_param_space              --  dict with param values for the
                                         PostsynapticModels class
         ps_var_space                --  dict with initial variable values for
                                         the PostsynapticModels class
-        connectivity_initialiser    --  InitSparseConnectivitySnippet::Init
-                                        for connectivity
+        connectivity_initialiser    --  SparseConnectivityInit or 
+                                        ToeplitzConnectivityInit used to 
+                                        configure connectivity
         """
         if self._built:
             raise Exception("GeNN model already built")
@@ -350,17 +355,38 @@ class GeNNModel(ModelSpecInternal):
         source = self._validate_neuron_group(source, "source")
         target = self._validate_neuron_group(target, "target")
         
+        # If matrix type is a string, loop up enumeration value
+        if isinstance(matrix_type, string_types):
+            matrix_type = getattr(SynapseMatrixType, matrix_type)
+        
+        # If no connectivity initialiser is passed, 
+        # use unitialised sparse connectivity
+        if connectivity_initialiser is None:
+            connectivity_initialiser = init_sparse_connectivity(
+                init_sparse_connectivity_snippets.Uninitialised(), {})
+        
+        # Resolve postsynaptic and weight update models
+        postsyn_model = get_snippet(postsyn_model, PostsynapticModelBase, 
+                                    postsynaptic_models)
+        w_update_model = get_snippet(w_update_model, WeightUpdateModelBase, 
+                                     weight_update_models)
+        
+        # Extract parts of var spaces which should be initialised by GeNN
+        ps_var_init = get_var_init(ps_var_space)
+        wu_var_init = get_var_init(wu_var_space)
+        wu_pre_var_init = get_var_init(wu_pre_var_space)
+        wu_post_var_init = get_var_init(wu_post_var_space)
+        
         # Use superclass to add population
         s_group = super(GeNNModel, self).add_synapse_population(
-            pop_name, matrix_type, delay_steps,
-            source, target, w_update_model, wu_param_space,
-           wu_var_space, wu_pre_var_space,
-           wu_post_var_space, postsyn_model,
-           ps_param_space, ps_var_space,
-           connectivity_initialiser)
+            pop_name, matrix_type, delay_steps, source.name, target.name, 
+            w_update_model, wu_param_space, wu_var_init, wu_pre_var_init, wu_post_var_init,
+            postsyn_model, ps_param_space, ps_var_init,
+            connectivity_initialiser)
         
-        # Setup back-reference, store group in dictionary and return
-        s_group._model = proxy(self)
+        # Initialise group, store group in dictionary and return
+        s_group._init_group(self, ps_var_space, wu_var_space, wu_pre_var_space,
+                            wu_post_var_space, source, target)
         self.synapse_populations[pop_name] = s_group
         return s_group
 
@@ -563,66 +589,6 @@ class GeNNModel(ModelSpecInternal):
             
         self._slm.custom_update(name)
    
-    def pull_connectivity_from_device(self, pop_name):
-        """Pull connectivity from the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pulling")
-
-        self._slm.pull_connectivity_from_device(pop_name)
-
-    def push_spikes_to_device(self, pop_name):
-        """Push spikes to the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_spikes_to_device(pop_name)
-    
-    def push_spike_events_to_device(self, pop_name):
-        """Push spike events to the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_spike_events_to_device(pop_name)
-
-    def push_current_spikes_to_device(self, pop_name):
-        """Push current spikes to the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_current_spikes_to_device(pop_name)
-    
-    def push_current_spike_events_to_device(self, pop_name):
-        """Push current spike events to the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_current_spike_events_to_device(pop_name)
-
-    def push_connectivity_to_device(self, pop_name):
-        """Push connectivity to the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_connectivity_to_device(pop_name)
-
-    def push_var_to_device(self, pop_name, var_name):
-        """Push variable to the device for a given population"""
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_var_to_device(pop_name, var_name)
-
-    def push_extra_global_param_to_device(self, pop_name, egp_name, size=None):
-        """Push extra global parameter to the device for a given population"""
-        if size is None:
-            warn("The default of size=1 is very counter-intuitive and "
-                 "will be removed in future", DeprecationWarning)
-            size = 1
-
-        if not self._loaded:
-            raise Exception("GeNN model has to be loaded before pushing")
-
-        self._slm.push_extra_global_param(pop_name, egp_name, size)
 
     def pull_recording_buffers_from_device(self):
         """Pull recording buffers from device"""
@@ -717,7 +683,22 @@ def init_sparse_connectivity(init_sparse_connect_snippet, param_space):
                                               InitSparseConnectivitySnippetBase,
                                               init_sparse_connectivity_snippets)
     return SparseConnectivityInit(init_sparse_connect_snippet, param_space)
-    
+
+@deprecated("The name of this function was ambiguous, use init_sparse_connectivity instead")
+def init_connectivity(init_sparse_connect_snippet, param_space):
+    """This helper function creates a InitSparseConnectivitySnippet::Init
+    object to easily initialise connectivity using a snippet.
+
+    Args:
+    init_sparse_connect_snippet --  type of the InitSparseConnectivitySnippet
+                                    class as string or instance of class
+                                    derived from
+                                    InitSparseConnectivitySnippetBase
+    param_space                 --  dict with param values for the
+                                    InitSparseConnectivitySnippet class
+    """
+    return init_sparse_connectivity(init_sparse_connect_snippet, param_space)
+
 def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
     """This helper function creates a InitToeplitzConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.

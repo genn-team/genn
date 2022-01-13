@@ -6,19 +6,18 @@ and defines class Variable
 from numbers import Number
 from weakref import proxy, ProxyTypes
 import numpy as np
-from six import iteritems, iterkeys, itervalues
+from six import iteritems, iterkeys, itervalues, string_types
 
 from .genn import VarInit
 from .init_var_snippets import Uninitialised
 
-def prepare_model(model, group, param_space, var_space):
+def prepare_model(model, group, var_space):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
 
     Args:
     model           --  instance of a class derived from pygenn.genn.ModelBase
     group           --  group model will belong to
-    param_space     --  dict with model parameters
     var_space       --  dict with model variables
     model_module    --  Module which should contain base class for models and functions to get built in models
 
@@ -85,7 +84,7 @@ def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     
     # If model is a string, get function with 
     # this name from module and call it
-    if isinstance(snippet, str):
+    if isinstance(snippet, string_types):
         return getattr(built_in_snippet_module, snippet)()
     # Otherwise, if model is derived off correct 
     # base class, return it directly
