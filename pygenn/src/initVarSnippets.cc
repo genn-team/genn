@@ -5,22 +5,10 @@
 // GeNN includes
 #include "initVarSnippet.h"
 
-// PyGeNN includes
-#include "trampolines.h"
-
 using namespace InitVarSnippet;
 
 namespace
 {
-//----------------------------------------------------------------------------
-// PyInitVarSnippetBase
-//----------------------------------------------------------------------------
-class PyInitVarSnippetBase : public PySnippet<Base> 
-{
-public:
-    virtual std::string getCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_code", getCode); }
-};
-
 template<typename T>
 const Base *getBaseInstance()
 {
@@ -33,15 +21,7 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(init_var_snippets, m) 
 {
-    pybind11::module_::import("genn_wrapper.genn");
-
-    //------------------------------------------------------------------------
-    // init_var_snippets.Base
-    //------------------------------------------------------------------------
-    pybind11::class_<Base, Snippet::Base, PyInitVarSnippetBase>(m, "Base")
-        .def(pybind11::init<>())
-
-        .def("get_code", &Base::getCode);
+    pybind11::module_::import("pygenn.genn");
 
     //------------------------------------------------------------------------
     // Free functions

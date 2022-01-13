@@ -5,24 +5,10 @@
 // GeNN includes
 #include "postsynapticModels.h"
 
-// PyGeNN includes
-#include "trampolines.h"
-
 using namespace PostsynapticModels;
 
 namespace
 {
-//----------------------------------------------------------------------------
-// PyPostsynapticModelBase
-//----------------------------------------------------------------------------
-class PyPostsynapticModelBase : public PyModel<Base> 
-{
-public:
-    virtual std::string getDecayCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_decay_code", getDecayCode); }
-    virtual std::string getApplyInputCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_apply_input_code", getApplyInputCode); }
-    virtual std::string getSupportCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_support_code", getSupportCode); }
-};
-
 template<typename T>
 const Base *getBaseInstance()
 {
@@ -36,16 +22,6 @@ const Base *getBaseInstance()
 PYBIND11_MODULE(postsynaptic_models, m) 
 {
     pybind11::module_::import("pygenn.genn");
-
-    //------------------------------------------------------------------------
-    // postsynaptic_models.Base
-    //------------------------------------------------------------------------
-    pybind11::class_<Base, Models::Base, PyPostsynapticModelBase>(m, "Base")
-        .def(pybind11::init<>())
-
-        .def("get_decay_code", &Base::getDecayCode)
-        .def("get_apply_input_code", &Base::getApplyInputCode)
-        .def("get_support_code", &Base::getSupportCode);
 
     //------------------------------------------------------------------------
     // Free functions
