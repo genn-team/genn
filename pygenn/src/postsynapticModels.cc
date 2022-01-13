@@ -35,7 +35,7 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(postsynaptic_models, m) 
 {
-    pybind11::module_::import("genn_wrapper.genn");
+    pybind11::module_::import("pygenn.genn");
 
     //------------------------------------------------------------------------
     // postsynaptic_models.Base

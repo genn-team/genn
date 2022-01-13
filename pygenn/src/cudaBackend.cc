@@ -30,7 +30,7 @@ Backend createBackend(const ModelSpecInternal &model, const std::string &outputP
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(cuda_backend, m) 
 {
-    pybind11::module_::import("genn_wrapper.genn");
+    pybind11::module_::import("pygenn.genn");
     
     //------------------------------------------------------------------------
     // Enumerations

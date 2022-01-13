@@ -40,7 +40,7 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(neuron_models, m) 
 {
-    pybind11::module_::import("genn_wrapper.genn");
+    pybind11::module_::import("pygenn.genn");
 
     //------------------------------------------------------------------------
     // neuron_models.Base

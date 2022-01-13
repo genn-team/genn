@@ -36,7 +36,7 @@ const Base *getBaseInstance()
 //----------------------------------------------------------------------------
 PYBIND11_MODULE(init_toeplitz_connectivity_snippets, m) 
 {
-    pybind11::module_::import("genn_wrapper.genn");
+    pybind11::module_::import("pygenn.genn");
 
     //------------------------------------------------------------------------
     // init_toeplitz_connectivity_snippets.Base
