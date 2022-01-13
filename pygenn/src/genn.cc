@@ -9,6 +9,8 @@
 // GeNN includes
 #include "currentSource.h"
 #include "currentSourceModels.h"
+#include "customUpdate.h"
+#include "customUpdateModels.h"
 #include "initSparseConnectivitySnippet.h"
 #include "initToeplitzConnectivitySnippet.h"
 #include "initVarSnippet.h"
@@ -106,6 +108,18 @@ class PyCurrentSourceModelBase : public PyModel<CurrentSourceModels::Base>
     using Base = CurrentSourceModels::Base;
 public:
     virtual std::string getInjectionCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_injection_code", getInjectionCode); }
+};
+
+//----------------------------------------------------------------------------
+// PyCustomUpdateModelBase
+//----------------------------------------------------------------------------
+// 'Trampoline' class for custom update models
+class PyCustomUpdateModelBase : public PyModel<CustomUpdateModels::Base> 
+{
+    using Base = CustomUpdateModels::Base;
+public:
+    virtual VarRefVec getVarRefs() const override { PYBIND11_OVERRIDE_NAME(VarRefVec, Base, "get_var_refs", getVarRefs); }
+    virtual std::string getUpdateCode() const override { PYBIND11_OVERRIDE_NAME(std::string, Base, "get_update_code", getUpdateCode); }
 };
 
 //----------------------------------------------------------------------------
@@ -570,7 +584,16 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<CurrentSourceModels::Base, Models::Base, PyCurrentSourceModelBase>(m, "CurrentSourceModelBase")
         .def(pybind11::init<>())
 
-        .def("get_inection_code", &CurrentSourceModels::Base::getInjectionCode);
+        .def("get_injection_code", &CurrentSourceModels::Base::getInjectionCode);
+    
+    //------------------------------------------------------------------------
+    // genn.CustomUpdateModelBase
+    //------------------------------------------------------------------------
+    pybind11::class_<CustomUpdateModels::Base, Models::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
+        .def(pybind11::init<>())
+
+        .def("get_var_regs", &CustomUpdateModels::Base::getVarRefs)
+        .def("get_update_code", &CustomUpdateModels::Base::getUpdateCode);
     
     //------------------------------------------------------------------------
     // genn.NeuronModelBase
