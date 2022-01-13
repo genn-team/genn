@@ -40,7 +40,7 @@ ModelSpec::ModelSpec()
     m_DefaultSparseConnectivityLocation(VarLocation::HOST_DEVICE), m_DefaultNarrowSparseIndEnabled(false),
     m_ShouldFusePostsynapticModels(false), m_ShouldFusePrePostWeightUpdateModels(false), m_BatchSize(1)
 {
-    setPrecision(GENN_FLOAT);
+    setPrecision(ScalarPrecision::FLOAT);
 }
 
 ModelSpec::~ModelSpec() 
@@ -180,23 +180,21 @@ CustomUpdateWU *ModelSpec::addCustomUpdate(const std::string &name, const std::s
 }
 
 //--------------------------------------------------------------------------
-/*! \brief This function sets the numerical precision of floating type variables. By default, it is GENN_GENN_FLOAT.
+/*! \brief This function sets the numerical precision of floating type variables. By default, it is ScalarPrecision::FLOAT
  */
 //--------------------------------------------------------------------------
-void ModelSpec::setPrecision(FloatType floattype /**<  */)
+void ModelSpec::setPrecision(ScalarPrecision scalarPrecision)
 {
-    switch (floattype) {
-    case GENN_FLOAT:
+    switch (scalarPrecision) {
+    case ScalarPrecision::FLOAT:
         m_Precision = "float";
         break;
-    case GENN_DOUBLE:
+    case ScalarPrecision::DOUBLE:
         m_Precision = "double"; // not supported by compute capability < 1.3
         break;
-    case GENN_LONG_DOUBLE:
+    case ScalarPrecision::LONG_DOUBLE:
         m_Precision = "long double"; // not supported by CUDA at the moment.
-        break;
-    default:
-        throw std::runtime_error("Unrecognised floating-point type.");
+        break;    
     }
 }
 
