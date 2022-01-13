@@ -64,33 +64,35 @@ def get_var_init(var_space):
     return var_init
             
     
-def get_model(model, model_base_class, built_in_model_module):
+def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     """Check whether the model is valid, i.e is native or derived
     from model_family.Custom
 
     Args:
-    model                   -- string or instance of pygenn.genn.ModelBase
-    model_base_class        -- base class model SHOULD have 
-    built_in_model_module   -- module (neuron_models, postsynaptic_models etc) 
-                               where built in models should be looked up
+    model                   -- string or instance of pygenn.genn.SnippetBase
+    snippet_base_class      -- if model is an instance, base class it SHOULD have 
+    built_in_snippet_module -- if model is a string, module which should be searched
+                               for built in snippet
 
     Returns:
-    instance of the model and its type as string
+    instance of the snippet and its type as string
 
-    Raises ValueError if model is not valid (i.e. is not custom and is
-    not natively available)
+    Raises:
+    AttributeError  -- if snippet specified by name doesn't exist
+    Exception       -- if something other than a string or object derived 
+                       from snippet_base_class is provided
     """
     
     # If model is a string, get function with 
     # this name from module and call it
-    if isinstance(model, str):
-        return getattr(built_in_model_module, model)()
+    if isinstance(snippet, str):
+        return getattr(built_in_snippet_module, snippet)()
     # Otherwise, if model is derived off correct 
     # base class, return it directly
-    elif isinstance(model, model_base_class):
+    elif isinstance(snippet, snippet_base_class):
         return model
     else:
-        raise Exception("Invalid model")
+        raise Exception("Invalid snippet")
 
 class Variable(object):
 

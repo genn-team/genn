@@ -12,7 +12,7 @@ Example:
 The following example shows in a (very) simplified manner how to build and
 run a simulation using GeNNModel::
 
-    from pygenn.genn_model import GeNNModel
+    from pygenn import GeNNModel
     gm = GeNNModel("float", "test")
 
     # add populations
@@ -56,15 +56,19 @@ from six import iteritems, itervalues, string_types
 
 # pygenn imports
 from .genn import (generate_code, init_logging, CurrentSource, 
-                   CurrentSourceModelBase, ModelSpecInternal, NeuronGroup,
-                   NeuronModelBase, PlogSeverity, ScalarPrecision, 
-                   SynapseGroup, TimePrecision, VarLocation)
+                   CurrentSourceModelBase, InitSparseConnectivitySnippetBase,
+                   InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase, 
+                   PlogSeverity, ScalarPrecision, SynapseGroup, TimePrecision,
+                   VarInit, VarLocation)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
 from .genn_groups import CurrentSourceMixin, NeuronGroupMixin
-from .model_preprocessor import get_model, get_var_init
-from . import current_source_models, neuron_models
+from .model_preprocessor import get_snippet, get_var_init
+from . import (current_source_models, init_sparse_connectivity_snippets,
+               init_toeplitz_connectivity_snippets, init_var_snippets,
+               neuron_models, postsynaptic_models, weight_update_models)
 
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
@@ -285,7 +289,7 @@ class GeNNModel(ModelSpecInternal):
             raise Exception("GeNN model already built")
 
         # Resolve neuron model
-        neuron = get_model(neuron, NeuronModelBase, neuron_models)
+        neuron = get_snippet(neuron, NeuronModelBase, neuron_models)
         
         # Extract parts of var_space which should be initialised by GeNN
         var_init = get_var_init(var_space)
@@ -386,8 +390,8 @@ class GeNNModel(ModelSpecInternal):
         pop = self._validate_neuron_group(pop, "pop")
 
         # Resolve current source model
-        current_source_model = get_model(current_source_model, CurrentSourceModelBase,
-                                         current_source_models)
+        current_source_model = get_snippet(current_source_model, CurrentSourceModelBase,
+                                           current_source_models)
         
         # Extract parts of var_space which should be initialised by GeNN
         var_init = get_var_init(var_space)
@@ -684,19 +688,19 @@ def init_var(init_var_snippet, param_space):
     Args:
     init_var_snippet    --  type of the InitVarSnippet class as string or
                             instance of class derived from
-                            InitVarSnippet::Custom class.
+                            InitVarSnippetBase class.
     param_space         --  dict with param values for the InitVarSnippet class
     """
-    # Prepare snippet
-    (s_instance, s_type, param_names, params) = \
-        prepare_snippet(init_var_snippet, param_space,
-                        genn_wrapper.InitVarSnippet)
+    # Get snippet and wrap in VarInit object
+    init_var_snippet = get_snippet(init_var_snippet,
+                                   InitVarSnippetBase,
+                                   init_var_snippets)
 
     # Use add function to create suitable VarInit
-    return genn.VarInit(s_instance, params)
+    return VarInit(init_var_snippet, param_space)
 
 
-def init_connectivity(init_sparse_connect_snippet, param_space):
+def init_sparse_connectivity(init_sparse_connect_snippet, param_space):
     """This helper function creates a InitSparseConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
 
@@ -704,18 +708,16 @@ def init_connectivity(init_sparse_connect_snippet, param_space):
     init_sparse_connect_snippet --  type of the InitSparseConnectivitySnippet
                                     class as string or instance of class
                                     derived from
-                                    InitSparseConnectivitySnippet::Custom.
+                                    InitSparseConnectivitySnippetBase
     param_space                 --  dict with param values for the
                                     InitSparseConnectivitySnippet class
     """
-    # Prepare snippet
-    (s_instance, s_type, param_names, params) = \
-        prepare_snippet(init_sparse_connect_snippet, param_space,
-                        genn_wrapper.InitSparseConnectivitySnippet)
-
-    # Use add function to create suitable VarInit
-    return genn.InitSparse(s_instance, params)
-
+    # Get snippet and wrap in SparseConnectivityInit object
+    init_sparse_connect_snippet = get_snippet(init_sparse_connect_snippet,
+                                              InitSparseConnectivitySnippetBase,
+                                              init_sparse_connectivity_snippets)
+    return SparseConnectivityInit(init_sparse_connect_snippet, param_space)
+    
 def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
     """This helper function creates a InitToeplitzConnectivitySnippet::Init
     object to easily initialise connectivity using a snippet.
@@ -724,17 +726,15 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
     init_toeplitz_connect_snippet   -- type of the InitToeplitzConnectivitySnippet
                                        class as string or instance of class
                                        derived from
-                                       InitSparseConnectivitySnippet::Custom.
+                                       InitSparseConnectivitySnippetBase
     param_space                     -- dict with param values for the
                                        InitToeplitzConnectivitySnippet class
     """
-    # Prepare snippet
-    (s_instance, s_type, param_names, params) = \
-        prepare_snippet(init_toeplitz_connect_snippet, param_space,
-                        genn_wrapper.InitToeplitzConnectivitySnippet)
-
-    # Use add function to create suitable VarInit
-    return InitToeplitz(s_instance, params)
+    # Get snippet and wrap in InitToeplitzConnectivitySnippet object
+    init_toeplitz_connect_snippet = get_snippet(init_toeplitz_connect_snippet,
+                                                InitToeplitzConnectivitySnippetBase,
+                                                init_toeplitz_connectivity_snippets)
+    return InitToeplitzConnectivitySnippet(init_toeplitz_connect_snippet, param_space)
 
 def create_var_ref(pop, var_name):
     """This helper function creates a Models::VarReference

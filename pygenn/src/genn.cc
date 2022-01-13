@@ -495,7 +495,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // genn.InitVarSnippetBaseBase
     //------------------------------------------------------------------------
-    pybind11::class_<InitVarSnippet::Base, Snippet::Base, PyInitVarSnippetBase>(m, "InitVarSnippetBaseBase")
+    pybind11::class_<InitVarSnippet::Base, Snippet::Base, PyInitVarSnippetBase>(m, "InitVarSnippetBase")
         .def(pybind11::init<>())
 
         .def("get_code", &InitVarSnippet::Base::getCode);
@@ -575,25 +575,27 @@ PYBIND11_MODULE(genn, m)
         .def("is_prev_pre_spike_event_time_required", &WeightUpdateModels::Base::isPrevPreSpikeEventTimeRequired);
 
     //------------------------------------------------------------------------
+    // genn.SparseConnectivityInit
+    //------------------------------------------------------------------------
+    pybind11::class_<InitSparseConnectivitySnippet::Init>(m, "SparseConnectivityInit")
+        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>())
+        .def_property_readonly("snippet", &InitSparseConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
+        
+    //------------------------------------------------------------------------
+    // genn.ToeplitzConnectivityInit
+    //------------------------------------------------------------------------
+    pybind11::class_<InitToeplitzConnectivitySnippet::Init>(m, "ToeplitzConnectivityInit")
+        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>())
+        .def_property_readonly("snippet", &InitToeplitzConnectivitySnippet::Init::getSnippet, pybind11::return_value_policy::reference);
+    
+    //------------------------------------------------------------------------
     // genn.VarInit
     //------------------------------------------------------------------------
     pybind11::class_<Models::VarInit>(m, "VarInit")
         .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
         .def(pybind11::init<double>())
         .def_property_readonly("snippet", &Models::VarInit::getSnippet, pybind11::return_value_policy::reference);
-    
-    //------------------------------------------------------------------------
-    // genn.ToeplitzConnectivityInit
-    //------------------------------------------------------------------------
-    pybind11::class_<InitToeplitzConnectivitySnippet::Init>(m, "ToeplitzConnectivityInit")
-        .def(pybind11::init<const InitToeplitzConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>());
-    
-    //------------------------------------------------------------------------
-    // genn.SparseConnectivityInit
-    //------------------------------------------------------------------------
-    pybind11::class_<InitSparseConnectivitySnippet::Init>(m, "SparseConnectivityInit")
-        .def(pybind11::init<const InitSparseConnectivitySnippet::Base*, const std::unordered_map<std::string, double>&>());
-    
+
     //------------------------------------------------------------------------
     // genn.PreferencesBase
     //------------------------------------------------------------------------
