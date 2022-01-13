@@ -89,7 +89,7 @@ def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     # Otherwise, if model is derived off correct 
     # base class, return it directly
     elif isinstance(snippet, snippet_base_class):
-        return model
+        return snippet
     else:
         raise Exception("Invalid snippet")
 
