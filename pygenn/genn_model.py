@@ -55,14 +55,15 @@ import numpy as np
 from six import iteritems, itervalues, string_types
 
 # pygenn imports
-from .genn import (generate_code, init_logging, CurrentSource, 
-                   CurrentSourceModelBase, InitSparseConnectivitySnippetBase,
+from .genn import (generate_code, init_logging, CurrentSource,
+                   CurrentSourceModelBase, #CustomUpdateModelBase,
+                   DerivedParam, EGP, InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
-                   ModelSpecInternal, NeuronGroup, NeuronModelBase, 
-                   PlogSeverity, PostsynapticModelBase, ScalarPrecision, 
-                   SparseConnectivityInit, SynapseGroup, SynapseMatrixType,
-                   TimePrecision, ToeplitzConnectivityInit, VarInit, 
-                   VarLocation, WeightUpdateModelBase)
+                   ModelSpecInternal, NeuronGroup, NeuronModelBase,
+                   ParamVal, PlogSeverity, PostsynapticModelBase,
+                   ScalarPrecision, SparseConnectivityInit, SynapseGroup,
+                   SynapseMatrixType, TimePrecision, ToeplitzConnectivityInit,
+                   Var, VarInit, VarLocation, VarRef, WeightUpdateModelBase)
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
@@ -797,8 +798,7 @@ def create_custom_neuron_class(class_name, param_names=None,
                                reset_code=None, support_code=None,
                                extra_global_params=None,
                                additional_input_vars=None,
-                               is_auto_refractory_required=None,
-                               custom_body=None):
+                               is_auto_refractory_required=None):
     """This helper function creates a custom NeuronModel class.
     See also:
     create_custom_postsynaptic_class
@@ -830,12 +830,7 @@ def create_custom_neuron_class(class_name, param_names=None,
                                     local input variables
     is_auto_refractory_required --  does this model require auto-refractory
                                     logic to be generated?
-    custom_body                 --  dictionary with additional attributes and
-                                    methods of the new class
     """
-    if not isinstance(custom_body, dict) and custom_body is not None:
-        raise ValueError("custom_body must be an isinstance of dict or None")
-
     body = {}
 
     if sim_code is not None:
@@ -853,30 +848,27 @@ def create_custom_neuron_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
+            lambda self: [EGP(egp[0], egp[1])
+                          for egp in extra_global_params]
 
     if additional_input_vars:
         body["get_additional_input_vars"] = \
-            lambda self: ParamValVector([ParamVal(a[0], a[1], a[2])
-                                         for a in additional_input_vars])
+            lambda self: [ParamVal(a[0], a[1], a[2])
+                                   for a in additional_input_vars]
 
     if is_auto_refractory_required is not None:
         body["is_auto_refractory_required"] = \
             lambda self: is_auto_refractory_required
 
-    if custom_body is not None:
-        body.update(custom_body)
-
     return create_custom_model_class(
-        class_name, genn_wrapper.NeuronModels.Custom, param_names,
+        class_name, NeuronModelBase, param_names,
         var_name_types, derived_params, body)
 
 
 def create_custom_postsynaptic_class(class_name, param_names=None,
                                      var_name_types=None, derived_params=None,
                                      decay_code=None, apply_input_code=None,
-                                     support_code=None, custom_body=None):
+                                     support_code=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_custom_neuron_class
@@ -898,12 +890,7 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
     support_code        --  string with the support code
-    custom_body         --  dictionary with additional attributes and methods
-                            of the new class
     """
-    if not isinstance(custom_body, dict) and custom_body is not None:
-        raise ValueError()
-
     body = {}
 
     if decay_code is not None:
@@ -915,11 +902,8 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
     if support_code is not None:
         body["get_support_code"] = lambda self: dedent(support_code)
 
-    if custom_body is not None:
-        body.update(custom_body)
-
     return create_custom_model_class(
-        class_name, genn_wrapper.PostsynapticModels.Custom, param_names,
+        class_name, PostsynapticModelBase, param_names,
         var_name_types, derived_params, body)
 
 
@@ -1006,12 +990,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
                                                 required in any weight update kernels?
     is_prev_pre_spike_event_time_required   --  boolean, is _previous_ presynaptic spike-like-event 
                                                 time required in any weight update kernels?
-    custom_body                             --  dictionary with additional attributes
-                                                and methods of the new class
     """
-    if not isinstance(custom_body, dict) and custom_body is not None:
-        raise ValueError("custom_body must be an instance of dict or None")
-
     body = {}
 
     if sim_code is not None:
@@ -1055,18 +1034,16 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
+            lambda self: [EGP(egp[0], egp[1])
+                          for egp in extra_global_params]
 
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
-            lambda self: VarVector([Var(*vn)
-                                    for vn in pre_var_name_types])
+            lambda self: [Var(*vn) for vn in pre_var_name_types]
 
     if post_var_name_types is not None:
         body["get_post_vars"] = \
-            lambda self: VarVector([Var(*vn)
-                                    for vn in post_var_name_types])
+            lambda self: [Var(*vn) for vn in post_var_name_types]
 
     if is_pre_spike_time_required is not None:
         body["is_pre_spike_time_required"] = \
@@ -1092,11 +1069,8 @@ def create_custom_weight_update_class(class_name, param_names=None,
         body["is_prev_pre_spike_event_time_required"] = \
             lambda self: is_prev_pre_spike_event_time_required
 
-    if custom_body is not None:
-        body.update(custom_body)
-
     return create_custom_model_class(
-        class_name, genn_wrapper.WeightUpdateModels.Custom, param_names,
+        class_name, WeightUpdateModelBase, param_names,
         var_name_types, derived_params, body)
 
 
@@ -1137,11 +1111,10 @@ def create_custom_current_source_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
+            lambda self: [EGP(egp[0], egp[1]) for egp in extra_global_params]
 
     return create_custom_model_class(
-        class_name, genn_wrapper.CurrentSourceModels.Custom, param_names,
+        class_name, CurrentSourceModelBase, param_names,
         var_name_types, derived_params, body)
 
 
@@ -1175,9 +1148,6 @@ def create_custom_custom_update_class(class_name, param_names=None,
     extra_global_params --  list of pairs of strings with names and types of
                             additional parameters
     """
-    if not isinstance(custom_body, dict) and custom_body is not None:
-        raise ValueError("custom_body must be an instance of dict or None")
-
     body = {}
 
     if update_code is not None:
@@ -1185,21 +1155,18 @@ def create_custom_custom_update_class(class_name, param_names=None,
 
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
+            lambda self: [EGP(egp[0], egp[1]) for egp in extra_global_params]
     
     if var_refs is not None:
-        body["get_var_refs"] = \
-            lambda self: VarRefVector([VarRef(*v)
-                                       for v in var_refs])
+        body["get_var_refs"] = lambda self: [VarRef(*v) for v in var_refs]
 
     return create_custom_model_class(
-        class_name, genn_wrapper.CustomUpdateModels.Custom, param_names,
+        class_name, CustomUpdateModelBase, param_names,
         var_name_types, derived_params, body)        
 
 
 def create_custom_model_class(class_name, base, param_names, var_name_types,
-                              derived_params):
+                              derived_params, custom_body):
     """This helper function completes a custom model class creation.
 
     This part is common for all model classes and is nearly useless on its own
@@ -1221,6 +1188,7 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second should 
                         be a functor returned by create_dpf_class
+    custom_body     --  dictionary with attributes and methods of the new class
     """
 
     def ctor(self):
@@ -1231,17 +1199,19 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     }
 
     if param_names is not None:
-        body["get_param_names"] = lambda self: StringVector(param_names)
+        body["get_param_names"] = lambda self: param_names
 
     if var_name_types is not None:
         body["get_vars"] = \
-            lambda self: VarVector([Var(*vn)
-                                    for vn in var_name_types])
+            lambda self: [Var(*vn) for vn in var_name_types]
 
     if derived_params is not None:
         body["get_derived_params"] = \
-            lambda self: DerivedParamVector([DerivedParam(dp[0], make_dpf(dp[1]))
-                                             for dp in derived_params])
+            lambda self: [DerivedParam(dp[0], make_dpf(dp[1])) 
+                          for dp in derived_params]
+    
+    if custom_body is not None:
+        body.update(custom_body)
 
     return type(class_name, (base,), body)()
 

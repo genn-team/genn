@@ -316,6 +316,14 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     m.def("generate_code", &generateCode, pybind11::return_value_policy::move);
     m.def("init_logging", &initLogging);
+    m.def("create_var_ref", pybind11::overload_cast<const NeuronGroup*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
+    m.def("create_var_ref", pybind11::overload_cast<const CurrentSource*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
+    m.def("create_var_ref", pybind11::overload_cast<const CustomUpdate*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
+    m.def("create_psm_var_ref", &createPSMVarRef, pybind11::return_value_policy::move);
+    m.def("create_wu_pre_var_ref", &createWUPreVarRef, pybind11::return_value_policy::move);
+    m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move);
+    m.def("create_wu_var_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&, const SynapseGroup*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
+    m.def("create_wu_var_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
 
     //------------------------------------------------------------------------
     // genn.ModelSpec
@@ -465,6 +473,14 @@ PYBIND11_MODULE(genn, m)
         .def("set_ps_var_location", &SynapseGroup::setPSVarLocation);
     
     //------------------------------------------------------------------------
+    // genn.DerivedParam
+    //------------------------------------------------------------------------
+    pybind11::class_<Snippet::Base::DerivedParam>(m, "DerivedParam")
+        .def(pybind11::init<const std::string&, std::function<double(const std::unordered_map<std::string, double>&, double)>&>())
+        .def_readonly("name", &Snippet::Base::DerivedParam::name)
+        .def_readonly("func", &Snippet::Base::DerivedParam::func);
+        
+    //------------------------------------------------------------------------
     // genn.EGP
     //------------------------------------------------------------------------
     pybind11::class_<Snippet::Base::EGP>(m, "EGP")
@@ -531,6 +547,16 @@ PYBIND11_MODULE(genn, m)
         .def_readonly("name", &Models::Base::Var::name)
         .def_readonly("type", &Models::Base::Var::type)
         .def_readonly("access", &Models::Base::Var::access);
+    
+    //------------------------------------------------------------------------
+    // genn.VarRef
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::Base::VarRef>(m, "VarRef")
+        .def(pybind11::init<const std::string&, const std::string&, VarAccessMode>())
+        .def(pybind11::init<const std::string&, const std::string&>())
+        .def_readonly("name", &Models::Base::VarRef::name)
+        .def_readonly("type", &Models::Base::VarRef::type)
+        .def_readonly("access", &Models::Base::VarRef::access);
         
     //------------------------------------------------------------------------
     // genn.ModelBase
