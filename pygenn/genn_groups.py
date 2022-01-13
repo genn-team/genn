@@ -14,8 +14,8 @@ from weakref import proxy
 import numpy as np
 
 from . import neuron_models
-from .genn import (SynapseMatrixConnectivity, SynapseMatrixWeight,
-                   VarAccessDuplication, VarLocation)
+from .genn import (CustomUpdateWU, SynapseMatrixConnectivity,
+                   SynapseMatrixWeight, VarAccessDuplication, VarLocation)
 from .model_preprocessor import prepare_model, ExtraGlobalParameter, Variable
 
 
@@ -789,68 +789,22 @@ class CurrentSourceMixin(GroupMixin):
         self._load_var_init_egps()
 
 class CustomUpdateMixin(GroupMixin):
-
     """Class representing a custom update"""
-
-    def __init__(self, name, model):
-        """Init CustomUpdate
-
-        Args:
-        name    -- string name of the custom update
-        model   -- pygenn.genn_model.GeNNModel this custom update is part of
-        """
-        super(CustomUpdateMixin, self).__init__(name, model)
-        self.custom_update_model = None
-        self.var_refs = {}
-        self.custom_wu_update = False
-
-    def set_custom_update_model(self, model, param_space, var_space, var_ref_space):
-        """Set custom update model, its parameters, 
-        initial variables and variable referneces
+    def _init_group(self, model, var_space):
+        """Init NeuronGroup
 
         Args:
-        model           --  type as string or instance of the model
-        param_space     --  dict with model parameters
-        var_space       --  dict with model variables
-        var_references  --  dict with model variables
+        name    -- string name of the group
+        model   -- pygenn.genn_model.GeNNModel this neuron group is part of
         """
-
-        # Prepare standard model
-        (self.custom_update_model, self.type, self.param_names, self.params,
-         self.var_names, self.vars, self.extra_global_params) =\
-            model_preprocessor.prepare_model(
-                model, self, param_space, var_space, 
-                genn_wrapper.CustomUpdateModels)
-
-        # Check variable references
-        self.var_ref_names = [vnt.name for vnt in self.custom_update_model.get_var_refs()]
-        if var_ref_space is not None and set(iterkeys(var_ref_space)) != set(self.var_ref_names):
-            raise ValueError("Invalid variable reference initializers "
-                             "for CustomUpdateModels")
-
-        # Count wu var references in list
-        num_wu_var_refs = sum(isinstance(v[0], WUVarReference)
-                              for v in itervalues(var_ref_space))
-
-        # If there's a mixture of references to weight 
-        # update  model and other variables, give error
-        if num_wu_var_refs != 0 and num_wu_var_refs != len(var_ref_space):
-            raise ValueError("Custom updates cannot be created with "
-                             "references pointing to a mixture of "
-                             "weight update and other variables")
-
-        # Set flag 
-        self.custom_wu_update = (num_wu_var_refs != 0)
-
-        # Store variable references in class
-        self.var_refs = var_ref_space
+        super(CustomUpdateMixin, self)._init_group(model)
+        self.vars, self.extra_global_params = prepare_model(
+            self.custom_update_model, self, var_space)
+    
 
     def load(self):
         # If this is a custom weight update
-        if self.custom_wu_update:
-            # Assert that population has individual synapse variables
-            assert self.matrix_type & SynapseMatrixWeight.INDIVIDUAL
-
+        if self._custom_wu_update:
             # Loop through state variables
             for v in self.custom_update_model.get_vars():
                 # Get corresponding data from dictionary
@@ -858,7 +812,8 @@ class CustomUpdateMixin(GroupMixin):
 
                 # If variable is located on host
                 var_loc = self.get_var_location(v.name) 
-                if (var_loc & VarLocation_HOST) != 0:
+                if var_loc & VarLocation.HOST:
+                    # **TODO** WHAT IS HAPPENING HERE?
                     # Determine how many copies of this variable are present
                     #num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
                     #              else self._model.batch_size)
@@ -882,7 +837,7 @@ class CustomUpdateMixin(GroupMixin):
         # Otherwise, load variables 
         else:
             self._load_vars(self.custom_update_model.get_vars(),
-                            size=self.get_size())
+                            size=self.size)
 
         # Load custom update extra global parameters
         self._load_egp()
@@ -890,12 +845,16 @@ class CustomUpdateMixin(GroupMixin):
     def load_init_egps(self):
         # Load any egps used for variable initialisation
         self._load_var_init_egps()
+    
+    @property
+    def _custom_wu_update(self):
+        return isinstance(self, genn.CustomUpdateWU)
 
     @property
     def _synapse_group(self):
         """Get SynapseGroup associated with custom weight update"""
-        assert self.custom_wu_update
+        assert self._custom_wu_update
 
         # Return Python synapse group reference from 
         # first (arbitrarily) variable reference
-        return next(itervalues(self.var_refs))[1]
+        return next(itervalues(self.var_refs)).synapse_group

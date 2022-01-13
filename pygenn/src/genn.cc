@@ -1,4 +1,5 @@
 // PyBind11 includes
+#include <pybind11/functional.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -26,6 +27,8 @@
 #include "code_generator/generateMakefile.h"
 #include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
+
+using namespace pybind11::literals;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -336,7 +339,8 @@ PYBIND11_MODULE(genn, m)
     m.def("create_psm_var_ref", &createPSMVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_pre_var_ref", &createWUPreVarRef, pybind11::return_value_policy::move);
     m.def("create_wu_post_var_ref", &createWUPostVarRef, pybind11::return_value_policy::move);
-    m.def("create_wu_var_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&, const SynapseGroup*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
+    m.def("create_wu_var_ref", pybind11::overload_cast<const SynapseGroup*, const std::string&, const SynapseGroup*, const std::string&>(&createWUVarRef), 
+          "sg"_a, "var_name"_a, "transpose_sg"_a = nullptr, "transpose_var_name"_a = "", pybind11::return_value_policy::move);
     m.def("create_wu_var_ref", pybind11::overload_cast<const CustomUpdateWU*, const std::string&>(&createWUVarRef), pybind11::return_value_policy::move);
 
     //------------------------------------------------------------------------
@@ -371,6 +375,16 @@ PYBIND11_MODULE(genn, m)
              static_cast<CurrentSource* (ModelSpecInternal::*)(
                 const std::string&, const CurrentSourceModels::Base*, const std::string&, 
                 const ParamValues&, const VarValues&)>(&ModelSpecInternal::addCurrentSource), 
+            pybind11::return_value_policy::reference)
+        .def("add_custom_update",  
+             static_cast<CustomUpdate* (ModelSpecInternal::*)(
+                const std::string&, const std::string&, const CustomUpdateModels::Base*, 
+                const ParamValues&, const VarValues&, const VarReferences&)>(&ModelSpecInternal::addCustomUpdate), 
+            pybind11::return_value_policy::reference)
+        .def("add_custom_update",  
+             static_cast<CustomUpdateWU* (ModelSpecInternal::*)(
+                const std::string&, const std::string&, const CustomUpdateModels::Base*, 
+                const ParamValues&, const VarValues&, const WUVarReferences&)>(&ModelSpecInternal::addCustomUpdate), 
             pybind11::return_value_policy::reference)
         .def("add_neuron_population",  
              static_cast<NeuronGroup* (ModelSpecInternal::*)(
@@ -411,6 +425,38 @@ PYBIND11_MODULE(genn, m)
         //--------------------------------------------------------------------
         .def("set_var_location", &CurrentSource::setVarLocation)
         .def("get_var_location", pybind11::overload_cast<const std::string&>(&CurrentSource::getVarLocation, pybind11::const_));
+    
+    //------------------------------------------------------------------------
+    // genn.CustomUpdateBase
+    //------------------------------------------------------------------------
+    pybind11::class_<CustomUpdateBase>(m, "CustomUpdateBase")
+        //--------------------------------------------------------------------
+        // Properties
+        //--------------------------------------------------------------------
+        .def_property_readonly("name", &CustomUpdateBase::getName)
+        .def_property_readonly("update_group_name", &CustomUpdateBase::getUpdateGroupName)
+        .def_property_readonly("custom_update_model", &CustomUpdateBase::getCustomUpdateModel, pybind11::return_value_policy::reference)
+        .def_property_readonly("params", &CustomUpdateBase::getParams)
+        .def_property_readonly("var_initialisers", &CustomUpdateBase::getVarInitialisers)
+
+        //--------------------------------------------------------------------
+        // Methods
+        //--------------------------------------------------------------------
+        .def("set_var_location", &CustomUpdateBase::setVarLocation)
+        .def("get_var_location", pybind11::overload_cast<const std::string&>(&CustomUpdateBase::getVarLocation, pybind11::const_));
+    
+    //------------------------------------------------------------------------
+    // genn.CustomUpdate
+    //------------------------------------------------------------------------
+    pybind11::class_<CustomUpdate, CustomUpdateBase>(m, "CustomUpdate", pybind11::dynamic_attr())
+        .def_property_readonly("size", &CustomUpdate::getSize)
+        .def_property_readonly("var_references", &CustomUpdate::getVarReferences);
+
+    //------------------------------------------------------------------------
+    // genn.CustomUpdate
+    //------------------------------------------------------------------------
+    pybind11::class_<CustomUpdateWU, CustomUpdateBase>(m, "CustomUpdateWU", pybind11::dynamic_attr())
+        .def_property_readonly("var_references", &CustomUpdateWU::getVarReferences);
 
     //------------------------------------------------------------------------
     // genn.NeuronGroup
@@ -592,7 +638,7 @@ PYBIND11_MODULE(genn, m)
     pybind11::class_<CustomUpdateModels::Base, Models::Base, PyCustomUpdateModelBase>(m, "CustomUpdateModelBase")
         .def(pybind11::init<>())
 
-        .def("get_var_regs", &CustomUpdateModels::Base::getVarRefs)
+        .def("get_var_refs", &CustomUpdateModels::Base::getVarRefs)
         .def("get_update_code", &CustomUpdateModels::Base::getUpdateCode);
     
     //------------------------------------------------------------------------
@@ -666,6 +712,12 @@ PYBIND11_MODULE(genn, m)
         .def(pybind11::init<const InitVarSnippet::Base*, const std::unordered_map<std::string, double>&>())
         .def(pybind11::init<double>())
         .def_property_readonly("snippet", &Models::VarInit::getSnippet, pybind11::return_value_policy::reference);
+    
+    //------------------------------------------------------------------------
+    // genn.WUVarReference
+    //------------------------------------------------------------------------
+    pybind11::class_<Models::WUVarReference>(m, "WUVarReference")
+        .def_property_readonly("synapse_group", &Models::WUVarReference::getSynapseGroup, pybind11::return_value_policy::reference);
 
     //------------------------------------------------------------------------
     // genn.PreferencesBase

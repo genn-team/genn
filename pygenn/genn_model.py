@@ -56,8 +56,9 @@ from six import iteritems, itervalues, string_types
 
 # pygenn imports
 from .genn import (generate_code, init_logging, CurrentSource,
-                   CurrentSourceModelBase, #CustomUpdateModelBase,
-                   DerivedParam, EGP, InitSparseConnectivitySnippetBase,
+                   CurrentSourceModelBase, CustomUpdate, 
+                   CustomUpdateModelBase, CustomUpdateWU, DerivedParam, 
+                   EGP, InitSparseConnectivitySnippetBase,
                    InitToeplitzConnectivitySnippetBase, InitVarSnippetBase,
                    ModelSpecInternal, NeuronGroup, NeuronModelBase,
                    ParamVal, PlogSeverity, PostsynapticModelBase,
@@ -67,10 +68,11 @@ from .genn import (generate_code, init_logging, CurrentSource,
 from .shared_library_model import (SharedLibraryModelDouble, 
                                    SharedLibraryModelFloat)
                                    
-from .genn_groups import (CurrentSourceMixin, NeuronGroupMixin, 
-                          SynapseGroupMixin)
+from .genn_groups import (CurrentSourceMixin, CustomUpdateMixin,
+                          NeuronGroupMixin, SynapseGroupMixin)
 from .model_preprocessor import get_snippet, get_var_init
-from . import (current_source_models, init_sparse_connectivity_snippets,
+from . import (current_source_models, custom_update_models,
+               init_sparse_connectivity_snippets, 
                init_toeplitz_connectivity_snippets, init_var_snippets,
                neuron_models, postsynaptic_models, weight_update_models)
 
@@ -92,6 +94,8 @@ for b in ["cuda", "single_threaded_cpu", "opencl"]:
 
 # Dynamically add Python mixin to wrapped class
 CurrentSource.__bases__ += (CurrentSourceMixin,)
+CustomUpdate.__bases__ += (CustomUpdateMixin,)
+CustomUpdateWU.__bases__ += (CustomUpdateMixin,)
 NeuronGroup.__bases__ += (NeuronGroupMixin,)
 SynapseGroup.__bases__ += (SynapseGroupMixin,)
 
@@ -438,11 +442,12 @@ class GeNNModel(ModelSpecInternal):
 
         Args:
         cu_name                 -- name of the new current source
-        group_name              -- name of
+        group_name              -- name of custom update group this
+                                   update belongs to
         custom_update_model     -- type of the CustomUpdateModel class as
                                    string or instance of CustomUpdateModel
                                    class derived from
-                                   ``pygenn.genn_wrapper.CustomUpdateModel.Custom`` (see also
+                                   ``CustomUpdateModelBase`` (see also
                                    pygenn.genn_model.create_custom_custom_update_class)
         param_space             -- dict with param values for the
                                    CustomUpdateModel class
@@ -453,14 +458,21 @@ class GeNNModel(ModelSpecInternal):
         """
         if self._built:
             raise Exception("GeNN model already built")
+        
+        # Resolve custom update model
+        custom_update_model = get_snippet(custom_update_model, CustomUpdateModelBase,
+                                          custom_update_models)
+        
+        # Extract parts of var_space which should be initialised by GeNN
+        var_init = get_var_init(var_space)
 
         # Use superclass to add population
         c_update = super(GeNNModel, self).add_custom_update(
             cu_name, group_name, custom_update_model,
-            param_space, var_space, var_ref_space)
+            param_space, var_init, var_ref_space)
 
         # Setup back-reference, store group in dictionary and return
-        c_update._model = proxy(self)
+        c_update._init_group(self, var_space)
         self.custom_updates[cu_name] = c_update
         return c_update
         
@@ -717,80 +729,6 @@ def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
                                                 InitToeplitzConnectivitySnippetBase,
                                                 init_toeplitz_connectivity_snippets)
     return InitToeplitzConnectivitySnippet(init_toeplitz_connect_snippet, param_space)
-
-def create_var_ref(pop, var_name):
-    """This helper function creates a Models::VarReference
-    pointing to a neuron or current source variable
-    for initialising variable references.
-
-    Args:
-    pop         -- population, either a NeuronGroup or CurrentSource object
-    var_name    -- name of variable in population to reference
-    """
-    return (genn_wrapper.create_var_ref(pop.pop, var_name), pop)
-    
-def create_psm_var_ref(sg, var_name):
-    """This helper function creates a Models::VarReference
-    pointing to a postsynaptic model variable
-    for initialising variable references.
-
-    Args:
-    sg          -- SynapseGroup object
-    var_name    -- name of postsynaptic model variable
-                   in synapse group to reference
-    """
-    return (genn_wrapper.create_psmvar_ref(sg.pop, var_name), sg)
-
-def create_wu_pre_var_ref(sg, var_name):
-    """This helper function creates a Models::VarReference
-    pointing to a presynaptic weight update model variable
-    for initialising variable references.
-
-    Args:
-    sg          -- SynapseGroup object
-    var_name    -- name of presynaptic weight update model
-                   variable in synapse group to reference
-    """
-    return (genn_wrapper.create_wupre_var_ref(sg.pop, var_name), sg)
-
-def create_wu_post_var_ref(sg, var_name):
-    """This helper function creates a Models::VarReference
-    pointing to a postsynaptic weight update model variable
-    for initialising variable references.
-
-    Args:
-    sg          -- SynapseGroup object
-    var_name    -- name of postsynaptic weight update model  
-                   variable in synapse group to reference
-    """
-    return (genn_wrapper.create_wupost_var_ref(sg.pop, var_name), sg)
-
-def create_wu_var_ref(g, var_name, tp_sg=None, tp_var_name=None):
-    """This helper function creates a Models::WUVarReference
-    pointing to a weight update model variable for 
-    initialising variable references.
-
-    Args:
-    g           -- SynapseGroup or CustomUpdate object
-    var_name    -- name of weight update model variable 
-                   in synapse group to reference
-    tp_sg       -- (optional) SynapseGroup object to 
-                   copy transpose of variable to
-    tp_var_name -- (optional) name of weight update 
-                   model variable in tranpose synapse group
-                   to copy transpose to
-    """
-    
-    # If we're referencing a WU variable in a custom update,
-    # Use it's synapse group for the PyGeNN-level backreference
-    sg = g._synapse_group if isinstance(g, CustomUpdate) else g
- 
-    if tp_sg is None:
-        return (genn_wrapper.create_wuvar_ref(g.pop, var_name), sg)
-    else:
-        return (genn_wrapper.create_wuvar_ref(g.pop, var_name,
-                                              tp_sg.pop, tp_var_name), sg)
-    
 
 def create_custom_neuron_class(class_name, param_names=None,
                                var_name_types=None, derived_params=None,
@@ -1207,7 +1145,7 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
 
     if derived_params is not None:
         body["get_derived_params"] = \
-            lambda self: [DerivedParam(dp[0], make_dpf(dp[1])) 
+            lambda self: [DerivedParam(dp[0], dp[1]) 
                           for dp in derived_params]
     
     if custom_body is not None:
