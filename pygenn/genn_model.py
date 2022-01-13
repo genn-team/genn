@@ -47,6 +47,7 @@ from psutil import cpu_count
 from subprocess import check_call  # to call make
 from textwrap import dedent
 from warnings import warn
+from weakref import proxy
 
 # 3rd party imports
 import numpy as np

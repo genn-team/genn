@@ -8,6 +8,8 @@ from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iterkeys, itervalues
 
+from .genn import VarInit
+
 def prepare_model(model, group, param_space, var_space):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
@@ -109,7 +111,7 @@ class Variable(object):
             # Build extra global parameters dictionary from var init snippet
             self.extra_global_params =\
                 {egp.name: ExtraGlobalParameter(egp.name, egp.type, self.group)
-                 for egp in self.init_val.get_snippet().get_extra_global_params()}
+                 for egp in self.init_val.snippet.get_extra_global_params()}
         # If no values are specified - mark as uninitialised
         elif values is None:
             self.init_val = genn_wrapper.uninitialised_var()

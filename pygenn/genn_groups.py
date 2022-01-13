@@ -7,10 +7,10 @@ try:
 except NameError:  # Python 3
     xrange = range
 
-from weakref import proxy
 from deprecated import deprecated
 from six import iteritems, iterkeys, itervalues
 from warnings import warn
+from weakref import proxy
 import numpy as np
 
 from . import neuron_models
