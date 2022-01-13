@@ -143,9 +143,13 @@ for filename, namespace, kwargs in backends:
                                          [os.path.join(pygenn_src, filename + "Backend.cc")],
                                          **backend_extension_kwargs))
 
+# Read version from txt file
+with open(os.path.join(genn_path, "version.txt")) as version_file:
+    version = version_file.read().strip()
+
 setup(
     name="pygenn",
-    version="0.0.1",
+    version=version,
     packages = find_packages(),
     package_data={"pygenn": package_data},
 
