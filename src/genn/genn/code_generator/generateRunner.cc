@@ -384,29 +384,28 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                                      "", "group->");
 
         // Loop through EGPs
-        const auto egps = connectInit.getSnippet()->getExtraGlobalParams();
-        for(size_t i = 0; i < egps.size(); i++) {
-            const auto loc = sg.getArchetype().getSparseConnectivityExtraGlobalParamLocation(i);
+        for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
+            const auto loc = sg.getArchetype().getSparseConnectivityExtraGlobalParamLocation(egp.name);
             // If EGP is a pointer and located on the host
-            if(Utils::isTypePointer(egps[i].type) && (loc & VarLocation::HOST)) {
+            if(Utils::isTypePointer(egp.type) && (loc & VarLocation::HOST)) {
                 // Generate code to allocate this EGP with count specified by $(0)
                 std::stringstream allocStream;
                 CodeGenerator::CodeStream alloc(allocStream);
-                backend.genExtraGlobalParamAllocation(alloc, egps[i].type + "*", egps[i].name,
+                backend.genExtraGlobalParamAllocation(alloc, egp.type + "*", egp.name,
                                                       loc, "$(0)", "group->");
 
                 // Add substitution
-                subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
+                subs.addFuncSubstitution("allocate" + egp.name, 1, allocStream.str());
 
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
+                backend.genExtraGlobalParamPush(push, egp.type + "*", egp.name,
                                                 loc, "$(0)", "group->");
 
 
                 // Add substitution
-                subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
+                subs.addFuncSubstitution("push" + egp.name, 1, pushStream.str());
             }
         }
         std::string code = connectInit.getSnippet()->getHostInitCode();

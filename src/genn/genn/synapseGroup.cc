@@ -261,25 +261,6 @@ bool SynapseGroup::isSpikeEventRequired() const
      return !getWUModel()->getEventCode().empty();
 }
 //----------------------------------------------------------------------------
-std::string SynapseGroup::getSparseIndType() const
-{
-    // If narrow sparse inds are enabled
-    if(m_NarrowSparseIndEnabled) {
-        // If number of target neurons can be represented using a uint8, use this type
-        const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
-        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
-            return "uint8_t";
-        }
-        // Otherwise, if they can be represented as a uint16, use this type
-        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
-            return "uint16_t";
-        }
-    }
-
-    // Otherwise, use 32-bit int
-    return "uint32_t";
-}
-//----------------------------------------------------------------------------
 const std::unordered_map<std::string, double> SynapseGroup::getWUConstInitVals() const
 {
     return getConstInitVals(m_WUVarInitialisers);
@@ -335,18 +316,6 @@ VarLocation SynapseGroup::getWUVarLocation(const std::string &var) const
     }
 }
 //----------------------------------------------------------------------------
-VarLocation SynapseGroup::getWUVarLocation(size_t index) const
-{ 
-    // **NOTE** these get retrived from weight sharing master 
-    // as they can be set AFTER creation of synapse group
-    if(isWeightSharingSlave()) {
-        return getWeightSharingMaster()->getWUVarLocation(index);
-    }
-    else {
-        return m_WUVarLocation.at(index);
-    }
-}
-//----------------------------------------------------------------------------
 VarLocation SynapseGroup::getWUPreVarLocation(const std::string &var) const
 {
     return m_WUPreVarLocation[getWUModel()->getPreVarIndex(var)];
@@ -381,18 +350,6 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
     }
     else {
         return m_ConnectivityExtraGlobalParamLocation[m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
-    }
-}
-//----------------------------------------------------------------------------
-VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(size_t index) const
-{ 
-    // **NOTE** these get retrived from weight sharing master 
-    // as they can be set AFTER creation of synapse group
-    if(isWeightSharingSlave()) {
-        return getWeightSharingMaster()->getSparseConnectivityExtraGlobalParamLocation(index);
-    }
-    else {
-        return m_ConnectivityExtraGlobalParamLocation.at(index);
     }
 }
 //----------------------------------------------------------------------------
@@ -788,6 +745,25 @@ bool SynapseGroup::canPreOutputBeFused() const
 {
     // There are no variables or other non-constant objects, so these can presumably always be fused
     return true;
+}
+//----------------------------------------------------------------------------
+std::string SynapseGroup::getSparseIndType() const
+{
+    // If narrow sparse inds are enabled
+    if(m_NarrowSparseIndEnabled) {
+        // If number of target neurons can be represented using a uint8, use this type
+        const unsigned int numTrgNeurons = getTrgNeuronGroup()->getNumNeurons();
+        if(numTrgNeurons <= std::numeric_limits<uint8_t>::max()) {
+            return "uint8_t";
+        }
+        // Otherwise, if they can be represented as a uint16, use this type
+        else if(numTrgNeurons <= std::numeric_limits<uint16_t>::max()) {
+            return "uint16_t";
+        }
+    }
+
+    // Otherwise, use 32-bit int
+    return "uint32_t";
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const

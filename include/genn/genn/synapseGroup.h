@@ -148,24 +148,6 @@ public:
     //! Is this synapse group a weight-sharing slave
     bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
 
-    //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
-    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
-    bool isPSModelFused() const{ return m_FusedPSVarSuffix != getName(); }
-    
-    //! Has the presynaptic component of this synapse group's weight update
-    //! model been fused with those from other synapse groups?
-    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
-    bool isWUPreModelFused() const { return m_FusedWUPreVarSuffix != getName(); }
-
-    //! Has the postsynaptic component of this synapse group's weight update
-    //! model been fused with those from other synapse groups?
-    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
-    bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
-
-    //! Get the type to use for sparse connectivity indices for synapse group
-    /*! NOTE: this can only be called after model is finalized but needs to be public for PyGeNN */
-    std::string getSparseIndType() const;
-
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
@@ -187,43 +169,22 @@ public:
 
     //! Get location of weight update model per-synapse state variable by name
     VarLocation getWUVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model per-synapse state variable by index
-    VarLocation getWUVarLocation(size_t index) const;
-
     //! Get location of weight update model presynaptic state variable by name
     VarLocation getWUPreVarLocation(const std::string &var) const;
 
-    //! Get location of weight update model presynaptic state variable by index
-    VarLocation getWUPreVarLocation(size_t index) const{ return m_WUPreVarLocation.at(index); }
-
     //! Get location of weight update model postsynaptic state variable by name
     VarLocation getWUPostVarLocation(const std::string &var) const;
-
-    //! Get location of weight update model postsynaptic state variable by index
-    VarLocation getWUPostVarLocation(size_t index) const{ return m_WUPostVarLocation.at(index); }
 
     //! Get location of weight update model extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getWUExtraGlobalParamLocation(const std::string &paramName) const;
 
-    //! Get location of  weight update model extra global parameter by index
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getWUExtraGlobalParamLocation(size_t index) const{ return m_WUExtraGlobalParamLocation.at(index); }
-
     //! Get location of postsynaptic model state variable
     VarLocation getPSVarLocation(const std::string &var) const;
-
-    //! Get location of postsynaptic model state variable
-    VarLocation getPSVarLocation(size_t index) const{ return m_PSVarLocation.at(index); }
 
     //! Get location of postsynaptic model extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getPSExtraGlobalParamLocation(const std::string &paramName) const;
-
-    //! Get location of postsynaptic model extra global parameter by index
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getPSExtraGlobalParamLocation(size_t index) const{ return m_PSExtraGlobalParamLocation.at(index); }
 
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
@@ -236,10 +197,6 @@ public:
     //! Get location of sparse connectivity initialiser extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
     VarLocation getSparseConnectivityExtraGlobalParamLocation(const std::string &paramName) const;
-
-    //! Get location of sparse connectivity initialiser extra global parameter by index
-    /*! This is only used by extra global parameters which are pointers*/
-    VarLocation getSparseConnectivityExtraGlobalParamLocation(size_t index) const;
 
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
@@ -334,6 +291,20 @@ protected:
     //! Can postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
     bool canWUMPostUpdateBeFused() const;
     
+    //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
+    bool isPSModelFused() const{ return m_FusedPSVarSuffix != getName(); }
+    
+    //! Has the presynaptic component of this synapse group's weight update
+    //! model been fused with those from other synapse groups?
+    bool isWUPreModelFused() const { return m_FusedWUPreVarSuffix != getName(); }
+
+    //! Has the postsynaptic component of this synapse group's weight update
+    //! model been fused with those from other synapse groups?
+    bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
+
+    //! Get the type to use for sparse connectivity indices for synapse group
+    std::string getSparseIndType() const;
+
     //! Generate hash of weight update component of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getWUHashDigest() const;

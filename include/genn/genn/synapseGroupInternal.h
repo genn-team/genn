@@ -45,11 +45,14 @@ public:
     using SynapseGroup::getFusedPreOutputSuffix;
     using SynapseGroup::getFusedWUPreVarSuffix;
     using SynapseGroup::getFusedWUPostVarSuffix;
-    using SynapseGroup::getSparseIndType;
     using SynapseGroup::canPSBeFused;
     using SynapseGroup::canWUMPreUpdateBeFused;
     using SynapseGroup::canWUMPostUpdateBeFused;
     using SynapseGroup::canPreOutputBeFused;
+    using SynapseGroup::isPSModelFused;
+    using SynapseGroup::isWUPreModelFused;
+    using SynapseGroup::isWUPostModelFused;
+    using SynapseGroup::getSparseIndType;
     using SynapseGroup::getWUHashDigest;
     using SynapseGroup::getWUPreHashDigest;
     using SynapseGroup::getWUPostHashDigest;
