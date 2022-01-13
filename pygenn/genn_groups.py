@@ -13,24 +13,11 @@ from six import iteritems, iterkeys, itervalues
 from warnings import warn
 import numpy as np
 
-#from . import neuron_models
+from . import neuron_models
 from .genn import VarAccessDuplication, VarLocation
 from .model_preprocessor import prepare_model
 
-"""
-from . import genn_wrapper
-from . import model_preprocessor
-from .model_preprocessor import ExtraGlobalParameter, Variable
-from .genn_wrapper import (SynapseMatrixConnectivity_SPARSE,
-                           SynapseMatrixConnectivity_BITMASK,
-                           SynapseMatrixConnectivity_DENSE,
-                           SynapseMatrixWeight_KERNEL,
-                           SynapseMatrixWeight_INDIVIDUAL,
-                           SynapseMatrixWeight_INDIVIDUAL_PSM,
-                           VarLocation_HOST,
-                           SynapseMatrixConnectivity_PROCEDURAL)
-from .genn_wrapper.Models import VarAccessDuplication_SHARED, WUVarReference
-"""
+
 class GroupMixin(object):
 
     """Parent class of NeuronGroupMixin, 
@@ -312,8 +299,8 @@ class NeuronGroupMixin(GroupMixin):
         super(NeuronGroupMixin, self)._init_group(model)
         self.spike_que_ptr = [0]
         
-        self.vars, self.extra_global_params = self.prepare_model(
-            self.neuron_model, self, self.params, self.var_initialisers, model_module)
+        self.vars, self.extra_global_params = prepare_model(
+            self.neuron_model, self, self.params, self.var_initialisers)
 
     @property
     def spike_recording_data(self):

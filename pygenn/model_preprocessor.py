@@ -7,19 +7,13 @@ from numbers import Number
 from weakref import proxy, ProxyTypes
 import numpy as np
 from six import iterkeys, itervalues
-"""
-from . import genn_wrapper
-from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
-                                  VarInitVector, VarRefVector, 
-                                  VarReferenceVector, WUVarReferenceVector)
-from .genn_wrapper.StlContainers import DoubleVector
-"""
-def prepare_model(model, group, param_space, var_space, model_module):
+
+def prepare_model(model, group, param_space, var_space):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
 
     Args:
-    model           --  string or instance of a class derived from pygenn.genn_wrapper.NeuronModels.Custom or pygenn.genn_wrapper.WeightUpdateModels.Custom or pygenn.genn_wrapper.CurrentSourceModels.Custom
+    model           --  instance of a class derived from pygenn.genn.ModelBase
     group           --  group model will belong to
     param_space     --  dict with model parameters
     var_space       --  dict with model variables
@@ -30,49 +24,23 @@ def prepare_model(model, group, param_space, var_space, model_module):
     instances of class Variable, dict mapping names of egps to class ExtraGlobalParameter)
 
     """
-    m_instance = is_model_valid(model, model_module)
-
     vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
-            for vnt in m_instance.get_vars()}
+            for vnt in model.get_vars()}
 
     egps = {egp.name: ExtraGlobalParameter(egp.name, egp.type, group)
-            for egp in m_instance.get_extra_global_params()}
+            for egp in model.get_extra_global_params()}
 
-    return (m_instance, vars, egps)
+    return vars, egps
 
-def prepare_snippet(snippet, param_space, snippet_family):
-    """Prepare a snippet by checking its validity and extracting
-    information about parameters
-
-    Args:
-    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom,
-                        pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet.Custom
-    param_space     --  dict with model parameters
-    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet, pygenn.genn_wrapper.InitSparseConnectivitySnippet
-                        or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet
-
-    Returns:
-    tuple consisting of (snippet instance, snippet type,
-                         snippet parameter names, snippet parameters)
-    """
-    s_instance, s_type = is_model_valid(snippet, snippet_family)
-    param_names = list(s_instance.get_param_names())
-    if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter initializers for {0}".format(
-            snippet_family.__name__))
-    params = param_space_to_val_vec(s_instance, param_space)
-
-    return (s_instance, s_type, param_names, params)
-
-
-def is_model_valid(model, model_module):
+def get_model(model, model_module):
     """Check whether the model is valid, i.e is native or derived
     from model_family.Custom
 
     Args:
-    model           --  string or instance of model_family.Custom
-    model_family    --  model family (NeuronModels, WeightUpdateModels or
-                        PostsynapticModels) to which model should belong to
+    model           --  string or instance of pygenn.genn.ModelBase
+    model_module    --  module model SHOULD be in (neuron_models, 
+                        weight_update_models etc) to which model 
+                        should belong to
 
     Returns:
     instance of the model and its type as string
@@ -81,114 +49,16 @@ def is_model_valid(model, model_module):
     not natively available)
     """
     
-    # If model is a string
+    # If model is a string, get function with 
+    # this name from module and call it
     if isinstance(model, str):
-        # Get function with this name from module and call it 
-        return getattr(model_module, model_type)()
+        return getattr(model_module, model)()
+    # Otherwise, if model is derived off correct 
+    # base class, return it directly
     elif isinstance(model, model_module.Base):
         return model
     else:
         raise Exception("Invalid model")
-
-def param_space_to_vals(model, param_space):
-    """Convert a param_space dict to ParamValues
-
-    Args:
-    model       --  instance of the model
-    param_space --  dict with parameters
-
-    Returns:
-    native model's ParamValues
-    """
-    return model.make_param_values(param_space_to_val_vec(model, param_space))
-
-
-def param_space_to_val_vec(model, param_space):
-    """Convert a param_space dict to a std::vector<double>
-
-    Args:
-    model     -- instance of the model
-    param_space -- dict with parameters
-
-    Returns:
-    native vector of parameters
-    """
-    if not all(isinstance(p, Number) for p in itervalues(param_space)):
-        raise ValueError("non-numeric parameters are not supported")
-
-    return DoubleVector([param_space[pn] for pn in model.get_param_names()])
-
-
-def var_space_to_vals(model, var_space):
-    """Convert a var_space dict to VarValues
-
-    Args:
-    model       -- instance of the model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_values(VarInitVector([var_space[vnt.name].init_val
-                                                for vnt in model.get_vars()]))
-
-def var_ref_space_to_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to VarReferences
-
-    Args:
-    model           -- instance of the model
-    var_ref_space   -- dict with variable references
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name][0]
-                            for v in model.get_var_refs()]))
-                                                
-def var_ref_space_to_wu_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to WUVarReferences
-
-    Args:
-    model       -- instance of the model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_wuvar_references(
-        WUVarReferenceVector([var_ref_space[v.name][0]
-                              for v in model.get_var_refs()]))
-
-def pre_var_space_to_vals(model, var_space):
-    """Convert a var_space dict to PreVarValues
-
-    Args:
-    model       -- instance of the weight update model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_pre_var_values(
-        VarInitVector([var_space[vnt.name].init_val
-                       for vnt in model.get_pre_vars()]))
-
-
-def post_var_space_to_vals(model, var_space):
-    """Convert a var_space dict to PostVarValues
-
-    Args:
-    model       -- instance of the weight update model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_post_var_values(
-        VarInitVector([var_space[vnt.name].init_val
-                       for vnt in model.get_post_vars()]))
-
 
 class Variable(object):
 

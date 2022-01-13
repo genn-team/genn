@@ -59,33 +59,17 @@ from .shared_library_model import (SharedLibraryModelDouble,
                                    SharedLibraryModelFloat)
                                    
 from .genn_groups import NeuronGroupMixin
-"""
-from . import genn_wrapper
-from .genn_wrapper import SharedLibraryModelNumpy as slm
-from .genn_wrapper.Models import (Var, VarRef, VarInit, VarReference, 
-                                  WUVarReference, VarVector, VarRefVector)
-from .genn_wrapper.InitSparseConnectivitySnippet import Init as InitSparse
-from .genn_wrapper.InitToeplitzConnectivitySnippet import Init as InitToeplitz
-from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
-                                   EGPVector, ParamValVector,
-                                   DerivedParamVector)
-from .genn_wrapper.InitSparseConnectivitySnippet import make_cmlf, make_cksf
-from .genn_wrapper.StlContainers import StringVector
-from .genn_wrapper import VarLocation_HOST_DEVICE
-from .genn_groups import (NeuronGroup, SynapseGroup, 
-                          CurrentSource, CustomUpdate)
-from .model_preprocessor import prepare_snippet
-"""
+from .model_preprocessor import get_model
+from . import neuron_models
+
 # Loop through backends in preferential order
 backend_modules = OrderedDict()
 for b in ["cuda", "single_threaded_cpu", "opencl"]:
     # Try and import
     try:
-        print("trying to import " + b + "_backend")
         m = import_module("." + b + "_backend", "pygenn")
     # Ignore failed imports - likely due to non-supported backends
     except ImportError as ex:
-        print(ex)
         pass
     # Raise any other errors
     except:
@@ -290,10 +274,13 @@ class GeNNModel(ModelSpecInternal):
         """
         if self._built:
             raise Exception("GeNN model already built")
-        
+
+        # Resolve neuron model
+        neuron = get_model(neuron, neuron_models)
+
         # Use superclass to add population
         n_group = super(GeNNModel, self).add_neuron_population(
-            pop_name, int(num_neurons), model, param_space, var_space)
+            pop_name, int(num_neurons), neuron, param_space, var_space)
         
         # Initialise group, store group in dictionary and return
         n_group._init_group(self)
