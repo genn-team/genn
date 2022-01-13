@@ -367,7 +367,7 @@ class NeuronGroupMixin(GroupMixin):
                                                 event_recording_bytes))
 
         # Calculate start time of recording
-        start_time_ms = (self._model.timestep - data_bytes.shape[0]) * self._model.dT
+        start_time_ms = (self._model.timestep - data_bytes.shape[0]) * self._model.dt
         if start_time_ms < 0.0:
             raise Exception("spike_recording_data can only be "
                             "accessed once buffer is full.")
@@ -385,7 +385,7 @@ class NeuronGroupMixin(GroupMixin):
             events = np.where(data_unpack[:,b,:] == 1)
 
             # Convert event times to ms
-            event_times = start_time_ms + (events[0] * self._model.dT)
+            event_times = start_time_ms + (events[0] * self._model.dt)
 
             # Add to list
             event_data.append((event_times, events[1]))
@@ -430,7 +430,7 @@ class SynapseGroupMixin(GroupMixin):
         else:
             connect_init = self.sparse_connectivity_initialiser
         self.connectivity_extra_global_params =\
-            {egp.name: ExtraGlobalParameter(egp.name, egp.type, self.group)
+            {egp.name: ExtraGlobalParameter(egp.name, egp.type, self)
             for egp in connect_init.snippet.get_extra_global_params()}
 
     @property
