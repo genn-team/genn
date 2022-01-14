@@ -1393,12 +1393,12 @@ bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamReferenced(const std
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSrcNeuronParamReferenced(const std::string &paramName) const
 {
-    return isParamReferenced({getArchetypeCode()}, paramName);
+    return isParamReferenced({getArchetypeCode()}, paramName + "_pre");
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isTrgNeuronParamReferenced(const std::string &paramName) const
 {
-    return isParamReferenced({getArchetypeCode()}, paramName);
+    return isParamReferenced({getArchetypeCode()}, paramName +  "_post");
 }
 
 // ----------------------------------------------------------------------------
