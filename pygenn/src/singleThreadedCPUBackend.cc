@@ -12,7 +12,7 @@
 #include "optimiser.h"
 
 
-using namespace CodeGenerator::CUDA;
+using namespace CodeGenerator::SingleThreadedCPU;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
@@ -28,42 +28,20 @@ Backend createBackend(const ModelSpecInternal &model, const std::string &outputP
 }
 
 //----------------------------------------------------------------------------
-// cuda_backend
+// single_threaded_cpu_backend
 //----------------------------------------------------------------------------
-PYBIND11_MODULE(cuda_backend, m) 
+PYBIND11_MODULE(single_threaded_cpu_backend, m)
 {
     pybind11::module_::import("pygenn.genn");
-    
-    //------------------------------------------------------------------------
-    // Enumerations
-    //------------------------------------------------------------------------
-    pybind11::enum_<DeviceSelect>(m, "DeviceSelect")
-        .value("OPTIMAL", DeviceSelect::OPTIMAL)
-        .value("MOST_MEMORY", DeviceSelect::MOST_MEMORY)
-        .value("MANUAL", DeviceSelect::MANUAL);
-
-    pybind11::enum_<BlockSizeSelect>(m, "BlockSizeSelect")
-        .value("OCCUPANCY", BlockSizeSelect::OCCUPANCY)
-        .value("MANUAL", BlockSizeSelect::MANUAL);
 
     //------------------------------------------------------------------------
-    // cuda_backend.Preferences
+    // single_threaded_cpu_backend.Preferences
     //------------------------------------------------------------------------
     pybind11::class_<Preferences, CodeGenerator::PreferencesBase>(m, "Preferences")
-        .def(pybind11::init<>())
-        
-        .def_readwrite("show_ptx_info", &Preferences::showPtxInfo)
-        .def_readwrite("generate_line_info", &Preferences::generateLineInfo)
-        .def_readwrite("enable_nccl_reductions", &Preferences::enableNCCLReductions)
-        .def_readwrite("device_select_method", &Preferences::deviceSelectMethod)
-        .def_readwrite("manual_device_id", &Preferences::manualDeviceID)
-        .def_readwrite("block_size_select_method", &Preferences::blockSizeSelectMethod)
-        // **TODO** some weirdness with "opaque types" means this doesn't work
-        .def_readwrite("manual_block_sizes", &Preferences::manualBlockSizes)
-        .def_readwrite("constant_cache_overhead", &Preferences::constantCacheOverhead);
-    
+        .def(pybind11::init<>());
+
     //------------------------------------------------------------------------
-    // cuda_backend.Backend
+    // single_threaded_cpu_backend.Backend
     //------------------------------------------------------------------------
     pybind11::class_<Backend, CodeGenerator::BackendBase>(m, "Backend");
     
