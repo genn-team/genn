@@ -214,7 +214,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if("dev_toolset" in nodeLabel) {
                                 makeCommand += ". /opt/rh/devtoolset-6/enable\n"
                             }
-                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
+                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                             def makeStatusCode = sh script:makeCommand, returnStatus:true
                             if(makeStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
@@ -275,7 +275,7 @@ for(b = 0; b < builderNodes.size(); b++) {
 
                             pip install wheel "numpy>=1.17" pybind11
 
-                            copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
+                            copy /Y lib\\genn*Release_DLL.* pygenn
 
                             python setup.py clean --all
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
