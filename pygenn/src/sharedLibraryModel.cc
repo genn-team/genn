@@ -5,36 +5,13 @@
 // GeNN includes
 #include "../../userproject/include/sharedLibraryModel.h"
 
-//----------------------------------------------------------------------------
-// Macros
-//----------------------------------------------------------------------------
-//#define DECLARE_GET_VAR(TYPE) declareGetVar<T, TYPE>(slm, #TYPE)
-//#define DECLARE_GET_STDINT_VAR(TYPE) declareGetVar<T, TYPE##_t>(slm, #TYPE)
+using namespace pybind11::literals;
 
 //----------------------------------------------------------------------------
 // Anonymous namespace
 //----------------------------------------------------------------------------
 namespace
 {
-/*template<typename T, typename V>
-void declareGetVar(pybind11::class_<SharedLibraryModel<T>> &c, const std::string &typeName)
-{
-    // **NOTE** based on https://github.com/pybind/pybind11/issues/323 and 
-    // https://stackoverflow.com/questions/44659924/returning-numpy-arrays-via-pybind11
-    // we use the class as a 'base' which I think defines lifetime
-    const std::string getArrayName = "get_array_" + typeName;
-    const std::string getScalarName = "get_scalar_" + typeName;
-    c.def(getArrayName.c_str(), 
-          [&c](SharedLibraryModel<T> &s, const std::string &varName, size_t count) 
-          { 
-             return pybind11::array_t<V>(count, s.getArray<V>(varName), c);
-          });
-    c.def(getScalarName.c_str(), 
-          [&c](SharedLibraryModel<T> &s, const std::string &varName) 
-          { 
-             return pybind11::array_t<V>(1, s.getScalar<V>(varName), c);
-          });
-}*/
 template<typename T>
 void declareSharedLibraryModel(pybind11::module &m, const std::string &typeString) 
 {
@@ -75,9 +52,12 @@ void declareSharedLibraryModel(pybind11::module &m, const std::string &typeStrin
         .def("pull_connectivity_from_device", &SharedLibraryModel<T>::pullConnectivityFromDevice)
         .def("pull_var_from_device", &SharedLibraryModel<T>::pullVarFromDevice)
         .def("pull_extra_global_param", pybind11::overload_cast<const std::string&, const std::string&, unsigned int>(&SharedLibraryModel<T>::pullExtraGlobalParam))
-        .def("push_state_to_device", &SharedLibraryModel<T>::pushStateToDevice)
-        .def("push_connectivity_to_device", &SharedLibraryModel<T>::pushConnectivityToDevice)
-        .def("push_var_to_device", &SharedLibraryModel<T>::pushVarToDevice)
+        .def("push_state_to_device", &SharedLibraryModel<T>::pushStateToDevice,
+            "pop_name"_a, "uninitialised_only"_a = false)
+        .def("push_connectivity_to_device", &SharedLibraryModel<T>::pushConnectivityToDevice,
+            "pop_name"_a, "uninitialised_only"_a = false)
+        .def("push_var_to_device", &SharedLibraryModel<T>::pushVarToDevice,
+            "pop_name"_a, "var_name"_a, "uninitialised_only"_a = false)
         .def("push_extra_global_param", pybind11::overload_cast<const std::string&, const std::string&, unsigned int>(&SharedLibraryModel<T>::pushExtraGlobalParam))
         .def("get_custom_update_time", &SharedLibraryModel<T>::getCustomUpdateTime)
         .def("get_custom_update_transpose_time", &SharedLibraryModel<T>::getCustomUpdateTransposeTime)
@@ -97,20 +77,6 @@ void declareSharedLibraryModel(pybind11::module &m, const std::string &typeStrin
              {
                  return pybind11::memoryview::from_memory(*static_cast<void**>(s.getSymbol(varName)), bytes);
              });
-        // Declare memory view getters for standard sized types
-        /*DECLARE_GET_STDINT_VAR(int8);
-        DECLARE_GET_STDINT_VAR(int16);
-        DECLARE_GET_STDINT_VAR(int32);
-        DECLARE_GET_STDINT_VAR(int64);
-        DECLARE_GET_STDINT_VAR(uint8);
-        DECLARE_GET_STDINT_VAR(uint16);
-        DECLARE_GET_STDINT_VAR(uint32);
-        DECLARE_GET_STDINT_VAR(uint64);
-        
-        // Declare memory view getters for standard types
-        DECLARE_GET_VAR(bool);
-        DECLARE_GET_VAR(float);
-        DECLARE_GET_VAR(double);*/
 }
 }
 
