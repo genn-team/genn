@@ -220,17 +220,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                             }
 
-                            // Create virtualenv, install numpy and make Python wheel
+                            // Create virtualenv, install numpy and pybind11; and make Python wheel
                             echo "Creating Python wheels";
                             script = """
                             rm -rf virtualenv
                             ${env.PYTHON} -m venv virtualenv
                             . virtualenv/bin/activate
 
-                            pip install wheel "numpy>=1.17"
+                            pip install "numpy>=1.17" pybind11
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                             """
 
@@ -269,19 +268,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             CALL %ANACONDA_ACTIVATE_BAT%
 
-                            CALL conda install -y swig
-
                             ${env.PYTHON} -m venv virtualenv
                             pushd virtualenv\\Scripts
                             call activate
                             popd
 
-                            pip install wheel "numpy>=1.17"
+                            pip install "numpy>=1.17" pybind11
 
                             copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             """
 
