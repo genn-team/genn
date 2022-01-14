@@ -1154,61 +1154,6 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     return type(class_name, (base,), body)()
 
 
-def create_dpf_class(dp_func):
-    """Helper function to create derived parameter function class
-
-    Args:
-    dp_func --  a function which computes the derived parameter and takes
-                two args "pars" (vector of double) and "dt" (double)
-    """
-    dpf = genn_wrapper.Snippet.DerivedParamFunc
-
-    def ctor(self):
-        dpf.__init__(self)
-
-    def call(self, pars, dt):
-        return dp_func(pars, dt)
-
-    return type("", (dpf,), {"__init__": ctor, "__call__": call})
-
-
-def create_cmlf_class(cml_func):
-    """Helper function to create function class for calculating sizes of
-    matrices initialised with sparse connectivity initialisation snippet
-
-    Args:
-    cml_func -- a function which computes the length and takes
-                three args "num_pre" (unsigned int), "num_post" (unsigned int)
-                and "pars" (vector of double)
-    """
-    cmlf = genn_wrapper.InitSparseConnectivitySnippet.CalcMaxLengthFunc
-
-    def ctor(self):
-        cmlf.__init__(self)
-
-    def call(self, num_pre, num_post, pars):
-        return cml_func(num_pre, num_post, pars)
-
-    return type("", (cmlf,), {"__init__": ctor, "__call__": call})
-
-def create_cksf_class(cks_func):
-    """Helper function to create function class for calculating sizes 
-    of kernels from connectivity initialiser parameters 
-
-    Args:
-    cks_func -- a function which computes the kernel size and takes
-                one arg "pars" (vector of double)
-    """
-    cksf = genn_wrapper.InitSparseConnectivitySnippet.CalcKernelSizeFunc
-
-    def ctor(self):
-        cksf.__init__(self)
-
-    def call(self, pars):
-        return cks_func(pars)
-
-    return type("", (cksf,), {"__init__": ctor, "__call__": call})
-
 def create_custom_init_var_snippet_class(class_name, param_names=None,
                                          derived_params=None,
                                          var_init_code=None, 
