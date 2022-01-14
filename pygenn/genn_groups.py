@@ -649,7 +649,7 @@ class SynapseGroupMixin(GroupMixin):
                 var_loc = self.get_wu_var_location(v.name) 
                 if var_loc & VarLocation.HOST:
                     # Determine how many copies of this variable are present
-                    num_copies = (1 if (v.access & VarAccessDuplication_SHARED) != 0
+                    num_copies = (1 if (v.access & VarAccessDuplication.SHARED) != 0
                                     else self._model.batch_size)
                     # Get view
                     var_data.view = self._assign_ext_ptr_array(
@@ -848,7 +848,7 @@ class CustomUpdateMixin(GroupMixin):
     
     @property
     def _custom_wu_update(self):
-        return isinstance(self, genn.CustomUpdateWU)
+        return isinstance(self, CustomUpdateWU)
 
     @property
     def _synapse_group(self):
@@ -857,4 +857,4 @@ class CustomUpdateMixin(GroupMixin):
 
         # Return Python synapse group reference from 
         # first (arbitrarily) variable reference
-        return next(itervalues(self.var_refs)).synapse_group
+        return next(itervalues(self.var_references)).synapse_group
