@@ -19,12 +19,18 @@ void Base::updateHash(boost::uuids::detail::sha1 &hash) const
     Utils::updateHash(getVars(), hash);
 }
 //----------------------------------------------------------------------------
-void Base::validate() const
+void Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                    const std::unordered_map<std::string, Models::VarInit> &varValues,
+                    const std::string &description) const
 {
     // Superclass
-    Snippet::Base::validate();
+    Snippet::Base::validate(paramValues, description);
 
-    Utils::validateVecNames(getVars(), "Variable");
+    const auto vars = getVars();
+    Utils::validateVecNames(vars, "Variable");
+
+    // Validate variable initialisers
+    Utils::validateInitialisers(vars, varValues, "variable", description);
 }
 
 //----------------------------------------------------------------------------

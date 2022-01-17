@@ -19,9 +19,9 @@ boost::uuids::detail::sha1::digest_type InitToeplitzConnectivitySnippet::Base::g
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void InitToeplitzConnectivitySnippet::Base::validate() const
+void InitToeplitzConnectivitySnippet::Base::validate(const std::unordered_map<std::string, double> &paramValues) const
 {
     // Superclass
-    Snippet::Base::validate();
+    Snippet::Base::validate(paramValues, "Toeplitz connectivity initialiser ");
     Utils::validateVecNames(getDiagonalBuildStateVars(), "Row building state variable");
 }

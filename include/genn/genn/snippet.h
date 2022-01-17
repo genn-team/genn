@@ -133,20 +133,10 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void updateHash(boost::uuids::detail::sha1 &hash) const
-    {
-        Utils::updateHash(getParamNames(), hash);
-        Utils::updateHash(getDerivedParams(), hash);
-        Utils::updateHash(getExtraGlobalParams(), hash);
-    }
+    void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Validate names of parameters etc
-    void validate() const
-    {
-        Utils::validateParamNames(getParamNames());
-        Utils::validateVecNames(getDerivedParams(), "Derived parameter");
-        Utils::validateVecNames(getExtraGlobalParams(), "Derived parameter");
-    }
+    void validate(const std::unordered_map<std::string, double> &paramValues, const std::string &description) const;
 
     //------------------------------------------------------------------------
     // Protected static helpers
@@ -180,7 +170,7 @@ public:
         : m_Snippet(snippet), m_Params(params)
     {
         // Validate names
-        getSnippet()->validate();
+        getSnippet()->validate(params);
     }
 
     //----------------------------------------------------------------------------

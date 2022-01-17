@@ -113,7 +113,10 @@ protected:
     void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Validate names of parameters etc
-    void validate() const;
+    void validate(const std::unordered_map<std::string, double> &paramValues, 
+                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::string &description) const;
+   
 };
 
 

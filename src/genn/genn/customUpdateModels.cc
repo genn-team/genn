@@ -27,11 +27,3 @@ bool CustomUpdateModels::Base::isReduction() const
             || std::any_of(varRefs.cbegin(), varRefs.cend(),
                            [](const Models::Base::VarRef &v) { return (v.access & VarAccessModeAttribute::REDUCE); }));
 }
-//----------------------------------------------------------------------------
-void CustomUpdateModels::Base::validate() const
-{
-    // Superclass
-    Models::Base::validate();
-
-    Utils::validateVecNames(getVarRefs(), "Variable reference");
-}
