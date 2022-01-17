@@ -44,8 +44,7 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
 {
     // Validate names
     Utils::validatePopName(name, "Current source");
-    Utils::validateParamValues(getCurrentSourceModel()->getParamNames(), getParams(), "Current source " + getName());
-    getCurrentSourceModel()->validate();
+    getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), "Current source " + getName());
 }
 //----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)

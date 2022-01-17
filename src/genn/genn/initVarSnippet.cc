@@ -24,6 +24,12 @@ boost::uuids::detail::sha1::digest_type InitVarSnippet::Base::getHashDigest() co
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+void InitVarSnippet::Base::validate(const std::unordered_map<std::string, double> &paramValues) const
+{
+    // Superclass
+    Snippet::Base::validate(paramValues, "Variable initialiser ");
+}
+//----------------------------------------------------------------------------
 bool InitVarSnippet::Base::requiresKernel() const
 {
     return (getCode().find("$(id_kernel)") != std::string::npos);

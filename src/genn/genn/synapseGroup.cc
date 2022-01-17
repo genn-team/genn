@@ -490,10 +490,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
-    Utils::validateParamValues(getWUModel()->getParamNames(), getWUParams(), "Synapse group " + getName() + " weight update model ");
-    Utils::validateParamValues(getPSModel()->getParamNames(), getPSParams(), "Synapse group " + getName() + " postsynaptic model ");
-    getWUModel()->validate();
-    getPSModel()->validate();
+    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), getWUPreVarInitialisers(), getWUPostVarInitialisers(), 
+                           "Synapse group " + getName() + " weight update model ");
+    getPSModel()->validate(getPSParams(), getPSVarInitialisers(), "Synapse group " + getName() + " postsynaptic model ");
 
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {

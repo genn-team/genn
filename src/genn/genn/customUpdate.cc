@@ -98,6 +98,9 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     : CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_Size(varReferences.empty() ? 0 : varReferences.begin()->second.getSize()), m_DelayNeuronGroup(nullptr)
 {
+    // Validate parameters, variables and variable references
+    getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
+
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
     }
@@ -171,6 +174,9 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
 :   CustomUpdateBase(name, updateGroupName, customUpdateModel, params, varInitialisers, defaultVarLocation, defaultExtraGlobalParamLocation),
     m_VarReferences(varReferences), m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal*>(m_VarReferences.begin()->second.getSynapseGroup()))
 {
+    // Validate parameters, variables and variable references
+    getCustomUpdateModel()->validate(getParams(), getVarInitialisers(), getVarReferences(), "Custom update " + getName());
+
     if(varReferences.empty()) {
         throw std::runtime_error("Custom update models must reference variables.");
     }

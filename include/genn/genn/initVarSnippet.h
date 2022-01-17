@@ -29,7 +29,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    using Snippet::Base::validate;
+    void validate(const std::unordered_map<std::string, double> &paramValues) const;
 
     //! Does this var init snippet require kernel-based connectivity
     bool requiresKernel() const;

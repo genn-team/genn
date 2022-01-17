@@ -32,10 +32,12 @@ boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() cons
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void NeuronModels::Base::validate() const
+void NeuronModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                                  const std::string &description) const
 {
     // Superclass
-    Models::Base::validate();
+    Models::Base::validate(paramValues, varValues, description);
 
     Utils::validateVecNames(getAdditionalInputVars(), "Additional input variable");
 
