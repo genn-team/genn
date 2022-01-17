@@ -19,27 +19,22 @@ enum class SynapseMatrixWeight : unsigned int
     GLOBAL          = (1 << 5),
     INDIVIDUAL      = (1 << 6),
     PROCEDURAL      = (1 << 7),
-    INDIVIDUAL_PSM  = (1 << 8),
-    KERNEL          = (1 << 9)
+    KERNEL          = (1 << 8)
 };
 
 //! Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
 enum class SynapseMatrixType : unsigned int
 {
     DENSE_GLOBALG                       = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    DENSE_GLOBALG_INDIVIDUAL_PSM        = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
-    DENSE_INDIVIDUALG                   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
-    DENSE_PROCEDURALG                   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    DENSE_INDIVIDUALG                   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
+    DENSE_PROCEDURALG                   = static_cast<unsigned int>(SynapseMatrixConnectivity::DENSE) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL),
     BITMASK_GLOBALG                     = static_cast<unsigned int>(SynapseMatrixConnectivity::BITMASK) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    BITMASK_GLOBALG_INDIVIDUAL_PSM      = static_cast<unsigned int>(SynapseMatrixConnectivity::BITMASK) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
     SPARSE_GLOBALG                      = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    SPARSE_GLOBALG_INDIVIDUAL_PSM       = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
-    SPARSE_INDIVIDUALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    SPARSE_INDIVIDUALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::SPARSE) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL),
     PROCEDURAL_GLOBALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
-    PROCEDURAL_GLOBALG_INDIVIDUAL_PSM   = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
-    PROCEDURAL_PROCEDURALG              = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
-    PROCEDURAL_KERNELG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
-    TOEPLITZ_KERNELG                    = static_cast<unsigned int>(SynapseMatrixConnectivity::TOEPLITZ) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    PROCEDURAL_PROCEDURALG              = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL),
+    PROCEDURAL_KERNELG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL),
+    TOEPLITZ_KERNELG                    = static_cast<unsigned int>(SynapseMatrixConnectivity::TOEPLITZ) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL),
 };
 
 //----------------------------------------------------------------------------

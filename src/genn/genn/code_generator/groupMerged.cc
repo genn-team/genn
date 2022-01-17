@@ -164,14 +164,6 @@ bool NeuronGroupMergedBase::isPSMDerivedParamHeterogeneous(size_t childIndex, co
                                            [](const SynapseGroupInternal *inSyn) { return inSyn->getPSDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMGlobalVarHeterogeneous(size_t childIndex, const std::string &varName) const
-{
-    return (isPSMGlobalVarReferenced(childIndex, varName) &&
-            isChildParamValueHeterogeneous(childIndex, varName, m_SortedMergedInSyns, 
-                                           [](const SynapseGroupInternal *inSyn) { return inSyn->getPSConstInitVals(); }));
-
-}
-//----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
 {
     return (isPSMVarInitParamReferenced(childIndex, varName, paramName) &&
@@ -298,39 +290,23 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         // Loop through variables
         const auto &varInit = sg->getPSVarInitialisers();
         for(const auto &var : sg->getPSModel()->getVars()) {
-            // If PSM has individual variables
-            if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                // Add pointers to state variable
-                if(!init || !varInit.at(var.name).getSnippet()->getCode().empty()) {
-                    addMergedInSynPointerField(var.type, var.name + "InSyn", i, backend.getDeviceVarPrefix() + var.name);
-                }
-
-                // If we're generating an initialization structure, also add any heterogeneous parameters, derived parameters or extra global parameters required for initializers
-                if(init) {
-                    const auto *varInitSnippet = varInit.at(var.name).getSnippet();
-                    addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), m_SortedMergedInSyns, i, var.name, "InSyn",
-                                                       &NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous, &SynapseGroupInternal::getPSVarInitialisers);
-                    addHeterogeneousChildVarInitDerivedParams(varInitSnippet->getDerivedParams(), m_SortedMergedInSyns, i, var.name, "InSyn",
-                                                              &NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous, &SynapseGroupInternal::getPSVarInitialisers);
-                    addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "InSyn",
-                                 [var, this](size_t groupIndex, size_t childIndex)
-                                 {
-                                     return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getFusedPSVarSuffix();
-                                 });
-                }
+            // Add pointers to state variable
+            if(!init || !varInit.at(var.name).getSnippet()->getCode().empty()) {
+                addMergedInSynPointerField(var.type, var.name + "InSyn", i, backend.getDeviceVarPrefix() + var.name);
             }
-            // Otherwise, if postsynaptic model variables are global and we're updating 
-            // **NOTE** global variable values aren't useful during initialization
-            else if(!init) {
-                // If GLOBALG variable should be implemented heterogeneously, add value
-                if(isPSMGlobalVarHeterogeneous(i, var.name)) {
-                    addScalarField(var.name + "InSyn" + std::to_string(i),
-                                   [this, i, var](const NeuronGroupInternal &, size_t groupIndex)
-                                   {
-                                       const double val = m_SortedMergedInSyns.at(groupIndex).at(i)->getPSConstInitVals().at(var.name);
-                                       return Utils::writePreciseString(val);
-                                   });
-                }
+
+            // If we're generating an initialization structure, also add any heterogeneous parameters, derived parameters or extra global parameters required for initializers
+            if(init) {
+                const auto *varInitSnippet = varInit.at(var.name).getSnippet();
+                addHeterogeneousChildVarInitParams(varInitSnippet->getParamNames(), m_SortedMergedInSyns, i, var.name, "InSyn",
+                                                    &NeuronGroupMergedBase::isPSMVarInitParamHeterogeneous, &SynapseGroupInternal::getPSVarInitialisers);
+                addHeterogeneousChildVarInitDerivedParams(varInitSnippet->getDerivedParams(), m_SortedMergedInSyns, i, var.name, "InSyn",
+                                                            &NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous, &SynapseGroupInternal::getPSVarInitialisers);
+                addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + "InSyn",
+                                [var, this](size_t groupIndex, size_t childIndex)
+                                {
+                                    return var.name + m_SortedMergedInSyns.at(groupIndex).at(childIndex)->getFusedPSVarSuffix();
+                                });
             }
         }
 
@@ -446,14 +422,12 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
 
             // Loop through variables and update hash with variable initialisation parameters and derived parameters
             for(const auto &v : sg->getPSVarInitialisers()) {
-                if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                    updateChildVarInitParamsHash(m_SortedMergedInSyns, c, v.first,
-                                                 &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
-                                                 &SynapseGroupInternal::getPSVarInitialisers, hash);
-                    updateChildVarInitDerivedParamsHash(m_SortedMergedInSyns, c, v.first,
-                                                        &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
-                                                        &SynapseGroupInternal::getPSVarInitialisers, hash);
-                }
+                updateChildVarInitParamsHash(m_SortedMergedInSyns, c, v.first,
+                                                &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
+                                                &SynapseGroupInternal::getPSVarInitialisers, hash);
+                updateChildVarInitDerivedParamsHash(m_SortedMergedInSyns, c, v.first,
+                                                    &NeuronGroupMergedBase::isPSMVarInitParamReferenced,
+                                                    &SynapseGroupInternal::getPSVarInitialisers, hash);
             }
         }
     }
@@ -474,11 +448,6 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
                                  &SynapseGroupInternal::getPSParams, hash);
             updateChildDerivedParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
                                         &SynapseGroupInternal::getPSDerivedParams, hash);
-
-            if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
-                updateChildParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMGlobalVarReferenced,
-                                     &SynapseGroupInternal::getPSConstInitVals, hash);
-            }
         }
     }
 }
@@ -505,19 +474,6 @@ bool NeuronGroupMergedBase::isPSMParamReferenced(size_t childIndex, const std::s
 {
     const auto *psm = getSortedArchetypeMergedInSyns().at(childIndex)->getPSModel();
     return isParamReferenced({psm->getApplyInputCode(), psm->getDecayCode()}, paramName);
-}
-//----------------------------------------------------------------------------
-bool NeuronGroupMergedBase::isPSMGlobalVarReferenced(size_t childIndex, const std::string &varName) const
-{
-    // If synapse group doesn't have individual PSM variables to start with, return false
-    const auto *sg = getSortedArchetypeMergedInSyns().at(childIndex);
-    if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-        return false;
-    }
-    else {
-        const auto *psm = sg->getPSModel();
-        return isParamReferenced({psm->getApplyInputCode(), psm->getDecayCode()}, varName);
-    }
 }
 //----------------------------------------------------------------------------
 bool NeuronGroupMergedBase::isPSMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const

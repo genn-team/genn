@@ -1132,20 +1132,18 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                     "unsigned int", "denDelayPtr" + sg->getFusedPSVarSuffix(), "0", mem);
             }
 
-            if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                for(const auto &psmVar : sg->getPSModel()->getVars()) {
-                    backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                     psmVar.type, psmVar.name + sg->getFusedPSVarSuffix(), sg->getPSVarLocation(psmVar.name),
-                                     sg->getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVar.access, batchSize), mem);
+            for(const auto &psmVar : sg->getPSModel()->getVars()) {
+                backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
+                                    psmVar.type, psmVar.name + sg->getFusedPSVarSuffix(), sg->getPSVarLocation(psmVar.name),
+                                    sg->getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVar.access, batchSize), mem);
 
-                    // Loop through EGPs required to initialize PSM variable
-                    const auto extraGlobalParams = sg->getPSVarInitialisers().at(psmVar.name).getSnippet()->getExtraGlobalParams();
-                    for(const auto &e : extraGlobalParams) {
-                        genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
-                                            runnerVarDecl, runnerExtraGlobalParamFunc, 
-                                            e.type, e.name + psmVar.name + sg->getFusedPSVarSuffix(),
-                                            true, VarLocation::HOST_DEVICE);
-                    }
+                // Loop through EGPs required to initialize PSM variable
+                const auto extraGlobalParams = sg->getPSVarInitialisers().at(psmVar.name).getSnippet()->getExtraGlobalParams();
+                for(const auto &e : extraGlobalParams) {
+                    genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
+                                        runnerVarDecl, runnerExtraGlobalParamFunc, 
+                                        e.type, e.name + psmVar.name + sg->getFusedPSVarSuffix(),
+                                        true, VarLocation::HOST_DEVICE);
                 }
             }
         }
@@ -1337,18 +1335,15 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                                                 true, s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
                                 });
 
-            // If this synapse group has individual postsynaptic model variables
-            if (s.second.getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-                for(const auto &psmVar : psm->getVars()) {
-                    const bool autoInitialized = !s.second.getPSVarInitialisers().at(psmVar.name).getSnippet()->getCode().empty();
-                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(psmVar.name),
-                                        backend.getPreferences().automaticCopy, psmVar.name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                        [&]()
-                                        {
-                                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVar.type, psmVar.name + s.second.getName(), s.second.getPSVarLocation(psmVar.name),
-                                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVar.access, batchSize));
-                                        });
-                }
+            for(const auto &psmVar : psm->getVars()) {
+                const bool autoInitialized = !s.second.getPSVarInitialisers().at(psmVar.name).getSnippet()->getCode().empty();
+                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(psmVar.name),
+                                    backend.getPreferences().automaticCopy, psmVar.name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                    [&]()
+                                    {
+                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVar.type, psmVar.name + s.second.getName(), s.second.getPSVarLocation(psmVar.name),
+                                                                    autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVar.access, batchSize));
+                                    });
             }
         }
         

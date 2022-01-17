@@ -232,11 +232,6 @@ const std::unordered_map<std::string, double> SynapseGroup::getWUConstInitVals()
     return getConstInitVals(m_WUVarInitialisers);
 }
 //----------------------------------------------------------------------------
-const std::unordered_map<std::string, double> SynapseGroup::getPSConstInitVals() const
-{
-    return getConstInitVals(m_PSVarInitialisers);
-}
-//----------------------------------------------------------------------------
 bool SynapseGroup::isZeroCopyEnabled() const
 {
     // If there are any postsynaptic variables implemented in zero-copy mode return true
@@ -774,7 +769,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSHashDigest() const
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
     Utils::updateHash(getPSTargetVar(), hash);
     return hash.get_digest();
 }
@@ -784,7 +778,6 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     boost::uuids::detail::sha1 hash;
     Utils::updateHash(getPSModel()->getHashDigest(), hash);
     Utils::updateHash(getMaxDendriticDelayTimesteps(), hash);
-    Utils::updateHash((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM), hash);
     Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);

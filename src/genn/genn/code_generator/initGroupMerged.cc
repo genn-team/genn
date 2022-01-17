@@ -348,13 +348,10 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                 });
         }
 
-        // If postsynaptic model variables should be individual
-        if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), sg->getPSVarInitialisers(),
-                                 "InSyn" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),
-                                 [i, this](const std::string &v, const std::string &p) { return isPSMVarInitParamHeterogeneous(i, v, p); },
-                                 [i, this](const std::string &v, const std::string &p) { return isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
-        }
+        genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), sg->getPSVarInitialisers(),
+                                "InSyn" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),
+                                [i, this](const std::string &v, const std::string &p) { return isPSMVarInitParamHeterogeneous(i, v, p); },
+                                [i, this](const std::string &v, const std::string &p) { return isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
     }
 
     // Loop through incoming synaptic populations with postsynaptic variables

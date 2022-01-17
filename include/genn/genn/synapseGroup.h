@@ -157,7 +157,6 @@ public:
 
     const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
     const std::unordered_map<std::string, Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
-    const std::unordered_map<std::string, double> getPSConstInitVals() const;
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
