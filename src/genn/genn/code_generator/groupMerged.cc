@@ -1038,26 +1038,26 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
 
     // Add pointers to connectivity data
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addWeightSharingPointerField("unsigned int", "rowLength", backend.getDeviceVarPrefix() + "rowLength");
-        addWeightSharingPointerField(getArchetype().getSparseIndType(), "ind", backend.getDeviceVarPrefix() + "ind");
+        addPointerField("unsigned int", "rowLength", backend.getDeviceVarPrefix() + "rowLength");
+        addPointerField(getArchetype().getSparseIndType(), "ind", backend.getDeviceVarPrefix() + "ind");
 
         // Add additional structure for postsynaptic access
         if(backend.isPostsynapticRemapRequired() && !wum->getLearnPostCode().empty()
            && (role == Role::PostsynapticUpdate || role == Role::SparseInit))
         {
-            addWeightSharingPointerField("unsigned int", "colLength", backend.getDeviceVarPrefix() + "colLength");
-            addWeightSharingPointerField("unsigned int", "remap", backend.getDeviceVarPrefix() + "remap");
+            addPointerField("unsigned int", "colLength", backend.getDeviceVarPrefix() + "colLength");
+            addPointerField("unsigned int", "remap", backend.getDeviceVarPrefix() + "remap");
         }
 
         // Add additional structure for synapse dynamics access if required
         if((role == Role::SynapseDynamics || role == Role::SparseInit) &&
            backend.isSynRemapRequired(getArchetype()))
         {
-            addWeightSharingPointerField("unsigned int", "synRemap", backend.getDeviceVarPrefix() + "synRemap");
+            addPointerField("unsigned int", "synRemap", backend.getDeviceVarPrefix() + "synRemap");
         }
     }
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        addWeightSharingPointerField("uint32_t", "gp", backend.getDeviceVarPrefix() + "gp");
+        addPointerField("uint32_t", "gp", backend.getDeviceVarPrefix() + "gp");
     }
 
     // If we're updating a group with procedural connectivity or initialising connectivity
@@ -1162,7 +1162,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
 
             // If we're performing an update with individual weights; or this variable should be initialised
             if((updateRole && individualWeights) || (kernelWeights && updateRole) || varInitRequired) {
-                addWeightSharingPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
+                addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
             }
 
             // If we're performing a procedural update or this variable should be initialised, add any var init EGPs to structure
@@ -1174,12 +1174,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                     addField(e.type, e.name + var.name,
                              [e, prefix, var](const SynapseGroupInternal &sg, size_t)
                              {
-                                 if(sg.isWeightSharingSlave()) {
-                                     return prefix + e.name + var.name + sg.getWeightSharingMaster()->getName();
-                                 }
-                                 else {
-                                     return prefix + e.name + var.name + sg.getName();
-                                 }
+                                 return prefix + e.name + var.name + sg.getName();
                              },
                              isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
                 }
@@ -1321,21 +1316,6 @@ void SynapseGroupMergedBase::addTrgPointerField(const std::string &type, const s
 {
     assert(!Utils::isTypePointer(type));
     addField(type + "*", name, [prefix](const SynapseGroupInternal &sg, size_t) { return prefix + sg.getTrgNeuronGroup()->getName(); });
-}
-//----------------------------------------------------------------------------
-void SynapseGroupMergedBase::addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix)
-{
-    assert(!Utils::isTypePointer(type));
-    addField(type + "*", name, 
-             [prefix](const SynapseGroupInternal &sg, size_t)
-             { 
-                 if(sg.isWeightSharingSlave()) {
-                     return prefix + sg.getWeightSharingMaster()->getName();
-                 }
-                 else {
-                     return prefix + sg.getName();
-                 }
-             });
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isWUParamReferenced(const std::string &paramName) const

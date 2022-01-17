@@ -119,9 +119,6 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
         throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
     }
 
-    if(sg->isWeightSharingSlave()) {
-        throw std::runtime_error("Only weight update model variables in weight sharing master synapse group can be referenced.");
-    }
     // If a transpose synapse group is specified
     if(m_TransposeSG != nullptr) {
         // Check that tranpose group also has individual variables

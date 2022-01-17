@@ -145,9 +145,6 @@ public:
     //! Does synapse group need to handle spike-like events
     bool isSpikeEventRequired() const;
 
-    //! Is this synapse group a weight-sharing slave
-    bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
-
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
@@ -232,7 +229,7 @@ protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
-                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
+                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
