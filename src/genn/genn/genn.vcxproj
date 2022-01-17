@@ -51,6 +51,7 @@
     <ClCompile Include="neuronModels.cc" />
     <ClCompile Include="postsynapticModels.cc" />
     <ClCompile Include="gennUtils.cc" />
+    <ClCompile Include="snippet.cc" />
     <ClCompile Include="weightUpdateModels.cc" />
     <ClCompile Include="synapseGroup.cc" />
   </ItemGroup>

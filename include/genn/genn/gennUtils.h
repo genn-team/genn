@@ -71,15 +71,30 @@ GENN_EXPORT void validateVarName(const std::string &name, const std::string &des
 GENN_EXPORT void validatePopName(const std::string &name, const std::string &description);
 
 //--------------------------------------------------------------------------
-//! \brief Are values provided for all of the the parameter names in the vector?
-//--------------------------------------------------------------------------
-GENN_EXPORT void validateParamValues(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &paramValues, 
-                                     const std::string &description);
-
-//--------------------------------------------------------------------------
 //! \brief Are all the parameter names in vector valid? GeNN variables and population names must obey C variable naming rules
 //--------------------------------------------------------------------------
 GENN_EXPORT void validateParamNames(const std::vector<std::string> &paramNames);
+
+//--------------------------------------------------------------------------
+//! \brief Are initialisers provided for all of the the item names in the vector?
+//--------------------------------------------------------------------------
+template<typename T, typename V>
+void validateInitialisers(const std::vector<T> &vec, const std::unordered_map<std::string, V> &values, 
+                          const std::string &type, const std::string description)
+{
+    // If there are a different number of sizes than values, give error
+    if(vec.size() != values.size()) {
+        throw std::runtime_error(description + " expected " + std::to_string(vec.size()) + " " + type + " but got " + std::to_string(values.size()));
+    }
+
+    // Loop through variables
+    for(const auto &v : vec) {
+        // If there is no values, give error
+        if(values.find(v.name) == values.cend()) {
+            throw std::runtime_error(description + " missing initialiser for " + type + ": '" + v.name + "'");
+        }
+    }
+}
 
 //--------------------------------------------------------------------------
 //! \brief Are the 'name' fields of all structs in vector valid? GeNN variables and population names must obey C variable naming rules

@@ -39,7 +39,21 @@ public:
     bool isReduction() const;
 
     //! Validate names of parameters etc
-    void validate() const;
+    template<typename R>
+    void validate(const std::unordered_map<std::string, double> &paramValues,
+                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, R> &varRefTargets,
+                  const std::string &description) const
+    {
+        // Superclass
+        Models::Base::validate(paramValues, varValues, description);
+
+        const auto varRefs = getVarRefs();
+        Utils::validateVecNames(getVarRefs(), "Variable reference");
+
+        // Validate variable reference initialisers
+        Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
+    }
 };
 
 //----------------------------------------------------------------------------
