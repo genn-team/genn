@@ -119,3 +119,34 @@ TEST(InitSparseConnectivitySnippet, CompareUnusedParameters)
 
     ASSERT_EQ(connectivityInit0.getHashDigest(), connectivityInit1.getHashDigest());
 }
+//--------------------------------------------------------------------------
+TEST(InitSparseConnectivitySnippet, ValidateParamValues) 
+{
+    const std::unordered_map<std::string, double> paramValsCorrect{{"prob", 0.1}};
+    const std::unordered_map<std::string, double> paramValsMisSpelled{{"probs", 0.1}};
+    const std::unordered_map<std::string, double> paramValsMissing{};
+    const std::unordered_map<std::string, double> paramValsExtra{{"prob", 0.1}, {"sd", 1.0}};
+
+    InitSparseConnectivitySnippet::FixedProbability::getInstance()->validate(paramValsCorrect);
+
+    try {
+        InitSparseConnectivitySnippet::FixedProbability::getInstance()->validate(paramValsMisSpelled);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        InitSparseConnectivitySnippet::FixedProbability::getInstance()->validate(paramValsMissing);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        InitSparseConnectivitySnippet::FixedProbability::getInstance()->validate(paramValsExtra);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+}

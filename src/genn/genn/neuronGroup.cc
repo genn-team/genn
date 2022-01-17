@@ -313,8 +313,7 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
 {
     // Validate names
     Utils::validatePopName(name, "Neuron group");
-    Utils::validateParamValues(getNeuronModel()->getParamNames(), getParams(), "Neuron group " + getName());
-    getNeuronModel()->validate();
+    getNeuronModel()->validate(getParams(), getVarInitialisers(), "Neuron group " + getName());
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
