@@ -112,7 +112,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         model.setName("test");
         model.setDT(0.1);
         model.setTiming(false);
-        model.setPrecision(GENN_FLOAT);
+        model.setPrecision(ScalarPrecision::FLOAT);
         model.setTimePrecision(TimePrecision::DEFAULT);
         model.setBatchSize(1);
         model.setSeed(0);
