@@ -1279,3 +1279,36 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
     return create_custom_model_class(
         class_name, genn_wrapper.InitSparseConnectivitySnippet.Custom, param_names,
         None, derived_params, body)
+
+@deprecated("this wrapper is now unnecessary - use callables directly")
+def create_dpf_class(dp_func):
+    """Helper function to create derived parameter function class
+
+    Args:
+    dp_func --  a function which computes the derived parameter and takes
+                two args "pars" (vector of double) and "dt" (double)
+    """
+    return lambda: dp_func
+
+@deprecated("this wrapper is now unnecessary - use callables directly")
+def create_cmlf_class(cml_func):
+    """Helper function to create function class for calculating sizes of
+    matrices initialised with sparse connectivity initialisation snippet
+
+    Args:
+    cml_func -- a function which computes the length and takes
+                three args "num_pre" (unsigned int), "num_post" (unsigned int)
+                and "pars" (vector of double)
+    """
+    return lambda: cml_func
+
+@deprecated("this wrapper is now unnecessary - use callables directly")
+def create_cksf_class(cks_func):
+    """Helper function to create function class for calculating sizes 
+    of kernels from connectivity initialiser parameters 
+
+    Args:
+    cks_func -- a function which computes the kernel size and takes
+                one arg "pars" (vector of double)
+    """
+    return lambda: cks_func
