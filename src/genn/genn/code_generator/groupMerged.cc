@@ -528,7 +528,7 @@ const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnect
 //------------------------------------------------------------------------
 SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+:   GroupMerged<SynapseGroupInternal>(index, precision, groups, true)
 {
     // **TODO** these could be generic
     addField("unsigned int", "numSrcNeurons",
@@ -1344,7 +1344,7 @@ const std::string CustomUpdateHostReductionGroupMerged::name = "CustomUpdateHost
 //----------------------------------------------------------------------------
 CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                            const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
+:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups, true)
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
@@ -1367,7 +1367,7 @@ const std::string CustomWUUpdateHostReductionGroupMerged::name = "CustomWUUpdate
 //----------------------------------------------------------------------------
 CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+:   CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups, true)
 {
     addField("unsigned int", "size",
              [&backend](const CustomUpdateWUInternal &cg, size_t) 

@@ -52,14 +52,17 @@ public:
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
 
 
-    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups))
+    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
+    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)), m_Host(host)
     {}
 
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
     size_t getIndex() const { return m_Index; }
+
+    //! Does this merged group generate host or device data structures?
+    bool isHost() const { return m_Host; }
 
     //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
     const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
@@ -89,8 +92,7 @@ public:
     }
 
     //! Generate declaration of struct to hold this merged group
-    void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name,
-                        bool host = false) const
+    void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name) const
     {
         os << "struct Merged" << name << "Group" << getIndex() << std::endl;
         {
@@ -103,7 +105,7 @@ public:
                 const std::string &type = std::get<0>(f);
                 if(::Utils::isTypePointer(type) && std::get<3>(f) != FieldType::Host) {
                     // If we are generating a host structure, allow the backend to override the type
-                    if(host) {
+                    if(isHost()) {
                         os << backend.getMergedGroupFieldHostType(type);
                     }
                     // Otherwise, allow the backend to add a prefix 
@@ -433,14 +435,14 @@ protected:
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
                             CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                             CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                            const std::string &name, bool host = false) const
+                            const std::string &name) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
         auto sortedFields = getSortedFields(backend);
 
         // If this isn't a host merged structure, generate definition for function to push group
-        if(!host) {
+        if(!isHost()) {
             definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
             generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend);
             definitionsInternalFunc << ");" << std::endl;
@@ -455,14 +457,14 @@ protected:
             }
 
             // Raise error if this field is a host field but this isn't a host structure
-            assert(std::get<3>(f) != FieldType::Host || host);
+            assert(std::get<3>(f) != FieldType::Host || isHost());
         }
 
         // If merged group is used on host
-        if(host) {
+        if(isHost()) {
             // Generate struct directly into internal definitions
             // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
-            generateStruct(definitionsInternal, backend, name, true);
+            generateStruct(definitionsInternal, backend, name);
 
             // Declare array of these structs containing individual neuron group pointers etc
             runnerVarDecl << "Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
@@ -474,7 +476,7 @@ protected:
         // Loop through groups
         for(size_t groupIndex = 0; groupIndex < getGroups().size(); groupIndex++) {
             // If this is a merged group used on the host, directly set array entry
-            if(host) {
+            if(isHost()) {
                 runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << "};" << std::endl;
@@ -517,6 +519,7 @@ private:
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;
     std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
+    const bool m_Host;
 };
 
 //----------------------------------------------------------------------------
@@ -965,7 +968,7 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
@@ -1160,8 +1163,8 @@ class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
 {
 protected:
      CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
-                                   const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
+                                   const std::vector<std::reference_wrapper<const G>> &groups, bool host = false)
+    :   GroupMerged<G>(index, precision, groups, host)
     {
         // Loop through variables and add pointers if they are reduction targets
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
@@ -1197,7 +1200,7 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1223,7 +1226,7 @@ public:
                         CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+                           runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
     //----------------------------------------------------------------------------
