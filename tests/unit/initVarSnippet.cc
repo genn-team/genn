@@ -49,3 +49,34 @@ TEST(InitVarSnippet, CompareVarInitParameters)
     ASSERT_EQ(varInit0.getHashDigest(), varInit1.getHashDigest());
     ASSERT_EQ(varInit0.getHashDigest(), varInit2.getHashDigest());
 }
+//--------------------------------------------------------------------------
+TEST(InitVarSnippet, ValidateParamValues) 
+{
+    const std::unordered_map<std::string, double> paramValsCorrect{{"min", 0.0}, {"max", 1.0}};
+    const std::unordered_map<std::string, double> paramValsMisSpelled{{"miny", 0.0}, {"max", 1.0}};
+    const std::unordered_map<std::string, double> paramValsMissing{{"max", 1.0}};
+    const std::unordered_map<std::string, double> paramValsExtra{{"min", 0.0}, {"max", 1.0}, {"mean", 0.5}};
+
+    InitVarSnippet::Uniform::getInstance()->validate(paramValsCorrect);
+
+    try {
+        InitVarSnippet::Uniform::getInstance()->validate(paramValsMisSpelled);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        InitVarSnippet::Uniform::getInstance()->validate(paramValsMissing);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        InitVarSnippet::Uniform::getInstance()->validate(paramValsExtra);
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+}

@@ -227,7 +227,7 @@ TEST(NeuronGroup, UnitialisedVarIzhikevich)
     ModelSpec model;
 
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", uninitialisedVar()}, {"u", uninitialisedVar()}};
+    VarValues varVals{{"V", uninitialisedVar()}, {"U", uninitialisedVar()}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     ASSERT_FALSE(ng->isZeroCopyEnabled());
@@ -241,7 +241,7 @@ TEST(NeuronGroup, UnitialisedVarRand)
 
     ParamValues dist{{"min", 0.0}, {"max", 1.0}};
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", initVar<InitVarSnippet::Uniform>(dist)}};
+    VarValues varVals{{"V", 0.0}, {"U", initVar<InitVarSnippet::Uniform>(dist)}};
     NeuronGroup *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     ASSERT_FALSE(ng->isZeroCopyEnabled());

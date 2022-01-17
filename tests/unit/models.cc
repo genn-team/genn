@@ -85,7 +85,7 @@ TEST(Models, NeuronVarReference)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     const auto *ng = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     auto neuronVoltage = createVarRef(ng, "V");
@@ -105,7 +105,7 @@ TEST(Models, NeuronVarReferenceDelay)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn", SynapseMatrixType::DENSE_INDIVIDUALG,
@@ -129,7 +129,7 @@ TEST(Models, CurrentSourceVarReference)
 
     // Add neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add one poisson exp current source
@@ -155,7 +155,7 @@ TEST(Models, PSMVarReference)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
@@ -195,7 +195,7 @@ TEST(Models, WUPreVarReference)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
@@ -236,7 +236,7 @@ TEST(Models, WUPostVarReference)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
@@ -279,7 +279,7 @@ TEST(Models, WUMVarReference)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
@@ -317,7 +317,7 @@ TEST(Models, WUMTransposeVarReference)
 
     // Add two neuron group to model
     ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
-    VarValues varVals{{"v", 0.0}, {"u", 0.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
