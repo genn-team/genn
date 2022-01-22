@@ -404,9 +404,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
-    modelMerged.genMergedNeuronUpdateGroupStructs(os, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(os, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(os, *this);
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedNeuronUpdateGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
@@ -527,10 +527,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                                HostHandler preambleHandler, HostHandler pushEGPHandler) const
 {
     // Generate struct definitions
-    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(os, *this);
-    modelMerged.genMergedPresynapticUpdateGroupStructs(os, *this);
-    modelMerged.genMergedPostsynapticUpdateGroupStructs(os, *this);
-    modelMerged.genMergedSynapseDynamicsGroupStructs(os, *this);
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedPresynapticUpdateGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedPostsynapticUpdateGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedSynapseDynamicsGroups());
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
@@ -686,9 +686,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     const ModelSpecInternal &model = modelMerged.getModel();
 
     // Generate struct definitions
-    modelMerged.genMergedCustomUpdateStructs(os, *this);
-    modelMerged.genMergedCustomUpdateWUStructs(os, *this);
-    modelMerged.genMergedCustomUpdateTransposeWUStructs(os, *this);
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedCustomUpdateGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedCustomUpdateWUGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedCustomUpdateTransposeWUGroups());
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateGroups());
@@ -855,14 +855,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     os << std::endl;
 
     // Generate struct definitions
-    modelMerged.genMergedNeuronInitGroupStructs(os, *this);
-    modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
-    modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseKernelInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
-    modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedNeuronInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedCustomUpdateInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedSynapseDenseInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedSynapseKernelInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedSynapseConnectivityInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedSynapseSparseInitGroups());
+    modelMerged.genMergedStructs(os, *this, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
 
     // Generate arrays of merged structs and functions to push them
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());

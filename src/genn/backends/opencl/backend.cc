@@ -309,9 +309,9 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     neuronUpdateKernels << std::endl << std::endl;
 
     // Generate struct definitions
-    modelMerged.genMergedNeuronUpdateGroupStructs(neuronUpdateKernels, *this);
-    modelMerged.genMergedNeuronSpikeQueueUpdateStructs(neuronUpdateKernels, *this);
-    modelMerged.genMergedNeuronPrevSpikeTimeUpdateStructs(neuronUpdateKernels, *this);
+    modelMerged.genMergedStructs(neuronUpdateKernels, *this, modelMerged.getMergedNeuronUpdateGroups());
+    modelMerged.genMergedStructs(neuronUpdateKernels, *this, modelMerged.getMergedNeuronSpikeQueueUpdateGroups());
+    modelMerged.genMergedStructs(neuronUpdateKernels, *this, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups());
 
     // Generate merged data structures
     genMergedKernelDataStructures(neuronUpdateKernels, modelMerged.getMergedNeuronUpdateGroups(),
@@ -563,10 +563,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
     synapseUpdateKernels << std::endl;
 
     // Generate struct definitions
-    modelMerged.genMergedSynapseDendriticDelayUpdateStructs(synapseUpdateKernels, *this);
-    modelMerged.genMergedPresynapticUpdateGroupStructs(synapseUpdateKernels, *this);
-    modelMerged.genMergedPostsynapticUpdateGroupStructs(synapseUpdateKernels, *this);
-    modelMerged.genMergedSynapseDynamicsGroupStructs(synapseUpdateKernels, *this);
+    modelMerged.genMergedStructs(synapseUpdateKernels, *this, modelMerged.getMergedSynapseDendriticDelayUpdateGroups());
+    modelMerged.genMergedStructs(synapseUpdateKernels, *this, modelMerged.getMergedPresynapticUpdateGroups());
+    modelMerged.genMergedStructs(synapseUpdateKernels, *this, modelMerged.getMergedPostsynapticUpdateGroups());
+    modelMerged.genMergedStructs(synapseUpdateKernels, *this, modelMerged.getMergedSynapseDynamicsGroups());
     synapseUpdateKernels << std::endl;
 
     // Generate data structure for accessing merged groups
@@ -866,9 +866,9 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     genKernelPreamble(customUpdateKernels, modelMerged);  
 
     // Generate struct definitions
-    modelMerged.genMergedCustomUpdateStructs(customUpdateKernels, *this);
-    modelMerged.genMergedCustomUpdateWUStructs(customUpdateKernels, *this);
-    modelMerged.genMergedCustomUpdateTransposeWUStructs(customUpdateKernels, *this);
+    modelMerged.genMergedStructs(customUpdateKernels, *this, modelMerged.getMergedCustomUpdateGroups());
+    modelMerged.genMergedStructs(customUpdateKernels, *this, modelMerged.getMergedCustomUpdateWUGroups());
+    modelMerged.genMergedStructs(customUpdateKernels, *this, modelMerged.getMergedCustomUpdateTransposeWUGroups());
    
 
     // Generate data structure for accessing merged groups from within custom update kernels
@@ -1105,14 +1105,14 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genKernelPreamble(initializeKernels, modelMerged);  
 
     // Generate struct definitions
-    modelMerged.genMergedNeuronInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedCustomUpdateInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedSynapseDenseInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedSynapseKernelInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedSynapseConnectivityInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedSynapseSparseInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(initializeKernels, *this);
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedNeuronInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedCustomUpdateInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedSynapseDenseInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedSynapseKernelInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedSynapseConnectivityInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedSynapseSparseInitGroups());
+    modelMerged.genMergedStructs(initializeKernels, *this, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
 
     // Generate data structure for accessing merged groups from within initialisation kernel
     // **NOTE** pass in zero constant cache here as it's precious and would be wasted on init kernels which are only launched once
