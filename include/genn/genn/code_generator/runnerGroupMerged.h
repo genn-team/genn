@@ -31,7 +31,7 @@ public:
 
     }
 
-    void genPushPull(const BackendBase &backend, CodeStream &runner, CodeStream &definitions, const ModelSpecMerged &modelMerged) const
+    void genPushPullGet(const BackendBase &backend, CodeStream &runner, CodeStream &definitions, const ModelSpecMerged &modelMerged) const
     {
         const unsigned int batchSize = modelMerged.getModel().getBatchSize();
         
@@ -51,6 +51,7 @@ public:
                 {
                     const std::string name = std::get<0>(f) + T::name + "Group" + std::to_string(getIndex());
                     const std::string count = fieldCount.empty() ? "count" : fieldCount;
+                    const std::string group = "merged" + T::name + "Group" + std::to_string(getIndex()) + "[group]";
                     if(fieldCount.empty()) {
                         definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, unsigned int count;" << std::endl;
                         runner << "void push" << name << "ToDevice(unsigned int group, unsigned int count)";
@@ -61,7 +62,7 @@ public:
                     }
                     {
                         CodeStream::Scope a(runner);
-
+                        runner << "auto *group = &" << group ";" << std::endl;
                         backend.genExtraGlobalParamPush(push, std::get<0>(f), std::get<1>(f),
                                                         loc, count, "group->");
                     }
@@ -77,11 +78,18 @@ public:
                     }
                     {
                         CodeStream::Scope a(runner);
-
+                        runner << "auto *group = &" << group ";" << std::endl;
                         backend.genExtraGlobalParamPull(push, std::get<0>(f), std::get<1>(f),
                                                         loc, count, "group->");
                     }
                     runner << std::endl;
+                    
+                    definitions << "EXPORT_FUNC " << std::get<0>(f) << "get" << name << "(unsigned int group);" << std::endl;
+                    runner << std::get<0>(f) << "get" << name << "(unsigned int group)";
+                    {
+                        CodeStream::Scope a(runner);
+                        runner << "return " << group << "." << std::get<1>(f) << ";" << std::endl;
+                    }
 
                 }
             }
