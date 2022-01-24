@@ -262,13 +262,17 @@ protected:
     bool isVarQueueRequired(const std::string &var) const;
     bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
 
-    //! Updates hash with neuron group
+    //! Gets hash used for merging neuron update groups
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    //! Updates hash with neuron group initialisation
+    //! Gets hash used for merging neuron initialisation groups
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
+    
+    //! Gets hash used for merging neuron runner groups
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getRunnerHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
 

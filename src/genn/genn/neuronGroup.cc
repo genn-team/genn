@@ -544,6 +544,26 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getRunnerHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    /*getSpikeLocation
+    
+    isDelayRequired
+    isTrueSpikeRequired
+    isSpikeEventRequired
+    isSpikeRecordingEnabled
+    isSpikeEventRecordingEnabled
+    isSpikeTimeRequired
+    isSpikeEventTimeRequired
+    isPrevSpikeTimeRequired
+    isPrevSpikeEventTimeRequired
+    isSimRNGRequired
+    getNeuronModel()->getVars()
+    varInit.at(var.name).getSnippet()->getExtraGlobalParams(*/
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
