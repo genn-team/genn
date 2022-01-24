@@ -251,11 +251,11 @@ size_t BackendSIMT::getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg)
 size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg)
 {
     // If there's row building code, return number of source neurons i.e. rows
-    if(!sg.getConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
+    if(!sg.getSparseConnectivityInitialiser().getSnippet()->getRowBuildCode().empty()) {
         return sg.getSrcNeuronGroup()->getNumNeurons();
     }
     // Otherwise, if there's column building code, return number of target neurons i.e. columns
-    else if(!sg.getConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
+    else if(!sg.getSparseConnectivityInitialiser().getSnippet()->getColBuildCode().empty()) {
         return sg.getTrgNeuronGroup()->getNumNeurons();
     }
     // Otherwise, give an error
@@ -1340,7 +1340,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
         [&modelMerged, this](CodeStream &os, const SynapseConnectivityInitGroupMerged &sg, Substitutions &popSubs)
         {
             // If there is row-building code in this snippet
-            const auto *snippet = sg.getArchetype().getConnectivityInitialiser().getSnippet();
+            const auto *snippet = sg.getArchetype().getSparseConnectivityInitialiser().getSnippet();
             if(!snippet->getRowBuildCode().empty()) {
                 os << "// only do this for existing presynaptic neurons" << std::endl;
                 os << "if(" << popSubs["id"] << " < group->numSrcNeurons)";

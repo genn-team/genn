@@ -231,7 +231,7 @@ private:
 // CodeGenerator::CustomUpdateInitGroupMergedBase
 //----------------------------------------------------------------------------
 template<typename G>
-class CustomUpdateInitGroupMergedBase : public GroupMerged<G>
+class CustomUpdateInitGroupMergedBase : public RuntimeGroupMerged<G>
 {
 public:
     //----------------------------------------------------------------------------
@@ -254,7 +254,7 @@ public:
 protected:
     CustomUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
                                     const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
+    :   RuntimeGroupMerged<G>(index, precision, groups)
     {
          // Loop through variables
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();

@@ -799,7 +799,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
                 // If there is row-building code in this snippet
                 Substitutions popSubs(&funcSubs);
-                const auto *snippet = s.getArchetype().getConnectivityInitialiser().getSnippet();
+                const auto *snippet = s.getArchetype().getSparseConnectivityInitialiser().getSnippet();
                 if(!snippet->getRowBuildCode().empty()) {
                     // Generate loop through source neurons
                     os << "for (unsigned int i = 0; i < group->numSrcNeurons; i++)";

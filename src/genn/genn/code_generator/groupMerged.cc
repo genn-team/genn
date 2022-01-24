@@ -20,7 +20,7 @@ const std::string NeuronSpikeQueueUpdateGroupMerged::name = "NeuronSpikeQueueUpd
 //----------------------------------------------------------------------------
 NeuronSpikeQueueUpdateGroupMerged::NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                      const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+:   RuntimeGroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
     if(getArchetype().isDelayRequired()) {
         addPointerField("unsigned int", "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
@@ -67,7 +67,7 @@ const std::string NeuronPrevSpikeTimeUpdateGroupMerged::name = "NeuronPrevSpikeT
 //----------------------------------------------------------------------------
 NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                                            const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+:   RuntimeGroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
     if(getArchetype().isDelayRequired()) {
         addPointerField("unsigned int", "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
@@ -180,19 +180,19 @@ bool NeuronGroupMergedBase::isPSMVarInitDerivedParamHeterogeneous(size_t childIn
 //----------------------------------------------------------------------------
 NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                              bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+:   RuntimeGroupMerged<NeuronGroupInternal>(index, precision, groups)
 {
     // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
-                             init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
+    orderGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
+                       init ? &SynapseGroupInternal::getPSInitHashDigest : &SynapseGroupInternal::getPSHashDigest);
 
     // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
-                             init ? &SynapseGroupInternal::getPreOutputInitHashDigest : &SynapseGroupInternal::getPreOutputHashDigest);
+    orderGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
+                       init ? &SynapseGroupInternal::getPreOutputInitHashDigest : &SynapseGroupInternal::getPreOutputHashDigest);
 
     // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
-                             init ? &CurrentSourceInternal::getInitHashDigest : &CurrentSourceInternal::getHashDigest);
+    orderGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
+                       init ? &CurrentSourceInternal::getInitHashDigest : &CurrentSourceInternal::getHashDigest);
 
     addField("unsigned int", "numNeurons",
               [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
@@ -512,7 +512,7 @@ const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendrit
 //----------------------------------------------------------------------------
 SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+:   RuntimeGroupMerged<SynapseGroupInternal>(index, precision, groups)
 {
     addField("unsigned int*", "denDelayPtr", 
              [&backend](const SynapseGroupInternal &sg, size_t) 
@@ -528,7 +528,7 @@ const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnect
 //------------------------------------------------------------------------
 SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups, true)
+:   RuntimeGroupMerged<SynapseGroupInternal>(index, precision, groups, true)
 {
     // **TODO** these could be generic
     addField("unsigned int", "numSrcNeurons",
@@ -540,18 +540,18 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
 
     // Add heterogeneous connectivity initialiser model parameters
     addHeterogeneousParams<SynapseConnectivityHostInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
-        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
+        getArchetype().getSparseConnectivityInitialiser().getSnippet()->getParamNames(), "",
+        [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); },
         &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
 
     // Add heterogeneous connectivity initialiser derived parameters
     addHeterogeneousDerivedParams<SynapseConnectivityHostInitGroupMerged>(
-        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
-        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
+        getArchetype().getSparseConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
+        [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); },
         &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
 
     // Add EGP pointers to struct for both host and device EGPs if they are seperate
-    const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+    const auto egps = getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
     for(const auto &e : egps) {
         addField(e.type + "*", e.name,
                  [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
@@ -577,19 +577,19 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
     return (isSparseConnectivityInitParamReferenced(paramName) &&
-            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getConnectivityInitialiser().getParams(); }));
+            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg){ return sg.getSparseConnectivityInitialiser().getParams(); }));
 }
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
     return (isSparseConnectivityInitParamReferenced(paramName) &&
-            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
+            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
 bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamReferenced(const std::string &paramName) const
 {
     // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
-    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const auto *connectInitSnippet = getArchetype().getSparseConnectivityInitialiser().getSnippet();
     return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
 }
 
@@ -629,13 +629,13 @@ bool SynapseGroupMergedBase::isWUVarInitDerivedParamHeterogeneous(const std::str
 bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous(const std::string &paramName) const
 {
     return (isSparseConnectivityInitParamReferenced(paramName) &&
-            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }));
+            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); }));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const
 {
     return (isSparseConnectivityInitParamReferenced(paramName) &&
-            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
+            isParamValueHeterogeneous(paramName, [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous(const std::string &paramName) const
@@ -812,7 +812,7 @@ std::string SynapseGroupMergedBase::getKernelVarIndex(unsigned int batchSize, Va
 //----------------------------------------------------------------------------
 SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   GroupMerged<SynapseGroupInternal>(index, precision, groups), m_ArchetypeCode(archetypeCode)
+:   RuntimeGroupMerged<SynapseGroupInternal>(index, precision, groups), m_ArchetypeCode(archetypeCode)
 {
     const bool updateRole = ((role == Role::PresynapticUpdate)
                              || (role == Role::PostsynapticUpdate)
@@ -1020,18 +1020,18 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     if((getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) || (role == Role::ConnectivityInit)) {
         // Add heterogeneous sparse connectivity initialiser model parameters
         addHeterogeneousParams<SynapseGroupMergedBase>(
-            getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
-            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
+            getArchetype().getSparseConnectivityInitialiser().getSnippet()->getParamNames(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); },
             &SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous);
 
 
         // Add heterogeneous sparse connectivity initialiser derived parameters
         addHeterogeneousDerivedParams<SynapseGroupMergedBase>(
-            getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
-            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
+            getArchetype().getSparseConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
+            [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); },
             &SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous);
 
-        addEGPs(getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
+        addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
                 backend.getDeviceVarPrefix());
     }
 
@@ -1191,11 +1191,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
         // Update hash with connectivity parameters and derived parameters
         updateParamHash<SynapseGroupMergedBase>(
             &SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced,
-            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); }, hash);
+            [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getParams(); }, hash);
 
         updateParamHash<SynapseGroupMergedBase>(
             &SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced,
-            [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }, hash);
+            [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); }, hash);
     }
 
     // If we're updating a hash for a group with Toeplitz connectivity
@@ -1300,7 +1300,7 @@ bool SynapseGroupMergedBase::isWUVarInitParamReferenced(const std::string &varNa
 //----------------------------------------------------------------------------
 bool SynapseGroupMergedBase::isSparseConnectivityInitParamReferenced(const std::string &paramName) const
 {
-    const auto *snippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const auto *snippet = getArchetype().getSparseConnectivityInitialiser().getSnippet();
     const auto rowBuildStateVars = snippet->getRowBuildStateVars();
     const auto colBuildStateVars = snippet->getColBuildStateVars();
 

@@ -105,7 +105,7 @@ const std::string CustomUpdateGroupMerged::name = "CustomUpdate";
 //----------------------------------------------------------------------------
 CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
                                                  const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   GroupMerged<CustomUpdateInternal>(index, precision, groups)
+:   RuntimeGroupMerged<CustomUpdateInternal>(index, precision, groups)
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
@@ -253,7 +253,7 @@ std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize
 //----------------------------------------------------------------------------
 CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
+:   RuntimeGroupMerged<CustomUpdateWUInternal>(index, precision, groups)
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomUpdateWUInternal &cg, size_t) 

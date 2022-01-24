@@ -8,7 +8,7 @@
 //----------------------------------------------------------------------------
 namespace CodeGenerator
 {
-class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
+class GENN_EXPORT CustomUpdateGroupMerged : public RuntimeGroupMerged<CustomUpdateInternal>
 {
 public:
     CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -47,7 +47,7 @@ public:
 // ----------------------------------------------------------------------------
 // CodeGenerator::CustomUpdateWUGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomUpdateWUGroupMergedBase : public GroupMerged<CustomUpdateWUInternal>
+class GENN_EXPORT CustomUpdateWUGroupMergedBase : public RuntimeGroupMerged<CustomUpdateWUInternal>
 {
 public:
     //----------------------------------------------------------------------------

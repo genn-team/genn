@@ -158,7 +158,7 @@ public:
     const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
     const std::unordered_map<std::string, Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
 
-    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
+    const InitSparseConnectivitySnippet::Init &getSparseConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;

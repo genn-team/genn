@@ -363,7 +363,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
         // Get reference to group
         os << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
 
-        const auto &connectInit = sg.getArchetype().getConnectivityInitialiser();
+        const auto &connectInit = sg.getArchetype().getSparseConnectivityInitialiser();
 
         // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
         // Otherwise it will only ever be used for initialization which uses one thread per row
@@ -1209,7 +1209,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     std::vector<std::string> connectivityPushPullFunctions;
     for(const auto &s : model.getSynapseGroups()) {
-        const auto *snippet = s.second.getConnectivityInitialiser().getSnippet();
+        const auto *snippet = s.second.getSparseConnectivityInitialiser().getSnippet();
         const bool autoInitialized = !snippet->getRowBuildCode().empty() || !snippet->getColBuildCode().empty();
 
         if(s.second.getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
@@ -1408,12 +1408,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                 true, s.second.getWUExtraGlobalParamLocation(e.name));
         }
 
-        const auto sparseConnExtraGlobalParams = s.second.getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+        const auto sparseConnExtraGlobalParams = s.second.getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
         for(const auto &e : sparseConnExtraGlobalParams) {
             genExtraGlobalParam(modelMerged, backend, definitionsVar, definitionsFunc, definitionsInternalVar,
                                 runnerVarDecl, runnerExtraGlobalParamFunc, 
                                 e.type, e.name + s.second.getName(),
-                                s.second.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty(),
+                                s.second.getSparseConnectivityInitialiser().getSnippet()->getHostInitCode().empty(),
                                 s.second.getSparseConnectivityExtraGlobalParamLocation(e.name));
         }
     }

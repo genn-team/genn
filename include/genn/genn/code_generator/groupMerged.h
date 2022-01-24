@@ -34,6 +34,102 @@ class GroupMerged
 {
 public:
     //------------------------------------------------------------------------
+    // Typedefines
+    //------------------------------------------------------------------------
+    typedef G GroupInternal;
+    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
+
+    GroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_Groups(std::move(groups))
+    {}
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    size_t getIndex() const { return m_Index; }
+
+    //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
+    const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
+
+    //! Gets access to underlying vector of neuron groups which have been merged
+    const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
+
+
+protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    template<typename T, typename G, typename H>
+    void orderGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
+                            G getVectorFunc, H getHashDigestFunc) const
+    {
+        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
+
+        // Reserve vector of vectors to hold children for all groups, in archetype order
+        sortedGroupChildren.reserve(getGroups().size());
+
+        // Create temporary vector of children and their digests
+        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, T*>> childDigests;
+        childDigests.reserve(archetypeChildren.size());
+
+        // Loop through groups
+        for(const auto &g : getGroups()) {
+            // Get group children
+            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
+            assert(groupChildren.size() == archetypeChildren.size());
+
+            // Loop through children and add them and their digests to vector
+            childDigests.clear();
+            for(auto *c : groupChildren) {
+                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
+            }
+
+            // Sort by digest
+            std::sort(childDigests.begin(), childDigests.end(),
+                      [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a,
+                         const std::pair<boost::uuids::detail::sha1::digest_type, T*> &b)
+                      {
+                          return (a.first < b.first);
+                      });
+
+
+            // Reserve vector for this group's children
+            sortedGroupChildren.emplace_back();
+            sortedGroupChildren.back().reserve(groupChildren.size());
+
+            // Copy sorted child pointers into sortedGroupChildren
+            std::transform(childDigests.cbegin(), childDigests.cend(), std::back_inserter(sortedGroupChildren.back()),
+                           [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a){ return a.second; });
+        }
+    }
+
+
+    //! Helper to update hash with the hash of calling getHashableFn on each group
+    template<typename H>
+    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
+    {
+        for(const auto &g : getGroups()) {
+            Utils::updateHash(getHashableFn(g.get()), hash);
+        }
+    }
+
+private:
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const size_t m_Index;
+    std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
+    
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::RuntimeGroupMerged
+//----------------------------------------------------------------------------
+template<typename G>
+class RuntimeGroupMerged : public GroupMerged<G>
+{
+public:
+    //------------------------------------------------------------------------
     // Enumerations
     //------------------------------------------------------------------------
     enum class FieldType
@@ -47,31 +143,18 @@ public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef G GroupInternal;
-    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
+    
+    RuntimeGroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
+    :   GroupMerged<G>(index, groups), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Host(host)
 
-
-    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups)), m_Host(host)
     {}
-
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    size_t getIndex() const { return m_Index; }
 
     //! Does this merged group generate host or device data structures?
     bool isHost() const { return m_Host; }
 
-    //! Get 'archetype' neuron group - it's properties represent those of all other merged neuron groups
-    const GroupInternal &getArchetype() const { return m_Groups.front().get(); }
-
     //! Get name of memory space assigned to group
     const std::string &getMemorySpace() const { return m_MemorySpace; }
-
-    //! Gets access to underlying vector of neuron groups which have been merged
-    const std::vector<std::reference_wrapper<const GroupInternal>> &getGroups() const{ return m_Groups; }
 
     //! Get group fields
     const std::vector<Field> &getFields() const{ return m_Fields; }
@@ -88,7 +171,6 @@ public:
                       return (backend.getSize(std::get<0>(a)) > backend.getSize(std::get<0>(b)));
                   });
         return sortedFields;
-
     }
 
     //! Generate declaration of struct to hold this merged group
@@ -185,9 +267,12 @@ public:
     }
 
 protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
+    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    {
+        // Add field to data structure
+        m_Fields.emplace_back(type, name, getFieldValue, fieldType);
+    }
+
     //! Helper to test whether parameter is referenced in vector of codestrings
     bool isParamReferenced(const std::vector<std::string> &codeStrings, const std::string &paramName) const
     {
@@ -226,12 +311,6 @@ protected:
                            {
                                return (getParamValuesFn(g).at(index) != archetypeValue);
                            });
-    }
-
-    void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
-    {
-        // Add field to data structure
-        m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
     void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
@@ -362,15 +441,6 @@ protected:
         }
     }
 
-    //! Helper to update hash with the hash of calling getHashableFn on each group
-    template<typename H>
-    void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
-    {
-        for(const auto &g : getGroups()) {
-            Utils::updateHash(getHashableFn(g.get()), hash);
-        }
-    }
-
     template<typename T, typename V, typename R>
     void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
     {
@@ -489,7 +559,6 @@ protected:
             }
         }
     }
-
 private:
     //------------------------------------------------------------------------
     // Private methods
@@ -514,18 +583,16 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const size_t m_Index;
     const std::string m_LiteralSuffix;
+    const bool m_Host;
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;
-    std::vector<std::reference_wrapper<const GroupInternal>> m_Groups;
-    const bool m_Host;
 };
 
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronSpikeQueueUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public RuntimeGroupMerged<NeuronGroupInternal>
 {
 public:
     NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
@@ -553,7 +620,7 @@ public:
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public RuntimeGroupMerged<NeuronGroupInternal>
 {
 public:
     NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
@@ -579,7 +646,7 @@ public:
 //----------------------------------------------------------------------------
 // CodeGenerator::NeuronGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT NeuronGroupMergedBase : public GroupMerged<NeuronGroupInternal>
+class GENN_EXPORT NeuronGroupMergedBase : public RuntimeGroupMerged<NeuronGroupInternal>
 {
 public:
     //------------------------------------------------------------------------
@@ -639,49 +706,6 @@ protected:
 
     void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
 
-    template<typename T, typename G, typename H>
-    void orderNeuronGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
-                                  G getVectorFunc, H getHashDigestFunc) const
-    {
-        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
-
-        // Reserve vector of vectors to hold children for all neuron groups, in archetype order
-        sortedGroupChildren.reserve(getGroups().size());
-
-        // Create temporary vector of children and their digests
-        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, T*>> childDigests;
-        childDigests.reserve(archetypeChildren.size());
-
-        // Loop through groups
-        for(const auto &g : getGroups()) {
-            // Get group children
-            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
-            assert(groupChildren.size() == archetypeChildren.size());
-
-            // Loop through children and add them and their digests to vector
-            childDigests.clear();
-            for(auto *c : groupChildren) {
-                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
-            }
-
-            // Sort by digest
-            std::sort(childDigests.begin(), childDigests.end(),
-                      [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a,
-                         const std::pair<boost::uuids::detail::sha1::digest_type, T*> &b)
-                      {
-                          return (a.first < b.first);
-                      });
-
-
-            // Reserve vector for this group's children
-            sortedGroupChildren.emplace_back();
-            sortedGroupChildren.back().reserve(groupChildren.size());
-
-            // Copy sorted child pointers into sortedGroupChildren
-            std::transform(childDigests.cbegin(), childDigests.cend(), std::back_inserter(sortedGroupChildren.back()),
-                           [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a){ return a.second; });
-        }
-    }
 
     //! Is the var init parameter referenced?
     bool isVarInitParamReferenced(const std::string &varName, const std::string &paramName) const;
@@ -928,7 +952,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public RuntimeGroupMerged<SynapseGroupInternal>
 {
 public:
     SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
@@ -954,7 +978,7 @@ public:
 // ----------------------------------------------------------------------------
 // SynapseConnectivityHostInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public RuntimeGroupMerged<SynapseGroupInternal>
 {
 public:
     SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
@@ -993,7 +1017,7 @@ private:
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseGroupMergedBase : public GroupMerged<SynapseGroupInternal>
+class GENN_EXPORT SynapseGroupMergedBase : public RuntimeGroupMerged<SynapseGroupInternal>
 {
 public:
     //------------------------------------------------------------------------
@@ -1159,12 +1183,12 @@ private:
 // CustomUpdateHostReductionGroupMergedBase
 //----------------------------------------------------------------------------
 template<typename G>
-class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
+class CustomUpdateHostReductionGroupMergedBase : public RuntimeGroupMerged<G>
 {
 protected:
      CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
                                    const std::vector<std::reference_wrapper<const G>> &groups, bool host = false)
-    :   GroupMerged<G>(index, precision, groups, host)
+    :   RuntimeGroupMerged<G>(index, precision, groups, host)
     {
         // Loop through variables and add pointers if they are reduction targets
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();

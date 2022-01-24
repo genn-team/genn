@@ -232,7 +232,7 @@ void PresynapticUpdateGroupMerged::generateSpikeUpdate(const BackendBase &backen
 //----------------------------------------------------------------------------
 void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    const auto &connectInit = getArchetype().getConnectivityInitialiser();
+    const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
 
     // Add substitutions
     popSubs.addFuncSubstitution("endRow", 0, "break");

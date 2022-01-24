@@ -164,13 +164,13 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getFusedInSynWithPostVars,
-                             &SynapseGroupInternal::getWUPostInitHashDigest);
+    orderGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getFusedInSynWithPostVars,
+                       &SynapseGroupInternal::getWUPostInitHashDigest);
 
     // Build vector of vectors containing each child group's outgoing 
     // synapse groups, ordered to match those of the archetype group
-    orderNeuronGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getFusedOutSynWithPreVars,
-                             &SynapseGroupInternal::getWUPreInitHashDigest);
+    orderGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getFusedOutSynWithPreVars,
+                       &SynapseGroupInternal::getWUPreInitHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic variables
     generateWUVar(backend, "WUPost", m_SortedInSynWithPostVars,
@@ -652,7 +652,7 @@ void SynapseConnectivityInitGroupMerged::generateKernelInit(const BackendBase&, 
 //----------------------------------------------------------------------------
 void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Substitutions &popSubs, const std::string &ftype, bool rowNotColumns) const
 {
-    const auto &connectInit = getArchetype().getConnectivityInitialiser();
+    const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
     const auto *snippet = connectInit.getSnippet();
 
     // Add substitutions
