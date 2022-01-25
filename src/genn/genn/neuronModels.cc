@@ -1,18 +1,18 @@
 #include "neuronModels.h"
 
 // Implement models
-IMPLEMENT_MODEL(NeuronModels::RulkovMap);
-IMPLEMENT_MODEL(NeuronModels::Izhikevich);
-IMPLEMENT_MODEL(NeuronModels::IzhikevichVariable);
-IMPLEMENT_MODEL(NeuronModels::LIF);
-IMPLEMENT_MODEL(NeuronModels::SpikeSource);
-IMPLEMENT_MODEL(NeuronModels::SpikeSourceArray);
-IMPLEMENT_MODEL(NeuronModels::Poisson);
-IMPLEMENT_MODEL(NeuronModels::PoissonNew);
-IMPLEMENT_MODEL(NeuronModels::TraubMiles);
-IMPLEMENT_MODEL(NeuronModels::TraubMilesFast);
-IMPLEMENT_MODEL(NeuronModels::TraubMilesAlt);
-IMPLEMENT_MODEL(NeuronModels::TraubMilesNStep);
+IMPLEMENT_SNIPPET(NeuronModels::RulkovMap);
+IMPLEMENT_SNIPPET(NeuronModels::Izhikevich);
+IMPLEMENT_SNIPPET(NeuronModels::IzhikevichVariable);
+IMPLEMENT_SNIPPET(NeuronModels::LIF);
+IMPLEMENT_SNIPPET(NeuronModels::SpikeSource);
+IMPLEMENT_SNIPPET(NeuronModels::SpikeSourceArray);
+IMPLEMENT_SNIPPET(NeuronModels::Poisson);
+IMPLEMENT_SNIPPET(NeuronModels::PoissonNew);
+IMPLEMENT_SNIPPET(NeuronModels::TraubMiles);
+IMPLEMENT_SNIPPET(NeuronModels::TraubMilesFast);
+IMPLEMENT_SNIPPET(NeuronModels::TraubMilesAlt);
+IMPLEMENT_SNIPPET(NeuronModels::TraubMilesNStep);
 
 //----------------------------------------------------------------------------
 // NeuronModels::Base
@@ -32,10 +32,12 @@ boost::uuids::detail::sha1::digest_type NeuronModels::Base::getHashDigest() cons
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void NeuronModels::Base::validate() const
+void NeuronModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                                  const std::string &description) const
 {
     // Superclass
-    Models::Base::validate();
+    Models::Base::validate(paramValues, varValues, description);
 
     Utils::validateVecNames(getAdditionalInputVars(), "Additional input variable");
 

@@ -611,7 +611,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         // Get index of variable being transposed
                         const size_t transposeVarIdx = std::distance(c.getArchetype().getVarReferences().cbegin(),
                                                                      std::find_if(c.getArchetype().getVarReferences().cbegin(), c.getArchetype().getVarReferences().cend(),
-                                                                                  [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
+                                                                                  [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
                         const std::string transposeVarName = c.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
 
                         // Loop through presynaptic neurons
@@ -1492,10 +1492,10 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
 
             // Add substitutions
             connSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                               [&sg](size_t i) { return sg.isToeplitzConnectivityInitParamHeterogeneous(i);  },
+                                               [&sg](const std::string &p) { return sg.isToeplitzConnectivityInitParamHeterogeneous(p);  },
                                                "", "group->");
             connSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                             [&sg](size_t i) { return sg.isToeplitzConnectivityInitDerivedParamHeterogeneous(i);  },
+                                             [&sg](const std::string &p) { return sg.isToeplitzConnectivityInitDerivedParamHeterogeneous(p);  },
                                              "", "group->");
             connSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
             connSubs.addVarNameSubstitution(connectInit.getSnippet()->getDiagonalBuildStateVars());

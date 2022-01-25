@@ -17,8 +17,8 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(size_t index) const;
-    bool isDerivedParamHeterogeneous(size_t index) const;
+    bool isParamHeterogeneous(const std::string &paramName) const;
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
@@ -53,8 +53,8 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool isParamHeterogeneous(size_t index) const;
-    bool isDerivedParamHeterogeneous(size_t index) const;
+    bool isParamHeterogeneous(const std::string &paramName) const;
+    bool isDerivedParamHeterogeneous(const std::string &paramName) const;
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 

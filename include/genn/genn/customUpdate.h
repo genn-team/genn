@@ -2,6 +2,7 @@
 
 // Standard includes
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 // GeNN includes
@@ -35,8 +36,8 @@ public:
     //! Gets the custom update model used by this group
     const CustomUpdateModels::Base *getCustomUpdateModel() const{ return m_CustomUpdateModel; }
 
-    const std::vector<double> &getParams() const{ return m_Params; }
-    const std::vector<Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
+    const std::unordered_map<std::string, double> &getParams() const{ return m_Params; }
+    const std::unordered_map<std::string, Models::VarInit> &getVarInitialisers() const{ return m_VarInitialisers; }
 
     //! Get variable location for custom update model state variable
     VarLocation getVarLocation(const std::string &varName) const;
@@ -48,9 +49,8 @@ public:
     bool isVarInitRequired() const;
 
 protected:
-    CustomUpdateBase(const std::string &name, const std::string &updateGroupName,
-                     const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                     const std::vector<Models::VarInit> &varInitialisers,
+    CustomUpdateBase(const std::string &name, const std::string &updateGroupName, const CustomUpdateModels::Base *customUpdateModel, 
+                     const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
                      VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
     :   m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomUpdateModel(customUpdateModel), m_Params(params), 
         m_VarInitialisers(varInitialisers), m_VarLocation(varInitialisers.size(), defaultVarLocation),
@@ -60,7 +60,6 @@ protected:
         // Validate names
         Utils::validatePopName(name, "Custom update");
         Utils::validatePopName(updateGroupName, "Custom update group name");
-        getCustomUpdateModel()->validate();
     }
 
     //------------------------------------------------------------------------
@@ -71,7 +70,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected const methods
     //------------------------------------------------------------------------
-    const std::vector<double> &getDerivedParams() const{ return m_DerivedParams; }
+    const std::unordered_map<std::string, double> &getDerivedParams() const{ return m_DerivedParams; }
 
     //! Does this current source group require an RNG for it's init code
     bool isInitRNGRequired() const;
@@ -96,18 +95,17 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferences(const std::vector<V> &varRefs)
+    void checkVarReferences(const std::unordered_map<std::string, V> &varRefs)
     {
         const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
 
         // If target of any variable references is duplicated, custom update should be batched
         m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                [](const V &v) { return (v.getVar().access & VarAccessDuplication::DUPLICATE); });
+                                [](const auto &v) { return (v.second.getVar().access & VarAccessDuplication::DUPLICATE); });
 
         // Loop through all variable references
-        for(size_t i = 0; i < varRefs.size(); i++) {
-            const auto varRef = varRefs.at(i);
-            const auto modelVarRef = modelVarRefs.at(i);
+        for(const auto &modelVarRef : modelVarRefs) {
+            const auto varRef = varRefs.at(modelVarRef.name);
 
             // Check types of variable references against those specified in model
             // **THINK** due to GeNN's current string-based type system this is rather conservative
@@ -140,9 +138,9 @@ private:
     const std::string m_UpdateGroupName;
 
     const CustomUpdateModels::Base *m_CustomUpdateModel;
-    const std::vector<double> m_Params;
-    std::vector<double> m_DerivedParams;
-    std::vector<Models::VarInit> m_VarInitialisers;
+    const std::unordered_map<std::string, double> m_Params;
+    std::unordered_map<std::string, double> m_DerivedParams;
+    std::unordered_map<std::string, Models::VarInit> m_VarInitialisers;
 
     //! Location of individual state variables
     std::vector<VarLocation> m_VarLocation;
@@ -163,13 +161,13 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::unordered_map<std::string, Models::VarReference> &getVarReferences() const{ return m_VarReferences;  }
     unsigned int getSize() const { return m_Size; }
 
 protected:
     CustomUpdate(const std::string &name, const std::string &updateGroupName,
-                 const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                 const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::VarReference> &varReferences,
+                 const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                 const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::VarReference> &varReferences,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
@@ -194,7 +192,7 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<Models::VarReference> m_VarReferences;
+    const std::unordered_map<std::string, Models::VarReference> m_VarReferences;
     const unsigned int m_Size;
     const NeuronGroup *m_DelayNeuronGroup;
 };
@@ -208,12 +206,12 @@ public:
     //------------------------------------------------------------------------
     // Public const methods
     //------------------------------------------------------------------------
-    const std::vector<Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::unordered_map<std::string, Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
 
 protected:
     CustomUpdateWU(const std::string &name, const std::string &updateGroupName,
-                   const CustomUpdateModels::Base *customUpdateModel, const std::vector<double> &params,
-                   const std::vector<Models::VarInit> &varInitialisers, const std::vector<Models::WUVarReference> &varReferences,
+                   const CustomUpdateModels::Base *customUpdateModel, const std::unordered_map<std::string, double> &params,
+                   const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
 
@@ -236,6 +234,6 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    const std::vector<Models::WUVarReference> m_VarReferences;
+    const std::unordered_map<std::string, Models::WUVarReference> m_VarReferences;
     const SynapseGroupInternal *m_SynapseGroup;
 };

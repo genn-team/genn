@@ -1,9 +1,9 @@
 #include "postsynapticModels.h"
 
 // Implement models
-IMPLEMENT_MODEL(PostsynapticModels::ExpCurr);
-IMPLEMENT_MODEL(PostsynapticModels::ExpCond);
-IMPLEMENT_MODEL(PostsynapticModels::DeltaCurr);
+IMPLEMENT_SNIPPET(PostsynapticModels::ExpCurr);
+IMPLEMENT_SNIPPET(PostsynapticModels::ExpCond);
+IMPLEMENT_SNIPPET(PostsynapticModels::DeltaCurr);
 
 
 //----------------------------------------------------------------------------
@@ -21,10 +21,12 @@ boost::uuids::detail::sha1::digest_type PostsynapticModels::Base::getHashDigest(
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void PostsynapticModels::Base::validate() const
+void PostsynapticModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                                        const std::unordered_map<std::string, Models::VarInit> &varValues,
+                                        const std::string &description) const
 {
     // Superclass
-    Models::Base::validate();
+    Models::Base::validate(paramValues, varValues, description);
 
     const auto vars = getVars();
     if(std::any_of(vars.cbegin(), vars.cend(),

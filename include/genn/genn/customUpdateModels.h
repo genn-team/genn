@@ -7,13 +7,6 @@
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_CUSTOM_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_VAR_REFS)   \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                          \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                   \
-    typedef Models::VarReferenceContainerBase<NUM_VAR_REFS> VarReferences;      \
-    typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> WUVarReferences
-    
-
 #define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_UPDATE_CODE(UPDATE_CODE) virtual std::string getUpdateCode() const override{ return UPDATE_CODE; }
 
@@ -46,7 +39,21 @@ public:
     bool isReduction() const;
 
     //! Validate names of parameters etc
-    void validate() const;
+    template<typename R>
+    void validate(const std::unordered_map<std::string, double> &paramValues,
+                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::unordered_map<std::string, R> &varRefTargets,
+                  const std::string &description) const
+    {
+        // Superclass
+        Models::Base::validate(paramValues, varValues, description);
+
+        const auto varRefs = getVarRefs();
+        Utils::validateVecNames(getVarRefs(), "Variable reference");
+
+        // Validate variable reference initialisers
+        Utils::validateInitialisers(varRefs, varRefTargets, "Variable reference", description);
+    }
 };
 
 //----------------------------------------------------------------------------
@@ -55,7 +62,7 @@ public:
 //! Minimal custom update model for calculating tranpose
 class Transpose : public Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Transpose, 0, 0, 1);
+    DECLARE_SNIPPET(Transpose);
 
     SET_VAR_REFS({{"variable", "scalar", VarAccessMode::READ_WRITE}});
 };

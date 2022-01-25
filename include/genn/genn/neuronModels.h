@@ -67,7 +67,9 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate() const;
+    void validate(const std::unordered_map<std::string, double> &paramValues, 
+                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
@@ -103,7 +105,7 @@ public:
 class RulkovMap : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::RulkovMap, 4, 2);
+    DECLARE_SNIPPET(NeuronModels::RulkovMap);
 
     SET_SIM_CODE(
         "if ($(V) <= 0) {\n"
@@ -127,9 +129,9 @@ public:
     SET_VARS({{"V","scalar"}, {"preV", "scalar"}});
 
     SET_DERIVED_PARAMS({
-        {"ip0", [](const std::vector<double> &pars, double){ return pars[0] * pars[0] * pars[1]; }},
-        {"ip1", [](const std::vector<double> &pars, double){ return pars[0] * pars[2]; }},
-        {"ip2", [](const std::vector<double> &pars, double){ return (pars[0] * pars[1]) + (pars[0] * pars[2]); }}});
+        {"ip0", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("Vspike") * pars.at("alpha"); }},
+        {"ip1", [](const std::unordered_map<std::string, double> &pars, double){ return pars.at("Vspike") * pars.at("y"); }},
+        {"ip2", [](const std::unordered_map<std::string, double> &pars, double){ return (pars.at("Vspike") * pars.at("alpha")) + (pars.at("Vspike") * pars.at("y")); }}});
 };
 
 //----------------------------------------------------------------------------
@@ -156,7 +158,7 @@ public:
 class Izhikevich : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Izhikevich, 4, 2);
+    DECLARE_SNIPPET(NeuronModels::Izhikevich);
 
     SET_SIM_CODE(
         "if ($(V) >= 30.0){\n"
@@ -198,7 +200,7 @@ public:
 class IzhikevichVariable : public Izhikevich
 {
 public:
-    DECLARE_MODEL(NeuronModels::IzhikevichVariable, 0, 6);
+    DECLARE_SNIPPET(NeuronModels::IzhikevichVariable);
 
     SET_PARAM_NAMES({});
     SET_VARS({{"V","scalar"}, {"U", "scalar"},
@@ -212,7 +214,7 @@ public:
 class LIF : public Base
 {
 public:
-    DECLARE_MODEL(LIF, 7, 2);
+    DECLARE_SNIPPET(LIF);
 
     SET_SIM_CODE(
         "if ($(RefracTime) <= 0.0) {\n"
@@ -240,8 +242,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+        {"ExpTC", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
+        {"Rmembrane", [](const std::unordered_map<std::string, double> &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -257,7 +259,7 @@ public:
 class SpikeSource : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::SpikeSource, 0, 0);
+    DECLARE_SNIPPET(NeuronModels::SpikeSource);
 
     SET_THRESHOLD_CONDITION_CODE("0");
     SET_NEEDS_AUTO_REFRACTORY(false);
@@ -281,7 +283,7 @@ public:
 class SpikeSourceArray : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::SpikeSourceArray, 0, 2);
+    DECLARE_SNIPPET(NeuronModels::SpikeSourceArray);
     SET_SIM_CODE("")
     SET_THRESHOLD_CONDITION_CODE(
         "$(startSpike) != $(endSpike) && "
@@ -332,7 +334,7 @@ public:
 class Poisson : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::Poisson, 4, 2);
+    DECLARE_SNIPPET(NeuronModels::Poisson);
 
     SET_SIM_CODE(
         "if(($(t) - $(spikeTime)) > $(tspike) && $(V) > $(Vrest)){\n"
@@ -371,7 +373,7 @@ public:
 class PoissonNew : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::PoissonNew, 1, 1);
+    DECLARE_SNIPPET(NeuronModels::PoissonNew);
 
     SET_SIM_CODE(
         "if($(timeStepToSpike) <= 0.0f) {\n"
@@ -384,7 +386,7 @@ public:
 
     SET_PARAM_NAMES({"rate"});
     SET_VARS({{"timeStepToSpike", "scalar"}});
-    SET_DERIVED_PARAMS({{"isi", [](const std::vector<double> &pars, double dt){ return 1000.0 / (pars[0] * dt); }}});
+    SET_DERIVED_PARAMS({{"isi", [](const std::unordered_map<std::string, double> &pars, double dt){ return 1000.0 / (pars.at("rate") * dt); }}});
     SET_NEEDS_AUTO_REFRACTORY(false);
 };
 
@@ -439,7 +441,7 @@ public:
 class TraubMiles : public Base
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMiles, 7, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMiles);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -494,7 +496,7 @@ public:
 class TraubMilesFast : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesFast, 7, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMilesFast);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -527,7 +529,7 @@ public:
 class TraubMilesAlt : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesAlt, 7, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMilesAlt);
 
     SET_SIM_CODE(
         "scalar Imem;\n"
@@ -563,7 +565,7 @@ public:
 class TraubMilesNStep : public TraubMiles
 {
 public:
-    DECLARE_MODEL(NeuronModels::TraubMilesNStep, 8, 4);
+    DECLARE_SNIPPET(NeuronModels::TraubMilesNStep);
 
     SET_SIM_CODE(
         "scalar Imem;\n"

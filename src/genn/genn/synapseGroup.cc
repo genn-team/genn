@@ -16,23 +16,22 @@
 //----------------------------------------------------------------------------
 namespace
 {
-std::vector<double> getConstInitVals(const std::vector<Models::VarInit> &varInitialisers)
+std::unordered_map<std::string, double> getConstInitVals(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
 {
     // Reserve initial values to match initialisers
-    std::vector<double> initVals;
-    initVals.reserve(varInitialisers.size());
+    std::unordered_map<std::string, double> initVals;
 
     // Transform variable initialisers into a vector of doubles
-    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::back_inserter(initVals),
-                   [](const Models::VarInit &v)
+    std::transform(varInitialisers.cbegin(), varInitialisers.cend(), std::inserter(initVals, initVals.end()),
+                   [](const auto &v)
                    {
                        // Check
-                       if(dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr) {
+                       if(dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr) {
                            throw std::runtime_error("Only 'Constant' variable initialisation snippets can be used to initialise state variables of synapse groups using GLOBALG");
                        }
 
                        // Return the first parameter (the value)
-                       return v.getParams()[0];
+                       return std::make_pair(v.first, v.second.getParams().at("constant"));
                    });
 
     return initVals;
@@ -281,12 +280,12 @@ std::string SynapseGroup::getSparseIndType() const
     return "uint32_t";
 }
 //----------------------------------------------------------------------------
-const std::vector<double> SynapseGroup::getWUConstInitVals() const
+const std::unordered_map<std::string, double> SynapseGroup::getWUConstInitVals() const
 {
     return getConstInitVals(m_WUVarInitialisers);
 }
 //----------------------------------------------------------------------------
-const std::vector<double> SynapseGroup::getPSConstInitVals() const
+const std::unordered_map<std::string, double> SynapseGroup::getPSConstInitVals() const
 {
     return getConstInitVals(m_PSVarInitialisers);
 }
@@ -491,9 +490,9 @@ bool SynapseGroup::isWUVarInitRequired() const
     // weight sharing slave, return true if any of them have initialisation code which doesn't require a kernel
     if (!isWeightSharingSlave() && ((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || (getMatrixType() & SynapseMatrixWeight::KERNEL))) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
-                           [](const Models::VarInit &init)
+                           [](const auto &init)
                            { 
-                               return !init.getSnippet()->getCode().empty() && !init.getSnippet()->requiresKernel(); 
+                               return !init.second.getSnippet()->getCode().empty() && !init.second.getSnippet()->requiresKernel(); 
                            });
     }
     else {
@@ -512,8 +511,8 @@ bool SynapseGroup::isSparseConnectivityInitRequired() const
 }
 //----------------------------------------------------------------------------
 SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
-                           const WeightUpdateModels::Base *wu, const std::vector<double> &wuParams, const std::vector<Models::VarInit> &wuVarInitialisers, const std::vector<Models::VarInit> &wuPreVarInitialisers, const std::vector<Models::VarInit> &wuPostVarInitialisers,
-                           const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
+                           const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
+                           const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                            const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
@@ -534,8 +533,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
-    getWUModel()->validate();
-    getPSModel()->validate();
+    getWUModel()->validate(getWUParams(), getWUVarInitialisers(), getWUPreVarInitialisers(), getWUPostVarInitialisers(), 
+                           "Synapse group " + getName() + " weight update model ");
+    getPSModel()->validate(getPSParams(), getPSVarInitialisers(), "Synapse group " + getName() + " postsynaptic model ");
 
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
@@ -667,7 +667,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     // check that no variable's initialisation snippets require a kernel
     if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
        m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
-                                           [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
+                                           [](const auto &v) { return v.second.getSnippet()->requiresKernel(); }))
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
     }
@@ -681,38 +681,34 @@ void SynapseGroup::initDerivedParams(double dt)
     auto wuDerivedParams = getWUModel()->getDerivedParams();
     auto psDerivedParams = getPSModel()->getDerivedParams();
 
-    // Reserve vector to hold derived parameters
-    m_WUDerivedParams.reserve(wuDerivedParams.size());
-    m_PSDerivedParams.reserve(psDerivedParams.size());
-
     // Loop through WU derived parameters
     for(const auto &d : wuDerivedParams) {
-        m_WUDerivedParams.push_back(d.func(m_WUParams, dt));
+        m_WUDerivedParams.emplace(d.name, d.func(m_WUParams, dt));
     }
 
     // Loop through PSM derived parameters
     for(const auto &d : psDerivedParams) {
-        m_PSDerivedParams.push_back(d.func(m_PSParams, dt));
+        m_PSDerivedParams.emplace(d.name, d.func(m_PSParams, dt));
     }
 
     // Initialise derived parameters for WU variable initialisers
     for(auto &v : m_WUVarInitialisers) {
-        v.initDerivedParams(dt);
+        v.second.initDerivedParams(dt);
     }
 
     // Initialise derived parameters for PSM variable initialisers
     for(auto &v : m_PSVarInitialisers) {
-        v.initDerivedParams(dt);
+        v.second.initDerivedParams(dt);
     }
 
     // Initialise derived parameters for WU presynaptic variable initialisers
     for(auto &v : m_WUPreVarInitialisers) {
-        v.initDerivedParams(dt);
+        v.second.initDerivedParams(dt);
     }
     
     // Initialise derived parameters for WU postsynaptic variable initialisers
     for(auto &v : m_WUPostVarInitialisers) {
-        v.initDerivedParams(dt);
+        v.second.initDerivedParams(dt);
     }
 
     // Initialise any derived connectivity initialiser parameters
@@ -734,7 +730,7 @@ bool SynapseGroup::canWUMPreUpdateBeFused() const
     // If any presynaptic variables aren't initialised to constant values, this synapse group's presynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
     if(std::any_of(getWUPreVarInitialisers().cbegin(), getWUPreVarInitialisers().cend(), 
-                   [](const Models::VarInit &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr); }))
+                   [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
@@ -763,7 +759,7 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
     // If any postsynaptic variables aren't initialised to constant values, this synapse group's postsynaptic update can't be merged
     // **NOTE** hash check will compare these constant values
     if(std::any_of(getWUPostVarInitialisers().cbegin(), getWUPostVarInitialisers().cend(), 
-                   [](const Models::VarInit &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.getSnippet()) == nullptr); }))
+                   [](const auto &v){ return (dynamic_cast<const InitVarSnippet::Constant*>(v.second.getSnippet()) == nullptr); }))
     {
         return false;
     }
@@ -812,7 +808,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     // If weights are procedural, include variable initialiser hashes
     if(getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
         for(const auto &w : getWUVarInitialisers()) {
-            Utils::updateHash(w.getHashDigest(), hash);
+            Utils::updateHash(w.first, hash);
+            Utils::updateHash(w.second.getHashDigest(), hash);
         }
     }
 
@@ -883,33 +880,31 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreFuseHashDigest() c
     // Due to SynapseGroup::canWUMPreUpdateBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUPreVarInitialisers()) {
-        assert(w.getParams().size() == 1);
-        Utils::updateHash(w.getParams().at(0), hash);
+        assert(w.second.getParams().size() == 1);
+        Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuParamNames = getWUModel()->getParamNames();
     const std::string preSpikeCode = getWUModel()->getPreSpikeCode();
     const std::string preDynamicsCode = getWUModel()->getPreDynamicsCode();
-    for(size_t i = 0; i < wuParamNames.size(); i++) {
-        const std::string paramName = "$(" + wuParamNames.at(i) + ")";
+    for(const auto &p : getWUModel()->getParamNames()) {
+        const std::string paramName = "$(" + p + ")";
         if((preSpikeCode.find(paramName) != std::string::npos)
            || (preDynamicsCode.find(paramName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUParams().at(i), hash);
+            Utils::updateHash(getWUParams().at(p), hash);
         }
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuDerivedParams = getWUModel()->getDerivedParams();
-    for(size_t i = 0; i < wuDerivedParams.size(); i++) {
-        const std::string derivedParamName = "$(" + wuDerivedParams.at(i).name + ")";
+    for(const auto &d : getWUModel()->getDerivedParams()) {
+        const std::string derivedParamName = "$(" + d.name + ")";
         if((preSpikeCode.find(derivedParamName) != std::string::npos)
            || (preDynamicsCode.find(derivedParamName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUDerivedParams().at(i), hash);
+            Utils::updateHash(getWUDerivedParams().at(d.name), hash);
         }
     }
 
@@ -926,33 +921,31 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostFuseHashDigest() 
     // Due to SynapseGroup::canWUMPostUpdateBeFused, all initialiser snippets
     // will be constant and have a single parameter containing the value
     for(const auto &w : getWUPostVarInitialisers()) {
-        assert(w.getParams().size() == 1);
-        Utils::updateHash(w.getParams().at(0), hash);
+        assert(w.second.getParams().size() == 1);
+        Utils::updateHash(w.second.getParams().at("constant"), hash);
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuParamNames = getWUModel()->getParamNames();
     const std::string postSpikeCode = getWUModel()->getPostSpikeCode();
     const std::string postDynamicsCode = getWUModel()->getPostDynamicsCode();
-    for(size_t i = 0; i < wuParamNames.size(); i++) {
-        const std::string paramName = "$(" + wuParamNames.at(i) + ")";
+    for(const auto &p : getWUModel()->getParamNames()) {
+        const std::string paramName = "$(" + p + ")";
         if((postSpikeCode.find(paramName) != std::string::npos)
            || (postDynamicsCode.find(paramName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUParams().at(i), hash);
+            Utils::updateHash(getWUParams().at(p), hash);
         }
     }
 
     // Loop through weight update model parameters and, if they are referenced
     // in presynaptic spike or dynamics code, include their value in hash
-    const auto wuDerivedParams = getWUModel()->getDerivedParams();
-    for(size_t i = 0; i < wuDerivedParams.size(); i++) {
-        const std::string derivedParamName = "$(" + wuDerivedParams.at(i).name + ")";
+    for(const auto &d : getWUModel()->getDerivedParams()) {
+        const std::string derivedParamName = "$(" + d.name + ")";
         if((postSpikeCode.find(derivedParamName) != std::string::npos)
            || (postDynamicsCode.find(derivedParamName) != std::string::npos)) 
         {
-            Utils::updateHash(getWUDerivedParams().at(i), hash);
+            Utils::updateHash(getWUDerivedParams().at(d.name), hash);
         }
     }
 
@@ -975,7 +968,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
 
     // Include variable initialiser hashes
     for(const auto &w : getWUVarInitialisers()) {
-        Utils::updateHash(w.getHashDigest(), hash);
+        Utils::updateHash(w.first, hash);
+        Utils::updateHash(w.second.getHashDigest(), hash);
     }
     return hash.get_digest();
 }
@@ -987,7 +981,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPreInitHashDigest() c
 
     // Include presynaptic variable initialiser hashes
     for(const auto &w : getWUPreVarInitialisers()) {
-        Utils::updateHash(w.getHashDigest(), hash);
+        Utils::updateHash(w.first, hash);
+        Utils::updateHash(w.second.getHashDigest(), hash);
     }
     return hash.get_digest();
 }
@@ -999,7 +994,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUPostInitHashDigest() 
 
     // Include postsynaptic variable initialiser hashes
     for(const auto &w : getWUPostVarInitialisers()) {
-        Utils::updateHash(w.getHashDigest(), hash);
+        Utils::updateHash(w.first, hash);
+        Utils::updateHash(w.second.getHashDigest(), hash);
     }
     return hash.get_digest();
 }
@@ -1012,7 +1008,8 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
 
     // Include postsynaptic model variable initialiser hashes
     for(const auto &p : getPSVarInitialisers()) {
-        Utils::updateHash(p.getHashDigest(), hash);
+        Utils::updateHash(p.first, hash);
+        Utils::updateHash(p.second.getHashDigest(), hash);
     }
     return hash.get_digest();
 }

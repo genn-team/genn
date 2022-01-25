@@ -1,9 +1,9 @@
 #include "currentSourceModels.h"
 
 // Implement models
-IMPLEMENT_MODEL(CurrentSourceModels::DC);
-IMPLEMENT_MODEL(CurrentSourceModels::GaussianNoise);
-IMPLEMENT_MODEL(CurrentSourceModels::PoissonExp);
+IMPLEMENT_SNIPPET(CurrentSourceModels::DC);
+IMPLEMENT_SNIPPET(CurrentSourceModels::GaussianNoise);
+IMPLEMENT_SNIPPET(CurrentSourceModels::PoissonExp);
 
 //----------------------------------------------------------------------------
 // CurrentSourceModels::Base
@@ -18,10 +18,12 @@ boost::uuids::detail::sha1::digest_type CurrentSourceModels::Base::getHashDigest
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void CurrentSourceModels::Base::validate() const
+void CurrentSourceModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                                         const std::unordered_map<std::string, Models::VarInit> &varValues,
+                                         const std::string &description) const
 {
     // Superclass
-    Models::Base::validate();
+    Models::Base::validate(paramValues, varValues, description);
 
     // If any variables have a reduction access mode, give an error
     const auto vars = getVars();

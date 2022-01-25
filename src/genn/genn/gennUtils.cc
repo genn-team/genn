@@ -61,13 +61,13 @@ bool isRNGRequired(const std::string &code)
 
 }
 //--------------------------------------------------------------------------
-bool isRNGRequired(const std::vector<Models::VarInit> &varInitialisers)
+bool isRNGRequired(const std::unordered_map<std::string, Models::VarInit> &varInitialisers)
 {
     // Return true if any of these variable initialisers require an RNG
     return std::any_of(varInitialisers.cbegin(), varInitialisers.cend(),
-                       [](const Models::VarInit &varInit)
+                       [](const auto &varInit)
                        {
-                           return isRNGRequired(varInit.getSnippet()->getCode());
+                           return isRNGRequired(varInit.second.getSnippet()->getCode());
                        });
 }
 //--------------------------------------------------------------------------
@@ -130,7 +130,7 @@ void validatePopName(const std::string &name, const std::string &description)
         throw std::runtime_error(description + " name invalid: cannot be empty");
     }
 
-    // If any characters aren't underscores or alphanumeric, name isn't valud
+    // If any characters aren't underscores or alphanumeric, name isn't valid
     if(std::any_of(name.cbegin(), name.cend(),
                    [](char c) { return (c != '_') && !std::isalnum(c); }))
     {

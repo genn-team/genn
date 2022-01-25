@@ -27,10 +27,10 @@ boost::uuids::detail::sha1::digest_type InitSparseConnectivitySnippet::Base::get
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void InitSparseConnectivitySnippet::Base::validate() const
+void InitSparseConnectivitySnippet::Base::validate(const std::unordered_map<std::string, double> &paramValues) const
 {
     // Superclass
-    Snippet::Base::validate();
+    Snippet::Base::validate(paramValues, "Sparse connectivity initialiser ");
     Utils::validateVecNames(getRowBuildStateVars(), "Row building state variable");
     Utils::validateVecNames(getColBuildStateVars(), "Column building state variable");
 }

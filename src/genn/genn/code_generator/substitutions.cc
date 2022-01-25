@@ -6,20 +6,17 @@
 //--------------------------------------------------------------------------
 // CodeGenerator::Substitutions
 //--------------------------------------------------------------------------
-void CodeGenerator::Substitutions::addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::vector<double> &values,
+void CodeGenerator::Substitutions::addParamValueSubstitution(const std::vector<std::string> &paramNames, const std::unordered_map<std::string, double> &values,
                                                              const std::string &sourceSuffix)
 {
     if(paramNames.size() != values.size()) {
         throw std::runtime_error("Number of parameters does not match number of values");
     }
 
-    auto param = paramNames.cbegin();
-    auto val = values.cbegin();
-    for(; param != paramNames.cend() && val != values.cend(); param++, val++) {
-        addVarSubstitution(*param + sourceSuffix,
-                           "(" + Utils::writePreciseString(*val) + ")");
+    for(const auto &p : paramNames) {
+        addVarSubstitution(p + sourceSuffix,
+                           "(" + Utils::writePreciseString(values.at(p)) + ")");
     }
-
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::Substitutions::addVarSubstitution(const std::string &source, const std::string &destionation, bool allowOverride)

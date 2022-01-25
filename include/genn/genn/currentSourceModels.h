@@ -39,7 +39,9 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Validate names of parameters etc
-    void validate() const;
+    void validate(const std::unordered_map<std::string, double> &paramValues, 
+                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::string &description) const;
 };
 
 //----------------------------------------------------------------------------
@@ -51,7 +53,7 @@ public:
 */
 class DC : public Base
 {
-    DECLARE_MODEL(DC, 1, 0);
+    DECLARE_SNIPPET(DC);
 
     SET_INJECTION_CODE("$(injectCurrent, $(amp));\n");
 
@@ -68,7 +70,7 @@ class DC : public Base
 */
 class GaussianNoise : public Base
 {
-    DECLARE_MODEL(GaussianNoise, 2, 0);
+    DECLARE_SNIPPET(GaussianNoise);
 
     SET_INJECTION_CODE("$(injectCurrent, $(mean) + $(gennrand_normal) * $(sd));\n");
 
@@ -87,7 +89,7 @@ class GaussianNoise : public Base
 */
 class PoissonExp : public Base
 {
-    DECLARE_MODEL(PoissonExp, 3, 1);
+    DECLARE_SNIPPET(PoissonExp);
 
     SET_INJECTION_CODE(
         "scalar p = 1.0f;\n"
@@ -104,8 +106,8 @@ class PoissonExp : public Base
     SET_PARAM_NAMES({"weight", "tauSyn", "rate"});
     SET_VARS({{"current", "scalar"}});
     SET_DERIVED_PARAMS({
-        {"ExpDecay", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"Init", [](const std::vector<double> &pars, double dt){ return pars[0] * (1.0 - std::exp(-dt / pars[1])) * (pars[1] / dt); }},
-        {"ExpMinusLambda", [](const std::vector<double> &pars, double dt){ return std::exp(-(pars[2] / 1000.0) * dt); }}});
+        {"ExpDecay", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-dt / pars.at("tauSyn")); }},
+        {"Init", [](const std::unordered_map<std::string, double> &pars, double dt){ return pars.at("weight") * (1.0 - std::exp(-dt / pars.at("tauSyn"))) * (pars.at("tauSyn") / dt); }},
+        {"ExpMinusLambda", [](const std::unordered_map<std::string, double> &pars, double dt){ return std::exp(-(pars.at("rate") / 1000.0) * dt); }}});
 };
 } // CurrentSourceModels

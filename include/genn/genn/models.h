@@ -28,14 +28,6 @@ class BackendBase;
 //----------------------------------------------------------------------------
 // Macros
 //----------------------------------------------------------------------------
-#define DECLARE_MODEL(TYPE, NUM_PARAMS, NUM_VARS)                       \
-    DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                  \
-    typedef Models::VarInitContainerBase<NUM_VARS> VarValues;        \
-    typedef Models::VarInitContainerBase<0> PreVarValues;            \
-    typedef Models::VarInitContainerBase<0> PostVarValues
-
-#define IMPLEMENT_MODEL(TYPE) IMPLEMENT_SNIPPET(TYPE)
-
 #define SET_VARS(...) virtual VarVec getVars() const override{ return __VA_ARGS__; }
 
 
@@ -121,7 +113,10 @@ protected:
     void updateHash(boost::uuids::detail::sha1 &hash) const;
 
     //! Validate names of parameters etc
-    void validate() const;
+    void validate(const std::unordered_map<std::string, double> &paramValues, 
+                  const std::unordered_map<std::string, Models::VarInit> &varValues,
+                  const std::string &description) const;
+   
 };
 
 
@@ -134,22 +129,16 @@ protected:
 class VarInit : public Snippet::Init<InitVarSnippet::Base>
 {
 public:
-    VarInit(const InitVarSnippet::Base *snippet, const std::vector<double> &params)
+    VarInit(const InitVarSnippet::Base *snippet, const std::unordered_map<std::string, double> &params)
         : Snippet::Init<InitVarSnippet::Base>(snippet, params)
     {
     }
 
     VarInit(double constant)
-        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {constant})
+        : Snippet::Init<InitVarSnippet::Base>(InitVarSnippet::Constant::getInstance(), {{"constant", constant}})
     {
     }
 };
-
-//----------------------------------------------------------------------------
-// Models::VarInitContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using VarInitContainerBase = Snippet::InitialiserContainerBase<VarInit, NumVars>;
 
 //----------------------------------------------------------------------------
 // Models::VarReferenceBase
@@ -225,12 +214,6 @@ private:
 };
 
 //----------------------------------------------------------------------------
-// Models::VarReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using VarReferenceContainerBase = Snippet::InitialiserContainerBase<VarReference, NumVars>;
-
-//----------------------------------------------------------------------------
 // Models::WUVarReference
 //----------------------------------------------------------------------------
 class GENN_EXPORT WUVarReference : public VarReferenceBase
@@ -260,12 +243,6 @@ private:
     Models::Base::Var m_TransposeVar;
     GetTargetNameFn m_GetTransposeTargetName;
 };
-
-//----------------------------------------------------------------------------
-// Models::WUVarReferenceContainerBase
-//----------------------------------------------------------------------------
-template<size_t NumVars>
-using WUVarReferenceContainerBase = Snippet::InitialiserContainerBase<WUVarReference, NumVars>;
 
 //----------------------------------------------------------------------------
 // updateHash overrides

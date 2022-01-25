@@ -1051,7 +1051,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             // Get index of variable being transposed
             const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
                                                          std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
-                                                                      [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
+                                                                      [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
             const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 

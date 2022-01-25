@@ -23,10 +23,10 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
 
     // Substitute parameter and derived parameter names
     synapseSubs.addParamValueSubstitution(wu->getParamNames(), sg.getArchetype().getWUParams(),
-                                          [&sg](size_t i) { return sg.isWUParamHeterogeneous(i);  },
+                                          [&sg](const std::string &p) { return sg.isWUParamHeterogeneous(p);  },
                                           "", "group->");
     synapseSubs.addVarValueSubstitution(wu->getDerivedParams(), sg.getArchetype().getWUDerivedParams(),
-                                        [&sg](size_t i) { return sg.isWUDerivedParamHeterogeneous(i);  },
+                                        [&sg](const std::string &p) { return sg.isWUDerivedParamHeterogeneous(p);  },
                                         "", "group->");
     synapseSubs.addVarNameSubstitution(wu->getExtraGlobalParams(), "", "group->");
 
@@ -68,29 +68,29 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // Otherwise, if weights are procedual
     else if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL) {
         const auto vars = wu->getVars();
-        for(size_t k = 0; k < vars.size(); k++) {
-            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(k);
+        for(const auto &var : vars) {
+            const auto &varInit = sg.getArchetype().getWUVarInitialisers().at(var.name);
 
             // If this variable has any initialisation code
             if(!varInit.getSnippet()->getCode().empty()) {
                 // Configure variable substitutions
                 CodeGenerator::Substitutions varSubs(&synapseSubs);
-                varSubs.addVarSubstitution("value", "l" + vars[k].name);
+                varSubs.addVarSubstitution("value", "l" + var.name);
                 varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                  [k, &sg](size_t p) { return sg.isWUVarInitParamHeterogeneous(k, p); },
-                                                  "", "group->", vars[k].name);
+                                                  [&var, &sg](const std::string &p) { return sg.isWUVarInitParamHeterogeneous(var.name, p); },
+                                                  "", "group->", var.name);
                 varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                [k, &sg](size_t p) { return sg.isWUVarInitDerivedParamHeterogeneous(k, p); },
-                                                "", "group->", vars[k].name);
+                                                [&var, &sg](const std::string &p) { return sg.isWUVarInitDerivedParamHeterogeneous(var.name, p); },
+                                                "", "group->", var.name);
                 varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                               "", "group->", vars[k].name);
+                                               "", "group->", var.name);
 
                 // Generate variable initialization code
                 std::string code = varInit.getSnippet()->getCode();
-                varSubs.applyCheckUnreplaced(code, "initVar : merged" + vars[k].name + std::to_string(sg.getIndex()));
+                varSubs.applyCheckUnreplaced(code, "initVar : merged" + var.name + std::to_string(sg.getIndex()));
 
                 // Declare local variable
-                os << vars[k].type << " " << "l" << vars[k].name << ";" << std::endl;
+                os << var.type << " " << "l" << var.name << ";" << std::endl;
 
                 // Insert code to initialize variable into scope
                 {
@@ -117,7 +117,7 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     // Otherwise, substitute variables for constant values
     else {
         synapseSubs.addVarValueSubstitution(wu->getVars(), sg.getArchetype().getWUConstInitVals(),
-                                            [&sg](size_t v) { return sg.isWUGlobalVarHeterogeneous(v); },
+                                            [&sg](const std::string &v) { return sg.isWUGlobalVarHeterogeneous(v); },
                                             "", "group->");
     }
 
@@ -125,8 +125,8 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     const std::string axonalDelayOffset = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getDelaySteps() + 1u)) + " + ";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getSrcNeuronGroup(),
                                       axonalDelayOffset, "_pre", "Pre", "", "", false,
-                                      [&sg](size_t paramIndex) { return sg.isSrcNeuronParamHeterogeneous(paramIndex); },
-                                      [&sg](size_t derivedParamIndex) { return sg.isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); },
+                                      [&sg](const std::string &p) { return sg.isSrcNeuronParamHeterogeneous(p); },
+                                      [&sg](const std::string &p) { return sg.isSrcNeuronDerivedParamHeterogeneous(p); },
                                       [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
                                       {
                                           return sg.getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
@@ -141,8 +141,8 @@ void applySynapseSubstitutions(CodeStream &os, std::string code, const std::stri
     const std::string backPropDelayMs = Utils::writePreciseString(model.getDT() * (double)(sg.getArchetype().getBackPropDelaySteps() + 1u)) + " + ";
     neuronSubstitutionsInSynapticCode(synapseSubs, sg.getArchetype().getTrgNeuronGroup(),
                                       backPropDelayMs, "_post", "Post", "", "", false,
-                                      [&sg](size_t paramIndex) { return sg.isTrgNeuronParamHeterogeneous(paramIndex); },
-                                      [&sg](size_t derivedParamIndex) { return sg.isTrgNeuronDerivedParamHeterogeneous(derivedParamIndex); },
+                                      [&sg](const std::string &p) { return sg.isTrgNeuronParamHeterogeneous(p); },
+                                      [&sg](const std::string &p) { return sg.isTrgNeuronDerivedParamHeterogeneous(p); },
                                       [&synapseSubs, &sg, batchSize](bool delay, VarAccessDuplication varDuplication) 
                                       {
                                           return sg.getPostVarIndex(delay, batchSize, varDuplication, synapseSubs["id_post"]); 
@@ -183,18 +183,18 @@ void PresynapticUpdateGroupMerged::generateSpikeEventThreshold(const BackendBase
 
     // Make weight update model substitutions
     synapseSubs.addParamValueSubstitution(getArchetype().getWUModel()->getParamNames(), getArchetype().getWUParams(),
-                                         [this](size_t i) { return isWUParamHeterogeneous(i);  },
+                                         [this](const std::string &p) { return isWUParamHeterogeneous(p);  },
                                          "", "group->");
     synapseSubs.addVarValueSubstitution(getArchetype().getWUModel()->getDerivedParams(), getArchetype().getWUDerivedParams(),
-                                        [this](size_t i) { return isWUDerivedParamHeterogeneous(i);  },
+                                        [this](const std::string &p) { return isWUDerivedParamHeterogeneous(p);  },
                                         "", "group->");
     synapseSubs.addVarNameSubstitution(getArchetype().getWUModel()->getExtraGlobalParams(), "", "group->");
 
     // Substitute in presynaptic neuron properties
     const unsigned int batchSize = modelMerged.getModel().getBatchSize();
     neuronSubstitutionsInSynapticCode(synapseSubs, getArchetype().getSrcNeuronGroup(), "", "_pre", "Pre", "", "", false,
-                                      [this](size_t paramIndex) { return isSrcNeuronParamHeterogeneous(paramIndex); },
-                                      [this](size_t derivedParamIndex) { return isSrcNeuronDerivedParamHeterogeneous(derivedParamIndex); },
+                                      [this](const std::string &p) { return isSrcNeuronParamHeterogeneous(p); },
+                                      [this](const std::string &p) { return isSrcNeuronDerivedParamHeterogeneous(p); },
                                       [batchSize, &synapseSubs, this](bool delay, VarAccessDuplication varDuplication) 
                                       {
                                           return getPreVarIndex(delay, batchSize, varDuplication, synapseSubs["id_pre"]); 
@@ -237,10 +237,10 @@ void PresynapticUpdateGroupMerged::generateProceduralConnectivity(const BackendB
     // Add substitutions
     popSubs.addFuncSubstitution("endRow", 0, "break");
     popSubs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                      [this](size_t i) { return isSparseConnectivityInitParamHeterogeneous(i);  },
+                                      [this](const std::string &p) { return isSparseConnectivityInitParamHeterogeneous(p);  },
                                       "", "group->");
     popSubs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                    [this](size_t i) { return isSparseConnectivityInitDerivedParamHeterogeneous(i);  },
+                                    [this](const std::string &p) { return isSparseConnectivityInitDerivedParamHeterogeneous(p);  },
                                     "", "group->");
     popSubs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "group->");
     popSubs.addVarNameSubstitution(connectInit.getSnippet()->getRowBuildStateVars());

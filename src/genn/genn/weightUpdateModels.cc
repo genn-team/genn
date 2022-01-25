@@ -1,9 +1,9 @@
 #include "weightUpdateModels.h"
 
-IMPLEMENT_MODEL(WeightUpdateModels::StaticPulse);
-IMPLEMENT_MODEL(WeightUpdateModels::StaticPulseDendriticDelay);
-IMPLEMENT_MODEL(WeightUpdateModels::StaticGraded);
-IMPLEMENT_MODEL(WeightUpdateModels::PiecewiseSTDP);
+IMPLEMENT_SNIPPET(WeightUpdateModels::StaticPulse);
+IMPLEMENT_SNIPPET(WeightUpdateModels::StaticPulseDendriticDelay);
+IMPLEMENT_SNIPPET(WeightUpdateModels::StaticGraded);
+IMPLEMENT_SNIPPET(WeightUpdateModels::PiecewiseSTDP);
 
 //----------------------------------------------------------------------------
 // WeightUpdateModels::Base
@@ -37,10 +37,14 @@ boost::uuids::detail::sha1::digest_type WeightUpdateModels::Base::getHashDigest(
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void WeightUpdateModels::Base::validate() const
+void WeightUpdateModels::Base::validate(const std::unordered_map<std::string, double> &paramValues, 
+                                        const std::unordered_map<std::string, Models::VarInit> &varValues,
+                                        const std::unordered_map<std::string, Models::VarInit> &preVarValues,
+                                        const std::unordered_map<std::string, Models::VarInit> &postVarValues,
+                                        const std::string &description) const
 {
     // Superclass
-    Models::Base::validate();
+    Models::Base::validate(paramValues, varValues, description);
 
     Utils::validateVecNames(getPreVars(), "Presynaptic variable");
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
@@ -58,4 +62,10 @@ void WeightUpdateModels::Base::validate() const
     {
         throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
+
+    // Validate variable reference initialisers
+    Utils::validateInitialisers(preVars, preVarValues, "presynaptic variable", description);
+
+    // Validate variable reference initialisers
+    Utils::validateInitialisers(postVars, postVarValues, "postsynaptic variable", description);
 }

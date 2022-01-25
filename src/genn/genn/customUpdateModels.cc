@@ -1,8 +1,7 @@
 #include "customUpdateModels.h"
 
-
 // Implement models
-IMPLEMENT_MODEL(CustomUpdateModels::Transpose);
+IMPLEMENT_SNIPPET(CustomUpdateModels::Transpose);
 
 //----------------------------------------------------------------------------
 // CustomUpdateModels::Base
@@ -27,12 +26,4 @@ bool CustomUpdateModels::Base::isReduction() const
                         [](const Models::Base::Var &v) { return (v.access & VarAccessModeAttribute::REDUCE); })
             || std::any_of(varRefs.cbegin(), varRefs.cend(),
                            [](const Models::Base::VarRef &v) { return (v.access & VarAccessModeAttribute::REDUCE); }));
-}
-//----------------------------------------------------------------------------
-void CustomUpdateModels::Base::validate() const
-{
-    // Superclass
-    Models::Base::validate();
-
-    Utils::validateVecNames(getVarRefs(), "Variable reference");
 }

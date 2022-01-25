@@ -17,7 +17,7 @@ namespace
 {
 class Sum : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum, 0, 1, 2);
+    DECLARE_SNIPPET(Sum);
 
     SET_UPDATE_CODE("$(sum) = $(a) + $(b);\n");
 
@@ -25,11 +25,11 @@ class Sum : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(Sum);
+IMPLEMENT_SNIPPET(Sum);
 
 class Sum2 : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Sum2, 0, 1, 2);
+    DECLARE_SNIPPET(Sum2);
 
     SET_UPDATE_CODE("$(a) = $(mult) * ($(a) + $(b));\n");
 
@@ -37,42 +37,42 @@ class Sum2 : public CustomUpdateModels::Base
     SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_WRITE}, 
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
-IMPLEMENT_MODEL(Sum2);
+IMPLEMENT_SNIPPET(Sum2);
 
 class Cont : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(Cont, 0, 1, 0, 0);
+    DECLARE_SNIPPET(Cont);
 
     SET_VARS({{"g", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "$(addToInSyn, $(g) * $(V_pre));\n");
 };
-IMPLEMENT_MODEL(Cont);
+IMPLEMENT_SNIPPET(Cont);
 
 class Cont2 : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(Cont2, 0, 2, 0, 0);
+    DECLARE_SNIPPET(Cont2);
 
     SET_VARS({{"g", "scalar"}, {"x", "scalar"}});
 
     SET_SYNAPSE_DYNAMICS_CODE(
         "$(addToInSyn, ($(g) + $(x)) * $(V_pre));\n");
 };
-IMPLEMENT_MODEL(Cont2);
+IMPLEMENT_SNIPPET(Cont2);
 
 class Reduce : public CustomUpdateModels::Base
 {
-    DECLARE_CUSTOM_UPDATE_MODEL(Reduce, 0, 0, 2);
+    DECLARE_SNIPPET(Reduce);
 
     SET_UPDATE_CODE("$(reduction) = $(var);\n");
 
     SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}, 
                   {"reduction", "scalar", VarAccessMode::REDUCE_SUM}});
 };
-IMPLEMENT_MODEL(Reduce);
+IMPLEMENT_SNIPPET(Reduce);
 }
 //--------------------------------------------------------------------------
 // Tests
@@ -82,20 +82,20 @@ TEST(CustomUpdates, VarReferenceTypeChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
         "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        {}, {1.0, 4},
+        {}, {{"g", 1.0}, {"d", 4}},
         {}, {});
 
-    Sum::VarValues sumVarValues(0.0);
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "d"));
+    VarValues sumVarValues{{"sum", 0.0}};
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "d")}};
 
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
@@ -116,16 +116,16 @@ TEST(CustomUpdates, VarSizeChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     auto *ng2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron2", 10, paramVals, varVals);
     auto *ng3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron3", 25, paramVals, varVals);
 
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
-    Sum::VarReferences sumVarReferences2(createVarRef(ng1, "V"), createVarRef(ng2, "V"));
-    Sum::VarReferences sumVarReferences3(createVarRef(ng1, "V"), createVarRef(ng3, "V"));
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences1{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng1, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng2, "V")}};
+    VarReferences sumVarReferences3{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng3, "V")}};
 
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
@@ -148,18 +148,19 @@ TEST(CustomUpdates, VarDelayChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *post = model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     10, "Pre1", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, 
+                                                                    {}, {});
 
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences1(createVarRef(pre1, "V"), createVarRef(post, "V"));
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences1{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(post, "V")}};
 
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
@@ -172,8 +173,8 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
@@ -181,14 +182,15 @@ TEST(CustomUpdates, VarMixedDelayChecks)
     // Add synapse groups to force pre1's v to be delayed by 10 timesteps and pre2's v to be delayed by 5 timesteps
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     10, "Pre1", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, 
+                                                                    {}, {});
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     5, "Pre2", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, 
+                                                                    {}, {});
 
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences2(createVarRef(pre1, "V"), createVarRef(pre2, "V"));
-
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences2{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(pre2, "V")}};
     model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences2);
 
@@ -205,27 +207,26 @@ TEST(CustomUpdates, WUVarSynapseGroupChecks)
     ModelSpecInternal model;
 
     // Add two neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
     auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
         "Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        {}, {1.0, 4},
+        {}, {{"g", 1.0}, {"d", 4}},
         {}, {});
     auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
         "Synapses2", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
         "Pre", "Post",
-        {}, {1.0, 4},
+        {}, {{"g", 1.0}, {"d", 4}},
         {}, {});
 
 
-    Sum::VarValues sumVarValues(0.0);
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(sg1, "g"), createWUVarRef(sg2, "d"));
-
+    VarValues sumVarValues{{"sum", 0.0}};
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg1, "g")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(sg1, "g")}, {"b", createWUVarRef(sg2, "d")}};
     model.addCustomUpdate<Sum>("SumWeight1", "CustomUpdate",
                                {}, sumVarValues, sumVarReferences1);
 
@@ -246,15 +247,15 @@ TEST(CustomUpdates, BatchingVars)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
 
     // Create updates where variable is shared and references vary
-    Sum2::VarValues sum2VarValues(1.0);
-    Sum2::VarReferences sum2VarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum2::VarReferences sum2VarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
-    Sum2::VarReferences sum2VarReferences3(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    VarValues sum2VarValues{{"mult", 1.0}};
+    VarReferences sum2VarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sum2VarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
+    VarReferences sum2VarReferences3{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "a")}};
 
     auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                              {}, sum2VarValues, sum2VarReferences1);
@@ -275,11 +276,11 @@ TEST(CustomUpdates, BatchingWriteShared)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
-    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    VarReferences reduceVarReferences{{"var", createVarRef(pop, "V")}, {"reduction", createVarRef(pop, "U")}};
     try {
         model.addCustomUpdate<Reduce>("Sum1", "CustomUpdate",
                                       {}, {}, reduceVarReferences);
@@ -295,12 +296,12 @@ TEST(CustomUpdates, ReduceDuplicate)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
     
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
-    Sum2::VarValues sum2VarValues(1.0);
-    Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
+    VarValues sum2VarValues{{"mult", 1.0}};
+    VarReferences sum2VarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "V")}};
     try {
         model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
                                     {}, sum2VarValues, sum2VarReferences);
@@ -315,19 +316,19 @@ TEST(CustomUpdates, CompareDifferentModel)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
     
     // Add three custom updates with two different models
-    Sum::VarReferences sumVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum2::VarReferences sum2VarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    VarReferences sumVarReferences{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sum2VarReferences{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     auto *sum0 = model.addCustomUpdate<Sum>("Sum0", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences);
+                                            {}, {{"sum", 0.0}}, sumVarReferences);
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences);
+                                            {}, {{"sum", 0.0}}, sumVarReferences);
     auto *sum2 = model.addCustomUpdate<Sum2>("Sum2", "CustomUpdate",
-                                             {}, {1.0}, sum2VarReferences);
+                                             {}, {{"mult", 1.0}}, sum2VarReferences);
 
     // Finalize model
     model.finalize();
@@ -357,18 +358,18 @@ TEST(CustomUpdates, CompareDifferentUpdateGroup)
     ModelSpecInternal model;
 
     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
 
     // Add three custom updates in two different update groups
-    Sum::VarReferences sumVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    VarReferences sumVarReferences{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
     auto *sum0 = model.addCustomUpdate<Sum>("Sum0", "CustomUpdate1",
-                                            {}, {0.0}, sumVarReferences);
+                                            {}, {{"sum", 0.0}}, sumVarReferences);
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate2",
-                                            {}, {1.0}, sumVarReferences);
+                                            {}, {{"sum", 1.0}}, sumVarReferences);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate1",
-                                            {}, {1.0}, sumVarReferences);
+                                            {}, {{"sum", 1.0}}, sumVarReferences);
     // Finalize model
     model.finalize();
 
@@ -397,8 +398,8 @@ TEST(CustomUpdates, CompareDifferentDelay)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *pre1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre1", 10, paramVals, varVals);
     auto *pre2 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre2", 10, paramVals, varVals);
     auto *pre3 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre3", 10, paramVals, varVals);
@@ -408,31 +409,31 @@ TEST(CustomUpdates, CompareDifferentDelay)
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     NO_DELAY, "Pre1", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, {}, {});
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn2", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     5, "Pre2", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, {}, {});
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn3", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     5, "Pre3", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, {}, {});
     model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("Syn4", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                     10, "Pre4", "Post",
-                                                                    {}, {0.1}, {}, {});
+                                                                    {}, {{"g", 0.1}}, {}, {});
     
 
     // Add three custom updates in two different update groups
-    Sum::VarReferences sumVarReferences1(createVarRef(pre1, "V"), createVarRef(pre1, "U"));
-    Sum::VarReferences sumVarReferences2(createVarRef(pre2, "V"), createVarRef(pre2, "U"));
-    Sum::VarReferences sumVarReferences3(createVarRef(pre3, "V"), createVarRef(pre3, "U"));
-    Sum::VarReferences sumVarReferences4(createVarRef(pre4, "V"), createVarRef(pre4, "U"));
+    VarReferences sumVarReferences1{{"a", createVarRef(pre1, "V")}, {"b", createVarRef(pre1, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(pre2, "V")}, {"b", createVarRef(pre2, "U")}};
+    VarReferences sumVarReferences3{{"a", createVarRef(pre3, "V")}, {"b", createVarRef(pre3, "U")}};
+    VarReferences sumVarReferences4{{"a", createVarRef(pre4, "V")}, {"b", createVarRef(pre4, "U")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences1);
+                                            {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences2);
+                                            {}, {{"sum", 0.0}}, sumVarReferences2);
     auto *sum3 = model.addCustomUpdate<Sum>("Sum3", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences3);
+                                            {}, {{"sum", 0.0}}, sumVarReferences3);
     auto *sum4 = model.addCustomUpdate<Sum>("Sum4", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences4);
+                                            {}, {{"sum", 0.0}}, sumVarReferences4);
 
     // Finalize model
     model.finalize();
@@ -474,16 +475,16 @@ TEST(CustomUpdates, CompareDifferentBatched)
     model.setBatchSize(5);
 
     // Add neuron and spike source (arbitrary choice of model with read_only variables) to model
-    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    VarValues izkVarVals{{"V", 0.0}, {"U", 0.0}, {"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
     auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
 
     // Add one custom update which sums duplicated variables (v and u) and another which sums shared variables (a and b)
-    Sum::VarReferences sumVarReferences1(createVarRef(pop, "V"), createVarRef(pop, "U"));
-    Sum::VarReferences sumVarReferences2(createVarRef(pop, "a"), createVarRef(pop, "b"));
+    VarReferences sumVarReferences1{{"a", createVarRef(pop, "V")}, {"b", createVarRef(pop, "U")}};
+    VarReferences sumVarReferences2{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "b")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Sum1", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences1);
+                                            {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Sum2", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences2);
+                                            {}, {{"sum", 0.0}}, sumVarReferences2);
 
     model.finalize();
 
@@ -514,26 +515,26 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
     // Add synapse groups to force pre1's v to be delayed by 0 timesteps, pre2 and pre3's v to be delayed by 5 timesteps and pre4's to be delayed by 10 timesteps
     auto *fwdSyn = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>("fwdSyn", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                                     NO_DELAY, "Pre", "Post",
-                                                                                    {}, {0.0, 0.0}, {}, {});
+                                                                                    {}, {{"g", 0.0}, {"x", 0.0}}, {}, {});
     auto *backSyn = model.addSynapsePopulation<Cont, PostsynapticModels::DeltaCurr>("backSyn", SynapseMatrixType::DENSE_INDIVIDUALG,
                                                                                      NO_DELAY, "Post", "Pre",
-                                                                                     {}, {0.0}, {}, {});
+                                                                                     {}, {{"g", 0.0}}, {}, {});
 
     // Add two custom updates which transpose different forward variables into backward population
-    Sum2::WUVarReferences sumVarReferences1(createWUVarRef(fwdSyn, "g", backSyn, "g"), createWUVarRef(fwdSyn, "x"));
-    Sum2::WUVarReferences sumVarReferences2(createWUVarRef(fwdSyn, "g"), createWUVarRef(fwdSyn, "x", backSyn, "g"));
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(fwdSyn, "g", backSyn, "g")}, {"b", createWUVarRef(fwdSyn, "x")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(fwdSyn, "g")}, {"b", createWUVarRef(fwdSyn, "x", backSyn, "g")}};
     auto *sum1 = model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences1);
+                                            {}, {{"mult", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum2>("Sum2", "CustomUpdate",
-                                            {}, {0.0}, sumVarReferences2);
+                                            {}, {{"mult", 0.0}}, sumVarReferences2);
     
     // Finalize model
     model.finalize();
@@ -565,8 +566,8 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
 {
     ModelSpecInternal model;
 
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
 
@@ -574,20 +575,20 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     auto *syn1 = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>(
         "Syn1", SynapseMatrixType::DENSE_INDIVIDUALG,
         NO_DELAY, "Pre", "Post",
-        {}, {0.0, 0.0}, {}, {});
+        {}, {{"g", 0.0}, {"x", 0.0}}, {}, {});
     auto *syn2 = model.addSynapsePopulation<Cont2, PostsynapticModels::DeltaCurr>(
         "Syn2", SynapseMatrixType::SPARSE_INDIVIDUALG,
         NO_DELAY, "Pre", "Post",
-        {}, {0.0, 0.0}, {}, {},
-        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
+        {}, {{"g", 0.0}, {"x", 0.0}}, {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({{"prob", 0.1}}));
 
     // Add two custom updates which transpose different forward variables into backward population
-    Sum::WUVarReferences sumVarReferences1(createWUVarRef(syn1, "g"), createWUVarRef(syn1, "x"));
-    Sum::WUVarReferences sumVarReferences2(createWUVarRef(syn2, "g"), createWUVarRef(syn2, "x"));
+    WUVarReferences sumVarReferences1{{"a", createWUVarRef(syn1, "g")}, {"b", createWUVarRef(syn1, "x")}};
+    WUVarReferences sumVarReferences2{{"a", createWUVarRef(syn2, "g")}, {"b", createWUVarRef(syn2, "x")}};
     auto *sum1 = model.addCustomUpdate<Sum>("Decay1", "CustomUpdate",
-                                             {}, {0.0}, sumVarReferences1);
+                                             {}, {{"sum", 0.0}}, sumVarReferences1);
     auto *sum2 = model.addCustomUpdate<Sum>("Decay2", "CustomUpdate",
-                                             {}, {0.0}, sumVarReferences2);
+                                             {}, {{"sum", 0.0}}, sumVarReferences2);
     
     // Finalize model
     model.finalize();
@@ -617,12 +618,12 @@ TEST(CustomUpdates, InvalidName)
     ModelSpec model;
     
      // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences1{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng1, "U")}};
 
     try {
         model.addCustomUpdate<Sum>("Sum-1", "CustomUpdate",
@@ -637,13 +638,13 @@ TEST(CustomUpdates, InvalidUpdateGroupName)
 {
     ModelSpec model;
     
-     // Add neuron group to model
-    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
-    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    // Add neuron group to model
+    ParamValues paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    VarValues varVals{{"V", 0.0}, {"U", 0.0}};
     auto *ng1 = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neuron1", 10, paramVals, varVals);
     
-    Sum::VarValues sumVarValues(0.0);
-    Sum::VarReferences sumVarReferences1(createVarRef(ng1, "V"), createVarRef(ng1, "U"));
+    VarValues sumVarValues{{"sum", 0.0}};
+    VarReferences sumVarReferences1{{"a", createVarRef(ng1, "V")}, {"b", createVarRef(ng1, "U")}};
 
     try {
         model.addCustomUpdate<Sum>("Sum", "CustomUpdate-1",

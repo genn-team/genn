@@ -35,7 +35,7 @@ VarLocation CurrentSource::getExtraGlobalParamLocation(const std::string &varNam
 }
 //----------------------------------------------------------------------------
 CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels::Base *currentSourceModel,
-                             const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
+                             const std::unordered_map<std::string, double> &params, const std::unordered_map<std::string, Models::VarInit> &varInitialisers,
                              const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation,
                              VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_CurrentSourceModel(currentSourceModel), m_Params(params), m_VarInitialisers(varInitialisers),
@@ -44,24 +44,21 @@ CurrentSource::CurrentSource(const std::string &name, const CurrentSourceModels:
 {
     // Validate names
     Utils::validatePopName(name, "Current source");
-    getCurrentSourceModel()->validate();
+    getCurrentSourceModel()->validate(getParams(), getVarInitialisers(), "Current source " + getName());
 }
 //----------------------------------------------------------------------------
 void CurrentSource::initDerivedParams(double dt)
 {
     auto derivedParams = getCurrentSourceModel()->getDerivedParams();
 
-    // Reserve vector to hold derived parameters
-    m_DerivedParams.reserve(derivedParams.size());
-
     // Loop through derived parameters
     for(const auto &d : derivedParams) {
-        m_DerivedParams.push_back(d.func(getParams(), dt));
+        m_DerivedParams.emplace(d.name, d.func(m_Params, dt));
     }
 
     // Initialise derived parameters for variable initialisers
     for(auto &v : m_VarInitialisers) {
-        v.initDerivedParams(dt);
+        v.second.initDerivedParams(dt);
     }
 }
 //----------------------------------------------------------------------------
@@ -104,7 +101,8 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest() const
 
     // Include variable initialiser hashes
     for(const auto &w : getVarInitialisers()) {
-        Utils::updateHash(w.getHashDigest(), hash);
+        Utils::updateHash(w.first, hash);
+        Utils::updateHash(w.second.getHashDigest(), hash);
     }
     return hash.get_digest();
 }

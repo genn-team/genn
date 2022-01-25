@@ -2,6 +2,7 @@
 #include "gtest/gtest.h"
 
 // GeNN includes
+#include "modelSpec.h"
 #include "neuronModels.h"
 
 //--------------------------------------------------------------------------
@@ -36,8 +37,8 @@ public:
         "TauRefrac"});
 
     SET_DERIVED_PARAMS({
-        {"ExpTC", [](const std::vector<double> &pars, double dt){ return std::exp(-dt / pars[1]); }},
-        {"Rmembrane", [](const std::vector<double> &pars, double){ return  pars[1] / pars[0]; }}});
+        {"ExpTC", [](const ParamValues &pars, double dt){ return std::exp(-dt / pars.at("TauM")); }},
+        {"Rmembrane", [](const ParamValues &pars, double){ return  pars.at("TauM") / pars.at("C"); }}});
 
     SET_VARS({{"V", "scalar"}, {"RefracTime", "scalar"}});
 
@@ -61,4 +62,70 @@ TEST(NeuronModels, CompareCopyPasted)
 
     LIFCopy lifCopy;
     ASSERT_EQ(NeuronModels::LIF::getInstance()->getHashDigest(), lifCopy.getHashDigest());
+}
+//--------------------------------------------------------------------------
+TEST(NeuronModels, ValidateParamValues) 
+{
+    const VarValues varVals{{"V", uninitialisedVar()}, {"U", uninitialisedVar()}};
+
+    const std::unordered_map<std::string, double> paramValsCorrect{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const std::unordered_map<std::string, double> paramValsMisSpelled{{"a", 0.02}, {"B", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    const std::unordered_map<std::string, double> paramValsMissing{{"a", 0.02}, {"b", 0.2}, {"d", 8.0}};
+    const std::unordered_map<std::string, double> paramValsExtra{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}, {"e", 8.0}};
+
+    NeuronModels::Izhikevich::getInstance()->validate(paramValsCorrect, varVals, "Neuron group");
+
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramValsMisSpelled, varVals, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramValsMissing, varVals, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramValsExtra, varVals, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+}
+//--------------------------------------------------------------------------
+TEST(NeuronModels, ValidateVarValues) 
+{
+    const std::unordered_map<std::string, double> paramVals{{"a", 0.02}, {"b", 0.2}, {"c", -65.0}, {"d", 8.0}};
+    
+    const std::unordered_map<std::string, Models::VarInit> varValsCorrect{{"V", 0.0}, {"U", 0.0}};
+    const std::unordered_map<std::string, Models::VarInit> varValsMisSpelled{{"V", 0.0}, {"u", 0.0}};
+    const std::unordered_map<std::string, Models::VarInit> varValsMissing{{"V", 0.0}};
+    const std::unordered_map<std::string, Models::VarInit> varValsExtra{{"V", 0.0}, {"U", 0.0}, {"A", 0.0}};
+
+    NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsCorrect, "Neuron group");
+
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsMisSpelled, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsMissing, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
+
+    try {
+        NeuronModels::Izhikevich::getInstance()->validate(paramVals, varValsExtra, "Neuron group");
+        FAIL();
+    }
+    catch(const std::runtime_error &) {
+    } 
 }
