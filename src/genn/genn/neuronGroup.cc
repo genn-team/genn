@@ -547,20 +547,26 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
 boost::uuids::detail::sha1::digest_type NeuronGroup::getRunnerHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
-    /*getSpikeLocation
+    Utils::updateHash(isDelayRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isSpikeRecordingEnabled(), hash);
+    Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
+    Utils::updateHash(isSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeEventTimeRequired(), hash);
+    Utils::updateHash(isSimRNGRequired(), hash);
+    Utils::updateHash(getNeuronModel()->getVars(), hash);
+    Utils::updateHash(getNeuronModel()->getExtraGlobalParams(), hash);
     
-    isDelayRequired
-    isTrueSpikeRequired
-    isSpikeEventRequired
-    isSpikeRecordingEnabled
-    isSpikeEventRecordingEnabled
-    isSpikeTimeRequired
-    isSpikeEventTimeRequired
-    isPrevSpikeTimeRequired
-    isPrevSpikeEventTimeRequired
-    isSimRNGRequired
-    getNeuronModel()->getVars()
-    varInit.at(var.name).getSnippet()->getExtraGlobalParams(*/
+    for(const auto &var : getVarInitialisers()) {
+        Utils::updateHash(var.first, hash);
+        Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+    }
+
+    // **TODO** this will replace getVarLocationHashDigest entirely
+    Utils::updateHash(getVarLocationHashDigest(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

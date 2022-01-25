@@ -32,87 +32,91 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     m_PresynapticUpdateSupportCode("PresynapticUpdateSupportCode"), m_PostsynapticUpdateSupportCode("PostsynapticUpdateSupportCode"),
     m_SynapseDynamicsSupportCode("SynapseDynamicsSupportCode")
 {
+    LOGD_CODE_GEN << "Merging neuron runner groups:";
+    createMergedRunnerGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronRunnerGroups,
+                                 &NeuronGroupInternal::getRunnerHashDigest);
+
     LOGD_CODE_GEN << "Merging neuron update groups:";
-    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
-                           [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::getHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
+                                  [](const NeuronGroupInternal &){ return true; },
+                                  &NeuronGroupInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging presynaptic update groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
-                           [](const SynapseGroupInternal &sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
-                           &SynapseGroupInternal::getWUHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPresynapticUpdateGroups,
+                                  [](const SynapseGroupInternal &sg) { return (sg.isSpikeEventRequired() || sg.isTrueSpikeRequired()); },
+                                  &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging postsynaptic update groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
-                           [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
-                           &SynapseGroupInternal::getWUHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedPostsynapticUpdateGroups,
+                                  [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getLearnPostCode().empty(); },
+                                  &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse dynamics update groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
-                           [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
-                           &SynapseGroupInternal::getWUHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDynamicsGroups,
+                                  [](const SynapseGroupInternal &sg){ return !sg.getWUModel()->getSynapseDynamicsCode().empty(); },
+                                  &SynapseGroupInternal::getWUHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron initialization groups:";
-    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
-                           [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::getInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronInitGroups,
+                                  [](const NeuronGroupInternal &){ return true; },
+                                  &NeuronGroupInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom update initialization groups:";
-    createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
-                           [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
-                           &CustomUpdateInternal::getInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateInitGroups,
+                                  [](const CustomUpdateInternal &cg) { return cg.isVarInitRequired(); },
+                                  &CustomUpdateInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom dense weight update initialization groups:";
-    createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateDenseInitGroups,
-                           [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) && cg.isVarInitRequired(); },
-                           &CustomUpdateWUInternal::getInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateDenseInitGroups,
+                                  [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE) && cg.isVarInitRequired(); },
+                                  &CustomUpdateWUInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
-                           [](const SynapseGroupInternal &sg)
-                           {
-                               return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
-                           },
-                           &SynapseGroupInternal::getWUInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
+                                  [](const SynapseGroupInternal &sg)
+                                  {
+                                      return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
+                                  },
+                                  &SynapseGroupInternal::getWUInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse connectivity initialisation groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
-                           [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
-                           &SynapseGroupInternal::getConnectivityInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityInitGroups,
+                                  [](const SynapseGroupInternal &sg){ return sg.isSparseConnectivityInitRequired(); },
+                                  &SynapseGroupInternal::getConnectivityInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse sparse initialization groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
-                           [&backend](const SynapseGroupInternal &sg)
-                           {
-                               return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
-                                       (sg.isWUVarInitRequired()
-                                        || backend.isSynRemapRequired(sg)
-                                        || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
-                           },
-                           &SynapseGroupInternal::getWUInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseSparseInitGroups,
+                                  [&backend](const SynapseGroupInternal &sg)
+                                  {
+                                      return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
+                                              (sg.isWUVarInitRequired()
+                                               || backend.isSynRemapRequired(sg)
+                                               || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
+                                  },
+                                  &SynapseGroupInternal::getWUInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom sparse weight update initialization groups:";
-    createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
-                           [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
-                           &CustomUpdateWUInternal::getInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
+                                  [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
+                                  &CustomUpdateWUInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse kernel initialization groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseKernelInitGroups,
-                           [&backend](const SynapseGroupInternal &sg)
-                           {
-                               return ((sg.getMatrixType() & SynapseMatrixWeight::KERNEL) && sg.isWUVarInitRequired());
-                           },
-                           &SynapseGroupInternal::getWUInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseKernelInitGroups,
+                                  [&backend](const SynapseGroupInternal &sg)
+                                  {
+                                      return ((sg.getMatrixType() & SynapseMatrixWeight::KERNEL) && sg.isWUVarInitRequired());
+                                  },
+                                  &SynapseGroupInternal::getWUInitHashDigest);
     
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
-    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
-                           [](const NeuronGroupInternal &){ return true; },
-                           &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
+                                  [](const NeuronGroupInternal &){ return true; },
+                                  &NeuronGroupInternal::getSpikeQueueUpdateHashDigest);
 
     LOGD_CODE_GEN << "Merging neuron groups which require their previous spike times updating:";
-    createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
-                           [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
-                           &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
+                                  [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
+                                  &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
 
     // Build vector of merged synapse groups which require dendritic delay
     std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
@@ -124,42 +128,42 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
         }
     }
     LOGD_CODE_GEN << "Merging synapse groups which require their dendritic delay updating:";
-    createMergedGroupsHash(model, backend, synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
-                           &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, synapseGroupsWithDendriticDelay, m_MergedSynapseDendriticDelayUpdateGroups,
+                                  &SynapseGroupInternal::getDendriticDelayUpdateHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse groups which require host code to initialise their synaptic connectivity:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
-                           [](const SynapseGroupInternal &sg)
-                           { 
-                               return !sg.getSparseConnectivityInitialiser().getSnippet()->getHostInitCode().empty();
-                           },
-                           &SynapseGroupInternal::getConnectivityHostInitHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
+                                  [](const SynapseGroupInternal &sg)
+                                  { 
+                                      return !sg.getSparseConnectivityInitialiser().getSnippet()->getHostInitCode().empty();
+                                  },
+                                  &SynapseGroupInternal::getConnectivityHostInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom update groups:";
-    createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
-                           [](const CustomUpdateInternal &) { return true; },
-                           &CustomUpdateInternal::getHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateGroups,
+                                  [](const CustomUpdateInternal &) { return true; },
+                                  &CustomUpdateInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging custom weight update groups:";
-    createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
-                           [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
-                           &CustomUpdateWUInternal::getHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWUGroups,
+                                  [](const CustomUpdateWUInternal &cg) { return !cg.isTransposeOperation(); },
+                                  &CustomUpdateWUInternal::getHashDigest);
 
     LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
-    createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
-                           [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
-                           &CustomUpdateWUInternal::getHashDigest);
+    createMergedRuntimeGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateTransposeWUGroups,
+                                  [](const CustomUpdateWUInternal &cg) { return cg.isTransposeOperation(); },
+                                  &CustomUpdateWUInternal::getHashDigest);
 
     if(backend.isHostReductionRequired()) {
         LOGD_CODE_GEN << "Merging custom weight update groups:";
-        createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
-                               [](const CustomUpdateInternal &cg) { return cg.isReduction(); },
-                               &CustomUpdateInternal::getHashDigest);
+        createMergedRuntimeGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
+                                      [](const CustomUpdateInternal &cg) { return cg.isReduction(); },
+                                      &CustomUpdateInternal::getHashDigest);
 
         LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
-        createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
-                               [](const CustomUpdateWUInternal &cg) { return cg.isReduction(); },
-                               &CustomUpdateWUInternal::getHashDigest);
+        createMergedRuntimeGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
+                                      [](const CustomUpdateWUInternal &cg) { return cg.isReduction(); },
+                                      &CustomUpdateWUInternal::getHashDigest);
     }
 
     // Get memory spaces available to this backend

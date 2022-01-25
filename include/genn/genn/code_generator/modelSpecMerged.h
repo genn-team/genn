@@ -14,6 +14,7 @@
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/initGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
+#include "code_generator/runnerGroupMerged.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
 #include "code_generator/supportCodeMerged.h"
 
@@ -99,6 +100,9 @@ public:
     //--------------------------------------------------------------------------
     //! Get underlying, unmerged model
     const ModelSpecInternal &getModel() const{ return m_Model; }
+
+    //! Get merged neuron groups used for generating runner
+    const std::vector<NeuronRunnerGroupMerged> &getMergedNeuronRunnerGroups() const { return m_MergedNeuronRunnerGroups;  }
 
     //! Get merged neuron groups which require updating
     const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
@@ -282,9 +286,37 @@ private:
     // Private methods
     //--------------------------------------------------------------------------
     template<typename Group, typename MergedGroup, typename D>
-    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
-                                const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
-                                std::vector<MergedGroup> &mergedGroups, D getHashDigest)
+    void createMergedRunnerGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                      const std::map<std::string, Group> &unmergedGroups, std::vector<MergedGroup> &mergedGroups, 
+                                      D getHashDigest)
+    {
+        // Create a hash map to group together groups with the same SHA1 digest
+        std::unordered_map<boost::uuids::detail::sha1::digest_type, 
+                           std::vector<std::reference_wrapper<const Group>>, 
+                           Utils::SHA1Hash> protoMergedGroups;
+
+        // Add unmerged groups to correct vector
+        for(const auto &g : unmergedGroups) {
+            protoMergedGroups[std::invoke(getHashDigest, g.second)].push_back(g.second);
+        }
+
+        // Reserve final merged groups vector
+        mergedGroups.reserve(protoMergedGroups.size());
+
+        // Loop through resultant merged groups
+        size_t i = 0;
+        for(const auto &p : protoMergedGroups) {
+            // Add group to vector
+            mergedGroups.emplace_back(i, model.getPrecision(), model.getTimePrecision(), backend, p.second);
+
+            i++;
+        }
+    }
+
+    template<typename Group, typename MergedGroup, typename D>
+    void createMergedRuntimeGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                       const std::vector<std::reference_wrapper<const Group>> &unmergedGroups,
+                                       std::vector<MergedGroup> &mergedGroups, D getHashDigest)
     {
         // Create a hash map to group together groups with the same SHA1 digest
         std::unordered_map<boost::uuids::detail::sha1::digest_type, 
@@ -327,9 +359,9 @@ private:
     }
 
     template<typename Group, typename MergedGroup, typename F, typename U>
-    void createMergedGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
-                                const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
-                                F filter, U updateHash)
+    void createMergedRuntimeGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
+                                       const std::map<std::string, Group> &groups, std::vector<MergedGroup> &mergedGroups,
+                                       F filter, U updateHash)
     {
         // Build temporary vector of references to groups that pass filter
         std::vector<std::reference_wrapper<const Group>> unmergedGroups;
@@ -340,7 +372,7 @@ private:
         }
 
         // Merge filtered vector
-        createMergedGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash);
+        createMergedRuntimeGroupsHash(model, backend, unmergedGroups, mergedGroups, updateHash);
     }
 
     //--------------------------------------------------------------------------
@@ -348,6 +380,9 @@ private:
     //--------------------------------------------------------------------------
     //! Underlying, unmerged model
     const ModelSpecInternal &m_Model;
+
+    //! Get merged neuron groups used for generating runner
+    std::vector<NeuronRunnerGroupMerged> m_MergedNeuronRunnerGroups;
 
     //! Merged neuron groups which require updating
     std::vector<NeuronUpdateGroupMerged> m_MergedNeuronUpdateGroups;

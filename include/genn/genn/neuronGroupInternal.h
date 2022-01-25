@@ -41,6 +41,7 @@ public:
     using NeuronGroup::isVarQueueRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
+    using NeuronGroup::getRunnerHashDigest;
     using NeuronGroup::getSpikeQueueUpdateHashDigest;
     using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
     using NeuronGroup::getVarLocationHashDigest;

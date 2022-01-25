@@ -14,8 +14,6 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
 :   RunnerGroupMergedBase<NeuronGroupInternal, NeuronRunnerGroupMerged>(index, precision, groups, backend)
 {
-    
-    
     addField("unsigned int", "numNeurons",
               [](const NeuronGroupInternal &ng) { return std::to_string(ng.getNumNeurons()); });
     if(getArchetype().isDelayRequired()) {
