@@ -688,7 +688,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
         const auto *sg = archetypeSyns.at(i);
 
         // Loop through variables
-        const auto vars = (sg->getWUModel()->*getVars)();
+        const auto vars = std::invoke(getVars, sg->getWUModel());
         for(size_t v = 0; v < vars.size(); v++) {
             // Add pointers to state variable
             const auto var = vars[v];
@@ -696,7 +696,7 @@ void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const s
             addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
                      [i, var, &backend, &sortedSyn, getFusedVarSuffix](const NeuronGroupInternal &, size_t groupIndex)
                      {
-                         const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
+                         const std::string &varMergeSuffix = std::invoke(getFusedVarSuffix, sortedSyn.at(groupIndex).at(i));
                          return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
                      });
         }
@@ -758,15 +758,15 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
         const SynapseGroupInternal *sg = archetypeSyn[i];
 
         // If this code string isn't empty
-        std::string code = (sg->getWUModel()->*getCode)();
+        std::string code = std::invoke(getCode, sg->getWUModel());
         if(!code.empty()) {
             Substitutions subs(&popSubs);
             CodeStream::Scope b(os);
 
             // Fetch variables from global memory
             os << "// perform WUM update required for merged" << i << std::endl;
-            const auto vars = (sg->getWUModel()->*getVars)();
-            const bool delayed = ((sg->*getDelaySteps)() != NO_DELAY);
+            const auto vars = std::invoke(getVars, sg->getWUModel());
+            const bool delayed = (std::invoke(getDelaySteps, sg) != NO_DELAY);
             for(const auto &v : vars) {
                 if(v.access & VarAccessMode::READ_ONLY) {
                     os << "const ";
@@ -776,10 +776,10 @@ void NeuronUpdateGroupMerged::generateWUVarUpdate(CodeStream &os, const Substitu
             }
 
             subs.addParamValueSubstitution(sg->getWUModel()->getParamNames(), sg->getWUParams(),
-                                           [i, isParamHeterogeneous , this](const std::string &p) { return (this->*isParamHeterogeneous)(i, p); },
+                                           [i, isParamHeterogeneous , this](const std::string &p) { return std::invoke(isParamHeterogeneous, this, i, p); },
                                            "", "group->", fieldPrefixStem + std::to_string(i));
             subs.addVarValueSubstitution(sg->getWUModel()->getDerivedParams(), sg->getWUDerivedParams(),
-                                         [i, isDerivedParamHeterogeneous, this](const std::string &p) { return (this->*isDerivedParamHeterogeneous)(i, p); },
+                                         [i, isDerivedParamHeterogeneous, this](const std::string &p) { return std::invoke(isDerivedParamHeterogeneous, this, i, p); },
                                          "", "group->", fieldPrefixStem + std::to_string(i));
             subs.addVarNameSubstitution(sg->getWUModel()->getExtraGlobalParams(), "", "group->", fieldPrefixStem + std::to_string(i));
             subs.addVarNameSubstitution(vars, "", "l");

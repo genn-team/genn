@@ -416,8 +416,8 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         const auto *sg = archetypeSyns.at(i);
 
         // Loop through variables
-        const auto vars = (sg->getWUModel()->*getVars)();
-        const auto &varInit = (sg->*getVarInitialiserFn)();
+        const auto vars = std::invoke(getVars, sg->getWUModel());
+        const auto &varInit = std::invoke(getVarInitialiserFn, sg);
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
@@ -425,7 +425,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
                 addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
                          [i, var, &backend, &sortedSyn, getFusedVarSuffix](const NeuronGroupInternal &, size_t groupIndex)
                          {
-                             const std::string &varMergeSuffix = (sortedSyn.at(groupIndex).at(i)->*getFusedVarSuffix)();
+                             const std::string &varMergeSuffix = std::invoke(getFusedVarSuffix, sortedSyn.at(groupIndex).at(i));
                              return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
                          });
             }

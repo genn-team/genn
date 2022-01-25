@@ -293,7 +293,7 @@ private:
 
         // Add unmerged groups to correct vector
         for(const auto &g : unmergedGroups) {
-            protoMergedGroups[(g.get().*getHashDigest)()].push_back(g);
+            protoMergedGroups[std::invoke(getHashDigest, g.get())].push_back(g);
         }
 
         // Reserve final merged groups vector

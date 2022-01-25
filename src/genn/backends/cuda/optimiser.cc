@@ -449,7 +449,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
             // Calculate module's hash digest
             // **NOTE** this COULD be done in thread functions but, because when using GeNN from Python,
             // this will call into Python code it would require whole Python interface to be made thread-safe
-            const auto hashDigest = (modelMerged.*m.getArchetypeHashDigest)();
+            const auto hashDigest = std::invoke(m.getArchetypeHashDigest, modelMerged);
 
             // Launch thread to analyse kernels in this module (if required)
             threads.emplace_back(analyseModule, std::cref(m), r, cuContext, hashDigest, std::cref(outputPath), std::cref(nvccPath),

@@ -322,7 +322,7 @@ protected:
         // Loop through params
         for(const auto &p : paramNames) {
             // If parameters is heterogeneous
-            if((static_cast<const T*>(this)->*isHeterogeneous)(p)) {
+            if(std::invoke(isHeterogeneous, static_cast<const T*>(this), p)) {
                 // Add field
                 addScalarField(p + suffix,
                                [p, getParamValues](const G &g, size_t)
@@ -341,7 +341,7 @@ protected:
         // Loop through derived params
         for(const auto &d : derivedParams) {
             // If parameters isn't homogeneous
-            if((static_cast<const T*>(this)->*isHeterogeneous)(d.name)) {
+            if(std::invoke(isHeterogeneous, static_cast<const T*>(this), d.name)) {
                 // Add field
                 addScalarField(d.name + suffix,
                                [d, getDerivedParamValues](const G &g, size_t)
@@ -357,15 +357,15 @@ protected:
     void addHeterogeneousVarInitParams(V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getSnippet()->getParamNames()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(varInit.first, p)) {
+                if(std::invoke(isHeterogeneous, static_cast<const T*>(this), varInit.first, p)) {
                     addScalarField(p + varInit.first,
                                    [p, varInit, getVarInitialisers](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)().at(varInit.first).getParams();
+                                       const auto &values = std::invoke(getVarInitialisers, g).at(varInit.first).getParams();
                                        return Utils::writePreciseString(values.at(p));
                                    });
                 }
@@ -377,15 +377,15 @@ protected:
     void addHeterogeneousVarInitDerivedParams(V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getSnippet()->getDerivedParams()) {
-                if((static_cast<const T*>(this)->*isHeterogeneous)(varInit.first, d.name)) {
+                if(std::invoke(isHeterogeneous, static_cast<const T*>(this), varInit.first, d.name)) {
                     addScalarField(d.name + varInit.first,
                                    [d, varInit, getVarInitialisers](const G &g, size_t)
                                    {
-                                       const auto &values = (g.*getVarInitialisers)().at(varInit.first).getDerivedParams();
+                                       const auto &values = std::invoke(getVarInitialisers, g).at(varInit.first).getDerivedParams();
                                        return Utils::writePreciseString(values.at(d.name));
                                    });
                 }
@@ -400,7 +400,7 @@ protected:
         const auto &archetypeParams = getValueFn(getArchetype());
         for(const auto &p : archetypeParams) {
             // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isParamReferencedFn)(p.first)) {
+            if(std::invoke(isParamReferencedFn, static_cast<const T*>(this), p.first)) {
                 // Loop through groups
                 for(const auto &g : getGroups()) {
                     // Update hash with parameter value
@@ -414,15 +414,15 @@ protected:
     void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getParams()) {
                 // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, p.first)) {
+                if(std::invoke(isParamReferencedFn, static_cast<const T *>(this), varInit.first, p.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getParams();
+                        const auto &values = std::invoke(getVarInitialisers, g.get()).at(varInit.first).getParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(p.first), hash);
@@ -436,15 +436,15 @@ protected:
     void updateVarInitDerivedParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = (getArchetype().*getVarInitialisers)();
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getDerivedParams()) {
                 // If any of the code strings reference the parameter
-                if((static_cast<const T *>(this)->*isParamReferencedFn)(varInit.first, d.first)) {
+                if(std::invoke(isParamReferencedFn, static_cast<const T *>(this), varInit.first, d.first)) {
                     // Loop through groups
                     for(const auto &g : getGroups()) {
-                        const auto &values = (g.get().*getVarInitialisers)().at(varInit.first).getDerivedParams();
+                        const auto &values = std::invoke(getVarInitialisers, g.get()).at(varInit.first).getDerivedParams();
 
                         // Update hash with parameter value
                         Utils::updateHash(values.at(d.first), hash);
@@ -663,7 +663,7 @@ protected:
     void orderGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
                             G getVectorFunc, H getHashDigestFunc) const
     {
-        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
+        const std::vector<T*> &archetypeChildren = std::invoke(getVectorFunc, getArchetype());
 
         // Reserve vector of vectors to hold children for all groups, in archetype order
         sortedGroupChildren.reserve(getGroups().size());
@@ -675,13 +675,13 @@ protected:
         // Loop through groups
         for(const auto &g : getGroups()) {
             // Get group children
-            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
+            const std::vector<T*> &groupChildren = std::invoke(getVectorFunc, g.get());
             assert(groupChildren.size() == archetypeChildren.size());
 
             // Loop through children and add them and their digests to vector
             childDigests.clear();
             for(auto *c : groupChildren) {
-                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
+                childDigests.emplace_back(std::invoke(getHashDigestFunc, c), c);
             }
 
             // Sort by digest
@@ -748,12 +748,12 @@ protected:
         // Loop through parameters
         for(const auto &p : paramNames) {
             // If parameter is heterogeneous
-            if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, p)) {
+            if(std::invoke(isChildParamHeterogeneousFn, static_cast<const T*>(this), childIndex, p)) {
                 addScalarField(p + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                                   return Utils::writePreciseString((child->*getValueFn)().at(p));
+                                   return Utils::writePreciseString(std::invoke(getValueFn, child).at(p));
                                });
             }
         }
@@ -768,12 +768,12 @@ protected:
         // Loop through derived parameters
         for(const auto &p : derivedParams) {
             // If parameter is heterogeneous
-            if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, p.name)) {
+            if(std::invoke(isChildDerivedParamHeterogeneousFn, static_cast<const T*>(this), childIndex, p.name)) {
                 addScalarField(p.name + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, p, getValueFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                                   return Utils::writePreciseString((child->*getValueFn)().at(p.name));
+                                   return Utils::writePreciseString(std::invoke(getValueFn, child).at(p.name));
                                });
             }
         }
@@ -788,12 +788,12 @@ protected:
         // Loop through parameters
         for(const auto &p : paramNames) {
             // If parameter is heterogeneous
-            if((static_cast<const T*>(this)->*isChildParamHeterogeneousFn)(childIndex, varName, p)) {
+            if(std::invoke(isChildParamHeterogeneousFn, static_cast<const T*>(this), childIndex, varName, p)) {
                 addScalarField(p + varName + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, varName, p, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                                   const auto &varInit = (child->*getVarInitialiserFn)();
+                                   const auto &varInit = std::invoke(getVarInitialiserFn,
+                                                                     sortedGroupChildren.at(groupIndex).at(childIndex));
                                    return Utils::writePreciseString(varInit.at(varName).getParams().at(p));
                                });
             }
@@ -809,12 +809,12 @@ protected:
         // Loop through parameters
         for(const auto &d : derivedParams) {
             // If parameter is heterogeneous
-            if((static_cast<const T*>(this)->*isChildDerivedParamHeterogeneousFn)(childIndex, varName, d.name)) {
+            if(std::invoke(isChildDerivedParamHeterogeneousFn, static_cast<const T*>(this), childIndex, varName, d.name)) {
                 addScalarField(d.name + varName + prefix + std::to_string(childIndex),
                                [&sortedGroupChildren, childIndex, varName, d, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
                                {
-                                   const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                                   const auto &varInit = (child->*getVarInitialiserFn)();
+                                   const auto &varInit = std::invoke(getVarInitialiserFn, 
+                                                                     sortedGroupChildren.at(groupIndex).at(childIndex));
                                    return Utils::writePreciseString(varInit.at(varName).getDerivedParams().at(d.name));
                                });
             }
@@ -844,17 +844,17 @@ protected:
                               boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
+        const auto &archetypeParams = std::invoke(getValueFn, sortedGroupChildren.front().at(childIndex));
         for(const auto &p : archetypeParams) {
             // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, p.first)) {
+            if(std::invoke(isChildParamReferencedFn, static_cast<const T*>(this), childIndex, p.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
 
                     // Update hash with parameter value
-                    Utils::updateHash((child->*getValueFn)().at(p.first), hash);
+                    Utils::updateHash(std::invoke(getValueFn, child).at(p.first), hash);
                 }
             }
         }
@@ -866,17 +866,17 @@ protected:
                                      boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        const auto &archetypeDerivedParams = (sortedGroupChildren.front().at(childIndex)->*getValueFn)();
+        const auto &archetypeDerivedParams = std::invoke(getValueFn, sortedGroupChildren.front().at(childIndex));
         for(const auto &d : archetypeDerivedParams) {
             // If any of the code strings reference the parameter
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, d.first)) {
+            if(std::invoke(isChildParamReferencedFn, static_cast<const T*>(this), childIndex, d.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group
                     const auto *child = sortedGroupChildren.at(g).at(childIndex);
 
                     // Update hash with parameter value
-                    Utils::updateHash((child->*getValueFn)().at(d.first), hash);
+                    Utils::updateHash(std::invoke(getValueFn, child).at(d.first), hash);
                 }
             }
         }
@@ -888,16 +888,16 @@ protected:
                                       boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeVarInit = std::invoke(getVarInitialiserFn, sortedGroupChildren.front().at(childIndex));
         const auto &archetypeParams = archetypeVarInit.at(varName).getParams();
         for(const auto &p : archetypeParams) {
             // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varName, p.first)) {
+            if(std::invoke(isChildParamReferencedFn, static_cast<const T*>(this), childIndex, varName, p.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = (child->*getVarInitialiserFn)();
+                    const auto &varInit = std::invoke(getVarInitialiserFn,
+                                                      sortedGroupChildren.at(g).at(childIndex));
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varName).getParams().at(p.first), hash);
@@ -912,16 +912,16 @@ protected:
                                              boost::uuids::detail::sha1 &hash) const
     {
         // Loop through derived parameters
-        const auto &archetypeVarInit = (sortedGroupChildren.front().at(childIndex)->*getVarInitialiserFn)();
+        const auto &archetypeVarInit = std::invoke(getVarInitialiserFn, sortedGroupChildren.front().at(childIndex));
         const auto &archetypeDerivedParams = archetypeVarInit.at(varName).getDerivedParams();
         for(const auto &d : archetypeDerivedParams) {
             // If parameter is referenced
-            if((static_cast<const T*>(this)->*isChildParamReferencedFn)(childIndex, varName, d.first)) {
+            if(std::invoke(isChildParamReferencedFn, static_cast<const T*>(this), childIndex, varName, d.first)) {
                 // Loop through groups
                 for(size_t g = 0; g < getGroups().size(); g++) {
                     // Get child group and its variable initialisers
-                    const auto *child = sortedGroupChildren.at(g).at(childIndex);
-                    const auto &varInit = (child->*getVarInitialiserFn)();
+                    const auto &varInit = std::invoke(getVarInitialiserFn, 
+                                                      sortedGroupChildren.at(g).at(childIndex));
 
                     // Update hash with parameter value
                     Utils::updateHash(varInit.at(varName).getDerivedParams().at(d.first), hash);
