@@ -15,38 +15,12 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
 :   RunnerGroupMergedBase<NeuronGroupInternal, NeuronRunnerGroupMerged>(index, precision, groups, backend)
 {
     
-    // Build vector of vectors containing each child group's merged in syns, ordered to match those of the archetype group
-    // **TODO** bespoke runner hashes
-    orderGroupChildren(m_SortedMergedInSyns, &NeuronGroupInternal::getFusedPSMInSyn,
-                       &SynapseGroupInternal::getPSInitHashDigest);
-
-    // Build vector of vectors containing each child group's merged out syns with pre output, ordered to match those of the archetype group
-    // **TODO** bespoke runner hashes
-    orderGroupChildren(m_SortedMergedPreOutputOutSyns, &NeuronGroupInternal::getFusedPreOutputOutSyn,
-                       &SynapseGroupInternal::getPreOutputInitHashDigest);
-
-    // Build vector of vectors containing each child group's current sources, ordered to match those of the archetype group
-    // **TODO** bespoke runner hashes
-    orderGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
-                       &CurrentSourceInternal::getInitHashDigest);
-
-    // Build vector of vectors containing each child group's incoming 
-    // synapse groups, ordered to match those of the archetype group
-    // **TODO** bespoke runner hashes
-    orderGroupChildren(m_SortedInSynWithPostVars, &NeuronGroupInternal::getFusedInSynWithPostVars,
-                       &SynapseGroupInternal::getWUPostInitHashDigest);
-
-    // Build vector of vectors containing each child group's outgoing 
-    // synapse groups, ordered to match those of the archetype group
-    // **TODO** bespoke runner hashes
-    orderGroupChildren(m_SortedOutSynWithPreVars, &NeuronGroupInternal::getFusedOutSynWithPreVars,
-                       &SynapseGroupInternal::getWUPreInitHashDigest);
-
+    
     addField("unsigned int", "numNeurons",
-              [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+              [](const NeuronGroupInternal &ng) { return std::to_string(ng.getNumNeurons()); });
     if(getArchetype().isDelayRequired()) {
         addField("unsigned int", "numDelaySlots",
-                 [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumDelaySlots()); });
+                 [](const NeuronGroupInternal &ng) { return std::to_string(ng.getNumDelaySlots()); });
     }
     
     const bool delaySpikes = (getArchetype().isTrueSpikeRequired() && getArchetype().isDelayRequired());
@@ -105,91 +79,12 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
         addField(var.type, var.name, getArchetype().getVarLocation(var.name), 
                  POINTER_FIELD_PUSH_PULL_GET, count, getVarAccessDuplication(var.access));
 
-        // If we're initializing, add any var init EGPs to structure
-        for(const auto &egp : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
-            addField(egp.type, egp.name + var.name, 
-                     VarLocation::HOST_DEVICE, POINTER_FIELD_PUSH_PULL_GET);
-        }
+        addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
     }
 
     // Add extra global parmeters
-    for(const auto &egp : getArchetype().getNeuronModel()->getExtraGlobalParams()) {
-        addField(egp.type, egp.name, getArchetype().getExtraGlobalParamLocation(egp.name),
-                 POINTER_FIELD_PUSH_PULL_GET);
-    }
-
-    // Loop through merged synaptic inputs to archetypical neuron group (0) in sorted order
-    for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
-        const SynapseGroupInternal *sg = getSortedArchetypeMergedInSyns().at(i);
-
-        // Add pointer to insyn
-        const unsigned int flags = sg->isPSModelFused() ? 0 : POINTER_FIELD_PUSH_PULL_GET;
-        addChildField(precision, "inSynInSyn", i, sg->getInSynLocation(), flags, numNeurons);
-
-        // Add pointer to dendritic delay buffer if required
-        if(sg->isDendriticDelayRequired()) {
-            addChildField("unsigned int", "maxDendriticDelayTimestepsInSyn", i, 
-                          [i, this](const NeuronGroupInternal&, size_t groupIndex) 
-                          { 
-                              const auto *sg = m_SortedMergedInSyns.at(groupIndex).at(i);
-                              return std::to_string(sg->getMaxDendriticDelayTimesteps());
-                          });
-
-            addChildField(precision, "denDelayInSyn", i, sg->getDendriticDelayLocation(), 0,
-                          "group->numNeurons * group->maxDendriticDelayTimestepsInSyn" + std::to_string(i));
-            //addChildField("unsigned int", "denDelayPtrInSyn", i, sg->getDendriticDelayLocation(), VarAccessDuplication::DUPLICATE);
-        }
-
-        // Add extra global parmeters
-        for(const auto &egp : sg->getPSModel()->getExtraGlobalParams()) {
-            addChildField(egp.type, egp.name + "InSyn", i, sg->getPSExtraGlobalParamLocation(egp.name), 
-                          POINTER_FIELD_PUSH_PULL_GET);
-        }
-
-        // Loop through variables
-        const auto &varInit = sg->getPSVarInitialisers();
-        for(const auto &var : sg->getPSModel()->getVars()) {
-            addChildField(var.type, var.name + "InSyn", i, sg->getPSVarLocation(var.name), 
-                          flags, numNeurons, getVarAccessDuplication(var.access));
-            
-            // If we're initializing, add any var init EGPs to structure
-            for(const auto &egp : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
-                addChildField(egp.type, egp.name + var.name+ "InSyn", i,
-                              VarLocation::HOST_DEVICE, POINTER_FIELD_PUSH_PULL_GET);
-            }
-        }
-    }
-
-    // Loop through merged output synapses with presynaptic output of archetypical neuron group (0) in sorted order
-    for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
-        // Add pointer to revInSyn
-        const auto loc = getSortedArchetypeMergedPreOutputOutSyns().at(i)->getInSynLocation();
-        addChildField(precision, "revInSynOutSyn", i, loc, 0, numNeurons);
-    }
-
-    // Loop through current sources of archetypical neuron group (0) in sorted order
-    for(size_t i = 0; i < getSortedArchetypeCurrentSources().size(); i++) {
-        const CurrentSourceInternal *cs = getSortedArchetypeCurrentSources().at(i);
-
-        // Add extra global parmeters
-        for(const auto &egp : cs->getCurrentSourceModel()->getExtraGlobalParams()) {
-            addChildField(egp.type, egp.name + "CS", i, cs->getExtraGlobalParamLocation(egp.name),
-                          POINTER_FIELD_PUSH_PULL_GET);
-        }
-
-        // Loop through variables
-        const auto &varInit = cs->getVarInitialisers();
-        for(const auto &var : cs->getCurrentSourceModel()->getVars()) {
-            addChildField(var.type, var.name + "CS", i, cs->getVarLocation(var.name), 
-                          POINTER_FIELD_PUSH_PULL_GET, numNeurons, getVarAccessDuplication(var.access));
-            
-             // If we're initializing, add any var init EGPs to structure
-            for(const auto &egp : varInit.at(var.name).getSnippet()->getExtraGlobalParams()) {
-                addChildField(egp.type, egp.name + var.name+ "CS", i,
-                              VarLocation::HOST_DEVICE, POINTER_FIELD_PUSH_PULL_GET);
-            }
-        }
-    }
+    addEGPs(getArchetype().getNeuronModel()->getExtraGlobalParams(), "",
+            [this](const std::string &name) { return getArchetype().getExtraGlobalParamLocation(name); });
 }
 //----------------------------------------------------------------------------
 void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const
@@ -270,6 +165,30 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
         }
     }
 }
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CurrentSourceRunnerGroupMerged
+//----------------------------------------------------------------------------
+CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                                               const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
+:   RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>(index, precision, groups, backend)
+{
+    addField("unsigned int", "numNeurons",
+              [](const CurrentSourceInternal &cs) { return std::to_string(cs.getTrgNeuronGroup()->getNumNeurons()); });
+
+    // Add extra global parmeters
+    addEGPs(getArchetype().getCurrentSourceModel()->getExtraGlobalParams(), "",
+            [this](const std::string &name) { return getArchetype().getExtraGlobalParamLocation(name); });
+
+    // Loop through variables
+    const auto &varInit = getArchetype().getVarInitialisers();
+    for(const auto &var : getArchetype().getCurrentSourceModel()->getVars()) {
+        addField(var.type, var.name, getArchetype().getVarLocation(var.name), 
+                        POINTER_FIELD_PUSH_PULL_GET, "group->numNeurons", getVarAccessDuplication(var.access));
+        addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+    }
+}
+
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseRunnerGroupMerged
 //----------------------------------------------------------------------------
@@ -278,13 +197,18 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
 :   RunnerGroupMergedBase<SynapseGroupInternal, SynapseRunnerGroupMerged>(index, precision, groups, backend)
 {
     addField("unsigned int", "numSrcNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+             [](const SynapseGroupInternal &sg) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+             [](const SynapseGroupInternal &sg) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "rowStride",
-             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+             [&backend](const SynapseGroupInternal &sg) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
     addField("unsigned int", "colStride",
-             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getMaxSourceConnections()); });
+             [](const SynapseGroupInternal &sg) { return std::to_string(sg.getMaxSourceConnections()); });
+    
+    if(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        addField("unsigned int", "kernelSizeFlattened",
+                 [](const SynapseGroupInternal &sg) { return std::to_string(sg.getKernelSizeFlattened()); });
+    }
 
     // Add pointers to connectivity data
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -317,10 +241,89 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
     addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
             backend.getDeviceVarPrefix());*/
 
-    if((getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)
-       || (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL)) 
-    {
+  
 
+    // **TODO** if not fused
+    // Add pointer to insyn
+    assert(!getArchetype().isPSModelFused());
+    //const unsigned int flags = sg->isPSModelFused() ? 0 : POINTER_FIELD_PUSH_PULL_GET;
+    addField(precision, "inSyn", getArchetype().getInSynLocation(), 
+             POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons");
+
+    // Add pointer to dendritic delay buffer if required
+    if(getArchetype().isDendriticDelayRequired()) {
+        addField("unsigned int", "maxDendriticDelayTimesteps",
+                 [this](const SynapseGroupInternal &sg) 
+                 { 
+                      return std::to_string(sg.getMaxDendriticDelayTimesteps());
+                 });
+
+        addField(precision, "denDelay", getArchetype().getDendriticDelayLocation(), 0,
+                 "group->numTrgNeurons * group->maxDendriticDelayTimesteps");
+        //addChildField("unsigned int", "denDelayPtrInSyn", i, sg->getDendriticDelayLocation(), VarAccessDuplication::DUPLICATE);
     }
 
+    // If presynaptic output is required, add pointer to revInSyn    
+    if(getArchetype().isPresynapticOutputRequired()) {
+        addField(precision, "revInSyn", getArchetype().getInSynLocation(), 0, "group->numSrcNeurons");
+    }
+
+    // Add PSM extra global parmeters
+    addEGPs(getArchetype().getPSModel()->getExtraGlobalParams(), "",
+            [this](const std::string &name) { return getArchetype().getPSExtraGlobalParamLocation(name); });
+
+    // Loop through PSM variables
+    const auto &psVarInit = getArchetype().getPSVarInitialisers();
+    for(const auto &var : getArchetype().getPSModel()->getVars()) {
+        addField(var.type, var.name, getArchetype().getPSVarLocation(var.name), 
+                 POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
+        addEGPs(psVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+    }
+
+    
+    // Add WUM extra global parmeters
+    addEGPs(getArchetype().getWUModel()->getExtraGlobalParams(), "",
+            [this](const std::string &name) { return getArchetype().getWUExtraGlobalParamLocation(name); });
+
+    // If WUM variables aren't global
+    if(!(getArchetype().getMatrixType() & SynapseMatrixWeight::GLOBAL)) {
+        // Loop through variables
+        const auto &wuVarInit = getArchetype().getWUVarInitialisers();
+        for(const auto &var : getArchetype().getWUModel()->getVars()) {
+            if(getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
+                addField(var.type, var.name, getArchetype().getWUVarLocation(var.name), 
+                         POINTER_FIELD_PUSH_PULL_GET, "group->numSrcNeurons * group->rowStride", 
+                         getVarAccessDuplication(var.access));
+            }
+            else if(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                addField(var.type, var.name, getArchetype().getWUVarLocation(var.name), 
+                         POINTER_FIELD_PUSH_PULL_GET, "group->kernelSizeFlattened", 
+                         getVarAccessDuplication(var.access));
+            }
+
+            addEGPs(wuVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name); 
+        }
+    }
+    
+    // WU pre
+    assert(!getArchetype().isWUPreModelFused());
+    
+    // Loop through WUM presynaptic variables
+    const auto &wuPreVarInit = getArchetype().getWUPreVarInitialisers();
+    for(const auto &var : getArchetype().getWUModel()->getPreVars()) {
+        addField(var.type, var.name, getArchetype().getWUPreVarLocation(var.name), 
+                 POINTER_FIELD_PUSH_PULL_GET, "group->numSrcNeurons", getVarAccessDuplication(var.access));
+        addEGPs(wuPreVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name); 
+    }
+
+    // WU post
+    assert(!getArchetype().isWUPostModelFused());
+    
+    // Loop through WUM presynaptic variables
+    const auto &wuPostVarInit = getArchetype().getWUPostVarInitialisers();
+    for(const auto &var : getArchetype().getWUModel()->getPostVars()) {
+        addField(var.type, var.name, getArchetype().getWUPostVarLocation(var.name), 
+                 POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
+        addEGPs(wuPostVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name); 
+    }
 }

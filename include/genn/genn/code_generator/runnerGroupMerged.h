@@ -21,6 +21,7 @@ public:
         POINTER_FIELD_PUSH_PULL_GET = (1 << 1), //! Generate push, pull and getter functions for this field
     };
 
+    typedef std::function<std::string(const G &)> GetFieldValueFunc;
     typedef std::tuple<VarLocation, VarAccessDuplication, std::string, unsigned int> PointerField;
     typedef std::tuple<std::string, std::string, std::variant<GetFieldValueFunc, PointerField>> Field;
 
@@ -237,6 +238,25 @@ protected:
         m_Fields.emplace_back(type + "*", name, std::make_tuple(loc, duplication, count, flags));
     }
 
+    template<typename E>
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &suffix, E getEGPLocFunc)
+    {
+        // Loop through EGPs
+        for(const auto &egp : egps) {
+            // If EGP is a pointer, add field
+            if(Utils::isTypePointer(egp.type)) {
+                addField(egp.type, egp.name + suffix,
+                         getEGPLocFunc(egp.name),
+                         POINTER_FIELD_PUSH_PULL_GET);
+            }
+        }
+    }
+
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &suffix)
+    {
+        addEGPs(egps, suffix, [](const std::string &) { return VarLocation::HOST_DEVICE; });
+    }
+
 private:
     //------------------------------------------------------------------------
     // Members
@@ -263,44 +283,16 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+};
 
-private:
-    void addChildField(const std::string &type, const std::string &name, size_t childIndex,
-                       GetFieldValueFunc getFieldValue)
-    {
-        addField(type, name + std::to_string(childIndex), getFieldValue);
-    }
-
-    void addChildField(const std::string &type, const std::string &name, size_t childIndex, VarLocation loc, 
-                       unsigned int flags, const std::string &count = "", VarAccessDuplication duplication = VarAccessDuplication::DUPLICATE)
-    {
-        addField(type, name + std::to_string(childIndex), loc, flags, count, duplication);
-    }
-
-    //! Get sorted vectors of merged incoming synapse groups belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedInSyns() const { return m_SortedMergedInSyns.front(); }
-
-    //! Get sorted vectors of merged outgoing synapse groups with presynaptic output belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeMergedPreOutputOutSyns() const { return m_SortedMergedPreOutputOutSyns.front(); }
-
-    //! Get sorted vectors of current sources belonging to archetype group
-    const std::vector<CurrentSourceInternal*> &getSortedArchetypeCurrentSources() const { return m_SortedCurrentSources.front(); }
-
-    //! Get sorted vectors of incoming synapse groups with postsynaptic variables belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeInSynWithPostVars() const { return m_SortedInSynWithPostVars.front(); }
-
-    //! Get sorted vectors of outgoing synapse groups with presynaptic variables belonging to archetype group
-    const std::vector<SynapseGroupInternal*> &getSortedArchetypeOutSynWithPreVars() const { return m_SortedOutSynWithPreVars.front(); }
-
-
-    //------------------------------------------------------------------------
-    // Members
-    //------------------------------------------------------------------------
-    std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedInSyns;
-    std::vector<std::vector<SynapseGroupInternal*>> m_SortedMergedPreOutputOutSyns;
-    std::vector<std::vector<CurrentSourceInternal*>> m_SortedCurrentSources;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedInSynWithPostVars;
-    std::vector<std::vector<SynapseGroupInternal *>> m_SortedOutSynWithPreVars;
+//----------------------------------------------------------------------------
+// CodeGenerator::CurrentSourceRunnerGroupMerged
+//----------------------------------------------------------------------------
+class CurrentSourceRunnerGroupMerged : public RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>
+{
+public:
+    CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                   const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
 };
 
 //----------------------------------------------------------------------------

@@ -37,7 +37,6 @@ public:
     // Typedefines
     //------------------------------------------------------------------------
     typedef G GroupInternal;
-    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
 
     GroupMerged(size_t index, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
     :   m_Index(index), m_Groups(std::move(groups))
@@ -56,54 +55,6 @@ public:
 
 
 protected:
-    //------------------------------------------------------------------------
-    // Protected methods
-    //------------------------------------------------------------------------
-    template<typename T, typename G, typename H>
-    void orderGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
-                            G getVectorFunc, H getHashDigestFunc) const
-    {
-        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
-
-        // Reserve vector of vectors to hold children for all groups, in archetype order
-        sortedGroupChildren.reserve(getGroups().size());
-
-        // Create temporary vector of children and their digests
-        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, T*>> childDigests;
-        childDigests.reserve(archetypeChildren.size());
-
-        // Loop through groups
-        for(const auto &g : getGroups()) {
-            // Get group children
-            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
-            assert(groupChildren.size() == archetypeChildren.size());
-
-            // Loop through children and add them and their digests to vector
-            childDigests.clear();
-            for(auto *c : groupChildren) {
-                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
-            }
-
-            // Sort by digest
-            std::sort(childDigests.begin(), childDigests.end(),
-                      [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a,
-                         const std::pair<boost::uuids::detail::sha1::digest_type, T*> &b)
-                      {
-                          return (a.first < b.first);
-                      });
-
-
-            // Reserve vector for this group's children
-            sortedGroupChildren.emplace_back();
-            sortedGroupChildren.back().reserve(groupChildren.size());
-
-            // Copy sorted child pointers into sortedGroupChildren
-            std::transform(childDigests.cbegin(), childDigests.cend(), std::back_inserter(sortedGroupChildren.back()),
-                           [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a){ return a.second; });
-        }
-    }
-
-
     //! Helper to update hash with the hash of calling getHashableFn on each group
     template<typename H>
     void updateHash(H getHashableFn, boost::uuids::detail::sha1 &hash) const
@@ -143,6 +94,7 @@ public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
+    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
     
     RuntimeGroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
@@ -703,6 +655,53 @@ protected:
     //------------------------------------------------------------------------
     NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    template<typename T, typename G, typename H>
+    void orderGroupChildren(std::vector<std::vector<T*>> &sortedGroupChildren,
+                            G getVectorFunc, H getHashDigestFunc) const
+    {
+        const std::vector<T*> &archetypeChildren = (getArchetype().*getVectorFunc)();
+
+        // Reserve vector of vectors to hold children for all groups, in archetype order
+        sortedGroupChildren.reserve(getGroups().size());
+
+        // Create temporary vector of children and their digests
+        std::vector<std::pair<boost::uuids::detail::sha1::digest_type, T*>> childDigests;
+        childDigests.reserve(archetypeChildren.size());
+
+        // Loop through groups
+        for(const auto &g : getGroups()) {
+            // Get group children
+            const std::vector<T*> &groupChildren = (g.get().*getVectorFunc)();
+            assert(groupChildren.size() == archetypeChildren.size());
+
+            // Loop through children and add them and their digests to vector
+            childDigests.clear();
+            for(auto *c : groupChildren) {
+                childDigests.emplace_back((c->*getHashDigestFunc)(), c);
+            }
+
+            // Sort by digest
+            std::sort(childDigests.begin(), childDigests.end(),
+                      [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a,
+                         const std::pair<boost::uuids::detail::sha1::digest_type, T*> &b)
+                      {
+                          return (a.first < b.first);
+                      });
+
+
+            // Reserve vector for this group's children
+            sortedGroupChildren.emplace_back();
+            sortedGroupChildren.back().reserve(groupChildren.size());
+
+            // Copy sorted child pointers into sortedGroupChildren
+            std::transform(childDigests.cbegin(), childDigests.cend(), std::back_inserter(sortedGroupChildren.back()),
+                           [](const std::pair<boost::uuids::detail::sha1::digest_type, T*> &a){ return a.second; });
+        }
+    }
 
     void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
 
