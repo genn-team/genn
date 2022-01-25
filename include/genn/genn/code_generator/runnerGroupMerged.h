@@ -32,138 +32,6 @@ public:
 
     }
 
-    void genPushPullGet(const BackendBase &backend, CodeStream &runner, CodeStream &definitions, const ModelSpecMerged &modelMerged) const
-    {
-        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-        
-        // Loop through fields
-        for(const auto &f : getFields()) {
-            // If this is pointer field
-            if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                const auto pointerField = std::get<PointerField>(std::get<2>(f));
-
-                // If field should have a push and pull function generated and it can be pushed and pulled
-                // **TODO** auto initialise and handle unitialisedOnly in backend
-                const auto loc = std::get<0>(pointerField);
-                const std::string &fieldCount = std::get<2>(pointerField);
-                const unsigned int flags = std::get<3>(pointerField);
-                if((flags & POINTER_FIELD_PUSH_PULL_GET) && (loc & VarLocation::HOST) &&
-                   (loc & VarLocation::DEVICE)) 
-                {
-                    const std::string name = std::get<0>(f) + T::name + "Group" + std::to_string(getIndex());
-                    const std::string count = fieldCount.empty() ? "count" : fieldCount;
-                    const std::string group = "merged" + T::name + "Group" + std::to_string(getIndex()) + "[group]";
-                    if(fieldCount.empty()) {
-                        definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, unsigned int count;" << std::endl;
-                        runner << "void push" << name << "ToDevice(unsigned int group, unsigned int count)";
-                    }
-                    else {
-                        definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly = false);" << std::endl;
-                        runner << "void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly)";
-                    }
-                    {
-                        CodeStream::Scope a(runner);
-                        runner << "auto *group = &" << group ";" << std::endl;
-                        backend.genExtraGlobalParamPush(push, std::get<0>(f), std::get<1>(f),
-                                                        loc, count, "group->");
-                    }
-                    runner << std::endl;
-                    
-                    if(fieldCount.empty()) {
-                        definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group, unsigned int count);" << std::endl;
-                        runner << "void pull" << name << "FromDevice(unsigned int group, unsigned int count)";
-                    }
-                    else {
-                        definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group);" << std::endl;
-                        runner << "void pull" << name << "FromDevice(unsigned int group)";
-                    }
-                    {
-                        CodeStream::Scope a(runner);
-                        runner << "auto *group = &" << group ";" << std::endl;
-                        backend.genExtraGlobalParamPull(push, std::get<0>(f), std::get<1>(f),
-                                                        loc, count, "group->");
-                    }
-                    runner << std::endl;
-                    
-                    definitions << "EXPORT_FUNC " << std::get<0>(f) << "get" << name << "(unsigned int group);" << std::endl;
-                    runner << std::get<0>(f) << "get" << name << "(unsigned int group)";
-                    {
-                        CodeStream::Scope a(runner);
-                        runner << "return " << group << "." << std::get<1>(f) << ";" << std::endl;
-                    }
-
-                }
-            }
-        }
-    }
-
-    void genAllocMem(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const
-    {
-        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-
-        CodeStream::Scope b(runner);
-        runner << "// merged group " << getIndex() << std::endl;
-        runner << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
-        {
-            CodeStream::Scope b(runner);
-
-            // Get reference to group
-            runner << "auto *group = &merged" << T::name << "Group" << getIndex() << "[g]; " << std::endl;
-
-            // Loop through fields
-            for(const auto &f : getFields()) {
-                // If this is pointer field
-                if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
-
-                    // If field has a count i.e. it's not allocated dynamically
-                    const std::string &count = std::get<2>(pointerField);
-                    if(!count.empty()) {
-                        if(std::get<1>(pointerField) == VarAccessDuplication::SHARED) {
-                            backend.genExtraGlobalParamAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
-                                                                  count, "group->");
-                        }
-                        else {
-                            backend.genExtraGlobalParamAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
-                                                                  std::to_string(numCopies) + " * " + count, "group->");
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    void genFreeMem(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const
-    {
-        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-
-        CodeStream::Scope b(runner);
-        runner << "// merged group " << getIndex() << std::endl;
-        runner << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
-        {
-            CodeStream::Scope b(runner);
-
-            // Get reference to group
-            runner << "auto *group = &merged" << T::name << "Group" << getIndex() << "[g]; " << std::endl;
-
-            // Loop through fields
-            for(const auto &f : getFields()) {
-                // If this is pointer field
-                if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
-
-                    // If field has a count i.e. it's not allocated dynamically
-                    // **TODO** we could insert a NULL check here and free these at the same time
-                    const std::string &count = std::get<2>(pointerField);
-                    if(!count.empty()) {
-                        backend.genVariableFree(runner, std::get<1>(f), std::get<0>(pointerField));
-                    }
-                }
-            }
-        }
-    }
-
-
      //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
@@ -179,48 +47,86 @@ public:
     }
 
     //! Generate declaration of struct to hold this merged group
-    void generateStruct(CodeStream &os, const BackendBase &backend) const
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsFunc, 
+                        CodeStream &runnerVarDecl,  CodeStream &runnerMergedRunnerStructAlloc, 
+                        CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerPushFunc, 
+                        CodeStream &runnerPullFunc, CodeStream &runnerGetterFunc, 
+                        const ModelSpecMerged &modelMerged, MemAlloc &memAlloc) const
     {
-        os << "struct Merged" << T::name << "Group" << getIndex() << std::endl;
+        const auto sortedFields = getSortedFields(backend);
+        runnerVarDecl << "struct Merged" << M::name << "Group" << getIndex() << std::endl;
         {
             // Loop through fields and write to structure
-            CodeStream::Scope b(os);
-            const auto sortedFields = getSortedFields(backend);
+            CodeStream::Scope b(runnerVarDecl);
             for(const auto &f : sortedFields) {
                 // If it's a pointer
                 if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                    const VarLocation loc = std::get<0>(pointerField);
-
                     // If variable is present on host
+                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
+                    const VarLocation loc = std::get<0>(pointerField);
                     if(loc & VarLocation::HOST) {
                         // Add field to struct
-                        os << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+                        runnerVarDecl << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
 
                         // If backend has device prefix, add additional field with prefix and overriden type
                         if(!backend.getHostVarPrefix().empty()) {
-                            os << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getHostVarPrefix() << std::get<1>(f) << ";" << std::endl;
+                            runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getHostVarPrefix() << std::get<1>(f) << ";" << std::endl;
                         }
                     }
 
                     // If backend has device prefix, add additional field with prefix and overriden type
                     if((loc & VarLocation::DEVICE) && !backend.getDeviceVarPrefix().empty()) {
-                        os << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getDeviceVarPrefix() << std::get<1>(f) << ";" << std::endl;
+                        runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getDeviceVarPrefix() << std::get<1>(f) << ";" << std::endl;
                     }
                 }
                 else {
                     // Add field to struct
-                    os << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+                    runnerVarDecl << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
                 }
             }
-            os << std::endl;
+            runnerVarDecl << std::endl;
+        }
+        runnerVarDecl << ";" << std::endl;
+
+        // Declare array of groups
+        runnerVarDecl << "Merged" << M::name << "Group" << getIndex() << " merged" << M::name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+
+        // Loop through groups
+        for(size_t g = 0; g < getGroups().size(); g++) {
+            // Loop through fields
+            runnerMergedRunnerStructAlloc << "merged" << M::name << "Group" << getIndex() << "[" << g << "] = {";
+            for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
+                // If field's a pointer, initialise to null pointer
+                const auto &f = sortedFields.at(fieldIndex);
+                if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                    runnerMergedRunnerStructAlloc << "nullptr";
+                }
+                // Otherwise, initialise with value
+                else {
+                    const auto getValueFn = std::get<GetFieldValueFunc>(std::get<2>(f));
+                    runnerMergedRunnerStructAlloc << getValueFn(getGroups().at(g));
+                }
+
+                if(fieldIndex != (sortedFields.size() - 1)) {
+                    runnerMergedRunnerStructAlloc << ", ";
+                }
+            }
+            runnerMergedRunnerStructAlloc << "};" << std::endl;
         }
 
-        os << ";" << std::endl;
+        // Generate push, pull and getter functions
+        genPushPullGet(backend, runnerPushFunc, runnerPullFunc, runnerGetterFunc, definitionsFunc, modelMerged);
+        
+        // Generate memory allocation code
+        genAllocMem(backend, runnerMergedRunnerStructAlloc, modelMerged, memAlloc);
+
+        // Generate memory free code
+        genFreeMem(backend, runnerVarFree, modelMerged);
     }
 
 protected:
     //------------------------------------------------------------------------
-    // Protected API
+    // Protected methods
     //------------------------------------------------------------------------
     void addField(const std::string &type, const std::string &name, 
                   GetFieldValueFunc getFieldValue)
@@ -258,6 +164,141 @@ protected:
     }
 
 private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+    void genPushPullGet(const BackendBase &backend, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+                        CodeStream &runnerGetterFunc, CodeStream &definitions, const ModelSpecMerged &modelMerged) const
+    {
+        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+        
+        // Loop through fields
+        for(const auto &f : m_Fields) {
+            // If this is pointer field
+            if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                const auto pointerField = std::get<PointerField>(std::get<2>(f));
+
+                // If field should have a push and pull function generated and it can be pushed and pulled
+                // **TODO** auto initialise and handle unitialisedOnly in backend
+                const auto loc = std::get<0>(pointerField);
+                const std::string &fieldCount = std::get<2>(pointerField);
+                const unsigned int flags = std::get<3>(pointerField);
+                if((flags & POINTER_FIELD_PUSH_PULL_GET) && (loc & VarLocation::HOST) &&
+                   (loc & VarLocation::DEVICE)) 
+                {
+                    const std::string name = std::get<0>(f) + M::name + "Group" + std::to_string(getIndex());
+                    const std::string count = fieldCount.empty() ? "count" : fieldCount;
+                    const std::string group = "merged" + M::name + "Group" + std::to_string(getIndex()) + "[group]";
+                    if(fieldCount.empty()) {
+                        definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, unsigned int count;" << std::endl;
+                        runnerPushFunc << "void push" << name << "ToDevice(unsigned int group, unsigned int count)";
+                    }
+                    else {
+                        definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly = false);" << std::endl;
+                        runnerPushFunc << "void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly)";
+                    }
+                    {
+                        CodeStream::Scope a(runnerPushFunc);
+                        runnerPushFunc << "auto *group = &" << group << ";" << std::endl;
+                        backend.genExtraGlobalParamPush(runnerPushFunc, std::get<0>(f), std::get<1>(f),
+                                                        loc, count, "group->");
+                    }
+                    runnerPushFunc << std::endl;
+                    
+                    if(fieldCount.empty()) {
+                        definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group, unsigned int count);" << std::endl;
+                        runnerPullFunc << "void pull" << name << "FromDevice(unsigned int group, unsigned int count)";
+                    }
+                    else {
+                        definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group);" << std::endl;
+                        runnerPullFunc << "void pull" << name << "FromDevice(unsigned int group)";
+                    }
+                    {
+                        CodeStream::Scope a(runnerPullFunc);
+                        runnerPullFunc << "auto *group = &" << group << ";" << std::endl;
+                        backend.genExtraGlobalParamPull(runnerPullFunc, std::get<0>(f), std::get<1>(f),
+                                                        loc, count, "group->");
+                    }
+                    runnerPullFunc << std::endl;
+                    
+                    definitions << "EXPORT_FUNC " << std::get<0>(f) << "get" << name << "(unsigned int group);" << std::endl;
+                    runnerGetterFunc << std::get<0>(f) << "get" << name << "(unsigned int group)";
+                    {
+                        CodeStream::Scope a(runnerGetterFunc);
+                        runnerGetterFunc << "return " << group << "." << std::get<1>(f) << ";" << std::endl;
+                    }
+
+                }
+            }
+        }
+    }
+
+    void genAllocMem(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged, MemAlloc &memAlloc) const
+    {
+        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+
+        CodeStream::Scope b(runner);
+        runner << "// merged group " << getIndex() << std::endl;
+        runner << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+        {
+            CodeStream::Scope b(runner);
+
+            // Get reference to group
+            runner << "auto *group = &merged" << M::name << "Group" << getIndex() << "[g]; " << std::endl;
+
+            // Loop through fields
+            for(const auto &f : m_Fields) {
+                // If this is pointer field
+                if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
+
+                    // If field has a count i.e. it's not allocated dynamically
+                    const std::string &count = std::get<2>(pointerField);
+                    if(!count.empty()) {
+                        if(std::get<1>(pointerField) == VarAccessDuplication::SHARED) {
+                            backend.genExtraGlobalParamAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
+                                                                  count, "group->");
+                        }
+                        else {
+                            backend.genExtraGlobalParamAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
+                                                                  std::to_string(batchSize) + " * " + count, "group->");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    void genFreeMem(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const
+    {
+        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
+
+        CodeStream::Scope b(runner);
+        runner << "// merged group " << getIndex() << std::endl;
+        runner << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+        {
+            CodeStream::Scope b(runner);
+
+            // Get reference to group
+            runner << "auto *group = &merged" << M::name << "Group" << getIndex() << "[g]; " << std::endl;
+
+            // Loop through fields
+            for(const auto &f : m_Fields) {
+                // If this is pointer field
+                if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
+
+                    // If field has a count i.e. it's not allocated dynamically
+                    // **TODO** we could insert a NULL check here and free these at the same time
+                    const std::string &count = std::get<2>(pointerField);
+                    if(!count.empty()) {
+                        backend.genVariableFree(runner, std::get<1>(f), std::get<0>(pointerField));
+                    }
+                }
+            }
+        }
+    }
+
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------

@@ -531,7 +531,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
     std::stringstream runnerVarAllocStream;
-    std::stringstream runnerMergedStructAllocStream;
+    std::stringstream runnerMergedRuntimeStructAllocStream;
+    std::stringstream runnerMergedRunnerStructAllocStream;
     std::stringstream runnerVarFreeStream;
     std::stringstream runnerExtraGlobalParamFuncStream;
     std::stringstream runnerPushFuncStream;
@@ -544,7 +545,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     std::stringstream definitionsInternalFuncStream;
     CodeStream runnerVarDecl(runnerVarDeclStream);
     CodeStream runnerVarAlloc(runnerVarAllocStream);
-    CodeStream runnerMergedStructAlloc(runnerMergedStructAllocStream);
+    CodeStream runnerMergedRuntimeStructAlloc(runnerMergedRuntimeStructAllocStream);
+    CodeStream runnerMergedRunnerStructAlloc(runnerMergedRunnerStructAllocStream);
     CodeStream runnerVarFree(runnerVarFreeStream);
     CodeStream runnerExtraGlobalParamFunc(runnerExtraGlobalParamFuncStream);
     CodeStream runnerPushFunc(runnerPushFuncStream);
@@ -680,136 +682,144 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     definitionsInternalFunc << "// copying merged group structures to device" << std::endl;
     definitionsInternalFunc << "// ------------------------------------------------------------------------" << std::endl;
 
+    // Loop through merged neuron runner groups, generate and populate structures
+    for(const auto &m : modelMerged.getMergedNeuronRunnerGroups()) {
+        m.generateRunner(backend, definitionsFunc, runnerVarDecl,
+                         runnerMergedRunnerStructAlloc, runnerVarAlloc,
+                         runnerVarFree, runnerPushFunc, runnerPullFunc,
+                         runnerGetterFunc, modelMerged, mem);
+    }
+
     // Loop through merged synapse connectivity host initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged synapse connectivity host init groups and generate host init code
     // **NOTE** this is done here so valid pointers get copied straight into subsequent structures and merged EGP system isn't required
     for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        genSynapseConnectivityHostInit(backend, runnerMergedStructAlloc, sg, model.getPrecision());
+        genSynapseConnectivityHostInit(backend, runnerMergedRuntimeStructAlloc, sg, model.getPrecision());
     }
 
     // Generate merged neuron initialisation groups
     for(const auto &m : modelMerged.getMergedNeuronInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Generate merged custom update initialisation groups
     for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Generate merged custom dense WU update initialisation groups
     for(const auto &m : modelMerged.getMergedCustomWUUpdateDenseInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged dense synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                          runnerVarDecl, runnerMergedStructAlloc);
+                          runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
     
     // Loop through merged kernel synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseKernelInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                          runnerVarDecl, runnerMergedStructAlloc);
+                          runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged synapse connectivity initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Generate merged custom sparse WU update initialisation groups
     for(const auto &m : modelMerged.getMergedCustomWUUpdateSparseInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged neuron update groups
     for(const auto &m : modelMerged.getMergedNeuronUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged presynaptic update groups
     for(const auto &m : modelMerged.getMergedPresynapticUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through merged postsynaptic update groups
     for(const auto &m : modelMerged.getMergedPostsynapticUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through synapse dynamics groups
     for(const auto &m : modelMerged.getMergedSynapseDynamicsGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through neuron groups whose previous spike times need resetting
     for(const auto &m : modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through neuron groups whose spike queues need resetting
     for(const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through synapse groups whose dendritic delay pointers need updating
     for(const auto &m : modelMerged.getMergedSynapseDendriticDelayUpdateGroups()) {
        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                        runnerVarDecl, runnerMergedStructAlloc);
+                        runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
     
     // Loop through custom variable update groups
     for(const auto &m : modelMerged.getMergedCustomUpdateGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through custom WU variable update groups
     for(const auto &m : modelMerged.getMergedCustomUpdateWUGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through custom WU transpose variable update groups
     for(const auto &m : modelMerged.getMergedCustomUpdateTransposeWUGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through custom update host reduction groups
     for(const auto &m : modelMerged.getMergedCustomUpdateHostReductionGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     // Loop through custom weight update host reduction groups
     for(const auto &m : modelMerged.getMergedCustomWUUpdateHostReductionGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
+                         runnerVarDecl, runnerMergedRuntimeStructAlloc);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -1612,11 +1622,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // so global initialisation is often performed here
         backend.genAllocateMemPreamble(runner, modelMerged, mem);
 
+        // Write merged runner struct allocations to runner
+        runner << runnerMergedRunnerStructAllocStream.str();
+
         // Write variable allocations to runner
         runner << runnerVarAllocStream.str();
 
-        // Write merged struct allocations to runner
-        runner << runnerMergedStructAllocStream.str();
+        // Write merged runtime struct allocations to runner
+        runner << runnerMergedRuntimeStructAllocStream.str();
     }
     runner << std::endl;
 
