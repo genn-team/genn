@@ -29,7 +29,8 @@ const std::vector<Substitutions::FunctionTemplate> openclLFSRFunctions = {
     {"gennrand_normal", 0, "normalDistLfsr113($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistLfsr113($(rng))"},
     {"gennrand_log_normal", 2, "logNormalDistLfsr113($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistLfsr113($(rng), $(0))"}
+    {"gennrand_gamma", 1, "gammaDistLfsr113($(rng), $(0))"},
+    {"gennrand_binomial", 2, "binomialDistLfsr113($(rng), $(0), $(1))"}
 };
 //-----------------------------------------------------------------------
 const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
@@ -37,7 +38,8 @@ const std::vector<Substitutions::FunctionTemplate> openclPhilloxFunctions = {
     {"gennrand_normal", 0, "normalDistPhilox432($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistPhilox432($(rng))"},
     {"gennrand_log_normal", 2, "logNormalDistPhilox432($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistPhilox432($(rng), $(0))"}
+    {"gennrand_gamma", 1, "gammaDistPhilox432($(rng), $(0))"},
+    {"gennrand_binomial", 2, "binomialDistPhilox432($(rng), $(0), $(1))"}
 };
 //--------------------------------------------------------------------------
 template<typename T>
@@ -2642,6 +2644,57 @@ void Backend::genKernelPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
                 os << "const " << precision << " d = a - " << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ";" << std::endl;
                 os << "const " << precision << " c = (" << model.scalarExpr(1.0) << " / " << model.scalarExpr(3.0) << ") / sqrt(d);" << std::endl;
                 os << "return gammaDistInternal" << r << "(rng, c, d);" << std::endl;
+            }
+        }
+
+        // The following code is an almost exact copy of numpy's
+        // rk_binomial_inversion function (numpy/random/mtrand/distributions.c)
+        os << "inline unsigned int binomialDist" << r << "Internal(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "const " << precision << " q = " << model.scalarExpr(1.0) << " - p;" << std::endl;
+            os << "const " << precision << " qn = exp(n * log(q));" << std::endl;
+            os << "const " << precision << " np = n * p;" << std::endl;
+            os << "const unsigned int bound = min(n, (unsigned int)(np + (" << model.scalarExpr(10.0) << " * sqrt((np * q) + " << model.scalarExpr(1.0) << "))));" << std::endl;
+
+            os << "unsigned int x = 0;" << std::endl;
+            os << precision << " px = qn;" << std::endl;
+            os << precision << " u = clrng" << r << "RandomU01(rng);" << std::endl;
+            os << "while(u > px)" << std::endl;
+            {
+                CodeStream::Scope b(os);
+                os << "x++;" << std::endl;
+                os << "if(x > bound)";
+                {
+                    CodeStream::Scope b(os);
+                    os << "x = 0;" << std::endl;
+                    os << "px = qn;" << std::endl;
+                    os << "u = clrng" << r << "RandomU01(rng);" << std::endl;
+                }
+                os << "else";
+                {
+                    CodeStream::Scope b(os);
+                    os << "u -= px;" << std::endl;
+                    os << "px = ((n - x + 1) * p * px) / (x * q);" << std::endl;
+                }
+            }
+            os << "return x;" << std::endl;
+        }
+        os << std::endl;
+
+        os << "inline unsigned int binomialDist" << r << "(clrng" << r << "Stream *rng, unsigned int n, " << precision << " p)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "if(p <= " << model.scalarExpr(0.5) << ")";
+            {
+                CodeStream::Scope b(os);
+                os << "return binomialDist" << r << "Internal(rng, n, p);" << std::endl;
+
+            }
+            os << "else";
+            {
+                CodeStream::Scope b(os);
+                os << "return (n - binomialDist" << r << "Internal(rng, n, " << model.scalarExpr(1.0) << " - p));" << std::endl;
             }
         }
         os << std::endl;
