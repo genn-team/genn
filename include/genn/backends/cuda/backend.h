@@ -186,19 +186,13 @@ public:
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
-
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    virtual void genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                    VarLocation loc, const std::string &countVarName = "count") const override;
+    virtual void genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 
+                              VarLocation loc, const std::string &countVarName = "count") const override;
+    virtual void genFieldPull(CodeStream &os, const std::string &type, const std::string &name, 
+                               VarLocation loc, const std::string &countVarName = "count") const override;
+     virtual void genFieldFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 

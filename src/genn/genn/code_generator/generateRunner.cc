@@ -104,8 +104,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 // Generate code to allocate this EGP with count specified by $(0)
                 std::stringstream allocStream;
                 CodeGenerator::CodeStream alloc(allocStream);
-                backend.genExtraGlobalParamAllocation(alloc, egp.type + "*", egp.name,
-                                                      loc, "$(0)", "group->");
+                backend.genFieldAllocation(alloc, egp.type + "*", egp.name, loc, "$(0)");
 
                 // Add substitution
                 subs.addFuncSubstitution("allocate" + egp.name, 1, allocStream.str());
@@ -113,8 +112,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, egp.type + "*", egp.name,
-                                                loc, "$(0)", "group->");
+                backend.genFieldPush(push, egp.type + "*", egp.name, loc, "$(0)");
 
 
                 // Add substitution

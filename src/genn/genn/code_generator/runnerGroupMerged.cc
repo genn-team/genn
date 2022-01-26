@@ -105,7 +105,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
         // **YUCK** maybe this should be renamed genDynamicArray
         if(getArchetype().isSpikeRecordingEnabled()) {
             CodeStream::Scope b(runner);
-            backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpk", VarLocation::HOST_DEVICE, "numWords", "group->");
+            backend.genFieldAllocation(runner, "uint32_t*", "recordSpk", VarLocation::HOST_DEVICE, "numWords");
 
             // Get destinations in merged structures, this EGP 
             // needs to be copied to and call push function
@@ -120,7 +120,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
         // **YUCK** maybe this should be renamed genDynamicArray
         if(getArchetype().isSpikeEventRecordingEnabled()) {
             CodeStream::Scope b(runner);
-            backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpkEvent", VarLocation::HOST_DEVICE, "numWords", "group->");
+            backend.genFieldAllocation(runner, "uint32_t*", "recordSpkEvent", VarLocation::HOST_DEVICE, "numWords");
 
             // Get destinations in merged structures, this EGP 
             // needs to be copied to and call push function
@@ -153,13 +153,13 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
         // **YUCK** maybe this should be renamed pullDynamicArray
         if(getArchetype().isSpikeRecordingEnabled()) {
             CodeStream::Scope b(runner);
-            backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpk", VarLocation::HOST_DEVICE, "numWords", "group->");
+            backend.genFieldPull(runner, "uint32_t*", "recordSpk", VarLocation::HOST_DEVICE, "numWords");
         }
         // AllocaPullte spike event array if required
         // **YUCK** maybe this should be renamed pullDynamicArray
         if(getArchetype().isSpikeEventRecordingEnabled()) {
             CodeStream::Scope b(runner);
-            backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpkEvent", VarLocation::HOST_DEVICE, "numWords", "group->");
+            backend.genFieldPull(runner, "uint32_t*", "recordSpkEvent", VarLocation::HOST_DEVICE, "numWords");
         }
     }
 }

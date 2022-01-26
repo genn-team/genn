@@ -248,19 +248,13 @@ public:
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
-
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
+    virtual void genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                    VarLocation loc, const std::string &countVarName = "count") const = 0;
+    virtual void genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 
+                              VarLocation loc, const std::string &countVarName = "count") const = 0;
+    virtual void genFieldPull(CodeStream &os, const std::string &type, const std::string &name, 
+                               VarLocation loc, const std::string &countVarName = "count") const = 0;
+     virtual void genFieldFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -404,32 +398,6 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    //! Helper function to generate matching push and pull functions for a variable
-    void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
-    {
-        genVariablePush(push, type, name, loc, autoInitialized, count);
-        genVariablePull(pull, type, name, loc, count);
-    }
-
-    //! Helper function to generate matching push and pull functions for the current state of a variable
-    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, const std::string &type, 
-                                    const std::string &name, VarLocation loc, unsigned int batchSize) const
-    {
-        genCurrentVariablePush(push, ng, type, name, loc, batchSize);
-        genCurrentVariablePull(pull, ng, type, name, loc, batchSize);
-    }
-
-    //! Helper function to generate matching definition, declaration, allocation and free code for an array
-    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                  const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
-    {
-        genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
-        genVariableImplementation(runner, type + "*", name, loc);
-        genVariableFree(free, name, loc);
-        genVariableAllocation(allocations, type, name, loc, count, memAlloc);
-    }
-
     //! Get the size of the type
     size_t getSize(const std::string &type) const;
 

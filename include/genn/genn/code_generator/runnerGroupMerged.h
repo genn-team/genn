@@ -213,8 +213,7 @@ private:
                     {
                         CodeStream::Scope a(runnerPushFunc);
                         runnerPushFunc << "auto *group = &" << group << ";" << std::endl;
-                        backend.genExtraGlobalParamPush(runnerPushFunc, std::get<0>(f), std::get<1>(f),
-                                                        loc, count, "group->");
+                        backend.genFieldPush(runnerPushFunc, std::get<0>(f), std::get<1>(f), loc, count);
                     }
                     runnerPushFunc << std::endl;
                     
@@ -229,8 +228,7 @@ private:
                     {
                         CodeStream::Scope a(runnerPullFunc);
                         runnerPullFunc << "auto *group = &" << group << ";" << std::endl;
-                        backend.genExtraGlobalParamPull(runnerPullFunc, std::get<0>(f), std::get<1>(f),
-                                                        loc, count, "group->");
+                        backend.genFieldPull(runnerPullFunc, std::get<0>(f), std::get<1>(f), loc, count);
                     }
                     runnerPullFunc << std::endl;
                     
@@ -269,12 +267,11 @@ private:
                     const std::string &count = std::get<2>(pointerField);
                     if(!count.empty()) {
                         if(std::get<1>(pointerField) == VarAccessDuplication::SHARED) {
-                            backend.genExtraGlobalParamAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
-                                                                  count, "group->");
+                            backend.genFieldAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField), count);
                         }
                         else {
-                            backend.genExtraGlobalParamAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
-                                                                  std::to_string(batchSize) + " * " + count, "group->");
+                            backend.genFieldAllocation(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField),
+                                                       std::to_string(batchSize) + " * " + count);
                         }
                     }
                 }
@@ -305,7 +302,7 @@ private:
                     // **TODO** we could insert a NULL check here and free these at the same time
                     const std::string &count = std::get<2>(pointerField);
                     if(!count.empty()) {
-                        backend.genVariableFree(runner, "group->" + std::get<1>(f), std::get<0>(pointerField));
+                        backend.genFieldFree(runner, std::get<1>(f), std::get<0>(pointerField));
                     }
                 }
             }

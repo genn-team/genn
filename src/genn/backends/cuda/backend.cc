@@ -1395,151 +1395,18 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
         os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(neuronUpdateStop));" << std::endl;
     }
 }
-//--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    const bool deviceType = isDeviceType(type);
 
-    if(getPreferences().automaticCopy && ::Utils::isTypePointer(type)) {
-        // Export pointer, either in definitionsInternal if variable has a device type
-        // or to definitions if it should be accessable on host
-        CodeStream &d = deviceType ? definitionsInternal : definitions;
-        d << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            if(deviceType) {
-                throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
-            }
-
-            definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-        }
-        if(loc & VarLocation::DEVICE) {
-            // If the type is a pointer type we need a device pointer
-            if(::Utils::isTypePointer(type)) {
-                // Write host definition to internal definitions stream if type is device only
-                CodeStream &d = deviceType ? definitionsInternal : definitions;
-                d << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
-            }
-            // Otherwise we just need a device variable, made volatile for safety
-            else {
-                definitionsInternal << "EXPORT_VAR __device__ volatile " << type << " d_" << name << ";" << std::endl;
-            }
-        }
-    }
-
-
-}
 //--------------------------------------------------------------------------
-void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    if(getPreferences().automaticCopy && ::Utils::isTypePointer(type)) {
-        os << type << " " << name << ";" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            os << type << " " << name << ";" << std::endl;
-        }
-        if(loc & VarLocation::DEVICE) {
-            // If the type is a pointer type we need a host and a device pointer
-            if(::Utils::isTypePointer(type)) {
-                os << type << " d_" << name << ";" << std::endl;
-            }
-            // Otherwise we just need a device variable, made volatile for safety
-            else {
-                os << "__device__ volatile " << type << " d_" << name << ";" << std::endl;
-            }
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
-{
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-        memAlloc += MemAlloc::device(count * getSize(type));
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
-            memAlloc += MemAlloc::host(count * getSize(type));
-        }
-
-        // If variable is present on device at all
-        if(loc & VarLocation::DEVICE) {
-            // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
-            if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << ", (void *)" << name << ", 0));" << std::endl;
-                memAlloc += MemAlloc::zeroCopy(count * getSize(type));
-            }
-            else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
-                memAlloc += MemAlloc::device(count * getSize(type));
-            }
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
-{
-    if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaFree(" << name << "));" << std::endl;
-    }
-    else {
-        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
-        if(loc & VarLocation::HOST) {
-            os << "CHECK_CUDA_ERRORS(cudaFreeHost(" << name << "));" << std::endl;
-        }
-
-        // If this variable wasn't allocated in zero-copy mode, free it
-        if((loc & VarLocation::DEVICE) && !(loc & VarLocation::ZERO_COPY)) {
-            os << "CHECK_CUDA_ERRORS(cudaFree(d_" << name << "));" << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
-                                            const std::string &type, const std::string &name, VarLocation loc) const
-{
-    if(getPreferences().automaticCopy) {
-        definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-        }
-        if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-            definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    if(getPreferences().automaticCopy) {
-        os << type << " " << name << ";" << std::endl;
-    }
-    else {
-        if(loc & VarLocation::HOST) {
-            os << type << " " << name << ";" << std::endl;
-        }
-        if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-            os << type << " d_" << name << ";" << std::endl;
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                            VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+void Backend::genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                 VarLocation loc, const std::string &countVarName) const
 {
     // Get underlying type
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-    const std::string hostPointerToPointer = pointerToPointer ? (prefix + name) : ("&" + prefix + name);
-    const std::string devicePointerToPointer = pointerToPointer ? (prefix + "d_" + name) : ("&" + prefix + "d_" + name);
+    const std::string hostPointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
+    const std::string hostPointerToPointer = pointerToPointer ? ("group->" + name) : ("&group->" + name);
+    const std::string devicePointerToPointer = pointerToPointer ? ("group->d_" + name) : ("&group->d_" + name);
     if(getPreferences().automaticCopy) {
         os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
     }
@@ -1561,8 +1428,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
-                                      VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+void Backend::genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 
+                           VarLocation loc, const std::string &countVarName) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1571,8 +1438,8 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
         const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-        const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-        const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+        const std::string hostPointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
+        const std::string devicePointer = pointerToPointer ? ("*group->d_" + name) : ("group->d_" + name);
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << devicePointer;
         os << ", " << hostPointer;
@@ -1580,8 +1447,8 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
-                                      VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+void Backend::genFieldPull(CodeStream &os, const std::string &type, const std::string &name, 
+                           VarLocation loc, const std::string &countVarName) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1590,12 +1457,30 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
         const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-        const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-        const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+        const std::string hostPointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
+        const std::string devicePointer = pointerToPointer ? ("*group->d_" + name) : ("group->d_" + name);
 
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << hostPointer;
         os << ", " << devicePointer;
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genFieldFree(CodeStream &os, const std::string &name,  VarLocation loc) const
+{
+    if(getPreferences().automaticCopy) {
+        os << "CHECK_CUDA_ERRORS(cudaFree(group->" << name << "));" << std::endl;
+    }
+    else {
+        // **NOTE** because we pinned the variable we need to free it with cudaFreeHost rather than use the host code generator
+        if(loc & VarLocation::HOST) {
+            os << "CHECK_CUDA_ERRORS(cudaFreeHost(group->" << name << "));" << std::endl;
+        }
+
+        // If this variable wasn't allocated in zero-copy mode, free it
+        if((loc & VarLocation::DEVICE) && !(loc & VarLocation::ZERO_COPY)) {
+            os << "CHECK_CUDA_ERRORS(cudaFree(group->d_" << name << "));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -1717,8 +1602,9 @@ void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, 
 void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                    const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
+    assert(false);
     // Create an array or XORWOW RNGs
-    genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count, memAlloc);
+    //genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count, memAlloc);
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
