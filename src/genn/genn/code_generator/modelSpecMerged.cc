@@ -52,6 +52,13 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     createMergedRunnerGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWURunnerGroups,
                                  &CustomUpdateWUInternal::getRunnerHashDigest);
 
+    // Add runner groups to map
+    addMergedRunnerGroups(getMergedNeuronRunnerGroups());
+    addMergedRunnerGroups(getMergedSynapseRunnerGroups());
+    addMergedRunnerGroups(getMergedCurrentSourceRunnerGroups());
+    addMergedRunnerGroups(getMergedCustomUpdateRunnerGroups());
+    addMergedRunnerGroups(getMergedCustomUpdateWURunnerGroups());
+
     LOGD_CODE_GEN << "Merging neuron update groups:";
     createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
                                   [](const NeuronGroupInternal &){ return true; },
@@ -240,6 +247,8 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedCustomWUUpdateDenseInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
 }
+//----------------------------------------------------------------------------
+
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const
 {
