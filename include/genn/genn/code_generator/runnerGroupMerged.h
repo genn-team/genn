@@ -96,20 +96,33 @@ public:
             // Loop through fields
             runnerMergedRunnerStructAlloc << "merged" << M::name << "Group" << getIndex() << "[" << g << "] = {";
             for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
-                // If field's a pointer, initialise to null pointer
+                // If field's a pointer
                 const auto &f = sortedFields.at(fieldIndex);
                 if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                    runnerMergedRunnerStructAlloc << "nullptr";
+                    // If variable is present on host
+                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
+                    const VarLocation loc = std::get<0>(pointerField);
+                    if(loc & VarLocation::HOST) {
+                        runnerMergedRunnerStructAlloc << "nullptr, ";
+
+                        // If backend has device prefix, add additional field with prefix and overriden type
+                        if(!backend.getHostVarPrefix().empty()) {
+                            // **TODO** some sort of OpenCL initialiser
+                            runnerMergedRunnerStructAlloc << "nullptr, ";
+                        }
+                    }
+
+                    if((loc & VarLocation::DEVICE) && !backend.getDeviceVarPrefix().empty()) {
+                        // **TODO** some sort of OpenCL initialiser
+                        runnerMergedRunnerStructAlloc << "nullptr, ";
+                    }
                 }
                 // Otherwise, initialise with value
                 else {
                     const auto getValueFn = std::get<GetFieldValueFunc>(std::get<2>(f));
-                    runnerMergedRunnerStructAlloc << getValueFn(getGroups().at(g));
+                    runnerMergedRunnerStructAlloc << getValueFn(getGroups().at(g)) << ", ";
                 }
 
-                if(fieldIndex != (sortedFields.size() - 1)) {
-                    runnerMergedRunnerStructAlloc << ", ";
-                }
             }
             runnerMergedRunnerStructAlloc << "};" << std::endl;
         }
@@ -292,7 +305,7 @@ private:
                     // **TODO** we could insert a NULL check here and free these at the same time
                     const std::string &count = std::get<2>(pointerField);
                     if(!count.empty()) {
-                        backend.genVariableFree(runner, std::get<1>(f), std::get<0>(pointerField));
+                        backend.genVariableFree(runner, "group->" + std::get<1>(f), std::get<0>(pointerField));
                     }
                 }
             }
