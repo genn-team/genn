@@ -13,6 +13,7 @@
 #include "code_generator/groupMerged.h"
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/initGroupMerged.h"
+#include "code_generator/mergedRunnerMap.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 #include "code_generator/runnerGroupMerged.h"
 #include "code_generator/synapseUpdateGroupMerged.h"
@@ -191,21 +192,6 @@ public:
     const std::string &getPostsynapticUpdateSupportCodeNamespace(const std::string &code) const{ return m_PostsynapticUpdateSupportCode.getSupportCodeNamespace(code); }
     const std::string &getSynapseDynamicsSupportCodeNamespace(const std::string &code) const{ return m_SynapseDynamicsSupportCode.getSupportCodeNamespace(code); }
 
-    //! Find the name of the merged runner group associated with neuron group e.g. mergedNeuronRunnerGroup0[6]
-    std::string findMergedRunnerGroup(const NeuronGroupInternal &ng) const { return findMergedRunnerGroup<NeuronRunnerGroupMerged>(ng); }
-
-    //! Find the name of the merged runner group associated with synapse group e.g. mergedSynapseRunnerGroup0[6]
-    std::string findMergedRunnerGroup(const SynapseGroupInternal &sg) const { return findMergedRunnerGroup<SynapseRunnerGroupMerged>(sg); }
-
-    //! Find the name of the merged runner group associated with current source e.g. mergedCurrentSourceRunnerGroup0[6]
-    std::string findMergedRunnerGroup(const CurrentSourceInternal &cs) const { return findMergedRunnerGroup<CurrentSourceRunnerGroupMerged>(cs); }
-
-    //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateRunnerGroup0[6]
-    std::string findMergedRunnerGroup(const CustomUpdateInternal &cu) const { return findMergedRunnerGroup<CustomUpdateRunnerGroupMerged>(cu); }
-
-    //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateWURunnerGroup0[6]
-    std::string findMergedRunnerGroup(const CustomUpdateWUInternal &cu) const { return findMergedRunnerGroup<CustomUpdateWURunnerGroupMerged>(cu); }
-
     //! Get hash digest of entire model
     boost::uuids::detail::sha1::digest_type getHashDigest(const BackendBase &backend) const;
 
@@ -312,32 +298,6 @@ private:
     //--------------------------------------------------------------------------
     // Private methods
     //--------------------------------------------------------------------------
-    //! Helper to find merged runner group
-    template<typename MergedGroup>
-    std::string findMergedRunnerGroup(const typename MergedGroup::GroupInternal &g) const
-    {
-        // Find group by name
-        const auto m = m_MergedRunnerGroups.at(g.getName());
-
-        // Return structure
-        return "merged" + MergedGroup::name + "Group" + std::to_string(std::get<0>(m)) + "[" + std::to_string(std::get<1>(m)) + "]";
-    }
-
-    template<typename MergedGroup>
-    void addMergedRunnerGroups(const std::vector<MergedGroup> &mergedGroups)
-    {
-        // Loop through merged groups
-        for(const auto &g : mergedGroups) {
-            // Loop through individual groups inside and add to map
-            for(size_t i = 0; i < g.getGroups().size(); i++) {
-                auto result = m_MergedRunnerGroups.emplace(std::piecewise_construct,
-                                                           std::forward_as_tuple(g.getGroups().at(i).get().getName()),
-                                                           std::forward_as_tuple(g.getIndex(), i));
-                assert(result.second);
-            }
-        }
-    }
-
     template<typename Group, typename MergedGroup, typename D>
     void createMergedRunnerGroupsHash(const ModelSpecInternal &model, const BackendBase &backend,
                                       const std::map<std::string, Group> &unmergedGroups, std::vector<MergedGroup> &mergedGroups, 
@@ -530,7 +490,6 @@ private:
     //! Map containing mapping of original extra global param names to their locations within merged groups
     MergedEGPMap m_MergedEGPs;
 
-    //! Map of group names to index of merged group and index of group within that
-    std::unordered_map<std::string, std::tuple<unsigned int, unsigned int>> m_MergedRunnerGroups;
+    MergedRunnerMap m_MergedRunnerGroups;
 };
 }   // namespace CodeGenerator

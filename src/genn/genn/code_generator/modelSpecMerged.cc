@@ -53,11 +53,11 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                                  &CustomUpdateWUInternal::getRunnerHashDigest);
 
     // Add runner groups to map
-    addMergedRunnerGroups(getMergedNeuronRunnerGroups());
-    addMergedRunnerGroups(getMergedSynapseRunnerGroups());
-    addMergedRunnerGroups(getMergedCurrentSourceRunnerGroups());
-    addMergedRunnerGroups(getMergedCustomUpdateRunnerGroups());
-    addMergedRunnerGroups(getMergedCustomUpdateWURunnerGroups());
+    m_MergedRunnerGroups.addGroup(getMergedNeuronRunnerGroups());
+    m_MergedRunnerGroups.addGroup(getMergedSynapseRunnerGroups());
+    m_MergedRunnerGroups.addGroup(getMergedCurrentSourceRunnerGroups());
+    m_MergedRunnerGroups.addGroup(getMergedCustomUpdateRunnerGroups());
+    m_MergedRunnerGroups.addGroup(getMergedCustomUpdateWURunnerGroups());
 
     LOGD_CODE_GEN << "Merging neuron update groups:";
     createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
