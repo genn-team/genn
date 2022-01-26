@@ -880,10 +880,10 @@ protected:
                  {
                      const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
                      if(scalar && isDeviceScalarRequired()) {
-                         return map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
+                         return "&" + map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
                      }
                      else {
-                         return "&" + map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
+                         return map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
                      }
                  });
     }
