@@ -105,17 +105,22 @@ const std::string CustomUpdateGroupMerged::name = "CustomUpdate";
 //----------------------------------------------------------------------------
 CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
                                                  const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   RuntimeGroupMerged<CustomUpdateInternal>(index, precision, groups)
+:   RuntimeGroupMerged<CustomUpdateInternal>(index, precision, backend, groups)
 {
     addField("unsigned int", "size",
-             [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
+             [](const CustomUpdateInternal &c, size_t, const MergedRunnerMap&) { return std::to_string(c.getSize()); });
     
     // If some variables are delayed, add delay pointer
     if(getArchetype().getDelayNeuronGroup() != nullptr) {
         addField("unsigned int*", "spkQuePtr", 
-                 [&backend](const CustomUpdateInternal &cg, size_t) 
+                 [this](const CustomUpdateInternal &cg, size_t, const MergedRunnerMap &map) 
                  { 
-                     return backend.getScalarAddressPrefix() + "spkQuePtr" + cg.getDelayNeuronGroup()->getName(); 
+                     if(isDeviceScalarRequired()) {
+                         return "&" + map.findGroup(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
+                     }
+                     else {
+                         return map.findGroup(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
+                     }
                  });
     }
 
@@ -133,7 +138,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
         &CustomUpdateGroupMerged::isDerivedParamHeterogeneous);
 
     // Add variables to struct
-    addVars(cm->getVars(), backend.getDeviceVarPrefix());
+    addVars(cm->getVars());
 
     // Add variable references to struct
     addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
@@ -253,24 +258,24 @@ std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize
 //----------------------------------------------------------------------------
 CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   RuntimeGroupMerged<CustomUpdateWUInternal>(index, precision, groups)
+:   RuntimeGroupMerged<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
     addField("unsigned int", "rowStride",
-             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             [&backend](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) 
              { 
                  const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                  return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
              });
     
     addField("unsigned int", "numSrcNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) 
+             [](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) 
              {
                  const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                  return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
              });
 
     addField("unsigned int", "numTrgNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t)
+             [](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&)
              { 
                  const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
                  return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
@@ -278,27 +283,16 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // If synapse group has sparse connectivity
     if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
-                 [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                 { 
-                     return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
-                 });
+        addSynapseGroupPointerField(getArchetype().getSynapseGroup()->getSparseIndType(), "ind");
+        
 
         // If the referenced synapse group requires synaptic remapping and matrix type is sparse, add field
         if(backend.isSynRemapRequired(*getArchetype().getSynapseGroup())) {
-            addField("unsigned int*", "synRemap", 
-                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + "synRemap" + cg.getSynapseGroup()->getName(); 
-                     });
+            addSynapseGroupPointerField("unsigned int", "synRemap");
         }
         // Otherwise, add row length
         else {
-            addField("unsigned int*", "rowLength",
-                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                     });
+            addSynapseGroupPointerField("unsigned int", "rowLength");
         }
     }
 
@@ -316,7 +310,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         &CustomUpdateWUGroupMergedBase::isDerivedParamHeterogeneous);
 
     // Add variables to struct
-    addVars(cm->getVars(), backend.getDeviceVarPrefix());
+    addVars(cm->getVars());
 
     // Add variable references to struct
     const auto varRefs = cm->getVarRefs();
@@ -329,7 +323,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
             addField(v.type + "*", v.name + "Transpose",
-                     [&backend, v](const CustomUpdateWUInternal &g, size_t)
+                     [&backend, v](const CustomUpdateWUInternal &g, size_t, const MergedRunnerMap&)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);
                          return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
@@ -339,6 +333,17 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
+//----------------------------------------------------------------------------
+void CustomUpdateWUGroupMergedBase::addSynapseGroupPointerField(const std::string &type, const std::string &name)
+{
+    assert(!Utils::isTypePointer(type));
+    addField(type + "*", name, 
+             [name, this](const CustomUpdateWUInternal &cu, size_t, const MergedRunnerMap &map) 
+             { 
+                 return map.findGroup(*cu.getSynapseGroup()) + "." + getDeviceVarPrefix() + name;
+             });
+}
+
 // ----------------------------------------------------------------------------
 // CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------

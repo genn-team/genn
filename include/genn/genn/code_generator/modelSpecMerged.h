@@ -180,6 +180,8 @@ public:
     //! Get merged custom weight update groups where host reduction needs to be performed
     const std::vector<CustomWUUpdateHostReductionGroupMerged> &getMergedCustomWUUpdateHostReductionGroups() const { return m_MergedCustomWUUpdateHostReductionGroups; }
 
+    const MergedRunnerMap &getMergedRunnerGroups() const { return m_MergedRunnerGroups; }
+
     void genNeuronUpdateGroupSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_NeuronUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
     void genPostsynapticDynamicsSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PostsynapticDynamicsSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
     void genPresynapticUpdateSupportCode(CodeStream &os, bool supportsNamespace = true) const{ m_PresynapticUpdateSupportCode.gen(os, getModel().getPrecision(), supportsNamespace); }
@@ -354,8 +356,9 @@ private:
             for(const auto &f : mergedGroups.back().getFields()) {
                 // If field is an EGP, add record to merged EGPS
                 if(std::get<3>(f) == MergedGroup::FieldType::PointerEGP || std::get<3>(f) == MergedGroup::FieldType::ScalarEGP) {
+                    assert(false);
                     // Loop through groups within newly-created merged group
-                    for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
+                    /*for(size_t groupIndex = 0; groupIndex < mergedGroups.back().getGroups().size(); groupIndex++) {
                         const auto &g = mergedGroups.back().getGroups()[groupIndex];
 
                         // Add reference to this group's variable to data structure
@@ -363,7 +366,7 @@ private:
                             std::piecewise_construct,
                             std::forward_as_tuple(MergedGroup::name),
                             std::forward_as_tuple(i, groupIndex, std::get<0>(f), std::get<1>(f)));
-                    }
+                    }*/
                 }
             }
 

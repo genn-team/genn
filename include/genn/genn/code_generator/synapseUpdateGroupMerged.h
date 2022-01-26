@@ -28,10 +28,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSpikeEventThreshold(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -65,10 +66,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -98,10 +100,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;

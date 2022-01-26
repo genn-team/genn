@@ -436,12 +436,6 @@ public:
     //! Get the lowest value of a type
     std::string getLowestValue(const std::string &type) const;
 
-    //! Get the prefix for accessing the address of 'scalar' variables
-    std::string getScalarAddressPrefix() const
-    {
-        return isDeviceScalarRequired() ? getDeviceVarPrefix() : ("&" + getDeviceVarPrefix());
-    }
-
     bool areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const;
 
     const PreferencesBase &getPreferences() const { return m_Preferences; }

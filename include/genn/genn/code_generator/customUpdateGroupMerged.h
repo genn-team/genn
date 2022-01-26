@@ -24,10 +24,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -65,6 +66,10 @@ protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
+    void addSynapseGroupPointerField(const std::string &type, const std::string &name);
 };
 
 // ----------------------------------------------------------------------------
@@ -84,10 +89,11 @@ public:
     //----------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -115,10 +121,11 @@ public:
     //----------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;

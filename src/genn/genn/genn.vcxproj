@@ -31,6 +31,7 @@
     <ClCompile Include="code_generator\generateSupportCode.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
+    <ClCompile Include="code_generator\mergedRunnerMap.cc" />
     <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
     <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />

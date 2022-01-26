@@ -40,10 +40,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -63,8 +64,7 @@ private:
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        const std::unordered_map<std::string, Models::VarInit>&(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
                        bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const,
-                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const,
-                       const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
+                       bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const);
 
     //! Is the incoming synapse weight update model var init parameter referenced?
     bool isInSynWUMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
@@ -107,10 +107,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -139,10 +140,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -171,10 +173,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -204,10 +207,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSparseRowInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -254,7 +258,7 @@ public:
 protected:
     CustomUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
                                     const std::vector<std::reference_wrapper<const G>> &groups)
-    :   RuntimeGroupMerged<G>(index, precision, groups)
+    :   RuntimeGroupMerged<G>(index, precision, backend, groups)
     {
          // Loop through variables
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
@@ -267,7 +271,7 @@ protected:
             }
 
             // Add any var init EGPs to structure
-            this->addEGPs(varInit.getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+            this->addEGPs(varInit.getSnippet()->getExtraGlobalParams(), var.name);
         }
 
         this->template addHeterogeneousVarInitParams<CustomUpdateInitGroupMergedBase<G>>(
@@ -328,10 +332,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -359,10 +364,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -389,10 +395,11 @@ public:
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;

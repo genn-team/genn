@@ -16,6 +16,7 @@
 // GeNN code generator includes
 #include "code_generator/backendBase.h"
 #include "code_generator/codeGenUtils.h"
+#include "mergedRunnerMap.h"
 
 // Forward declarations
 namespace CodeGenerator
@@ -94,14 +95,20 @@ public:
     //------------------------------------------------------------------------
     // Typedefines
     //------------------------------------------------------------------------
-    typedef std::function<std::string(const G &, size_t)> GetFieldValueFunc;
+    typedef std::function<std::string(const G &, size_t, const MergedRunnerMap&)> GetFieldValueFunc;
+    typedef std::function<std::string(const G &, size_t)> GetScalarFieldValueFunc;
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
     
-    RuntimeGroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
-    :   GroupMerged<G>(index, groups), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Host(host)
+    RuntimeGroupMerged(size_t index, const std::string &precision, const BackendBase &backend, 
+                       const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
+    :   GroupMerged<G>(index, groups), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Host(host),
+        m_DeviceVarPrefix(backend.getDeviceVarPrefix()), m_DeviceScalarRequired(backend.isDeviceScalarRequired())
 
     {}
 
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
     //! Does this merged group generate host or device data structures?
     bool isHost() const { return m_Host; }
 
@@ -219,6 +226,12 @@ public:
     }
 
 protected:
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------    
+    const std::string &getDeviceVarPrefix() const { return m_DeviceVarPrefix;  }
+    const bool isDeviceScalarRequired() const { return m_DeviceScalarRequired;  }
+
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         // Add field to data structure
@@ -265,28 +278,36 @@ protected:
                            });
     }
 
-    void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
+    void addScalarField(const std::string &name, GetScalarFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         addField("scalar", name,
-                 [getFieldValue, this](const G &g, size_t i)
+                 [getFieldValue, this](const G &g, size_t i, const MergedRunnerMap &map)
                  {
                      return getFieldValue(g, i) + m_LiteralSuffix;
                  },
                  fieldType);
     }
 
-    void addPointerField(const std::string &type, const std::string &name, const std::string &prefix)
+    void addPointerField(const std::string &type, const std::string &name, const std::string &suffix = "", bool scalar = false)
     {
         assert(!Utils::isTypePointer(type));
-        addField(type + "*", name, [prefix](const G &g, size_t) { return prefix + g.getName(); });
+        addField(type + "*", name, 
+                 [this, name, scalar, suffix](const G &g, size_t, const MergedRunnerMap &map) 
+                 { 
+                     if(scalar && isDeviceScalarRequired()) {
+                         return "&" + map.findGroup(g) + "." + getDeviceVarPrefix() + name;
+                     }
+                     else {
+                         return map.findGroup(g) + "." + getDeviceVarPrefix() + name;
+                     }
+                 });
     }
 
-
-    void addVars(const Models::Base::VarVec &vars, const std::string &arrayPrefix)
+    void addVars(const Models::Base::VarVec &vars)
     {
         // Loop through variables
         for(const auto &v : vars) {
-            addPointerField(v.type, v.name, arrayPrefix + v.name);
+            addPointerField(v.type, v.name);
         }
     }
 
@@ -296,7 +317,7 @@ protected:
         // Loop through variables
         for(const auto &v : varReferences) {
             addField(v.type + "*", v.name, 
-                     [getVarRefFn, arrayPrefix, v](const G &g, size_t) 
+                     [getVarRefFn, arrayPrefix, v](const G &g, size_t, const MergedRunnerMap&) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
                          return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
@@ -304,13 +325,15 @@ protected:
         }
     }
 
-    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &arrayPrefix, const std::string &varName = "")
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &varName = "")
     {
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string prefix = isPointer ? arrayPrefix : "";
             addField(e.type, e.name + varName,
-                     [e, prefix, varName](const G &g, size_t) { return prefix + e.name + varName + g.getName(); },
+                     [e, varName](const G &g, size_t, const MergedRunnerMap &map) 
+                     { 
+                         return map.findGroup(g) + "." + e.name + varName; 
+                     },
                      isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
     }
@@ -457,7 +480,7 @@ protected:
     void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
                             CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
                             CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
-                            const std::string &name) const
+                            const MergedRunnerMap &mergedRunnerMap, const std::string &name) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
         // to structure packing rules, significant memory is saved and estimate is more precise
@@ -500,13 +523,13 @@ protected:
             // If this is a merged group used on the host, directly set array entry
             if(isHost()) {
                 runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
-                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
+                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields, mergedRunnerMap);
                 runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
                 runnerMergedStructAlloc << "pushMerged" << name << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
-                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
+                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields, mergedRunnerMap);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
         }
@@ -516,7 +539,8 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     void generateStructFieldArguments(CodeStream &os, size_t groupIndex, 
-                                      const std::vector<Field> &sortedFields) const
+                                      const std::vector<Field> &sortedFields,
+                                      const MergedRunnerMap &mergedRunnerMap) const
     {
         // Get group by index
         const auto &g = getGroups()[groupIndex];
@@ -524,7 +548,7 @@ private:
         // Loop through fields
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
             const auto &f = sortedFields[fieldIndex];
-            const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
+            const std::string fieldInitVal = std::get<2>(f)(g, groupIndex, mergedRunnerMap);
             os << fieldInitVal;
             if(fieldIndex != (sortedFields.size() - 1)) {
                 os << ", ";
@@ -537,6 +561,8 @@ private:
     //------------------------------------------------------------------------
     const std::string m_LiteralSuffix;
     const bool m_Host;
+    const std::string m_DeviceVarPrefix;
+    const bool m_DeviceScalarRequired;
     std::string m_MemorySpace;
     std::vector<Field> m_Fields;
 };
@@ -554,11 +580,12 @@ public:
     // Public API
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const;
@@ -582,11 +609,12 @@ public:
     // Public API
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                  CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                  CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------
@@ -811,7 +839,8 @@ protected:
             // If parameter is heterogeneous
             if(std::invoke(isChildDerivedParamHeterogeneousFn, static_cast<const T*>(this), childIndex, varName, d.name)) {
                 addScalarField(d.name + varName + prefix + std::to_string(childIndex),
-                               [&sortedGroupChildren, childIndex, varName, d, getVarInitialiserFn](const NeuronGroupInternal &, size_t groupIndex)
+                               [&sortedGroupChildren, childIndex, varName, d, getVarInitialiserFn]
+                               (const NeuronGroupInternal &, size_t groupIndex)
                                {
                                    const auto &varInit = std::invoke(getVarInitialiserFn, 
                                                                      sortedGroupChildren.at(groupIndex).at(childIndex));
@@ -821,21 +850,42 @@ protected:
         }
     }
 
-    template<typename S>
-    void addChildEGPs(const std::vector<Snippet::Base::EGP> &egps, size_t childIndex,
-                      const std::string &arrayPrefix, const std::string &prefix,
-                      S getEGPSuffixFn)
+    template<typename C>
+    void addChildEGPs(const std::vector<Snippet::Base::EGP> &egps,
+                      const std::vector<std::vector<C>> &sortedGroupChildren,
+                      size_t childIndex, const std::string &suffix, const std::string &varName = "")
     {
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
-            const std::string varPrefix = isPointer ? arrayPrefix : "";
-            addField(e.type, e.name + prefix + std::to_string(childIndex),
-                     [getEGPSuffixFn, childIndex, e, varPrefix](const NeuronGroupInternal&, size_t groupIndex)
+            addField(e.type, e.name + varName + suffix + std::to_string(childIndex),
+                     [this, &sortedGroupChildren, childIndex, e, varName]
+                     (const NeuronGroupInternal&, size_t groupIndex, const MergedRunnerMap &map)
                      {
-                         return varPrefix + e.name + getEGPSuffixFn(groupIndex, childIndex);
+                         const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                         return map.findGroup(*child) + "." + getDeviceVarPrefix() +  e.name + varName; 
                      },
-                     Utils::isTypePointer(e.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
+                     isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
+    }
+
+    template<typename C>
+    void addChildPointerField(const std::string &type, const std::string &name,
+                              const std::vector<std::vector<C>> &sortedGroupChildren,
+                              size_t childIndex, const std::string &suffix, bool scalar = false)
+    {
+        assert(!Utils::isTypePointer(type));
+        addField(type + "*", name + suffix + std::to_string(childIndex),
+                 [this, &sortedGroupChildren, childIndex, name, scalar]
+                 (const NeuronGroupInternal&, size_t groupIndex, const MergedRunnerMap &map)
+                 {
+                     const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
+                     if(scalar && isDeviceScalarRequired()) {
+                         return map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
+                     }
+                     else {
+                         return "&" + map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
+                     }
+                 });
     }
 
     template<typename T = NeuronGroupMergedBase, typename C, typename V, typename R>
@@ -930,13 +980,6 @@ protected:
         }
     }
 
-    void addMergedInSynPointerField(const std::string &type, const std::string &name,
-                                    size_t archetypeIndex, const std::string &prefix);
-
-    void addMergedPreOutputOutSynPointerField(const std::string &type, const std::string &name,
-                                    size_t archetypeIndex, const std::string &prefix);
-
-
 private:
     //------------------------------------------------------------------------
     // Members
@@ -962,10 +1005,11 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------
@@ -988,10 +1032,11 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
@@ -1146,10 +1191,10 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void addPSPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addPreOutputPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
+    void addPSPointerField(const std::string &type, const std::string &name, bool scalar = false);
+    void addPreOutputPointerField(const std::string &type, const std::string &name, bool scalar = false);
+    void addPrePointerField(const std::string &type, const std::string &name, bool scalar = false);
+    void addPostPointerField(const std::string &type, const std::string &name, bool scalar = false);
 
     //! Is the weight update model parameter referenced?
     bool isWUParamReferenced(const std::string &paramName) const;
@@ -1187,7 +1232,7 @@ class CustomUpdateHostReductionGroupMergedBase : public RuntimeGroupMerged<G>
 protected:
      CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
                                    const std::vector<std::reference_wrapper<const G>> &groups, bool host = false)
-    :   RuntimeGroupMerged<G>(index, precision, groups, host)
+    :   RuntimeGroupMerged<G>(index, precision, backend, groups, host)
     {
         // Loop through variables and add pointers if they are reduction targets
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
@@ -1220,10 +1265,11 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1246,10 +1292,11 @@ public:
     //------------------------------------------------------------------------
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+                        const MergedRunnerMap &mergedRunnerMap) const
     {
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
+                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------

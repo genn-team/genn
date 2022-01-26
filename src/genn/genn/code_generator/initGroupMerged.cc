@@ -176,16 +176,14 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
     generateWUVar(backend, "WUPost", m_SortedInSynWithPostVars,
                   &WeightUpdateModels::Base::getPostVars, &SynapseGroupInternal::getWUPostVarInitialisers,
                   &NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous,
-                  &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getFusedWUPostVarSuffix);
+                  &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous);
 
 
     // Generate struct fields for outgoing synapse groups
     generateWUVar(backend, "WUPre", m_SortedOutSynWithPreVars,
                   &WeightUpdateModels::Base::getPreVars, &SynapseGroupInternal::getWUPreVarInitialisers,
                   &NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous,
-                  &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getFusedWUPreVarSuffix);
+                  &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous);
 }
 //----------------------------------------------------------------------------
 bool NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const
@@ -407,8 +405,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
                                           Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                                           const std::unordered_map<std::string, Models::VarInit> &(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
                                           bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const,
-                                          bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const,
-                                          const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const)
+                                          bool(NeuronInitGroupMerged::*isDerivedParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();
@@ -421,13 +418,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
         for(const auto &var : vars) {
             // Add pointers to state variable
             if(!varInit.at(var.name).getSnippet()->getCode().empty()) {
-                assert(!Utils::isTypePointer(var.type));
-                addField(var.type + "*", var.name + fieldPrefixStem + std::to_string(i),
-                         [i, var, &backend, &sortedSyn, getFusedVarSuffix](const NeuronGroupInternal &, size_t groupIndex)
-                         {
-                             const std::string &varMergeSuffix = std::invoke(getFusedVarSuffix, sortedSyn.at(groupIndex).at(i));
-                             return backend.getDeviceVarPrefix() + var.name + varMergeSuffix;
-                         });
+                addChildPointerField(var.type, var.name, sortedSyn, i, fieldPrefixStem);
             }
 
             // Also add any heterogeneous, derived or extra global parameters required for initializers
@@ -436,11 +427,7 @@ void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
                                                                       isParamHeterogeneousFn, getVarInitialiserFn);
             addHeterogeneousChildVarInitDerivedParams<NeuronInitGroupMerged>(varInitSnippet->getDerivedParams(), sortedSyn, i, var.name, fieldPrefixStem,
                                                                              isDerivedParamHeterogeneousFn, getVarInitialiserFn);
-            addChildEGPs(varInitSnippet->getExtraGlobalParams(), i, backend.getDeviceVarPrefix(), var.name + fieldPrefixStem,
-                         [var, &sortedSyn](size_t groupIndex, size_t childIndex)
-                         {
-                             return var.name + sortedSyn.at(groupIndex).at(childIndex)->getName();
-                         });
+            addChildEGPs(varInitSnippet->getExtraGlobalParams(), sortedSyn, i, var.name);
         }
     }
 }
@@ -701,7 +688,7 @@ CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std
 :   CustomUpdateInitGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
 {
     addField("unsigned int", "size",
-             [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
+             [](const CustomUpdateInternal &c, size_t, const MergedRunnerMap&) { return std::to_string(c.getSize()); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomUpdateInitGroupMerged::getHashDigest() const
@@ -736,12 +723,12 @@ CustomWUUpdateDenseInitGroupMerged::CustomWUUpdateDenseInitGroupMerged(size_t in
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
     addField("unsigned int", "rowStride",
-             [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+             [&backend](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
   
     addField("unsigned int", "numSrcNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+             [](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+             [](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomWUUpdateDenseInitGroupMerged::getHashDigest() const
@@ -797,24 +784,24 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
 :   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
 {
     addField("unsigned int", "rowStride",
-             [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+             [&backend](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
 
     addField("unsigned int", "numSrcNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+             [](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+             [](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap&) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
 
     addField("unsigned int*", "rowLength", 
-             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             [this](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap &map) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                 return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
+                 return map.findGroup(*sg) + "." + getDeviceVarPrefix() + "rowLength";
              });
     addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
-             [&backend](const CustomUpdateWUInternal &cg, size_t) 
+             [this](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap &map) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                 return backend.getDeviceVarPrefix() + "ind" + sg->getName();
+                 return map.findGroup(*sg) + "." + getDeviceVarPrefix() + "ind";
              });
 }
 //----------------------------------------------------------------------------

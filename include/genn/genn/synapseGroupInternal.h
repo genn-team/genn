@@ -50,6 +50,7 @@ public:
     using SynapseGroup::canWUMPostUpdateBeFused;
     using SynapseGroup::canPreOutputBeFused;
     using SynapseGroup::isPSModelFused;
+    using SynapseGroup::isPreOutputModelFused;
     using SynapseGroup::isWUPreModelFused;
     using SynapseGroup::isWUPostModelFused;
     using SynapseGroup::getSparseIndType;

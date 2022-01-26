@@ -290,6 +290,9 @@ protected:
     //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
     bool isPSModelFused() const{ return m_FusedPSVarSuffix != getName(); }
     
+     //! Has this synapse group's presynaptic model been fused with those from other synapse groups?
+    bool isPreOutputModelFused() const{ return m_FusedPreOutputSuffix != getName(); }
+
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
     bool isWUPreModelFused() const { return m_FusedWUPreVarSuffix != getName(); }
