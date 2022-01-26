@@ -720,7 +720,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
             genSynapseIndexCalculation(os, sg, batchSize);
 
-            os << "const unsigned int numSpikes = group->trgSpkCnt[" << sg.getPostSlot(batchSize) << "];" << std::endl;
+            os << "const unsigned int numSpikes = group->spkCntPost[" << sg.getPostSlot(batchSize) << "];" << std::endl;
             
 
             os << "const unsigned int numSpikeBlocks = (numSpikes + " << getKernelBlockSize(KernelPostsynapticUpdate) - 1 << ") / " << getKernelBlockSize(KernelPostsynapticUpdate) << ";" << std::endl;
@@ -733,7 +733,7 @@ void BackendSIMT::genPostsynapticUpdateKernel(CodeStream &os, const Substitution
                 {
                     CodeStream::Scope b(os);
                     const std::string index = "(r * " + std::to_string(getKernelBlockSize(KernelPostsynapticUpdate)) + ") + " + getThreadID();
-                    os << "const unsigned int spk = group->trgSpk[" << sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
+                    os << "const unsigned int spk = group->spkPost[" << sg.getPostVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
                     os << "shSpk[" << getThreadID() << "] = spk;" << std::endl;
 
                     if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {

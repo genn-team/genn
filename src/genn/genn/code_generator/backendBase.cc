@@ -152,10 +152,10 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
 
         os << "const unsigned int preDelaySlot = ";
         if(numDelaySteps == 0) {
-            os << "*group->srcSpkQuePtr;" << std::endl;
+            os << "*group->spkQuePtrPre;" << std::endl;
         }
         else {
-            os << "(*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
+            os << "(*group->spkQuePtrPre + " << (numSrcDelaySlots - numDelaySteps) << ") % " << numSrcDelaySlots <<  ";" << std::endl;
         }
         os << "const unsigned int preDelayOffset = preDelaySlot * group->numSrcNeurons;" << std::endl;
 
@@ -165,7 +165,7 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
         }
 
         if(sg.getArchetype().getWUModel()->isPrevPreSpikeTimeRequired() || sg.getArchetype().getWUModel()->isPrevPreSpikeEventTimeRequired()) {
-            os << "const unsigned int prePrevSpikeTimeDelayOffset = " << "((*group->srcSpkQuePtr + " << (numSrcDelaySlots - numDelaySteps - 1) << ") % " << numSrcDelaySlots << ")" << " * group->numSrcNeurons;" << std::endl;
+            os << "const unsigned int prePrevSpikeTimeDelayOffset = " << "((*group->spkQuePtrPre + " << (numSrcDelaySlots - numDelaySteps - 1) << ") % " << numSrcDelaySlots << ")" << " * group->numSrcNeurons;" << std::endl;
 
             if(batchSize > 1) {
                 os << "const unsigned int prePrevSpikeTimeBatchDelayOffset = prePrevSpikeTimeDelayOffset + (preBatchOffset * " << numSrcDelaySlots << ");" << std::endl;
@@ -180,10 +180,10 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
 
         os << "const unsigned int postDelaySlot = ";
         if(numBackPropDelaySteps == 0) {
-            os << "*group->trgSpkQuePtr;" << std::endl;
+            os << "*group->spkQuePtrPost;" << std::endl;
         }
         else {
-            os << "(*group->trgSpkQuePtr + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
+            os << "(*group->spkQuePtrPost + " << (numTrgDelaySlots - numBackPropDelaySteps) << ") % " << numTrgDelaySlots << ";" << std::endl;
         }
         os << "const unsigned int postDelayOffset = postDelaySlot * group->numTrgNeurons;" << std::endl;
 
@@ -193,7 +193,7 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
         }
 
         if(sg.getArchetype().getWUModel()->isPrevPostSpikeTimeRequired()) {
-            os << "const unsigned int postPrevSpikeTimeDelayOffset = " << "((*group->trgSpkQuePtr + " << (numTrgDelaySlots - numBackPropDelaySteps - 1) << ") % " << numTrgDelaySlots << ")" << " * group->numTrgNeurons;" << std::endl;
+            os << "const unsigned int postPrevSpikeTimeDelayOffset = " << "((*group->spkQuePtrPost + " << (numTrgDelaySlots - numBackPropDelaySteps - 1) << ") % " << numTrgDelaySlots << ")" << " * group->numTrgNeurons;" << std::endl;
             
             if(batchSize > 1) {
                 os << "const unsigned int postPrevSpikeTimeBatchDelayOffset = postPrevSpikeTimeDelayOffset + (postBatchOffset * " << numTrgDelaySlots << ");" << std::endl;

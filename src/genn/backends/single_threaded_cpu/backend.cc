@@ -399,10 +399,10 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
 
                     // Get number of postsynaptic spikes
                     if (s.getArchetype().getTrgNeuronGroup()->isDelayRequired() && s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired()) {
-                        os << "const unsigned int numSpikes = group->trgSpkCnt[postDelaySlot];" << std::endl;
+                        os << "const unsigned int numSpikes = group->spkCntPost[postDelaySlot];" << std::endl;
                     }
                     else {
-                        os << "const unsigned int numSpikes = group->trgSpkCnt[0];" << std::endl;
+                        os << "const unsigned int numSpikes = group->spkCntPost[0];" << std::endl;
                     }
 
                     // Loop through postsynaptic spikes
@@ -411,7 +411,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
                         CodeStream::Scope b(os);
 
                         const std::string offsetTrueSpkPost = (s.getArchetype().getTrgNeuronGroup()->isTrueSpikeRequired() && s.getArchetype().getTrgNeuronGroup()->isDelayRequired()) ? "postDelayOffset + " : "";
-                        os << "const unsigned int spike = group->trgSpk[" << offsetTrueSpkPost << "j];" << std::endl;
+                        os << "const unsigned int spike = group->spkPost[" << offsetTrueSpkPost << "j];" << std::endl;
 
                         // Loop through column of presynaptic neurons
                         if (s.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
@@ -1513,16 +1513,16 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
              // Detect spike events or spikes and do the update
             os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
             if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-                os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
+                os << "for (unsigned int i = 0; i < group->spkCnt" << eventSuffix << "Pre[preDelaySlot]; i++)";
             }
             else {
-                os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
+                os << "for (unsigned int i = 0; i < group->spkCnt" << eventSuffix << "Pre[0]; i++)";
             }
             {
                 CodeStream::Scope b(os);
 
                 const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
-                os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
+                os << "const unsigned int ipre = group->spk" << eventSuffix << "Pre[" << queueOffset << "i];" << std::endl;
 
                 // Create another substitution stack for generating presynaptic simulation code
                 Substitutions presynapticUpdateSubs(&popSubs);
@@ -1591,10 +1591,10 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
         // Detect spike events or spikes and do the update
         os << "// process presynaptic events: " << (trueSpike ? "True Spikes" : "Spike type events") << std::endl;
         if(sg.getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
-            os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[preDelaySlot]; i++)";
+            os << "for (unsigned int i = 0; i < group->spkCnt" << eventSuffix << "Pre[preDelaySlot]; i++)";
         }
         else {
-            os << "for (unsigned int i = 0; i < group->srcSpkCnt" << eventSuffix << "[0]; i++)";
+            os << "for (unsigned int i = 0; i < group->spkCnt" << eventSuffix << "Pre[0]; i++)";
         }
         {
             CodeStream::Scope b(os);
@@ -1603,7 +1603,7 @@ void Backend::genPresynapticUpdate(CodeStream &os, const ModelSpecMerged &modelM
             }
 
             const std::string queueOffset = sg.getArchetype().getSrcNeuronGroup()->isDelayRequired() ? "preDelayOffset + " : "";
-            os << "const unsigned int ipre = group->srcSpk" << eventSuffix << "[" << queueOffset << "i];" << std::endl;
+            os << "const unsigned int ipre = group->spk" << eventSuffix << "Pre[" << queueOffset << "i];" << std::endl;
 
             // If this is a spike-like event, insert threshold check for this presynaptic neuron
             if(!trueSpike && sg.getArchetype().isEventThresholdReTestRequired()) {

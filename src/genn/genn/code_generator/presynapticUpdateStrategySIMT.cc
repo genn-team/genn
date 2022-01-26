@@ -106,7 +106,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
         os << "scalar lrevInSyn= 0.0;" << std::endl;
     }
     
-    os << "if (spike < group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "])";
+    os << "if (spike < group->spkCnt" << eventSuffix << "Pre[" << sg.getPreSlot(batchSize) << "])";
     {
         CodeStream::Scope b(os);
 
@@ -114,7 +114,7 @@ void PreSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, cons
             os << "using namespace " << modelMerged.getPresynapticUpdateSupportCodeNamespace(wu->getSimSupportCode()) << ";" << std::endl;
         }
 
-        os << "const unsigned int preInd = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
+        os << "const unsigned int preInd = group->spk" << eventSuffix << "Pre[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
 
         if(numThreadsPerSpike > 1) {
             os << "unsigned int synAddress = (preInd * group->rowStride) + thread;" << std::endl;
@@ -262,7 +262,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
     const unsigned int batchSize = model.getBatchSize();
     const std::string eventSuffix = trueSpike ? "" : "Evnt";
 
-    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
+    os << "const unsigned int numSpikes = group->spkCnt" << eventSuffix << "Pre[" << sg.getPreSlot(batchSize) << "];" << std::endl;
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
     const auto *wu = sg.getArchetype().getWUModel();
@@ -276,7 +276,7 @@ void PostSpan::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, con
         {
             CodeStream::Scope b(os);
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
+            os << "const unsigned int spk = group->spk" << eventSuffix << "Pre[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
             os << "shSpk" << eventSuffix << "[" << backend.getThreadID() << "] = spk;" << std::endl;
             if(sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 os << "shRowLength[" << backend.getThreadID() << "] = group->rowLength[spk];" << std::endl;
@@ -498,12 +498,12 @@ void PreSpanProcedural::genUpdate(CodeStream &os, const ModelSpecMerged &modelMe
     }
 
     // If there is a spike for this thread to process
-    os << "if (spike < group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "])";
+    os << "if (spike < group->spkCnt" << eventSuffix << "Pre[" << sg.getPreSlot(batchSize) << "])";
     {
         CodeStream::Scope b(os);
 
         // Determine the index of the presynaptic neuron this thread is responsible for
-        os << "const unsigned int preInd = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
+        os << "const unsigned int preInd = group->spk" << eventSuffix << "Pre[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, "spike") << "];" << std::endl;
 
         // Create substitution stack and add presynaptic index
         Substitutions synSubs(&popSubs);
@@ -680,7 +680,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
     // Get blocksize
     const size_t blockSize = backend.getKernelBlockSize(KernelPresynapticUpdate);
 
-    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
+    os << "const unsigned int numSpikes = group->spkCnt" << eventSuffix << "Pre[" << sg.getPreSlot(batchSize) << "];" << std::endl;
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
 
 
@@ -696,7 +696,7 @@ void PostSpanBitmask::genUpdate(CodeStream &os, const ModelSpecMerged &modelMerg
         {
             CodeStream::Scope b(os);
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
+            os << "const unsigned int spk = group->spk" << eventSuffix << "Pre[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
             os << "shSpk" << eventSuffix << "[" << backend.getThreadID() << "] = spk;" << std::endl;
         }
         backend.genSharedMemBarrier(os);
@@ -878,7 +878,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
         os << d.type << " " << d.name << " = " << value << ";" << std::endl;
     }
 
-    os << "const unsigned int numSpikes = group->srcSpkCnt" << eventSuffix << "[" << sg.getPreSlot(batchSize) << "];" << std::endl;
+    os << "const unsigned int numSpikes = group->spkCnt" << eventSuffix << "Pre[" << sg.getPreSlot(batchSize) << "];" << std::endl;
     os << "const unsigned int numSpikeBlocks = (numSpikes + " << backend.getKernelBlockSize(KernelPresynapticUpdate) << " - 1) / " << backend.getKernelBlockSize(KernelPresynapticUpdate) << ";" << std::endl;
 
     const auto *wu = sg.getArchetype().getWUModel();
@@ -892,7 +892,7 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
         {
             CodeStream::Scope b(os);
             const std::string index = "(r * " + std::to_string(backend.getKernelBlockSize(KernelPresynapticUpdate)) + ") + " + backend.getThreadID();
-            os << "const unsigned int spk = group->srcSpk" << eventSuffix << "[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
+            os << "const unsigned int spk = group->spk" << eventSuffix << "Pre[" << sg.getPreVarIndex(batchSize, VarAccessDuplication::DUPLICATE, index) << "];" << std::endl;
             os << "shSpk" << eventSuffix << "[" << backend.getThreadID() << "] = spk;" << std::endl;
         }
         backend.genSharedMemBarrier(os);
