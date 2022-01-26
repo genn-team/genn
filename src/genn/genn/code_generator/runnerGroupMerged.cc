@@ -98,7 +98,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
 
         // Calculate number of words required for spike/spike event buffers
         if(getArchetype().isSpikeRecordingEnabled() || getArchetype().isSpikeEventRecordingEnabled()) {
-            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * timesteps;" << std::endl;
+            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * numRecordingTimesteps;" << std::endl;
         }
 
         // Allocate spike array if required
@@ -146,7 +146,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
 
         // Calculate number of words required for spike/spike event buffers
         if(getArchetype().isSpikeRecordingEnabled() || getArchetype().isSpikeEventRecordingEnabled()) {
-            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * timesteps;" << std::endl;
+            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * numRecordingTimesteps;" << std::endl;
         }
 
         // Pull spike array if required
