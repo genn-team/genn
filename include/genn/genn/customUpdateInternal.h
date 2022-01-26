@@ -24,6 +24,7 @@ public:
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
     using CustomUpdateBase::isReduction;
+    using CustomUpdateBase::getRunnerHashDigest;
     using CustomUpdateBase::getVarLocationHashDigest;
 
     using CustomUpdate::finalize;
@@ -53,10 +54,11 @@ public:
     using CustomUpdateBase::isZeroCopyEnabled;
     using CustomUpdateBase::isBatched;
     using CustomUpdateBase::isReduction;
+    using CustomUpdateBase::getRunnerHashDigest;
     using CustomUpdateBase::getVarLocationHashDigest;
     
     using CustomUpdateWU::getHashDigest;
-    using CustomUpdateWU::getInitHashDigest;
+    using CustomUpdateWU::getInitHashDigest;    
     using CustomUpdateWU::getSynapseGroup;
     using CustomUpdateWU::isTransposeOperation;
 };

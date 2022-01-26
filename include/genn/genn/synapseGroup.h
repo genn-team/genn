@@ -366,6 +366,10 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
     
+    //! Gets hash used for merging synapse runner groups
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getRunnerHashDigest() const;
+
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 private:
     //------------------------------------------------------------------------

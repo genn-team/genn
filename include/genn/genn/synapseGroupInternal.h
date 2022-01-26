@@ -69,5 +69,6 @@ public:
     using SynapseGroup::getPreOutputInitHashDigest;
     using SynapseGroup::getConnectivityInitHashDigest;
     using SynapseGroup::getConnectivityHostInitHashDigest;
+    using SynapseGroup::getRunnerHashDigest;
     using SynapseGroup::getVarLocationHashDigest;
 };

@@ -104,6 +104,18 @@ public:
     //! Get merged neuron groups used for generating runner
     const std::vector<NeuronRunnerGroupMerged> &getMergedNeuronRunnerGroups() const { return m_MergedNeuronRunnerGroups;  }
 
+    //! Get merged synapse groups used for generating runner
+    const std::vector<SynapseRunnerGroupMerged> &getMergedSynapseRunnerGroups() const { return m_MergedSynapseRunnerGroups;  }
+
+    //! Get merged current sources used for generating runner
+    const std::vector<CurrentSourceRunnerGroupMerged> &getMergedCurrentSourceRunnerGroups() const { return m_MergedCurrentSourceRunnerGroups;  }
+
+    //! Get merged custom updates used for generating runner
+    const std::vector<CustomUpdateRunnerGroupMerged> &getMergedCustomUpdateRunnerGroups() const { return m_MergedCustomUpdateRunnerGroups; }
+
+    //! Get merged custom WU updates used for generating runner
+    const std::vector<CustomUpdateWURunnerGroupMerged> &getMergedCustomUpdateWURunnerGroups() const { return m_MergedCustomUpdateWURunnerGroups; }
+
     //! Get merged neuron groups which require updating
     const std::vector<NeuronUpdateGroupMerged> &getMergedNeuronUpdateGroups() const{ return m_MergedNeuronUpdateGroups; }
 
@@ -381,8 +393,20 @@ private:
     //! Underlying, unmerged model
     const ModelSpecInternal &m_Model;
 
-    //! Get merged neuron groups used for generating runner
+    //! Merged neuron groups used for generating runner
     std::vector<NeuronRunnerGroupMerged> m_MergedNeuronRunnerGroups;
+
+    //! Merged synapse groups used for generating runner
+    std::vector<SynapseRunnerGroupMerged> m_MergedSynapseRunnerGroups; 
+
+    //! Merged current sources used for generating runner
+    std::vector<CurrentSourceRunnerGroupMerged> m_MergedCurrentSourceRunnerGroups;
+
+    //! Merged custom updates used for generating runner
+    std::vector<CustomUpdateRunnerGroupMerged> m_MergedCustomUpdateRunnerGroups;
+
+    //! Merged custom WU updates used for generating runner
+    std::vector<CustomUpdateWURunnerGroupMerged> m_MergedCustomUpdateWURunnerGroups;
 
     //! Merged neuron groups which require updating
     std::vector<NeuronUpdateGroupMerged> m_MergedNeuronUpdateGroups;

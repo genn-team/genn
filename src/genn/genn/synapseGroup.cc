@@ -954,6 +954,53 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getConnectivityHostInitHas
     return getSparseConnectivityInitialiser().getHashDigest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getRunnerHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getMatrixType(), hash);
+    Utils::updateHash(isDendriticDelayRequired(), hash);
+    Utils::updateHash(getSparseIndType(), hash);
+    Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
+    Utils::updateHash(getWUModel()->getLearnPostCode().empty(), hash);
+    
+    // Weight update model variabless
+    Utils::updateHash(getWUModel()->getVars(), hash);
+    Utils::updateHash(getWUModel()->getExtraGlobalParams(), hash);
+
+    // Weight update model variable initialisation EGPs
+    for(const auto &var : getWUVarInitialisers()) {
+        Utils::updateHash(var.first, hash);
+        Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+    }
+
+    // Weight update model presynaptic variable initialisation EGPs
+    for(const auto &var : getWUPreVarInitialisers()) {
+        Utils::updateHash(var.first, hash);
+        Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+    }
+
+    // Weight update model postsynaptic variable initialisation EGPs
+    for(const auto &var : getWUPostVarInitialisers()) {
+        Utils::updateHash(var.first, hash);
+        Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+    }
+
+    // Postsynaptic model variables and EGPs
+    Utils::updateHash(getPSModel()->getVars(), hash);
+    Utils::updateHash(getPSModel()->getExtraGlobalParams(), hash);
+    
+    // Postsynaptic model variable initialisation EGPs
+    for(const auto &var : getPSVarInitialisers()) {
+        Utils::updateHash(var.first, hash);
+        Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+    }
+
+    // **TODO** this will replace getVarLocationHashDigest entirely
+    Utils::updateHash(getVarLocationHashDigest(), hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getVarLocationHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

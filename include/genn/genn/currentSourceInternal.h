@@ -26,5 +26,6 @@ public:
     using CurrentSource::isZeroCopyEnabled;
     using CurrentSource::getHashDigest;
     using CurrentSource::getInitHashDigest;
+    using CurrentSource::getRunnerHashDigest;
     using CurrentSource::getVarLocationHashDigest;
 };

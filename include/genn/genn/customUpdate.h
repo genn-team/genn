@@ -91,6 +91,25 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     void updateInitHash(boost::uuids::detail::sha1 &hash) const;
 
+    //! Gets hash used for merging custom update runner groups
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getRunnerHashDigest() const
+    {
+        boost::uuids::detail::sha1 hash;
+        Utils::updateHash(getCustomUpdateModel()->getVars(), hash);
+        Utils::updateHash(getCustomUpdateModel()->getExtraGlobalParams(), hash);
+    
+        for(const auto &var : getVarInitialisers()) {
+            Utils::updateHash(var.first, hash);
+            Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+        }
+
+        // **TODO** this will replace getVarLocationHashDigest entirely
+        Utils::updateHash(getVarLocationHashDigest(), hash);
+
+        return hash.get_digest();
+    }
+
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
     //! Helper function to check if variable reference types match those specified in model

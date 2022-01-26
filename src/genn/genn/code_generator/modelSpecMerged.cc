@@ -36,6 +36,22 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     createMergedRunnerGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronRunnerGroups,
                                  &NeuronGroupInternal::getRunnerHashDigest);
 
+    LOGD_CODE_GEN << "Merging synapse runner groups:";
+    createMergedRunnerGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseRunnerGroups,
+                                 &SynapseGroupInternal::getRunnerHashDigest);
+
+    LOGD_CODE_GEN << "Merging current source runner groups:";
+    createMergedRunnerGroupsHash(model, backend, model.getLocalCurrentSources(), m_MergedCurrentSourceRunnerGroups,
+                                 &CurrentSourceInternal::getRunnerHashDigest);
+
+    LOGD_CODE_GEN << "Merging custom update runner groups:";
+    createMergedRunnerGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateRunnerGroups,
+                                 &CustomUpdateInternal::getRunnerHashDigest);
+
+    LOGD_CODE_GEN << "Merging custom WU update runner groups:";
+    createMergedRunnerGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomUpdateWURunnerGroups,
+                                 &CustomUpdateWUInternal::getRunnerHashDigest);
+
     LOGD_CODE_GEN << "Merging neuron update groups:";
     createMergedRuntimeGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronUpdateGroups,
                                   [](const NeuronGroupInternal &){ return true; },

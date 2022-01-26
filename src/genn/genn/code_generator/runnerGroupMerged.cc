@@ -98,7 +98,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
 
         // Calculate number of words required for spike/spike event buffers
         if(getArchetype().isSpikeRecordingEnabled() || getArchetype().isSpikeEventRecordingEnabled()) {
-            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << "timesteps;" << std::endl;
+            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * timesteps;" << std::endl;
         }
 
         // Allocate spike array if required
@@ -146,7 +146,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
 
         // Calculate number of words required for spike/spike event buffers
         if(getArchetype().isSpikeRecordingEnabled() || getArchetype().isSpikeEventRecordingEnabled()) {
-            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << "timesteps;" << std::endl;
+            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * timesteps;" << std::endl;
         }
 
         // Pull spike array if required
@@ -165,30 +165,9 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CurrentSourceRunnerGroupMerged
-//----------------------------------------------------------------------------
-CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                                               const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
-:   RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>(index, precision, groups, backend)
-{
-    addField("unsigned int", "numNeurons",
-              [](const CurrentSourceInternal &cs) { return std::to_string(cs.getTrgNeuronGroup()->getNumNeurons()); });
-
-    // Add extra global parmeters
-    addEGPs(getArchetype().getCurrentSourceModel()->getExtraGlobalParams(), "",
-            [this](const std::string &name) { return getArchetype().getExtraGlobalParamLocation(name); });
-
-    // Loop through variables
-    const auto &varInit = getArchetype().getVarInitialisers();
-    for(const auto &var : getArchetype().getCurrentSourceModel()->getVars()) {
-        addField(var.type, var.name, getArchetype().getVarLocation(var.name), 
-                        POINTER_FIELD_PUSH_PULL_GET, "group->numNeurons", getVarAccessDuplication(var.access));
-        addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
-    }
-}
-
-//----------------------------------------------------------------------------
 // CodeGenerator::SynapseRunnerGroupMerged
+//----------------------------------------------------------------------------
+const std::string SynapseRunnerGroupMerged::name = "SynapseRunner";
 //----------------------------------------------------------------------------
 SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                                                    const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
@@ -324,4 +303,59 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
                  POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
         addEGPs(wuPostVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name); 
     }
+}
+
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CurrentSourceRunnerGroupMerged
+//----------------------------------------------------------------------------
+const std::string CurrentSourceRunnerGroupMerged::name = "CurrentSourceRunner";
+//----------------------------------------------------------------------------
+CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                                               const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
+:   RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>(index, precision, groups, backend)
+{
+    addField("unsigned int", "numNeurons",
+              [](const CurrentSourceInternal &cs) { return std::to_string(cs.getTrgNeuronGroup()->getNumNeurons()); });
+
+    // Add extra global parmeters
+    addEGPs(getArchetype().getCurrentSourceModel()->getExtraGlobalParams(), "",
+            [this](const std::string &name) { return getArchetype().getExtraGlobalParamLocation(name); });
+
+    // Loop through variables
+    const auto &varInit = getArchetype().getVarInitialisers();
+    for(const auto &var : getArchetype().getCurrentSourceModel()->getVars()) {
+        addField(var.type, var.name, getArchetype().getVarLocation(var.name), 
+                        POINTER_FIELD_PUSH_PULL_GET, "group->numNeurons", getVarAccessDuplication(var.access));
+        addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+    }
+}
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CustomUpdateRunnerGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomUpdateRunnerGroupMerged::name = "CustomUpdateRunner";
+//----------------------------------------------------------------------------
+CustomUpdateRunnerGroupMerged::CustomUpdateRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                                             const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
+:   CustomUpdateRunnerGroupMergedBase<CustomUpdateInternal, CustomUpdateRunnerGroupMerged>(index, precision, backend, groups)
+{
+    addField("unsigned int", "size",
+              [](const CustomUpdateInternal &cu) { return std::to_string(cu.getSize()); });
+}
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CustomUpdateWURunnerGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomUpdateWURunnerGroupMerged::name = "CustomUpdateWURunner";
+//----------------------------------------------------------------------------
+CustomUpdateWURunnerGroupMerged::CustomUpdateWURunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                                                 const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+    : CustomUpdateRunnerGroupMergedBase<CustomUpdateWUInternal, CustomUpdateWURunnerGroupMerged>(index, precision, backend, groups)
+{
+    addField("unsigned int", "size",
+             [&backend](const CustomUpdateWUInternal &cu) 
+             {
+                 return std::to_string(cu.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*cu.getSynapseGroup())); 
+             });
 }

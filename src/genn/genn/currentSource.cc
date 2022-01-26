@@ -107,6 +107,23 @@ boost::uuids::detail::sha1::digest_type CurrentSource::getInitHashDigest() const
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CurrentSource::getRunnerHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getCurrentSourceModel()->getVars(), hash);
+    Utils::updateHash(getCurrentSourceModel()->getExtraGlobalParams(), hash);
+    
+    for(const auto &var : getVarInitialisers()) {
+        Utils::updateHash(var.first, hash);
+        Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+    }
+
+    // **TODO** this will replace getVarLocationHashDigest entirely
+    Utils::updateHash(getVarLocationHashDigest(), hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CurrentSource::getVarLocationHashDigest() const
 {
     boost::uuids::detail::sha1 hash;

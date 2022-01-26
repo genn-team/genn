@@ -118,7 +118,7 @@ public:
         genPushPullGet(backend, runnerPushFunc, runnerPullFunc, runnerGetterFunc, definitionsFunc, modelMerged);
         
         // Generate memory allocation code
-        genAllocMem(backend, runnerMergedRunnerStructAlloc, modelMerged, memAlloc);
+        genAllocMem(backend, runnerVarAlloc, modelMerged, memAlloc);
 
         // Generate memory free code
         genFreeMem(backend, runnerVarFree, modelMerged);
@@ -327,16 +327,6 @@ public:
 };
 
 //----------------------------------------------------------------------------
-// CodeGenerator::CurrentSourceRunnerGroupMerged
-//----------------------------------------------------------------------------
-class CurrentSourceRunnerGroupMerged : public RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>
-{
-public:
-    CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
-                                   const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
-};
-
-//----------------------------------------------------------------------------
 // CodeGenerator::SynapseRunnerGroupMerged
 //----------------------------------------------------------------------------
 class SynapseRunnerGroupMerged : public RunnerGroupMergedBase<SynapseGroupInternal, SynapseRunnerGroupMerged>
@@ -345,9 +335,80 @@ public:
     SynapseRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                              const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
-    //------------------------------------------------------------------------
-    // Public API
-    //------------------------------------------------------------------------
-    void genConnectivityPushPull(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const;
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
-}
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CurrentSourceRunnerGroupMerged
+//----------------------------------------------------------------------------
+class CurrentSourceRunnerGroupMerged : public RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>
+{
+public:
+    CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                   const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CustomUpdateRunnerGroupMergedBase
+//----------------------------------------------------------------------------
+template<typename G, typename M>
+class CustomUpdateRunnerGroupMergedBase : public RunnerGroupMergedBase<G, M>
+{
+public:
+    CustomUpdateRunnerGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+                                      const std::vector<std::reference_wrapper<const G>> &groups)
+    :   RunnerGroupMergedBase<G, M>(index, precision, groups, backend)
+    {
+        // Add extra global parmeters
+        // **TODO** missing location
+        addEGPs(getArchetype().getCustomUpdateModel()->getExtraGlobalParams(), "");
+
+        // Loop through variables
+        const auto &varInit = getArchetype().getVarInitialisers();
+        for(const auto &var : getArchetype().getCustomUpdateModel()->getVars()) {
+            addField(var.type, var.name, getArchetype().getVarLocation(var.name),
+                     POINTER_FIELD_PUSH_PULL_GET, "group->size", getVarAccessDuplication(var.access));
+            addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+        }
+    }
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CustomUpdateRunnerGroupMerged
+//----------------------------------------------------------------------------
+class CustomUpdateRunnerGroupMerged : public CustomUpdateRunnerGroupMergedBase<CustomUpdateInternal, CustomUpdateRunnerGroupMerged>
+{
+public:
+    CustomUpdateRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                  const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+//----------------------------------------------------------------------------
+// CodeGenerator::CustomUpdateWURunnerGroupMerged
+//----------------------------------------------------------------------------
+class CustomUpdateWURunnerGroupMerged : public CustomUpdateRunnerGroupMergedBase<CustomUpdateWUInternal, CustomUpdateWURunnerGroupMerged>
+{
+public:
+    CustomUpdateWURunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                    const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
+}   // namespace CodeGenerator
