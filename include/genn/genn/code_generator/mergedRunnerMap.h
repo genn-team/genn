@@ -6,9 +6,12 @@
 #include <unordered_map>
 #include <vector>
 
-// GeNN code generator includes
-#include "runnerGroupMerged.h"
-
+// Forward declarations
+class NeuronGroup;
+class SynapseGroup;
+class CurrentSource;
+class CustomUpdate;
+class CustomUpdateWU;
 
 //--------------------------------------------------------------------------
 // CodeGenerator::MergedRunnerMap
@@ -37,19 +40,19 @@ public:
     }
 
     //! Find the name of the merged runner group associated with neuron group e.g. mergedNeuronRunnerGroup0[6]
-    std::string findGroup(const NeuronGroupInternal &ng) const { return findGroup<NeuronRunnerGroupMerged>(ng); }
+    std::string findGroup(const NeuronGroup &ng) const;
 
     //! Find the name of the merged runner group associated with synapse group e.g. mergedSynapseRunnerGroup0[6]
-    std::string findGroup(const SynapseGroupInternal &sg) const { return findGroup<SynapseRunnerGroupMerged>(sg); }
+    std::string findGroup(const SynapseGroup &sg) const;
 
     //! Find the name of the merged runner group associated with current source e.g. mergedCurrentSourceRunnerGroup0[6]
-    std::string findGroup(const CurrentSourceInternal &cs) const { return findGroup<CurrentSourceRunnerGroupMerged>(cs); }
+    std::string findGroup(const CurrentSource &cs) const;
 
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateRunnerGroup0[6]
-    std::string findGroup(const CustomUpdateInternal &cu) const { return findGroup<CustomUpdateRunnerGroupMerged>(cu); }
+    std::string findGroup(const CustomUpdate &cu) const;
 
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateWURunnerGroup0[6]
-    std::string findGroup(const CustomUpdateWUInternal &cu) const { return findGroup<CustomUpdateWURunnerGroupMerged>(cu); }
+    std::string findGroup(const CustomUpdateWU &cu) const;
 
 private:
     //--------------------------------------------------------------------------
@@ -57,10 +60,10 @@ private:
     //--------------------------------------------------------------------------
     //! Helper to find merged runner group
     template<typename MergedGroup>
-    std::string findGroup(const typename MergedGroup::GroupInternal &g) const
+    std::string findGroup(const std::string &name) const
     {
         // Find group by name
-        const auto m = m_MergedRunnerGroups.at(g.getName());
+        const auto m = m_MergedRunnerGroups.at(name);
 
         // Return structure
         return "merged" + MergedGroup::name + "Group" + std::to_string(std::get<0>(m)) + "[" + std::to_string(std::get<1>(m)) + "]";
