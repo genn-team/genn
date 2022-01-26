@@ -74,6 +74,6 @@ private:
     // Members
     //--------------------------------------------------------------------------
     //! Map of group names to index of merged group and index of group within that
-    std::unordered_map<std::string, std::tuple<unsigned int, unsigned int>> m_MergedRunnerGroups;
+    std::unordered_map<std::string, std::tuple<size_t, size_t>> m_MergedRunnerGroups;
 };
 }
