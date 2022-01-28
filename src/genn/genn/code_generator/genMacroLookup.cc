@@ -12,7 +12,9 @@
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-void CodeGenerator::generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged)
+namespace CodeGenerator
+{
+void generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged)
 {
     std::ofstream macroLookupStream((outputPath / ("macroLookup.h")).str());
     CodeStream macroLookup(macroLookupStream);
@@ -20,7 +22,7 @@ void CodeGenerator::generateMacroLookup(const filesystem::path &outputPath, cons
     macroLookup << "#pragma once" << std::endl;
     
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    macroLookup << "// helper macros
+    macroLookup << "// helper macros" << std::endl;
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
     // Generate boost preprocessor style implicit concatentation macros
     // **NOTE** the two level macro expansion is required so macros referring to other macros get expanded
@@ -38,5 +40,40 @@ void CodeGenerator::generateMacroLookup(const filesystem::path &outputPath, cons
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
     macroLookup << "// group macros" << std::endl;
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    for(const auto &g : modelMerged.get
+    
+    // Loop through neuron groups
+    const auto &model = modelMerged.getModel();
+    const auto &map = modelMerged.getMergedRunnerGroups();
+    for(const auto &g : model.getNeuronGroups()) {
+        // Get indices
+        const auto groupIndices = map.getIndices(g.second.getName());
+        
+        // Write out 
+        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP NeuronRunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        macroLookup << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
+        macroLookup << std::endl;
+    }
+    
+    // Loop through synapse groups
+    for(const auto &g : model.getSynapseGroups()) {
+        // Get indices
+        const auto groupIndices = map.getIndices(g.second.getName());
+        
+        // Write out 
+        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP SynapseRunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        macroLookup << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
+        macroLookup << std::endl;
+    }
+    
+    // Loop through synapse groups
+    for(const auto &g : model.getSynapseGroups()) {
+        // Get indices
+        const auto groupIndices = map.getIndices(g.second.getName());
+        
+        // Write out 
+        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP SynapseRunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        macroLookup << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
+        macroLookup << std::endl;
+    }
+}
 }

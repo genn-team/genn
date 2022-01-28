@@ -54,6 +54,8 @@ public:
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateWURunnerGroup0[6]
     std::string getStruct(const CustomUpdateWU &cu) const;
 
+    std::tuple<size_t, size_t> getIndices(const std::string &name) const{ return m_MergedRunnerGroups.at(name); }
+
 private:
     //--------------------------------------------------------------------------
     // Private methods

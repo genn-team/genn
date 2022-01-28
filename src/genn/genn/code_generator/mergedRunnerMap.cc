@@ -10,26 +10,26 @@ namespace CodeGenerator
 {
 std::string MergedRunnerMap::getStruct(const NeuronGroup &ng) const 
 { 
-    return findGroup<NeuronRunnerGroupMerged>(ng.getName()); 
+    return getStruct<NeuronRunnerGroupMerged>(ng.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const SynapseGroup &sg) const 
 { 
-    return findGroup<SynapseRunnerGroupMerged>(sg.getName()); 
+    return getStruct<SynapseRunnerGroupMerged>(sg.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const CurrentSource &cs) const 
 { 
-    return findGroup<CurrentSourceRunnerGroupMerged>(cs.getName()); 
+    return getStruct<CurrentSourceRunnerGroupMerged>(cs.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const CustomUpdate &cu) const 
 { 
-    return findGroup<CustomUpdateRunnerGroupMerged>(cu.getName()); 
+    return getStruct<CustomUpdateRunnerGroupMerged>(cu.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const CustomUpdateWU &cu) const
 { 
-    return findGroup<CustomUpdateWURunnerGroupMerged>(cu.getName()); 
+    return getStruct<CustomUpdateWURunnerGroupMerged>(cu.getName()); 
 }
 }
