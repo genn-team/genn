@@ -28,7 +28,8 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
              delaySpikes ? "group->numDelaySlots * group->numNeurons" : "group->numNeurons");
     
     if(getArchetype().isSpikeRecordingEnabled()) {
-        addField("uint32_t", "recordSpk", VarLocation::HOST_DEVICE, POINTER_FIELD_MANUAL_ALLOC);
+        addField("uint32_t", "recordSpk", VarLocation::HOST_DEVICE, 
+                 POINTER_FIELD_MANUAL_ALLOC | POINTER_FIELD_GET);
     }
 
     const std::string numNeurons = "group->numNeurons";
@@ -40,7 +41,8 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
                  numNeuronsDelayed);
 
         if(getArchetype().isSpikeEventRecordingEnabled()) {
-            addField("uint32_t", "recordSpkEvent", VarLocation::HOST_DEVICE, POINTER_FIELD_MANUAL_ALLOC);
+            addField("uint32_t", "recordSpkEvent", VarLocation::HOST_DEVICE, 
+                     POINTER_FIELD_MANUAL_ALLOC | POINTER_FIELD_GET);
         }
     }
 

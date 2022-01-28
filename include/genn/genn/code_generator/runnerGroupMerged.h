@@ -18,7 +18,9 @@ public:
     enum PointerFieldFlags
     {
         POINTER_FIELD_MANUAL_ALLOC  = (1 << 0), //! This (dynamic) pointer field will be manually allocated
-        POINTER_FIELD_PUSH_PULL_GET = (1 << 1), //! Generate push, pull and getter functions for this field
+        POINTER_FIELD_PUSH_PULL     = (1 << 1), //! Generate push and pull functions for this field
+        POINTER_FIELD_GET           = (1 << 2), //! Generate getter function for this field
+        POINTER_FIELD_PUSH_PULL_GET = POINTER_FIELD_PUSH_PULL | POINTER_FIELD_GET,
     };
 
     typedef std::function<std::string(const G &)> GetFieldValueFunc;
@@ -196,49 +198,52 @@ private:
                 const auto loc = std::get<0>(pointerField);
                 const std::string &fieldCount = std::get<2>(pointerField);
                 const unsigned int flags = std::get<3>(pointerField);
-                if((flags & POINTER_FIELD_PUSH_PULL_GET) && (loc & VarLocation::HOST) &&
-                   (loc & VarLocation::DEVICE)) 
+                if((loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
                 {
-                    const std::string name = std::get<0>(f) + M::name + "Group" + std::to_string(getIndex());
+                    const std::string name = std::get<1>(f) + M::name + "Group" + std::to_string(getIndex());
                     const std::string count = fieldCount.empty() ? "count" : fieldCount;
                     const std::string group = "merged" + M::name + "Group" + std::to_string(getIndex()) + "[group]";
-                    if(fieldCount.empty()) {
-                        definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, unsigned int count;" << std::endl;
-                        runnerPushFunc << "void push" << name << "ToDevice(unsigned int group, unsigned int count)";
-                    }
-                    else {
-                        definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly = false);" << std::endl;
-                        runnerPushFunc << "void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly)";
-                    }
-                    {
-                        CodeStream::Scope a(runnerPushFunc);
-                        runnerPushFunc << "auto *group = &" << group << ";" << std::endl;
-                        backend.genFieldPush(runnerPushFunc, std::get<0>(f), std::get<1>(f), loc, count);
-                    }
-                    runnerPushFunc << std::endl;
-                    
-                    if(fieldCount.empty()) {
-                        definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group, unsigned int count);" << std::endl;
-                        runnerPullFunc << "void pull" << name << "FromDevice(unsigned int group, unsigned int count)";
-                    }
-                    else {
-                        definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group);" << std::endl;
-                        runnerPullFunc << "void pull" << name << "FromDevice(unsigned int group)";
-                    }
-                    {
-                        CodeStream::Scope a(runnerPullFunc);
-                        runnerPullFunc << "auto *group = &" << group << ";" << std::endl;
-                        backend.genFieldPull(runnerPullFunc, std::get<0>(f), std::get<1>(f), loc, count);
-                    }
-                    runnerPullFunc << std::endl;
-                    
-                    definitions << "EXPORT_FUNC " << std::get<0>(f) << "get" << name << "(unsigned int group);" << std::endl;
-                    runnerGetterFunc << std::get<0>(f) << "get" << name << "(unsigned int group)";
-                    {
-                        CodeStream::Scope a(runnerGetterFunc);
-                        runnerGetterFunc << "return " << group << "." << std::get<1>(f) << ";" << std::endl;
-                    }
 
+                    if(flags & POINTER_FIELD_PUSH_PULL) {
+                        if(fieldCount.empty()) {
+                            definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, unsigned int count;" << std::endl;
+                            runnerPushFunc << "void push" << name << "ToDevice(unsigned int group, unsigned int count)";
+                        }
+                        else {
+                            definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly = false);" << std::endl;
+                            runnerPushFunc << "void push" << name << "ToDevice(unsigned int group, bool uninitialisedOnly)";
+                        }
+                        {
+                            CodeStream::Scope a(runnerPushFunc);
+                            runnerPushFunc << "auto *group = &" << group << ";" << std::endl;
+                            backend.genFieldPush(runnerPushFunc, std::get<0>(f), std::get<1>(f), loc, count);
+                        }
+                        runnerPushFunc << std::endl;
+
+                        if(fieldCount.empty()) {
+                            definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group, unsigned int count);" << std::endl;
+                            runnerPullFunc << "void pull" << name << "FromDevice(unsigned int group, unsigned int count)";
+                        }
+                        else {
+                            definitions << "EXPORT_FUNC void pull" << name << "FromDevice(unsigned int group);" << std::endl;
+                            runnerPullFunc << "void pull" << name << "FromDevice(unsigned int group)";
+                        }
+                        {
+                            CodeStream::Scope a(runnerPullFunc);
+                            runnerPullFunc << "auto *group = &" << group << ";" << std::endl;
+                            backend.genFieldPull(runnerPullFunc, std::get<0>(f), std::get<1>(f), loc, count);
+                        }
+                        runnerPullFunc << std::endl;
+                    }
+                    
+                    if(flags & POINTER_FIELD_GET) {
+                        definitions << "EXPORT_FUNC " << std::get<0>(f) << " get" << name << "(unsigned int group);" << std::endl;
+                        runnerGetterFunc << std::get<0>(f) << " get" << name << "(unsigned int group)";
+                        {
+                            CodeStream::Scope a(runnerGetterFunc);
+                            runnerGetterFunc << "return " << group << "." << std::get<1>(f) << ";" << std::endl;
+                        }
+                    }
                 }
             }
         }
