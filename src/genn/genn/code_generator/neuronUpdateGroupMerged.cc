@@ -25,16 +25,14 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                        &SynapseGroupInternal::getWUPreHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic update code
-    generateWUVar(backend, "WUPost", m_SortedInSynWithPostCode,
+    generateWUVar("WUPost", m_SortedInSynWithPostCode,
                   &WeightUpdateModels::Base::getPostVars, &NeuronUpdateGroupMerged::isInSynWUMParamHeterogeneous,
-                  &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getFusedWUPostVarSuffix);
+                  &NeuronUpdateGroupMerged::isInSynWUMDerivedParamHeterogeneous);
 
     // Generate struct fields for outgoing synapse groups with presynaptic update code
-    generateWUVar(backend, "WUPre", m_SortedOutSynWithPreCode,
+    generateWUVar("WUPre", m_SortedOutSynWithPreCode,
                   &WeightUpdateModels::Base::getPreVars, &NeuronUpdateGroupMerged::isOutSynWUMParamHeterogeneous,
-                  &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous,
-                  &SynapseGroupInternal::getFusedWUPreVarSuffix);
+                  &NeuronUpdateGroupMerged::isOutSynWUMDerivedParamHeterogeneous);
 
     // Loop through neuron groups
     std::vector<std::vector<SynapseGroupInternal *>> eventThresholdSGs;
@@ -675,12 +673,10 @@ std::string NeuronUpdateGroupMerged::getWriteVarIndex(bool delay, unsigned int b
     }
 }
 //----------------------------------------------------------------------------
-void NeuronUpdateGroupMerged::generateWUVar(const BackendBase &backend,  const std::string &fieldPrefixStem, 
-                                            const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
+void NeuronUpdateGroupMerged::generateWUVar(const std::string &fieldPrefixStem, const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                                             Models::Base::VarVec (WeightUpdateModels::Base::*getVars)(void) const,
                                             bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
-                                            bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const,
-                                            const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const)
+                                            bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const)
 {
     // Loop through synapse groups
     const auto &archetypeSyns = sortedSyn.front();

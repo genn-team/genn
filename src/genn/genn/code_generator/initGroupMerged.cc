@@ -173,14 +173,14 @@ NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &pr
                        &SynapseGroupInternal::getWUPreInitHashDigest);
 
     // Generate struct fields for incoming synapse groups with postsynaptic variables
-    generateWUVar(backend, "WUPost", m_SortedInSynWithPostVars,
+    generateWUVar("WUPost", m_SortedInSynWithPostVars,
                   &WeightUpdateModels::Base::getPostVars, &SynapseGroupInternal::getWUPostVarInitialisers,
                   &NeuronInitGroupMerged::isInSynWUMVarInitParamHeterogeneous,
                   &NeuronInitGroupMerged::isInSynWUMVarInitDerivedParamHeterogeneous);
 
 
     // Generate struct fields for outgoing synapse groups
-    generateWUVar(backend, "WUPre", m_SortedOutSynWithPreVars,
+    generateWUVar("WUPre", m_SortedOutSynWithPreVars,
                   &WeightUpdateModels::Base::getPreVars, &SynapseGroupInternal::getWUPreVarInitialisers,
                   &NeuronInitGroupMerged::isOutSynWUMVarInitParamHeterogeneous,
                   &NeuronInitGroupMerged::isOutSynWUMVarInitDerivedParamHeterogeneous);
@@ -399,8 +399,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
     }
 }
 //----------------------------------------------------------------------------
-void NeuronInitGroupMerged::generateWUVar(const BackendBase &backend,
-                                          const std::string &fieldPrefixStem,
+void NeuronInitGroupMerged::generateWUVar(const std::string &fieldPrefixStem,
                                           const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                                           Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                                           const std::unordered_map<std::string, Models::VarInit> &(SynapseGroupInternal::*getVarInitialiserFn)(void) const,

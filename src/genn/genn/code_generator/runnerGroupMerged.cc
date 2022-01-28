@@ -1,7 +1,5 @@
 #include "code_generator/runnerGroupMerged.h"
 
-// GeNN code generator includes
-#include "code_generator/modelSpecMerged.h"
 
 using namespace CodeGenerator;
 
@@ -10,9 +8,9 @@ using namespace CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronRunnerGroupMerged::name = "NeuronRunner";
 //----------------------------------------------------------------------------
-NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string&, const std::string &timePrecision, const BackendBase &backend,
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   RunnerGroupMergedBase<NeuronGroupInternal, NeuronRunnerGroupMerged>(index, precision, groups, backend)
+:   RunnerGroupMergedBase<NeuronGroupInternal, NeuronRunnerGroupMerged>(index, groups)
 {
     addField("unsigned int", "numNeurons",
               [](const NeuronGroupInternal &ng) { return std::to_string(ng.getNumNeurons()); });
@@ -87,7 +85,7 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
             [this](const std::string &name) { return getArchetype().getExtraGlobalParamLocation(name); });
 }
 //----------------------------------------------------------------------------
-void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const
+void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const
 {
     CodeStream::Scope b(runner);
     runner << "// merged neuron runner group " << getIndex() << std::endl;
@@ -100,7 +98,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
 
         // Calculate number of words required for spike/spike event buffers
         if(getArchetype().isSpikeRecordingEnabled() || getArchetype().isSpikeEventRecordingEnabled()) {
-            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * numRecordingTimesteps;" << std::endl;
+            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << batchSize << " * numRecordingTimesteps;" << std::endl;
         }
 
         // Allocate spike array if required
@@ -135,7 +133,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
     }
 }
 //----------------------------------------------------------------------------
-void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const
+void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const
 {
     CodeStream::Scope b(runner);
     runner << "// merged neuron runner group " << getIndex() << std::endl;
@@ -148,7 +146,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
 
         // Calculate number of words required for spike/spike event buffers
         if(getArchetype().isSpikeRecordingEnabled() || getArchetype().isSpikeEventRecordingEnabled()) {
-            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << modelMerged.getModel().getBatchSize() << " * numRecordingTimesteps;" << std::endl;
+            runner << "const unsigned int numWords = ((group->numNeurons + 31) / 32) * " << batchSize << " * numRecordingTimesteps;" << std::endl;
         }
 
         // Pull spike array if required
@@ -171,9 +169,9 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
 //----------------------------------------------------------------------------
 const std::string SynapseRunnerGroupMerged::name = "SynapseRunner";
 //----------------------------------------------------------------------------
-SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
                                                    const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   RunnerGroupMergedBase<SynapseGroupInternal, SynapseRunnerGroupMerged>(index, precision, groups, backend)
+:   RunnerGroupMergedBase<SynapseGroupInternal, SynapseRunnerGroupMerged>(index, groups)
 {
     addField("unsigned int", "numSrcNeurons",
              [](const SynapseGroupInternal &sg) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
@@ -313,9 +311,9 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
 //----------------------------------------------------------------------------
 const std::string CurrentSourceRunnerGroupMerged::name = "CurrentSourceRunner";
 //----------------------------------------------------------------------------
-CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, const std::string&, const std::string&, const BackendBase&,
                                                                const std::vector<std::reference_wrapper<const CurrentSourceInternal>> &groups)
-:   RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>(index, precision, groups, backend)
+:   RunnerGroupMergedBase<CurrentSourceInternal, CurrentSourceRunnerGroupMerged>(index, groups)
 {
     addField("unsigned int", "numNeurons",
               [](const CurrentSourceInternal &cs) { return std::to_string(cs.getTrgNeuronGroup()->getNumNeurons()); });
@@ -338,9 +336,9 @@ CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, con
 //----------------------------------------------------------------------------
 const std::string CustomUpdateRunnerGroupMerged::name = "CustomUpdateRunner";
 //----------------------------------------------------------------------------
-CustomUpdateRunnerGroupMerged::CustomUpdateRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+CustomUpdateRunnerGroupMerged::CustomUpdateRunnerGroupMerged(size_t index, const std::string&, const std::string&, const BackendBase&,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateRunnerGroupMergedBase<CustomUpdateInternal, CustomUpdateRunnerGroupMerged>(index, precision, backend, groups)
+:   CustomUpdateRunnerGroupMergedBase<CustomUpdateInternal, CustomUpdateRunnerGroupMerged>(index, groups)
 {
     addField("unsigned int", "size",
               [](const CustomUpdateInternal &cu) { return std::to_string(cu.getSize()); });
@@ -351,9 +349,9 @@ CustomUpdateRunnerGroupMerged::CustomUpdateRunnerGroupMerged(size_t index, const
 //----------------------------------------------------------------------------
 const std::string CustomUpdateWURunnerGroupMerged::name = "CustomUpdateWURunner";
 //----------------------------------------------------------------------------
-CustomUpdateWURunnerGroupMerged::CustomUpdateWURunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+CustomUpdateWURunnerGroupMerged::CustomUpdateWURunnerGroupMerged(size_t index, const std::string&, const std::string&, const BackendBase &backend,
                                                                  const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-    : CustomUpdateRunnerGroupMergedBase<CustomUpdateWUInternal, CustomUpdateWURunnerGroupMerged>(index, precision, backend, groups)
+    : CustomUpdateRunnerGroupMergedBase<CustomUpdateWUInternal, CustomUpdateWURunnerGroupMerged>(index, groups)
 {
     addField("unsigned int", "size",
              [&backend](const CustomUpdateWUInternal &cu) 

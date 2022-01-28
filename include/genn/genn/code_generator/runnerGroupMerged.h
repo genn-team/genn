@@ -28,7 +28,7 @@ public:
     typedef std::tuple<std::string, std::string, std::variant<GetFieldValueFunc, PointerField>> Field;
 
     
-    RunnerGroupMergedBase(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const G>> groups, const BackendBase &backend)
+    RunnerGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const G>> groups)
     :   GroupMerged<G>(index, groups)
     {
 
@@ -53,10 +53,10 @@ public:
                         CodeStream &runnerVarDecl,  CodeStream &runnerMergedRunnerStructAlloc, 
                         CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerPushFunc, 
                         CodeStream &runnerPullFunc, CodeStream &runnerGetterFunc, 
-                        const ModelSpecMerged &modelMerged, MemAlloc &memAlloc) const
+                        unsigned int batchSize, MemAlloc &memAlloc) const
     {
         const auto sortedFields = getSortedFields(backend);
-        runnerVarDecl << "struct Merged" << M::name << "Group" << getIndex() << std::endl;
+        runnerVarDecl << "struct Merged" << M::name << "Group" << this->getIndex() << std::endl;
         {
             // Loop through fields and write to structure
             CodeStream::Scope b(runnerVarDecl);
@@ -91,12 +91,12 @@ public:
         runnerVarDecl << ";" << std::endl;
 
         // Declare array of groups
-        runnerVarDecl << "Merged" << M::name << "Group" << getIndex() << " merged" << M::name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+        runnerVarDecl << "Merged" << M::name << "Group" << this->getIndex() << " merged" << M::name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
 
         // Loop through groups
-        for(size_t g = 0; g < getGroups().size(); g++) {
+        for(size_t g = 0; g < this->getGroups().size(); g++) {
             // Loop through fields
-            runnerMergedRunnerStructAlloc << "merged" << M::name << "Group" << getIndex() << "[" << g << "] = {";
+            runnerMergedRunnerStructAlloc << "merged" << M::name << "Group" << this->getIndex() << "[" << g << "] = {";
             for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
                 // If field's a pointer
                 const auto &f = sortedFields.at(fieldIndex);
@@ -122,7 +122,7 @@ public:
                 // Otherwise, initialise with value
                 else {
                     const auto getValueFn = std::get<GetFieldValueFunc>(std::get<2>(f));
-                    runnerMergedRunnerStructAlloc << getValueFn(getGroups().at(g)) << ", ";
+                    runnerMergedRunnerStructAlloc << getValueFn(this->getGroups().at(g)) << ", ";
                 }
 
             }
@@ -130,13 +130,13 @@ public:
         }
 
         // Generate push, pull and getter functions
-        genPushPullGet(backend, runnerPushFunc, runnerPullFunc, runnerGetterFunc, definitionsFunc, modelMerged);
+        genPushPullGet(backend, runnerPushFunc, runnerPullFunc, runnerGetterFunc, definitionsFunc);
         
         // Generate memory allocation code
-        genAllocMem(backend, runnerVarAlloc, modelMerged, memAlloc);
+        genAllocMem(backend, runnerVarAlloc, batchSize, memAlloc);
 
         // Generate memory free code
-        genFreeMem(backend, runnerVarFree, modelMerged);
+        genFreeMem(backend, runnerVarFree);
     }
 
 protected:
@@ -183,10 +183,8 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     void genPushPullGet(const BackendBase &backend, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                        CodeStream &runnerGetterFunc, CodeStream &definitions, const ModelSpecMerged &modelMerged) const
+                        CodeStream &runnerGetterFunc, CodeStream &definitions) const
     {
-        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-        
         // Loop through fields
         for(const auto &f : m_Fields) {
             // If this is pointer field
@@ -200,9 +198,9 @@ private:
                 const unsigned int flags = std::get<3>(pointerField);
                 if((loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
                 {
-                    const std::string name = std::get<1>(f) + M::name + "Group" + std::to_string(getIndex());
+                    const std::string name = std::get<1>(f) + M::name + "Group" + std::to_string(this->getIndex());
                     const std::string count = fieldCount.empty() ? "count" : fieldCount;
-                    const std::string group = "merged" + M::name + "Group" + std::to_string(getIndex()) + "[group]";
+                    const std::string group = "merged" + M::name + "Group" + std::to_string(this->getIndex()) + "[group]";
 
                     if(flags & POINTER_FIELD_PUSH_PULL) {
                         if(fieldCount.empty()) {
@@ -249,18 +247,16 @@ private:
         }
     }
 
-    void genAllocMem(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged, MemAlloc &memAlloc) const
+    void genAllocMem(const BackendBase &backend, CodeStream &runner, unsigned int batchSize, MemAlloc &memAlloc) const
     {
-        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-
         CodeStream::Scope b(runner);
-        runner << "// merged group " << getIndex() << std::endl;
-        runner << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+        runner << "// merged group " << this->getIndex() << std::endl;
+        runner << "for(unsigned int g = 0; g < " << this->getGroups().size() << "; g++)";
         {
             CodeStream::Scope b(runner);
 
             // Get reference to group
-            runner << "auto *group = &merged" << M::name << "Group" << getIndex() << "[g]; " << std::endl;
+            runner << "auto *group = &merged" << M::name << "Group" << this->getIndex() << "[g]; " << std::endl;
 
             // Loop through fields
             for(const auto &f : m_Fields) {
@@ -284,18 +280,16 @@ private:
         }
     }
 
-    void genFreeMem(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const
+    void genFreeMem(const BackendBase &backend, CodeStream &runner) const
     {
-        const unsigned int batchSize = modelMerged.getModel().getBatchSize();
-
         CodeStream::Scope b(runner);
-        runner << "// merged group " << getIndex() << std::endl;
-        runner << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+        runner << "// merged group " << this->getIndex() << std::endl;
+        runner << "for(unsigned int g = 0; g < " << this->getGroups().size() << "; g++)";
         {
             CodeStream::Scope b(runner);
 
             // Get reference to group
-            runner << "auto *group = &merged" << M::name << "Group" << getIndex() << "[g]; " << std::endl;
+            runner << "auto *group = &merged" << M::name << "Group" << this->getIndex() << "[g]; " << std::endl;
 
             // Loop through fields
             for(const auto &f : m_Fields) {
@@ -332,8 +326,8 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void genRecordingBufferAlloc(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const;
-    void genRecordingBufferPull(const BackendBase &backend, CodeStream &runner, const ModelSpecMerged &modelMerged) const;
+    void genRecordingBufferAlloc(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const;
+    void genRecordingBufferPull(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -378,20 +372,19 @@ template<typename G, typename M>
 class CustomUpdateRunnerGroupMergedBase : public RunnerGroupMergedBase<G, M>
 {
 public:
-    CustomUpdateRunnerGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
-                                      const std::vector<std::reference_wrapper<const G>> &groups)
-    :   RunnerGroupMergedBase<G, M>(index, precision, groups, backend)
+    CustomUpdateRunnerGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const G>> &groups)
+    :   RunnerGroupMergedBase<G, M>(index, groups)
     {
         // Add extra global parmeters
         // **TODO** missing location
-        addEGPs(getArchetype().getCustomUpdateModel()->getExtraGlobalParams(), "");
+        this->addEGPs(this->getArchetype().getCustomUpdateModel()->getExtraGlobalParams(), "");
 
         // Loop through variables
-        const auto &varInit = getArchetype().getVarInitialisers();
-        for(const auto &var : getArchetype().getCustomUpdateModel()->getVars()) {
-            addField(var.type, var.name, getArchetype().getVarLocation(var.name),
-                     POINTER_FIELD_PUSH_PULL_GET, "group->size", getVarAccessDuplication(var.access));
-            addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+        const auto &varInit = this->getArchetype().getVarInitialisers();
+        for(const auto &var : this->getArchetype().getCustomUpdateModel()->getVars()) {
+            this->addField(var.type, var.name, this->getArchetype().getVarLocation(var.name),
+                           this->POINTER_FIELD_PUSH_PULL_GET, "group->size", getVarAccessDuplication(var.access));
+            this->addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
         }
     }
 };

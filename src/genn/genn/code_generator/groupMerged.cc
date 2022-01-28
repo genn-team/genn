@@ -423,8 +423,6 @@ void NeuronGroupMergedBase::updateBaseHash(bool init, boost::uuids::detail::sha1
 
         // Loop through child merged insyns
         for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
-            const auto *sg = getSortedArchetypeMergedInSyns().at(i);
-
             updateChildParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 
                                  &SynapseGroupInternal::getPSParams, hash);
             updateChildDerivedParamHash(m_SortedMergedInSyns, i, &NeuronGroupMergedBase::isPSMParamReferenced, 

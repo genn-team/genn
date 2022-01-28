@@ -59,8 +59,7 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem,
-                       const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
+    void generateWUVar(const std::string &fieldPrefixStem, const std::vector<std::vector<SynapseGroupInternal *>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        const std::unordered_map<std::string, Models::VarInit>&(SynapseGroupInternal::*getVarInitialiserFn)(void) const,
                        bool(NeuronInitGroupMerged::*isParamHeterogeneousFn)(size_t, const std::string&, const std::string&) const,

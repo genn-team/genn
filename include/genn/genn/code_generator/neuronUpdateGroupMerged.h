@@ -70,12 +70,11 @@ private:
     // Private methods
     //------------------------------------------------------------------------
     //! Helper to generate merged struct fields for WU pre and post vars
-    void generateWUVar(const BackendBase &backend, const std::string &fieldPrefixStem, 
+    void generateWUVar(const std::string &fieldPrefixStem, 
                        const std::vector<std::vector<SynapseGroupInternal*>> &sortedSyn,
                        Models::Base::VarVec(WeightUpdateModels::Base::*getVars)(void) const,
                        bool(NeuronUpdateGroupMerged::*isParamHeterogeneous)(size_t, const std::string&) const,
-                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const,
-                       const std::string&(SynapseGroupInternal::*getFusedVarSuffix)(void) const);
+                       bool(NeuronUpdateGroupMerged::*isDerivedParamHeterogeneous)(size_t, const std::string&) const);
 
     //! Is the incoming synapse weight update model parameter referenced?
     bool isInSynWUMParamReferenced(size_t childIndex, const std::string &paramName) const;

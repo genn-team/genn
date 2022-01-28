@@ -171,6 +171,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     
     // write DT macro
     const ModelSpecInternal &model = modelMerged.getModel();
+    const unsigned int batchSize = model.getBatchSize();
     if (model.getTimePrecision() == "float") {
         definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << "f" << std::endl;
     } else {
@@ -339,7 +340,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, modelMerged, mem);
+                         runnerGetterFunc, batchSize, mem);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -349,7 +350,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, modelMerged, mem);
+                         runnerGetterFunc, batchSize, mem);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -359,7 +360,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, modelMerged, mem);
+                         runnerGetterFunc, batchSize, mem);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -369,13 +370,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, modelMerged, mem);
+                         runnerGetterFunc, batchSize, mem);
     }
     for(const auto &m : modelMerged.getMergedCustomUpdateWURunnerGroups()) {
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, modelMerged, mem);
+                         runnerGetterFunc, batchSize, mem);
     }
 
     runnerVarDecl << "// ------------------------------------------------------------------------" << std::endl;
@@ -525,7 +526,6 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedRuntimeStructAlloc, modelMerged.getMergedRunnerGroups());
     }
 
-    const unsigned int batchSize = model.getBatchSize();
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
     std::vector<std::string> statePushPullFunctions;
@@ -613,7 +613,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             // Loop through merged groups and generate allocation code
             for(const auto &m : modelMerged.getMergedNeuronRunnerGroups()) {
-                m.genRecordingBufferAlloc(backend, runner, modelMerged);
+                m.genRecordingBufferAlloc(backend, runner, batchSize);
             }
         }
         runner << std::endl;
@@ -631,7 +631,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
             // Loop through merged groups and generate allocation code
             for(const auto &m : modelMerged.getMergedNeuronRunnerGroups()) {
-                m.genRecordingBufferPull(backend, runner, modelMerged);
+                m.genRecordingBufferPull(backend, runner, batchSize);
             }
         }
         runner << std::endl;

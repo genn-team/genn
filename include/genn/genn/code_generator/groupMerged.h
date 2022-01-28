@@ -100,7 +100,7 @@ public:
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
     
     RuntimeGroupMerged(size_t index, const std::string &precision, const BackendBase &backend, 
-                       const std::vector<std::reference_wrapper<const GroupInternal>> groups, bool host = false)
+                       const std::vector<std::reference_wrapper<const typename GroupMerged<G>::GroupInternal>> groups, bool host = false)
     :   GroupMerged<G>(index, groups), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Host(host),
         m_DeviceVarPrefix(backend.getDeviceVarPrefix()), m_DeviceScalarRequired(backend.isDeviceScalarRequired())
 
@@ -135,7 +135,7 @@ public:
     //! Generate declaration of struct to hold this merged group
     void generateStruct(CodeStream &os, const BackendBase &backend, const std::string &name) const
     {
-        os << "struct Merged" << name << "Group" << getIndex() << std::endl;
+        os << "struct Merged" << name << "Group" << this->getIndex() << std::endl;
         {
             // Loop through fields and write to structure
             CodeStream::Scope b(os);
@@ -196,7 +196,7 @@ public:
 
         // Add total size of array of merged structures to merged struct data
         // **NOTE** to match standard struct packing rules we pad to a multiple of the largest field size
-        return padSize(structSize, largestFieldSize) * getGroups().size();
+        return padSize(structSize, largestFieldSize) * this->getGroups().size();
     }
 
     //! Assign memory spaces to group
@@ -230,7 +230,7 @@ protected:
     // Protected methods
     //------------------------------------------------------------------------    
     const std::string &getDeviceVarPrefix() const { return m_DeviceVarPrefix;  }
-    const bool isDeviceScalarRequired() const { return m_DeviceScalarRequired;  }
+    bool isDeviceScalarRequired() const { return m_DeviceScalarRequired;  }
 
     void addField(const std::string &type, const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
@@ -253,11 +253,11 @@ protected:
     bool isParamValueHeterogeneous(const std::string &name, P getParamValuesFn) const
     {
         // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(name);
+        const double archetypeValue = getParamValuesFn(this->getArchetype()).at(name);
 
         // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [&name, archetypeValue, getParamValuesFn](const GroupInternal &g)
+        return std::any_of(this->getGroups().cbegin(), this->getGroups().cend(),
+                           [&name, archetypeValue, getParamValuesFn](const typename GroupMerged<G>::GroupInternal &g)
                            {
                                return (getParamValuesFn(g).at(name) != archetypeValue);
                            });
@@ -268,11 +268,11 @@ protected:
     bool isParamValueHeterogeneous(size_t index, P getParamValuesFn) const
     {
         // Get value of parameter in archetype group
-        const double archetypeValue = getParamValuesFn(getArchetype()).at(index);
+        const double archetypeValue = getParamValuesFn(this->getArchetype()).at(index);
 
         // Return true if any parameter values differ from the archetype value
-        return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                           [archetypeValue, index, getParamValuesFn](const GroupInternal &g)
+        return std::any_of(this->getGroups().cbegin(), this->getGroups().cend(),
+                           [archetypeValue, index, getParamValuesFn](const typename GroupMerged<G>::GroupInternal &g)
                            {
                                return (getParamValuesFn(g).at(index) != archetypeValue);
                            });
@@ -281,7 +281,7 @@ protected:
     void addScalarField(const std::string &name, GetScalarFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         addField("scalar", name,
-                 [getFieldValue, this](const G &g, size_t i, const MergedRunnerMap &map)
+                 [getFieldValue, this](const G &g, size_t i, const MergedRunnerMap&)
                  {
                      return getFieldValue(g, i) + m_LiteralSuffix;
                  },
@@ -380,7 +380,7 @@ protected:
     void addHeterogeneousVarInitParams(V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, this->getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getSnippet()->getParamNames()) {
@@ -400,7 +400,7 @@ protected:
     void addHeterogeneousVarInitDerivedParams(V getVarInitialisers, H isHeterogeneous)
     {
         // Loop through weight update model variables
-        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, this->getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getSnippet()->getDerivedParams()) {
@@ -420,12 +420,12 @@ protected:
     void updateParamHash(R isParamReferencedFn, V getValueFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through parameters
-        const auto &archetypeParams = getValueFn(getArchetype());
+        const auto &archetypeParams = getValueFn(this->getArchetype());
         for(const auto &p : archetypeParams) {
             // If any of the code strings reference the parameter
             if(std::invoke(isParamReferencedFn, static_cast<const T*>(this), p.first)) {
                 // Loop through groups
-                for(const auto &g : getGroups()) {
+                for(const auto &g : this->getGroups()) {
                     // Update hash with parameter value
                     Utils::updateHash(getValueFn(g.get()).at(p.first), hash);
                 }
@@ -437,14 +437,14 @@ protected:
     void updateVarInitParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, this->getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &p : varInit.second.getParams()) {
                 // If any of the code strings reference the parameter
                 if(std::invoke(isParamReferencedFn, static_cast<const T *>(this), varInit.first, p.first)) {
                     // Loop through groups
-                    for(const auto &g : getGroups()) {
+                    for(const auto &g : this->getGroups()) {
                         const auto &values = std::invoke(getVarInitialisers, g.get()).at(varInit.first).getParams();
 
                         // Update hash with parameter value
@@ -459,14 +459,14 @@ protected:
     void updateVarInitDerivedParamHash(V getVarInitialisers, R isParamReferencedFn, boost::uuids::detail::sha1 &hash) const
     {
         // Loop through variables
-        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, getArchetype());
+        const auto &archetypeVarInitialisers = std::invoke(getVarInitialisers, this->getArchetype());
         for(const auto &varInit : archetypeVarInitialisers) {
             // Loop through parameters
             for(const auto &d : varInit.second.getDerivedParams()) {
                 // If any of the code strings reference the parameter
                 if(std::invoke(isParamReferencedFn, static_cast<const T *>(this), varInit.first, d.first)) {
                     // Loop through groups
-                    for(const auto &g : getGroups()) {
+                    for(const auto &g : this->getGroups()) {
                         const auto &values = std::invoke(getVarInitialisers, g.get()).at(varInit.first).getDerivedParams();
 
                         // Update hash with parameter value
@@ -488,7 +488,7 @@ protected:
 
         // If this isn't a host merged structure, generate definition for function to push group
         if(!isHost()) {
-            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << getIndex() << "ToDevice(unsigned int idx, ";
+            definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << "Group" << this->getIndex() << "ToDevice(unsigned int idx, ";
             generateStructFieldArgumentDefinitions(definitionsInternalFunc, backend);
             definitionsInternalFunc << ");" << std::endl;
         }
@@ -497,7 +497,7 @@ protected:
         for(const auto &f : sortedFields) {
             // If this field is for a pointer EGP, also declare function to push it
             if(std::get<3>(f) == FieldType::PointerEGP) {
-                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
+                definitionsInternalFunc << "EXPORT_FUNC void pushMerged" << name << this->getIndex() << std::get<1>(f) << "ToDevice(unsigned int idx, ";
                 definitionsInternalFunc << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " value);" << std::endl;
             }
 
@@ -512,23 +512,23 @@ protected:
             generateStruct(definitionsInternal, backend, name);
 
             // Declare array of these structs containing individual neuron group pointers etc
-            runnerVarDecl << "Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "];" << std::endl;
+            runnerVarDecl << "Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
 
             // Export it
-            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << getIndex() << " merged" << name << "Group" << getIndex() << "[" << getGroups().size() << "]; " << std::endl;
+            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "]; " << std::endl;
         }
 
         // Loop through groups
-        for(size_t groupIndex = 0; groupIndex < getGroups().size(); groupIndex++) {
+        for(size_t groupIndex = 0; groupIndex < this->getGroups().size(); groupIndex++) {
             // If this is a merged group used on the host, directly set array entry
             if(isHost()) {
-                runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
+                runnerMergedStructAlloc << "merged" << name << "Group" << this->getIndex() << "[" << groupIndex << "] = {";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields, mergedRunnerMap);
                 runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
-                runnerMergedStructAlloc << "pushMerged" << name << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
+                runnerMergedStructAlloc << "pushMerged" << name << "Group" << this->getIndex() << "ToDevice(" << groupIndex << ", ";
                 generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields, mergedRunnerMap);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
@@ -543,7 +543,7 @@ private:
                                       const MergedRunnerMap &mergedRunnerMap) const
     {
         // Get group by index
-        const auto &g = getGroups()[groupIndex];
+        const auto &g = this->getGroups()[groupIndex];
 
         // Loop through fields
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
