@@ -794,13 +794,13 @@ CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t 
              [this](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap &map) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                 return map.findGroup(*sg) + "." + getDeviceVarPrefix() + "rowLength";
+                 return map.getStruct(*sg) + "." + getDeviceVarPrefix() + "rowLength";
              });
     addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
              [this](const CustomUpdateWUInternal &cg, size_t, const MergedRunnerMap &map) 
              { 
                  const SynapseGroupInternal *sg = cg.getSynapseGroup();
-                 return map.findGroup(*sg) + "." + getDeviceVarPrefix() + "ind";
+                 return map.getStruct(*sg) + "." + getDeviceVarPrefix() + "ind";
              });
 }
 //----------------------------------------------------------------------------

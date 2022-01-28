@@ -40,19 +40,19 @@ public:
     }
 
     //! Find the name of the merged runner group associated with neuron group e.g. mergedNeuronRunnerGroup0[6]
-    std::string findGroup(const NeuronGroup &ng) const;
+    std::string getStruct(const NeuronGroup &ng) const;
 
     //! Find the name of the merged runner group associated with synapse group e.g. mergedSynapseRunnerGroup0[6]
-    std::string findGroup(const SynapseGroup &sg) const;
+    std::string getStruct(const SynapseGroup &sg) const;
 
     //! Find the name of the merged runner group associated with current source e.g. mergedCurrentSourceRunnerGroup0[6]
-    std::string findGroup(const CurrentSource &cs) const;
+    std::string getStruct(const CurrentSource &cs) const;
 
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateRunnerGroup0[6]
-    std::string findGroup(const CustomUpdate &cu) const;
+    std::string getStruct(const CustomUpdate &cu) const;
 
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateWURunnerGroup0[6]
-    std::string findGroup(const CustomUpdateWU &cu) const;
+    std::string getStruct(const CustomUpdateWU &cu) const;
 
 private:
     //--------------------------------------------------------------------------
@@ -60,7 +60,7 @@ private:
     //--------------------------------------------------------------------------
     //! Helper to find merged runner group
     template<typename MergedGroup>
-    std::string findGroup(const std::string &name) const
+    std::string getStruct(const std::string &name) const
     {
         // Find group by name
         const auto m = m_MergedRunnerGroups.at(name);

@@ -509,7 +509,7 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
         addField(e.type + "*", e.name,
                  [e](const SynapseGroupInternal &g, size_t, const MergedRunnerMap &map) 
                  { 
-                     return "&" + map.findGroup(g) + "." + e.name; 
+                     return "&" + map.getStruct(g) + "." + e.name; 
                  },
                  FieldType::Host);
 
@@ -517,14 +517,14 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
             addField(e.type + "*", backend.getDeviceVarPrefix() + e.name,
                      [this, e](const SynapseGroupInternal &g, size_t, const MergedRunnerMap &map)
                      {
-                         return "&" + map.findGroup(g) + "." + getDeviceVarPrefix() + e.name;
+                         return "&" + map.getStruct(g) + "." + getDeviceVarPrefix() + e.name;
                      });
         }
         if(!backend.getHostVarPrefix().empty()) {
             addField(e.type + "*", backend.getHostVarPrefix() + e.name,
                      [this, e, &backend](const SynapseGroupInternal &g, size_t, const MergedRunnerMap &map)
                      {
-                         return "&" + map.findGroup(g) + "." + backend.getHostVarPrefix() + e.name;
+                         return "&" + map.getStruct(g) + "." + backend.getHostVarPrefix() + e.name;
                      });
         }
     }
@@ -886,7 +886,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                 addField(e.type, e.name + "Pre",
                          [e, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
                          { 
-                             return map.findGroup(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + e.name;
+                             return map.getStruct(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + e.name;
                          },
                          isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
             }
@@ -901,7 +901,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                 addField(e.type, e.name + "Post",
                          [e, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map)
                          { 
-                             return map.findGroup(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + e.name;
+                             return map.getStruct(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + e.name;
                          },
                          isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
             }
@@ -944,7 +944,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                      [v, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
                      { 
                          assert(!sg.isWUPreModelFused());
-                         return map.findGroup(sg) + "." + getDeviceVarPrefix() + v.name;
+                         return map.getStruct(sg) + "." + getDeviceVarPrefix() + v.name;
                      });
         }
         
@@ -954,7 +954,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                      [v, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
                      { 
                          assert(!sg.isWUPostModelFused());
-                         return map.findGroup(sg) + "." + getDeviceVarPrefix() + v.name;
+                         return map.getStruct(sg) + "." + getDeviceVarPrefix() + v.name;
                      });
         }
 
@@ -1218,10 +1218,10 @@ void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const st
              { 
                  assert(!sg.isPSModelFused());
                  if(scalar && isDeviceScalarRequired()) {
-                     return "&" + map.findGroup(sg) + "." + getDeviceVarPrefix() + name;
+                     return "&" + map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
-                     return map.findGroup(sg) + "." + getDeviceVarPrefix() + name;
+                     return map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
                  }
              });
 }
@@ -1234,10 +1234,10 @@ void SynapseGroupMergedBase::addPreOutputPointerField(const std::string &type, c
              { 
                  assert(!sg.isPreOutputModelFused());
                  if(scalar && isDeviceScalarRequired()) {
-                     return "&" + map.findGroup(sg) + "." + getDeviceVarPrefix() + name;
+                     return "&" + map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
-                     return map.findGroup(sg) + "." + getDeviceVarPrefix() + name;
+                     return map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
                  }
              });
 }
@@ -1249,10 +1249,10 @@ void SynapseGroupMergedBase::addPrePointerField(const std::string &type, const s
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
                  if(scalar && isDeviceScalarRequired()) {
-                     return "&" + map.findGroup(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + name;
+                     return "&" + map.getStruct(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
-                     return map.findGroup(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + name;
+                     return map.getStruct(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + name;
                  }
              });
 }
@@ -1264,10 +1264,10 @@ void SynapseGroupMergedBase::addPostPointerField(const std::string &type, const 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
                  if(scalar && isDeviceScalarRequired()) {
-                     return "&" + map.findGroup(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + name;
+                     return "&" + map.getStruct(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
-                     return map.findGroup(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + name;
+                     return map.getStruct(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + name;
                  }
              });
 }
@@ -1354,10 +1354,10 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
                  [&](const CustomUpdateInternal &cg, size_t, const MergedRunnerMap &map) 
                  { 
                      if(isDeviceScalarRequired()) {
-                         return "&" + map.findGroup(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
+                         return "&" + map.getStruct(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
                      }
                      else {
-                         return map.findGroup(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
+                         return map.getStruct(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
                      }
                  });
     }

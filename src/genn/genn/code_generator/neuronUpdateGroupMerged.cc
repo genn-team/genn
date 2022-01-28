@@ -65,7 +65,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                     addField(egp.type, egp.name + "EventThresh" + std::to_string(i),
                              [eventThresholdSGs, prefix, egp, i](const NeuronGroupInternal &, size_t groupIndex, const MergedRunnerMap &map)
                              {
-                                 return map.findGroup(*eventThresholdSGs.at(groupIndex).at(i)) + "." + prefix + egp.name;
+                                 return map.getStruct(*eventThresholdSGs.at(groupIndex).at(i)) + "." + prefix + egp.name;
                              },
                              Utils::isTypePointer(egp.type) ? FieldType::PointerEGP : FieldType::ScalarEGP);
                 }
@@ -79,7 +79,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
                     addField(var.type + "*", var.name + "EventThresh" + std::to_string(i),
                              [this, eventThresholdSGs, var, i](const NeuronGroupInternal &, size_t groupIndex, const MergedRunnerMap &map)
                              {
-                                 return map.findGroup(*eventThresholdSGs.at(groupIndex).at(i)) + "." + getDeviceVarPrefix() + var.name;
+                                 return map.getStruct(*eventThresholdSGs.at(groupIndex).at(i)) + "." + getDeviceVarPrefix() + var.name;
                              });
                 }
             }
@@ -93,7 +93,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
         addField("uint32_t*", "recordSpk",
                  [this](const NeuronGroupInternal &ng, size_t, const MergedRunnerMap &map) 
                  { 
-                     return map.findGroup(ng) + "." + getDeviceVarPrefix() + "recordSpk";
+                     return map.getStruct(ng) + "." + getDeviceVarPrefix() + "recordSpk";
                  },
                  FieldType::PointerEGP);
     }
@@ -104,7 +104,7 @@ NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string
         addField("uint32_t*", "recordSpkEvent",
                  [this](const NeuronGroupInternal &ng, size_t, const MergedRunnerMap &map)
                  {
-                     return map.findGroup(ng) + "." + getDeviceVarPrefix() + "recordSpkEvent";
+                     return map.getStruct(ng) + "." + getDeviceVarPrefix() + "recordSpkEvent";
                  },
                  FieldType::PointerEGP);
     }

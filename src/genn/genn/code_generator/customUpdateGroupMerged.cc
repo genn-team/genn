@@ -116,10 +116,10 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
                  [this](const CustomUpdateInternal &cg, size_t, const MergedRunnerMap &map) 
                  { 
                      if(isDeviceScalarRequired()) {
-                         return "&" + map.findGroup(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
+                         return "&" + map.getStruct(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
                      }
                      else {
-                         return map.findGroup(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
+                         return map.getStruct(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
                      }
                  });
     }
@@ -340,7 +340,7 @@ void CustomUpdateWUGroupMergedBase::addSynapseGroupPointerField(const std::strin
     addField(type + "*", name, 
              [name, this](const CustomUpdateWUInternal &cu, size_t, const MergedRunnerMap &map) 
              { 
-                 return map.findGroup(*cu.getSynapseGroup()) + "." + getDeviceVarPrefix() + name;
+                 return map.getStruct(*cu.getSynapseGroup()) + "." + getDeviceVarPrefix() + name;
              });
 }
 

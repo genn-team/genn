@@ -295,10 +295,10 @@ protected:
                  [this, name, scalar, suffix](const G &g, size_t, const MergedRunnerMap &map) 
                  { 
                      if(scalar && isDeviceScalarRequired()) {
-                         return "&" + map.findGroup(g) + "." + getDeviceVarPrefix() + name;
+                         return "&" + map.getStruct(g) + "." + getDeviceVarPrefix() + name;
                      }
                      else {
-                         return map.findGroup(g) + "." + getDeviceVarPrefix() + name;
+                         return map.getStruct(g) + "." + getDeviceVarPrefix() + name;
                      }
                  });
     }
@@ -332,7 +332,7 @@ protected:
             addField(e.type, e.name + varName,
                      [e, varName](const G &g, size_t, const MergedRunnerMap &map) 
                      { 
-                         return map.findGroup(g) + "." + e.name + varName; 
+                         return map.getStruct(g) + "." + e.name + varName; 
                      },
                      isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
@@ -862,7 +862,7 @@ protected:
                      (const NeuronGroupInternal&, size_t groupIndex, const MergedRunnerMap &map)
                      {
                          const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                         return map.findGroup(*child) + "." + getDeviceVarPrefix() +  e.name + varName; 
+                         return map.getStruct(*child) + "." + getDeviceVarPrefix() +  e.name + varName; 
                      },
                      isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
@@ -880,10 +880,10 @@ protected:
                  {
                      const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
                      if(scalar && isDeviceScalarRequired()) {
-                         return "&" + map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
+                         return "&" + map.getStruct(*child) + "." + getDeviceVarPrefix() + name; 
                      }
                      else {
-                         return map.findGroup(*child) + "." + getDeviceVarPrefix() + name; 
+                         return map.getStruct(*child) + "." + getDeviceVarPrefix() + name; 
                      }
                  });
     }
