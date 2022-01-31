@@ -64,10 +64,8 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
-    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() ) 
-    {
-        assert(false);
-        //addNullPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rng");
+    if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired()) {
+        addField(backend.getMergedGroupSimRNGType(), "rng", VarLocation::DEVICE, 0);
     }
 
     // Loop through variables
