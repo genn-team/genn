@@ -29,6 +29,7 @@
     <ClCompile Include="code_generator\generateMSBuild.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\generateSupportCode.cc" />
+    <ClCompile Include="code_generator\generateMacroLookup.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
     <ClCompile Include="code_generator\initGroupMerged.cc" />
     <ClCompile Include="code_generator\mergedRunnerMap.cc" />
@@ -73,6 +74,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMacroLookup.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\initGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\neuronUpdateGroupMerged.h" />
