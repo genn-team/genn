@@ -65,13 +65,35 @@ void generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerg
         macroLookup << std::endl;
     }
     
-    // Loop through synapse groups
-    for(const auto &g : model.getSynapseGroups()) {
+    // Loop through current sources
+    for(const auto &g : model.getLocalCurrentSources()) {
         // Get indices
         const auto groupIndices = map.getIndices(g.second.getName());
         
         // Write out 
-        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP SynapseRunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP CurrentSourceRunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        macroLookup << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
+        macroLookup << std::endl;
+    }
+
+    // Loop through custom updates
+    for(const auto &g : model.getCustomUpdates()) {
+        // Get indices
+        const auto groupIndices = map.getIndices(g.second.getName());
+        
+        // Write out 
+        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP CustomUpdateRunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        macroLookup << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
+        macroLookup << std::endl;
+    }
+
+    // Loop through custom WU updates
+    for(const auto &g : model.getCustomWUUpdates()) {
+        // Get indices
+        const auto groupIndices = map.getIndices(g.second.getName());
+        
+        // Write out 
+        macroLookup << "#define " << g.second.getName() << "_MERGED_GROUP CustomUpdateWURunnerGroup" << std::get<0>(groupIndices) << std::endl;
         macroLookup << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
         macroLookup << std::endl;
     }

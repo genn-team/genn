@@ -18,6 +18,7 @@
 #include "code_generator/codeStream.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateRunner.h"
+#include "code_generator/generateMacroLookup.h"
 #include "code_generator/modelSpecMerged.h"
 
 using namespace CodeGenerator;
@@ -110,6 +111,7 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
         generateNeuronUpdate(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);
         generateInit(outputPath, modelMerged, backend);
+        generateMacroLookup(outputPath, modelMerged);
 
         // Generate support code module if the backend supports namespaces
         if(backend.supportsNamespace()) {
