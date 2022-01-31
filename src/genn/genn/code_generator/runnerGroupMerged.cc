@@ -45,8 +45,7 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
     }
 
     if(getArchetype().isDelayRequired()) {
-        assert(false);
-        //addNullPointerField("unsigned int", "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
+        addField("unsigned int", "spkQuePtr", "0");
     }
 
     if(getArchetype().isSpikeTimeRequired()) {
@@ -230,7 +229,7 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
 
             addField(precision, "denDelay", getArchetype().getDendriticDelayLocation(), 0,
                      "group->numTrgNeurons * group->maxDendriticDelayTimesteps");
-            //addChildField("unsigned int", "denDelayPtrInSyn", i, sg->getDendriticDelayLocation(), VarAccessDuplication::DUPLICATE);
+            addField("unsigned int", "denDelayPtr", "0");
         }
 
         // Add PSM extra global parmeters

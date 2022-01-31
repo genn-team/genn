@@ -1212,7 +1212,7 @@ void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const st
     addField(type + "*", name, 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
-                 if(scalar && isDeviceScalarRequired()) {
+                 if(scalar && !isDeviceScalarRequired()) {
                      return "&" + map.getStruct(*sg.getFusedPostOutputSource()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
@@ -1227,7 +1227,7 @@ void SynapseGroupMergedBase::addPreOutputPointerField(const std::string &type, c
     addField(type + "*", name, 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
-                 if(scalar && isDeviceScalarRequired()) {
+                 if(scalar && !isDeviceScalarRequired()) {
                      return "&" + map.getStruct(*sg.getFusedPreOutputSource()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
@@ -1242,7 +1242,7 @@ void SynapseGroupMergedBase::addPrePointerField(const std::string &type, const s
     addField(type + "*", name + "Pre", 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
-                 if(scalar && isDeviceScalarRequired()) {
+                 if(scalar && !isDeviceScalarRequired()) {
                      return "&" + map.getStruct(*sg.getSrcNeuronGroup()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
@@ -1257,7 +1257,7 @@ void SynapseGroupMergedBase::addPostPointerField(const std::string &type, const 
     addField(type + "*", name + "Post", 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
-                 if(scalar && isDeviceScalarRequired()) {
+                 if(scalar && !isDeviceScalarRequired()) {
                      return "&" + map.getStruct(*sg.getTrgNeuronGroup()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
@@ -1347,7 +1347,7 @@ CustomUpdateHostReductionGroupMerged::CustomUpdateHostReductionGroupMerged(size_
         addField("unsigned int*", "spkQuePtr", 
                  [&](const CustomUpdateInternal &cg, size_t, const MergedRunnerMap &map) 
                  { 
-                     if(isDeviceScalarRequired()) {
+                     if(!isDeviceScalarRequired()) {
                          return "&" + map.getStruct(*cg.getDelayNeuronGroup()) + "." + getDeviceVarPrefix() + "spkQuePtr";
                      }
                      else {

@@ -22,8 +22,8 @@ void generatePopulationMacros(CodeStream &os, const std::map<std::string, G> &gr
         const auto groupIndices = map.getIndices(g.second.getName());
         
         // Write out 
-        os << "#define " << g.second.getName() << "_MERGED_GROUP " << name << "RunnerGroup" << std::get<0>(groupIndices) << std::endl;
-        os << "#define " << g.second.getName() << "_GROUP " << std::get<1>(groupIndices) << std::endl;
+        os << "#define MERGED_GROUP_" << g.second.getName() << " " << name << "RunnerGroup" << std::get<0>(groupIndices) << std::endl;
+        os << "#define GROUP_" << g.second.getName() << " " << std::get<1>(groupIndices) << std::endl;
     }
     os << std::endl;
 }
@@ -53,9 +53,9 @@ void generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerg
     macroLookup << "// field getter macros" << std::endl;
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
     // Using these, generate macros to call functions on group fields
-    macroLookup << "#define GET_FIELD(POP, VAR) GENN_CAT(get, GENN_CAT(VAR, GENN_CAT(POP, _MERGED_GROUP)))(GENN_CAT(POP, _GROUP))" << std::endl;
-    macroLookup << "#define PUSH_FIELD(POP, VAR) GENN_CAT(GENN_CAT(push, GENN_CAT(VAR, GENN_CAT(POP, _MERGED_GROUP))), ToDevice)(GENN_CAT(POP, _GROUP))" << std::endl;
-    macroLookup << "#define PULL_FIELD(POP, VAR) GENN_CAT(GENN_CAT(pull, GENN_CAT(VAR, GENN_CAT(POP, _MERGED_GROUP))), FromDevice)(GENN_CAT(POP, _GROUP))" << std::endl;
+    macroLookup << "#define GET_FIELD(POP, VAR) GENN_CAT(get, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP)))(GENN_CAT(GROUP_, POP))" << std::endl;
+    macroLookup << "#define PUSH_FIELD(POP, VAR) GENN_CAT(GENN_CAT(push, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP))), ToDevice)(GENN_CAT(GROUP_, POP))" << std::endl;
+    macroLookup << "#define PULL_FIELD(POP, VAR) GENN_CAT(GENN_CAT(pull, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP))), FromDevice)(GENN_CAT(GROUP_, POP))" << std::endl;
     macroLookup << std::endl;
 
     // Genererate macros

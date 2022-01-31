@@ -25,7 +25,7 @@ public:
 
     typedef std::function<std::string(const G &)> GetFieldValueFunc;
     typedef std::tuple<VarLocation, VarAccessDuplication, std::string, unsigned int> PointerField;
-    typedef std::tuple<std::string, std::string, std::variant<GetFieldValueFunc, PointerField>> Field;
+    typedef std::tuple<std::string, std::string, std::variant<GetFieldValueFunc, PointerField, std::string>> Field;
 
     
     RunnerGroupMergedBase(size_t index, const std::vector<std::reference_wrapper<const G>> groups)
@@ -87,9 +87,17 @@ public:
                         runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getDeviceVarPrefix() << std::get<1>(f) << ";" << std::endl;
                     }
                 }
-                else {
+                // Otherwise, if it's a scalar field e.g. numbers of neurons
+                else if(std::holds_alternative<GetFieldValueFunc>(std::get<2>(f))) {
                     // Add field to struct
                     runnerVarDecl << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+                }
+                // Otherwise, it's a host device scalar
+                else {
+                    runnerVarDecl << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
+                    if(backend.isDeviceScalarRequired()) {
+                        runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f) + "*") << " " << backend.getDeviceVarPrefix() << std::get<1>(f) << ";" << std::endl;
+                    }
                 }
             }
             runnerVarDecl << std::endl;
@@ -125,10 +133,18 @@ public:
                         runnerMergedRunnerStructAlloc << "nullptr, ";
                     }
                 }
-                // Otherwise, initialise with value
-                else {
+                // Otherwise, if it's a scalar field e.g. numbers of neurons
+                else if(std::holds_alternative<GetFieldValueFunc>(std::get<2>(f))) {
                     const auto getValueFn = std::get<GetFieldValueFunc>(std::get<2>(f));
                     runnerMergedRunnerStructAlloc << getValueFn(this->getGroups().at(g)) << ", ";
+                }
+                // Otherwise, it's a host device scalar
+                else {
+                    runnerMergedRunnerStructAlloc << std::get<std::string>(std::get<2>(f)) << ", ";
+                    if(backend.isDeviceScalarRequired()) {
+                        // **TODO** some sort of OpenCL initialiser
+                        runnerMergedRunnerStructAlloc << "nullptr, ";
+                    }
                 }
 
             }
@@ -155,6 +171,13 @@ protected:
         // Add field to data structure
         assert(!Utils::isTypePointer(type));
         m_Fields.emplace_back(type, name, getFieldValue);
+    }
+
+    void addField(const std::string &type, const std::string &name, const std::string &hostValue)
+    {
+        // Add field to data structure
+        assert(!Utils::isTypePointer(type));
+        m_Fields.emplace_back(type, name, hostValue);
     }
 
     void addField(const std::string &type, const std::string &name, VarLocation loc, unsigned int flags,

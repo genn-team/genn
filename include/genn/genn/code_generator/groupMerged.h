@@ -294,7 +294,7 @@ protected:
         addField(type + "*", name, 
                  [this, name, scalar, suffix](const G &g, size_t, const MergedRunnerMap &map) 
                  { 
-                     if(scalar && isDeviceScalarRequired()) {
+                     if(scalar && !isDeviceScalarRequired()) {
                          return "&" + map.getStruct(g) + "." + getDeviceVarPrefix() + name;
                      }
                      else {
@@ -877,7 +877,7 @@ protected:
                  (const NeuronGroupInternal&, size_t groupIndex, const MergedRunnerMap &map)
                  {
                      const auto *child = sortedGroupChildren.at(groupIndex).at(childIndex);
-                     if(scalar && isDeviceScalarRequired()) {
+                     if(scalar && !isDeviceScalarRequired()) {
                          return "&" + map.getStruct(*child) + "." + getDeviceVarPrefix() + name; 
                      }
                      else {
