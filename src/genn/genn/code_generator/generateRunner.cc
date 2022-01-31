@@ -409,7 +409,6 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, batchSize, mem);
-
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -421,6 +420,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, batchSize, mem);
+        genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -431,6 +431,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, batchSize, mem);
+        genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -441,12 +442,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, batchSize, mem);
+        genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
     for(const auto &m : modelMerged.getMergedCustomUpdateWURunnerGroups()) {
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, batchSize, mem);
+        genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
     runnerVarDecl << "// ------------------------------------------------------------------------" << std::endl;
