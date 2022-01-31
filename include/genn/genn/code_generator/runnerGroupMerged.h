@@ -34,7 +34,13 @@ public:
 
     }
 
-     //! Get group fields, sorted into order they will appear in struct
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Get group fields
+    const std::vector<Field> &getFields() const{ return m_Fields; }
+
+    //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due

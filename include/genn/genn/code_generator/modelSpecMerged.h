@@ -213,9 +213,9 @@ public:
     bool anyPointerEGPs() const;
 
     //! Get the map of destinations within the merged data structures for a particular extra global parameter
-    const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name, const BackendBase &backend) const
+    const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name) const
     {
-        return m_MergedEGPs.at(backend.getDeviceVarPrefix() + name);
+        return m_MergedEGPs.at(name);
     }
 
     //! Generate calls to update all target merged groups

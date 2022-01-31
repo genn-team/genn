@@ -64,6 +64,67 @@ void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
     mem += MemAlloc::host(sizeof(std::mt19937));
 }
 //-------------------------------------------------------------------------
+template<typename G>
+void genExtraGlobalParamTargets(const BackendBase &backend, CodeStream &os, const G &runnerGroup, const ModelSpecMerged &modelMerged)
+{
+    // Loop through fields
+    for(const auto &f : runnerGroup.getFields()) {
+        // If this is pointer field
+        if(std::holds_alternative<typename G::PointerField>(std::get<2>(f))) {
+            const auto pointerField = std::get<typename G::PointerField>(std::get<2>(f));
+
+            // If field doesn't have a count i.e. it's allocated dynamically
+            const std::string &count = std::get<2>(pointerField);
+            if(count.empty()) {
+                // Create three sub-streams to generate seperate data structure into
+                std::ostringstream fieldPushFunctionStart;
+                std::ostringstream fieldPushFunctionEnd;
+                std::ostringstream fieldPushFunction;
+
+                // Start declaration of three data structures
+                fieldPushFunctionStart << "const unsigned int start" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "[]{";
+                fieldPushFunctionEnd << "const unsigned int end" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "[]{";
+                fieldPushFunction << "const std::function<void(" << std::get<0>(f) << ")> push" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "ToDevice[]{";
+               
+                // Loop through groups
+                size_t numPushFunctions = 0;
+                for(size_t i = 0; i < runnerGroup.getGroups().size(); i++) {
+                    // Write index of current group's starting push function
+                    fieldPushFunctionStart << numPushFunctions << ", ";
+
+                    // Assemble field name
+                    // **YUCK** no need for this to be a single string
+                    const std::string fieldName = "merged" + G::name + "Group" + std::to_string(runnerGroup.getIndex()) + "[" + std::to_string(i) + "]." + backend.getDeviceVarPrefix() + std::get<1>(f);
+
+                    // Get targets in merged runtime groups
+                    // **TODO** rename
+                    const auto &targets = modelMerged.getMergedEGPDestinations(fieldName);
+                    assert(!targets.empty());
+
+                    // Loop through targets and bind group index to push function
+                    for(const auto &t : targets) {
+                        
+                        fieldPushFunction << "std::bind(&pushMerged" << t.first << t.second.mergedGroupIndex << t.second.fieldName << "ToDevice, ";
+                        fieldPushFunction << t.second.groupIndex << ", std::placeholders::_1),";
+                        numPushFunctions++;
+                    }
+
+                    // Write index of current group's ending push function
+                    fieldPushFunctionEnd << numPushFunctions << ", ";
+                }
+
+                // End all three arrays
+                fieldPushFunctionStart << "};" << std::endl;
+                fieldPushFunctionEnd << "};" << std::endl;
+                fieldPushFunction << "};" << std::endl;
+                
+                // Write all to runner
+                os << fieldPushFunctionStart.str() << fieldPushFunctionEnd.str() << fieldPushFunction.str() << std::endl;
+            }
+        }
+    }
+}
+//-------------------------------------------------------------------------
 void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os, 
                                     const SynapseConnectivityHostInitGroupMerged &sg, const std::string &precision)
 {
@@ -194,6 +255,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     // Write runner preamble
     runner << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl << std::endl;
+    runner << "#include <functional>" << std::endl << std::endl;
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
@@ -333,6 +395,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         allVarStreams << std::endl;
     }
 
+    // End extern C block around variable declarations
+    runnerVarDecl << "}  // extern \"C\"" << std::endl;
+
+    // Open anonymous namespace in runner around structs etc which shouldn't be exported
+    runnerVarDecl << "namespace {" << std::endl;
+
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
     allVarStreams << "// neuron groups" << std::endl;
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -341,6 +409,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, batchSize, mem);
+
+        genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
     allVarStreams << "// ------------------------------------------------------------------------" << std::endl;
@@ -526,13 +596,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedRuntimeStructAlloc, modelMerged.getMergedRunnerGroups());
     }
 
+    // End anonymous namespace in runner around structs etc which shouldn't be exported
+    runnerVarDecl << "}" << std::endl;
+
     std::vector<std::string> currentSpikePullFunctions;
     std::vector<std::string> currentSpikeEventPullFunctions;
     std::vector<std::string> statePushPullFunctions;
     allVarStreams << std::endl;
-
-    // End extern C block around variable declarations
-    runnerVarDecl << "}  // extern \"C\"" << std::endl;
  
     // Write pre-amble to runner
     backend.genRunnerPreamble(runner, modelMerged, mem);
