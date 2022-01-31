@@ -432,7 +432,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
+        m_FusedPostOutputSource(nullptr), m_FusedWUPreSource(nullptr), m_FusedWUPostSource(nullptr), m_FusedPreOutputSource(nullptr), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -722,7 +722,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     Utils::updateHash(getNumThreadsPerSpike(), hash);
     Utils::updateHash(isEventThresholdReTestRequired(), hash);
     Utils::updateHash(getSpanType(), hash);
-    Utils::updateHash(isPSModelFused(), hash);
+    Utils::updateHash(isPostOutputModelFused(), hash);
     Utils::updateHash(getSrcNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getTrgNeuronGroup()->getNumDelaySlots(), hash);
     Utils::updateHash(getMatrixType(), hash);
@@ -962,7 +962,15 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getRunnerHashDigest() cons
     Utils::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
     Utils::updateHash(getWUModel()->getLearnPostCode().empty(), hash);
-    
+    Utils::updateHash(isPreOutputModelFused(), hash);
+    Utils::updateHash(isPostOutputModelFused(), hash);
+    Utils::updateHash(isWUPostModelFused(), hash);
+    Utils::updateHash(isWUPreModelFused(), hash);
+    Utils::updateHash(isPreOutputModelFuseSource(), hash);
+    Utils::updateHash(isPostOutputModelFuseSource(), hash);
+    Utils::updateHash(isWUPostModelFuseSource(), hash);
+    Utils::updateHash(isWUPreModelFuseSource(), hash);
+
     // Weight update model variabless
     Utils::updateHash(getWUModel()->getVars(), hash);
     Utils::updateHash(getWUModel()->getExtraGlobalParams(), hash);

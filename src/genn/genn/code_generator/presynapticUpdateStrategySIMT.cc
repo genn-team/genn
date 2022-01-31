@@ -406,7 +406,7 @@ void PostSpan::genPostamble(CodeStream &os, const ModelSpecMerged &modelMerged, 
         {
             CodeStream::Scope b(os);
             const std::string inSyn = "group->inSyn[" + sg.getPostISynIndex(batchSize, popSubs["id"]) + "]";
-            if(sg.getArchetype().isPSModelFused()) {
+            if(sg.getArchetype().isPostOutputModelFused()) {
                 os << backend.getAtomic(model.getPrecision()) << "(&" << inSyn << ", linSyn);" << std::endl;
             }
             else {
@@ -796,7 +796,7 @@ void PostSpanBitmask::genPostamble(CodeStream &os, const ModelSpecMerged &modelM
         {
             CodeStream::Scope b(os);
             const std::string inSyn = "group->inSyn[" + sg.getPostISynIndex(modelMerged.getModel().getBatchSize(), "glbIdx") +"]";
-            if(sg.getArchetype().isPSModelFused()) {
+            if(sg.getArchetype().isPostOutputModelFused()) {
                 os << backend.getAtomic(modelMerged.getModel().getPrecision()) << "(&" << inSyn << ", shLg[shIdx]);" << std::endl;
             }
             else {

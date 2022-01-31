@@ -329,10 +329,11 @@ protected:
     {
         for(const auto &e : egps) {
             const bool isPointer = Utils::isTypePointer(e.type);
+            assert(isPointer);
             addField(e.type, e.name + varName,
-                     [e, varName](const G &g, size_t, const MergedRunnerMap &map) 
+                     [this, e, varName](const G &g, size_t, const MergedRunnerMap &map) 
                      { 
-                         return map.getStruct(g) + "." + e.name + varName; 
+                         return map.getStruct(g) + "." + getDeviceVarPrefix() + e.name + varName; 
                      },
                      isPointer ? FieldType::PointerEGP : FieldType::ScalarEGP);
         }
@@ -507,15 +508,12 @@ protected:
 
         // If merged group is used on host
         if(isHost()) {
-            // Generate struct directly into internal definitions
+            // Generate struct directly into runner
             // **NOTE** we ignore any backend prefix as we're generating this struct for use on the host
-            generateStruct(definitionsInternal, backend, name);
+            generateStruct(runnerVarDecl, backend, name);
 
             // Declare array of these structs containing individual neuron group pointers etc
             runnerVarDecl << "Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "];" << std::endl;
-
-            // Export it
-            definitionsInternalVar << "EXPORT_VAR Merged" << name << "Group" << this->getIndex() << " merged" << name << "Group" << this->getIndex() << "[" << this->getGroups().size() << "]; " << std::endl;
         }
 
         // Loop through groups

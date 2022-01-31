@@ -223,14 +223,14 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
         addPointerField(timePrecision, "prevST");
     }
     if(getArchetype().isPrevSpikeEventTimeRequired()) {
-        addPointerField(timePrecision, "prevSET", backend.getDeviceVarPrefix() + "prevSET");
+        addPointerField(timePrecision, "prevSET");
     }
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
     if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired() 
        && (!init || backend.isPopulationRNGInitialisedOnDevice())) 
     {
-        addPointerField(backend.getMergedGroupSimRNGType(), "rng", backend.getDeviceVarPrefix() + "rng");
+        addPointerField(backend.getMergedGroupSimRNGType(), "rng");
     }
 
     // Loop through variables
@@ -943,8 +943,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             addField(v.type + "*", v.name, 
                      [v, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
                      { 
-                         assert(!sg.isWUPreModelFused());
-                         return map.getStruct(sg) + "." + getDeviceVarPrefix() + v.name;
+                         return map.getStruct(*sg.getFusedWUPreSource()) + "." + getDeviceVarPrefix() + v.name;
                      });
         }
         
@@ -953,8 +952,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             addField(v.type + "*", v.name, 
                      [v, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
                      { 
-                         assert(!sg.isWUPostModelFused());
-                         return map.getStruct(sg) + "." + getDeviceVarPrefix() + v.name;
+                         return map.getStruct(*sg.getFusedWUPostSource()) + "." + getDeviceVarPrefix() + v.name;
                      });
         }
 
@@ -1001,8 +999,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             [](const SynapseGroupInternal &sg) { return sg.getSparseConnectivityInitialiser().getDerivedParams(); },
             &SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous);
 
-        addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                backend.getDeviceVarPrefix());
+        addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
     }
 
     // If we're updating a group with Toeplitz connectivity
@@ -1020,8 +1017,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             [](const SynapseGroupInternal &sg) { return sg.getToeplitzConnectivityInitialiser().getDerivedParams(); },
             &SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous);
 
-        addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-                backend.getDeviceVarPrefix());
+        addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
     }
 
     // If WU variables are global
@@ -1216,12 +1212,11 @@ void SynapseGroupMergedBase::addPSPointerField(const std::string &type, const st
     addField(type + "*", name, 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
-                 assert(!sg.isPSModelFused());
                  if(scalar && isDeviceScalarRequired()) {
-                     return "&" + map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
+                     return "&" + map.getStruct(*sg.getFusedPostOutputSource()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
-                     return map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
+                     return map.getStruct(*sg.getFusedPostOutputSource()) + "." + getDeviceVarPrefix() + name;
                  }
              });
 }
@@ -1232,12 +1227,11 @@ void SynapseGroupMergedBase::addPreOutputPointerField(const std::string &type, c
     addField(type + "*", name, 
              [name, scalar, this](const SynapseGroupInternal &sg, size_t, const MergedRunnerMap &map) 
              { 
-                 assert(!sg.isPreOutputModelFused());
                  if(scalar && isDeviceScalarRequired()) {
-                     return "&" + map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
+                     return "&" + map.getStruct(*sg.getFusedPreOutputSource()) + "." + getDeviceVarPrefix() + name;
                  }
                  else {
-                     return map.getStruct(sg) + "." + getDeviceVarPrefix() + name;
+                     return map.getStruct(*sg.getFusedPreOutputSource()) + "." + getDeviceVarPrefix() + name;
                  }
              });
 }

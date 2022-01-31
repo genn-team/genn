@@ -245,10 +245,10 @@ protected:
     //! Set if any of this synapse group's weight update model variables referenced by a custom update
     void setWUVarReferencedByCustomUpdate(bool ref) { m_WUVarReferencedByCustomUpdate = ref;  }
 
-    void setFusedPSVarSuffix(const std::string &suffix){ m_FusedPSVarSuffix = suffix; }
-    void setFusedWUPreVarSuffix(const std::string &suffix){ m_FusedWUPreVarSuffix = suffix; }
-    void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
-    void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
+    void setFusedPostOutputSource(SynapseGroup *source){ m_FusedPostOutputSource = source; }
+    void setFusedWUPreSource(SynapseGroup *source){ m_FusedWUPreSource = source; }
+    void setFusedWUPostSource(SynapseGroup *source){ m_FusedWUPostSource = source; }
+    void setFusedPreOutputSource(SynapseGroup *source){ m_FusedPreOutputSource = source; }
     
     void initDerivedParams(double dt);
 
@@ -267,10 +267,10 @@ protected:
     /*! This is required when the pre-synaptic neuron population's outgoing synapse groups require different event threshold */
     bool isEventThresholdReTestRequired() const{ return m_EventThresholdReTestRequired; }
 
-    const std::string &getFusedPSVarSuffix() const{ return m_FusedPSVarSuffix; }
-    const std::string &getFusedWUPreVarSuffix() const { return m_FusedWUPreVarSuffix; }
-    const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
-    const std::string &getFusedPreOutputSuffix() const { return m_FusedPreOutputSuffix; }
+    const SynapseGroup *getFusedPostOutputSource() const { return isPostOutputModelFused() ? m_FusedPostOutputSource : this; }
+    const SynapseGroup *getFusedWUPreSource() const { return isWUPreModelFused() ? m_FusedWUPreSource : this; }
+    const SynapseGroup *getFusedWUPostSource() const { return isWUPostModelFused() ? m_FusedWUPostSource : this; }
+    const SynapseGroup *getFusedPreOutputSource() const { return isPreOutputModelFused() ? m_FusedPreOutputSource : this; }
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
@@ -288,18 +288,32 @@ protected:
     bool canWUMPostUpdateBeFused() const;
     
     //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
-    bool isPSModelFused() const{ return m_FusedPSVarSuffix != getName(); }
+    bool isPostOutputModelFused() const{ return m_FusedPostOutputSource != nullptr; }
     
      //! Has this synapse group's presynaptic model been fused with those from other synapse groups?
-    bool isPreOutputModelFused() const{ return m_FusedPreOutputSuffix != getName(); }
+    bool isPreOutputModelFused() const{ return m_FusedPreOutputSource!= nullptr; }
 
     //! Has the presynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
-    bool isWUPreModelFused() const { return m_FusedWUPreVarSuffix != getName(); }
+    bool isWUPreModelFused() const { return m_FusedWUPreSource != nullptr; }
 
     //! Has the postsynaptic component of this synapse group's weight update
     //! model been fused with those from other synapse groups?
-    bool isWUPostModelFused() const { return m_FusedWUPostVarSuffix != getName(); }
+    bool isWUPostModelFused() const { return m_FusedWUPostSource != nullptr; }
+
+     //! Has this synapse group's postsynaptic model been fused with those from other synapse groups?
+    bool isPostOutputModelFuseSource() const{ return m_FusedPostOutputSource == this; }
+    
+     //! Has this synapse group's presynaptic model been fused with those from other synapse groups?
+    bool isPreOutputModelFuseSource() const{ return m_FusedPreOutputSource  == this; }
+
+    //! Has the presynaptic component of this synapse group's weight update
+    //! model been fused with those from other synapse groups?
+    bool isWUPreModelFuseSource() const { return m_FusedWUPreSource  == this; }
+
+    //! Has the postsynaptic component of this synapse group's weight update
+    //! model been fused with those from other synapse groups?
+    bool isWUPostModelFuseSource() const { return m_FusedWUPostSource  == this; }
 
     //! Get the type to use for sparse connectivity indices for synapse group
     std::string getSparseIndType() const;
@@ -493,21 +507,17 @@ private:
     //! Location of connectivity initialiser extra global parameters
     std::vector<VarLocation> m_ConnectivityExtraGlobalParamLocation;
 
-    //! Suffix for postsynaptic model variable names
-    /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedPSVarSuffix;
+    //! Pointer to synapse group which PSM has been fused into
+    SynapseGroup *m_FusedPostOutputSource;
 
-    //! Suffix for weight update model presynaptic variable names
-    /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedWUPreVarSuffix;
+     //! Pointer to synapse group which weight update model presynaptic update has been fused into
+    SynapseGroup *m_FusedWUPreSource;
     
-    //! Suffix for weight update model postsynaptic variable names
-    /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedWUPostVarSuffix;
+    ///! Pointer to synapse group which weight update model postsynaptic update has been fused into
+    SynapseGroup *m_FusedWUPostSource;
 
     //! Suffix for weight update model presynaptic output variable
-    /*! This may not be the name of this synapse group if it has been fused */
-    std::string m_FusedPreOutputSuffix;
+    SynapseGroup *m_FusedPreOutputSource;
 
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */

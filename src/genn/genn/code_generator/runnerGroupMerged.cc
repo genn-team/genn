@@ -65,7 +65,7 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
 
     // If this backend initialises population RNGs on device and this group requires on for simulation
     if(backend.isPopulationRNGRequired() && getArchetype().isSimRNGRequired()) {
-        addField(backend.getMergedGroupSimRNGType(), "rng", VarLocation::DEVICE, 0);
+        addField(backend.getMergedGroupSimRNGType(), "rng", VarLocation::DEVICE, 0, "group->numNeurons");
     }
 
     // Loop through variables
@@ -209,51 +209,51 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
                  0, "(((group->numSrcNeurons * group->rowStride) + 31) / 32)", VarAccessDuplication::SHARED);
     }
     
-    /*addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-            backend.getDeviceVarPrefix());
-    addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams(),
-            backend.getDeviceVarPrefix());*/
+    addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
+    addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
 
   
+    // If postsynaptic output model either isn't fused or archetype is the fuse source
+    if(!getArchetype().isPostOutputModelFused() || getArchetype().isPostOutputModelFuseSource()) {
+        // Add pointer to insyn
+        const unsigned int flags = getArchetype().isPostOutputModelFused() ? 0 : POINTER_FIELD_PUSH_PULL_GET;
+        addField(precision, "inSyn", getArchetype().getInSynLocation(), 
+                 POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons");
 
-    // **TODO** if not fused
-    // Add pointer to insyn
-    assert(!getArchetype().isPSModelFused());
-    //const unsigned int flags = sg->isPSModelFused() ? 0 : POINTER_FIELD_PUSH_PULL_GET;
-    addField(precision, "inSyn", getArchetype().getInSynLocation(), 
-             POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons");
+        // Add pointer to dendritic delay buffer if required
+        if(getArchetype().isDendriticDelayRequired()) {
+            addField("unsigned int", "maxDendriticDelayTimesteps",
+                     [this](const SynapseGroupInternal &sg) 
+                     { 
+                          return std::to_string(sg.getMaxDendriticDelayTimesteps());
+                     });
 
-    // Add pointer to dendritic delay buffer if required
-    if(getArchetype().isDendriticDelayRequired()) {
-        addField("unsigned int", "maxDendriticDelayTimesteps",
-                 [this](const SynapseGroupInternal &sg) 
-                 { 
-                      return std::to_string(sg.getMaxDendriticDelayTimesteps());
-                 });
+            addField(precision, "denDelay", getArchetype().getDendriticDelayLocation(), 0,
+                     "group->numTrgNeurons * group->maxDendriticDelayTimesteps");
+            //addChildField("unsigned int", "denDelayPtrInSyn", i, sg->getDendriticDelayLocation(), VarAccessDuplication::DUPLICATE);
+        }
 
-        addField(precision, "denDelay", getArchetype().getDendriticDelayLocation(), 0,
-                 "group->numTrgNeurons * group->maxDendriticDelayTimesteps");
-        //addChildField("unsigned int", "denDelayPtrInSyn", i, sg->getDendriticDelayLocation(), VarAccessDuplication::DUPLICATE);
+        // Add PSM extra global parmeters
+        addEGPs(getArchetype().getPSModel()->getExtraGlobalParams(), "",
+                [this](const std::string &name) { return getArchetype().getPSExtraGlobalParamLocation(name); });
+
+        // Loop through PSM variables
+        const auto &psVarInit = getArchetype().getPSVarInitialisers();
+        for(const auto &var : getArchetype().getPSModel()->getVars()) {
+            addField(var.type, var.name, getArchetype().getPSVarLocation(var.name), 
+                     POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
+            addEGPs(psVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+        }
     }
 
-    // If presynaptic output is required, add pointer to revInSyn    
-    if(getArchetype().isPresynapticOutputRequired()) {
+    // If presynaptic output is required and presynaptic output either isn't  
+    // fused or archetype is the fuse source, add pointer to revInSyn    
+    if(getArchetype().isPresynapticOutputRequired() &&
+       (!getArchetype().isPreOutputModelFused() || getArchetype().isPreOutputModelFuseSource())) 
+    {
         addField(precision, "revInSyn", getArchetype().getInSynLocation(), 0, "group->numSrcNeurons");
     }
 
-    // Add PSM extra global parmeters
-    addEGPs(getArchetype().getPSModel()->getExtraGlobalParams(), "",
-            [this](const std::string &name) { return getArchetype().getPSExtraGlobalParamLocation(name); });
-
-    // Loop through PSM variables
-    const auto &psVarInit = getArchetype().getPSVarInitialisers();
-    for(const auto &var : getArchetype().getPSModel()->getVars()) {
-        addField(var.type, var.name, getArchetype().getPSVarLocation(var.name), 
-                 POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
-        addEGPs(psVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
-    }
-
-    
     // Add WUM extra global parmeters
     addEGPs(getArchetype().getWUModel()->getExtraGlobalParams(), "",
             [this](const std::string &name) { return getArchetype().getWUExtraGlobalParamLocation(name); });
@@ -278,26 +278,26 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
         }
     }
     
-    // WU pre
-    assert(!getArchetype().isWUPreModelFused());
-    
-    // Loop through WUM presynaptic variables
-    const auto &wuPreVarInit = getArchetype().getWUPreVarInitialisers();
-    for(const auto &var : getArchetype().getWUModel()->getPreVars()) {
-        addField(var.type, var.name, getArchetype().getWUPreVarLocation(var.name), 
-                 POINTER_FIELD_PUSH_PULL_GET, "group->numSrcNeurons", getVarAccessDuplication(var.access));
-        addEGPs(wuPreVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name); 
+    // If presynaptic weight update model either isn't fused or archetype is the fuse source
+    if(!getArchetype().isWUPreModelFused() || getArchetype().isWUPreModelFuseSource()) {
+        // Loop through WUM presynaptic variables
+        const auto &wuPreVarInit = getArchetype().getWUPreVarInitialisers();
+        for(const auto &var : getArchetype().getWUModel()->getPreVars()) {
+            addField(var.type, var.name, getArchetype().getWUPreVarLocation(var.name),
+                     POINTER_FIELD_PUSH_PULL_GET, "group->numSrcNeurons", getVarAccessDuplication(var.access));
+            addEGPs(wuPreVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+        }
     }
 
-    // WU post
-    assert(!getArchetype().isWUPostModelFused());
-    
-    // Loop through WUM presynaptic variables
-    const auto &wuPostVarInit = getArchetype().getWUPostVarInitialisers();
-    for(const auto &var : getArchetype().getWUModel()->getPostVars()) {
-        addField(var.type, var.name, getArchetype().getWUPostVarLocation(var.name), 
-                 POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
-        addEGPs(wuPostVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name); 
+    // If postsynaptic weight update model either isn't fused or archetype is the fuse source
+    if(!getArchetype().isWUPostModelFused() || getArchetype().isWUPostModelFuseSource()) {
+        // Loop through WUM presynaptic variables
+        const auto &wuPostVarInit = getArchetype().getWUPostVarInitialisers();
+        for(const auto &var : getArchetype().getWUModel()->getPostVars()) {
+            addField(var.type, var.name, getArchetype().getWUPostVarLocation(var.name),
+                     POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
+            addEGPs(wuPostVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+        }
     }
 }
 

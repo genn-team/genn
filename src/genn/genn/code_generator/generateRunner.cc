@@ -786,7 +786,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             // Loop through incoming synaptic populations
             for(const auto *sg : n.second.getFusedPSMInSyn()) {
                 if(sg->isDendriticDelayRequired()) {
-                    runner << "denDelayPtr" << sg->getFusedPSVarSuffix() << " = (denDelayPtr" << sg->getFusedPSVarSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
+                    //assert(false);
+                    //runner << "denDelayPtr" << sg->getFusedPSVarSuffix() << " = (denDelayPtr" << sg->getFusedPSVarSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
                 }
             }
         }

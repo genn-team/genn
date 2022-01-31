@@ -172,7 +172,7 @@ protected:
         for(const auto &egp : egps) {
             // If EGP is a pointer, add field
             if(Utils::isTypePointer(egp.type)) {
-                addField(egp.type, egp.name + suffix,
+                addField(Utils::getUnderlyingType(egp.type), egp.name + suffix,
                          getEGPLocFunc(egp.name),
                          POINTER_FIELD_PUSH_PULL_GET);
             }
@@ -210,7 +210,7 @@ private:
 
                     if(flags & POINTER_FIELD_PUSH_PULL) {
                         if(fieldCount.empty()) {
-                            definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int i, unsigned int count;" << std::endl;
+                            definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int i, unsigned int count);" << std::endl;
                             runnerPushFunc << "void push" << name << "ToDevice(unsigned int i, unsigned int count)";
                         }
                         else {
