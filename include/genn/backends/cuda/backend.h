@@ -205,31 +205,6 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::string getMergedGroupSimRNGType() const override { return "curandState"; }
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
-
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, false);
-    }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, false);
-    }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, true);
-    }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, true);
-    }
-    
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
                                     CodeStream &runner, CodeStream &allocations, CodeStream &free, 
                                     MemAlloc &memAlloc) const override;
