@@ -1511,14 +1511,6 @@ void Backend::genGlobalDeviceRNG(CodeStream &, CodeStream &definitionsInternal, 
     memAlloc += MemAlloc::device(getSize("curandStatePhilox4_32_10_t"));
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
-                                   const std::string &name, size_t count, MemAlloc &memAlloc) const
-{
-    assert(false);
-    // Create an array or XORWOW RNGs
-    //genArray(definitions, definitionsInternal, runner, allocations, free, "curandState", name, VarLocation::DEVICE, count, memAlloc);
-}
-//--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                        CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const
 {

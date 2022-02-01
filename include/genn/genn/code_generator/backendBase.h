@@ -279,10 +279,6 @@ public:
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                                     CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
 
-    //! Generate an RNG with a state per population member
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations,
-                                  CodeStream &free, const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
-
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
