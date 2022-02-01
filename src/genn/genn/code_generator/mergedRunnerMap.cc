@@ -8,28 +8,37 @@
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
+std::string MergedRunnerMap::getStruct(const std::string &name) const
+{
+    // Find group by name
+    const auto m = m_MergedRunnerGroups.at(name);
+
+    // Return structure
+    return "merged" + std::get<2>(m) + "Group" + std::to_string(std::get<0>(m)) + "[" + std::to_string(std::get<1>(m)) + "]";
+}
+//--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const NeuronGroup &ng) const 
 { 
-    return getStruct<NeuronRunnerGroupMerged>(ng.getName()); 
+    return getStruct(ng.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const SynapseGroup &sg) const 
 { 
-    return getStruct<SynapseRunnerGroupMerged>(sg.getName()); 
+    return getStruct(sg.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const CurrentSource &cs) const 
 { 
-    return getStruct<CurrentSourceRunnerGroupMerged>(cs.getName()); 
+    return getStruct(cs.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const CustomUpdate &cu) const 
 { 
-    return getStruct<CustomUpdateRunnerGroupMerged>(cu.getName()); 
+    return getStruct(cu.getName()); 
 }
 //--------------------------------------------------------------------------
 std::string MergedRunnerMap::getStruct(const CustomUpdateWU &cu) const
 { 
-    return getStruct<CustomUpdateWURunnerGroupMerged>(cu.getName()); 
+    return getStruct(cu.getName()); 
 }
 }

@@ -312,15 +312,15 @@ protected:
     }
 
     template<typename V>
-    void addVarReferences(const Models::Base::VarRefVec &varReferences, const std::string &arrayPrefix, V getVarRefFn)
+    void addVarReferences(const Models::Base::VarRefVec &varReferences, V getVarRefFn)
     {
         // Loop through variables
         for(const auto &v : varReferences) {
             addField(v.type + "*", v.name, 
-                     [getVarRefFn, arrayPrefix, v](const G &g, size_t, const MergedRunnerMap&) 
+                     [this, getVarRefFn, v](const G &g, size_t, const MergedRunnerMap &map) 
                      { 
                          const auto varRef = getVarRefFn(g).at(v.name);
-                         return arrayPrefix + varRef.getVar().name + varRef.getTargetName(); 
+                         return map.getStruct(varRef.getTargetName()) + "." + getDeviceVarPrefix() + varRef.getVar().name;
                      });
         }
     }

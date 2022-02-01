@@ -33,12 +33,15 @@ public:
             for(size_t i = 0; i < g.getGroups().size(); i++) {
                 auto result = m_MergedRunnerGroups.emplace(std::piecewise_construct,
                                                            std::forward_as_tuple(g.getGroups().at(i).get().getName()),
-                                                           std::forward_as_tuple(g.getIndex(), i));
+                                                           std::forward_as_tuple(g.getIndex(), i, MergedGroup::name));
                 assert(result.second);
             }
         }
     }
 
+    //! Find struct by name
+    std::string getStruct(const std::string &name) const;
+    
     //! Find the name of the merged runner group associated with neuron group e.g. mergedNeuronRunnerGroup0[6]
     std::string getStruct(const NeuronGroup &ng) const;
 
@@ -54,28 +57,13 @@ public:
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateWURunnerGroup0[6]
     std::string getStruct(const CustomUpdateWU &cu) const;
 
-    std::tuple<size_t, size_t> getIndices(const std::string &name) const{ return m_MergedRunnerGroups.at(name); }
+    const std::tuple<size_t, size_t, std::string> &getIndices(const std::string &name) const{ return m_MergedRunnerGroups.at(name); }
 
 private:
-    //--------------------------------------------------------------------------
-    // Private methods
-    //--------------------------------------------------------------------------
-    //! Helper to find merged runner group
-    template<typename MergedGroup>
-    std::string getStruct(const std::string &name) const
-    {
-        // Find group by name
-        const auto m = m_MergedRunnerGroups.at(name);
-
-        // Return structure
-        return "merged" + MergedGroup::name + "Group" + std::to_string(std::get<0>(m)) + "[" + std::to_string(std::get<1>(m)) + "]";
-    }
-
-
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     //! Map of group names to index of merged group and index of group within that
-    std::unordered_map<std::string, std::tuple<size_t, size_t>> m_MergedRunnerGroups;
+    std::unordered_map<std::string, std::tuple<size_t, size_t, std::string>> m_MergedRunnerGroups;
 };
 }

@@ -1049,10 +1049,8 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
         [&modelMerged, this, blockSize](CodeStream &os, const CustomUpdateTransposeWUGroupMerged &cg, Substitutions &popSubs)
         {
             // Get index of variable being transposed
-            const size_t transposeVarIdx = std::distance(cg.getArchetype().getVarReferences().cbegin(),
-                                                         std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
-                                                                      [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; }));
-            const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
+            const auto transposeVar = std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
+                                                   [](const auto &v) { return v.second.getTransposeSynapseGroup() != nullptr; });            
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
             // To allow these kernels to be batched, we turn 2D grid into wide 1D grid of 2D block so calculate size
@@ -1116,7 +1114,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                             cg.generateCustomUpdate(*this, os, modelMerged, synSubs);
 
                             // Write forward weight to shared memory
-                            os << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVarName << ";" << std::endl;
+                            os << "shTile[" << getThreadID(1) << " + j][" << getThreadID(0) << "] = l" << transposeVar->first << ";" << std::endl;
                         }
                     }
                 }
@@ -1140,7 +1138,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                         os << "if((y + j) < group->numTrgNeurons)";
                         {
                             CodeStream::Scope b(os);
-                            os << "group->" << transposeVarName << "Transpose[";
+                            os << "group->" << transposeVar->first << "Transpose[";
                             if(cg.getArchetype().isBatched() && batchSize > 1) {
                                 os << "batchOffset + ";
                             }
