@@ -58,8 +58,8 @@ public:
     void generateRunner(const BackendBase &backend, CodeStream &definitionsFunc, 
                         CodeStream &runnerVarDecl,  CodeStream &runnerMergedRunnerStructAlloc, 
                         CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerPushFunc, 
-                        CodeStream &runnerPullFunc, CodeStream &runnerGetterFunc, 
-                        unsigned int batchSize, MemAlloc &memAlloc) const
+                        CodeStream &runnerPullFunc, CodeStream &runnerGetterFunc, CodeStream &runnerAllocateFunc,
+                        CodeStream &runnerFreeFunc, unsigned int batchSize, MemAlloc &memAlloc) const
     {
         const auto sortedFields = getSortedFields(backend);
         runnerVarDecl << "struct Merged" << M::name << "Group" << this->getIndex() << std::endl;
@@ -152,7 +152,8 @@ public:
         }
 
         // Generate push, pull and getter functions
-        genPushPullGet(backend, runnerPushFunc, runnerPullFunc, runnerGetterFunc, definitionsFunc);
+        genFieldFuncs(backend, runnerPushFunc, runnerPullFunc, runnerGetterFunc, 
+                     runnerAllocateFunc, runnerFreeFunc, definitionsFunc);
         
         // Generate memory allocation code
         genAllocMem(backend, runnerVarAlloc, batchSize, memAlloc);
@@ -206,13 +207,23 @@ protected:
     {
         addEGPs(egps, suffix, [](const std::string &) { return VarLocation::HOST_DEVICE; });
     }
+    
+    void genPushPointer(const BackendBase &backend, CodeStream &os, const std::string &varName, const std::string &groupIndex) const
+    {
+        // Push updated pointer to all destinations
+        os << "for(unsigned int m = start" << varName << M::name << "Group" << this->getIndex() << "[" << groupIndex <<"]; m < end" << varName << M::name << "Group" << this->getIndex() << "[" << groupIndex << "]; m++)";
+        {
+            CodeStream::Scope b(os);
+            os << "update" << varName << M::name << "Group" << this->getIndex() << "MergedGroups[m](group->" << backend.getDeviceVarPrefix() << varName << ");" << std::endl;
+        }
+    }
 
 private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void genPushPullGet(const BackendBase &backend, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                        CodeStream &runnerGetterFunc, CodeStream &definitions) const
+    void genFieldFuncs(const BackendBase &backend, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+                       CodeStream &runnerGetterFunc, CodeStream &runnerAllocateFunc, CodeStream &runnerFreeFunc, CodeStream &definitions) const
     {
         // Loop through fields
         for(const auto &f : m_Fields) {
@@ -225,12 +236,11 @@ private:
                 const auto loc = std::get<0>(pointerField);
                 const std::string &fieldCount = std::get<2>(pointerField);
                 const unsigned int flags = std::get<3>(pointerField);
+                const std::string name = std::get<1>(f) + M::name + "Group" + std::to_string(this->getIndex());
+                const std::string count = fieldCount.empty() ? "count" : fieldCount;
+                const std::string group = "merged" + M::name + "Group" + std::to_string(this->getIndex()) + "[i]";
                 if((loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
                 {
-                    const std::string name = std::get<1>(f) + M::name + "Group" + std::to_string(this->getIndex());
-                    const std::string count = fieldCount.empty() ? "count" : fieldCount;
-                    const std::string group = "merged" + M::name + "Group" + std::to_string(this->getIndex()) + "[i]";
-
                     if(flags & POINTER_FIELD_PUSH_PULL) {
                         if(fieldCount.empty()) {
                             definitions << "EXPORT_FUNC void push" << name << "ToDevice(unsigned int i, unsigned int count);" << std::endl;
@@ -270,6 +280,32 @@ private:
                             CodeStream::Scope a(runnerGetterFunc);
                             runnerGetterFunc << "return " << group << "." << std::get<1>(f) << ";" << std::endl;
                         }
+                    }
+                }
+                
+                // If field is dynamically allocated and doesn't have manual allocation flag set
+                if(((flags & POINTER_FIELD_MANUAL_ALLOC) == 0) && fieldCount.empty()) {
+                    // Define allocate and free functions
+                    definitions << "EXPORT_FUNC void allocate" << name << "(unsigned int i, unsigned int count);" << std::endl;
+                    definitions << "EXPORT_FUNC void free" << name << "(unsigned int i);" << std::endl;
+                    
+                    // Implement allocate function
+                    runnerAllocateFunc << "void allocate" << name << "(unsigned int i, unsigned int count)";
+                    {
+                        CodeStream::Scope a(runnerAllocateFunc);
+                        runnerAllocateFunc << "auto *group = &" << group << ";" << std::endl;
+                        backend.genFieldAllocation(runnerAllocateFunc, std::get<0>(f), std::get<1>(f), loc, count);
+                        
+                        // Generate code to push updated pointer to all destinations
+                        genPushPointer(backend, runnerAllocateFunc, std::get<1>(f), "i");
+                    }
+                    
+                    // Allocate free function
+                    runnerFreeFunc << "void free" << name << "(unsigned int i)";
+                    {
+                        CodeStream::Scope a(runnerFreeFunc);
+                        runnerFreeFunc << "auto *group = &" << group << ";" << std::endl;
+                        backend.genFieldFree(runnerFreeFunc, std::get<1>(f), loc);
                     }
                 }
             }

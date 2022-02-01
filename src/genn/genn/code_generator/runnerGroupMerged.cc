@@ -104,12 +104,8 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
             CodeStream::Scope b(runner);
             backend.genFieldAllocation(runner, "uint32_t*", "recordSpk", VarLocation::HOST_DEVICE, "numWords");
 
-            // Push updated pointer to all destinations
-            runner << "for(unsigned int m = startrecordSpkNeuronRunnerGroup" << getIndex() << "[g]; m < endrecordSpkNeuronRunnerGroup" << getIndex() << "[g]; m++)";
-            {
-                CodeStream::Scope b(runner);
-                runner << "pushrecordSpkNeuronRunnerGroup" << getIndex() << "ToDevice[m](group->" << backend.getDeviceVarPrefix() << "recordSpk);" << std::endl;
-            }
+            // Generate code to push updated pointer to all destinations
+            genPushPointer(backend, runner, "recordSpk", "g");
         }
 
         // Allocate spike event array if required
@@ -118,12 +114,8 @@ void NeuronRunnerGroupMerged::genRecordingBufferAlloc(const BackendBase &backend
             CodeStream::Scope b(runner);
             backend.genFieldAllocation(runner, "uint32_t*", "recordSpkEvent", VarLocation::HOST_DEVICE, "numWords");
 
-            // Push updated pointer to all destinations
-            runner << "for(unsigned int m = startrecordSpkEventNeuronRunnerGroup" << getIndex() << "[g]; m < endrecordSpkEventNeuronRunnerGroup" << getIndex() << "[g]; m++)";
-            {
-                CodeStream::Scope b(runner);
-                runner << "pushrecordSpkEventNeuronRunnerGroup" << getIndex() << "ToDevice[m](group->" << backend.getDeviceVarPrefix() << "recordSpkEvent);" << std::endl;
-            }
+            // Generate code to push updated pointer to all destinations
+            genPushPointer(backend, runner, "recordSpkEvent", "g");
         }
     }
 }

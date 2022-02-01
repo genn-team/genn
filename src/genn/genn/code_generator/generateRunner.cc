@@ -84,7 +84,7 @@ void genExtraGlobalParamTargets(const BackendBase &backend, CodeStream &os, cons
                 // Start declaration of three data structures
                 fieldPushFunctionStart << "const unsigned int start" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "[]{";
                 fieldPushFunctionEnd << "const unsigned int end" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "[]{";
-                fieldPushFunction << "const std::function<void(" << std::get<0>(f) << ")> push" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "ToDevice[]{";
+                fieldPushFunction << "const std::function<void(" << std::get<0>(f) << ")> update" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "MergedGroups[]{";
                
                 // Loop through groups
                 size_t numPushFunctions = 0;
@@ -263,10 +263,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     std::stringstream runnerMergedRuntimeStructAllocStream;
     std::stringstream runnerMergedRunnerStructAllocStream;
     std::stringstream runnerVarFreeStream;
-    std::stringstream runnerExtraGlobalParamFuncStream;
     std::stringstream runnerPushFuncStream;
     std::stringstream runnerPullFuncStream;
     std::stringstream runnerGetterFuncStream;
+    std::stringstream runnerAllocateFuncStream;
+    std::stringstream runnerFreeFuncStream;
     std::stringstream runnerStepTimeFinaliseStream;
     std::stringstream definitionsVarStream;
     std::stringstream definitionsFuncStream;
@@ -277,10 +278,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     CodeStream runnerMergedRuntimeStructAlloc(runnerMergedRuntimeStructAllocStream);
     CodeStream runnerMergedRunnerStructAlloc(runnerMergedRunnerStructAllocStream);
     CodeStream runnerVarFree(runnerVarFreeStream);
-    CodeStream runnerExtraGlobalParamFunc(runnerExtraGlobalParamFuncStream);
     CodeStream runnerPushFunc(runnerPushFuncStream);
     CodeStream runnerPullFunc(runnerPullFuncStream);
     CodeStream runnerGetterFunc(runnerGetterFuncStream);
+    CodeStream runnerAllocateFunc(runnerAllocateFuncStream);
+    CodeStream runnerFreeFunc(runnerFreeFuncStream);
     CodeStream runnerStepTimeFinalise(runnerStepTimeFinaliseStream);
     CodeStream definitionsVar(definitionsVarStream);
     CodeStream definitionsFunc(definitionsFuncStream);
@@ -408,7 +410,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, batchSize, mem);
+                         runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
+                         batchSize, mem);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -419,7 +422,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, batchSize, mem);
+                         runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
+                         batchSize, mem);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -430,7 +434,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, batchSize, mem);
+                         runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
+                         batchSize, mem);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -441,14 +446,16 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, batchSize, mem);
+                         runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
+                         batchSize, mem);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
     for(const auto &m : modelMerged.getMergedCustomUpdateWURunnerGroups()) {
         m.generateRunner(backend, definitionsFunc, runnerVarDecl,
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
-                         runnerGetterFunc, batchSize, mem);
+                         runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
+                         batchSize, mem);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -605,31 +612,34 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();
 
-    // Write extra global parameter functions to runner
     runner << "// ------------------------------------------------------------------------" << std::endl;
-    runner << "// extra global params" << std::endl;
-    runner << "// ------------------------------------------------------------------------" << std::endl;
-    runner << runnerExtraGlobalParamFuncStream.str();
-    runner << std::endl;
-
-    // Write push function declarations to runner
-    runner << "// ------------------------------------------------------------------------" << std::endl;
-    runner << "// copying things to device" << std::endl;
+    runner << "// variable push functions" << std::endl;
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPushFuncStream.str();
     runner << std::endl;
 
-    // Write pull function declarations to runner
     runner << "// ------------------------------------------------------------------------" << std::endl;
-    runner << "// copying things from device" << std::endl;
+    runner << "// variable pull functions" << std::endl;
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerPullFuncStream.str();
     runner << std::endl;
 
     runner << "// ------------------------------------------------------------------------" << std::endl;
-    runner << "// helper getter functions" << std::endl;
+    runner << "// variable getter functions" << std::endl;
     runner << "// ------------------------------------------------------------------------" << std::endl;
     runner << runnerGetterFuncStream.str();
+    runner << std::endl;
+
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// EGP allocation functions" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << runnerAllocateFuncStream.str();
+    runner << std::endl;
+
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << "// EGP free functions" << std::endl;
+    runner << "// ------------------------------------------------------------------------" << std::endl;
+    runner << runnerFreeFuncStream.str();
     runner << std::endl;
 
     if(!backend.getPreferences().automaticCopy) {
