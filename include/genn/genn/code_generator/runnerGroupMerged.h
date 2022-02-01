@@ -305,6 +305,12 @@ private:
                         }
                     }
                 }
+                // Otherwise, if this is a scalar field and device scalars are required, allocate one entry array on device
+                else if(std::holds_alternative<std::string>(std::get<2>(f))) {
+                    if(backend.isDeviceScalarRequired()) {
+                        backend.genFieldAllocation(runner, std::get<0>(f) + "*", std::get<1>(f), VarLocation::DEVICE, "1");
+                    }
+                }
             }
         }
     }
@@ -331,6 +337,12 @@ private:
                     const std::string &count = std::get<2>(pointerField);
                     if(!count.empty()) {
                         backend.genFieldFree(runner, std::get<1>(f), std::get<0>(pointerField));
+                    }
+                }
+                // Otherwise, if this is a scalar field and device scalars are required, free device array
+                else if(std::holds_alternative<std::string>(std::get<2>(f))) {
+                    if(backend.isDeviceScalarRequired()) {
+                         backend.genFieldFree(runner, std::get<1>(f), VarLocation::DEVICE);
                     }
                 }
             }
