@@ -145,7 +145,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
                     [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
 
     // Add EGPs to struct
-    this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    this->addEGPs(cm->getExtraGlobalParams());
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateGroupMerged::isParamHeterogeneous(const std::string &paramName) const
@@ -331,7 +331,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
             }
     }
     // Add EGPs to struct
-    this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
+    this->addEGPs(cm->getExtraGlobalParams());
 }
 //----------------------------------------------------------------------------
 void CustomUpdateWUGroupMergedBase::addSynapseGroupPointerField(const std::string &type, const std::string &name)
