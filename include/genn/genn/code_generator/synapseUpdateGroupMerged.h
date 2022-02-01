@@ -26,13 +26,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PresynapticUpdate);
     }
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSpikeEventThreshold(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -64,13 +63,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::PostsynapticUpdate);
     }
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -98,13 +96,12 @@ public:
         return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::SynapseDynamics);
     }
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateSynapseUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;

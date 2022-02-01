@@ -478,9 +478,8 @@ protected:
         }
     }
 
-    void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternal,
-                            CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                            CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunnerBase(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                            CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                             const MergedRunnerMap &mergedRunnerMap, const std::string &name) const
     {
         // Make a copy of fields and sort so largest come first. This should mean that due
@@ -577,13 +576,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void genMergedGroupSpikeCountReset(CodeStream &os, unsigned int batchSize) const;
@@ -606,13 +604,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1001,13 +998,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1028,13 +1024,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
@@ -1261,13 +1256,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl,
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------
@@ -1288,13 +1282,12 @@ public:
     //------------------------------------------------------------------------
     // Public API
     //------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     //----------------------------------------------------------------------------

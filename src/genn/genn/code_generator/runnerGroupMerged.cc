@@ -215,7 +215,6 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
     // If postsynaptic output model either isn't fused or archetype is the fuse source
     if(!getArchetype().isPostOutputModelFused() || getArchetype().isPostOutputModelFuseSource()) {
         // Add pointer to insyn
-        const unsigned int flags = getArchetype().isPostOutputModelFused() ? 0 : POINTER_FIELD_PUSH_PULL_GET;
         addField(precision, "inSyn", getArchetype().getInSynLocation(), 
                  POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons");
 

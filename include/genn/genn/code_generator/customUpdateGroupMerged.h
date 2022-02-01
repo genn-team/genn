@@ -22,13 +22,12 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl,
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -87,13 +86,12 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
@@ -119,13 +117,12 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc,
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternalFunc, 
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc, 
                         const MergedRunnerMap &mergedRunnerMap) const
     {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, mergedRunnerMap, name);
+        generateRunnerBase(backend, definitionsInternalFunc, runnerVarDecl, 
+                           runnerMergedStructAlloc, mergedRunnerMap, name);
     }
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
