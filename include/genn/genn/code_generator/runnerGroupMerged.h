@@ -20,6 +20,8 @@ public:
         POINTER_FIELD_MANUAL_ALLOC  = (1 << 0), //! This (dynamic) pointer field will be manually allocated
         POINTER_FIELD_PUSH_PULL     = (1 << 1), //! Generate push and pull functions for this field
         POINTER_FIELD_GET           = (1 << 2), //! Generate getter function for this field
+        POINTER_FIELD_STATE         = (1 << 3), //! Should this field be included in 'state'
+        POINTER_FIELD_CONNECTIVITY  = (1 << 4), //! Should this field be included in 'connectivity'
         POINTER_FIELD_PUSH_PULL_GET = POINTER_FIELD_PUSH_PULL | POINTER_FIELD_GET,
     };
 
@@ -39,7 +41,23 @@ public:
     //------------------------------------------------------------------------
     //! Get group fields
     const std::vector<Field> &getFields() const{ return m_Fields; }
-
+    
+    //! Return true if there are any pointer fields with the specified flags set
+    bool anyWithFlags(unsigned int flags) const
+    {
+        return std::any_of(getFields().cbegin(), getFields.cend(),
+                           [flags](const Field &f)
+                           {
+                               if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                                   const unsigned int fieldFlags = std::get<3>(std::get<PointerField>(std::get<2>(f)));
+                                   return ((fieldFlags & flags) == fieldFlags);
+                               }
+                               else {
+                                   return false;
+                               }
+                           });
+    }
+    
     //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
     {
@@ -203,7 +221,7 @@ protected:
         }
     }
 
-    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &suffix)
+    void addEGPs(const Snippet::Base::EGPVec &egps, const std::string &suffix = "")
     {
         addEGPs(egps, suffix, [](const std::string &) { return VarLocation::HOST_DEVICE; });
     }
@@ -222,10 +240,44 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
+    void genFieldGroupPushPullFuncs(const std::vector<std::string> &fieldNames, const std::string &prefix,
+                                    CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, CodeStream &definitions) const
+    {
+        // If there are any fields in list
+        if(!fieldNames.empty()) {
+            // Define group push and pull functions
+            definitions << "EXPORT_FUNC void pull" << prefix << "FromDevice(unsigned int i);" << std::endl;
+            definitions << "EXPORT_FUNC void push" << prefix << "ToDevice(unsigned int i, bool uninitialisedOnly = false);" << std::endl;
+            
+            // Implement pull function
+            runnerPullFunc << "void pull" << prefix << "FromDevice(unsigned int i)";
+            {
+                CodeStream::Scope a(runnerPullFunc);
+                for(const auto &s : fieldNames) {
+                    runnerPullFunc << "pull" << s << "FromDevice(i);" << std::endl;
+                }
+            }
+            runnerPullFunc << std::endl;
+            
+            // Implement push function
+            runnerPushFunc << "void push" << prefix << "ToDevice(unsigned int i, bool uninitialisedOnly)";
+            {
+                CodeStream::Scope a(runnerPushFunc);
+                for(const auto &s : fieldNames) {
+                    runnerPushFunc << "push" << s << "ToDevice(i, uninitialisedOnly);" << std::endl;
+                }
+            }
+            runnerPushFunc << std::endl;
+        }
+    }
+    
     void genFieldFuncs(const BackendBase &backend, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
                        CodeStream &runnerGetterFunc, CodeStream &runnerAllocateFunc, CodeStream &runnerFreeFunc, CodeStream &definitions) const
     {
         // Loop through fields
+        std::vector<std::string> stateFields;
+        std::vector<std::string> connectivityFields;
+        const std::string mergedGroupName = M::name + "Group" + std::to_string(this->getIndex());
         for(const auto &f : m_Fields) {
             // If this is pointer field
             if(std::holds_alternative<PointerField>(std::get<2>(f))) {
@@ -236,9 +288,9 @@ private:
                 const auto loc = std::get<0>(pointerField);
                 const std::string &fieldCount = std::get<2>(pointerField);
                 const unsigned int flags = std::get<3>(pointerField);
-                const std::string name = std::get<1>(f) + M::name + "Group" + std::to_string(this->getIndex());
+                const std::string name = std::get<1>(f) + mergedGroupName;
                 const std::string count = fieldCount.empty() ? "count" : fieldCount;
-                const std::string group = "merged" + M::name + "Group" + std::to_string(this->getIndex()) + "[i]";
+                const std::string group = "merged" + mergedGroupName + "[i]";
                 if((loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
                 {
                     if(flags & POINTER_FIELD_PUSH_PULL) {
@@ -271,6 +323,19 @@ private:
                             backend.genFieldPull(runnerPullFunc, std::get<0>(f), std::get<1>(f), loc, count);
                         }
                         runnerPullFunc << std::endl;
+                        
+                        // If this isn't a dynamic file
+                        if(!fieldCount.empty()) {
+                            // If state flag is set, add to vector of state fields
+                            if(flags & POINTER_FIELD_STATE) {
+                                stateFields.push_back(name);
+                            }
+                            
+                            // If connectivity flag is set, add to vector of connectivity fields
+                            if(flags & POINTER_FIELD_CONNECTIVITY) {
+                                connectivityFields.push_back(name);
+                            }
+                        }
                     }
                     
                     if(flags & POINTER_FIELD_GET) {
@@ -310,6 +375,10 @@ private:
                 }
             }
         }
+        
+        // Generate push and pull functions for state if required
+        genFieldGroupPushPullFuncs(stateFields, mergedGroupName + "State", runnerPushFunc, runnerPullFunc, definitions);
+        genFieldGroupPushPullFuncs(connectivityFields, mergedGroupName + "Connectivity", runnerPushFunc, runnerPullFunc, definitions);
     }
 
     void genAllocMem(const BackendBase &backend, CodeStream &runner, unsigned int batchSize, MemAlloc &memAlloc) const
@@ -460,7 +529,8 @@ public:
         const auto &varInit = this->getArchetype().getVarInitialisers();
         for(const auto &var : this->getArchetype().getCustomUpdateModel()->getVars()) {
             this->addField(var.type, var.name, this->getArchetype().getVarLocation(var.name),
-                           this->POINTER_FIELD_PUSH_PULL_GET, "group->size", getVarAccessDuplication(var.access));
+                           this->POINTER_FIELD_PUSH_PULL_GET | this->POINTER_FIELD_STATE, 
+                           "group->size", getVarAccessDuplication(var.access));
             this->addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
         }
     }

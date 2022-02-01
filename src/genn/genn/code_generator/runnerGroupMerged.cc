@@ -72,7 +72,8 @@ NeuronRunnerGroupMerged::NeuronRunnerGroupMerged(size_t index, const std::string
     for(const auto &var : getArchetype().getNeuronModel()->getVars()) {
         const std::string count = getArchetype().isVarQueueRequired(var.name) ? numNeuronsDelayed : numNeurons;
         addField(var.type, var.name, getArchetype().getVarLocation(var.name), 
-                 POINTER_FIELD_PUSH_PULL_GET, count, getVarAccessDuplication(var.access));
+                 POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE, 
+                 count, getVarAccessDuplication(var.access));
 
         addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
     }
@@ -177,31 +178,31 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
     // Add pointers to connectivity data
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         addField("unsigned int", "rowLength", getArchetype().getSparseConnectivityLocation(), 
-                 0, "group->numSrcNeurons", VarAccessDuplication::SHARED);
+                 POINTER_FIELD_CONNECTIVITY, "group->numSrcNeurons", VarAccessDuplication::SHARED);
         addField(getArchetype().getSparseIndType(), "ind", getArchetype().getSparseConnectivityLocation(),
-                 0, "group->numSrcNeurons * group->rowStride", VarAccessDuplication::SHARED);
+                 POINTER_FIELD_CONNECTIVITY, "group->numSrcNeurons * group->rowStride", VarAccessDuplication::SHARED);
 
         // Add additional structure for postsynaptic access
         if(backend.isPostsynapticRemapRequired() && !getArchetype().getWUModel()->getLearnPostCode().empty()) {
-            addField("unsigned int", "colLength", VarLocation::DEVICE, 
-                     0, "group->numTrgNeurons", VarAccessDuplication::SHARED);
-            addField("unsigned int", "remap", VarLocation::DEVICE,
-                     0, "group->numTrgNeurons * group->colStride", VarAccessDuplication::SHARED);
+            addField("unsigned int", "colLength", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY, 
+                     "group->numTrgNeurons", VarAccessDuplication::SHARED);
+            addField("unsigned int", "remap", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY, 
+                     "group->numTrgNeurons * group->colStride", VarAccessDuplication::SHARED);
         }
 
         // Add additional structure for synapse dynamics access if required
         if(backend.isSynRemapRequired(getArchetype())) {
-            addField("unsigned int", "synRemap", VarLocation::DEVICE,
-                     0, "(group->numSrcNeurons * group->rowStride) + 1", VarAccessDuplication::SHARED);
+            addField("unsigned int", "synRemap", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY, 
+                     "(group->numSrcNeurons * group->rowStride) + 1", VarAccessDuplication::SHARED);
         }
     }
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        addField("uint32_t", "gp", getArchetype().getSparseConnectivityLocation(), 
-                 0, "(((group->numSrcNeurons * group->rowStride) + 31) / 32)", VarAccessDuplication::SHARED);
+        addField("uint32_t", "gp", getArchetype().getSparseConnectivityLocation(), POINTER_FIELD_CONNECTIVITY, 
+                 "(((group->numSrcNeurons * group->rowStride) + 31) / 32)", VarAccessDuplication::SHARED);
     }
     
-    addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
-    addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams(), "");
+    addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
+    addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
 
   
     // If postsynaptic output model either isn't fused or archetype is the fuse source
@@ -230,8 +231,9 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
         // Loop through PSM variables
         const auto &psVarInit = getArchetype().getPSVarInitialisers();
         for(const auto &var : getArchetype().getPSModel()->getVars()) {
+            const unsigned int flags = getArchetype().isPostOutputModelFused() ? 0 : (POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE);
             addField(var.type, var.name, getArchetype().getPSVarLocation(var.name), 
-                     POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
+                     flags, "group->numTrgNeurons", getVarAccessDuplication(var.access));
             addEGPs(psVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
         }
     }
@@ -255,12 +257,12 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
         for(const auto &var : getArchetype().getWUModel()->getVars()) {
             if(getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) {
                 addField(var.type, var.name, getArchetype().getWUVarLocation(var.name), 
-                         POINTER_FIELD_PUSH_PULL_GET, "group->numSrcNeurons * group->rowStride", 
+                         POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE, "group->numSrcNeurons * group->rowStride", 
                          getVarAccessDuplication(var.access));
             }
             else if(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
                 addField(var.type, var.name, getArchetype().getWUVarLocation(var.name), 
-                         POINTER_FIELD_PUSH_PULL_GET, "group->kernelSizeFlattened", 
+                         POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE, "group->kernelSizeFlattened", 
                          getVarAccessDuplication(var.access));
             }
 
@@ -272,9 +274,10 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
     if(!getArchetype().isWUPreModelFused() || getArchetype().isWUPreModelFuseSource()) {
         // Loop through WUM presynaptic variables
         const auto &wuPreVarInit = getArchetype().getWUPreVarInitialisers();
+        const unsigned int flags = getArchetype().isWUPreModelFused() ? 0 : (POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE);
         for(const auto &var : getArchetype().getWUModel()->getPreVars()) {
             addField(var.type, var.name, getArchetype().getWUPreVarLocation(var.name),
-                     POINTER_FIELD_PUSH_PULL_GET, "group->numSrcNeurons", getVarAccessDuplication(var.access));
+                     flags, "group->numSrcNeurons", getVarAccessDuplication(var.access));
             addEGPs(wuPreVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
         }
     }
@@ -283,9 +286,10 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
     if(!getArchetype().isWUPostModelFused() || getArchetype().isWUPostModelFuseSource()) {
         // Loop through WUM presynaptic variables
         const auto &wuPostVarInit = getArchetype().getWUPostVarInitialisers();
+        const unsigned int flags = getArchetype().isWUPostModelFused() ? 0 : (POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE);
         for(const auto &var : getArchetype().getWUModel()->getPostVars()) {
             addField(var.type, var.name, getArchetype().getWUPostVarLocation(var.name),
-                     POINTER_FIELD_PUSH_PULL_GET, "group->numTrgNeurons", getVarAccessDuplication(var.access));
+                     flags, "group->numTrgNeurons", getVarAccessDuplication(var.access));
             addEGPs(wuPostVarInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
         }
     }
@@ -312,7 +316,7 @@ CurrentSourceRunnerGroupMerged::CurrentSourceRunnerGroupMerged(size_t index, con
     const auto &varInit = getArchetype().getVarInitialisers();
     for(const auto &var : getArchetype().getCurrentSourceModel()->getVars()) {
         addField(var.type, var.name, getArchetype().getVarLocation(var.name), 
-                        POINTER_FIELD_PUSH_PULL_GET, "group->numNeurons", getVarAccessDuplication(var.access));
+                        POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE, "group->numNeurons", getVarAccessDuplication(var.access));
         addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
     }
 }
