@@ -65,6 +65,20 @@ void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
 }
 //-------------------------------------------------------------------------
 template<typename G>
+void genPushAllGroupState(CodeStream &os, const std::vector<G> &mergedRunnerGroups)
+{
+    for(const auto &m : mergedRunnerGroups) {
+        if(m.hasPushStateFunction()) {
+            os << "for(unsigned int i = 0; i < " << m.getGroups().size() << "; i++)";
+            {
+                CodeStream::Scope b(os);
+                os << "push" << m.name << "Group" << m.getIndex() << "StateToDevice(i, uninitialisedOnly);" << std::endl;
+            }
+        }
+    }
+}
+//-------------------------------------------------------------------------
+template<typename G>
 void genExtraGlobalParamTargets(const BackendBase &backend, CodeStream &os, const G &runnerGroup, const ModelSpecMerged &modelMerged)
 {
     // Loop through fields
@@ -644,35 +658,32 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     if(!backend.getPreferences().automaticCopy) {
         // ---------------------------------------------------------------------
-        // Function for copying all state to device
-        runner << "void copyStateToDevice(bool uninitialisedOnly)";
+        // Function for pushing all state to device
+        runner << "void pushStateToDevice(bool uninitialisedOnly)";
         {
             CodeStream::Scope b(runner);
-            /*for(const auto &g : statePushPullFunctions) {
-                runner << "push" << g << "StateToDevice(uninitialisedOnly);" << std::endl;
-            }*/
+            genPushAllGroupState(runner, modelMerged.getMergedNeuronRunnerGroups());
+            genPushAllGroupState(runner, modelMerged.getMergedSynapseRunnerGroups());
+            genPushAllGroupState(runner, modelMerged.getMergedCurrentSourceRunnerGroups());
+            genPushAllGroupState(runner, modelMerged.getMergedCustomUpdateRunnerGroups());
+            genPushAllGroupState(runner, modelMerged.getMergedCustomUpdateWURunnerGroups());
         }
         runner << std::endl;
 
         // ---------------------------------------------------------------------
-        // Function for copying all connectivity to device
-        runner << "void copyConnectivityToDevice(bool uninitialisedOnly)";
+        // Function for pushing all connectivity to device
+        runner << "void pushConnectivityToDevice(bool uninitialisedOnly)";
         {
             CodeStream::Scope b(runner);
-            /*for(const auto &func : connectivityPushPullFunctions) {
-                runner << "push" << func << "ToDevice(uninitialisedOnly);" << std::endl;
-            }*/
-        }
-        runner << std::endl;
-
-        // ---------------------------------------------------------------------
-        // Function for copying all state from device
-        runner << "void copyStateFromDevice()";
-        {
-            CodeStream::Scope b(runner);
-            /*for(const auto &g : statePushPullFunctions) {
-                runner << "pull" << g << "StateFromDevice();" << std::endl;
-            }*/
+            for(const auto &m : modelMerged.getMergedSynapseRunnerGroups()) {
+                if(m.hasPushConnectivityFunction()) {
+                    runner << "for(unsigned int i = 0; i < " << m.getGroups().size() << "; i++)";
+                    {
+                        CodeStream::Scope b(runner);
+                        runner << "push" << m.name << "Group" << m.getIndex() << "ConnectivityToDevice(i, uninitialisedOnly);" << std::endl;
+                    }
+                }
+            }
         }
         runner << std::endl;
     }
@@ -812,11 +823,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     // Function definitions
     definitions << "// Runner functions" << std::endl;
     if(!backend.getPreferences().automaticCopy) {
-        definitions << "EXPORT_FUNC void copyStateToDevice(bool uninitialisedOnly = false);" << std::endl;
-        definitions << "EXPORT_FUNC void copyConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
-        definitions << "EXPORT_FUNC void copyStateFromDevice();" << std::endl;
-        definitions << "EXPORT_FUNC void copyCurrentSpikesFromDevice();" << std::endl;
-        definitions << "EXPORT_FUNC void copyCurrentSpikeEventsFromDevice();" << std::endl;
+        definitions << "EXPORT_FUNC void pushStateToDevice(bool uninitialisedOnly = false);" << std::endl;
+        definitions << "EXPORT_FUNC void pushConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;
     }
 
     if(model.isRecordingInUse()) {

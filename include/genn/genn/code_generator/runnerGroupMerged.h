@@ -42,21 +42,8 @@ public:
     //! Get group fields
     const std::vector<Field> &getFields() const{ return m_Fields; }
     
-    //! Return true if there are any pointer fields with the specified flags set
-    bool anyWithFlags(unsigned int flags) const
-    {
-        return std::any_of(getFields().cbegin(), getFields.cend(),
-                           [flags](const Field &f)
-                           {
-                               if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                                   const unsigned int fieldFlags = std::get<3>(std::get<PointerField>(std::get<2>(f)));
-                                   return ((fieldFlags & flags) == fieldFlags);
-                               }
-                               else {
-                                   return false;
-                               }
-                           });
-    }
+    //! Does this group provide functions to push state
+    bool hasPushStateFunction() const{ return anyAccesibleFieldsWithFlags(POINTER_FIELD_PUSH_PULL | POINTER_FIELD_STATE); }
     
     //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
@@ -235,30 +222,38 @@ protected:
             os << "update" << varName << M::name << "Group" << this->getIndex() << "MergedGroups[m](group->" << backend.getDeviceVarPrefix() << varName << ");" << std::endl;
         }
     }
+    
+    //! Return true if there are any pointer fields with the specified flags set
+    bool anyAccesibleFieldsWithFlags(unsigned int flags) const
+    {
+        return std::any_of(getFields().cbegin(), getFields().cend(),
+                           [flags](const Field &f)
+                           {
+                               if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                                   const auto pointerField = std::get<PointerField>(std::get<2>(f));
+                                   const auto loc = std::get<0>(pointerField);
+                                   const unsigned int fieldFlags = std::get<3>(pointerField);
+                                   return (((fieldFlags & flags) == fieldFlags)
+                                           && (loc & VarLocation::HOST) && (loc & VarLocation::DEVICE));
+                               }
+                               else {
+                                   return false;
+                               }
+                           });
+    }
 
 private:
     //------------------------------------------------------------------------
     // Private methods
-    //------------------------------------------------------------------------
-    void genFieldGroupPushPullFuncs(const std::vector<std::string> &fieldNames, const std::string &prefix,
-                                    CodeStream &runnerPushFunc, CodeStream &runnerPullFunc, CodeStream &definitions) const
+    //------------------------------------------------------------------------    
+    void genFieldGroupPushFuncs(const std::vector<std::string> &fieldNames, const std::string &prefix,
+                                CodeStream &runnerPushFunc, CodeStream &definitions) const
     {
         // If there are any fields in list
         if(!fieldNames.empty()) {
-            // Define group push and pull functions
-            definitions << "EXPORT_FUNC void pull" << prefix << "FromDevice(unsigned int i);" << std::endl;
+            // Define group push functions
             definitions << "EXPORT_FUNC void push" << prefix << "ToDevice(unsigned int i, bool uninitialisedOnly = false);" << std::endl;
-            
-            // Implement pull function
-            runnerPullFunc << "void pull" << prefix << "FromDevice(unsigned int i)";
-            {
-                CodeStream::Scope a(runnerPullFunc);
-                for(const auto &s : fieldNames) {
-                    runnerPullFunc << "pull" << s << "FromDevice(i);" << std::endl;
-                }
-            }
-            runnerPullFunc << std::endl;
-            
+
             // Implement push function
             runnerPushFunc << "void push" << prefix << "ToDevice(unsigned int i, bool uninitialisedOnly)";
             {
@@ -377,8 +372,8 @@ private:
         }
         
         // Generate push and pull functions for state if required
-        genFieldGroupPushPullFuncs(stateFields, mergedGroupName + "State", runnerPushFunc, runnerPullFunc, definitions);
-        genFieldGroupPushPullFuncs(connectivityFields, mergedGroupName + "Connectivity", runnerPushFunc, runnerPullFunc, definitions);
+        genFieldGroupPushFuncs(stateFields, mergedGroupName + "State", runnerPushFunc, definitions);
+        genFieldGroupPushFuncs(connectivityFields, mergedGroupName + "Connectivity", runnerPushFunc, definitions);
     }
 
     void genAllocMem(const BackendBase &backend, CodeStream &runner, unsigned int batchSize, MemAlloc &memAlloc) const
@@ -490,6 +485,12 @@ public:
     SynapseRunnerGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
                              const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    //! Does this group provide functions to push connectivity
+    bool hasPushConnectivityFunction() const{ return anyAccesibleFieldsWithFlags(POINTER_FIELD_PUSH_PULL | POINTER_FIELD_CONNECTIVITY); }
+    
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------

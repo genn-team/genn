@@ -1025,8 +1025,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
         // Copy all uninitialised state variables to device
         if(!getPreferences().automaticCopy) {
-            os << "copyStateToDevice(true);" << std::endl;
-            os << "copyConnectivityToDevice(true);" << std::endl << std::endl;
+            os << "pushStateToDevice(true);" << std::endl;
+            os << "pushConnectivityToDevice(true);" << std::endl << std::endl;
         }
 
         // If there are any sparse initialisation threads

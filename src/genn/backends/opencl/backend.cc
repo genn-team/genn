@@ -1338,8 +1338,8 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         initSparsePushEGPHandler(os);
 
         // Copy all uninitialised state variables to device
-        os << "copyStateToDevice(true);" << std::endl;
-        os << "copyConnectivityToDevice(true);" << std::endl;
+        os << "pushStateToDevice(true);" << std::endl;
+        os << "pushConnectivityToDevice(true);" << std::endl;
 
         // If there are any sparse initialisation work-items
         if (idSparseInitStart > 0) {
