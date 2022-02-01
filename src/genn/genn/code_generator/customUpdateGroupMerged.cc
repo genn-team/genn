@@ -141,8 +141,7 @@ CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string
     addVars(cm->getVars());
 
     // Add variable references to struct
-    addVarReferences(cm->getVarRefs(), backend.getDeviceVarPrefix(),
-                    [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
+    addVarReferences(cm->getVarRefs(), [](const CustomUpdateInternal &cg) { return cg.getVarReferences(); });
 
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams());
@@ -314,8 +313,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
 
     // Add variable references to struct
     const auto varRefs = cm->getVarRefs();
-    addVarReferences(varRefs, backend.getDeviceVarPrefix(),
-                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
+    addVarReferences(varRefs, [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
 
      // Loop through variables
     for(const auto &v : varRefs) {
@@ -323,10 +321,10 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
         if(getArchetype().getVarReferences().at(v.name).getTransposeSynapseGroup() != nullptr) {
             // Add field with transpose suffix, pointing to transpose var
             addField(v.type + "*", v.name + "Transpose",
-                     [&backend, v](const CustomUpdateWUInternal &g, size_t, const MergedRunnerMap&)
+                     [this, v](const CustomUpdateWUInternal &g, size_t, const MergedRunnerMap &map)
                      {
                          const auto varRef = g.getVarReferences().at(v.name);
-                         return backend.getDeviceVarPrefix() + varRef.getTransposeVar().name + varRef.getTransposeTargetName();
+                         return map.getStruct(varRef.getTransposeTargetName()) + "." + getDeviceVarPrefix() + varRef.getTransposeVar().name;
                      });
             }
     }
