@@ -56,6 +56,10 @@ void generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerg
     macroLookup << "#define GET_FIELD(POP, VAR) GENN_CAT(get, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP)))(GENN_CAT(GROUP_, POP))" << std::endl;
     macroLookup << "#define PUSH_FIELD(POP, VAR) GENN_CAT(GENN_CAT(push, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP))), ToDevice)(GENN_CAT(GROUP_, POP))" << std::endl;
     macroLookup << "#define PULL_FIELD(POP, VAR) GENN_CAT(GENN_CAT(pull, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP))), FromDevice)(GENN_CAT(GROUP_, POP))" << std::endl;
+    macroLookup << "#define PUSH_EGP_FIELD(POP, VAR, COUNT) GENN_CAT(GENN_CAT(push, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP))), ToDevice)(GENN_CAT(GROUP_, POP), COUNT)" << std::endl;
+    macroLookup << "#define PULL_EGP_FIELD(POP, VAR, COUNT) GENN_CAT(GENN_CAT(pull, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP))), FromDevice)(GENN_CAT(GROUP_, POP), COUNT)" << std::endl;
+    macroLookup << "#define ALLOCATE_EGP_FIELD(POP, VAR, COUNT) GENN_CAT(allocate, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP)))(GENN_CAT(GROUP_, POP), COUNT)" << std::endl;
+    macroLookup << "#define FREE_EGP_FIELD(POP, VAR) GENN_CAT(free, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP)))(GENN_CAT(GROUP_, POP))" << std::endl;
     macroLookup << std::endl;
 
     // Genererate macros
