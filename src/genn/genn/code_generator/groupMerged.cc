@@ -481,7 +481,7 @@ const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnect
 //------------------------------------------------------------------------
 SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
                                                                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-:   RuntimeGroupMerged<SynapseGroupInternal>(index, precision, backend, groups, true)
+:   RuntimeGroupMerged<SynapseGroupInternal>(index, precision, backend, groups, true), m_Precision(precision)
 {
     // **TODO** these could be generic
     addField("unsigned int", "numSrcNeurons",
@@ -548,7 +548,70 @@ bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamRefere
     const auto *connectInitSnippet = getArchetype().getSparseConnectivityInitialiser().getSnippet();
     return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
 }
+//----------------------------------------------------------------------------
+void SynapseConnectivityHostInitGroupMerged::generateHostInit(const BackendBase &backend, CodeStream &os) const
+{
+    CodeStream::Scope b(os);
+    os << "// merged synapse connectivity host init group " << getIndex() << std::endl;
+    os << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+    {
+        CodeStream::Scope b(os);
 
+        // Get reference to group
+        os << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << getIndex() << "[g]; " << std::endl;
+
+        const auto &connectInit = getArchetype().getSparseConnectivityInitialiser();
+
+        // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
+        // Otherwise it will only ever be used for initialization which uses one thread per row
+        const size_t numThreads = (getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) ? getArchetype().getNumThreadsPerSpike() : 1;
+
+        // Create substitutions
+        Substitutions subs;
+        subs.addVarSubstitution("rng", "hostRNG");
+        subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+        subs.addVarSubstitution("num_post", "group->numTrgNeurons");
+        subs.addVarSubstitution("num_threads", std::to_string(numThreads));
+        subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group->");
+        subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                       [this](const std::string &p) { return isConnectivityInitParamHeterogeneous(p); },
+                                       "", "group->");
+        subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                     [this](const std::string &p) { return isConnectivityInitDerivedParamHeterogeneous(p); },
+                                     "", "group->");
+
+        // Loop through EGPs
+        for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
+            const auto loc = getArchetype().getSparseConnectivityExtraGlobalParamLocation(egp.name);
+            // If EGP is a pointer and located on the host
+            if(Utils::isTypePointer(egp.type) && (loc & VarLocation::HOST)) {
+                // Generate code to allocate this EGP with count specified by $(0)
+                std::stringstream allocStream;
+                CodeGenerator::CodeStream alloc(allocStream);
+                backend.genFieldAllocation(alloc, egp.type + "*", egp.name, loc, "$(0)");
+
+                // Add substitution
+                subs.addFuncSubstitution("allocate" + egp.name, 1, allocStream.str());
+
+                // Generate code to push this EGP with count specified by $(0)
+                std::stringstream pushStream;
+                CodeStream push(pushStream);
+                backend.genFieldPush(push, egp.type + "*", egp.name, loc, false, "$(0)");
+
+
+                // Add substitution
+                subs.addFuncSubstitution("push" + egp.name, 1, pushStream.str());
+            }
+        }
+        std::string code = connectInit.getSnippet()->getHostInitCode();
+        subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(getIndex()));
+        code = ensureFtype(code, m_Precision);
+
+        // Write out code
+        os << code << std::endl;
+
+    }
+}
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseGroupMergedBase
 //----------------------------------------------------------------------------

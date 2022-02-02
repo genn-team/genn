@@ -135,71 +135,6 @@ void genExtraGlobalParamTargets(const BackendBase &backend, CodeStream &os, cons
         }
     }
 }
-//-------------------------------------------------------------------------
-void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os, 
-                                    const SynapseConnectivityHostInitGroupMerged &sg, const std::string &precision)
-{
-    CodeStream::Scope b(os);
-    os << "// merged synapse connectivity host init group " << sg.getIndex() << std::endl;
-    os << "for(unsigned int g = 0; g < " << sg.getGroups().size() << "; g++)";
-    {
-        CodeStream::Scope b(os);
-
-        // Get reference to group
-        os << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << sg.getIndex() << "[g]; " << std::endl;
-
-        const auto &connectInit = sg.getArchetype().getSparseConnectivityInitialiser();
-
-        // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
-        // Otherwise it will only ever be used for initialization which uses one thread per row
-        const size_t numThreads = (sg.getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) ? sg.getArchetype().getNumThreadsPerSpike() : 1;
-
-        // Create substitutions
-        Substitutions subs;
-        subs.addVarSubstitution("rng", "hostRNG");
-        subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
-        subs.addVarSubstitution("num_post", "group->numTrgNeurons");
-        subs.addVarSubstitution("num_threads", std::to_string(numThreads));
-        subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group->");
-        subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
-                                       [&sg](const std::string &p) { return sg.isConnectivityInitParamHeterogeneous(p); },
-                                       "", "group->");
-        subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
-                                     [&sg](const std::string &p) { return sg.isConnectivityInitDerivedParamHeterogeneous(p); },
-                                     "", "group->");
-
-        // Loop through EGPs
-        for(const auto &egp : connectInit.getSnippet()->getExtraGlobalParams()) {
-            const auto loc = sg.getArchetype().getSparseConnectivityExtraGlobalParamLocation(egp.name);
-            // If EGP is a pointer and located on the host
-            if(Utils::isTypePointer(egp.type) && (loc & VarLocation::HOST)) {
-                // Generate code to allocate this EGP with count specified by $(0)
-                std::stringstream allocStream;
-                CodeGenerator::CodeStream alloc(allocStream);
-                backend.genFieldAllocation(alloc, egp.type + "*", egp.name, loc, "$(0)");
-
-                // Add substitution
-                subs.addFuncSubstitution("allocate" + egp.name, 1, allocStream.str());
-
-                // Generate code to push this EGP with count specified by $(0)
-                std::stringstream pushStream;
-                CodeStream push(pushStream);
-                backend.genFieldPush(push, egp.type + "*", egp.name, loc, false, "$(0)");
-
-
-                // Add substitution
-                subs.addFuncSubstitution("push" + egp.name, 1, pushStream.str());
-            }
-        }
-        std::string code = connectInit.getSnippet()->getHostInitCode();
-        subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(sg.getIndex()));
-        code = ensureFtype(code, precision);
-
-        // Write out code
-        os << code << std::endl;
-
-    }
-}
 }   // Anonymous namespace
 
 //--------------------------------------------------------------------------
@@ -483,7 +418,7 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
     // Loop through merged synapse connectivity host init groups and generate host init code
     // **NOTE** this is done here so valid pointers get copied straight into subsequent structures and merged EGP system isn't required
     for(const auto &sg : modelMerged.getMergedSynapseConnectivityHostInitGroups()) {
-        genSynapseConnectivityHostInit(backend, runnerMergedRuntimeStructAlloc, sg, model.getPrecision());
+        sg.generateHostInit(backend, runnerMergedRuntimeStructAlloc);
     }
 
     // Generate merged neuron initialisation groups

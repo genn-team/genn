@@ -1038,6 +1038,8 @@ public:
     //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
     bool isConnectivityInitDerivedParamHeterogeneous(const std::string &paramName) const;
 
+    void generateHostInit(const BackendBase &backend, CodeStream &os) const;
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -1049,6 +1051,11 @@ private:
     //------------------------------------------------------------------------
      //! Is the connectivity initialization parameter referenced?
     bool isSparseConnectivityInitParamReferenced(const std::string &paramName) const;
+
+    //------------------------------------------------------------------------
+    // Members
+    //------------------------------------------------------------------------
+    const std::string m_Precision;
 };
 
 //----------------------------------------------------------------------------
