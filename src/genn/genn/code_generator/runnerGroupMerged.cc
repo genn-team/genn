@@ -151,6 +151,22 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
         }
     }
 }
+//----------------------------------------------------------------------------
+void NeuronRunnerGroupMerged::genSpikeQueuePtrUpdate(CodeStream &os) const
+{
+    // If this merged group has axonal delay
+    if(getArchetype().isDelayRequired()) {
+         // Loop through groups
+         os << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+         {
+             CodeStream::Scope b(os);
+
+             // Generate update
+             os << "auto *group = &mergedNeuronRunnerGroup" << getIndex() << "[g]; " << std::endl;
+             os << "group->spkQuePtr = (group->spkQuePtr + 1) % group->numDelaySlots;" << std::endl;
+         }
+    }
+}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::SynapseRunnerGroupMerged
@@ -294,7 +310,24 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
         }
     }
 }
+//----------------------------------------------------------------------------
+void SynapseRunnerGroupMerged::genDenDelayPtrUpdate(CodeStream &os) const
+{
+    // If this merged group actually has a den delay pointer variable
+    if((!getArchetype().isPostOutputModelFused() || getArchetype().isPostOutputModelFuseSource())
+       && getArchetype().isDendriticDelayRequired())
+    {
+         // Loop through groups
+         os << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+         {
+             CodeStream::Scope b(os);
 
+             // Generate update
+             os << "auto *group = &mergedSynapseRunnerGroup" << getIndex() << "[g]; " << std::endl;
+             os << "group->denDelayPtr  = (group->denDelayPtr + 1) % group->maxDendriticDelayTimesteps;" << std::endl;
+         }
+    }
+}
 
 //----------------------------------------------------------------------------
 // CodeGenerator::CurrentSourceRunnerGroupMerged

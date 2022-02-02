@@ -470,6 +470,9 @@ public:
     void genRecordingBufferAlloc(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const;
     void genRecordingBufferPull(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const;
 
+    //! Generate code to update host spike queue pointer
+    void genSpikeQueuePtrUpdate(CodeStream &os) const;
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -491,6 +494,9 @@ public:
     //! Does this group provide functions to push connectivity
     bool hasPushConnectivityFunction() const{ return anyAccesibleFieldsWithFlags(POINTER_FIELD_PUSH_PULL | POINTER_FIELD_CONNECTIVITY); }
     
+    //! Generate code to update host dendritic delay pointer
+    void genDenDelayPtrUpdate(CodeStream &os) const;
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------

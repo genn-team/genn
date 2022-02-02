@@ -780,11 +780,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         runner << "updateSynapses(t);" << std::endl;
 
         // Generate code to advance host-side spike queues
-   
-        for(const auto &n : model.getNeuronGroups()) {
-            if (n.second.isDelayRequired()) {
-                runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
-            }
+        for(const auto &m : modelMerged.getMergedNeuronRunnerGroups()) {
+            m.genSpikeQueuePtrUpdate(runner);
         }
 
         // Update neuronal state
@@ -795,15 +792,10 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         runner << "); " << std::endl;
 
         // Generate code to advance host side dendritic delay buffers
-        for(const auto &n : model.getNeuronGroups()) {
-            // Loop through incoming synaptic populations
-            for(const auto *sg : n.second.getFusedPSMInSyn()) {
-                if(sg->isDendriticDelayRequired()) {
-                    //assert(false);
-                    //runner << "denDelayPtr" << sg->getFusedPSVarSuffix() << " = (denDelayPtr" << sg->getFusedPSVarSuffix() << " + 1) % " << sg->getMaxDendriticDelayTimesteps() << ";" << std::endl;
-                }
-            }
+        for(const auto &m : modelMerged.getMergedSynapseRunnerGroups()) {
+            m.genDenDelayPtrUpdate(runner);
         }
+        
         // Advance time
         runner << "iT++;" << std::endl;
         runner << "t = iT*DT;" << std::endl;
