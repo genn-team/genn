@@ -45,6 +45,7 @@ namespace CodeGenerator
     class SynapseConnectivityInitGroupMerged;
     class SynapseDenseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
+    class SynapseKernelInitGroupMerged;
     
 }
 
@@ -74,6 +75,10 @@ struct PreferencesBase
 
     //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
     bool generateExtraGlobalParamPull = true;
+
+    //! On Windows, should the model name be included in the name of the DLL 
+    //! i.e. runner_test_model_Release.dll rather than runner_Release.dll
+    bool includeModelNameInDLL = false;
 
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
@@ -180,27 +185,6 @@ public:
     
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
-
-    //! Standard callback type which provides a CodeStream to write platform-independent code for the specified SynapseGroup to.
-    typedef GroupHandler<NeuronUpdateGroupMerged> NeuronUpdateGroupMergedHandler;
-    typedef GroupHandler<PresynapticUpdateGroupMerged> PresynapticUpdateGroupMergedHandler;
-    typedef GroupHandler<PostsynapticUpdateGroupMerged> PostsynapticUpdateGroupMergedHandler;
-    typedef GroupHandler<SynapseDynamicsGroupMerged> SynapseDynamicsGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateGroupMerged> CustomUpdateGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateWUGroupMerged> CustomUpdateWUGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateTransposeWUGroupMerged> CustomUpdateTransposeWUGroupMergedHandler;
-    typedef GroupHandler<NeuronInitGroupMerged> NeuronInitGroupMergedHandler;
-    typedef GroupHandler<CustomUpdateInitGroupMerged> CustomUpdateInitGroupMergedHandler;
-    typedef GroupHandler<CustomWUUpdateDenseInitGroupMerged> CustomWUUpdateDenseInitGroupMergedHandler;
-    typedef GroupHandler<CustomWUUpdateSparseInitGroupMerged> CustomWUUpdateSparseInitGroupMergedHandler;
-    typedef GroupHandler<SynapseConnectivityInitGroupMerged> SynapseConnectivityInitMergedGroupHandler;
-    typedef GroupHandler<SynapseDenseInitGroupMerged> SynapseDenseInitGroupMergedHandler;
-    typedef GroupHandler<SynapseSparseInitGroupMerged> SynapseSparseInitGroupMergedHandler;
-    
-    //! Callback function type for generation neuron group simulation code
-    /*! Provides additional callbacks to insert code to emit spikes */
-    typedef std::function <void(CodeStream &, const NeuronUpdateGroupMerged &, Substitutions&,
-                                NeuronUpdateGroupMergedHandler, NeuronUpdateGroupMergedHandler)> NeuronGroupSimHandler;
     
     //! Vector of prefixes required to allocate in memory space and size of memory space
     typedef std::vector<std::pair<std::string, size_t>> MemorySpaces;
@@ -215,72 +199,34 @@ public:
     /*! \param os                       CodeStream to write function to
         \param modelMerged              merged model to generate code for
         \param preambleHandler          callback to write functions for pushing extra-global parameters
-        \param simHandler               callback to write platform-independent code to update an individual NeuronGroup
-        \param wuVarUpdateHandler       callback to write platform-independent code to update pre and postsynaptic weight update model variables when neuron spikes
-        \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                                 NeuronGroupSimHandler simHandler, NeuronUpdateGroupMergedHandler wuVarUpdateHandler,
-                                 HostHandler pushEGPHandler) const = 0;
+        \param pushEGPHandler           callback to write required extra-global parameter pushing code to start of neuronUpdate function*/
+    virtual void genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to update the state of all synapses
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
-        \param wumThreshHandler             callback to write platform-independent code to update an individual NeuronGroup
-        \param wumSimHandler                callback to write platform-independent code to process presynaptic spikes.
-                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.
-        \param wumEventHandler              callback to write platform-independent code to process presynaptic spike-like events.
-                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.
-        \param wumProceduralConnectHandler  callback to write platform-indepent code to procedurally generate connectivity
-                                            "id_pre" variable and "addSynapse" function will be provided to callback via Substitutions.
-                                            callback needs to implement loop over synapses in row, providing "synAddress" variable if INDIVIDUALG
-        \param postLearnHandler             callback to write platform-independent code to process postsynaptic spikes.
-                                            "id_pre", "id_post" and "id_syn" variables will be provided to callback via Substitutions.
-        \param synapseDynamicsHandler       callback to write platform-independent code to update time-driven synapse dynamics.
-                                            "id_pre", "id_post" and "id_syn" variables; and either "addToInSynDelay" or "addToInSyn" function will be provided
-                                            to callback via Substitutions.
         \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler,
-                                  PresynapticUpdateGroupMergedHandler wumThreshHandler, PresynapticUpdateGroupMergedHandler wumSimHandler,
-                                  PresynapticUpdateGroupMergedHandler wumEventHandler, PresynapticUpdateGroupMergedHandler wumProceduralConnectHandler,
-                                  PostsynapticUpdateGroupMergedHandler postLearnHandler, SynapseDynamicsGroupMergedHandler synapseDynamicsHandler,
-                                  HostHandler pushEGPHandler) const = 0;
+    virtual void genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                                  HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific functions to perform custom updates
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
-      
-        \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of synapseUpdate function*/
-    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                                 CustomUpdateGroupMergedHandler customUpdateHandler, CustomUpdateWUGroupMergedHandler customWUUpdateHandler, 
-                                 CustomUpdateTransposeWUGroupMergedHandler customWUTransposeUpdateHandler, HostHandler pushEGPHandler) const = 0;
+        \param pushEGPHandler               callback to write required extra-global parameter pushing code to start of customUpdate function*/
+    virtual void genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                                 HostHandler preambleHandler, HostHandler pushEGPHandler) const = 0;
 
     //! Generate platform-specific function to initialise model
     /*! \param os                           CodeStream to write function to
         \param modelMerged                  merged model to generate code for
         \param preambleHandler              callback to write functions for pushing extra-global parameters
-        \param localNGHandler               callback to write platform-independent code to initialize a merged neuron group
-        \param sgDenseInitHandler           callback to write platform-independent code to initialize the synapse variables of
-                                            a merged synapse group with dense connectivity
-        \param sgSparseRowConnectHandler    callback to write platform-independent code to initialize sparse connectivity
-                                            for a merged synapse group with a row-wise connectivity initialisation snippet
-        \param sgSparseColConnectHandler    callback to write platform-independent code to initialize sparse connectivity
-                                            for a merged synapse group with a column-wise connectivity initialisation snippet
-        \param sgKernelInitHandler          callback to write platform-independent code to initialize the synapse variables  of
-                                            merged synapse group variables which require a kernel
-        \param sgSparseInitHandler          callback to write platform-independent code to initialize the synapse variables of
-                                            a merged synapse group with sparse connectivity
         \param initPushEGPHandler           callback to write required extra-global parameter pushing code to start of initialize function
-        \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initialize function*/
-    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, HostHandler preambleHandler, 
-                         NeuronInitGroupMergedHandler localNGHandler, CustomUpdateInitGroupMergedHandler cuHandler,
-                         CustomWUUpdateDenseInitGroupMergedHandler cuDenseHandler, SynapseDenseInitGroupMergedHandler sgDenseInitHandler, 
-                         SynapseConnectivityInitMergedGroupHandler sgSparseRowConnectHandler,  SynapseConnectivityInitMergedGroupHandler sgSparseColConnectHandler, 
-                         SynapseConnectivityInitMergedGroupHandler sgKernelInitHandler, SynapseSparseInitGroupMergedHandler sgSparseInitHandler, 
-                         CustomWUUpdateSparseInitGroupMergedHandler cuSparseHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
+        \param initSparsePushEGPHandler     callback to write required extra-global parameter pushing code to start of initializeSparse function*/
+    virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
+                         HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
@@ -336,6 +282,7 @@ public:
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'
     virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;

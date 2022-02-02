@@ -57,7 +57,8 @@ from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModelNumpy as slm
 from .genn_wrapper.Models import (Var, VarRef, VarInit, VarReference, 
                                   WUVarReference, VarVector, VarRefVector)
-from .genn_wrapper.InitSparseConnectivitySnippet import Init
+from .genn_wrapper.InitSparseConnectivitySnippet import Init as InitSparse
+from .genn_wrapper.InitToeplitzConnectivitySnippet import Init as InitToeplitz
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
                                    EGPVector, ParamValVector,
                                    DerivedParamVector)
@@ -571,7 +572,10 @@ class GeNNModel(object):
         for k, v in iteritems(self._preferences):
             if hasattr(preferences, k):
                 setattr(preferences, k, v)
-
+        
+        # When using PyGeNN, always include model name in DLL
+        preferences.includeModelNameInDLL = True
+        
         # Create backend
         backend = self._backend_module.create_backend(self._model, output_path,
                                                       self.backend_log_level,
@@ -600,7 +604,7 @@ class GeNNModel(object):
             raise Exception("GeNN model already loaded")
         self._path_to_model = path_to_model
 
-        self._slm.open(self._path_to_model, self.model_name)
+        self._slm.open(self._path_to_model, self.model_name, True)
 
         self._slm.allocate_mem()
 
@@ -929,7 +933,34 @@ def init_connectivity(init_sparse_connect_snippet, param_space):
     s_instance.__disown__()
 
     # Use add function to create suitable VarInit
-    return Init(s_instance, params)
+    return InitSparse(s_instance, params)
+
+def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
+    """This helper function creates a InitToeplitzConnectivitySnippet::Init
+    object to easily initialise connectivity using a snippet.
+
+    Args:
+    init_toeplitz_connect_snippet   -- type of the InitToeplitzConnectivitySnippet
+                                       class as string or instance of class
+                                       derived from
+                                       InitSparseConnectivitySnippet::Custom.
+    param_space                     -- dict with param values for the
+                                       InitToeplitzConnectivitySnippet class
+    """
+    # Prepare snippet
+    (s_instance, s_type, param_names, params) = \
+        prepare_snippet(init_toeplitz_connect_snippet, param_space,
+                        genn_wrapper.InitToeplitzConnectivitySnippet)
+
+    # **YUCK** VarInit (and GeNN) assume that the snippet will live forever but
+    # as far as Python is concerned, s_instance is never used again so it will be
+    # destroyed. Disowning it here hands over it's ownership to C++
+    # **NOTE** this isn't the case with models as references to neuron and synapse
+    # models are kept within NeuronGroup and SynapseGroup objects
+    s_instance.__disown__()
+
+    # Use add function to create suitable VarInit
+    return InitToeplitz(s_instance, params)
 
 def create_var_ref(pop, var_name):
     """This helper function creates a Models::VarReference

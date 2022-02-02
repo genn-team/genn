@@ -8,6 +8,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "initSparseConnectivitySnippet.h"
+#include "initToeplitzConnectivitySnippet.h"
 #include "postsynapticModels.h"
 #include "weightUpdateModels.h"
 #include "synapseMatrixType.h"
@@ -68,6 +69,10 @@ public:
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     void setPSTargetVar(const std::string &varName);
     
+    //! Set name of neuron input variable $(addToPre, . ) commands will target
+    /*! This should either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
+    void setPreTargetVar(const std::string &varName);
+
     //! Set location of sparse connectivity initialiser extra global parameter
     /*! This is ignored for simulations on hardware with a single memory space
         and only applies to extra global parameters which are pointers. */
@@ -123,7 +128,8 @@ public:
     unsigned int getMaxDendriticDelayTimesteps() const{ return m_MaxDendriticDelayTimesteps; }
     SynapseMatrixType getMatrixType() const{ return m_MatrixType; }
     const std::vector<unsigned int> &getKernelSize() const { return m_KernelSize; }
-
+    size_t getKernelSizeFlattened() const;
+    
     //! Get variable mode used for variables used to combine input from this synapse group
     VarLocation getInSynLocation() const { return m_InSynLocation; }
 
@@ -174,7 +180,8 @@ public:
     const std::vector<Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
     const std::vector<double> getPSConstInitVals() const;
 
-    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_ConnectivityInitialiser; }
+    const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
+    const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
 
     bool isZeroCopyEnabled() const;
 
@@ -221,6 +228,10 @@ public:
     //! Get name of neuron input variable postsynaptic model will target
     /*! This will either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     const std::string &getPSTargetVar() const{ return m_PSTargetVar; }
+
+    //! Get name of neuron input variable which a presynaptic output specified with $(addToPre) will target
+    /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
+    const std::string &getPreTargetVar() const{ return m_PreTargetVar; }
     
     //! Get location of sparse connectivity initialiser extra global parameter by name
     /*! This is only used by extra global parameters which are pointers*/
@@ -233,6 +244,9 @@ public:
     //! Does this synapse group require dendritic delay?
     bool isDendriticDelayRequired() const;
 
+    //! Does this synapse group define presynaptic output?
+    bool isPresynapticOutputRequired() const;    
+    
     //! Does this synapse group require an RNG to generate procedural connectivity?
     bool isProceduralConnectivityRNGRequired() const;
 
@@ -263,6 +277,7 @@ protected:
                  const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                  NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                 const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                  VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled);
 
@@ -280,6 +295,7 @@ protected:
     void setFusedPSVarSuffix(const std::string &suffix){ m_FusedPSVarSuffix = suffix; }
     void setFusedWUPreVarSuffix(const std::string &suffix){ m_FusedWUPreVarSuffix = suffix; }
     void setFusedWUPostVarSuffix(const std::string &suffix){ m_FusedWUPostVarSuffix = suffix; }
+    void setFusedPreOutputSuffix(const std::string &suffix){ m_FusedPreOutputSuffix = suffix; }
     
     void initDerivedParams(double dt);
 
@@ -301,6 +317,7 @@ protected:
     const std::string &getFusedPSVarSuffix() const{ return m_FusedPSVarSuffix; }
     const std::string &getFusedWUPreVarSuffix() const { return m_FusedWUPreVarSuffix; }
     const std::string &getFusedWUPostVarSuffix() const { return m_FusedWUPostVarSuffix; }
+    const std::string &getFusedPreOutputSuffix() const { return m_FusedPreOutputSuffix; }
 
     //! Are any of this synapse group's weight update model variables referenced by a custom update
     bool areWUVarReferencedByCustomUpdate() const { return m_WUVarReferencedByCustomUpdate;  }
@@ -310,6 +327,9 @@ protected:
     
     //! Can presynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
     bool canWUMPreUpdateBeFused() const;
+
+     //! Can presynaptic output component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
+    bool canPreOutputBeFused() const;   
     
     //! Can postsynaptic update component of this synapse group's weight update model be safely fused with other whose hashes match so only one needs simulating at all?
     bool canWUMPostUpdateBeFused() const;
@@ -345,6 +365,10 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSFuseHashDigest() const;
 
+    //! Generate hash of presynaptic output update component of this synapse group 
+     /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPreOutputHashDigest() const;
+
     boost::uuids::detail::sha1::digest_type getDendriticDelayUpdateHashDigest() const;
 
     //! Generate hash of initialisation component of this synapse group
@@ -363,6 +387,10 @@ protected:
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getPSInitHashDigest() const;
 
+    //! Generate hash of presynaptic output initialization component of this synapse group 
+     /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getPreOutputInitHashDigest() const;
+    
     //! Generate hash of connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityInitHashDigest() const;
@@ -370,7 +398,7 @@ protected:
     //! Generate hash of host connectivity initialisation of this synapse group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getConnectivityHostInitHashDigest() const;
-
+    
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 private:
     //------------------------------------------------------------------------
@@ -480,7 +508,10 @@ private:
     std::vector<VarLocation> m_PSExtraGlobalParamLocation;
 
     //! Initialiser used for creating sparse connectivity
-    InitSparseConnectivitySnippet::Init m_ConnectivityInitialiser;
+    InitSparseConnectivitySnippet::Init m_SparseConnectivityInitialiser;
+
+    //! Initialiser used for creating toeplitz connectivity
+    InitToeplitzConnectivitySnippet::Init m_ToeplitzConnectivityInitialiser;
 
     //! Location of sparse connectivity
     VarLocation m_SparseConnectivityLocation;
@@ -500,7 +531,15 @@ private:
     /*! This may not be the name of this synapse group if it has been fused */
     std::string m_FusedWUPostVarSuffix;
 
+    //! Suffix for weight update model presynaptic output variable
+    /*! This may not be the name of this synapse group if it has been fused */
+    std::string m_FusedPreOutputSuffix;
+
     //! Name of neuron input variable postsynaptic model will target
     /*! This should either be 'Isyn' or the name of one of the postsynaptic neuron's additional input variables. */
     std::string m_PSTargetVar;
+
+    //! Name of neuron input variable a presynaptic output specified with $(addToPre) will target
+    /*! This will either be 'Isyn' or the name of one of the presynaptic neuron's additional input variables. */
+    std::string m_PreTargetVar;
 };

@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "batch_var_init", "batch_var_init.vcxproj", "{CDCC38EC-B5F6-4B40-ACD8-83A1F9FDD8AB}"
+	ProjectSection(ProjectDependencies) = postProject
+		{C4CA2BE9-0D72-4663-BE92-1A27C1667789} = {C4CA2BE9-0D72-4663-BE92-1A27C1667789}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "batch_var_init_CODE\runner.vcxproj", "{C4CA2BE9-0D72-4663-BE92-1A27C1667789}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{CDCC38EC-B5F6-4B40-ACD8-83A1F9FDD8AB}.Debug|x64.ActiveCfg = Debug|x64
+		{CDCC38EC-B5F6-4B40-ACD8-83A1F9FDD8AB}.Debug|x64.Build.0 = Debug|x64
+		{CDCC38EC-B5F6-4B40-ACD8-83A1F9FDD8AB}.Release|x64.ActiveCfg = Release|x64
+		{CDCC38EC-B5F6-4B40-ACD8-83A1F9FDD8AB}.Release|x64.Build.0 = Release|x64
+		{C4CA2BE9-0D72-4663-BE92-1A27C1667789}.Debug|x64.ActiveCfg = Debug|x64
+		{C4CA2BE9-0D72-4663-BE92-1A27C1667789}.Debug|x64.Build.0 = Debug|x64
+		{C4CA2BE9-0D72-4663-BE92-1A27C1667789}.Release|x64.ActiveCfg = Release|x64
+		{C4CA2BE9-0D72-4663-BE92-1A27C1667789}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

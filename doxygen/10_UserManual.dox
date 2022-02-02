@@ -234,21 +234,59 @@ Read-write state variables are duplicated for each batch and, by default, read-o
 /*! 
 \page sectNeuronModels Neuron models
 There is a number of predefined models which can be used with the \add_cpp_python_text{ModelSpec::addNeuronPopulation,pygenn.GeNNModel.add_neuron_population} method:
-- NeuronModels::RulkovMap
 - NeuronModels::Izhikevich
 - NeuronModels::IzhikevichVariable
 - NeuronModels::LIF
+- NeuronModels::Poisson
+- NeuronModels::PoissonNew
+- NeuronModels::RulkovMap
 - NeuronModels::SpikeSource
 - NeuronModels::SpikeSourceArray
-- NeuronModels::PoissonNew
 - NeuronModels::TraubMiles
-- NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesAlt
+- NeuronModels::TraubMilesFast
 - NeuronModels::TraubMilesNStep
 
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "Izhikevich".
 \end_toggle
+
+Example usage:
+\add_toggle_code_cpp
+// Izhikevich model parameters - tonic spiking
+NeuronModels::Izhikevich::ParamValues izh_p(
+    0.02,       // 0 - a
+    0.2,        // 1 - b
+    -65,        // 2 - c
+    6           // 3 - d
+); 
+
+// Izhikevich model initial conditions - tonic spiking
+NeuronModels::Izhikevich::VarValues izh_ini(
+    -65,        // 0 - V
+    -20         // 1 - U
+);
+    
+model.addNeuronPopulation<NeuronModels::Izhikevich>("Izh1", 10, izh_p, izh_ini);
+\end_toggle_code
+
+\add_toggle_code_python
+# Izhikevich model parameters - tonic spiking
+izh_p= {
+    "a": 0.02,
+    "b": 0.2,
+    "c": -65.0,
+    "d": 6.0
+}
+
+# Izhikevich model initial conditions - tonic spiking
+izh_ini= {
+    "V": -65.0,
+    "U": -20.0
+}
+     
+pop1= model.add_neuron_population("pop1", 10, "Izhikevich", izh_p, izh_ini) 
+\end_toggle_code
 
 \section sect_own Defining your own neuron type 
 In order to define a new neuron type for use in a GeNN application,
@@ -443,7 +481,7 @@ SET_SIM_CODE(
 \add_toggle_code_python
 sim_code="$(addToInSyn, $(inc));"
 \end_toggle_code
-where "inc" is the increment of the synaptic input to a post-synaptic neuron for each pre-synaptic spike. The simulation code also typically contains updates to the internal synapse variables that may have contributed to $(inc). For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
+where "inc" is the increment of the synaptic input to a post-synaptic neuron for each pre-synaptic spike. The simulation code also typically contains updates to the internal synapse variables that may have contributed to \$(inc). For an example, see WeightUpdateModels::StaticPulse for a simple synapse update model and WeightUpdateModels::PiecewiseSTDP for a more complicated model that uses STDP. 
 To apply input to the post-synaptic neuron with a dendritic (i.e. between the synapse and the postsynaptic neuron) delay you can instead use the \$(addToInSynDelay, weight, delay) function.
 For example
 \add_toggle_code_cpp
@@ -456,6 +494,20 @@ sim_code="$(addToInSynDelay, $(inc), $(delay));"
 where, once again, `inc` is the magnitude of the input step to apply and `delay` is the length of the dendritic delay in timesteps. By implementing `delay` as a weight update model variable, heterogeneous synaptic delays can be implemented. For an example, see WeightUpdateModels::StaticPulseDendriticDelay for a simple synapse update model with heterogeneous dendritic delays. 
 \note
 When using dendritic delays, the <b>maximum</b> dendritic delay for a synapse populations must be specified using the `SynapseGroup::setMaxDendriticDelayTimesteps()` function.
+
+One can also define synaptic effects that occur in the reverse direction, i.e. terms that are added to a target variable in the persynaptic neuron using the \$(addToPre, expression) function. For instance,
+\add_toggle_code_cpp
+SET_SIM_CODE(
+    "$(addToPre, $(inc)*$(V_post));");
+\end_toggle_code
+\add_toggle_code_python
+sim_code="$(addToPre, $(inc)*$(V_post));"
+\end_toggle_code
+would add terms \$(inc)*\$(V_post) to the predefined presynaptic variable \$(Isyn) for each outgoing synapse of a presynaptic neuron. One can also set alternative input variables in the presynaptic neuron as the target variable of this reverse input using \add_cpp_python_text{SynapseGroup::setPreTargetVar(),`pygenn.SynapseGroup.pre_target_var`}, see section \ref neuron_additional_input on how to define additional input variables for a neuron population.
+\note
+\$(addToPre, expression) can be used in \add_cpp_python_text{SET_SIM_CODE(),`sim_code`}, \add_cpp_python_text{SET_EVENT_CODE(),`event_code`}, \add_cpp_python_text{SET_SYNAPSE_DYNAMICS_CODE(),`synapse_dynamics_code`}, \add_cpp_python_text{SET_LEARN_POST_CODE(),`learn_post_code`}.
+\note
+Unlike for normal forward synaptic actions, reverse synaptic actions with \$(addToPre,\$(inc)) are not modulated through a post-synaptic model but added directly into the indicated presynaptic target input variable, such as \$(Isyn).
 
 - \add_cpp_python_text{SET_LEARN_POST_CODE(LEARN_POST_CODE),`learn_post_code=LEARN_POST_CODE`} defines the code which is used in the learnSynapsesPost kernel/function, which performs updates to synapses that are triggered by post-synaptic spikes. This is typically used in STDP-like models e.g. WeightUpdateModels::PiecewiseSTDP.
 - \add_cpp_python_text{SET_NEEDS_PRE_SPIKE_TIME(PRE_SPIKE_TIME_REQUIRED) and SET_NEEDS_POST_SPIKE_TIME(POST_SPIKE_TIME_REQUIRED),`is_pre_spike_time_required=PRE_SPIKE_TIME_REQUIRED` and `is_post_spike_time_required=POST_SPIKE_TIME_REQUIRED`} define whether the weight update needs to know the times of the spikes emitted from the pre and postsynaptic populations. These can then be accessed through \$(sT_pre) and \$(sT_post). For example an STDP rule would be likely to require:

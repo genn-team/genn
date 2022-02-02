@@ -11,6 +11,10 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
+#include "code_generator/customUpdateGroupMerged.h"
+#include "code_generator/initGroupMerged.h"
+#include "code_generator/neuronUpdateGroupMerged.h"
+#include "code_generator/synapseUpdateGroupMerged.h"
 #include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
@@ -125,6 +129,9 @@ public:
 
     //! Get merged synapse groups with sparse connectivity which require initialisation
     const std::vector<SynapseSparseInitGroupMerged> &getMergedSynapseSparseInitGroups() const{ return m_MergedSynapseSparseInitGroups; }
+    
+    //! Get merged synapse groups with kernel connectivity which require initialisation
+    const std::vector<SynapseKernelInitGroupMerged> &getMergedSynapseKernelInitGroups() const{ return m_MergedSynapseKernelInitGroups; }
 
     //! Get merged custom update groups with sparse connectivity which require initialisation
     const std::vector<CustomWUUpdateSparseInitGroupMerged> &getMergedCustomWUUpdateSparseInitGroups() const { return m_MergedCustomWUUpdateSparseInitGroups; }
@@ -166,6 +173,7 @@ public:
     void genMergedSynapseDenseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDenseInitGroups); }
     void genMergedSynapseConnectivityInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityInitGroups); }
     void genMergedSynapseSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseSparseInitGroups); }
+    void genMergedSynapseKernelInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseKernelInitGroups); }
     void genMergedCustomWUUpdateSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateSparseInitGroups); }
     void genMergedNeuronSpikeQueueUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronSpikeQueueUpdateGroups); }
     void genMergedNeuronPrevSpikeTimeUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronPrevSpikeTimeUpdateGroups); }
@@ -392,6 +400,9 @@ private:
 
     //! Merged synapse groups with sparse connectivity which require initialisation
     std::vector<SynapseSparseInitGroupMerged> m_MergedSynapseSparseInitGroups;
+    
+    //! Merged synapse groups with kernel connectivity which require initialisation
+    std::vector<SynapseKernelInitGroupMerged> m_MergedSynapseKernelInitGroups;
 
     //! Merged custom update groups with sparse connectivity which require initialisation
     std::vector<CustomWUUpdateSparseInitGroupMerged> m_MergedCustomWUUpdateSparseInitGroups;

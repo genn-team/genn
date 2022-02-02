@@ -39,8 +39,8 @@
 #include "modelSpecInternal.h"
 
 // GeNN code generator includes
-#include "code_generator/generateAll.h"
 #include "code_generator/generateMakefile.h"
+#include "code_generator/generateModules.h"
 #include "code_generator/generateMSBuild.h"
 
 // GeNN backend includes
@@ -630,7 +630,7 @@ int main(int argc, char *argv[])
         // **NOTE** scope requiredso it gets closed before being built
         {
             std::ofstream makefile((codePath / "runner.vcxproj").str());
-            CodeGenerator::generateMSBuild(makefile, backend, "", moduleNames);
+            CodeGenerator::generateMSBuild(makefile, model, backend, "", moduleNames);
         }
 
         // Generate command to build using msbuild

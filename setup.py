@@ -145,6 +145,7 @@ ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlCo
                Extension('_Models', ["pygenn/genn_wrapper/swig/Models.i"], **genn_extension_kwargs),
                Extension('_InitVarSnippet', ["pygenn/genn_wrapper/generated/InitVarSnippet.i", "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc"], **genn_extension_kwargs),
                Extension('_InitSparseConnectivitySnippet', ["pygenn/genn_wrapper/generated/InitSparseConnectivitySnippet.i", "pygenn/genn_wrapper/generated/initSparseConnectivitySnippetCustom.cc"], **genn_extension_kwargs),
+               Extension('_InitToeplitzConnectivitySnippet', ["pygenn/genn_wrapper/generated/InitToeplitzConnectivitySnippet.i", "pygenn/genn_wrapper/generated/initToeplitzConnectivitySnippetCustom.cc"], **genn_extension_kwargs),
                Extension('_NeuronModels', ["pygenn/genn_wrapper/generated/NeuronModels.i", "pygenn/genn_wrapper/generated/neuronModelsCustom.cc"], **genn_extension_kwargs),
                Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/postsynapticModelsCustom.cc"], **genn_extension_kwargs),
                Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"], **genn_extension_kwargs),

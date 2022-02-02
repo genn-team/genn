@@ -168,6 +168,28 @@ public:
 };
 IMPLEMENT_MODEL(Continuous);
 
+class ContinuousDenDelay : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(ContinuousDenDelay, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+
+    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSynDelay, $(g) * $(V_pre), 1);\n");
+};
+IMPLEMENT_MODEL(ContinuousDenDelay);
+
+class GradedDenDelay : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(GradedDenDelay, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+    SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) >= 0.1");
+    SET_EVENT_CODE("$(addToInSynDelay, $(g)*$(V_pre), 1);");
+};
+IMPLEMENT_MODEL(GradedDenDelay);
+
 class PostRepeatVal : public InitVarSnippet::Base
 {
 public:
@@ -444,8 +466,81 @@ TEST(SynapseGroup, CompareWUDifferentProceduralConnectivity)
 
     // Check that connectivity parameter is heterogeneous
     // **NOTE** raw parameter is NOT as only derived parameter is used in code
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitParamHeterogeneous(0));
-    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
+}
+
+
+TEST(SynapseGroup, CompareWUDifferentToeplitzConnectivity)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 64 * 64, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post1", 62 * 62, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post2", 62 * 62, paramVals, varVals);
+
+    InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParamsA(
+        3, 3,       // conv_kh, conv_kw
+        64, 64, 1,  // conv_ih, conv_iw, conv_ic
+        62, 62, 1); // conv_oh, conv_ow, conv_oc
+
+    InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParamsB(
+        3, 3,       // conv_kh, conv_kw
+        64, 64, 1,  // conv_ih, conv_iw, conv_ic
+        64, 64, 1); // conv_oh, conv_ow, conv_oc
+    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    auto *sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+                                                                                                           "Pre", "Post1",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParamsA));
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses1", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+                                                                                                           "Pre", "Post1",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParamsA));
+    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses2", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+                                                                                                           "Pre", "Post2",
+                                                                                                           {}, staticPulseVarVals,
+                                                                                                           {}, {},
+                                                                                                           initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParamsB));
+    // Finalize model
+    model.finalize();
+
+    SynapseGroupInternal *sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal *sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal *sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_EQ(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_EQ(modelSpecMerged.getMergedNeuronUpdateGroups().size(), 3);
+    ASSERT_EQ(modelSpecMerged.getMergedPresynapticUpdateGroups().size(), 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDenseInitGroups().empty());
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
+
+    // Check that connectivity parameter is heterogeneous
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(1));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(2));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(3));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(4));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(5));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(6));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitParamHeterogeneous(7));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isToeplitzConnectivityInitDerivedParamHeterogeneous(1));
 }
 
 TEST(SynapseGroup, CompareWUDifferentProceduralVars)
@@ -502,8 +597,8 @@ TEST(SynapseGroup, CompareWUDifferentProceduralVars)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().empty());
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitParamHeterogeneous(0));
-    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
     ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().at(0).isWUVarInitParamHeterogeneous(0, 1));
 }
@@ -616,8 +711,8 @@ TEST(SynapseGroup, InitCompareWUDifferentVars)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that only synaptic weight initialistion parameters are heterogeneous
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitParamHeterogeneous(0));
-    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitDerivedParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
+    ASSERT_FALSE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitDerivedParamHeterogeneous(0));
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().at(0).isWUVarInitParamHeterogeneous(0, 0));
 }
 
@@ -760,7 +855,7 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 1);
 
     // Check that fixed number post connectivity row length parameters are heterogeneous
-    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isConnectivityInitParamHeterogeneous(0));
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous(0));
 }
 
 TEST(SynapseGroup, InvalidMatrixTypes)
@@ -827,6 +922,42 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
     catch(const std::runtime_error &) {
     }
+}
+
+TEST(SynapseGroup, IsDendriticDelayRequired)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticPulseDendriticVarVals(0.1, 1);
+    GradedDenDelay::VarValues gradedDenDelayVarVars(0.1);
+    ContinuousDenDelay::VarValues contDenDelayVarVars(0.1);
+
+    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+            "Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, staticPulseDendriticVarVals,
+            {}, {});
+
+    auto *synGraded = model.addSynapsePopulation<GradedDenDelay, PostsynapticModels::DeltaCurr>(
+            "SynGraded", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, gradedDenDelayVarVars,
+            {}, {});
+
+    auto *synContinuous = model.addSynapsePopulation<ContinuousDenDelay, PostsynapticModels::DeltaCurr>(
+            "SynContinuous", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, contDenDelayVarVars,
+            {}, {});
+
+    ASSERT_TRUE(syn->isDendriticDelayRequired());
+    ASSERT_TRUE(synGraded->isDendriticDelayRequired());
+    ASSERT_TRUE(synContinuous->isDendriticDelayRequired());
 }
 
 TEST(SynapseGroup, InvalidName)

@@ -415,9 +415,9 @@ public:
     SET_ROW_BUILD_STATE_VARS({{"inRow", "int", "($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)"},
                               {"inCol", "int", "($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)"},
                               {"inChan", "int", "$(id_pre) % (int)$(conv_ic)"},
-                              {"outRow", "int", "min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh) - (int)$(conv_kh)) / (int)$(conv_sh))))"},
+                              {"outRow", "int", "min((int)$(conv_oh), max(0, 1 + (int)floor((inRow + $(conv_padh) - $(conv_kh)) / $(conv_sh))))"},
                               {"maxOutRow", "int", "min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh)) / (int)$(conv_sh))))"},
-                              {"minOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw) - (int)$(conv_kw)) / (int)$(conv_sw))))"},
+                              {"minOutCol", "int", "min((int)$(conv_ow), max(0, 1 + (int)floor((inCol + $(conv_padw) - $(conv_kw)) / $(conv_sw))))"},
                               {"maxOutCol", "int", "min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))"}});
 
     SET_ROW_BUILD_CODE(
@@ -441,12 +441,12 @@ public:
     SET_CALC_MAX_ROW_LENGTH_FUNC(
         [](unsigned int, unsigned int, const std::vector<double> &pars)
         {
-            const unsigned int conv_kh = (unsigned int)pars[0];
-            const unsigned int conv_kw = (unsigned int)pars[1];
-            const unsigned int conv_sh = (unsigned int)pars[2];
-            const unsigned int conv_sw = (unsigned int)pars[3];
+            const double conv_kh = pars[0];
+            const double conv_kw = pars[1];
+            const double conv_sh = pars[2];
+            const double conv_sw = pars[3];
             const unsigned int conv_oc = (unsigned int)pars[11];
-            return (conv_kh / conv_sh) * (conv_kw / conv_sw) * conv_oc;
+            return (unsigned int)std::ceil(conv_kh / conv_sh) * (unsigned int)std::ceil(conv_kw / conv_sw) * conv_oc;
         });
 
     SET_CALC_KERNEL_SIZE_FUNC(
