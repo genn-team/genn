@@ -184,7 +184,7 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genFieldPush(push, egp.type + "*", egp.name, loc, "$(0)");
+                backend.genFieldPush(push, egp.type + "*", egp.name, loc, false, "$(0)");
 
 
                 // Add substitution
