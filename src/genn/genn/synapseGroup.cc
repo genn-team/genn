@@ -979,18 +979,21 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getRunnerHashDigest() cons
     for(const auto &var : getWUVarInitialisers()) {
         Utils::updateHash(var.first, hash);
         Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+        Utils::updateHash(var.second.getSnippet()->getCode().empty(), hash);
     }
 
     // Weight update model presynaptic variable initialisation EGPs
     for(const auto &var : getWUPreVarInitialisers()) {
         Utils::updateHash(var.first, hash);
         Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+        Utils::updateHash(var.second.getSnippet()->getCode().empty(), hash);
     }
 
     // Weight update model postsynaptic variable initialisation EGPs
     for(const auto &var : getWUPostVarInitialisers()) {
         Utils::updateHash(var.first, hash);
         Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+        Utils::updateHash(var.second.getSnippet()->getCode().empty(), hash);
     }
 
     // Postsynaptic model variables and EGPs
@@ -1001,6 +1004,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getRunnerHashDigest() cons
     for(const auto &var : getPSVarInitialisers()) {
         Utils::updateHash(var.first, hash);
         Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+        Utils::updateHash(var.second.getSnippet()->getCode().empty(), hash);
     }
 
     // **TODO** this will replace getVarLocationHashDigest entirely

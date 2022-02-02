@@ -102,6 +102,7 @@ protected:
         for(const auto &var : getVarInitialisers()) {
             Utils::updateHash(var.first, hash);
             Utils::updateHash(var.second.getSnippet()->getExtraGlobalParams(), hash);
+            Utils::updateHash(var.second.getSnippet()->getCode().empty(), hash);
         }
 
         // **TODO** this will replace getVarLocationHashDigest entirely
