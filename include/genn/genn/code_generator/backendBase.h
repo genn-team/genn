@@ -70,11 +70,6 @@ struct PreferencesBase
     //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
     bool automaticCopy = false;
 
-    //! Should GeNN generate empty state push and pull functions
-    bool generateEmptyStatePushPull = true;
-
-    //! Should GeNN generate pull functions for extra global parameters? These are very rarely used
-    bool generateExtraGlobalParamPull = true;
 
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
@@ -92,8 +87,6 @@ struct PreferencesBase
         //! Update hash with preferences
         Utils::updateHash(enableBitmaskOptimisations, hash);
         Utils::updateHash(automaticCopy, hash);
-        Utils::updateHash(generateEmptyStatePushPull, hash);
-        Utils::updateHash(generateExtraGlobalParamPull, hash);
     }
 };
 
@@ -180,7 +173,7 @@ public:
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     virtual void genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const = 0;
+    virtual void genPointerFieldInitialisation(CodeStream &os, const std::string &type, VarLocation loc) const = 0;
     virtual void genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const = 0;
     virtual void genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const = 0;
 
@@ -190,7 +183,7 @@ public:
                               VarLocation loc, bool autoInitialised, const std::string &countVarName = "count") const = 0;
     virtual void genFieldPull(CodeStream &os, const std::string &type, const std::string &name, 
                                VarLocation loc, const std::string &countVarName = "count") const = 0;
-     virtual void genFieldFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
+     virtual void genFieldFree(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 

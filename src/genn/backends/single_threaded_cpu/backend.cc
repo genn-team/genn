@@ -1126,7 +1126,7 @@ void Backend::genPointerFieldDefinition(CodeStream &os, const std::string &type,
      os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const
+void Backend::genPointerFieldInitialisation(CodeStream &os, const std::string&, VarLocation loc) const
 {
     os << "nullptr, ";
 }
@@ -1165,7 +1165,7 @@ void Backend::genFieldPull(CodeStream&, const std::string&, const std::string&,
     assert(!getPreferences().automaticCopy);
 }
 //-------------------------------------------------------------------------
-void Backend::genFieldFree(CodeStream &os, const std::string &name, VarLocation) const
+void Backend::genFieldFree(CodeStream &os, const std::string&, const std::string &name, VarLocation) const
 {
     os << "delete[] group->" << name << ";" << std::endl;
 }

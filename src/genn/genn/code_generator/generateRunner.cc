@@ -95,7 +95,7 @@ void genExtraGlobalParamTargets(const BackendBase &backend, CodeStream &os, cons
                 // Start declaration of three data structures
                 fieldPushFunctionStart << "const unsigned int start" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "[]{";
                 fieldPushFunctionEnd << "const unsigned int end" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "[]{";
-                fieldPushFunction << "const std::function<void(" << std::get<0>(f) << ")> update" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "MergedGroups[]{";
+                fieldPushFunction << "const std::function<void(" << backend.getMergedGroupFieldHostType(std::get<0>(f)) << ")> update" << std::get<1>(f) << G::name << "Group" << runnerGroup.getIndex() << "MergedGroups[]{";
                
                 // Loop through groups
                 size_t numPushFunctions = 0;

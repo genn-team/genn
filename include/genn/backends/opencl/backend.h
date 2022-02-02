@@ -150,24 +150,23 @@ public:
 
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &allocations) const override;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
-    virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const override;
+    virtual void genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genPointerFieldInitialisation(CodeStream &os, const std::string &type, VarLocation loc) const override;
+    virtual void genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const override;
+    virtual void genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const override;
 
-    virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name,
-                                               VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
-                                         VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
+    virtual void genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+                                    VarLocation loc, const std::string &countVarName = "count") const override;
+    virtual void genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 
+                              VarLocation loc, bool autoInitialised, const std::string &countVarName = "count") const override;
+    virtual void genFieldPull(CodeStream &os, const std::string &type, const std::string &name, 
+                               VarLocation loc, const std::string &countVarName = "count") const override;
+     virtual void genFieldFree(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
     virtual void genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx,
@@ -180,35 +179,8 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::string getMergedGroupSimRNGType() const override { return "clrngLfsr113HostStream"; }
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
-
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type,
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type,
-                                        const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, false);
-    }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, false);
-    }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePush(os, ng, batchSize, true);
-    }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
-    {
-        genCurrentSpikePull(os, ng, batchSize, true);
-    }
-
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const override;
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations,
-                                  CodeStream &free, const std::string &name, size_t count, MemAlloc &memAlloc) const override;
+                                    CodeStream &allocations, CodeStream &free) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;

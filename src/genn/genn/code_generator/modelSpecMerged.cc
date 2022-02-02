@@ -511,21 +511,3 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
 
     return hash.get_digest();
 }
-//----------------------------------------------------------------------------
-bool ModelSpecMerged::anyPointerEGPs() const
-{
-    // Loop through grouped merged EGPs
-    for(const auto &e : m_MergedEGPs) {
-        // If there's any pointer EGPs, return true
-        if(std::any_of(e.second.cbegin(), e.second.cend(),
-                       [](const MergedEGPDestinations::value_type &g) 
-                       {
-                           return Utils::isTypePointer(g.second.type); 
-                       }))
-        {
-            return true;
-        }
-    }
-
-    return false;
-}

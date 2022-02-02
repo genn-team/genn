@@ -1463,7 +1463,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
 #ifdef _WIN32
     os << "#include <windows.h>" << std::endl;
@@ -1484,7 +1484,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << "cl::CommandQueue commandQueue;" << std::endl;
     if(shouldUseSubBufferAllocations()) {
         os << "cl::Buffer d_staticBuffer;" << std::endl;
-        os << "size_t dynamicAllocationOffset = " << memAlloc.getDeviceBytes() << ";" << std::endl;
+        os << "size_t staticAllocationOffsetBytes = 0;" << std::endl;
     }
     os << std::endl;
 
@@ -1630,7 +1630,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const
+void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // Initializing OpenCL programs
     os << "// Get platforms" << std::endl;
@@ -1651,16 +1651,7 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     // Create static buffer, within which all other device allocations are created as sub-buffers
     if(shouldUseSubBufferAllocations()) {
         os << "CHECK_OPENCL_ERRORS_POINTER(d_staticBuffer = cl::Buffer(clContext, CL_MEM_READ_WRITE, size_t{";
-        
-        // If model has any pointer EGPs, allocate all allocatable memory
-        if(modelMerged.anyPointerEGPs()) {
-            os << m_ChosenDevice.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
-        }
-        // Otherwise, static buffer only needs to be large enough for all static allocations
-        else {
-            os << memAlloc.getDeviceBytes();
-        }
-        os << "}, nullptr, &error));" << std::endl;
+        os << m_ChosenDevice.getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>() << "}, nullptr, &error));" << std::endl;
     }
     os << std::endl;
 
@@ -1779,155 +1770,127 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    const bool deviceType = isDeviceType(type);
-
-    if (loc & VarLocation::HOST) {
-        if (deviceType) {
-            throw std::runtime_error("Variable '" + name + "' is of device-only type '" + type + "' but is located on the host");
-        }
-        definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-
-        if(!(loc & VarLocation::ZERO_COPY)) {
-            definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
-        }
-    }
-    if (loc & VarLocation::DEVICE) {
-        definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    if (loc & VarLocation::HOST) {
-        os << type << " " << name << ";" << std::endl;
-
-        if(!(loc & VarLocation::ZERO_COPY)) {
-            os << "cl::Buffer h_" << name << ";" << std::endl;
-        }
-    }
-    if (loc & VarLocation::DEVICE) {
+    // If this is a population RNG
+    // **YUCK**
+    if(::Utils::getUnderlyingType(type) == getMergedGroupSimRNGType()) {
+        os << "clrngLfsr113Stream* " << name << ";" << std::endl;
         os << "cl::Buffer d_" << name << ";" << std::endl;
     }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
-{
-    // If variable is present on device then initialize the device buffer
-    if (loc & VarLocation::DEVICE) {
-        CodeStream::Scope b(os);
+    // Otherwise
+    else {
+        if(loc & VarLocation::HOST) {
+            os << type << " " << name << ";" << std::endl;
 
-        const size_t sizeBytes = count * getSize(type);
-        if(shouldUseSubBufferAllocations()) {
-            // Check zero-copy isn't in use
-            assert(!(loc & VarLocation::ZERO_COPY));
-
-            // Apply minimum alignement to size
-            const size_t alignedSizeBytes = padSize(sizeBytes, m_AllocationAlignementBytes);
-
-            // Create region struct defining location of this variable
-            os << "const cl_buffer_region region{size_t{" << memAlloc.getDeviceBytes() << "}, size_t{" << alignedSizeBytes << "}};" << std::endl;
-
-            // Create sub-buffer encapsulating this region within main static buffer
-            os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
-
-            // Add aligned size to mem allocation tracker
-            memAlloc += MemAlloc::device(alignedSizeBytes);
-        }
-        else {
-            os << "CHECK_OPENCL_ERRORS_POINTER(d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-            if(loc & VarLocation::ZERO_COPY) {
-                os << " | CL_MEM_ALLOC_HOST_PTR";
+            if(!(loc & VarLocation::ZERO_COPY)) {
+                os << "cl::Buffer h_" << name << ";" << std::endl;
             }
-            os << ", " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
-            memAlloc += MemAlloc::device(sizeBytes);
+        }
+        if(loc & VarLocation::DEVICE) {
+            os << "cl::Buffer d_" << name << ";" << std::endl;
         }
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genPointerFieldInitialisation(CodeStream &os, const std::string &type, VarLocation loc) const
+{
+    // If this is a population RNG
+    // **YUCK**
+    if(::Utils::getUnderlyingType(type) == getMergedGroupSimRNGType()) {
+        os << "nullptr, {}, ";
+    }
+    // Otherwise
+    else {
+        if(loc & VarLocation::HOST) {
+            os << "nullptr, ";
 
-    if(loc & VarLocation::HOST) {
-        if(loc & VarLocation::ZERO_COPY) {
-            os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(d_" << name;
-            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
+            if(!(loc & VarLocation::ZERO_COPY)) {
+                os << "{},";
+            }
         }
-        else {
-            os << "CHECK_OPENCL_ERRORS_POINTER(h_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, " << count << " * sizeof(" << type << "), nullptr, &error));" << std::endl;
-            os << "CHECK_OPENCL_ERRORS_POINTER(" << name << " = (" << type << "*)commandQueue.enqueueMapBuffer(h_" << name;
-            os << ", CL_TRUE, CL_MAP_READ | CL_MAP_WRITE, 0, " << count << " * sizeof(" << type << "), nullptr, nullptr, &error));" << std::endl;
-            memAlloc += MemAlloc::host(count * getSize(type));
+        if(loc & VarLocation::DEVICE) {
+            os << "{},";
         }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const
+void Backend::genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const
 {
-    if(loc & VarLocation::ZERO_COPY) {
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(d_" << name << ", " << name << "));" << std::endl;
-    }
-    else if(loc & VarLocation::HOST) {
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(h_" << name << ", " << name << "));" << std::endl;
-    }
+    os << type << " " << name << ";" << std::endl;
+    os << "cl::Buffer d_" << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, 
-                                            const std::string &type, const std::string &name, VarLocation loc) const
+void Backend::genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const
 {
-    if (loc & VarLocation::HOST) {
-        definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-        definitionsInternal << "EXPORT_VAR cl::Buffer h_" << name << ";" << std::endl;
-    }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        definitionsInternal << "EXPORT_VAR cl::Buffer d_" << name << ";" << std::endl;
-    }
+    os << hostValue << ", {}, ";
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    if (loc & VarLocation::HOST) {
-        os << type << " " << name << ";" << std::endl;
-        os << "cl::Buffer h_" << name << ";" << std::endl;
-    }
-    if (loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-        os << "cl::Buffer d_" << name << ";" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name,
-                                            VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+void Backend::genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name,
+                                 VarLocation loc, const std::string &countVarName) const
 {
     // Get underlying type
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-    const std::string deviceBuffer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
-    const std::string hostBuffer = pointerToPointer ? ("*" + prefix + "h_" + name) : (prefix + "h_" + name);
+    const std::string hostPointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
+    const std::string deviceBuffer = pointerToPointer ? ("*group->d_" + name) : ("group->d_" + name);
+    const std::string hostBuffer = pointerToPointer ? ("*group->h_" + name) : ("group->h_" + name);
+    
+    // If this is a population RNG
+    // **YUCK**
+    if(underlyingType == getMergedGroupSimRNGType()) {
+        // Create host stream
+        os << "size_t deviceSizeBytes;" << std::endl;
+        os << "group->" << name << " = clrngLfsr113CreateStreams(lfsrStreamCreator, " << countVarName << ", &deviceSizeBytes, nullptr);" << std::endl;
 
-    // If variable is present on device at all
-    if(loc & VarLocation::DEVICE) {
         if(shouldUseSubBufferAllocations()) {
-            // Check zero-copy isn't in use
-            assert(!(loc & VarLocation::ZERO_COPY));
+            os << "const unsigned int alignedDeviceSizeBytes = ((deviceSizeBytes + " << m_AllocationAlignementBytes - 1 << ") / " << m_AllocationAlignementBytes << ") * " << m_AllocationAlignementBytes << ";" << std::endl;
 
-            CodeStream::Scope b(os);
-            os << "const unsigned int sizeBytes = " << countVarName << " * sizeof(" << underlyingType << ");" << std::endl;
-            os << "const unsigned int alignedSizeBytes = ((sizeBytes + " << m_AllocationAlignementBytes - 1 << ") / " << m_AllocationAlignementBytes << ") * " << m_AllocationAlignementBytes << ";" << std::endl;
-
-            // Create region struct defining location of this variable
-            os << "const cl_buffer_region region{size_t{dynamicAllocationOffset}, size_t{alignedSizeBytes}};" << std::endl;
+            os << "const cl_buffer_region region{size_t{staticAllocationOffsetBytes}, size_t{alignedDeviceSizeBytes}};" << std::endl;
 
             // Create sub-buffer encapsulating this region within main static buffer
             os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
 
-            // Advance dynamic allocation offset
-            os << "dynamicAllocationOffset += alignedSizeBytes;" << std::endl;
+            // Advance allocation offset
+            os << "staticAllocationOffsetBytes += alignedDeviceSizeBytes;" << std::endl;
+
+            // Copy RNG to sub-buffer
+            // **NOTE** not at all clear how CL_MEM_COPY_HOST_PTR works in the context of sub-buffers
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(group->d_" << name << ", CL_TRUE, 0, deviceSizeBytes, group->" << name << "));" << std::endl;
         }
         else {
-            os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
-            if(loc & VarLocation::ZERO_COPY) {
-                os << " | CL_MEM_ALLOC_HOST_PTR";
+            os << "CHECK_OPENCL_ERRORS_POINTER(group->d_" << name << " = cl::Buffer(clContext, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, deviceSizeBytes, group->" << name << ", &error));" << std::endl;
+        }
+    }
+    // Otherwise
+    else {
+        // If variable is present on device at all
+        if(loc & VarLocation::DEVICE) {
+            if(shouldUseSubBufferAllocations()) {
+                // Check zero-copy isn't in use
+                assert(!(loc & VarLocation::ZERO_COPY));
+
+                CodeStream::Scope b(os);
+                os << "const unsigned int deviceSizeBytes = " << countVarName << " * sizeof(" << underlyingType << ");" << std::endl;
+                os << "const unsigned int alignedDeviceSizeBytes = ((deviceSizeBytes + " << m_AllocationAlignementBytes - 1 << ") / " << m_AllocationAlignementBytes << ") * " << m_AllocationAlignementBytes << ";" << std::endl;
+
+                // Create region struct defining location of this variable
+                os << "const cl_buffer_region region{size_t{staticAllocationOffsetBytes}, size_t{alignedDeviceSizeBytes}};" << std::endl;
+
+                // Create sub-buffer encapsulating this region within main static buffer
+                os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = d_staticBuffer.createSubBuffer(CL_MEM_READ_WRITE, CL_BUFFER_CREATE_TYPE_REGION, &region, &error));" << std::endl;
+
+                // Advance allocation offset
+                os << "staticAllocationOffsetBytes += alignedDeviceSizeBytes;" << std::endl;
             }
-            os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+            else {
+                os << "CHECK_OPENCL_ERRORS_POINTER(" << deviceBuffer << " = cl::Buffer(clContext, CL_MEM_READ_WRITE";
+                if(loc & VarLocation::ZERO_COPY) {
+                    os << " | CL_MEM_ALLOC_HOST_PTR";
+                }
+                os << ", " << countVarName << " * sizeof(" << underlyingType << "), nullptr, &error));" << std::endl;
+            }
         }
     }
 
@@ -1944,8 +1907,8 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name,
-                                      VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+void Backend::genFieldPush(CodeStream &os, const std::string &type, const std::string &name,
+                           VarLocation loc, bool autoInitialised, const std::string &countVarName) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1953,20 +1916,29 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-    const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string hostPointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
+    const std::string devicePointer = pointerToPointer ? ("*group->d_" + name) : ("group->d_" + name);
 
     if (!(loc & VarLocation::ZERO_COPY)) {
+        // Only copy if uninitialisedOnly isn't set
+        if(autoInitialised) {
+            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+        }
+
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(" << devicePointer;
         os << ", CL_TRUE";
         os << ", 0";
         os << ", " << countVarName << " * sizeof(" << underlyingType << ")";
         os << ", " << hostPointer << "));" << std::endl;
+
+        if(autoInitialised) {
+            os << CodeStream::CB(1101);
+        }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name,
-                                      VarLocation loc, const std::string &countVarName, const std::string &prefix) const
+void Backend::genFieldPull(CodeStream &os, const std::string &type, const std::string &name,
+                           VarLocation loc, const std::string &countVarName) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1974,8 +1946,8 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-    const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
-    const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
+    const std::string hostPointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
+    const std::string devicePointer = pointerToPointer ? ("*group->d_" + name) : ("group->d_" + name);
 
     if (!(loc & VarLocation::ZERO_COPY)) {
         os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(" << devicePointer;
@@ -1983,6 +1955,24 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
         os << ", " << "0";
         os << ", " << countVarName << " * sizeof(" << underlyingType << ")";
         os << ", " << hostPointer << "));" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genFieldFree(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    // If this is a population RNG
+    // **YUCK**
+    if(::Utils::getUnderlyingType(type) == getMergedGroupSimRNGType()) {
+        os << "clrngLfsr113DestroyStreams(group->" << name << ");" << std::endl;
+    }
+    // Otherwise
+    else {
+        if(loc & VarLocation::ZERO_COPY) {
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(group->d_" << name << ", group->" << name << "));" << std::endl;
+        }
+        else if(loc & VarLocation::HOST) {
+            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueUnmapMemObject(group->h_" << name << ", group->" << name << "));" << std::endl;
+        }
     }
 }
 //--------------------------------------------------------------------------
@@ -2014,106 +2004,7 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
-{
-    if (!(loc & VarLocation::ZERO_COPY)) {
-        // Only copy if uninitialisedOnly isn't set
-        if (autoInitialized) {
-            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
-        }
-
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << name;
-        os << ", CL_TRUE";
-        os << ", 0";
-        os << ", " << count << " * sizeof(" << type << ")";
-        os << ", " << name << "));" << std::endl;
-
-        if (autoInitialized) {
-            os << CodeStream::CB(1101);
-        }
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
-{
-    if (!(loc & VarLocation::ZERO_COPY)) {
-        os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << name;
-        os << ", " << "CL_TRUE";
-        os << ", " << "0";
-        os << ", " << count << " * sizeof(" << type << ")";
-        os << ", " << name << "));" << std::endl;
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    // If this variable requires queuing and isn't zero-copy
-    if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // If batch size is one, generate 1D memcpy to copy current timestep's data
-        if(batchSize == 1) {
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBuffer(d_" << name << ng.getName();
-            os << ", CL_TRUE";
-            os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", &" << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
-        }
-        // Otherwise, perform a 2D memcpy to copy current timestep's data from each batch
-        else {
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueWriteBufferRect(d_" << name << ng.getName();
-            os << ", CL_TRUE";
-            os << ", {0, spkQuePtr" << ng.getName() << ", 0}, {0, spkQuePtr" << ng.getName() << ", 0}";
-            os << ", {" << ng.getNumNeurons() << " * sizeof(" << type << "), 1, " << batchSize << "}";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            os << ", " << name << ng.getName() << "));" << std::endl;
-        }
-    }
-    // Otherwise, generate standard push
-    else {
-        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons() * batchSize);
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
-{
-    assert(!getPreferences().automaticCopy);
-
-    // If this variable requires queuing and isn't zero-copy
-    if (ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
-        // If batch size is one, generate 1D memcpy to copy current timestep's data
-        if(batchSize == 1) {
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBuffer(d_" << name << ng.getName();
-            os << ", CL_TRUE";
-            os << ", spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", &" << name << ng.getName() << "[spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << "]));" << std::endl;
-        }
-        // Otherwise, perform a 2D memcpy to copy current timestep's data from each batch
-        else {
-            os << "CHECK_OPENCL_ERRORS(commandQueue.enqueueReadBufferRect(d_" << name << ng.getName();
-            os << ", CL_TRUE";
-            os << ", {0, spkQuePtr" << ng.getName() << ", 0}, {0, spkQuePtr" << ng.getName() << ", 0}";
-            os << ", {" << ng.getNumNeurons() << " * sizeof(" << type << "), 1, " << batchSize << "}";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            os << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            os << ", " << name << ng.getName() << "));" << std::endl;
-        }
-    }
-    // Otherwise, generate standard push
-    else {
-        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons() * batchSize);
-    }
-}
-//--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free, MemAlloc&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free) const
 {
     definitionsInternal << "EXPORT_VAR clrngPhilox432Stream* rng;" << std::endl;
     definitionsInternal << "EXPORT_VAR cl::Buffer d_rng;" << std::endl;
@@ -2133,7 +2024,7 @@ void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream &definitionsInternal, C
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+/*void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                                const std::string &name, size_t count, MemAlloc &memAlloc) const
 {
     definitionsInternal << "EXPORT_VAR clrngLfsr113Stream* " << name << ";" << std::endl;
@@ -2175,7 +2066,7 @@ void Backend::genPopulationRNG(CodeStream&, CodeStream &definitionsInternal, Cod
             memAlloc += MemAlloc::hostDevice(sizeBytes);
         }
     }
-}
+}*/
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream&, CodeStream &definitionsInternal, CodeStream &runner, CodeStream&, CodeStream&,
                        CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const

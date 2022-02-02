@@ -1396,7 +1396,7 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const
+void Backend::genPointerFieldInitialisation(CodeStream &os, const std::string&, VarLocation loc) const
 {
     if(loc & VarLocation::HOST) {
         os << "nullptr, ";
@@ -1510,7 +1510,7 @@ void Backend::genFieldPull(CodeStream &os, const std::string &type, const std::s
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genFieldFree(CodeStream &os, const std::string &name,  VarLocation loc) const
+void Backend::genFieldFree(CodeStream &os, const std::string&, const std::string &name,  VarLocation loc) const
 {
     if(getPreferences().automaticCopy) {
         os << "CHECK_CUDA_ERRORS(cudaFree(group->" << name << "));" << std::endl;

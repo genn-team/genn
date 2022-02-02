@@ -106,7 +106,7 @@ public:
                 if(std::holds_alternative<PointerField>(std::get<2>(f))) {
                     // If variable is present on host
                     const auto pointerField = std::get<PointerField>(std::get<2>(f));
-                    backend.genPointerFieldInitialisation(runnerMergedRunnerStructAlloc, std::get<0>(pointerField));
+                    backend.genPointerFieldInitialisation(runnerMergedRunnerStructAlloc, std::get<0>(f), std::get<0>(pointerField));
                 }
                 // Otherwise, if it's a scalar field e.g. numbers of neurons
                 else if(std::holds_alternative<GetFieldValueFunc>(std::get<2>(f))) {
@@ -332,7 +332,7 @@ private:
                     {
                         CodeStream::Scope a(runnerFreeFunc);
                         runnerFreeFunc << "auto *group = &" << group << ";" << std::endl;
-                        backend.genFieldFree(runnerFreeFunc, std::get<1>(f), loc);
+                        backend.genFieldFree(runnerFreeFunc, std::get<0>(f), std::get<1>(f), loc);
                     }
                 }
             }
@@ -403,13 +403,13 @@ private:
                     // **TODO** we could insert a NULL check here and free these at the same time
                     const std::string &count = std::get<2>(pointerField);
                     if(!count.empty()) {
-                        backend.genFieldFree(runner, std::get<1>(f), std::get<0>(pointerField));
+                        backend.genFieldFree(runner, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField));
                     }
                 }
                 // Otherwise, if this is a scalar field and device scalars are required, free device array
                 else if(std::holds_alternative<std::string>(std::get<2>(f))) {
                     if(backend.isDeviceScalarRequired()) {
-                         backend.genFieldFree(runner, std::get<1>(f), VarLocation::DEVICE);
+                         backend.genFieldFree(runner, std::get<0>(f) + "*", std::get<1>(f), VarLocation::DEVICE);
                     }
                 }
             }

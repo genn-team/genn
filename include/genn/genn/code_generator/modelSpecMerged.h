@@ -209,9 +209,6 @@ public:
     //! Get hash digest of init module
     boost::uuids::detail::sha1::digest_type getInitArchetypeHashDigest() const;
 
-    //! Does model have any EGPs?
-    bool anyPointerEGPs() const;
-
     //! Get the map of destinations within the merged data structures for a particular extra global parameter
     const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name) const
     {
