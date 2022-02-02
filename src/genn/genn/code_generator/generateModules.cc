@@ -107,7 +107,11 @@ std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &mod
         generateNeuronUpdate(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);
         generateInit(outputPath, modelMerged, backend);
-        generateMacroLookup(outputPath, modelMerged);
+
+        // Generate macro-based population lookup if required
+        if(backend.getPreferences().generateMacroPopulationLookup) {
+            generateMacroLookup(outputPath, modelMerged);
+        }
 
         // Generate support code module if the backend supports namespaces
         if(backend.supportsNamespace()) {

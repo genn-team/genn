@@ -182,9 +182,6 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
         definitions << "#define DT " << Utils::writePreciseString(model.getDT()) << std::endl;
     }
 
-    // Typedefine scalar type
-    definitions << "typedef " << model.getPrecision() << " scalar;" << std::endl;
-
     // Write ranges of scalar and time types
     genTypeRange(definitions, model.getPrecision(), "SCALAR");
     genTypeRange(definitions, model.getTimePrecision(), "TIME");
@@ -195,10 +192,31 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
     definitions << "#define setB(x,i) x= ((x) | (0x80000000 >> (i))) //!< Set the bit at the specified position i in x to 1" << std::endl;
     definitions << "#define delB(x,i) x= ((x) & (~(0x80000000 >> (i)))) //!< Set the bit at the specified position i in x to 0" << std::endl;
     definitions << std::endl;
+    
+    // Typedefine scalar type
+    definitions << "typedef " << model.getPrecision() << " scalar;" << std::endl;
 
     // Write runner preamble
     runner << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl << std::endl;
     runner << "#include <functional>" << std::endl << std::endl;
+
+    // If runtime population lookup is enabled
+    if(backend.getPreferences().generateRuntimePopulationLookup) {
+        // Definite suitable struct
+        definitions << "struct Population";
+        {
+            CodeStream::Scope b(definitions);
+            definitions << "unsigned int mergedGroupIndex;" << std::endl;
+            definitions << "unsigned int groupIndex;" << std::endl;
+            definitions << "const char *groupType;" << std::endl;
+        }
+        definitions << ";";
+
+        // Include a couple of additional STL headers
+        runner << "#include <unordered_map>" << std::endl;
+    }
+
+    
 
     // Create codestreams to generate different sections of runner and definitions
     std::stringstream runnerVarDeclStream;
@@ -541,6 +559,19 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
                          runnerMergedRuntimeStructAlloc, modelMerged.getMergedRunnerGroups());
     }
 
+    // If runtime population lookup is enabled
+    if(backend.getPreferences().generateRuntimePopulationLookup) {
+        // Definite suitable struct
+        runnerVarDecl << "const std::unordered_map<std::string, Population> populationLookup";
+        {
+            CodeStream::Scope b(runnerVarDecl);
+            for(const auto &m : modelMerged.getMergedRunnerGroups().getGroups()) {
+                runnerVarDecl << "{\"" << m.first << "\", {" << std::get<0>(m.second) << ", " << std::get<1>(m.second) << ", \"" << std::get<2>(m.second) << "\"}}, " << std::endl;
+            }
+        } 
+        runnerVarDecl << ";" << std::endl;
+    }
+
     // End anonymous namespace in runner around structs etc which shouldn't be exported
     runnerVarDecl << "}" << std::endl;
 
@@ -585,6 +616,14 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
     runner << runnerFreeFuncStream.str();
     runner << std::endl;
 
+    if(backend.getPreferences().generateRuntimePopulationLookup) {
+        runner << "Population getPopulation(const char *name)";
+        {
+            CodeStream::Scope b(runner);
+            runner << "return populationLookup.at(name);" << std::endl;
+        }
+        runner << std::endl;
+    }
     if(!backend.getPreferences().automaticCopy) {
         // ---------------------------------------------------------------------
         // Function for pushing all state to device
@@ -743,6 +782,9 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
     // ---------------------------------------------------------------------
     // Function definitions
     definitions << "// Runner functions" << std::endl;
+    if(backend.getPreferences().generateRuntimePopulationLookup) {
+        definitions << "EXPORT_FUNC Population getPopulation(const char *name);" << std::endl;
+    }
     if(!backend.getPreferences().automaticCopy) {
         definitions << "EXPORT_FUNC void pushStateToDevice(bool uninitialisedOnly = false);" << std::endl;
         definitions << "EXPORT_FUNC void pushConnectivityToDevice(bool uninitialisedOnly = false);" << std::endl;

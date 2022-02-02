@@ -70,6 +70,12 @@ struct PreferencesBase
     //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
     bool automaticCopy = false;
 
+    //! Should we generate runtime population lookup structures
+    bool generateRuntimePopulationLookup = false;
+
+    //! Should we generate macro-based compile-time population lookup structures
+    bool generateMacroPopulationLookup = false;
+
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
@@ -86,6 +92,8 @@ struct PreferencesBase
         //! Update hash with preferences
         Utils::updateHash(enableBitmaskOptimisations, hash);
         Utils::updateHash(automaticCopy, hash);
+        Utils::updateHash(generateRuntimePopulationLookup, hash);
+        Utils::updateHash(generateMacroPopulationLookup, hash);
     }
 };
 
