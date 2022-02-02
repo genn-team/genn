@@ -233,7 +233,7 @@ protected:
                                    const auto pointerField = std::get<PointerField>(std::get<2>(f));
                                    const auto loc = std::get<0>(pointerField);
                                    const unsigned int fieldFlags = std::get<3>(pointerField);
-                                   return (((fieldFlags & flags) == fieldFlags)
+                                   return (((fieldFlags & flags) == flags)
                                            && (loc & VarLocation::HOST) && (loc & VarLocation::DEVICE));
                                }
                                else {
