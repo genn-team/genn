@@ -186,6 +186,11 @@ public:
     virtual void genFreeMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
 
+    virtual void genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
+    virtual void genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const override;
+    virtual void genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const override;
+    virtual void genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const override;
+
     virtual void genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                     VarLocation loc, const std::string &countVarName = "count") const override;
     virtual void genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 

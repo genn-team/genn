@@ -179,6 +179,11 @@ public:
     //! After all timestep logic is complete
     virtual void genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
+    virtual void genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
+    virtual void genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const = 0;
+    virtual void genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const = 0;
+    virtual void genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const = 0;
+
     virtual void genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                     VarLocation loc, const std::string &countVarName = "count") const = 0;
     virtual void genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 

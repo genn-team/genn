@@ -1395,7 +1395,42 @@ void Backend::genStepTimeFinalisePreamble(CodeStream &os, const ModelSpecMerged 
         os << "CHECK_CUDA_ERRORS(cudaEventSynchronize(neuronUpdateStop));" << std::endl;
     }
 }
+//--------------------------------------------------------------------------
+void Backend::genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const
+{
+    if(loc & VarLocation::HOST) {
+        os << "nullptr, ";
+    }
 
+    if(loc & VarLocation::DEVICE) {
+        os << "nullptr, ";
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
+{
+    // Add field to struct
+    if(loc & VarLocation::HOST) {
+        os << type << " " << name << ";" << std::endl;
+    }
+
+    // Add additional device field with prefix
+    if((loc & VarLocation::DEVICE)) {
+        os << type << " d_"  << name << ";" << std::endl;
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const
+{
+    os << type << " " << name << ";" << std::endl;
+    os << type << "* d_" << name << ";" << std::endl;
+}
+//--------------------------------------------------------------------------
+void Backend::genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const
+{
+    os << hostValue << ", ";
+    os << "nullptr, ";
+}
 //--------------------------------------------------------------------------
 void Backend::genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                  VarLocation loc, const std::string &countVarName) const

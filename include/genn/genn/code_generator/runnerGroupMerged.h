@@ -75,23 +75,9 @@ public:
             for(const auto &f : sortedFields) {
                 // If it's a pointer
                 if(std::holds_alternative<PointerField>(std::get<2>(f))) {
-                    // If variable is present on host
+                    // Generate field definition
                     const auto pointerField = std::get<PointerField>(std::get<2>(f));
-                    const VarLocation loc = std::get<0>(pointerField);
-                    if(loc & VarLocation::HOST) {
-                        // Add field to struct
-                        runnerVarDecl << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
-
-                        // If backend has device prefix, add additional field with prefix and overriden type
-                        if(!backend.getHostVarPrefix().empty()) {
-                            runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getHostVarPrefix() << std::get<1>(f) << ";" << std::endl;
-                        }
-                    }
-
-                    // If backend has device prefix, add additional field with prefix and overriden type
-                    if((loc & VarLocation::DEVICE) && !backend.getDeviceVarPrefix().empty()) {
-                        runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f)) << " " << backend.getDeviceVarPrefix() << std::get<1>(f) << ";" << std::endl;
-                    }
+                    backend.genPointerFieldDefinition(runnerVarDecl, std::get<0>(f), std::get<1>(f), std::get<0>(pointerField));
                 }
                 // Otherwise, if it's a scalar field e.g. numbers of neurons
                 else if(std::holds_alternative<GetFieldValueFunc>(std::get<2>(f))) {
@@ -100,10 +86,7 @@ public:
                 }
                 // Otherwise, it's a host device scalar
                 else {
-                    runnerVarDecl << std::get<0>(f) << " " << std::get<1>(f) << ";" << std::endl;
-                    if(backend.isDeviceScalarRequired()) {
-                        runnerVarDecl << backend.getMergedGroupFieldHostType(std::get<0>(f) + "*") << " " << backend.getDeviceVarPrefix() << std::get<1>(f) << ";" << std::endl;
-                    }
+                    backend.genScalarFieldDefinition(runnerVarDecl, std::get<0>(f), std::get<1>(f));
                 }
             }
             runnerVarDecl << std::endl;
@@ -123,21 +106,7 @@ public:
                 if(std::holds_alternative<PointerField>(std::get<2>(f))) {
                     // If variable is present on host
                     const auto pointerField = std::get<PointerField>(std::get<2>(f));
-                    const VarLocation loc = std::get<0>(pointerField);
-                    if(loc & VarLocation::HOST) {
-                        runnerMergedRunnerStructAlloc << "nullptr, ";
-
-                        // If backend has device prefix, add additional field with prefix and overriden type
-                        if(!backend.getHostVarPrefix().empty()) {
-                            // **TODO** some sort of OpenCL initialiser
-                            runnerMergedRunnerStructAlloc << "nullptr, ";
-                        }
-                    }
-
-                    if((loc & VarLocation::DEVICE) && !backend.getDeviceVarPrefix().empty()) {
-                        // **TODO** some sort of OpenCL initialiser
-                        runnerMergedRunnerStructAlloc << "nullptr, ";
-                    }
+                    backend.genPointerFieldInitialisation(runnerMergedRunnerStructAlloc, std::get<0>(pointerField));
                 }
                 // Otherwise, if it's a scalar field e.g. numbers of neurons
                 else if(std::holds_alternative<GetFieldValueFunc>(std::get<2>(f))) {
@@ -146,11 +115,7 @@ public:
                 }
                 // Otherwise, it's a host device scalar
                 else {
-                    runnerMergedRunnerStructAlloc << std::get<std::string>(std::get<2>(f)) << ", ";
-                    if(backend.isDeviceScalarRequired()) {
-                        // **TODO** some sort of OpenCL initialiser
-                        runnerMergedRunnerStructAlloc << "nullptr, ";
-                    }
+                    backend.genScalarFieldInitialisation(runnerMergedRunnerStructAlloc, std::get<std::string>(std::get<2>(f)));
                 }
 
             }

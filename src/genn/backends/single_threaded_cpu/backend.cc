@@ -1095,7 +1095,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
@@ -1109,7 +1109,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
     os << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&, const MemAlloc&) const
+void Backend::genAllocateMemPreamble(CodeStream&, const ModelSpecMerged&) const
 {
 }
 //--------------------------------------------------------------------------
@@ -1120,62 +1120,54 @@ void Backend::genFreeMemPreamble(CodeStream&, const ModelSpecMerged&) const
 void Backend::genStepTimeFinalisePreamble(CodeStream &, const ModelSpecMerged &) const
 {
 }
-//--------------------------------------------------------------------------
-void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &, const std::string &type, const std::string &name, VarLocation) const
+//-------------------------------------------------------------------------
+void Backend::genPointerFieldDefinition(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
 {
-    definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
+     os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation) const
+void Backend::genPointerFieldInitialisation(CodeStream &os, VarLocation loc) const
+{
+    os << "nullptr, ";
+}
+//--------------------------------------------------------------------------
+void Backend::genScalarFieldDefinition(CodeStream &os, const std::string &type, const std::string &name) const
 {
     os << type << " " << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation, size_t count, MemAlloc &memAlloc) const
+void Backend::genScalarFieldInitialisation(CodeStream &os, const std::string &hostValue) const
 {
-    os << name << " = new " << type << "[" << count << "];" << std::endl;
-
-    memAlloc += MemAlloc::host(count * getSize(type));
+    os << hostValue << ", ";
 }
-//--------------------------------------------------------------------------
-void Backend::genVariableFree(CodeStream &os, const std::string &name, VarLocation) const
-{
-    os << "delete[] " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &, 
-                                            const std::string &type, const std::string &name, VarLocation) const
-{
-    definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const
-{
-    genVariableImplementation(os, type, name, loc);
-}
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
-                                            VarLocation, const std::string &countVarName, const std::string &prefix) const
+//-------------------------------------------------------------------------
+void Backend::genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name,
+                                 VarLocation, const std::string &countVarName) const
 {
     // Get underlying type
     const std::string underlyingType = ::Utils::getUnderlyingType(type);
     const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
 
-    const std::string pointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
+    const std::string pointer = pointerToPointer ? ("*group->" + name) : ("group->" + name);
 
     os << pointer << " = new " << underlyingType << "[" << countVarName << "];" << std::endl;
 }
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &, const std::string &, const std::string &, 
-                                      VarLocation, const std::string &, const std::string &) const
+//-------------------------------------------------------------------------
+void Backend::genFieldPush(CodeStream&, const std::string&, const std::string&,
+                           VarLocation, bool, const std::string&) const
 {
     assert(!getPreferences().automaticCopy);
 }
-//--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &, const std::string &, const std::string &, 
-                                      VarLocation, const std::string &, const std::string &) const
+//-------------------------------------------------------------------------
+void Backend::genFieldPull(CodeStream&, const std::string&, const std::string&,
+                           VarLocation, const std::string&) const
 {
     assert(!getPreferences().automaticCopy);
+}
+//-------------------------------------------------------------------------
+void Backend::genFieldFree(CodeStream &os, const std::string &name, VarLocation) const
+{
+    os << "delete[] group->" << name << ";" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genMergedExtraGlobalParamPush(CodeStream &os, const std::string &suffix, size_t mergedGroupIdx, 
@@ -1286,54 +1278,9 @@ void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelIn
     generateRecursive(0);
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream&, const std::string&, const std::string&, VarLocation, size_t) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &, const NeuronGroupInternal &, const std::string &, const std::string &, VarLocation, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePush(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentTrueSpikePull(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPush(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genCurrentSpikeLikeEventPull(CodeStream&, const NeuronGroupInternal&, unsigned int) const
-{
-    assert(!getPreferences().automaticCopy);
-}
-//--------------------------------------------------------------------------
-void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&, MemAlloc&) const
+void Backend::genGlobalDeviceRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&) const
 {
     assert(false);
-}
-//--------------------------------------------------------------------------
-void Backend::genPopulationRNG(CodeStream&, CodeStream&, CodeStream&, CodeStream&, CodeStream&,
-                                   const std::string&, size_t, MemAlloc&) const
-{
 }
 //--------------------------------------------------------------------------
 void Backend::genTimer(CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, CodeStream &, const std::string &, bool) const
