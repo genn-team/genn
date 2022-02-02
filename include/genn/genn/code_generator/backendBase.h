@@ -70,7 +70,6 @@ struct PreferencesBase
     //! If backend/device supports it, copy data automatically when required rather than requiring push and pull
     bool automaticCopy = false;
 
-
     //! C++ compiler options to be used for building all host side code (used for unix based platforms)
     std::string userCxxFlagsGNU = "";
 
