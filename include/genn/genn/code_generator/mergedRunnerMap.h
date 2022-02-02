@@ -21,6 +21,7 @@ namespace CodeGenerator
 class MergedRunnerMap
 {
 public:
+    typedef std::unordered_map<std::string, std::tuple<size_t, size_t, std::string>> Map;
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -31,9 +32,9 @@ public:
         for(const auto &g : mergedGroups) {
             // Loop through individual groups inside and add to map
             for(size_t i = 0; i < g.getGroups().size(); i++) {
-                auto result = m_MergedRunnerGroups.emplace(std::piecewise_construct,
-                                                           std::forward_as_tuple(g.getGroups().at(i).get().getName()),
-                                                           std::forward_as_tuple(g.getIndex(), i, MergedGroup::name));
+                auto result = m_Groups.emplace(std::piecewise_construct,
+                                               std::forward_as_tuple(g.getGroups().at(i).get().getName()),
+                                               std::forward_as_tuple(g.getIndex(), i, MergedGroup::name));
                 assert(result.second);
             }
         }
@@ -57,13 +58,14 @@ public:
     //! Find the name of the merged runner group associated with custom update e.g. mergedCustomUpdateWURunnerGroup0[6]
     std::string getStruct(const CustomUpdateWU &cu) const;
 
-    const std::tuple<size_t, size_t, std::string> &getIndices(const std::string &name) const{ return m_MergedRunnerGroups.at(name); }
+    const Map::mapped_type &getIndices(const std::string &name) const{ return m_Groups.at(name); }
+    const Map &getGroups() const { return m_Groups; }
 
 private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
     //! Map of group names to index of merged group and index of group within that
-    std::unordered_map<std::string, std::tuple<size_t, size_t, std::string>> m_MergedRunnerGroups;
+    Map m_Groups;
 };
 }

@@ -11,23 +11,6 @@
 
 using namespace CodeGenerator;
 
-namespace
-{
-template<typename G>
-void generatePopulationMacros(CodeStream &os, const std::map<std::string, G> &groups, const MergedRunnerMap &map, const std::string &name)
-{
-    // Loop through custom WU updates
-    for(const auto &g : groups) {
-        // Get indices
-        const auto groupIndices = map.getIndices(g.second.getName());
-        
-        // Write out 
-        os << "#define MERGED_GROUP_" << g.second.getName() << " " << name << "RunnerGroup" << std::get<0>(groupIndices) << std::endl;
-        os << "#define GROUP_" << g.second.getName() << " " << std::get<1>(groupIndices) << std::endl;
-    }
-    os << std::endl;
-}
-}
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
@@ -62,28 +45,13 @@ void generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerg
     macroLookup << "#define FREE_EGP_FIELD(POP, VAR) GENN_CAT(free, GENN_CAT(VAR, GENN_CAT(MERGED_GROUP_, POP)))(GENN_CAT(GROUP_, POP))" << std::endl;
     macroLookup << std::endl;
 
-    // Genererate macros
-    const auto &model = modelMerged.getModel();
-    const auto &map = modelMerged.getMergedRunnerGroups();
+    // Generate macros for resolving population names to merged groups
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    macroLookup << "// neuron group macros" << std::endl;
+    macroLookup << "// group macros" << std::endl;
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    generatePopulationMacros(macroLookup, model.getNeuronGroups(), map, "Neuron");
-
-    macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    macroLookup << "// synapse group macros" << std::endl;
-    macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    generatePopulationMacros(macroLookup, model.getSynapseGroups(), map, "Synapse");
-
-    macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    macroLookup << "// current source macros" << std::endl;
-    macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    generatePopulationMacros(macroLookup, model.getLocalCurrentSources(), map, "CurrentSource");
-
-    macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    macroLookup << "// custom update macros" << std::endl;
-    macroLookup << "// ------------------------------------------------------------------------" << std::endl;
-    generatePopulationMacros(macroLookup, model.getCustomUpdates(), map, "CustomUpdate");
-    generatePopulationMacros(macroLookup, model.getCustomWUUpdates(), map, "CustomUpdateWU");
+    for(const auto &g : modelMerged.getMergedRunnerGroups().getGroups()) {
+        macroLookup << "#define MERGED_GROUP_" << g.first << " " << std::get<2>(g.second) << "Group" << std::get<0>(g.second) << std::endl;
+        macroLookup << "#define GROUP_" << g.first << " " << std::get<1>(g.second) << std::endl;
+    }
 }
 }

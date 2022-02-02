@@ -11,7 +11,7 @@ namespace CodeGenerator
 std::string MergedRunnerMap::getStruct(const std::string &name) const
 {
     // Find group by name
-    const auto m = m_MergedRunnerGroups.at(name);
+    const auto m = m_Groups.at(name);
 
     // Return structure
     return "merged" + std::get<2>(m) + "Group" + std::to_string(std::get<0>(m)) + "[" + std::to_string(std::get<1>(m)) + "]";
