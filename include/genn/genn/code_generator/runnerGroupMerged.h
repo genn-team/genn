@@ -17,11 +17,12 @@ class RunnerGroupMergedBase : public GroupMerged<G>
 public:
     enum PointerFieldFlags
     {
-        POINTER_FIELD_MANUAL_ALLOC  = (1 << 0), //! This (dynamic) pointer field will be manually allocated
-        POINTER_FIELD_PUSH_PULL     = (1 << 1), //! Generate push and pull functions for this field
-        POINTER_FIELD_GET           = (1 << 2), //! Generate getter function for this field
-        POINTER_FIELD_STATE         = (1 << 3), //! Should this field be included in 'state'
-        POINTER_FIELD_CONNECTIVITY  = (1 << 4), //! Should this field be included in 'connectivity'
+        POINTER_FIELD_MANUAL_ALLOC      = (1 << 0), //! This (dynamic) pointer field will be manually allocated
+        POINTER_FIELD_PUSH_PULL         = (1 << 1), //! Generate push and pull functions for this field
+        POINTER_FIELD_GET               = (1 << 2), //! Generate getter function for this field
+        POINTER_FIELD_STATE             = (1 << 3), //! Should this field be included in 'state'
+        POINTER_FIELD_CONNECTIVITY      = (1 << 4), //! Should this field be included in 'connectivity'
+        POINTER_FIELD_AUTO_INITIALISED  = (1 << 5), //! Has this field been auto-initialised?
         POINTER_FIELD_PUSH_PULL_GET = POINTER_FIELD_PUSH_PULL | POINTER_FIELD_GET,
     };
 
@@ -300,7 +301,8 @@ private:
                         {
                             CodeStream::Scope a(runnerPushFunc);
                             runnerPushFunc << "auto *group = &" << group << ";" << std::endl;
-                            backend.genFieldPush(runnerPushFunc, std::get<0>(f), std::get<1>(f), loc, count);
+                            backend.genFieldPush(runnerPushFunc, std::get<0>(f), std::get<1>(f), loc, 
+                                                 (flags & POINTER_FIELD_AUTO_INITIALISED), count);
                         }
                         runnerPushFunc << std::endl;
 
@@ -533,12 +535,15 @@ public:
         this->addEGPs(this->getArchetype().getCustomUpdateModel()->getExtraGlobalParams(), "");
 
         // Loop through variables
-        const auto &varInit = this->getArchetype().getVarInitialisers();
         for(const auto &var : this->getArchetype().getCustomUpdateModel()->getVars()) {
+            const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(var.name).getSnippet();
+            unsigned int flags = POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE;
+            if(!varInitSnippet->getCode().empty()) {
+                flags |= POINTER_FIELD_AUTO_INITIALISED;
+            }
             this->addField(var.type, var.name, this->getArchetype().getVarLocation(var.name),
-                           this->POINTER_FIELD_PUSH_PULL_GET | this->POINTER_FIELD_STATE, 
-                           "group->size", getVarAccessDuplication(var.access));
-            this->addEGPs(varInit.at(var.name).getSnippet()->getExtraGlobalParams(), var.name);
+                           flags, "group->size", getVarAccessDuplication(var.access));
+            this->addEGPs(varInitSnippet->getExtraGlobalParams(), var.name);
         }
     }
 };

@@ -251,7 +251,7 @@ public:
     virtual void genFieldAllocation(CodeStream &os, const std::string &type, const std::string &name, 
                                     VarLocation loc, const std::string &countVarName = "count") const = 0;
     virtual void genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 
-                              VarLocation loc, const std::string &countVarName = "count") const = 0;
+                              VarLocation loc, bool autoInitialised, const std::string &countVarName = "count") const = 0;
     virtual void genFieldPull(CodeStream &os, const std::string &type, const std::string &name, 
                                VarLocation loc, const std::string &countVarName = "count") const = 0;
      virtual void genFieldFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;

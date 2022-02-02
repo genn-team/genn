@@ -1429,11 +1429,16 @@ void Backend::genFieldAllocation(CodeStream &os, const std::string &type, const 
 }
 //--------------------------------------------------------------------------
 void Backend::genFieldPush(CodeStream &os, const std::string &type, const std::string &name, 
-                           VarLocation loc, const std::string &countVarName) const
+                           VarLocation loc, bool autoInitialised, const std::string &countVarName) const
 {
     assert(!getPreferences().automaticCopy);
 
     if(!(loc & VarLocation::ZERO_COPY)) {
+        // Only copy if uninitialisedOnly isn't set
+        if(autoInitialised) {
+            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+        }
+
         // Get underlying type
         const std::string underlyingType = ::Utils::getUnderlyingType(type);
         const bool pointerToPointer = ::Utils::isTypePointerToPointer(type);
@@ -1444,6 +1449,10 @@ void Backend::genFieldPush(CodeStream &os, const std::string &type, const std::s
         os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << devicePointer;
         os << ", " << hostPointer;
         os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
+
+        if(autoInitialised) {
+            os << CodeStream::CB(1101);
+        }
     }
 }
 //--------------------------------------------------------------------------
