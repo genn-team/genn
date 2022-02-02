@@ -65,7 +65,7 @@ public:
                         CodeStream &runnerVarDecl,  CodeStream &runnerMergedRunnerStructAlloc, 
                         CodeStream &runnerVarAlloc, CodeStream &runnerVarFree, CodeStream &runnerPushFunc, 
                         CodeStream &runnerPullFunc, CodeStream &runnerGetterFunc, CodeStream &runnerAllocateFunc,
-                        CodeStream &runnerFreeFunc, unsigned int batchSize, MemAlloc &memAlloc) const
+                        CodeStream &runnerFreeFunc, unsigned int batchSize) const
     {
         const auto sortedFields = getSortedFields(backend);
         runnerVarDecl << "struct Merged" << M::name << "Group" << this->getIndex() << std::endl;
@@ -162,7 +162,7 @@ public:
                      runnerAllocateFunc, runnerFreeFunc, definitionsFunc);
         
         // Generate memory allocation code
-        genAllocMem(backend, runnerVarAlloc, batchSize, memAlloc);
+        genAllocMem(backend, runnerVarAlloc, batchSize);
 
         // Generate memory free code
         genFreeMem(backend, runnerVarFree);
@@ -378,7 +378,7 @@ private:
         genFieldGroupPushFuncs(connectivityFields, mergedGroupName + "Connectivity", runnerPushFunc, definitions);
     }
 
-    void genAllocMem(const BackendBase &backend, CodeStream &runner, unsigned int batchSize, MemAlloc &memAlloc) const
+    void genAllocMem(const BackendBase &backend, CodeStream &runner, unsigned int batchSize) const
     {
         CodeStream::Scope b(runner);
         runner << "// merged group " << this->getIndex() << std::endl;

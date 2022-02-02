@@ -34,7 +34,7 @@ void genHostScalar(CodeStream &definitionsVar, CodeStream &runnerVarDecl, const 
 }
 //--------------------------------------------------------------------------
 void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
-                      CodeStream &runnerVarAlloc, unsigned int seed, MemAlloc &mem)
+                      CodeStream &runnerVarAlloc, unsigned int seed)
 {
     definitionsVar << "EXPORT_VAR " << "std::mt19937 hostRNG;" << std::endl;
     runnerVarDecl << "std::mt19937 hostRNG;" << std::endl;
@@ -59,9 +59,6 @@ void genGlobalHostRNG(CodeStream &definitionsVar, CodeStream &runnerVarDecl,
 
     // Seed RNG from seed sequence
     runnerVarAlloc << "hostRNG.seed(seeds);" << std::endl;
-
-    // Add size of Mersenne Twister to memory tracker
-    mem += MemAlloc::host(sizeof(std::mt19937));
 }
 //-------------------------------------------------------------------------
 template<typename G>
@@ -208,8 +205,8 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                       const BackendBase &backend, const std::string &suffix)
+void CodeGenerator::generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                   const BackendBase &backend, const std::string &suffix)
 {
     // Create output streams to write to file and wrap in CodeStreams
     std::ofstream definitionsStream((outputPath / ("definitions" + suffix + ".h")).str());
@@ -218,9 +215,6 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     CodeStream definitions(definitionsStream);
     CodeStream definitionsInternal(definitionsInternalStream);
     CodeStream runner(runnerStream);
-
-    // Track memory allocations, initially starting from zero
-    auto mem = MemAlloc::zero();
 
     // Write definitions preamble
     definitions << "#pragma once" << std::endl;
@@ -326,11 +320,11 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     }
     // If backend requires a global device RNG to simulate (or initialize) this model
     if(backend.isGlobalDeviceRNGRequired(modelMerged)) {
-        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree, mem);
+        backend.genGlobalDeviceRNG(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree);
     }
     // If backend required a global host RNG to simulate (or initialize) this model, generate a standard Mersenne Twister
     if(backend.isGlobalHostRNGRequired(modelMerged)) {
-        genGlobalHostRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, model.getSeed(), mem);
+        genGlobalHostRNG(definitionsVar, runnerVarDecl, runnerVarAlloc, model.getSeed());
     }
     allVarStreams << std::endl;
 
@@ -425,7 +419,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
-                         batchSize, mem);
+                         batchSize);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -437,7 +431,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
-                         batchSize, mem);
+                         batchSize);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -449,7 +443,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
-                         batchSize, mem);
+                         batchSize);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -461,7 +455,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
-                         batchSize, mem);
+                         batchSize);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
     for(const auto &m : modelMerged.getMergedCustomUpdateWURunnerGroups()) {
@@ -469,7 +463,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerMergedRunnerStructAlloc, runnerVarAlloc,
                          runnerVarFree, runnerPushFunc, runnerPullFunc,
                          runnerGetterFunc, runnerAllocateFunc, runnerFreeFunc, 
-                         batchSize, mem);
+                         batchSize);
         genExtraGlobalParamTargets(backend, runnerVarDecl, m, modelMerged);
     }
 
@@ -621,7 +615,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     allVarStreams << std::endl;
  
     // Write pre-amble to runner
-    backend.genRunnerPreamble(runner, modelMerged, mem);
+    backend.genRunnerPreamble(runner, modelMerged);
 
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();
@@ -732,7 +726,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
         // Generate preamble - this is the first bit of generated code called by user simulations
         // so global initialisation is often performed here
-        backend.genAllocateMemPreamble(runner, modelMerged, mem);
+        backend.genAllocateMemPreamble(runner, modelMerged);
 
         // Write merged runner struct allocations to runner
         runner << runnerMergedRunnerStructAllocStream.str();
@@ -850,6 +844,4 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     // End extern C block around definitions
     definitions << "}  // extern \"C\"" << std::endl;
     definitionsInternal << "}  // extern \"C\"" << std::endl;
-
-    return mem;
 }

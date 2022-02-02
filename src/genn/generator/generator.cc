@@ -70,7 +70,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
 
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, 
-                                                            outputPath, forceRebuild).first;
+                                                            outputPath, forceRebuild);
 
 #ifdef _WIN32
         // If runner GUID file doesn't exist

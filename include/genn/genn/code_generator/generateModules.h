@@ -7,9 +7,6 @@
 // GeNN includes
 #include "gennExport.h"
 
-// GeNN code generator includes
-#include "backendBase.h"
-
 // Forward declarations
 class ModelSpecInternal;
 
@@ -18,14 +15,20 @@ namespace filesystem
     class path;
 }
 
+namespace CodeGenerator
+{
+class BackendBase;
+class ModelSpecMerged;
+}
+
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-GENN_EXPORT std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
-                                                                      const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                                      bool forceRebuild = false);
+GENN_EXPORT std::vector<std::string> generateAll(const ModelSpecInternal &model, const BackendBase &backend, 
+                                                 const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                 bool forceRebuild = false);
 
 GENN_EXPORT void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
                                       const BackendBase &backend, const std::string &suffix = "");

@@ -15,6 +15,7 @@
 #include "modelSpecInternal.h"
 
 // Code generator includes
+#include "code_generator/backendBase.h"
 #include "code_generator/codeStream.h"
 #include "code_generator/generateSupportCode.h"
 #include "code_generator/generateRunner.h"
@@ -49,7 +50,7 @@ void copyFile(const filesystem::path &file, const filesystem::path &sharePath, c
     outputFileStream << inputFileStream.rdbuf();
 }
 //--------------------------------------------------------------------------
-bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest, MemAlloc &mem)
+bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::detail::sha1::digest_type &hashDigest)
 {
     try
     {
@@ -65,10 +66,6 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
         for(auto &d : previousHashDigest) {
             is >> d;
         }
-        
-        // Read memory usage as decimal
-        is >> std::dec;
-        is >> mem;
 
         // If hash matches
         if(previousHashDigest == hashDigest) {
@@ -91,9 +88,9 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                                         const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                                         bool forceRebuild)
+std::vector<std::string> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                                    const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                    bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -103,10 +100,9 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     
     // If force rebuild flag is set or model should be rebuilt
     const auto hashDigest = modelMerged.getHashDigest(backend);
-    MemAlloc mem = MemAlloc::zero();
-    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest, mem)) {
+    if(forceRebuild || shouldRebuildModel(outputPath, hashDigest)) {
         // Generate modules
-        mem = generateRunner(outputPath, modelMerged, backend);
+        generateRunner(outputPath, modelMerged, backend);
         generateSynapseUpdate(outputPath, modelMerged, backend);
         generateNeuronUpdate(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);
@@ -135,20 +131,6 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
             os << d << " ";
         }
         os << std::endl;
-
-        // Write model memory usage estimates so it can be reloaded if code doesn't need re-generating
-        os << std::dec;
-        os << mem << std::endl;
-    }
-
-    // Show memory usage
-    LOGI_CODE_GEN << "Host memory required for model: " << mem.getHostMBytes() << " MB";
-    LOGI_CODE_GEN << "Device memory required for model: " << mem.getDeviceMBytes() << " MB";
-    LOGI_CODE_GEN << "Zero-copy memory required for model: " << mem.getZeroCopyMBytes() << " MB";
-
-    // Give warning of model requires more memory than device has
-    if(mem.getDeviceBytes() > backend.getDeviceMemoryBytes()) {
-        LOGW_CODE_GEN << "Model requires " << mem.getDeviceMBytes() << " MB of device memory but device only has " << backend.getDeviceMemoryBytes() / (1024 * 1024) << " MB";
     }
 
     // Output summary to log
@@ -171,9 +153,8 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
 
-    // Return list of modules and memory usage
-    const std::vector<std::string> modules = {"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
-    return std::make_pair(modules, mem);
+    // Return list of modules
+    return std::vector<std::string>{"customUpdate", "neuronUpdate", "synapseUpdate", "init", "runner"};
 }
 //--------------------------------------------------------------------------
 void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 

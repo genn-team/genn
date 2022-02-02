@@ -25,6 +25,6 @@ class path;
 //--------------------------------------------------------------------------
 namespace CodeGenerator
 {
-GENN_EXPORT MemAlloc generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                    const BackendBase &backend, const std::string &suffix = "");
+GENN_EXPORT void generateRunner(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                                const BackendBase &backend, const std::string &suffix = "");
 }

@@ -98,75 +98,6 @@ struct PreferencesBase
 };
 
 //--------------------------------------------------------------------------
-// CodeGenerator::MemAlloc
-//--------------------------------------------------------------------------
-class MemAlloc
-{
-public:
-    //--------------------------------------------------------------------------
-    // Public API
-    //--------------------------------------------------------------------------
-    size_t getHostBytes() const{ return m_HostBytes; }
-    size_t getDeviceBytes() const{ return m_DeviceBytes; }
-    size_t getZeroCopyBytes() const{ return m_ZeroCopyBytes; }
-    size_t getHostMBytes() const{ return m_HostBytes / (1024 * 1024); }
-    size_t getDeviceMBytes() const{ return m_DeviceBytes / (1024 * 1024); }
-    size_t getZeroCopyMBytes() const{ return m_ZeroCopyBytes / (1024 * 1024); }
-
-    //--------------------------------------------------------------------------
-    // Operators
-    //--------------------------------------------------------------------------
-    MemAlloc &operator+=(const MemAlloc& rhs){
-        m_HostBytes += rhs.m_HostBytes;
-        m_DeviceBytes += rhs.m_DeviceBytes;
-        m_ZeroCopyBytes += rhs.m_ZeroCopyBytes;
-        return *this;
-    }
-
-    //--------------------------------------------------------------------------
-    // Static API
-    //--------------------------------------------------------------------------
-    static MemAlloc zero(){ return MemAlloc(0, 0, 0); }
-    static MemAlloc host(size_t hostBytes){ return MemAlloc(hostBytes, 0, 0); }
-    static MemAlloc hostDevice(size_t bytes) { return MemAlloc(bytes, bytes, 0); }
-    static MemAlloc device(size_t deviceBytes){ return MemAlloc(0, deviceBytes, 0); }
-    static MemAlloc zeroCopy(size_t zeroCopyBytes){ return MemAlloc(0, 0, zeroCopyBytes); }
-
-private:
-    MemAlloc(size_t hostBytes, size_t deviceBytes, size_t zeroCopyBytes)
-    :   m_HostBytes(hostBytes), m_DeviceBytes(deviceBytes), m_ZeroCopyBytes(zeroCopyBytes)
-    {
-    }
-
-    //--------------------------------------------------------------------------
-    // Members
-    //--------------------------------------------------------------------------
-    size_t m_HostBytes;
-    size_t m_DeviceBytes;
-    size_t m_ZeroCopyBytes;
-
-    //--------------------------------------------------------------------------
-    // Friend operators
-    //--------------------------------------------------------------------------
-    friend std::ostream& operator << (std::ostream &out, const MemAlloc &m);
-    friend std::istream& operator >> (std::istream &in,  MemAlloc &m);
-};
-
-inline std::ostream & operator << (std::ostream &out, const MemAlloc &m)
-{
-    out << m.m_HostBytes << " " << m.m_DeviceBytes << " " << m.m_ZeroCopyBytes;
-    return out;
-}
- 
-inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
-{
-    in >> m.m_HostBytes;
-    in >> m.m_DeviceBytes;
-    in >> m.m_ZeroCopyBytes;
-    return in;
-}
-
-//--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
 class GENN_EXPORT BackendBase
@@ -235,11 +166,11 @@ public:
     /*! This will only be included by the platform-specific compiler used to build this backend so can include platform-specific types or headers*/
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
-    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
+    virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Allocate memory is the first function in GeNN generated code called by usercode and it should only ever be called once.
     //! Therefore it's a good place for any global initialisation. This function generates a 'preamble' to this function.
-    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const = 0;
+    virtual void genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
 
     //! Free memory is called by usercode to free all memory allocatd by GeNN and should only ever be called once.
     //! This function generates a 'preamble' to this function, for example to free backend-specific objects
@@ -276,8 +207,8 @@ public:
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
-    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
-                                    CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
+    virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
+                                    CodeStream &runner, CodeStream &allocations, CodeStream &free) const = 0;
 
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
