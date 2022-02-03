@@ -287,34 +287,35 @@ class Group(object):
 
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
-            if egp_data.values is None:
-                cname = self.__class__.__name__
-                mname = self.name
-                raise Exception(f"Extra global parameter {egp_name} "
-                                f"for {mname} ({cname}) can not be set "
-                                f"to None, it should be {egp_data.type}")
-            elif egp_data.is_scalar:
+            if egp_data.is_scalar:
                 # Assign view
                 egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
                                                             egp_data.type)
                 # Copy values
                 egp_data.view[:] = egp_data.values
-            elif egp_data.values is not None:
-                # Allocate memory
-                self._model._slm.allocate_extra_global_param(
-                    self.name, egp_name + egp_suffix, len(egp_data.values))
+            else:
+                if egp_data.values is None:
+                    cname = self.__class__.__name__
+                    mname = self.name
+                    raise Exception(f"Extra global parameter {egp_name} "
+                                    f"for {mname} ({cname}) can not be set "
+                                    f"to None, it should be {egp_data.type}")
+                else:
+                    # Allocate memory
+                    self._model._slm.allocate_extra_global_param(
+                        self.name, egp_name + egp_suffix, len(egp_data.values))
 
-                # Assign view
-                egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
-                                                           len(egp_data.values), 
-                                                           egp_data.type)
+                    # Assign view
+                    egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
+                                                               len(egp_data.values), 
+                                                               egp_data.type)
 
-                # Copy values
-                egp_data.view[:] = egp_data.values
+                    # Copy values
+                    egp_data.view[:] = egp_data.values
 
-                # Push egp_data
-                self._model._slm.push_extra_global_param(
-                    self.name, egp_name + egp_suffix, len(egp_data.values))
+                    # Push egp_data
+                    self._model._slm.push_extra_global_param(
+                        self.name, egp_name + egp_suffix, len(egp_data.values))
 
     def _load_var_init_egps(self, var_dict=None):
         # If no variable dictionary is specified, use standard one
