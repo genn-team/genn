@@ -502,9 +502,9 @@ public:
         // Loop through variables
         for(const auto &var : this->getArchetype().getCustomUpdateModel()->getVars()) {
             const auto *varInitSnippet = this->getArchetype().getVarInitialisers().at(var.name).getSnippet();
-            unsigned int flags = POINTER_FIELD_PUSH_PULL_GET | POINTER_FIELD_STATE;
+            unsigned int flags = this->POINTER_FIELD_PUSH_PULL_GET | this->POINTER_FIELD_STATE;
             if(!varInitSnippet->getCode().empty()) {
-                flags |= POINTER_FIELD_AUTO_INITIALISED;
+                flags |= this->POINTER_FIELD_AUTO_INITIALISED;
             }
             this->addField(var.type, var.name, this->getArchetype().getVarLocation(var.name),
                            flags, "group->size", getVarAccessDuplication(var.access));
