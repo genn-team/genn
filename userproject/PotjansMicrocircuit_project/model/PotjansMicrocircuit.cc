@@ -19,6 +19,7 @@ void modelDefinition(NNmodel &model)
     GENN_PREFERENCES.deviceSelectMethod = DeviceSelect::MANUAL;
     GENN_PREFERENCES.manualDeviceID = _GPU_DEVICE;
 #endif
+    GENN_PREFERENCES.generateRuntimePopulationLookup = true;
     model.setDT(Parameters::dtMs);
     model.setName("PotjansMicrocircuit");
     model.setTiming(Parameters::measureTiming);
@@ -27,23 +28,17 @@ void modelDefinition(NNmodel &model)
     model.setMergePostsynapticModels(true);
     model.setDefaultNarrowSparseIndEnabled(true);
 
-    InitVarSnippet::Normal::ParamValues vDist(
-        -58.0, // 0 - mean
-        5.0);  // 1 - sd
+    ParamValues vDist{{"mean", -58.0}, {"sd", 5.0}};
 
     // LIF initial conditions
-    NeuronModels::LIF::VarValues lifInit(
-        initVar<InitVarSnippet::Normal>(vDist), // 0 - V
-        0.0);                                   // 1 - RefracTime
+    VarValues lifInit{{"V",  initVar<InitVarSnippet::Normal>(vDist)},
+                      {"RefracTime", 0.0}};
 
-    CurrentSourceModels::PoissonExp::VarValues poissonInit(0.0);    // 0 - Current
+    VarValues poissonInit{{"current", 0.0}};
 
     // Exponential current parameters
-    PostsynapticModels::ExpCurr::ParamValues excitatoryExpCurrParams(
-        0.5);  // 0 - TauSyn (ms)
-
-    PostsynapticModels::ExpCurr::ParamValues inhibitoryExpCurrParams(
-        0.5);  // 0 - TauSyn (ms)
+    ParamValues excitatoryExpCurrParams{{"tau", 0.5}};
+    ParamValues inhibitoryExpCurrParams{{"tau", 0.5}};
 
     const double quantile = 0.9999;
     const double maxDelayMs[Parameters::PopulationMax] = {
@@ -74,19 +69,12 @@ void modelDefinition(NNmodel &model)
             assert(extInputCurrent >= 0.0);
 
             // LIF model parameters
-            NeuronModels::LIF::ParamValues lifParams(
-                0.25,               // 0 - C
-                10.0,               // 1 - TauM
-                -65.0,              // 2 - Vrest
-                -65.0,              // 3 - Vreset
-                -50.0,              // 4 - Vthresh
-                extInputCurrent,    // 5 - Ioffset
-                2.0);               // 6 - TauRefrac
+            ParamValues lifParams{{"C", 0.25},  {"TauM", 10.0},
+                {"Vrest", -65.0}, {"Vreset", -65.0}, {"Vthresh", -50.0},
+                {"Ioffset", extInputCurrent}, {"TauRefrac", 2.0}};
 
-            CurrentSourceModels::PoissonExp::ParamValues poissonParams(
-                extWeight,      // 0 - Weight
-                0.5,            // 1 - TauSyn
-                extInputRate);  // 2 - Rate
+            ParamValues poissonParams{{"weight", extWeight}, {"tauSyn", 0.5}, 
+                                      {"rate", extInputRate}};
 
             // Create population
             const unsigned int popSize = Parameters::getScaledNumNeurons(layer, pop);
@@ -137,8 +125,7 @@ void modelDefinition(NNmodel &model)
                         std::cout << "\tConnection between '" << srcName << "' and '" << trgName << "': numConnections=" << numConnections << "(" << prob << "), meanWeight=" << meanWeight << ", weightSD=" << weightSD << ", meanDelay=" << Parameters::meanDelay[srcPop] << ", delaySD=" << Parameters::delaySD[srcPop] << std::endl;
 
                         // Build parameters for fixed number total connector
-                        InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement::ParamValues connectParams(
-                            numConnections);                            // 0 - number of connections
+                        ParamValues connectParams{{"total", numConnections}};
 
                         totalSynapses += numConnections;
 
@@ -148,24 +135,18 @@ void modelDefinition(NNmodel &model)
                         // Excitatory
                         if(srcPop == Parameters::PopulationE) {
                             // Build distribution for weight parameters
-                            InitVarSnippet::NormalClipped::ParamValues wDist(
-                                meanWeight,                                 // 0 - mean
-                                weightSD,                                   // 1 - sd
-                                0.0,                                        // 2 - min
-                                std::numeric_limits<float>::max());         // 3 - max
+                            ParamValues wDist{{"mean", meanWeight}, {"sd", weightSD},
+                                              {"min", 0.0}, {"max", std::numeric_limits<float>::max()}};
 
                             // Build distribution for delay parameters
-                            InitVarSnippet::NormalClippedDelay::ParamValues dDist(
-                                Parameters::meanDelay[srcPop],              // 0 - mean
-                                Parameters::delaySD[srcPop],                // 1 - sd
-                                0.0,                                        // 2 - min
-                                maxDelayMs[srcPop]);                        // 3 - max
+                            ParamValues dDist{{"mean", Parameters::meanDelay[srcPop]}, {"sd", Parameters::delaySD[srcPop]},
+                                              {"min", 0.0}, {"max", maxDelayMs[srcPop]}};
 
 
                             // Create weight parameters
-                            WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(
-                                initVar<InitVarSnippet::NormalClipped>(wDist),          // 0 - Wij (nA)
-                                initVar<InitVarSnippet::NormalClippedDelay>(dDist));    // 1 - delay (ms)
+                            VarValues staticSynapseInit{
+                                {"g", initVar<InitVarSnippet::NormalClipped>(wDist)},
+                                {"d", initVar<InitVarSnippet::NormalClippedDelay>(dDist)}};
 
                             // Add synapse population
                             auto *synPop = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
@@ -180,23 +161,17 @@ void modelDefinition(NNmodel &model)
                         // Inhibitory
                         else {
                             // Build distribution for weight parameters
-                            InitVarSnippet::NormalClipped::ParamValues wDist(
-                                meanWeight,                                 // 0 - mean
-                                weightSD,                                   // 1 - sd
-                                -std::numeric_limits<float>::max(),         // 2 - min
-                                0.0);                                       // 3 - max
+                            ParamValues wDist{{"mean", meanWeight}, {"sd", weightSD},
+                                              {"min", -std::numeric_limits<float>::max()}, {"max", 0.0}};
 
                             // Build distribution for delay parameters
-                            InitVarSnippet::NormalClippedDelay::ParamValues dDist(
-                                Parameters::meanDelay[srcPop],              // 0 - mean
-                                Parameters::delaySD[srcPop],                // 1 - sd
-                                0.0,                                        // 2 - min
-                                maxDelayMs[srcPop]);                        // 3 - max
+                            ParamValues dDist{{"mean", Parameters::meanDelay[srcPop]}, {"sd", Parameters::delaySD[srcPop]},
+                                              {"min", 0.0}, {"max", maxDelayMs[srcPop]}};
 
                             // Create weight parameters
-                            WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticSynapseInit(
-                                initVar<InitVarSnippet::NormalClipped>(wDist),          // 0 - Wij (nA)
-                                initVar<InitVarSnippet::NormalClippedDelay>(dDist));    // 1 - delay (ms)
+                            VarValues staticSynapseInit{
+                                {"g", initVar<InitVarSnippet::NormalClipped>(wDist)},
+                                {"d", initVar<InitVarSnippet::NormalClippedDelay>(dDist)}};
 
                             // Add synapse population
                             auto *synPop = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::ExpCurr>(
