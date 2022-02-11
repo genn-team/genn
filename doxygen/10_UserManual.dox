@@ -1254,7 +1254,7 @@ There are a number of predefined Toeplitz connectivity initialisation snippets:
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "Conv2D".
 \end_toggle
-For example, to initialise convolutional synaptic connectivity with a 3x3 kernel between two populations of 1024 neurons representing a single 32x32 channel:
+For example, to initialise convolutional synaptic connectivity with a 3x3 kernel between two populations of 1024 neurons, each representing a 32x32 layer with a single channel:
 \add_toggle_code_cpp
 InitTopelitzConnectivitySnippet::Conv2D::ParamValues conv(
     3, 3,       // conv_kh, conv_kw
