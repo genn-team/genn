@@ -1113,7 +1113,7 @@ Tranposing is currently only possible on variables belonging to synapse groups w
 /*! 
 \page sectSparseConnectivityInitialisation Sparse connectivity initialisation
 
-Using _sparse connectivity initialisation snippets_, synaptic connectivity implemented using SynapseMatrixConnectivity::SPARSE and SynapseMatrixConnectivity::BITMASK can be automatically initialised and SynapseMatrixConnectivity::PROCEDURAL connectivity cna be generated on the fly.
+Using _sparse connectivity initialisation snippets_, synaptic connectivity implemented using SynapseMatrixConnectivity::SPARSE and SynapseMatrixConnectivity::BITMASK can be automatically initialised and SynapseMatrixConnectivity::PROCEDURAL connectivity can be generated on the fly.
 
 There are a number of predefined sparse connectivity initialisation snippets:
 - InitSparseConnectivitySnippet::OneToOne
@@ -1268,36 +1268,37 @@ model.addSynapsePopulation<...>(
 \add_toggle_code_python
 conv = {"conv_kh": 3, "conv_kw": 3,
         "conv_ih": 32, "conv_iw": 32, "conv_ic": 1,
-        "conv_oh": 32, "conv_ow": 32, "conv_oc": 2}
+        "conv_oh": 32, "conv_ow": 32, "conv_oc": 1}
 model.add_synapse_population(
     ...
     genn_model.init_toeplitz_connectivity("Conv2D", conv))
 \end_toggle_code
+Here, `conv_kh` denotes the kernel height, `conv_kw` the kernel width, `conv_ih` the input layer height, `conv_iw`, the input layer width, `conv_ic` the number of input channels, `conv_oh` the output layer height, `conv_ow` the output layer width, and `conv_oc` the number of output channels/filters.
 
 \section sect_new_toeplitz_connect Defining a new Toeplitz connectivity snippet
 Similarly to sparse connectivity initialisation snippets, Toeplitz connectivity initialisation snippets can be created by simply defining a class in the model description.
 
-For example, the following Toeplitz connectivity initialisation snippet could be used to convolve a square kernel with the output of populations of ``kern_size x kern_size`` neurons.
+For example, the following Toeplitz connectivity initialisation snippet could be used to convolve a `kern_dim x kern_dim` square kernel with the output of populations of `pop_dim x pop_dim` neurons.
 \add_toggle_code_cpp
 class SimpleConv2D : public InitToeplitzConnectivitySnippet::Base
 {
 public:
     DECLARE_SNIPPET(SimpleConv2D, 2);
 
-    SET_PARAM_NAMES({"kern_size", "pop_size"});
+    SET_PARAM_NAMES({"kern_dim", "pop_dim"});
 
-    SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "$(id_diag) / (int)$(kern_size)"},
-                                   {"kernCol", "int", "$(id_diag) % (int)$(kern_size)"}});
+    SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "$(id_diag) / (int)$(kern_dim)"},
+                                   {"kernCol", "int", "$(id_diag) % (int)$(kern_dim)"}});
 
     SET_DIAGONAL_BUILD_CODE(
-        "const int preRow = $(id_pre) / (int)$(pop_size);\n"
-        "const int preCol = $(id_pre) / % (int)$(pop_size);\n"
+        "const int preRow = $(id_pre) / (int)$(pop_dim);\n"
+        "const int preCol = $(id_pre) % (int)$(pop_dim);\n"
         "// If we haven't gone off edge of output\n"
         "const int postRow = preRow + $(kernRow) - 1;\n"
         "const int postCol = preCol + $(kernCol) - 1;\n"
-        "if(postRow >= 0 && postCol >= 0 && postRow < (int)$(pop_size) && postCol < (int)$(pop_size)) {\n"
+        "if(postRow >= 0 && postCol >= 0 && postRow < (int)$(pop_dim) && postCol < (int)$(pop_dim)) {\n"
         "    // Calculate postsynaptic index\n"
-        "    const int postInd = ((postRow * (int)$(pop_size)) + postCol;\n"
+        "    const int postInd = ((postRow * (int)$(pop_dim)) + postCol;\n"
         "    $(addSynapse, postInd,  $(kernRow), $(kernCol));\n"
         "}\n");
 
@@ -1318,20 +1319,20 @@ IMPLEMENT_SNIPPET(SimpleConv2D);
 \add_toggle_code_python
 simple_conv2d_model = genn_model.create_custom_toeplitz_connect_init_snippet_class(
     "simple_conv2d",
-    param_names=["kern_size", "pop_size"],
+    param_names=["kern_size", "pop_dim"],
     diagonal_build_state_vars=[
-        ("kernRow", "int", "$(id_diag) / (int)$(kern_size)"),
-        ("kernCol", "int", "$(id_diag) % (int)$(kern_size)")],
+        ("kernRow", "int", "$(id_diag) / (int)$(kern_dim)"),
+        ("kernCol", "int", "$(id_diag) % (int)$(kern_dim)")],
     diagonal_build_code=
         """
-        const int preRow = $(id_pre) / (int)$(pop_size);
-        const int preCol = $(id_pre) / % (int)$(pop_size);
+        const int preRow = $(id_pre) / (int)$(pop_dim);
+        const int preCol = $(id_pre) % (int)$(pop_dim);
         // If we haven't gone off edge of output
         const int postRow = preRow + $(kernRow) - 1;
         const int postCol = preCol + $(kernCol) - 1;
-        if(postRow >= 0 && postCol >= 0 && postRow < (int)$(pop_size) && postCol < (int)$(pop_size)) {
+        if(postRow >= 0 && postCol >= 0 && postRow < (int)$(pop_dim) && postCol < (int)$(pop_dim)) {
             // Calculate postsynaptic index
-            const int postInd = (postRow * (int)$(pop_size)) + postCol;
+            const int postInd = (postRow * (int)$(pop_dim)) + postCol;
             $(addSynapse, postInd,  $(kernRow), $(kernCol));
         }
         """,
@@ -1341,7 +1342,7 @@ simple_conv2d_model = genn_model.create_custom_toeplitz_connect_init_snippet_cla
     calc_kernel_size_func=genn_model.create_cmlf_class(
         lambda pars: UnsignedIntVector([int(pars[0]), int(pars[0])]))())
 \end_toggle_code
-Each <i>diagonal</i> of Toeplitz connectivity is initialised independantly by running the snippet of code specified using the \add_cpp_python_text{`SET_DIAGONAL_BUILD_CODE()` macro,`diagonal_build_code` keyword argument} within a loop.
+Each <i>diagonal</i> of Toeplitz connectivity is initialised independently by running the snippet of code specified using the \add_cpp_python_text{`SET_DIAGONAL_BUILD_CODE()` macro,`diagonal_build_code` keyword argument} within a loop.
 The \$(id_diag) variable can be used to access the index of the diagonal being generated and the \$(id_pre) variable can be used to access the index of the presynaptic neuron currently being processed.
 The \add_cpp_python_text{`SET_DIAGONAL_BUILD_STATE_VARS()` macro,`diagonal_build_state_vars` keyword argument} can be used to initialise state variables outside of the loop - in this case \$(id_diag) is split into ``kernRow`` and ``kernCol`` which are subsequently used to access the kernel element repeated along each diagonal. Similarly to sparse connectivity initialisation snippets when a kernel is used, synapses are added to using the \$(addSynapse, target, kernRow, kernCol) function where the size of the kernel is specified using the \add_cpp_python_text{SET_CALC_KERNEL_SIZE_FUNC() macro, `calc_kernel_size_func` keyword argument`}.
 
