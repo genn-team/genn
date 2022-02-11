@@ -1105,9 +1105,9 @@ Tranposing is currently only possible on variables belonging to synapse groups w
 /*! 
 \page sectSparseConnectivityInitialisation Sparse connectivity initialisation
 
-Synaptic connectivity implemented using SynapseMatrixConnectivity::SPARSE and SynapseMatrixConnectivity::BITMASK can be automatically initialised. 
+Using _sparse connectivity initialisation snippets_, synaptic connectivity implemented using SynapseMatrixConnectivity::SPARSE and SynapseMatrixConnectivity::BITMASK can be automatically initialised and SynapseMatrixConnectivity::PROCEDURAL connectivity cna be generated on the fly.
 
-This can be done using one of a number of predefined _sparse connectivity initialisation snippets_:
+There are a number of predefined sparse connectivity initialisation snippets:
 - InitSparseConnectivitySnippet::OneToOne
 - InitSparseConnectivitySnippet::FixedProbability
 - InitSparseConnectivitySnippet::FixedProbabilityNoAutapse
@@ -1235,9 +1235,11 @@ This is controlled using the same ``VarLocations`` options described in section 
 /*! 
 \page sectToeplitzConnectivityInitialisation Toeplitz connectivity initialisation
 
-Synaptic connectivity implemented using SynapseMatrixConnectivity::SPARSE and SynapseMatrixConnectivity::BITMASK can be automatically initialised. 
+_Toeplitz matrices_ are ones where the values along all diagonals are constant.
+_Doubly-blocked Toeplitz matrices_ are matrices made out of Toeplitz sub-matrices in a structure that is, itself Toeplitz so the sub-matrices are repeated along diagonals.
+Doubly-blocked Toeplitz matrices can be used to represent common machine learning operations including convolutions and, in GeNN, _Toeplitz connectivity initialisation snippets_ can be used to generate such connectivity on the fly with SynapseMatrixType::TOEPLITZ_KERNELG (see \ref subsect34).
 
-This can be done using one of a number of predefined _Toeplitz connectivity initialisation snippets_:
+There are a number of predefined Toeplitz connectivity initialisation snippets:
 - InitToeplitzConnectivitySnippet::Conv2D
 - InitToeplitzConnectivitySnippet::AvgPoolConv2D
 
@@ -1303,7 +1305,7 @@ public:
             return {(unsigned int)pars[0], (unsigned int)pars[0]};
         });
 };
-IMPLEMENT_SNIPPET(Ring);
+IMPLEMENT_SNIPPET(SimpleConv2D);
 \end_toggle_code
 \add_toggle_code_python
 simple_conv2d_model = genn_model.create_custom_toeplitz_connect_init_snippet_class(
