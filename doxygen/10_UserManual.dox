@@ -434,6 +434,7 @@ Many neuron models have probabilistic terms, for example a source of noise or a 
 - <code>\$(gennrand_exponential)</code> returns a number drawn from an exponential distribution with \f$\lambda=1\f$.
 - <code>\$(gennrand_log_normal, MEAN, STDDEV)</code> returns a number drawn from a log-normal distribution with the specified mean and standard deviation.
 - <code>\$(gennrand_gamma, ALPHA)</code> returns a number drawn from a gamma distribution with the specified shape.
+- <code>\$(gennrand_binomial, N, P)</code> returns a number drawn from a binomial distribution with the specified shape.
 
 \section neuron_pop_own_type Creating neuron populations with your own neuron type
 Once defined in this way, new neuron models classes, can be used in network descriptions by referring to their type e.g.
@@ -956,6 +957,7 @@ or initialised using one of a number of predefined _variable initialisation snip
 - InitVarSnippet::NormalClippedDelay
 - InitVarSnippet::Exponential
 - InitVarSnippet::Gamma
+- InitVarSnippet::Binomial
 
 \add_toggle_python
 In Python, these models can be selected by their unqualified name e.g. "Normal".
