@@ -945,9 +945,8 @@ void PostSpanToeplitz::genUpdate(CodeStream &os, const ModelSpecMerged &modelMer
                 // Otherwise
                 else {
                     // If we should use shared memory, add to shared memory
-                    // **THINK** this is only correct if there are no multapses i.e. there is only one synapse between any pair of pre and postsynaptic neurons
                     if(isSmallSharedMemoryPop(sg, backend)) {
-                        presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, "shLg[" + presynapticUpdateSubs["id_post"] + "] += $(0)");
+                        presynapticUpdateSubs.addFuncSubstitution("addToInSyn", 1, "shLg[$(id_post)] += $(0)");
                     }
                     // Otherwise, use global memory atomic
                     else {
