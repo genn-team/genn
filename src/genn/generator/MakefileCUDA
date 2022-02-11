@@ -15,6 +15,9 @@ CXXFLAGS		+= -I"$(CUDA_PATH)/include"
 ifeq ($(DARWIN),DARWIN)
     LDFLAGS		+=-rpath $(CUDA_PATH)/lib -L"$(CUDA_PATH)/lib" -lcuda -lcudart -pthread
 else
+    ifeq ($(MICROSOFT),MICROSOFT)
+        LDFLAGS		+=-L"/usr/lib/wsl/lib"
+    endif
     ifeq ($(OS_SIZE),32)
         LDFLAGS		+=-L"$(CUDA_PATH)/lib" -lcuda -lcudart -pthread 
     else
