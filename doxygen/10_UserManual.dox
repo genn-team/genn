@@ -31,6 +31,7 @@
 - \subpage sectVariableInitialisation
 - \subpage sectVariableReferences
 - \subpage sectSparseConnectivityInitialisation
+- \subpage sectToeplitzConnectivityInitialisation
 
 \section sIntro Introduction
 
@@ -886,18 +887,18 @@ Weight update model variables associated with the sparsely connected synaptic po
 \c g=[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 X]
 - SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` format and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
 - SynapseMatrixConnectivity::PROCEDURAL is a new approach where, rather than being stored in memory, connectivity described using \ref sectSparseConnectivityInitialisation is generated 'on the fly' as spikes are processed (see \cite Knight2020 for more information). Therefore, this approach offers very large memory savings for a small performance cost but does not currently support plasticity.
-- SynapseMatrixConnectivity::TOEPLITZ is another new approach tailored to 
+- SynapseMatrixConnectivity::TOEPLITZ is another new approach where, kernel-based connectivity like convolutions described using \ref sectToeplitzConnectivityInitialisation is generated 'on the fly' as spikes are processed. As well as offering the large memory savings of ``SynapseMatrixConnectivity::PROCEDURAL``, if the batch size is large enough it also out-performs both ``SynapseMatrixConnectivity::SPARSE`` and ``SynapseMatrixConnectivity::PROCEDURAL``.
 
 \add_python_text{In Python\, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.SynapseGroup.set_sparse_connections method.}
-Furthermore the SynapseMatrixWeight defines how 
+Furthermore the `SynapseMatrixWeight` defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
 - SynapseMatrixWeight::INDIVIDUAL_PSM allows each postsynapic neuron to have unique post synaptic model variables.
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
 This is automatically initialized to the initial value passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}.
 - SynapseMatrixWeight::PROCEDURAL generates weight update model variable values described using \ref sectVariableInitialisation 'on the fly' as spikes are processed. This is typically used alongside SynapseMatrixConnectivity::PROCEDURAL for large models with static connectivity and weights/delays sampled from probability distributions (see \cite Knight2020 for an example).
-- SynapseMatrixWeight::KERNEL saves memory by sharing a small kernel of weights between all synapses. The size of the kernel is defined by the sparse connectivity initialisation snippet (see \ref sectSparseConnectivityInitialisation) or Toeplitz  connectivity initialisation snippet (see TODO).
+- SynapseMatrixWeight::KERNEL saves memory by sharing a small kernel of weights between all synapses. The size of the kernel is defined by the sparse connectivity initialisation snippet (see \ref sectSparseConnectivityInitialisation) or Toeplitz  connectivity initialisation snippet (see \ref sectToeplitzConnectivityInitialisation).
 
-Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}:
+Only certain combinations of `SynapseMatrixConnectivity` and `SynapseMatrixWeight` are sensible therefore, to reduce confusion, the `SynapseMatrixType` enumeration defines the following options which can be passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}:
 - SynapseMatrixType::SPARSE_GLOBALG
 - SynapseMatrixType::SPARSE_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::SPARSE_INDIVIDUALG
@@ -1220,12 +1221,120 @@ calc_kernel_size_func=create_cksf_class(
 \end_toggle_code
 Secondly, the row build code must use an extended version of the `addSynapse` function which indicates the kernel indices associated with the synapse.
 For example, the following could be used with a 4 dimensional kernel: \$(addSynapse, idPost, kernRow, kernCol, inChan, outChan);
-Finally, in order to use a kernel to initialise SynapseMatrixWeight::INDIVIDUAL variables or generate SynapseMatrixWeight::PROCEDURAL variables on the fly, the variables should be initialised using the InitVarSnippet::Kernel variable initialisation snippet and the kernel itself allocated as an extra global parameter and pushed to device (see \ref extraGlobalParamSim).
+In order to use a kernel to initialise SynapseMatrixWeight::INDIVIDUAL variables, the variables should be initialised using the InitVarSnippet::Kernel variable initialisation snippet and the kernel itself allocated as an extra global parameter and pushed to device (see \ref extraGlobalParamSim).
+Finally, in order to use a kernel to generate SynapseMatrixWeight::PROCEDURAL variables on the fly, the SynapseMatrixType::PROCEDURAL_KERNELG matrix type should be used.
 
 \section sect_sparse_connect_init_modes Sparse connectivity locations
 Once you have defined <b>how</b> sparse connectivity is going to be initialised, similarly to variables, you can control <b>where</b> it is allocated. 
 This is controlled using the same ``VarLocations`` options described in section \ref sect_var_init_modes and can either be set using the model default specifiued with ``ModelSpec::setDefaultSparseConnectivityLocation`` or on a per-synapse group basis using ``SynapseGroup::setSparseConnectivityLocation``.
 
 -----
-\link sectVariableReferences Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
+\link sectVariableReferences Previous\endlink | \link UserManual Top\endlink | \link sectToeplitzConnectivityInitialisation Next\endlink
+*/
+//----------------------------------------------------------------------------
+/*! 
+\page sectToeplitzConnectivityInitialisation Toeplitz connectivity initialisation
+
+Synaptic connectivity implemented using SynapseMatrixConnectivity::SPARSE and SynapseMatrixConnectivity::BITMASK can be automatically initialised. 
+
+This can be done using one of a number of predefined _Toeplitz connectivity initialisation snippets_:
+- InitToeplitzConnectivitySnippet::Conv2D
+- InitToeplitzConnectivitySnippet::AvgPoolConv2D
+
+\add_toggle_python
+In Python, these models can be selected by their unqualified name e.g. "Conv2D".
+\end_toggle
+For example, to initialise convolutional synaptic connectivity with a 3x3 kernel between two populations of 1024 neurons representing a single 32x32 channel:
+\add_toggle_code_cpp
+InitTopelitzConnectivitySnippet::Conv2D::ParamValues conv(
+    3, 3,       // conv_kh, conv_kw
+    32, 32, 1,  // conv_ih, conv_iw, conv_ic
+    32, 32, 1); // conv_oh, conv_ow, conv_oc
+    
+model.addSynapsePopulation<...>(
+        ...
+        initToeplitzConnectivity<InitTopelitzConnectivitySnippet::Conv2D>(conv));
+\end_toggle_code
+\add_toggle_code_python
+conv = {"conv_kh": 3, "conv_kw": 3,
+        "conv_ih": 32, "conv_iw": 32, "conv_ic": 1,
+        "conv_oh": 32, "conv_ow": 32, "conv_oc": 2}
+model.add_synapse_population(
+    ...
+    genn_model.init_toeplitz_connectivity("Conv2D", conv))
+\end_toggle_code
+
+\section sect_new_toeplitz_connect Defining a new Toeplitz connectivity snippet
+Similarly to sparse connectivity initialisation snippets, Toeplitz connectivity initialisation snippets can be created by simply defining a class in the model description.
+
+For example, the following Toeplitz connectivity initialisation snippet could be used to convolve a square kernel with the output of populations of ``kern_size x kern_size`` neurons.
+\add_toggle_code_cpp
+class SimpleConv2D : public InitToeplitzConnectivitySnippet::Base
+{
+public:
+    DECLARE_SNIPPET(SimpleConv2D, 2);
+
+    SET_PARAM_NAMES({"kern_size", "pop_size"});
+
+    SET_DIAGONAL_BUILD_STATE_VARS({{"kernRow", "int", "$(id_diag) / (int)$(kern_size)"},
+                                   {"kernCol", "int", "$(id_diag) % (int)$(kern_size)"}});
+
+    SET_DIAGONAL_BUILD_CODE(
+        "const int preRow = $(id_pre) / (int)$(pop_size);\n"
+        "const int preCol = $(id_pre) / % (int)$(pop_size);\n"
+        "// If we haven't gone off edge of output\n"
+        "const int postRow = preRow + $(kernRow) - 1;\n"
+        "const int postCol = preCol + $(kernCol) - 1;\n"
+        "if(postRow >= 0 && postCol >= 0 && postRow < (int)$(pop_size) && postCol < (int)$(pop_size)) {\n"
+        "    // Calculate postsynaptic index\n"
+        "    const int postInd = ((postRow * (int)$(pop_size)) + postCol;\n"
+        "    $(addSynapse, postInd,  $(kernRow), $(kernCol));\n"
+        "}\n");
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            return ((unsigned int)pars[0] * (unsigned int)pars[0]);
+        });
+
+    SET_CALC_KERNEL_SIZE_FUNC(
+        [](const std::vector<double> &pars)->std::vector<unsigned int>
+        {
+            return {(unsigned int)pars[0], (unsigned int)pars[0]};
+        });
+};
+IMPLEMENT_SNIPPET(Ring);
+\end_toggle_code
+\add_toggle_code_python
+simple_conv2d_model = genn_model.create_custom_toeplitz_connect_init_snippet_class(
+    "simple_conv2d",
+    param_names=["kern_size", "pop_size"],
+    diagonal_build_state_vars=[
+        ("kernRow", "int", "$(id_diag) / (int)$(kern_size)"),
+        ("kernCol", "int", "$(id_diag) % (int)$(kern_size)")],
+    diagonal_build_code=
+        """
+        const int preRow = $(id_pre) / (int)$(pop_size);
+        const int preCol = $(id_pre) / % (int)$(pop_size);
+        // If we haven't gone off edge of output
+        const int postRow = preRow + $(kernRow) - 1;
+        const int postCol = preCol + $(kernCol) - 1;
+        if(postRow >= 0 && postCol >= 0 && postRow < (int)$(pop_size) && postCol < (int)$(pop_size)) {
+            // Calculate postsynaptic index
+            const int postInd = (postRow * (int)$(pop_size)) + postCol;
+            $(addSynapse, postInd,  $(kernRow), $(kernCol));
+        }
+        """,
+
+    calc_max_row_len_func=genn_model.create_cmlf_class(
+        lambda num_pre, num_post, pars: int(pars[0]) * int(pars[0]))(),
+    calc_kernel_size_func=genn_model.create_cmlf_class(
+        lambda pars: UnsignedIntVector([int(pars[0]), int(pars[0])]))())
+\end_toggle_code
+Each <i>diagonal</i> of Toeplitz connectivity is initialised independantly by running the snippet of code specified using the \add_cpp_python_text{`SET_DIAGONAL_BUILD_CODE()` macro,`diagonal_build_code` keyword argument} within a loop.
+The \$(id_diag) variable can be used to access the index of the diagonal being generated and the \$(id_pre) variable can be used to access the index of the presynaptic neuron currently being processed.
+The \add_cpp_python_text{`SET_DIAGONAL_BUILD_STATE_VARS()` macro,`diagonal_build_state_vars` keyword argument} can be used to initialise state variables outside of the loop - in this case \$(id_diag) is split into ``kernRow`` and ``kernCol`` which are subsequently used to access the kernel element repeated along each diagonal. Similarly to sparse connectivity initialisation snippets when a kernel is used, synapses are added to using the \$(addSynapse, target, kernRow, kernCol) function where the size of the kernel is specified using the \add_cpp_python_text{SET_CALC_KERNEL_SIZE_FUNC() macro, `calc_kernel_size_func` keyword argument`}.
+
+-----
+\link sectSparseConnectivityInitialisation Previous\endlink | \link UserManual Top\endlink | \link Tutorial1 Next\endlink
 */
