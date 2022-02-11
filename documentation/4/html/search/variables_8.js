@@ -1,6 +1,7 @@
 var searchData=
 [
   ['in_5fsyn',['in_syn',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a41f9e8f4119814db34ea4115fb45ead8',1,'pygenn::genn_groups::SynapseGroup']]],
+  ['includemodelnameindll',['includeModelNameInDLL',['../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ab4aadbfe6857bf535c1ee2eebb7402bb',1,'CodeGenerator::PreferencesBase']]],
   ['ind',['ind',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb',1,'pygenn::genn_groups::SynapseGroup']]],
   ['init_5frequired',['init_required',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#aaa2fab632e26b9ebd69355f71cf269c8',1,'pygenn::model_preprocessor::Variable']]],
   ['init_5fval',['init_val',['../d5/de5/classpygenn_1_1model__preprocessor_1_1Variable.html#ac68a6acf871cd1651df79260ca020129',1,'pygenn::model_preprocessor::Variable']]],

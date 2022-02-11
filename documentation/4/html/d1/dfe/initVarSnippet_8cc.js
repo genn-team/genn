@@ -8,5 +8,6 @@ var initVarSnippet_8cc =
     [ "IMPLEMENT_SNIPPET", "d1/dfe/initVarSnippet_8cc.html#aad038fa8923543756ade94af9e29f8dd", null ],
     [ "IMPLEMENT_SNIPPET", "d1/dfe/initVarSnippet_8cc.html#a2a5aa401f7bc4b8dda156a52b18866f2", null ],
     [ "IMPLEMENT_SNIPPET", "d1/dfe/initVarSnippet_8cc.html#aa57c95d20fa803d69ebbae1b630c044e", null ],
-    [ "IMPLEMENT_SNIPPET", "d1/dfe/initVarSnippet_8cc.html#a9957e616103e28b0b547d94507069604", null ]
+    [ "IMPLEMENT_SNIPPET", "d1/dfe/initVarSnippet_8cc.html#a9957e616103e28b0b547d94507069604", null ],
+    [ "IMPLEMENT_SNIPPET", "d1/dfe/initVarSnippet_8cc.html#aa2aa6fb9541decd0e726f778f6d4ca35", null ]
 ];

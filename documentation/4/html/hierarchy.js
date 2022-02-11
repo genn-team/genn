@@ -21,7 +21,13 @@ var hierarchy =
         [ "InitSparseConnectivitySnippet::OneToOne", "d5/dd3/classInitSparseConnectivitySnippet_1_1OneToOne.html", null ],
         [ "InitSparseConnectivitySnippet::Uninitialised", "d1/d54/classInitSparseConnectivitySnippet_1_1Uninitialised.html", null ]
       ] ],
+      [ "InitToeplitzConnectivitySnippet::Base", "de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html", [
+        [ "InitToeplitzConnectivitySnippet::AvgPoolConv2D", "d9/d85/classInitToeplitzConnectivitySnippet_1_1AvgPoolConv2D.html", null ],
+        [ "InitToeplitzConnectivitySnippet::Conv2D", "d3/d85/classInitToeplitzConnectivitySnippet_1_1Conv2D.html", null ],
+        [ "InitToeplitzConnectivitySnippet::Uninitialised", "de/dc1/classInitToeplitzConnectivitySnippet_1_1Uninitialised.html", null ]
+      ] ],
       [ "InitVarSnippet::Base", "d3/d9e/classInitVarSnippet_1_1Base.html", [
+        [ "InitVarSnippet::Binomial", "dc/dda/classInitVarSnippet_1_1Binomial.html", null ],
         [ "InitVarSnippet::Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", null ],
         [ "InitVarSnippet::Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", null ],
         [ "InitVarSnippet::Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", null ],
@@ -110,6 +116,7 @@ var hierarchy =
     [ "CodeGenerator::PresynapticUpdateStrategySIMT::Base", "da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html", [
       [ "CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan", "d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html", null ],
       [ "CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask", "d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html", null ],
+      [ "CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz", "d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html", null ],
       [ "CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan", "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html", null ],
       [ "CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html", null ]
     ] ],
@@ -183,12 +190,16 @@ var hierarchy =
         [ "CodeGenerator::SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", null ],
+        [ "CodeGenerator::SynapseKernelInitGroupMerged", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html", null ],
         [ "CodeGenerator::SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", null ]
       ] ]
     ] ],
     [ "Snippet::Init< SnippetBase >", "d8/df6/classSnippet_1_1Init.html", null ],
     [ "Snippet::Init< InitSparseConnectivitySnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
       [ "InitSparseConnectivitySnippet::Init", "d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html", null ]
+    ] ],
+    [ "Snippet::Init< InitToeplitzConnectivitySnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
+      [ "InitToeplitzConnectivitySnippet::Init", "d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html", null ]
     ] ],
     [ "Snippet::Init< InitVarSnippet::Base >", "d8/df6/classSnippet_1_1Init.html", [
       [ "Models::VarInit", "d8/dee/classModels_1_1VarInit.html", null ]
@@ -249,10 +260,10 @@ var hierarchy =
     [ "SynapseGroup", "dc/dfa/classSynapseGroup.html", [
       [ "SynapseGroupInternal", "dd/d48/classSynapseGroupInternal.html", null ]
     ] ],
-    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "Timer", "dc/dea/classTimer.html", null ],
-    [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
+    [ "SpineMLSimulator::Timer", "d0/d02/classSpineMLSimulator_1_1Timer.html", null ],
     [ "SpineMLSimulator::TimerAccumulate", "d4/d21/classSpineMLSimulator_1_1TimerAccumulate.html", null ],
+    [ "TimerAccumulate", "de/d18/classTimerAccumulate.html", null ],
     [ "Models::Base::Var", "d5/d42/structModels_1_1Base_1_1Var.html", null ],
     [ "Models::Base::VarRef", "d1/daf/structModels_1_1Base_1_1VarRef.html", null ],
     [ "Models::VarReferenceBase", "df/d91/classModels_1_1VarReferenceBase.html", [

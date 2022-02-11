@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -143,38 +143,6 @@ Public Types</h2></td></tr>
 <tr class="memitem:adba20f0748ab61dd226b26bf116b04c2 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
 <tr class="memitem:adba20f0748ab61dd226b26bf116b04c2 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memTemplItemLeft" align="right" valign="top">using&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a> = std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const T &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;)&gt;</td></tr>
 <tr class="separator:adba20f0748ab61dd226b26bf116b04c2 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad36b2a42177de4433fc1ffd197924daf inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a></td></tr>
-<tr class="memdesc:ad36b2a42177de4433fc1ffd197924daf inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Standard callback type which provides a <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> to write platform-independent code for the specified <a class="el" href="../../dc/dfa/classSynapseGroup.html">SynapseGroup</a> to.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">More...</a><br /></td></tr>
-<tr class="separator:ad36b2a42177de4433fc1ffd197924daf inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a436d06ecbed5e432e2bf06e3dd49b094 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html">PresynapticUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a></td></tr>
-<tr class="separator:a436d06ecbed5e432e2bf06e3dd49b094 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3e3b87c30f6e8f8d0657c029c9b3a0fe inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html">PostsynapticUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a></td></tr>
-<tr class="separator:a3e3b87c30f6e8f8d0657c029c9b3a0fe inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a69d2a8b89bcd3d01fdc0bbe2f83b09f7 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html">SynapseDynamicsGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a></td></tr>
-<tr class="separator:a69d2a8b89bcd3d01fdc0bbe2f83b09f7 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac7bc5c26f226caf958bfc9f72a833893 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac7bc5c26f226caf958bfc9f72a833893">CustomUpdateGroupMergedHandler</a></td></tr>
-<tr class="separator:ac7bc5c26f226caf958bfc9f72a833893 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac01c888239b8ea78b65fba1cf0de3b31 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html">CustomUpdateWUGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac01c888239b8ea78b65fba1cf0de3b31">CustomUpdateWUGroupMergedHandler</a></td></tr>
-<tr class="separator:ac01c888239b8ea78b65fba1cf0de3b31 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3cbc7b9e7a5f2f3b608026bf204c9395 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html">CustomUpdateTransposeWUGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3cbc7b9e7a5f2f3b608026bf204c9395">CustomUpdateTransposeWUGroupMergedHandler</a></td></tr>
-<tr class="separator:a3cbc7b9e7a5f2f3b608026bf204c9395 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05d118c7cea7d61d3c635ad54775d378 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html">NeuronInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a></td></tr>
-<tr class="separator:a05d118c7cea7d61d3c635ad54775d378 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a13d23fe289492ea5a1eaf8c0dbae9eb3 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html">CustomUpdateInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a13d23fe289492ea5a1eaf8c0dbae9eb3">CustomUpdateInitGroupMergedHandler</a></td></tr>
-<tr class="separator:a13d23fe289492ea5a1eaf8c0dbae9eb3 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6a2f1cc29216bf24ccccce5e7f624d5e inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html">CustomWUUpdateDenseInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6a2f1cc29216bf24ccccce5e7f624d5e">CustomWUUpdateDenseInitGroupMergedHandler</a></td></tr>
-<tr class="separator:a6a2f1cc29216bf24ccccce5e7f624d5e inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e23567a9644391bfc78a38523b890b3 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html">CustomWUUpdateSparseInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a8e23567a9644391bfc78a38523b890b3">CustomWUUpdateSparseInitGroupMergedHandler</a></td></tr>
-<tr class="separator:a8e23567a9644391bfc78a38523b890b3 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a44a8647e5cc32e8883064e93def1ff6d inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html">SynapseConnectivityInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a></td></tr>
-<tr class="separator:a44a8647e5cc32e8883064e93def1ff6d inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8fc7e4cb214d545f08c9a95cd08affe inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html">SynapseDenseInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a></td></tr>
-<tr class="separator:ab8fc7e4cb214d545f08c9a95cd08affe inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2460e47c9ef8eb5cf9c2fe4ab8b28b31 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adba20f0748ab61dd226b26bf116b04c2">GroupHandler</a>&lt; <a class="el" href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html">SynapseSparseInitGroupMerged</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a></td></tr>
-<tr class="separator:a2460e47c9ef8eb5cf9c2fe4ab8b28b31 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a18d700c2c55565aba980600fbb872f63 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef std::function&lt; void(<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;, const <a class="el" href="../../d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html">NeuronUpdateGroupMerged</a> &amp;, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>)&gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a></td></tr>
-<tr class="memdesc:a18d700c2c55565aba980600fbb872f63 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Callback function type for generation neuron group simulation code.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">More...</a><br /></td></tr>
-<tr class="separator:a18d700c2c55565aba980600fbb872f63 inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1bbf7fdd326351be7af8f575d116a8ab inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">typedef std::vector&lt; std::pair&lt; std::string, size_t &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">MemorySpaces</a></td></tr>
 <tr class="memdesc:a1bbf7fdd326351be7af8f575d116a8ab inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Vector of prefixes required to allocate in memory space and size of memory space.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1bbf7fdd326351be7af8f575d116a8ab">More...</a><br /></td></tr>
 <tr class="separator:a1bbf7fdd326351be7af8f575d116a8ab inherit pub_types_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -229,6 +197,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a8c3e11fdb75f0a2c1f41d3f116bf09e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a652d6f75107039f005e67e1a4caa4faf"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a652d6f75107039f005e67e1a4caa4faf">genDenseSynapseVariableRowInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const final</td></tr>
 <tr class="separator:a652d6f75107039f005e67e1a4caa4faf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6543dffc10b84cf5cd885794ecaeb67"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#af6543dffc10b84cf5cd885794ecaeb67">genKernelSynapseVariableInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html">SynapseKernelInitGroupMerged</a> &amp;sg, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a> handler) const final</td></tr>
+<tr class="separator:af6543dffc10b84cf5cd885794ecaeb67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a55262bebebda7932d9e3fa6408806adc"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a55262bebebda7932d9e3fa6408806adc">isDeviceScalarRequired</a> () const final</td></tr>
 <tr class="memdesc:a55262bebebda7932d9e3fa6408806adc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should 'scalar' variables be implemented on device or can host variables be used directly?  <a href="#a55262bebebda7932d9e3fa6408806adc">More...</a><br /></td></tr>
 <tr class="separator:a55262bebebda7932d9e3fa6408806adc"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -261,18 +231,18 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:af3fd52fa0b5d8085ca2c033a62831b2e inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac4ba1c12b2a97dfb6cb4f3cd5df10f50 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac4ba1c12b2a97dfb6cb4f3cd5df10f50">~BackendBase</a> ()</td></tr>
 <tr class="separator:ac4ba1c12b2a97dfb6cb4f3cd5df10f50 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3ff2f42d94ffaea3f30324f225053aae inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3ff2f42d94ffaea3f30324f225053aae">genNeuronUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a> simHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a> wuVarUpdateHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
-<tr class="memdesc:a3ff2f42d94ffaea3f30324f225053aae inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all neurons.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3ff2f42d94ffaea3f30324f225053aae">More...</a><br /></td></tr>
-<tr class="separator:a3ff2f42d94ffaea3f30324f225053aae inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac660d0c89c7ad8f32bfbf23fb9ff9fb9 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac660d0c89c7ad8f32bfbf23fb9ff9fb9">genSynapseUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumThreshHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumSimHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumEventHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumProceduralConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a> postLearnHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a> synapseDynamicsHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
-<tr class="memdesc:ac660d0c89c7ad8f32bfbf23fb9ff9fb9 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all synapses.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac660d0c89c7ad8f32bfbf23fb9ff9fb9">More...</a><br /></td></tr>
-<tr class="separator:ac660d0c89c7ad8f32bfbf23fb9ff9fb9 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa590e4d6ff9b5f1088df7ceca8919e1b inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aa590e4d6ff9b5f1088df7ceca8919e1b">genCustomUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac7bc5c26f226caf958bfc9f72a833893">CustomUpdateGroupMergedHandler</a> customUpdateHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac01c888239b8ea78b65fba1cf0de3b31">CustomUpdateWUGroupMergedHandler</a> customWUUpdateHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3cbc7b9e7a5f2f3b608026bf204c9395">CustomUpdateTransposeWUGroupMergedHandler</a> customWUTransposeUpdateHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
-<tr class="memdesc:aa590e4d6ff9b5f1088df7ceca8919e1b inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific functions to perform custom updates.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aa590e4d6ff9b5f1088df7ceca8919e1b">More...</a><br /></td></tr>
-<tr class="separator:aa590e4d6ff9b5f1088df7ceca8919e1b inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a45d185441f1a27e055abacfe9066fa12 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a45d185441f1a27e055abacfe9066fa12">genInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a> localNGHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a13d23fe289492ea5a1eaf8c0dbae9eb3">CustomUpdateInitGroupMergedHandler</a> cuHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6a2f1cc29216bf24ccccce5e7f624d5e">CustomWUUpdateDenseInitGroupMergedHandler</a> cuDenseHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a> sgDenseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgSparseRowConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgSparseColConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgKernelInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a> sgSparseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a8e23567a9644391bfc78a38523b890b3">CustomWUUpdateSparseInitGroupMergedHandler</a> cuSparseHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> initPushEGPHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> initSparsePushEGPHandler) const =0</td></tr>
-<tr class="memdesc:a45d185441f1a27e055abacfe9066fa12 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to initialise model.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a45d185441f1a27e055abacfe9066fa12">More...</a><br /></td></tr>
-<tr class="separator:a45d185441f1a27e055abacfe9066fa12 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaa433b3f6f3f3a9a1eaf204707f7599 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adaa433b3f6f3f3a9a1eaf204707f7599">genNeuronUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
+<tr class="memdesc:adaa433b3f6f3f3a9a1eaf204707f7599 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all neurons.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#adaa433b3f6f3f3a9a1eaf204707f7599">More...</a><br /></td></tr>
+<tr class="separator:adaa433b3f6f3f3a9a1eaf204707f7599 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6cffd91f5fbf9556ad5f4483efd7dc41 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6cffd91f5fbf9556ad5f4483efd7dc41">genSynapseUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
+<tr class="memdesc:a6cffd91f5fbf9556ad5f4483efd7dc41 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to update the state of all synapses.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6cffd91f5fbf9556ad5f4483efd7dc41">More...</a><br /></td></tr>
+<tr class="separator:a6cffd91f5fbf9556ad5f4483efd7dc41 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a28d2ba608f32d392b5dd81d2bd292cc4 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a28d2ba608f32d392b5dd81d2bd292cc4">genCustomUpdate</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> pushEGPHandler) const =0</td></tr>
+<tr class="memdesc:a28d2ba608f32d392b5dd81d2bd292cc4 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific functions to perform custom updates.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a28d2ba608f32d392b5dd81d2bd292cc4">More...</a><br /></td></tr>
+<tr class="separator:a28d2ba608f32d392b5dd81d2bd292cc4 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aea064baa987d5c6c8e996c3afbac6006 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aea064baa987d5c6c8e996c3afbac6006">genInit</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> preambleHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> initPushEGPHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1ec13cdda649e931462efe7c26d2e549">HostHandler</a> initSparsePushEGPHandler) const =0</td></tr>
+<tr class="memdesc:aea064baa987d5c6c8e996c3afbac6006 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate platform-specific function to initialise model.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#aea064baa987d5c6c8e996c3afbac6006">More...</a><br /></td></tr>
+<tr class="separator:aea064baa987d5c6c8e996c3afbac6006 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1f01b0d362892758364d86a17eba4706 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1f01b0d362892758364d86a17eba4706">genDefinitionsPreamble</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged) const =0</td></tr>
 <tr class="memdesc:a1f01b0d362892758364d86a17eba4706 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Definitions is the usercode-facing header file for the generated code. This function generates a 'preamble' to this header file.  <a href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a1f01b0d362892758364d86a17eba4706">More...</a><br /></td></tr>
 <tr class="separator:a1f01b0d362892758364d86a17eba4706 inherit pub_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -446,26 +416,26 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:a36eab4195f9ae6efd84286d83cbd86d9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a7f24ee83b17231c736b95b7ee91ec6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5a7f24ee83b17231c736b95b7ee91ec6">genNeuronSpikeQueueUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
 <tr class="separator:a5a7f24ee83b17231c736b95b7ee91ec6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abcc84a0881d880cb58526cffe70d25fa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#abcc84a0881d880cb58526cffe70d25fa">genNeuronUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a> simHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a> wuVarUpdateHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:abcc84a0881d880cb58526cffe70d25fa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad6c8c2d71f4c13ed9606b0a243824028"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ad6c8c2d71f4c13ed9606b0a243824028">genNeuronUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
+<tr class="separator:ad6c8c2d71f4c13ed9606b0a243824028"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a755ccc2265c9918169c0559b63e666e1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a755ccc2265c9918169c0559b63e666e1">genSynapseDendriticDelayUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
 <tr class="separator:a755ccc2265c9918169c0559b63e666e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80cc58b010c2d4903098a86103889b9c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a80cc58b010c2d4903098a86103889b9c">genPresynapticUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumThreshHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumSimHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumEventHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a> wumProceduralConnectHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:a80cc58b010c2d4903098a86103889b9c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3f28d5e630b6b2e159840c945ee4afc8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a3f28d5e630b6b2e159840c945ee4afc8">genPostsynapticUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a> postLearnHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:a3f28d5e630b6b2e159840c945ee4afc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80c90d1fe8eb63c86cf01f52428cadc4"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a80c90d1fe8eb63c86cf01f52428cadc4">genSynapseDynamicsKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a> synapseDynamicsHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:a80c90d1fe8eb63c86cf01f52428cadc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a976c542ad289ebc3882b60738ca2a4a5"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a976c542ad289ebc3882b60738ca2a4a5">genCustomUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const std::string &amp;updateGroup, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac7bc5c26f226caf958bfc9f72a833893">CustomUpdateGroupMergedHandler</a> &amp;customUpdateHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:a976c542ad289ebc3882b60738ca2a4a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a70509cd9b98fbf845da30d338d511954"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a70509cd9b98fbf845da30d338d511954">genCustomUpdateWUKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const std::string &amp;updateGroup, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac01c888239b8ea78b65fba1cf0de3b31">CustomUpdateWUGroupMergedHandler</a> &amp;customUpdateWUHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:a70509cd9b98fbf845da30d338d511954"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af9f838da8f352e11645d3c5c3d36bb30"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#af9f838da8f352e11645d3c5c3d36bb30">genCustomTransposeUpdateWUKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const std::string &amp;updateGroup, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3cbc7b9e7a5f2f3b608026bf204c9395">CustomUpdateTransposeWUGroupMergedHandler</a> &amp;customWUTransposeUpdateHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:af9f838da8f352e11645d3c5c3d36bb30"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3b96754137ba9a714504ae7d5a3d63cc"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a3b96754137ba9a714504ae7d5a3d63cc">genInitializeKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a> neuronInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a13d23fe289492ea5a1eaf8c0dbae9eb3">CustomUpdateInitGroupMergedHandler</a> cuHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6a2f1cc29216bf24ccccce5e7f624d5e">CustomWUUpdateDenseInitGroupMergedHandler</a> cuDenseHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a> synapseDenseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgSparseRowConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgSparseColConnectHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a> sgKernelInitHandler, size_t &amp;idStart) const</td></tr>
-<tr class="separator:a3b96754137ba9a714504ae7d5a3d63cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adc739b5aebbb138bccb2b68e4653724f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#adc739b5aebbb138bccb2b68e4653724f">genInitializeSparseKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a> synapseSparseInitHandler, <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a8e23567a9644391bfc78a38523b890b3">CustomWUUpdateSparseInitGroupMergedHandler</a> cuSparseHandler, size_t numInitializeThreads, size_t &amp;idStart) const</td></tr>
-<tr class="separator:adc739b5aebbb138bccb2b68e4653724f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abebe03a78e32b3ab084580b8d263590b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#abebe03a78e32b3ab084580b8d263590b">genPresynapticUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
+<tr class="separator:abebe03a78e32b3ab084580b8d263590b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae93763dd961ac2a1262c43a63eb9c65c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ae93763dd961ac2a1262c43a63eb9c65c">genPostsynapticUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
+<tr class="separator:ae93763dd961ac2a1262c43a63eb9c65c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4da168ed760a8807bc8600c6c435a874"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a4da168ed760a8807bc8600c6c435a874">genSynapseDynamicsKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
+<tr class="separator:a4da168ed760a8807bc8600c6c435a874"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9552b77976050edd37fdd5b660f60cc8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a9552b77976050edd37fdd5b660f60cc8">genCustomUpdateKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const std::string &amp;updateGroup, size_t &amp;idStart) const</td></tr>
+<tr class="separator:a9552b77976050edd37fdd5b660f60cc8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac7a06b17eb1d31c6c68e6230b6d52f18"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ac7a06b17eb1d31c6c68e6230b6d52f18">genCustomUpdateWUKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const std::string &amp;updateGroup, size_t &amp;idStart) const</td></tr>
+<tr class="separator:ac7a06b17eb1d31c6c68e6230b6d52f18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a02f476bbf1fb1c1c59033be4a35a7737"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a02f476bbf1fb1c1c59033be4a35a7737">genCustomTransposeUpdateWUKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, const std::string &amp;updateGroup, size_t &amp;idStart) const</td></tr>
+<tr class="separator:a02f476bbf1fb1c1c59033be4a35a7737"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3fdf25a004658bb51198bb9054dee48"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ac3fdf25a004658bb51198bb9054dee48">genInitializeKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t &amp;idStart) const</td></tr>
+<tr class="separator:ac3fdf25a004658bb51198bb9054dee48"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abe8a8d11a41f572a2c3b7102855e7ce8"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#abe8a8d11a41f572a2c3b7102855e7ce8">genInitializeSparseKernel</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;kernelSubs, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, size_t numInitializeThreads, size_t &amp;idStart) const</td></tr>
+<tr class="separator:abe8a8d11a41f572a2c3b7102855e7ce8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae32ae31a12d5a40feecd20cad8e2cb21"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ae32ae31a12d5a40feecd20cad8e2cb21">addDeviceType</a> (const std::string &amp;type, size_t size, const std::string &amp;maxValue=&quot;&quot;)</td></tr>
 <tr class="memdesc:ae32ae31a12d5a40feecd20cad8e2cb21"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a type - both to backend base's list of sized types but also to device types set.  <a href="#ae32ae31a12d5a40feecd20cad8e2cb21">More...</a><br /></td></tr>
 <tr class="separator:ae32ae31a12d5a40feecd20cad8e2cb21"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -696,8 +666,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="af9f838da8f352e11645d3c5c3d36bb30"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af9f838da8f352e11645d3c5c3d36bb30">&#9670;&nbsp;</a></span>genCustomTransposeUpdateWUKernel()</h2>
+<a id="a02f476bbf1fb1c1c59033be4a35a7737"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a02f476bbf1fb1c1c59033be4a35a7737">&#9670;&nbsp;</a></span>genCustomTransposeUpdateWUKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -732,12 +702,6 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3cbc7b9e7a5f2f3b608026bf204c9395">CustomUpdateTransposeWUGroupMergedHandler</a> &amp;&#160;</td>
-          <td class="paramname"><em>customWUTransposeUpdateHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">size_t &amp;&#160;</td>
           <td class="paramname"><em>idStart</em>&#160;</td>
         </tr>
@@ -756,8 +720,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a976c542ad289ebc3882b60738ca2a4a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a976c542ad289ebc3882b60738ca2a4a5">&#9670;&nbsp;</a></span>genCustomUpdateKernel()</h2>
+<a id="a9552b77976050edd37fdd5b660f60cc8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9552b77976050edd37fdd5b660f60cc8">&#9670;&nbsp;</a></span>genCustomUpdateKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -792,12 +756,6 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac7bc5c26f226caf958bfc9f72a833893">CustomUpdateGroupMergedHandler</a> &amp;&#160;</td>
-          <td class="paramname"><em>customUpdateHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">size_t &amp;&#160;</td>
           <td class="paramname"><em>idStart</em>&#160;</td>
         </tr>
@@ -816,8 +774,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a70509cd9b98fbf845da30d338d511954"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a70509cd9b98fbf845da30d338d511954">&#9670;&nbsp;</a></span>genCustomUpdateWUKernel()</h2>
+<a id="ac7a06b17eb1d31c6c68e6230b6d52f18"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac7a06b17eb1d31c6c68e6230b6d52f18">&#9670;&nbsp;</a></span>genCustomUpdateWUKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -848,12 +806,6 @@ Protected Member Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>updateGroup</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ac01c888239b8ea78b65fba1cf0de3b31">CustomUpdateWUGroupMergedHandler</a> &amp;&#160;</td>
-          <td class="paramname"><em>customUpdateWUHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -972,8 +924,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a3b96754137ba9a714504ae7d5a3d63cc"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3b96754137ba9a714504ae7d5a3d63cc">&#9670;&nbsp;</a></span>genInitializeKernel()</h2>
+<a id="ac3fdf25a004658bb51198bb9054dee48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac3fdf25a004658bb51198bb9054dee48">&#9670;&nbsp;</a></span>genInitializeKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1002,48 +954,6 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">NeuronInitGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>neuronInitHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a13d23fe289492ea5a1eaf8c0dbae9eb3">CustomUpdateInitGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>cuHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a6a2f1cc29216bf24ccccce5e7f624d5e">CustomWUUpdateDenseInitGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>cuDenseHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab8fc7e4cb214d545f08c9a95cd08affe">SynapseDenseInitGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>synapseDenseInitHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>sgSparseRowConnectHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>sgSparseColConnectHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a44a8647e5cc32e8883064e93def1ff6d">SynapseConnectivityInitMergedGroupHandler</a>&#160;</td>
-          <td class="paramname"><em>sgKernelInitHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">size_t &amp;&#160;</td>
           <td class="paramname"><em>idStart</em>&#160;</td>
         </tr>
@@ -1062,8 +972,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="adc739b5aebbb138bccb2b68e4653724f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#adc739b5aebbb138bccb2b68e4653724f">&#9670;&nbsp;</a></span>genInitializeSparseKernel()</h2>
+<a id="abe8a8d11a41f572a2c3b7102855e7ce8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abe8a8d11a41f572a2c3b7102855e7ce8">&#9670;&nbsp;</a></span>genInitializeSparseKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1092,18 +1002,6 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2460e47c9ef8eb5cf9c2fe4ab8b28b31">SynapseSparseInitGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>synapseSparseInitHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a8e23567a9644391bfc78a38523b890b3">CustomWUUpdateSparseInitGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>cuSparseHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">size_t&#160;</td>
           <td class="paramname"><em>numInitializeThreads</em>, </td>
         </tr>
@@ -1125,6 +1023,56 @@ Protected Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+</div>
+</div>
+<a id="af6543dffc10b84cf5cd885794ecaeb67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af6543dffc10b84cf5cd885794ecaeb67">&#9670;&nbsp;</a></span>genKernelSynapseVariableInit()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CodeGenerator::BackendSIMT::genKernelSynapseVariableInit </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html">SynapseKernelInitGroupMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>sg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;&#160;</td>
+          <td class="paramname"><em>kernelSubs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab56bdf519ec4ae2c476bf1915c9a3cc5">Handler</a>&#160;</td>
+          <td class="paramname"><em>handler</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Implements <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a97615f9ae6aeff2b8034e1be34d60d74">CodeGenerator::BackendBase</a>.</p>
 
 </div>
 </div>
@@ -1218,8 +1166,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="abcc84a0881d880cb58526cffe70d25fa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abcc84a0881d880cb58526cffe70d25fa">&#9670;&nbsp;</a></span>genNeuronUpdateKernel()</h2>
+<a id="ad6c8c2d71f4c13ed9606b0a243824028"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad6c8c2d71f4c13ed9606b0a243824028">&#9670;&nbsp;</a></span>genNeuronUpdateKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1244,18 +1192,6 @@ Protected Member Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>modelMerged</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">NeuronGroupSimHandler</a>&#160;</td>
-          <td class="paramname"><em>simHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">NeuronUpdateGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>wuVarUpdateHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1467,8 +1403,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a3f28d5e630b6b2e159840c945ee4afc8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a3f28d5e630b6b2e159840c945ee4afc8">&#9670;&nbsp;</a></span>genPostsynapticUpdateKernel()</h2>
+<a id="ae93763dd961ac2a1262c43a63eb9c65c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae93763dd961ac2a1262c43a63eb9c65c">&#9670;&nbsp;</a></span>genPostsynapticUpdateKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1497,12 +1433,6 @@ Protected Member Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a3e3b87c30f6e8f8d0657c029c9b3a0fe">PostsynapticUpdateGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>postLearnHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">size_t &amp;&#160;</td>
           <td class="paramname"><em>idStart</em>&#160;</td>
         </tr>
@@ -1521,8 +1451,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a80cc58b010c2d4903098a86103889b9c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80cc58b010c2d4903098a86103889b9c">&#9670;&nbsp;</a></span>genPresynapticUpdateKernel()</h2>
+<a id="abebe03a78e32b3ab084580b8d263590b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abebe03a78e32b3ab084580b8d263590b">&#9670;&nbsp;</a></span>genPresynapticUpdateKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1547,30 +1477,6 @@ Protected Member Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>modelMerged</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>wumThreshHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>wumSimHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>wumEventHandler</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a436d06ecbed5e432e2bf06e3dd49b094">PresynapticUpdateGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>wumProceduralConnectHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1709,8 +1615,8 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a80c90d1fe8eb63c86cf01f52428cadc4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a80c90d1fe8eb63c86cf01f52428cadc4">&#9670;&nbsp;</a></span>genSynapseDynamicsKernel()</h2>
+<a id="a4da168ed760a8807bc8600c6c435a874"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4da168ed760a8807bc8600c6c435a874">&#9670;&nbsp;</a></span>genSynapseDynamicsKernel()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1735,12 +1641,6 @@ Protected Member Functions</h2></td></tr>
           <td></td>
           <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
           <td class="paramname"><em>modelMerged</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a69d2a8b89bcd3d01fdc0bbe2f83b09f7">SynapseDynamicsGroupMergedHandler</a>&#160;</td>
-          <td class="paramname"><em>synapseDynamicsHandler</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -2562,7 +2462,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html">BackendSIMT</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:54 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

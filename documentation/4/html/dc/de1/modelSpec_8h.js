@@ -23,6 +23,8 @@ var modelSpec_8h =
     [ "createWUVarRef", "dc/de1/modelSpec_8h.html#a91f30fbdec26d30e4776f00d8056095c", null ],
     [ "initConnectivity", "dc/de1/modelSpec_8h.html#aa65f6eb60b9d3e3f3c2d4b14d0ebcae2", null ],
     [ "initConnectivity", "dc/de1/modelSpec_8h.html#aaf0972f2313fc4e5f9395458b67306a0", null ],
+    [ "initToeplitzConnectivity", "dc/de1/modelSpec_8h.html#aa762da688c695598f5787b8792fd1840", null ],
+    [ "initToeplitzConnectivity", "dc/de1/modelSpec_8h.html#a7135f5a6c83a0f4222a94c93d3521f42", null ],
     [ "initVar", "dc/de1/modelSpec_8h.html#a82512da3fc2cd603ff00f8f5b7f2f1ce", null ],
     [ "initVar", "dc/de1/modelSpec_8h.html#ae71c7ad7d12a64c251ea45c5e3ff8af8", null ],
     [ "uninitialisedConnectivity", "dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073", null ],

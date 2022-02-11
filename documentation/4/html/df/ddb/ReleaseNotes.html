@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,24 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.6.0 </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.7.0 </h1>
+<p>This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.6.0 release.</p>
+<h2>User Side Changes </h2>
+<ol type="1">
+<li>While a wide range of convolutional type connectivity can be implemented using <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89">SynapseMatrixConnectivity::PROCEDURAL</a>, the performance is often worse than sparse connectivity. <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da49a65f87e83426c5f9305415b1820360">SynapseMatrixConnectivity::TOEPLITZ</a> provides a more efficient solution with <a class="el" href="../../d3/d85/classInitToeplitzConnectivitySnippet_1_1Conv2D.html">InitToeplitzConnectivitySnippet::Conv2D</a> and <a class="el" href="../../d9/d85/classInitToeplitzConnectivitySnippet_1_1AvgPoolConv2D.html">InitToeplitzConnectivitySnippet::AvgPoolConv2D</a> implementing some typical connectivity patterns (see <a class="el" href="../../d0/d2f/sectToeplitzConnectivityInitialisation.html">Toeplitz connectivity initialisation</a>)</li>
+<li>Shared weight kernels had to be previously provided as extra global parameters via the <a class="el" href="../../df/d7b/classInitVarSnippet_1_1Kernel.html" title="Used to initialise synapse variables from a kernel. ">InitVarSnippet::Kernel</a> variable initialisation snippet. This meant kernels had to be manually allocated to the correct size and couldn't be initialised using standard functionality. <a class="el" href="../../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa35c10219c45ccfb5b07444fd7e17214c">SynapseMatrixWeight::KERNEL</a> allows kernels to be treated as standard state variables (see <a class="el" href="../../d5/d39/subsect34.html">Synaptic matrix types</a>).</li>
+<li>Some presynaptic updates need to update the state of presynaptic neurons as well as postsynaptic. These updates can now be made using the $(addToPre,...) function from presynaptic update code and the destination additional input variable can be specified using <a class="el" href="../../dc/dfa/classSynapseGroup.html#ae67a3a99867ab771b6a34a04cfac8ca8" title="Set name of neuron input variable $(addToPre, . ) commands will target. ">SynapseGroup::setPreTargetVar</a> (see <a class="el" href="../../d5/d24/sectSynapseModels.html#sect34">Defining a new weight update model</a>)</li>
+<li>On Windows, all models in the same directory would build their generated code into DLLs with the same name, prevented the the caching system introduced in v4.5.0 working properly. <a class="el" href="../../d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ab4aadbfe6857bf535c1ee2eebb7402bb">CodeGenerator::PreferencesBase::includeModelNameInDLL</a> includes the name of the model in the DLL filename, resolving this problem. This is now the default behaviour in PyGeNN but, when using GeNN from C++, the flag must be manually set and MSBuild projects updated to link to the correct DLL.</li>
+<li>Neuron code can now sample the binomial distribution using $(gennrand_binomial) and this can be used to initialise variables with <a class="el" href="../../dc/dda/classInitVarSnippet_1_1Binomial.html" title="Initialises variable by sampling from the binomial distribution. ">InitVarSnippet::Binomial</a> (see <a class="el" href="../../de/ded/sectNeuronModels.html#neuron_rng">Random number generation</a> and <a class="el" href="../../d4/dc6/sectVariableInitialisation.html">Variable initialisation</a>)</li>
+<li>In the latest version of Windows Subsystem for Linux, CUDA is supported but libcuda is mounted in a non-standard location. GeNN's CUDA backend now adds this location to the linker paths.</li>
+</ol>
+<h2>Bug fixes: </h2>
+<ol type="1">
+<li>Fixed issues with some configurations of <a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html">InitSparseConnectivitySnippet::Conv2D</a> when stride &gt; 1 which caused incorrect connectivity to be instantiated as well as crashes when this snippet was used to generate sparse connectivity.</li>
+<li>Fixed issue where, if $(addToInSynDelay) was used in spike-like event code, it was not detected and dendritic delay structures were not correctly created.</li>
+<li>Fixed issue where precision wasn't being correctly applied to neuron additional input variable and sparse connectivity row build state variable initialisation meaning double precision code could unintentially be generated.</li>
+</ol>
+<h1>Release Notes for GeNN v4.6.0 </h1>
 <p>This release adds a number of significant new features to GeNN as well as several usability improvements for PyGeNN. It also includes a number of bug fixes that have been identified since the 4.5.1 release.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -209,7 +226,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <li><code><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html">InitSparseConnectivitySnippet::Base</a></code> row build state and <code><a class="el" href="../../d7/dad/classNeuronModels_1_1Base.html" title="Base class for all neuron models. ">NeuronModels::Base</a></code> additional input variables could previously only be initialised with a numeric value. Now they can be initialised with a code string supporting substitutions etc.</li>
 <li>Added GeNN implementation of cortical microcircuit model <a class="el" href="../../d0/de3/citelist.html#CITEREF_Potjans2012">[6]</a> to userprojects (discussed further in <a class="el" href="../../d0/de3/citelist.html#CITEREF_Knight2018">[2]</a>). Also demonstrates how to dynamically load GeNN models rather than linking against them.</li>
 <li>Previously one pushed states and spikes to and from device in PyGeNN using methods like <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a02586b0bf4c6969e7013778ced108194" title="Push current spikes to the device for a given population. ">pygenn.GeNNModel.push_current_spikes_to_device</a></code> which was somewhat cumbersome. These have now been wrapped in methods like <code><a class="el" href="../../dc/dc9/classpygenn_1_1genn__groups_1_1NeuronGroup.html#a7c19b0ba4b4ed6f33b44fa252a9007e4" title="Wrapper around GeNNModel.push_current_spikes_to_device. ">pygenn.NeuronGroup.push_current_spikes_to_device</a></code> which is somewhat nicer.</li>
-<li>The <code><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a1cfc27bd653ccbdff8b137fc6495ed0f">CodeGenerator::generateAll</a></code> function now returns memory estimates which are, in turn, returned from <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a860896623fb19b828a4ffa17bd664d08" title="Finalize and build a GeNN model. ">pygenn.GeNNModel.build</a></code>.</li>
+<li>The <code><a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a28b4275ddec88fc5518be4687dc21e5f">CodeGenerator::generateAll</a></code> function now returns memory estimates which are, in turn, returned from <code><a class="el" href="../../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a860896623fb19b828a4ffa17bd664d08" title="Finalize and build a GeNN model. ">pygenn.GeNNModel.build</a></code>.</li>
 <li>To better support batching of inputs into multiple instances of the same model, added <code><a class="el" href="../../da/dfd/classModelSpec.html#aee66eb23a248b286f3168ebe70c6ed71" title="Adds a synapse population to the model using shared per-synapse variables and a postsynaptic model ma...">ModelSpec::addSlaveSynapsePopulation</a></code> to add synapse populations which share per-synapse state with a 'master' synapse group.</li>
 <li>Added extra global parameters to variable initialisation snippets - can be used for lookup table style functionality.</li>
 <li>Added support for host initialisation of sparse connectivity initialisation snippet extra global parameters. This allows host-based initialisation to be encapsulated within an <code><a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html">InitSparseConnectivitySnippet::Base</a></code> class.</li>
@@ -325,7 +342,7 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <h2>User Side Changes </h2>
 <ol type="1">
 <li>Postsynaptic models can now have Extra Global Parameters.</li>
-<li>Gamma distribution can now be sampled using <code>$(gennrand_gamma, a)</code>. This can be used to initialise variables using <code><a class="el" href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the exponential distribution. ">InitVarSnippet::Gamma</a></code>.</li>
+<li>Gamma distribution can now be sampled using <code>$(gennrand_gamma, a)</code>. This can be used to initialise variables using <code><a class="el" href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the gamma distribution. ">InitVarSnippet::Gamma</a></code>.</li>
 <li>Experimental Python interface - All features of GeNN are now exposed to Python through the <code><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></code> module (see <a class="el" href="../../d0/d81/PyGeNN.html">Python interface (PyGeNN)</a> for more details).</li>
 </ol>
 <h2>Bug fixes: </h2>
@@ -545,7 +562,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:51 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

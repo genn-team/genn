@@ -1,6 +1,7 @@
 var searchData=
 [
   ['calcnumtimesteps',['calcNumTimesteps',['../db/d3e/classSpineMLSimulator_1_1Simulator.html#aa8da540022d23b78400ca692ebc13ac0',1,'SpineMLSimulator::Simulator']]],
+  ['canpreoutputbefused',['canPreOutputBeFused',['../dc/dfa/classSynapseGroup.html#a8b063538ac95c9be227ec986016495af',1,'SynapseGroup']]],
   ['canpsbefused',['canPSBeFused',['../dc/dfa/classSynapseGroup.html#a267787be0bccb9dc2eb8fdfad357e423',1,'SynapseGroup']]],
   ['canwumpostupdatebefused',['canWUMPostUpdateBeFused',['../dc/dfa/classSynapseGroup.html#a5ee3c883a40fd3ad8516f44c10582c6a',1,'SynapseGroup']]],
   ['canwumpreupdatebefused',['canWUMPreUpdateBeFused',['../dc/dfa/classSynapseGroup.html#a90c8fe19be76355bea43dee1dab47e0a',1,'SynapseGroup']]],
@@ -94,6 +95,7 @@ var searchData=
   ['create_5fcustom_5fneuron_5fclass',['create_custom_neuron_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a80f3b56cb2dc934ea04ed15a629c7db9',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fpostsynaptic_5fclass',['create_custom_postsynaptic_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a091ea4fe261201327c877528287f9611',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fsparse_5fconnect_5finit_5fsnippet_5fclass',['create_custom_sparse_connect_init_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a6afa899f0322db64b39395534d1e29d8',1,'pygenn::genn_model']]],
+  ['create_5fcustom_5ftoeplitz_5fconnect_5finit_5fsnippet_5fclass',['create_custom_toeplitz_connect_init_snippet_class',['../de/d6e/namespacepygenn_1_1genn__model.html#ade8879268d2849fd60e6bb5f8e99a66b',1,'pygenn::genn_model']]],
   ['create_5fcustom_5fweight_5fupdate_5fclass',['create_custom_weight_update_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a7c2e854789f74d6ffd92be2a487a0e5b',1,'pygenn::genn_model']]],
   ['create_5fdpf_5fclass',['create_dpf_class',['../de/d6e/namespacepygenn_1_1genn__model.html#a4877194a4aa6f04ecbc8768ec1c2de21',1,'pygenn::genn_model']]],
   ['create_5fpsm_5fvar_5fref',['create_psm_var_ref',['../de/d6e/namespacepygenn_1_1genn__model.html#a909a0153a1bdd03bc878aabd80851505',1,'pygenn::genn_model']]],
@@ -112,7 +114,7 @@ var searchData=
   ['currentsource',['CurrentSource',['../d1/d48/classCurrentSource.html#a23699d48b18506030c0d5afdf72ffd20',1,'CurrentSource::CurrentSource(const CurrentSource &amp;)=delete'],['../d1/d48/classCurrentSource.html#a837a3749724b52ad1ab76751b2464c21',1,'CurrentSource::CurrentSource()=delete'],['../d1/d48/classCurrentSource.html#ab9f01a154422ae76aacb62836c8bf9ba',1,'CurrentSource::CurrentSource(const std::string &amp;name, const CurrentSourceModels::Base *currentSourceModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; Models::VarInit &gt; &amp;varInitialisers, const NeuronGroupInternal *trgNeuronGroup, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)']]],
   ['currentsourceinternal',['CurrentSourceInternal',['../d6/de6/classCurrentSourceInternal.html#a3704e02575499912b44a11e6194299bf',1,'CurrentSourceInternal']]],
   ['custom_5fupdate',['custom_update',['../db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a37d2ef2c56291a96aa2ddf45f6537d87',1,'pygenn::genn_model::GeNNModel']]],
-  ['customupdate',['customUpdate',['../d9/d7e/classSharedLibraryModel.html#acb126198e455de0c9b3eb2dc1a99e6c5',1,'SharedLibraryModel::customUpdate()'],['../d7/d60/classCustomUpdate.html#a20a93aa4231102a22595cdc3343d4f06',1,'CustomUpdate::CustomUpdate()']]],
+  ['customupdate',['CustomUpdate',['../d7/d60/classCustomUpdate.html#a20a93aa4231102a22595cdc3343d4f06',1,'CustomUpdate::CustomUpdate()'],['../d9/d7e/classSharedLibraryModel.html#acb126198e455de0c9b3eb2dc1a99e6c5',1,'SharedLibraryModel::customUpdate()']]],
   ['customupdatebase',['CustomUpdateBase',['../da/da9/classCustomUpdateBase.html#aad47959474b3b3b16a600abd6ca6e0f3',1,'CustomUpdateBase::CustomUpdateBase(const CustomUpdateBase &amp;)=delete'],['../da/da9/classCustomUpdateBase.html#a42ac348785fa7113e0ef8685575e2e8c',1,'CustomUpdateBase::CustomUpdateBase()=delete'],['../da/da9/classCustomUpdateBase.html#abb63e2c199fd58ebf8152e0bd7a085c2',1,'CustomUpdateBase::CustomUpdateBase(const std::string &amp;name, const std::string &amp;updateGroupName, const CustomUpdateModels::Base *customUpdateModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; Models::VarInit &gt; &amp;varInitialisers, VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)']]],
   ['customupdategroupmerged',['CustomUpdateGroupMerged',['../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html#a1e084d6313723be58d3f427b634c9347',1,'CodeGenerator::CustomUpdateGroupMerged']]],
   ['customupdatehostreductiongroupmerged',['CustomUpdateHostReductionGroupMerged',['../d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html#ace4710f730bbc2e6e7a132135dd595af',1,'CodeGenerator::CustomUpdateHostReductionGroupMerged']]],

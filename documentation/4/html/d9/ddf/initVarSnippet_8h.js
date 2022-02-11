@@ -10,5 +10,6 @@ var initVarSnippet_8h =
     [ "NormalClippedDelay", "d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html", "d4/d87/classInitVarSnippet_1_1NormalClippedDelay" ],
     [ "Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", "d8/d70/classInitVarSnippet_1_1Exponential" ],
     [ "Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", "d0/d54/classInitVarSnippet_1_1Gamma" ],
+    [ "Binomial", "dc/dda/classInitVarSnippet_1_1Binomial.html", "dc/dda/classInitVarSnippet_1_1Binomial" ],
     [ "SET_CODE", "d9/ddf/initVarSnippet_8h.html#a4b6549c5c6a7a5b8058283d68fa11578", null ]
 ];

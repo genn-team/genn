@@ -110,18 +110,19 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a9abd87a3db3db2edc600bb1a66e95039",
-"d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#af9393b117d7a494726a83d6de2c9abba",
-"d4/d0e/cuda_2backend_8h_source.html",
-"d5/d77/logging_8h.html#aa1c7cae0215e882634d26d9a50a9b3f9",
-"d6/dfe/opencl_2optimiser_8h.html#a71033855ad85f8274c789032d6ea500b",
-"d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aab81cd2aa7db55bd0652e0d55be32df1",
-"d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html#aaebb384dbc38c2ad4363e1ec07c61f53",
-"db/d3e/classSpineMLSimulator_1_1Simulator.html#a5e281ae1b07061864c98ffc947e7fe6c",
-"dc/d4c/classNeuronModels_1_1TraubMilesFast.html",
-"dc/dfa/classSynapseGroup.html#aab6b2fb0ad30189bc11ee3dd7d48dbb2",
-"de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a6652fa240f2241229fb04c612d6b8127",
-"df/dc2/classSpineMLSimulator_1_1LogOutput_1_1AnalogueFile.html#a1055aee43dc7c09332a93d4f37687a9d"
+"d1/db3/classpygenn_1_1genn__groups_1_1Group.html#a646ab45304e93c1cec854df96e8fb197",
+"d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ad2ef2e2d4142eaae9fa55fcce997ae11",
+"d3/df5/customUpdateModels_8h.html",
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f",
+"d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a",
+"d7/d98/sectCustomUpdate.html#sect_own_custom_update",
+"d9/d7e/classSharedLibraryModel.html#a554acb235be4a8267b80108c8e673b4e",
+"da/dff/gccfeatures_8h.html#a7adc88eeeaadd91cc3e8a4715983be6f",
+"db/d9d/logOutput_8h_source.html",
+"dc/dfa/classSynapseGroup.html#a0948f8acc0ef725a79504c743642f4b2",
+"dd/dfd/groupMerged_8h_source.html",
+"de/dfb/varAccess_8h.html#ae8a5891c5d3beb45321e2f850539452f",
+"globals_defs_d.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

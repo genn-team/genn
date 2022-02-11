@@ -37,6 +37,7 @@ var namespaceCodeGenerator =
     [ "SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged" ],
     [ "SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged" ],
     [ "SynapseGroupMergedBase", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase" ],
+    [ "SynapseKernelInitGroupMerged", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged" ],
     [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged" ],
     [ "TeeBuf", "d8/d5e/classCodeGenerator_1_1TeeBuf.html", "d8/d5e/classCodeGenerator_1_1TeeBuf" ],
     [ "TeeStream", "d7/d71/classCodeGenerator_1_1TeeStream.html", "d7/d71/classCodeGenerator_1_1TeeStream" ]

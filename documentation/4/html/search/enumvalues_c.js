@@ -8,5 +8,6 @@ var searchData=
   ['procedural',['PROCEDURAL',['../dd/dd5/synapseMatrixType_8h.html#aedb0946699027562bc78103a5d2a578da71de203441306efe17e882a16d439b89',1,'PROCEDURAL():&#160;synapseMatrixType.h'],['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa71de203441306efe17e882a16d439b89',1,'PROCEDURAL():&#160;synapseMatrixType.h']]],
   ['procedural_5fglobalg',['PROCEDURAL_GLOBALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca50c74aa23e6563dc03d76c83503b0ef4',1,'synapseMatrixType.h']]],
   ['procedural_5fglobalg_5findividual_5fpsm',['PROCEDURAL_GLOBALG_INDIVIDUAL_PSM',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca0fa3005652ae18ada3a75bc01dc81f82',1,'synapseMatrixType.h']]],
+  ['procedural_5fkernelg',['PROCEDURAL_KERNELG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9ca777ee84a834a1f0a7f3ad8ad53ef8c75',1,'synapseMatrixType.h']]],
   ['procedural_5fproceduralg',['PROCEDURAL_PROCEDURALG',['../dd/dd5/synapseMatrixType_8h.html#a24a045033b9a7e987843a67ff5ddec9cadd8d747d9023d98e9045f39935d2803a',1,'synapseMatrixType.h']]]
 ];

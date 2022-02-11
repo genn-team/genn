@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -108,12 +108,12 @@ $(document).ready(function(){initNavTree('d9/d7e/classSharedLibraryModel.html','
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a46fe7bc7fb733795b8a5d63414b94dc7"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a46fe7bc7fb733795b8a5d63414b94dc7">SharedLibraryModel</a> ()</td></tr>
 <tr class="separator:a46fe7bc7fb733795b8a5d63414b94dc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acf5a56c0d4cb263d4a5a58974523a2a5"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#acf5a56c0d4cb263d4a5a58974523a2a5">SharedLibraryModel</a> (const std::string &amp;pathToModel, const std::string &amp;modelName)</td></tr>
-<tr class="separator:acf5a56c0d4cb263d4a5a58974523a2a5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aefade694e102298b9d6e2c77be6a3d05"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aefade694e102298b9d6e2c77be6a3d05">SharedLibraryModel</a> (const std::string &amp;pathToModel, const std::string &amp;modelName, bool includeModelNameInDLL=false)</td></tr>
+<tr class="separator:aefade694e102298b9d6e2c77be6a3d05"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4973a04263365c9a251098b7df644be0"><td class="memItemLeft" align="right" valign="top">virtual&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a4973a04263365c9a251098b7df644be0">~SharedLibraryModel</a> ()</td></tr>
 <tr class="separator:a4973a04263365c9a251098b7df644be0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a62576a6b780dbbb666f028081006652b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a62576a6b780dbbb666f028081006652b">open</a> (const std::string &amp;pathToModel, const std::string &amp;modelName)</td></tr>
-<tr class="separator:a62576a6b780dbbb666f028081006652b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeb55b2188016309213361fc65fece69f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#aeb55b2188016309213361fc65fece69f">open</a> (const std::string &amp;pathToModel, const std::string &amp;modelName, bool includeModelNameInDLL=false)</td></tr>
+<tr class="separator:aeb55b2188016309213361fc65fece69f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a12e8318b0e210e2e4529b7562e5ff800"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a12e8318b0e210e2e4529b7562e5ff800">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;egpName, unsigned int count)</td></tr>
 <tr class="separator:a12e8318b0e210e2e4529b7562e5ff800"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8500728c95b4d48ddd600456ea23ee28"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html#a8500728c95b4d48ddd600456ea23ee28">allocateExtraGlobalParam</a> (const std::string &amp;popName, const std::string &amp;varName, const std::string &amp;egpName, unsigned int count)</td></tr>
@@ -248,8 +248,8 @@ template&lt;typename scalar  = float&gt; </div>
 
 </div>
 </div>
-<a id="acf5a56c0d4cb263d4a5a58974523a2a5"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acf5a56c0d4cb263d4a5a58974523a2a5">&#9670;&nbsp;</a></span>SharedLibraryModel() <span class="overload">[2/2]</span></h2>
+<a id="aefade694e102298b9d6e2c77be6a3d05"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aefade694e102298b9d6e2c77be6a3d05">&#9670;&nbsp;</a></span>SharedLibraryModel() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -269,7 +269,13 @@ template&lt;typename scalar  = float&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>modelName</em>&#160;</td>
+          <td class="paramname"><em>modelName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>includeModelNameInDLL</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1216,8 +1222,8 @@ template&lt;typename scalar  = float&gt; </div>
 
 </div>
 </div>
-<a id="a62576a6b780dbbb666f028081006652b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a62576a6b780dbbb666f028081006652b">&#9670;&nbsp;</a></span>open()</h2>
+<a id="aeb55b2188016309213361fc65fece69f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeb55b2188016309213361fc65fece69f">&#9670;&nbsp;</a></span>open()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1237,7 +1243,13 @@ template&lt;typename scalar  = float&gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>modelName</em>&#160;</td>
+          <td class="paramname"><em>modelName</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>includeModelNameInDLL</em> = <code>false</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -2040,7 +2052,7 @@ template&lt;typename scalar  = float&gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d9/d7e/classSharedLibraryModel.html">SharedLibraryModel</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:53 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

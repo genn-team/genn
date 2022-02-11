@@ -19,6 +19,8 @@ var searchData=
   ['currentsourcemodels_2eh',['currentSourceModels.h',['../da/d49/currentSourceModels_8h.html',1,'']]],
   ['customupdate_2ecc',['customUpdate.cc',['../dd/dc6/customUpdate_8cc.html',1,'']]],
   ['customupdate_2eh',['customUpdate.h',['../d5/d56/customUpdate_8h.html',1,'']]],
+  ['customupdategroupmerged_2ecc',['customUpdateGroupMerged.cc',['../d3/d53/customUpdateGroupMerged_8cc.html',1,'']]],
+  ['customupdategroupmerged_2eh',['customUpdateGroupMerged.h',['../df/d86/customUpdateGroupMerged_8h.html',1,'']]],
   ['customupdateinternal_2eh',['customUpdateInternal.h',['../d8/d04/customUpdateInternal_8h.html',1,'']]],
   ['customupdatemodels_2ecc',['customUpdateModels.cc',['../d2/d2c/customUpdateModels_8cc.html',1,'']]],
   ['customupdatemodels_2eh',['customUpdateModels.h',['../d3/df5/customUpdateModels_8h.html',1,'']]],

@@ -47,5 +47,8 @@ var UserManual =
       [ "Defining a new sparse connectivity snippet", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_new_sparse_connect", null ],
       [ "Kernel-based connectivity", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_kernel", null ],
       [ "Sparse connectivity locations", "d5/dd4/sectSparseConnectivityInitialisation.html#sect_sparse_connect_init_modes", null ]
+    ] ],
+    [ "Toeplitz connectivity initialisation", "d0/d2f/sectToeplitzConnectivityInitialisation.html", [
+      [ "Defining a new Toeplitz connectivity snippet", "d0/d2f/sectToeplitzConnectivityInitialisation.html#sect_new_toeplitz_connect", null ]
     ] ]
 ];

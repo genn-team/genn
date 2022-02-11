@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -121,12 +121,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a6a3965dc7aedcb1d8c6aed7ec8c3f471"><td class="memItemLeft" align="right" valign="top">virtual <a class="el" href="../../db/d97/classSnippet_1_1Base.html#a06cd0f6da1424a20163e12b6fec62519">StringVec</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#a6a3965dc7aedcb1d8c6aed7ec8c3f471">getParamNames</a> () const override</td></tr>
 <tr class="memdesc:a6a3965dc7aedcb1d8c6aed7ec8c3f471"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets names of of (independent) model parameters.  <a href="#a6a3965dc7aedcb1d8c6aed7ec8c3f471">More...</a><br /></td></tr>
 <tr class="separator:a6a3965dc7aedcb1d8c6aed7ec8c3f471"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af49a5a5ea78bf12e1814b7d0a5b6d8f4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#af49a5a5ea78bf12e1814b7d0a5b6d8f4">SET_ROW_BUILD_STATE_VARS</a> ({{&quot;inRow&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)&quot;}, {&quot;inCol&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)&quot;}, {&quot;inChan&quot;, &quot;int&quot;, &quot;$(id_pre) % (int)$(conv_ic)&quot;}, {&quot;outRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh) - (int)$(conv_kh)) / (int)$(conv_sh))))&quot;}, {&quot;maxOutRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh)) / (int)$(conv_sh))))&quot;}, {&quot;minOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw) - (int)$(conv_kw)) / (int)$(conv_sw))))&quot;}, {&quot;maxOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))&quot;}})</td></tr>
-<tr class="separator:af49a5a5ea78bf12e1814b7d0a5b6d8f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fb0e05dafd0b47dfd0d56ee0141dace"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#a2fb0e05dafd0b47dfd0d56ee0141dace">SET_ROW_BUILD_STATE_VARS</a> ({{&quot;inRow&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)&quot;}, {&quot;inCol&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)&quot;}, {&quot;inChan&quot;, &quot;int&quot;, &quot;$(id_pre) % (int)$(conv_ic)&quot;}, {&quot;outRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + (int)floor((inRow + $(conv_padh) - $(conv_kh)) / $(conv_sh))))&quot;}, {&quot;maxOutRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh)) / (int)$(conv_sh))))&quot;}, {&quot;minOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + (int)floor((inCol + $(conv_padw) - $(conv_kw)) / $(conv_sw))))&quot;}, {&quot;maxOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))&quot;}})</td></tr>
+<tr class="separator:a2fb0e05dafd0b47dfd0d56ee0141dace"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aca4bb8554430725cde3c13717f88fb0e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#aca4bb8554430725cde3c13717f88fb0e">SET_ROW_BUILD_CODE</a> (&quot;if($(outRow) == $(maxOutRow)) {\ &quot; $(endRow);\&quot; &quot;}\&quot; &quot;const int strideRow=($(outRow) *(int)$(conv_sh)) -(int)$(conv_padh);\&quot; &quot;const int kernRow=$(inRow) - strideRow;\&quot; &quot;for(int outCol=$(minOutCol);outCol&lt; $(maxOutCol);outCol++) {\&quot; &quot; const int strideCol=(outCol *(int)$(conv_sw)) -(int)$(conv_padw);\&quot; &quot; const int kernCol=$(inCol) - strideCol;\&quot; &quot; for(unsigned int outChan=0;outChan&lt;(unsigned int)$(conv_oc);outChan++) {\&quot; &quot; const int idPost=(($(outRow) *(int)$(conv_ow) *(int)$(conv_oc))+\&quot; &quot;(outCol *(int)$(conv_oc))+\&quot; &quot; outChan);\&quot; &quot; $(addSynapse, idPost, kernRow, kernCol, $(inChan), outChan);\&quot; &quot; }\&quot; &quot;}\&quot; &quot;$(outRow)++;\&quot;)</td></tr>
 <tr class="separator:aca4bb8554430725cde3c13717f88fb0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7761528ed85c03c0b2c49b5f70667aaa"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#a7761528ed85c03c0b2c49b5f70667aaa">SET_CALC_MAX_ROW_LENGTH_FUNC</a> ([](unsigned int, unsigned int, const std::vector&lt; double &gt; &amp;pars) { const unsigned int conv_kh=(unsigned int) pars[0];const unsigned int conv_kw=(unsigned int) pars[1];const unsigned int conv_sh=(unsigned int) pars[2];const unsigned int conv_sw=(unsigned int) pars[3];const unsigned int conv_oc=(unsigned int) pars[11];return(conv_kh/conv_sh) *(conv_kw/conv_sw) *conv_oc;})</td></tr>
-<tr class="separator:a7761528ed85c03c0b2c49b5f70667aaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abcc71d62b0ca6e9028b670ae6638f155"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#abcc71d62b0ca6e9028b670ae6638f155">SET_CALC_MAX_ROW_LENGTH_FUNC</a> ([](unsigned int, unsigned int, const std::vector&lt; double &gt; &amp;pars) { const double conv_kh=pars[0];const double conv_kw=pars[1];const double conv_sh=pars[2];const double conv_sw=pars[3];const unsigned int conv_oc=(unsigned int) pars[11];return(unsigned int) std::ceil(conv_kh/conv_sh) *(unsigned int) std::ceil(conv_kw/conv_sw) *conv_oc;})</td></tr>
+<tr class="separator:abcc71d62b0ca6e9028b670ae6638f155"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:adcbb4441f96cfc9fddbfe74b89c66808"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html#adcbb4441f96cfc9fddbfe74b89c66808">SET_CALC_KERNEL_SIZE_FUNC</a> ([](const std::vector&lt; double &gt; &amp;pars) -&gt;std::vector&lt; unsigned int &gt; { return {(unsigned int) pars[0],(unsigned int) pars[1],(unsigned int) pars[8],(unsigned int) pars[11]};})</td></tr>
 <tr class="separator:adcbb4441f96cfc9fddbfe74b89c66808"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classInitSparseConnectivitySnippet_1_1Base"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classInitSparseConnectivitySnippet_1_1Base')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html">InitSparseConnectivitySnippet::Base</a></td></tr>
@@ -272,8 +272,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="a7761528ed85c03c0b2c49b5f70667aaa"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a7761528ed85c03c0b2c49b5f70667aaa">&#9670;&nbsp;</a></span>SET_CALC_MAX_ROW_LENGTH_FUNC()</h2>
+<a id="abcc71d62b0ca6e9028b670ae6638f155"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abcc71d62b0ca6e9028b670ae6638f155">&#9670;&nbsp;</a></span>SET_CALC_MAX_ROW_LENGTH_FUNC()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -281,7 +281,7 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">InitSparseConnectivitySnippet::Conv2D::SET_CALC_MAX_ROW_LENGTH_FUNC </td>
           <td>(</td>
-          <td class="paramtype">[] (unsigned int, unsigned int, const std::vector&lt; double &gt; &amp;pars) { const unsigned int conv_kh=(unsigned int) pars[0];const unsigned int conv_kw=(unsigned int) pars[1];const unsigned int conv_sh=(unsigned int) pars[2];const unsigned int conv_sw=(unsigned int) pars[3];const unsigned int conv_oc=(unsigned int) pars[11];return(conv_kh/conv_sh) *(conv_kw/conv_sw) *conv_oc;}&#160;</td>
+          <td class="paramtype">[] (unsigned int, unsigned int, const std::vector&lt; double &gt; &amp;pars) { const double conv_kh=pars[0];const double conv_kw=pars[1];const double conv_sh=pars[2];const double conv_sw=pars[3];const unsigned int conv_oc=(unsigned int) pars[11];return(unsigned int) std::ceil(conv_kh/conv_sh) *(unsigned int) std::ceil(conv_kw/conv_sw) *conv_oc;}&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
@@ -307,8 +307,8 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="af49a5a5ea78bf12e1814b7d0a5b6d8f4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af49a5a5ea78bf12e1814b7d0a5b6d8f4">&#9670;&nbsp;</a></span>SET_ROW_BUILD_STATE_VARS()</h2>
+<a id="a2fb0e05dafd0b47dfd0d56ee0141dace"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2fb0e05dafd0b47dfd0d56ee0141dace">&#9670;&nbsp;</a></span>SET_ROW_BUILD_STATE_VARS()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -316,7 +316,7 @@ Additional Inherited Members</h2></td></tr>
         <tr>
           <td class="memname">InitSparseConnectivitySnippet::Conv2D::SET_ROW_BUILD_STATE_VARS </td>
           <td>(</td>
-          <td class="paramtype">{{&quot;inRow&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)&quot;}, {&quot;inCol&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)&quot;}, {&quot;inChan&quot;, &quot;int&quot;, &quot;$(id_pre) % (int)$(conv_ic)&quot;}, {&quot;outRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh) - (int)$(conv_kh)) / (int)$(conv_sh))))&quot;}, {&quot;maxOutRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh)) / (int)$(conv_sh))))&quot;}, {&quot;minOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw) - (int)$(conv_kw)) / (int)$(conv_sw))))&quot;}, {&quot;maxOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))&quot;}}&#160;</td>
+          <td class="paramtype">{{&quot;inRow&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) / (int)$(conv_iw)&quot;}, {&quot;inCol&quot;, &quot;int&quot;, &quot;($(id_pre) / (int)$(conv_ic)) % (int)$(conv_iw)&quot;}, {&quot;inChan&quot;, &quot;int&quot;, &quot;$(id_pre) % (int)$(conv_ic)&quot;}, {&quot;outRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + (int)floor((inRow + $(conv_padh) - $(conv_kh)) / $(conv_sh))))&quot;}, {&quot;maxOutRow&quot;, &quot;int&quot;, &quot;min((int)$(conv_oh), max(0, 1 + ((inRow + (int)$(conv_padh)) / (int)$(conv_sh))))&quot;}, {&quot;minOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + (int)floor((inCol + $(conv_padw) - $(conv_kw)) / $(conv_sw))))&quot;}, {&quot;maxOutCol&quot;, &quot;int&quot;, &quot;min((int)$(conv_ow), max(0, 1 + ((inCol + (int)$(conv_padw)) / (int)$(conv_sw))))&quot;}}&#160;</td>
           <td class="paramname"></td><td>)</td>
           <td></td>
         </tr>
@@ -335,7 +335,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html">InitSparseConnectivitySnippet</a></li><li class="navelem"><a class="el" href="../../d0/d7d/classInitSparseConnectivitySnippet_1_1Conv2D.html">Conv2D</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:57 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

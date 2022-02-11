@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -160,6 +160,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a42c00411f4f2be6e35772c77d5d4ad85"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a42c00411f4f2be6e35772c77d5d4ad85">getSortedArchetypeMergedInSyns</a> () const</td></tr>
 <tr class="memdesc:a42c00411f4f2be6e35772c77d5d4ad85"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get sorted vectors of merged incoming synapse groups belonging to archetype group.  <a href="#a42c00411f4f2be6e35772c77d5d4ad85">More...</a><br /></td></tr>
 <tr class="separator:a42c00411f4f2be6e35772c77d5d4ad85"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeeaa6e356401eff9c77c39b04e96b5be"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aeeaa6e356401eff9c77c39b04e96b5be">getSortedArchetypeMergedPreOutputOutSyns</a> () const</td></tr>
+<tr class="memdesc:aeeaa6e356401eff9c77c39b04e96b5be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get sorted vectors of merged outgoing synapse groups with presynaptic output belonging to archetype group.  <a href="#aeeaa6e356401eff9c77c39b04e96b5be">More...</a><br /></td></tr>
+<tr class="separator:aeeaa6e356401eff9c77c39b04e96b5be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add4e932bc3707e7492ca4129506a8f76"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="../../d6/de6/classCurrentSourceInternal.html">CurrentSourceInternal</a> * &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#add4e932bc3707e7492ca4129506a8f76">getSortedArchetypeCurrentSources</a> () const</td></tr>
 <tr class="memdesc:add4e932bc3707e7492ca4129506a8f76"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get sorted vectors of current sources belonging to archetype group.  <a href="#add4e932bc3707e7492ca4129506a8f76">More...</a><br /></td></tr>
 <tr class="separator:add4e932bc3707e7492ca4129506a8f76"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -268,6 +271,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:ac5c7dedb7be731536f6159d0928a4f11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a267881fa027c5887d4a804ea67f72da3"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a267881fa027c5887d4a804ea67f72da3">addMergedInSynPointerField</a> (const std::string &amp;type, const std::string &amp;name, size_t archetypeIndex, const std::string &amp;prefix)</td></tr>
 <tr class="separator:a267881fa027c5887d4a804ea67f72da3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acccf9695b49fa64ecb9e4f8995a3e576"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#acccf9695b49fa64ecb9e4f8995a3e576">addMergedPreOutputOutSynPointerField</a> (const std::string &amp;type, const std::string &amp;name, size_t archetypeIndex, const std::string &amp;prefix)</td></tr>
+<tr class="separator:acccf9695b49fa64ecb9e4f8995a3e576"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_classCodeGenerator_1_1GroupMerged"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classCodeGenerator_1_1GroupMerged')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html">CodeGenerator::GroupMerged&lt; NeuronGroupInternal &gt;</a></td></tr>
 <tr class="memitem:a55919084b08d84b5c618a797473652ee inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a55919084b08d84b5c618a797473652ee">isParamReferenced</a> (const std::vector&lt; std::string &gt; &amp;codeStrings, const std::string &amp;paramName) const</td></tr>
 <tr class="memdesc:a55919084b08d84b5c618a797473652ee inherit pro_methods_classCodeGenerator_1_1GroupMerged"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper to test whether parameter is referenced in vector of codestrings.  <a href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html#a55919084b08d84b5c618a797473652ee">More...</a><br /></td></tr>
@@ -745,6 +750,54 @@ template&lt;typename T  = NeuronGroupMergedBase, typename C , typename H , typen
 
 </div>
 </div>
+<a id="acccf9695b49fa64ecb9e4f8995a3e576"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acccf9695b49fa64ecb9e4f8995a3e576">&#9670;&nbsp;</a></span>addMergedPreOutputOutSynPointerField()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void NeuronGroupMergedBase::addMergedPreOutputOutSynPointerField </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>type</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>archetypeIndex</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>prefix</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="add4e932bc3707e7492ca4129506a8f76"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#add4e932bc3707e7492ca4129506a8f76">&#9670;&nbsp;</a></span>getSortedArchetypeCurrentSources()</h2>
 
@@ -796,6 +849,33 @@ template&lt;typename T  = NeuronGroupMergedBase, typename C , typename H , typen
 </div><div class="memdoc">
 
 <p>Get sorted vectors of merged incoming synapse groups belonging to archetype group. </p>
+
+</div>
+</div>
+<a id="aeeaa6e356401eff9c77c39b04e96b5be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aeeaa6e356401eff9c77c39b04e96b5be">&#9670;&nbsp;</a></span>getSortedArchetypeMergedPreOutputOutSyns()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt;<a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a>*&gt;&amp; CodeGenerator::NeuronGroupMergedBase::getSortedArchetypeMergedPreOutputOutSyns </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Get sorted vectors of merged outgoing synapse groups with presynaptic output belonging to archetype group. </p>
 
 </div>
 </div>
@@ -2012,7 +2092,7 @@ template&lt;typename T  = NeuronGroupMergedBase, typename C , typename R , typen
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html">NeuronGroupMergedBase</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:55 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

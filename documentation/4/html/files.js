@@ -46,6 +46,13 @@ var files =
       [ "CustomUpdate", "d7/d60/classCustomUpdate.html", "d7/d60/classCustomUpdate" ],
       [ "CustomUpdateWU", "db/dd4/classCustomUpdateWU.html", "db/dd4/classCustomUpdateWU" ]
     ] ],
+    [ "customUpdateGroupMerged.cc", "d3/d53/customUpdateGroupMerged_8cc.html", null ],
+    [ "customUpdateGroupMerged.h", "df/d86/customUpdateGroupMerged_8h.html", [
+      [ "CustomUpdateGroupMerged", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged" ],
+      [ "CustomUpdateWUGroupMergedBase", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase" ],
+      [ "CustomUpdateWUGroupMerged", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged" ],
+      [ "CustomUpdateTransposeWUGroupMerged", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged" ]
+    ] ],
     [ "customUpdateInternal.h", "d8/d04/customUpdateInternal_8h.html", [
       [ "CustomUpdateInternal", "d7/df7/classCustomUpdateInternal.html", "d7/df7/classCustomUpdateInternal" ],
       [ "CustomUpdateWUInternal", "da/ddf/classCustomUpdateWUInternal.html", "da/ddf/classCustomUpdateWUInternal" ]
@@ -53,18 +60,12 @@ var files =
     [ "customUpdateModels.cc", "d2/d2c/customUpdateModels_8cc.html", "d2/d2c/customUpdateModels_8cc" ],
     [ "customUpdateModels.h", "d3/df5/customUpdateModels_8h.html", "d3/df5/customUpdateModels_8h" ],
     [ "gccfeatures.h", "da/dff/gccfeatures_8h.html", "da/dff/gccfeatures_8h" ],
-    [ "generateAll.cc", "df/d57/generateAll_8cc.html", null ],
-    [ "generateAll.h", "da/da4/generateAll_8h.html", "da/da4/generateAll_8h" ],
-    [ "generateCustomUpdate.cc", "d9/d10/generateCustomUpdate_8cc.html", null ],
-    [ "generateCustomUpdate.h", "d1/d51/generateCustomUpdate_8h.html", "d1/d51/generateCustomUpdate_8h" ],
-    [ "generateInit.cc", "d7/dac/generateInit_8cc.html", null ],
-    [ "generateInit.h", "d7/d53/generateInit_8h.html", "d7/d53/generateInit_8h" ],
     [ "generateMakefile.cc", "d3/d6c/generateMakefile_8cc.html", null ],
     [ "generateMakefile.h", "df/d24/generateMakefile_8h.html", "df/d24/generateMakefile_8h" ],
+    [ "generateModules.cc", "d3/de6/generateModules_8cc.html", null ],
+    [ "generateModules.h", "d2/dd2/generateModules_8h.html", "d2/dd2/generateModules_8h" ],
     [ "generateMSBuild.cc", "d6/d80/generateMSBuild_8cc.html", null ],
     [ "generateMSBuild.h", "d2/d70/generateMSBuild_8h.html", "d2/d70/generateMSBuild_8h" ],
-    [ "generateNeuronUpdate.cc", "d8/daf/generateNeuronUpdate_8cc.html", null ],
-    [ "generateNeuronUpdate.h", "df/d54/generateNeuronUpdate_8h.html", "df/d54/generateNeuronUpdate_8h" ],
     [ "generateRun.h", "dd/dcd/generateRun_8h.html", [
       [ "GenerateRunBase", "d4/d40/classGenerateRunBase.html", "d4/d40/classGenerateRunBase" ]
     ] ],
@@ -72,8 +73,6 @@ var files =
     [ "generateRunner.h", "d2/d75/generateRunner_8h.html", "d2/d75/generateRunner_8h" ],
     [ "generateSupportCode.cc", "df/da9/generateSupportCode_8cc.html", null ],
     [ "generateSupportCode.h", "d1/da4/generateSupportCode_8h.html", "d1/da4/generateSupportCode_8h" ],
-    [ "generateSynapseUpdate.cc", "dd/d3f/generateSynapseUpdate_8cc.html", null ],
-    [ "generateSynapseUpdate.h", "df/d5e/generateSynapseUpdate_8h.html", "df/d5e/generateSynapseUpdate_8h" ],
     [ "genn_groups.py", "d3/dd8/genn__groups_8py.html", "d3/dd8/genn__groups_8py" ],
     [ "genn_model.py", "de/db7/genn__model_8py.html", "de/db7/genn__model_8py" ],
     [ "gennExport.h", "d1/d8e/gennExport_8h.html", "d1/d8e/gennExport_8h" ],
@@ -85,31 +84,29 @@ var files =
       [ "NeuronSpikeQueueUpdateGroupMerged", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged.html", "d5/dbc/classCodeGenerator_1_1NeuronSpikeQueueUpdateGroupMerged" ],
       [ "NeuronPrevSpikeTimeUpdateGroupMerged", "d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged.html", "d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged" ],
       [ "NeuronGroupMergedBase", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html", "d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase" ],
-      [ "NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged" ],
-      [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged" ],
       [ "SynapseDendriticDelayUpdateGroupMerged", "d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html", "d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged" ],
       [ "SynapseConnectivityHostInitGroupMerged", "d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html", "d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged" ],
       [ "SynapseGroupMergedBase", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html", "d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase" ],
-      [ "PresynapticUpdateGroupMerged", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged" ],
-      [ "PostsynapticUpdateGroupMerged", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged" ],
-      [ "SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged" ],
-      [ "SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged" ],
-      [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged" ],
-      [ "SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged" ],
-      [ "CustomUpdateGroupMerged", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html", "d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged" ],
-      [ "CustomUpdateWUGroupMergedBase", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html", "de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase" ],
-      [ "CustomUpdateWUGroupMerged", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html", "de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged" ],
-      [ "CustomUpdateTransposeWUGroupMerged", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html", "da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged" ],
-      [ "CustomUpdateInitGroupMergedBase", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase" ],
-      [ "CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged" ],
-      [ "CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged" ],
-      [ "CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged" ],
       [ "CustomUpdateHostReductionGroupMergedBase", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase.html", "d5/da1/classCodeGenerator_1_1CustomUpdateHostReductionGroupMergedBase" ],
       [ "CustomUpdateHostReductionGroupMerged", "d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged.html", "d6/d09/classCodeGenerator_1_1CustomUpdateHostReductionGroupMerged" ],
       [ "CustomWUUpdateHostReductionGroupMerged", "d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged.html", "d1/d47/classCodeGenerator_1_1CustomWUUpdateHostReductionGroupMerged" ]
     ] ],
+    [ "initGroupMerged.cc", "d8/d16/initGroupMerged_8cc.html", null ],
+    [ "initGroupMerged.h", "d7/d70/initGroupMerged_8h.html", [
+      [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged" ],
+      [ "SynapseDenseInitGroupMerged", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html", "d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged" ],
+      [ "SynapseSparseInitGroupMerged", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html", "db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged" ],
+      [ "SynapseKernelInitGroupMerged", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html", "d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged" ],
+      [ "SynapseConnectivityInitGroupMerged", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html", "de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged" ],
+      [ "CustomUpdateInitGroupMergedBase", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase.html", "d1/d1d/classCodeGenerator_1_1CustomUpdateInitGroupMergedBase" ],
+      [ "CustomUpdateInitGroupMerged", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html", "df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged" ],
+      [ "CustomWUUpdateDenseInitGroupMerged", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html", "db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged" ],
+      [ "CustomWUUpdateSparseInitGroupMerged", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html", "d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged" ]
+    ] ],
     [ "initSparseConnectivitySnippet.cc", "d4/d88/initSparseConnectivitySnippet_8cc.html", "d4/d88/initSparseConnectivitySnippet_8cc" ],
     [ "initSparseConnectivitySnippet.h", "de/d51/initSparseConnectivitySnippet_8h.html", "de/d51/initSparseConnectivitySnippet_8h" ],
+    [ "initToeplitzConnectivitySnippet.cc", "da/db2/initToeplitzConnectivitySnippet_8cc.html", "da/db2/initToeplitzConnectivitySnippet_8cc" ],
+    [ "initToeplitzConnectivitySnippet.h", "d4/dad/initToeplitzConnectivitySnippet_8h.html", "d4/dad/initToeplitzConnectivitySnippet_8h" ],
     [ "initVarSnippet.cc", "d1/dfe/initVarSnippet_8cc.html", "d1/dfe/initVarSnippet_8cc" ],
     [ "initVarSnippet.h", "d9/ddf/initVarSnippet_8h.html", "d9/ddf/initVarSnippet_8h" ],
     [ "input.cc", "de/d4c/input_8cc.html", null ],
@@ -174,6 +171,10 @@ var files =
     ] ],
     [ "neuronModels.cc", "dc/dbc/neuronModels_8cc.html", "dc/dbc/neuronModels_8cc" ],
     [ "neuronModels.h", "d3/dc0/neuronModels_8h.html", "d3/dc0/neuronModels_8h" ],
+    [ "neuronUpdateGroupMerged.cc", "de/da1/neuronUpdateGroupMerged_8cc.html", null ],
+    [ "neuronUpdateGroupMerged.h", "d7/d7f/neuronUpdateGroupMerged_8h.html", [
+      [ "NeuronUpdateGroupMerged", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html", "d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged" ]
+    ] ],
     [ "normalDistribution.h", "df/d38/normalDistribution_8h.html", "df/d38/normalDistribution_8h" ],
     [ "open64features.h", "d7/d01/open64features_8h.html", "d7/d01/open64features_8h" ],
     [ "openclfeatures.h", "d2/dfd/openclfeatures_8h.html", "d2/dfd/openclfeatures_8h" ],
@@ -196,7 +197,8 @@ var files =
       [ "PreSpan", "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html", "d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan" ],
       [ "PostSpan", "d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html", "d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan" ],
       [ "PostSpanBitmask", "d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html", "d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask" ],
-      [ "PreSpanProcedural", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural" ]
+      [ "PreSpanProcedural", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html", "d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural" ],
+      [ "PostSpanToeplitz", "d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html", "d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz" ]
     ] ],
     [ "private.c", "d7/d07/private_8c.html", "d7/d07/private_8c" ],
     [ "private.h", "d3/d2e/private_8h.html", "d3/d2e/private_8h" ],
@@ -229,6 +231,12 @@ var files =
       [ "SynapseGroupInternal", "dd/d48/classSynapseGroupInternal.html", "dd/d48/classSynapseGroupInternal" ]
     ] ],
     [ "synapseMatrixType.h", "dd/dd5/synapseMatrixType_8h.html", "dd/dd5/synapseMatrixType_8h" ],
+    [ "synapseUpdateGroupMerged.cc", "da/dcc/synapseUpdateGroupMerged_8cc.html", null ],
+    [ "synapseUpdateGroupMerged.h", "da/d8b/synapseUpdateGroupMerged_8h.html", [
+      [ "PresynapticUpdateGroupMerged", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html", "df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged" ],
+      [ "PostsynapticUpdateGroupMerged", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html", "dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged" ],
+      [ "SynapseDynamicsGroupMerged", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html", "d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged" ]
+    ] ],
     [ "teeStream.h", "d5/dff/teeStream_8h.html", [
       [ "TeeBuf", "d8/d5e/classCodeGenerator_1_1TeeBuf.html", "d8/d5e/classCodeGenerator_1_1TeeBuf" ],
       [ "TeeStream", "d7/d71/classCodeGenerator_1_1TeeStream.html", "d7/d71/classCodeGenerator_1_1TeeStream" ]

@@ -17,6 +17,7 @@ var classNeuronGroup =
     [ "getFusedInSynWithPostVars", "d7/d3b/classNeuronGroup.html#afa92e03f70ae1980722077925a2fef03", null ],
     [ "getFusedOutSynWithPreCode", "d7/d3b/classNeuronGroup.html#a1b3eadafa955cb932279df2a356fb4f1", null ],
     [ "getFusedOutSynWithPreVars", "d7/d3b/classNeuronGroup.html#aa2a42efd6ec2311b0f7b67d4cf269f3f", null ],
+    [ "getFusedPreOutputOutSyn", "d7/d3b/classNeuronGroup.html#a9d8b739b82bdff15c52ba8c0907b281b", null ],
     [ "getFusedPSMInSyn", "d7/d3b/classNeuronGroup.html#ad8932a5f6f6644bf3390a67919f7537b", null ],
     [ "getFusedWUPostInSyn", "d7/d3b/classNeuronGroup.html#af06fdea47e0717b5ab7b9647dc5ea3ee", null ],
     [ "getFusedWUPreOutSyn", "d7/d3b/classNeuronGroup.html#a4631487ef276fbdb6b6ce0f139ff9218", null ],

@@ -1,6 +1,7 @@
 var namespaceInitVarSnippet =
 [
     [ "Base", "d3/d9e/classInitVarSnippet_1_1Base.html", "d3/d9e/classInitVarSnippet_1_1Base" ],
+    [ "Binomial", "dc/dda/classInitVarSnippet_1_1Binomial.html", "dc/dda/classInitVarSnippet_1_1Binomial" ],
     [ "Constant", "dd/dcb/classInitVarSnippet_1_1Constant.html", "dd/dcb/classInitVarSnippet_1_1Constant" ],
     [ "Exponential", "d8/d70/classInitVarSnippet_1_1Exponential.html", "d8/d70/classInitVarSnippet_1_1Exponential" ],
     [ "Gamma", "d0/d54/classInitVarSnippet_1_1Gamma.html", "d0/d54/classInitVarSnippet_1_1Gamma" ],

@@ -5,6 +5,7 @@ var namespaces =
     [ "CustomUpdateModels", "d4/d01/namespaceCustomUpdateModels.html", null ],
     [ "filesystem", "d1/d94/namespacefilesystem.html", null ],
     [ "InitSparseConnectivitySnippet", "dc/ddd/namespaceInitSparseConnectivitySnippet.html", null ],
+    [ "InitToeplitzConnectivitySnippet", "d1/dcf/namespaceInitToeplitzConnectivitySnippet.html", null ],
     [ "InitVarSnippet", "d2/dfc/namespaceInitVarSnippet.html", null ],
     [ "Logging", "d4/dd8/namespaceLogging.html", null ],
     [ "Models", "dd/d20/namespaceModels.html", null ],

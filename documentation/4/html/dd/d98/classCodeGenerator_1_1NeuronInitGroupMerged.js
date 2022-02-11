@@ -1,6 +1,7 @@
 var classCodeGenerator_1_1NeuronInitGroupMerged =
 [
     [ "NeuronInitGroupMerged", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#a41d713dac4acb71578da066549483da5", null ],
+    [ "generateInit", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#a52e4d7d9fdb6fee487c478b347a72151", null ],
     [ "generateRunner", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#ac4f899692cf38341efa6e01ee43d50f1", null ],
     [ "getHashDigest", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#a5ee6eff8e91c94c49a70c0a01c3c878c", null ],
     [ "getSortedArchetypeInSynWithPostVars", "dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#a858f0b7da8027ca6bda35411960e8699", null ],

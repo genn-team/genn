@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -117,6 +117,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 , <a class="el" href="d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html#a68a20bf3382ce3c539bf446d2f5a1832">CodeGenerator::SynapseDendriticDelayUpdateGroupMerged</a>
 , <a class="el" href="d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html#af71c36b51ba7656dc63afd5fc9200e15">CodeGenerator::SynapseDenseInitGroupMerged</a>
 , <a class="el" href="d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html#a0025cf62f6b502f46190d0f9dd21691e">CodeGenerator::SynapseDynamicsGroupMerged</a>
+, <a class="el" href="d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html#a318b55516d2a043a0c9697dfdd9012e4">CodeGenerator::SynapseKernelInitGroupMerged</a>
 , <a class="el" href="db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#a6f01661645f3335373c72d2ff5396da0">CodeGenerator::SynapseSparseInitGroupMerged</a>
 , <a class="el" href="d5/d42/structModels_1_1Base_1_1Var.html#a333472c1ad027594ee870b1994f884b1">Models::Base::Var</a>
 , <a class="el" href="d1/daf/structModels_1_1Base_1_1VarRef.html#a8099dc230673bda6d8341c0df3c943dd">Models::Base::VarRef</a>
@@ -155,7 +156,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 : <a class="el" href="db/d57/classpygenn_1_1genn__model_1_1GeNNModel.html#a4e97c002bdee5922aa7cbe37b6fe47e7">pygenn.genn_model.GeNNModel</a>
 </li>
 <li>NeuronGroup()
-: <a class="el" href="d7/d3b/classNeuronGroup.html#acf9b709abcfb87f8bdc2375796aa8b78">NeuronGroup</a>
+: <a class="el" href="d7/d3b/classNeuronGroup.html#a4555779ec20e5f3ca4a1e3b5ff53c8f8">NeuronGroup</a>
 </li>
 <li>NeuronGroupInternal()
 : <a class="el" href="dc/da3/classNeuronGroupInternal.html#a636944ae68b13c7fd8b9ff89a3a9691f">NeuronGroupInternal</a>
@@ -163,17 +164,11 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <li>NeuronGroupMergedBase()
 : <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#af901097e139903eb6db4e0690b3bb113">CodeGenerator::NeuronGroupMergedBase</a>
 </li>
-<li>NeuronGroupSimHandler
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a18d700c2c55565aba980600fbb872f63">CodeGenerator::BackendBase</a>
-</li>
 <li>NeuronGroupValueType
 : <a class="el" href="da/dfd/classModelSpec.html#ac724c12166b5ee5fb4492277c1d8deb5">ModelSpec</a>
 </li>
 <li>NeuronInitGroupMerged()
 : <a class="el" href="dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#a41d713dac4acb71578da066549483da5">CodeGenerator::NeuronInitGroupMerged</a>
-</li>
-<li>NeuronInitGroupMergedHandler
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a05d118c7cea7d61d3c635ad54775d378">CodeGenerator::BackendBase</a>
 </li>
 <li>NeuronPrevSpikeTimeUpdateGroupMerged()
 : <a class="el" href="d3/dbd/classCodeGenerator_1_1NeuronPrevSpikeTimeUpdateGroupMerged.html#aa42b206f8ac7a5935b4fce576173616b">CodeGenerator::NeuronPrevSpikeTimeUpdateGroupMerged</a>
@@ -183,9 +178,6 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 </li>
 <li>NeuronUpdateGroupMerged()
 : <a class="el" href="d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#af940417beb6077200c4561dd970cba5a">CodeGenerator::NeuronUpdateGroupMerged</a>
-</li>
-<li>NeuronUpdateGroupMergedHandler
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ad36b2a42177de4433fc1ffd197924daf">CodeGenerator::BackendBase</a>
 </li>
 <li>nextState
 : <a class="el" href="d3/d52/structclrngLfsr113StreamCreator__.html#af1421987eb26e1b71387b66051c683ff">clrngLfsr113StreamCreator_</a>
@@ -207,7 +199,7 @@ $(document).ready(function(){initNavTree('functions_n.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Nov 22 2021 17:38:11 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:53 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

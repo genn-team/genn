@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -124,6 +124,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7fa33c9872ab0cf97d0b60fa41bf17fe">pygenn.genn_model.init_connectivity</a> (init_sparse_connect_snippet, param_space)</td></tr>
 <tr class="memdesc:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> object to easily initialise connectivity using a snippet.  <a href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7fa33c9872ab0cf97d0b60fa41bf17fe">More...</a><br /></td></tr>
 <tr class="separator:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab53fba750c385db51312447f17463f06"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ab53fba750c385db51312447f17463f06">pygenn.genn_model.init_toeplitz_connectivity</a> (init_toeplitz_connect_snippet, param_space)</td></tr>
+<tr class="memdesc:ab53fba750c385db51312447f17463f06"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> object to easily initialise connectivity using a snippet.  <a href="../../de/d6e/namespacepygenn_1_1genn__model.html#ab53fba750c385db51312447f17463f06">More...</a><br /></td></tr>
+<tr class="separator:ab53fba750c385db51312447f17463f06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a58d69fc68a1745c3aff4fecd4e6e456e">pygenn.genn_model.create_var_ref</a> (pop, var_name)</td></tr>
 <tr class="memdesc:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a neuron or current source variable for initialising variable references.  <a href="../../de/d6e/namespacepygenn_1_1genn__model.html#a58d69fc68a1745c3aff4fecd4e6e456e">More...</a><br /></td></tr>
 <tr class="separator:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -172,6 +175,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a6afa899f0322db64b39395534d1e29d8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a6afa899f0322db64b39395534d1e29d8">pygenn.genn_model.create_custom_sparse_connect_init_snippet_class</a> (class_name, param_names=None, derived_params=None, row_build_code=None, row_build_state_vars=None, col_build_code=None, col_build_state_vars=None, calc_max_row_len_func=None, calc_max_col_len_func=None, calc_kernel_size_func=None, extra_global_params=None, custom_body=None)</td></tr>
 <tr class="memdesc:a6afa899f0322db64b39395534d1e29d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom <a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html" title="Base class for all sparse connectivity initialisation snippets. ">InitSparseConnectivitySnippet</a> class.  <a href="../../de/d6e/namespacepygenn_1_1genn__model.html#a6afa899f0322db64b39395534d1e29d8">More...</a><br /></td></tr>
 <tr class="separator:a6afa899f0322db64b39395534d1e29d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade8879268d2849fd60e6bb5f8e99a66b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ade8879268d2849fd60e6bb5f8e99a66b">pygenn.genn_model.create_custom_toeplitz_connect_init_snippet_class</a> (class_name, param_names=None, derived_params=None, diagonal_build_code=None, diagonal_build_state_vars=None, calc_max_row_len_func=None, calc_kernel_size_func=None, extra_global_params=None, custom_body=None)</td></tr>
+<tr class="memdesc:ade8879268d2849fd60e6bb5f8e99a66b"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom <a class="el" href="../../d1/dcf/namespaceInitToeplitzConnectivitySnippet.html" title="Base class for all toeplitz connectivity initialisation snippets. ">InitToeplitzConnectivitySnippet</a> class.  <a href="../../de/d6e/namespacepygenn_1_1genn__model.html#ade8879268d2849fd60e6bb5f8e99a66b">More...</a><br /></td></tr>
+<tr class="separator:ade8879268d2849fd60e6bb5f8e99a66b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -189,7 +195,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_4d3be5bd6ef78564e8c4f17e25f05ae0.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/db7/genn__model_8py.html">genn_model.py</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:49 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

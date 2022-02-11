@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -152,22 +152,22 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a67889d974494123157e2dd27b9145106">CodeGenerator::BackendBase</a>
 </li>
 <li>genCustomTransposeUpdateWUKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#af9f838da8f352e11645d3c5c3d36bb30">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a02f476bbf1fb1c1c59033be4a35a7737">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genCustomUpdate()
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#aa590e4d6ff9b5f1088df7ceca8919e1b">CodeGenerator::BackendBase</a>
-, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#afb2d8c53cbd4a1317951b40f69deae2f">CodeGenerator::CUDA::Backend</a>
-, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#ad34b22976762088be047042693325965">CodeGenerator::OpenCL::Backend</a>
-, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a8117b3f19173b9bb66910798b3568570">CodeGenerator::SingleThreadedCPU::Backend</a>
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a28d2ba608f32d392b5dd81d2bd292cc4">CodeGenerator::BackendBase</a>
+, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a07d89099be84143723a6e1474d69bbd9">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#ae1f404bb11a1097c34e986ede4b63fd3">CodeGenerator::OpenCL::Backend</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a0bb2cf68a2b1f9731eea5a754807bc06">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>genCustomUpdateIndexCalculation()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#afd5e142961de31bc392edda5e2f2714a">CodeGenerator::BackendBase</a>
 </li>
 <li>genCustomUpdateKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a976c542ad289ebc3882b60738ca2a4a5">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a9552b77976050edd37fdd5b660f60cc8">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genCustomUpdateWUKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a70509cd9b98fbf845da30d338d511954">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#ac7a06b17eb1d31c6c68e6230b6d52f18">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genDefinitionsInternalPreamble()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#aded19522a63e1d95cd475890dc843ee3">CodeGenerator::BackendBase</a>
@@ -186,14 +186,37 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a652d6f75107039f005e67e1a4caa4faf">CodeGenerator::BackendSIMT</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a93f3fdead77f2657b38778ad3481aeaf">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
+<li>generateCustomUpdate()
+: <a class="el" href="d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html#a88eef74a0c28060bd2bc5444e4a7d00a">CodeGenerator::CustomUpdateGroupMerged</a>
+, <a class="el" href="da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html#aaa9b5143bbe0e278b0aa1a0f7fa64fba">CodeGenerator::CustomUpdateTransposeWUGroupMerged</a>
+, <a class="el" href="de/d48/classCodeGenerator_1_1CustomUpdateWUGroupMerged.html#a89b73c26a3d89d6b2e5cec4112b9a4d0">CodeGenerator::CustomUpdateWUGroupMerged</a>
+</li>
 <li>generateEmptyStatePushPull
 : <a class="el" href="d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a547e3468c515d1400aa2dde51450dd07">CodeGenerator::PreferencesBase</a>
 </li>
 <li>generateExtraGlobalParamPull
 : <a class="el" href="d1/d7a/structCodeGenerator_1_1PreferencesBase.html#a84bb4b46d6fc46b1df26b0042318d577">CodeGenerator::PreferencesBase</a>
 </li>
+<li>generateInit()
+: <a class="el" href="df/d7c/classCodeGenerator_1_1CustomUpdateInitGroupMerged.html#a6f8312ff30bcac6d92501b4d2fd98299">CodeGenerator::CustomUpdateInitGroupMerged</a>
+, <a class="el" href="db/dd4/classCodeGenerator_1_1CustomWUUpdateDenseInitGroupMerged.html#af9c29aab451c65ef0cd395c36fa0ff25">CodeGenerator::CustomWUUpdateDenseInitGroupMerged</a>
+, <a class="el" href="d0/df8/classCodeGenerator_1_1CustomWUUpdateSparseInitGroupMerged.html#a6bb75cc0d276c79d5f742dd5be8e9c38">CodeGenerator::CustomWUUpdateSparseInitGroupMerged</a>
+, <a class="el" href="dd/d98/classCodeGenerator_1_1NeuronInitGroupMerged.html#a52e4d7d9fdb6fee487c478b347a72151">CodeGenerator::NeuronInitGroupMerged</a>
+, <a class="el" href="d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html#a964521a0aeb0a051d65a4363c6c6d299">CodeGenerator::SynapseDenseInitGroupMerged</a>
+, <a class="el" href="d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html#a4984f95c2c9951bd6a904eb4388ba6d6">CodeGenerator::SynapseKernelInitGroupMerged</a>
+, <a class="el" href="db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#ab5ae212dcff016640ec3f3c9a47cfaca">CodeGenerator::SynapseSparseInitGroupMerged</a>
+</li>
+<li>generateKernelInit()
+: <a class="el" href="de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html#ac930ff169b2ec1b09afe3e08ba0d1a85">CodeGenerator::SynapseConnectivityInitGroupMerged</a>
+</li>
 <li>generateLineInfo
 : <a class="el" href="da/dae/structCodeGenerator_1_1CUDA_1_1Preferences.html#a28f276f8498add4713f59850c153e522">CodeGenerator::CUDA::Preferences</a>
+</li>
+<li>generateNeuronUpdate()
+: <a class="el" href="d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#ac136a287ec1a50696c77afbdea6f6f9f">CodeGenerator::NeuronUpdateGroupMerged</a>
+</li>
+<li>generateProceduralConnectivity()
+: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#a825a9aadd9a17995c7cd7b0a2f3a492b">CodeGenerator::PresynapticUpdateGroupMerged</a>
 </li>
 <li>GenerateRunBase()
 : <a class="el" href="d4/d40/classGenerateRunBase.html#a0f512b2e8908ee58583c35aa4d5451c2">GenerateRunBase</a>
@@ -218,16 +241,42 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d4/d7f/classCodeGenerator_1_1SynapseDendriticDelayUpdateGroupMerged.html#a76922b637536848538338ed8838c4e37">CodeGenerator::SynapseDendriticDelayUpdateGroupMerged</a>
 , <a class="el" href="d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html#afb3b941a9dab4df930ff678ebcc2b5e1">CodeGenerator::SynapseDenseInitGroupMerged</a>
 , <a class="el" href="d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html#aa193f4dc681f0ef9df43747bc094875b">CodeGenerator::SynapseDynamicsGroupMerged</a>
+, <a class="el" href="d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html#afc8af6b3604b7c24761d73cb70bbada8">CodeGenerator::SynapseKernelInitGroupMerged</a>
 , <a class="el" href="db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#aa3ee46fe0776e38cce20b80fd9e0dc8f">CodeGenerator::SynapseSparseInitGroupMerged</a>
 </li>
 <li>generateRunnerBase()
 : <a class="el" href="df/dfd/classCodeGenerator_1_1GroupMerged.html#ac77f91d8484a2c12b56e94dc23d89003">CodeGenerator::GroupMerged&lt; G &gt;</a>
+</li>
+<li>generateSparseColumnInit()
+: <a class="el" href="de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html#a83cb94b10c047bad2134228dfc1190fe">CodeGenerator::SynapseConnectivityInitGroupMerged</a>
+</li>
+<li>generateSparseRowInit()
+: <a class="el" href="de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html#a13500b93ba8cf268083bbeb5d9bbe981">CodeGenerator::SynapseConnectivityInitGroupMerged</a>
+</li>
+<li>generateSpikeEventThreshold()
+: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#ade5063dab5cf718592d3f8f755c14c4d">CodeGenerator::PresynapticUpdateGroupMerged</a>
+</li>
+<li>generateSpikeEventUpdate()
+: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#a3a66b8cb64c9f131d550bf05c9529901">CodeGenerator::PresynapticUpdateGroupMerged</a>
+</li>
+<li>generateSpikeUpdate()
+: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#a3b1d4a7f8f45e0206ebfc8a6c8b37cf4">CodeGenerator::PresynapticUpdateGroupMerged</a>
 </li>
 <li>generateStruct()
 : <a class="el" href="df/dfd/classCodeGenerator_1_1GroupMerged.html#adcc2b080bdcbd7c6d3d8d8b16fa609c4">CodeGenerator::GroupMerged&lt; G &gt;</a>
 </li>
 <li>generateStructFieldArgumentDefinitions()
 : <a class="el" href="df/dfd/classCodeGenerator_1_1GroupMerged.html#aae68697044f258f736cca9c753bcedfb">CodeGenerator::GroupMerged&lt; G &gt;</a>
+</li>
+<li>generateSynapseUpdate()
+: <a class="el" href="dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html#ade2099306f646fafc3999f016944ad23">CodeGenerator::PostsynapticUpdateGroupMerged</a>
+, <a class="el" href="d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html#a1e4530ffa233ef4af7636da788d570a0">CodeGenerator::SynapseDynamicsGroupMerged</a>
+</li>
+<li>generateToeplitzConnectivity()
+: <a class="el" href="df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html#ab162aca31e7a3280b3bfe096bdd556b1">CodeGenerator::PresynapticUpdateGroupMerged</a>
+</li>
+<li>generateWUVarUpdate()
+: <a class="el" href="d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a2f72120af1ee2bdbd5db18b2aaa72be5">CodeGenerator::NeuronUpdateGroupMerged</a>
 </li>
 <li>genericName
 : <a class="el" href="d5/d5f/structCodeGenerator_1_1Substitutions_1_1FunctionTemplate.html#aa09ec28bf606147a17f8e71c357b4111">CodeGenerator::Substitutions::FunctionTemplate</a>
@@ -280,16 +329,24 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#afcc4e737da20e20871fdb425dc993ed6">CodeGenerator::OpenCL::Backend</a>
 </li>
 <li>genInit()
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a45d185441f1a27e055abacfe9066fa12">CodeGenerator::BackendBase</a>
-, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac2756995854b08ac62a2a310c8c0b91f">CodeGenerator::CUDA::Backend</a>
-, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a1258c2bc36b356567ab293a93f080d6d">CodeGenerator::OpenCL::Backend</a>
-, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ab3c0c497e372d2d9e790ae61b46bb749">CodeGenerator::SingleThreadedCPU::Backend</a>
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#aea064baa987d5c6c8e996c3afbac6006">CodeGenerator::BackendBase</a>
+, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#ac4b6fc895e56274660a0ff4ffde7aa4d">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a3a52d5a5f80d868cc73da7ba5573f84d">CodeGenerator::OpenCL::Backend</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a7e4ee050b7c32deb7752c4c580208d81">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>genInitializeKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a3b96754137ba9a714504ae7d5a3d63cc">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#ac3fdf25a004658bb51198bb9054dee48">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genInitializeSparseKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#adc739b5aebbb138bccb2b68e4653724f">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#abe8a8d11a41f572a2c3b7102855e7ce8">CodeGenerator::BackendSIMT</a>
+</li>
+<li>genKernelIndex()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aad0a1400ca86aafdce60e4bbc142c68a">CodeGenerator::SynapseGroupMergedBase</a>
+</li>
+<li>genKernelSynapseVariableInit()
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a97615f9ae6aeff2b8034e1be34d60d74">CodeGenerator::BackendBase</a>
+, <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#af6543dffc10b84cf5cd885794ecaeb67">CodeGenerator::BackendSIMT</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#af6b906e90960c5b784f7ab4f3a303fc6">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>genMakefileCompileRule()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a5835ec300bc0b5c6b2b476164d9da13b">CodeGenerator::BackendBase</a>
@@ -378,6 +435,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <li>genMergedSynapseDynamicsGroupStructs()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ad6ed49619b5d78169e9027a878276367">CodeGenerator::ModelSpecMerged</a>
 </li>
+<li>genMergedSynapseKernelInitGroupStructs()
+: <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a37e5ce772c606c30dc0d55bfc8fd82e4">CodeGenerator::ModelSpecMerged</a>
+</li>
 <li>genMergedSynapseSparseInitGroupStructs()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a2563d3c9f97daa88c8eb7ccdeb08bc5d">CodeGenerator::ModelSpecMerged</a>
 </li>
@@ -424,16 +484,16 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5a7f24ee83b17231c736b95b7ee91ec6">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genNeuronUpdate()
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a3ff2f42d94ffaea3f30324f225053aae">CodeGenerator::BackendBase</a>
-, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a43ebfe3bf03d1181a9f112951c04369b">CodeGenerator::CUDA::Backend</a>
-, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a5300aadefe1ef9a7bd44d4fc2b942037">CodeGenerator::OpenCL::Backend</a>
-, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a2bc63f4cc0688e30e0d17bed8bb94d2b">CodeGenerator::SingleThreadedCPU::Backend</a>
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#adaa433b3f6f3f3a9a1eaf204707f7599">CodeGenerator::BackendBase</a>
+, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a8ff6d682860d300f3502b13a4cc77f58">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a407b4cdee2a113f8c1a5deb457324ee0">CodeGenerator::OpenCL::Backend</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a6bd5a6ba554a970ec30e8594b7914d43">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>genNeuronUpdateGroupSupportCode()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ae9efd827afce23d68699b4fae2934a08">CodeGenerator::ModelSpecMerged</a>
 </li>
 <li>genNeuronUpdateKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#abcc84a0881d880cb58526cffe70d25fa">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#ad6c8c2d71f4c13ed9606b0a243824028">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genPopulationRNG()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a8752a161798a0c649ed6fe7c8e280dc5">CodeGenerator::BackendBase</a>
@@ -465,6 +525,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#aa8bf46c27566fb4c251ef0887f78f29a">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
 , <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#a120d70ea374ae66b6aa1b47bb0b1e25c">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#a443ef8ff8918792c008f69cfcf7bde91">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a491dd71793dad064b253bcb5c6ceedc6">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
 , <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a37de6c65c314235bed7e9ec241801145">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
 , <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#af7abae7e20c830df33bdd4c6c382300c">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 </li>
@@ -472,7 +533,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ad545bdc5534826ad9a55bd1597f258da">CodeGenerator::ModelSpecMerged</a>
 </li>
 <li>genPostsynapticUpdateKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a3f28d5e630b6b2e159840c945ee4afc8">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#ae93763dd961ac2a1262c43a63eb9c65c">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genPostsynapticUpdateSupportCode()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a7609879f397ca52ccb7f1229f3753426">CodeGenerator::ModelSpecMerged</a>
@@ -481,11 +542,12 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#acb0756c66b42115f6cef3bdc04c18a13">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
 , <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#a3f52274475b530afb4767b98d5e0e61b">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#ac15f02cfd38c65c33545aafd2276cf03">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a6531f5cbb11a930c23f0deab7188d1a4">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
 , <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a83d1187670f1c50d12b128b6fc2c6261">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
 , <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#aa3f23db218a4865ad18abe7c3f1da62c">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 </li>
 <li>genPresynapticUpdateKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a80cc58b010c2d4903098a86103889b9c">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#abebe03a78e32b3ab084580b8d263590b">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genPresynapticUpdateSupportCode()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#adf612d418a24bb50d38da4a6950d53e4">CodeGenerator::ModelSpecMerged</a>
@@ -525,7 +587,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a755ccc2265c9918169c0559b63e666e1">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genSynapseDynamicsKernel()
-: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a80c90d1fe8eb63c86cf01f52428cadc4">CodeGenerator::BackendSIMT</a>
+: <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a4da168ed760a8807bc8600c6c435a874">CodeGenerator::BackendSIMT</a>
 </li>
 <li>genSynapseDynamicsSupportCode()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#ad63110a50a1922ddbbc935e59a8c3485">CodeGenerator::ModelSpecMerged</a>
@@ -534,10 +596,10 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ab24ca7a4f8a0bf16643ab0d4cad91f91">CodeGenerator::BackendBase</a>
 </li>
 <li>genSynapseUpdate()
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ac660d0c89c7ad8f32bfbf23fb9ff9fb9">CodeGenerator::BackendBase</a>
-, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a290010ea40d4bb8b020bc8b5912941ab">CodeGenerator::CUDA::Backend</a>
-, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#a85a6f900d0f64ec94668f93c4564d3c3">CodeGenerator::OpenCL::Backend</a>
-, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a4926c8d55277834fe4d59ae5bd93f5df">CodeGenerator::SingleThreadedCPU::Backend</a>
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a6cffd91f5fbf9556ad5f4483efd7dc41">CodeGenerator::BackendBase</a>
+, <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#aff6f50e19dc6b4746796edbc96c73c9a">CodeGenerator::CUDA::Backend</a>
+, <a class="el" href="db/d47/classCodeGenerator_1_1OpenCL_1_1Backend.html#aebc74b29ba4f31de403744782a3e307e">CodeGenerator::OpenCL::Backend</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a45e8958b2199baa8dbd997366690e5c2">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>genTimer()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a054418ff1f9aa42e69c89aa7709807ff">CodeGenerator::BackendBase</a>
@@ -546,11 +608,12 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a3c0f6c1c3e5f3accb71edb832b7986ee">CodeGenerator::SingleThreadedCPU::Backend</a>
 </li>
 <li>genUpdate()
-: <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#a1fab77896b584f9e482cf02ae081d3c3">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
-, <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#aec7fd8c436fa3094e721eb08a9cd7d3f">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
-, <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#a2190bc0681fc97e441dfbc982cbefe85">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
-, <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a5b361e8109943c1111cb896a877c3c84">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
-, <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#a1da32169ee8adbf7f4e503cde94b5be1">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
+: <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#a8507e35cdb7f27153df1b93f9b766c5d">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
+, <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#a4376555fee2910dcb9c6a9958cba82d8">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
+, <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#ac480ae09c9f540968d7d83e06a3476ab">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a8bd85c3f82d88f2526d8ae1170568b65">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
+, <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#af6142380f965ce51a4112e787e27dea8">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
+, <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#a118c1c93f78ea67c82b43ce0e44653dc">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 </li>
 <li>genVariableAllocation()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ac2743e8e7ac2c205c2a14868742674bb">CodeGenerator::BackendBase</a>
@@ -670,12 +733,14 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 </li>
 <li>getCalcKernelSizeFunc()
 : <a class="el" href="d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#ae3814bd7aa3006cbdc4c8d80e656a0e6">InitSparseConnectivitySnippet::Base</a>
+, <a class="el" href="de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html#aabc79bcd102476e4c376fda4709966a4">InitToeplitzConnectivitySnippet::Base</a>
 </li>
 <li>getCalcMaxColLengthFunc()
 : <a class="el" href="d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a0e4f6cb6d90ae7ce97f8c6792c16d32d">InitSparseConnectivitySnippet::Base</a>
 </li>
 <li>getCalcMaxRowLengthFunc()
 : <a class="el" href="d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#a7cf7c23440db65582ddac36f903fcd5e">InitSparseConnectivitySnippet::Base</a>
+, <a class="el" href="de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html#a23d5cdb24fc5f3b2cda683b135fb6a1d">InitToeplitzConnectivitySnippet::Base</a>
 </li>
 <li>getChosenCUDADevice()
 : <a class="el" href="d6/d3a/classCodeGenerator_1_1CUDA_1_1Backend.html#a3d746532d480e6e5b99b524df0928005">CodeGenerator::CUDA::Backend</a>
@@ -762,6 +827,8 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d6/d0b/classCurrentSourceModels_1_1PoissonExp.html#ab54640850783171eb8c2a2bd0f514f6a">CurrentSourceModels::PoissonExp</a>
 , <a class="el" href="da/da9/classCustomUpdateBase.html#ab7389840388acb8b146f877c4337fe58">CustomUpdateBase</a>
 , <a class="el" href="db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a8ad49047e343c93b0c92be50b57ae7f5">InitSparseConnectivitySnippet::FixedProbabilityBase</a>
+, <a class="el" href="d9/d85/classInitToeplitzConnectivitySnippet_1_1AvgPoolConv2D.html#a1f3f12da07ceac2f51c43eeb195e98bf">InitToeplitzConnectivitySnippet::AvgPoolConv2D</a>
+, <a class="el" href="d3/d85/classInitToeplitzConnectivitySnippet_1_1Conv2D.html#a8e3c618aa3f96dcc8499bf43fb9f7bcc">InitToeplitzConnectivitySnippet::Conv2D</a>
 , <a class="el" href="d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html#af9feb0fd282db18b28963d343bd5c1b3">InitVarSnippet::NormalClippedDelay</a>
 , <a class="el" href="d7/d3b/classNeuronGroup.html#afb126d78de60c93ecb86eee8c8d6cdd5">NeuronGroup</a>
 , <a class="el" href="d0/d6d/classNeuronModels_1_1LIF.html#ae96e604549047ef24ba8b18090eb779f">NeuronModels::LIF</a>
@@ -789,6 +856,12 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a582aadc2fbbcde8c35b12ee83e2dd5bb">CodeGenerator::BackendBase</a>
 , <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a09096718acf8fe683535a424090c93c1">CodeGenerator::BackendSIMT</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#af9393b117d7a494726a83d6de2c9abba">CodeGenerator::SingleThreadedCPU::Backend</a>
+</li>
+<li>getDiagonalBuildCode()
+: <a class="el" href="de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html#abb51e944ebe8a8f24f12f680c5011f47">InitToeplitzConnectivitySnippet::Base</a>
+</li>
+<li>getDiagonalBuildStateVars()
+: <a class="el" href="de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html#a1e3860912a14747fb35bfd872194a23a">InitToeplitzConnectivitySnippet::Base</a>
 </li>
 <li>getDT()
 : <a class="el" href="da/dfd/classModelSpec.html#a589612f79c2f9645cd485285b33d2edd">ModelSpec</a>
@@ -861,6 +934,12 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <li>getFusedOutSynWithPreVars()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#aa2a42efd6ec2311b0f7b67d4cf269f3f">NeuronGroup</a>
 </li>
+<li>getFusedPreOutputOutSyn()
+: <a class="el" href="d7/d3b/classNeuronGroup.html#a9d8b739b82bdff15c52ba8c0907b281b">NeuronGroup</a>
+</li>
+<li>getFusedPreOutputSuffix()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ac8e301b310551f9a9c47b09d55b4de87">SynapseGroup</a>
+</li>
 <li>getFusedPSMInSyn()
 : <a class="el" href="d7/d3b/classNeuronGroup.html#ad8932a5f6f6644bf3390a67919f7537b">NeuronGroup</a>
 </li>
@@ -901,6 +980,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html#af4c5f712ed4c8e570717373365668aa5">CodeGenerator::SynapseDenseInitGroupMerged</a>
 , <a class="el" href="d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html#a19a6b52bf46718139bb5b4ff00668cca">CodeGenerator::SynapseDynamicsGroupMerged</a>
 , <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aab2082269d0bb908302554e5e0c4f579">CodeGenerator::SynapseGroupMergedBase</a>
+, <a class="el" href="d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html#ab4ccd7c8a9676667fb86f0d0b01258f0">CodeGenerator::SynapseKernelInitGroupMerged</a>
 , <a class="el" href="db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html#a84fb43388c447620f06e919722948dfd">CodeGenerator::SynapseSparseInitGroupMerged</a>
 , <a class="el" href="d1/d48/classCurrentSource.html#a035a2a16869116b305e582c4a2575823">CurrentSource</a>
 , <a class="el" href="d0/de0/classCurrentSourceModels_1_1Base.html#a86cd6524ed007e38d87ca7eea9c8b597">CurrentSourceModels::Base</a>
@@ -908,6 +988,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="de/db4/classCustomUpdateModels_1_1Base.html#a076dcff484c9062690771349857ef589">CustomUpdateModels::Base</a>
 , <a class="el" href="db/dd4/classCustomUpdateWU.html#a08e21efeaf00aee08a1eeda438de3314">CustomUpdateWU</a>
 , <a class="el" href="d5/d9f/classInitSparseConnectivitySnippet_1_1Base.html#afcb5a956f72fbbc02458ba87ec6dc7b0">InitSparseConnectivitySnippet::Base</a>
+, <a class="el" href="de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html#ad4171ac1e84a69eea1dd3bd33effb2e6">InitToeplitzConnectivitySnippet::Base</a>
 , <a class="el" href="d3/d9e/classInitVarSnippet_1_1Base.html#a80d800b8db79500f1a4b6be37be2d0bc">InitVarSnippet::Base</a>
 , <a class="el" href="da/dfd/classModelSpec.html#aa25ee11ef3f3ce6b4acf51f735b739b6">ModelSpec</a>
 , <a class="el" href="d7/d3b/classNeuronGroup.html#a33def3267138044355f18cffe3b48f2e">NeuronGroup</a>
@@ -926,7 +1007,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d2/d06/classCodeGenerator_1_1MemAlloc.html#a7087a0f011544619f53b7a0a4efa60c9">CodeGenerator::MemAlloc</a>
 </li>
 <li>getHostStateVar()
-: <a class="el" href="dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#a5be36abbe39b897b15fa998e7af64c0a">SpineMLSimulator::ModelProperty::Base</a>
+: <a class="el" href="dc/d09/classSpineMLSimulator_1_1ModelProperty_1_1Base.html#a8808b5ab96d3e42f25ad0120efeffd11">SpineMLSimulator::ModelProperty::Base</a>
 </li>
 <li>getHostVarPrefix()
 : <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#a2d0a17f6b00c6810a1d9bb0a3b2b37ca">CodeGenerator::BackendBase</a>
@@ -995,7 +1076,14 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5a92359aa8b47a57f00eb48a7161af8f">CodeGenerator::BackendSIMT</a>
 </li>
 <li>getKernelSize()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#ad9f17c66599fe1c04d5c42433202d228">SynapseGroup</a>
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9db92b2d369be4fbdbad1d7c0e53f01e">CodeGenerator::SynapseGroupMergedBase</a>
+, <a class="el" href="dc/dfa/classSynapseGroup.html#ad9f17c66599fe1c04d5c42433202d228">SynapseGroup</a>
+</li>
+<li>getKernelSizeFlattened()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#af65957b79f81f3f5b6479373b507a725">SynapseGroup</a>
+</li>
+<li>getKernelVarIndex()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a52b43e04ae3eab2414aeaabdda6878cc">CodeGenerator::SynapseGroupMergedBase</a>
 </li>
 <li>getLearnPostCode()
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a0bb39d77c70d759d9036352d316ee044">WeightUpdateModels::Base</a>
@@ -1109,6 +1197,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <li>getMergedSynapseDynamicsGroups()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a4127021c5481c93eeee3c84a5f996549">CodeGenerator::ModelSpecMerged</a>
 </li>
+<li>getMergedSynapseKernelInitGroups()
+: <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#abda429bd0fd3873a9e35ce450f1fc73b">CodeGenerator::ModelSpecMerged</a>
+</li>
 <li>getMergedSynapseSparseInitGroups()
 : <a class="el" href="de/d52/classCodeGenerator_1_1ModelSpecMerged.html#a82eec43c1453f96963b01fead2b6e932">CodeGenerator::ModelSpecMerged</a>
 </li>
@@ -1174,6 +1265,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#a36afd0d68b06bd6f685ce08fea288321">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
 , <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#aac5f696a1ccb75fa9c1d6bdc3e057d87">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#a4218a19577a543bba4b1a4ce8494eec6">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#ae33bbc4a7a3748c3acdca67f50ca5692">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
 , <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#ae028e1224a8fdb3a47d3e77496753a67">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
 , <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#a60e34c42eaa9df016ee181fbc07547d5">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 </li>
@@ -1204,6 +1296,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d1/d59/classInitSparseConnectivitySnippet_1_1FixedNumberPreWithReplacement.html#adc71d9b9b14e8ec6eddf1bdacf5b3fa9">InitSparseConnectivitySnippet::FixedNumberPreWithReplacement</a>
 , <a class="el" href="da/df7/classInitSparseConnectivitySnippet_1_1FixedNumberTotalWithReplacement.html#adf8132e22b41f3db4e020a154ecb10aa">InitSparseConnectivitySnippet::FixedNumberTotalWithReplacement</a>
 , <a class="el" href="db/d69/classInitSparseConnectivitySnippet_1_1FixedProbabilityBase.html#a74482a683eaf4407369df75b28957905">InitSparseConnectivitySnippet::FixedProbabilityBase</a>
+, <a class="el" href="d9/d85/classInitToeplitzConnectivitySnippet_1_1AvgPoolConv2D.html#ae6090b1f1df39a2397595b0a7bbe956f">InitToeplitzConnectivitySnippet::AvgPoolConv2D</a>
+, <a class="el" href="d3/d85/classInitToeplitzConnectivitySnippet_1_1Conv2D.html#a816f57b0bd591c71409475a7f3183aae">InitToeplitzConnectivitySnippet::Conv2D</a>
+, <a class="el" href="dc/dda/classInitVarSnippet_1_1Binomial.html#a66a99a9472649efa5c708ded4a4fe15e">InitVarSnippet::Binomial</a>
 , <a class="el" href="dd/dcb/classInitVarSnippet_1_1Constant.html#a016e6cec1879feaa80173f4c3ba9d429">InitVarSnippet::Constant</a>
 , <a class="el" href="d8/d70/classInitVarSnippet_1_1Exponential.html#a5a157c575a0832859e605d17b5d1aaba">InitVarSnippet::Exponential</a>
 , <a class="el" href="d0/d54/classInitVarSnippet_1_1Gamma.html#a9b49d48ecc76239c734f2d2c9fa2a749">InitVarSnippet::Gamma</a>
@@ -1264,7 +1359,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#aaee123ed9120b7493e1c3d53e8b7c681">SpineMLSimulator::Simulator</a>
 </li>
 <li>getPostVarIndex()
-: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ac60d6582e5bece84122012b33a563946">CodeGenerator::SynapseGroupMergedBase</a>
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a37e21ca4e4fc33071530a0930eb1fcc5">CodeGenerator::SynapseGroupMergedBase</a>
 , <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a4bca317ba20ee97433d03930081deac3">WeightUpdateModels::Base</a>
 </li>
 <li>getPostVars()
@@ -1280,7 +1375,16 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#ab2a4aa64e81692968841e33cd61cf796">WeightUpdateModels::Base</a>
 </li>
 <li>getPreferences()
-: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ab379bb2bc28f018100bfbde65fda327b">CodeGenerator::BackendBase</a>
+: <a class="el" href="d3/d15/classCodeGenerator_1_1BackendBase.html#ae2b7d92e8d40e28f22bcba155114496b">CodeGenerator::BackendBase</a>
+</li>
+<li>getPreISynIndex()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aad57a3c081554608923d52eeef586a8a">CodeGenerator::SynapseGroupMergedBase</a>
+</li>
+<li>getPreOutputHashDigest()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#abdbf3f3d7628402cb288f3342b8edc4f">SynapseGroup</a>
+</li>
+<li>getPreOutputInitHashDigest()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#adfffe77ac2dfd2962a7aea1550258cdc">SynapseGroup</a>
 </li>
 <li>getPrePrevSpikeTimeIndex()
 : <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#acab2066c2bdfd7213199234c8b232216">CodeGenerator::SynapseGroupMergedBase</a>
@@ -1298,8 +1402,11 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d9/d7e/classSharedLibraryModel.html#a4dd466a6aef579353ce58ca9135be39a">SharedLibraryModel&lt; scalar &gt;</a>
 , <a class="el" href="db/d3e/classSpineMLSimulator_1_1Simulator.html#a1f9ec168ff210e9cd294e4c5ed2ac059">SpineMLSimulator::Simulator</a>
 </li>
+<li>getPreTargetVar()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a46e906e5ae39538a371d38682069c5c8">SynapseGroup</a>
+</li>
 <li>getPreVarIndex()
-: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9cae7646505967de99350aeb64392f8b">CodeGenerator::SynapseGroupMergedBase</a>
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab7451734c86ba7e38fb5454c8c5be5c5">CodeGenerator::SynapseGroupMergedBase</a>
 , <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#add432f1a452d82183e0574d1fe171f75">WeightUpdateModels::Base</a>
 </li>
 <li>getPreVars()
@@ -1324,7 +1431,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a09a98e928222e12782a6e16f825d322a">SynapseGroup</a>
 </li>
 <li>getPSExtraGlobalParamLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a1cace5cda6eb25bafe04ed5a786cb0ab">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ae94d4f06f927a8e064fde501dc79fba1">SynapseGroup</a>
 </li>
 <li>getPSFuseHashDigest()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a7cf93f80976d50cd13f297b9f362f000">SynapseGroup</a>
@@ -1348,7 +1455,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#adaf521cec872b314e875e54c676dc99d">SynapseGroup</a>
 </li>
 <li>getPSVarLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a7e20da90e94f95655b0814e24fe5ca7b">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ad2f81f34af78fc2ef7250be19034d50f">SynapseGroup</a>
 </li>
 <li>getReadVarIndex()
 : <a class="el" href="d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a80f990c747854fd8f6935c863437ddcf">CodeGenerator::NeuronUpdateGroupMerged</a>
@@ -1381,6 +1488,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#a2ef9fa688e82afbff15c663d2653e5a2">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
 , <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#a3571930ccef2d7f6b0eaeeb99bf9c51b">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#afc2ac5e1a9334479744db20a35d6cc6b">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a4c950d0dada4da6f62a072d568e3ee00">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
 , <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a56c786a823de870862d59af295891ea8">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
 , <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#af92a97236e3edbfa8b24905163c9501e">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 </li>
@@ -1434,6 +1542,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <li>getSortedArchetypeMergedInSyns()
 : <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#a42c00411f4f2be6e35772c77d5d4ad85">CodeGenerator::NeuronGroupMergedBase</a>
 </li>
+<li>getSortedArchetypeMergedPreOutputOutSyns()
+: <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#aeeaa6e356401eff9c77c39b04e96b5be">CodeGenerator::NeuronGroupMergedBase</a>
+</li>
 <li>getSortedArchetypeOutSynWithPreCode()
 : <a class="el" href="d3/d7d/classCodeGenerator_1_1NeuronUpdateGroupMerged.html#a85f315676892033d2c7238a5c56b151f">CodeGenerator::NeuronUpdateGroupMerged</a>
 </li>
@@ -1477,7 +1588,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="d7/d3b/classNeuronGroup.html#a65601133dc934a9c46462e43e6d096dc">NeuronGroup</a>
 </li>
 <li>getSrcNeuronGroup()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a40f0d1eae3b977f1f41dd1d4f1da0565">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a96d91075d474de8c87b63988715c920d">SynapseGroup</a>
 </li>
 <li>getStateVarBegin()
 : <a class="el" href="d2/d8b/classSpineMLSimulator_1_1LogOutput_1_1AnalogueBase.html#a5dcebe3cc21e3aac34d19600cf03f44e">SpineMLSimulator::LogOutput::AnalogueBase</a>
@@ -1530,6 +1641,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#a7c1cb220e6393b42671c7051eee1ef32">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
 , <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#a24ee993be16d9a1dfa31a8f2e1de5542">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#a65cf67231cc6d159d64df751f66f56bc">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a533680e8bbc3fdbea65a042212bd5d61">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
 , <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a5fcb9d6869c71b2e7530622a4e567123">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
 , <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#a153fb13c2677b093d5ec877fc1716fdb">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ab568dc268d1fcb1f1f9da059498616f8">CodeGenerator::SingleThreadedCPU::Backend</a>
@@ -1576,6 +1688,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="db/d06/classSpineMLSimulator_1_1Input_1_1PoissonSpikeRate.html#aeb04b3fa3a4dc217a789dd1e6334676c">SpineMLSimulator::Input::PoissonSpikeRate</a>
 , <a class="el" href="d0/d79/classSpineMLSimulator_1_1Input_1_1RegularSpikeRate.html#a57c360ea4bc19d9e00d6a0c2bd71db2b">SpineMLSimulator::Input::RegularSpikeRate</a>
 </li>
+<li>getToeplitzConnectivityInitialiser()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ad42b1c49a6928b1eaac9381a89252925">SynapseGroup</a>
+</li>
 <li>getTransposeSynapseGroup()
 : <a class="el" href="dc/d6d/classModels_1_1WUVarReference.html#a07fa27d89100daf929c1f6bda0ac04bc">Models::WUVarReference</a>
 </li>
@@ -1590,7 +1705,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 </li>
 <li>getTrgNeuronGroup()
 : <a class="el" href="d1/d48/classCurrentSource.html#a93ff03c2577f5869de575ae6d222ca30">CurrentSource</a>
-, <a class="el" href="dc/dfa/classSynapseGroup.html#a4d1d61a12436e603e6443b4d6d788a00">SynapseGroup</a>
+, <a class="el" href="dc/dfa/classSynapseGroup.html#a6719d7b41b650ef308b36e6603839542">SynapseGroup</a>
 </li>
 <li>getUpdateCode()
 : <a class="el" href="de/db4/classCustomUpdateModels_1_1Base.html#a6ac30b8f437200d82d0e565d9e319733">CustomUpdateModels::Base</a>
@@ -1614,9 +1729,9 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 , <a class="el" href="d7/d3b/classNeuronGroup.html#a2217c2f1119bff7d7a471312d8d51004">NeuronGroup</a>
 </li>
 <li>getVarLocation()
-: <a class="el" href="d1/d48/classCurrentSource.html#a4082262b23f60d230840455ffbb8c5f3">CurrentSource</a>
+: <a class="el" href="d1/d48/classCurrentSource.html#a0b5061240ea86ae09f52bf128b158aed">CurrentSource</a>
 , <a class="el" href="da/da9/classCustomUpdateBase.html#a33214cfbb70918d02dfc288037f6a2b8">CustomUpdateBase</a>
-, <a class="el" href="d7/d3b/classNeuronGroup.html#a5f40746255edeee5e14404ef71921846">NeuronGroup</a>
+, <a class="el" href="d7/d3b/classNeuronGroup.html#adcbb2b02e02286d4206e94bc3905883b">NeuronGroup</a>
 </li>
 <li>getVarLocationHashDigest()
 : <a class="el" href="d1/d48/classCurrentSource.html#a03344dd378d3545b01dee3fd817f9f75">CurrentSource</a>
@@ -1709,13 +1824,13 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a5f60a80d62699a4b6edfda93e720ca9f">SynapseGroup</a>
 </li>
 <li>getWUPreVarLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#ad490eebd29a779d3abd26b87b1f97179">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#ae89e853febe50d5c78fce67a9c8a502c">SynapseGroup</a>
 </li>
 <li>getWUVarInitialisers()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#ac085e2eaf41431b8307a6f87e1de9031">SynapseGroup</a>
 </li>
 <li>getWUVarLocation()
-: <a class="el" href="dc/dfa/classSynapseGroup.html#a372211c03132fe062dfceb2c946fbdaf">SynapseGroup</a>
+: <a class="el" href="dc/dfa/classSynapseGroup.html#aeedc94782da1c991bd7fd7974cc69021">SynapseGroup</a>
 </li>
 <li>getZeroCopyBytes()
 : <a class="el" href="d2/d06/classCodeGenerator_1_1MemAlloc.html#abc2602688ece395a2798a1f72eb9b810">CodeGenerator::MemAlloc</a>
@@ -1746,7 +1861,7 @@ $(document).ready(function(){initNavTree('functions_g.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Nov 22 2021 17:38:11 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:53 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

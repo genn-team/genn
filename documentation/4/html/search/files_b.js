@@ -7,5 +7,7 @@ var searchData=
   ['neurongroupinternal_2eh',['neuronGroupInternal.h',['../d2/dfe/neuronGroupInternal_8h.html',1,'']]],
   ['neuronmodels_2ecc',['neuronModels.cc',['../dc/dbc/neuronModels_8cc.html',1,'']]],
   ['neuronmodels_2eh',['neuronModels.h',['../d3/dc0/neuronModels_8h.html',1,'']]],
+  ['neuronupdategroupmerged_2ecc',['neuronUpdateGroupMerged.cc',['../de/da1/neuronUpdateGroupMerged_8cc.html',1,'']]],
+  ['neuronupdategroupmerged_2eh',['neuronUpdateGroupMerged.h',['../d7/d7f/neuronUpdateGroupMerged_8h.html',1,'']]],
   ['normaldistribution_2eh',['normalDistribution.h',['../df/d38/normalDistribution_8h.html',1,'']]]
 ];

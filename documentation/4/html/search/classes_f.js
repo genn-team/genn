@@ -28,5 +28,6 @@ var searchData=
   ['synapsegroup',['SynapseGroup',['../d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html',1,'pygenn.genn_groups.SynapseGroup'],['../dc/dfa/classSynapseGroup.html',1,'SynapseGroup']]],
   ['synapsegroupinternal',['SynapseGroupInternal',['../dd/d48/classSynapseGroupInternal.html',1,'']]],
   ['synapsegroupmergedbase',['SynapseGroupMergedBase',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html',1,'CodeGenerator']]],
+  ['synapsekernelinitgroupmerged',['SynapseKernelInitGroupMerged',['../d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html',1,'CodeGenerator']]],
   ['synapsesparseinitgroupmerged',['SynapseSparseInitGroupMerged',['../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html',1,'CodeGenerator']]]
 ];

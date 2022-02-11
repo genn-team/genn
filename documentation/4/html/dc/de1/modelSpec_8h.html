@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -173,6 +173,14 @@ Functions</h2></td></tr>
 <tr class="memitem:a367c112babcc14b58db730731b798073"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a367c112babcc14b58db730731b798073">uninitialisedConnectivity</a> ()</td></tr>
 <tr class="memdesc:a367c112babcc14b58db730731b798073"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark a synapse group's sparse connectivity as uninitialised.  <a href="#a367c112babcc14b58db730731b798073">More...</a><br /></td></tr>
 <tr class="separator:a367c112babcc14b58db730731b798073"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa762da688c695598f5787b8792fd1840"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
+<tr class="memitem:aa762da688c695598f5787b8792fd1840"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a>&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#aa762da688c695598f5787b8792fd1840">initToeplitzConnectivity</a> (const typename S::ParamValues &amp;params)</td></tr>
+<tr class="memdesc:aa762da688c695598f5787b8792fd1840"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise toeplitz connectivity using a toeplitz connectivity snippet.  <a href="#aa762da688c695598f5787b8792fd1840">More...</a><br /></td></tr>
+<tr class="separator:aa762da688c695598f5787b8792fd1840"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7135f5a6c83a0f4222a94c93d3521f42"><td class="memTemplParams" colspan="2">template&lt;typename S &gt; </td></tr>
+<tr class="memitem:a7135f5a6c83a0f4222a94c93d3521f42"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if&lt; std::is_same&lt; typename S::ParamValues, <a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a>&lt; 0 &gt; &gt;::value, <a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> &gt;::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#a7135f5a6c83a0f4222a94c93d3521f42">initToeplitzConnectivity</a> ()</td></tr>
+<tr class="memdesc:a7135f5a6c83a0f4222a94c93d3521f42"><td class="mdescLeft">&#160;</td><td class="mdescRight">Initialise connectivity using a toeplitz connectivity snippet with no parameters.  <a href="#a7135f5a6c83a0f4222a94c93d3521f42">More...</a><br /></td></tr>
+<tr class="separator:a7135f5a6c83a0f4222a94c93d3521f42"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae926ed9264cd23650134184f0e3f5fc5"><td class="memItemLeft" align="right" valign="top"><a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../dc/de1/modelSpec_8h.html#ae926ed9264cd23650134184f0e3f5fc5">createVarRef</a> (const <a class="el" href="../../d7/d3b/classNeuronGroup.html">NeuronGroup</a> *ng, const std::string &amp;varName)</td></tr>
 <tr class="memdesc:ae926ed9264cd23650134184f0e3f5fc5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Creates a reference to a neuron group variable.  <a href="#ae926ed9264cd23650134184f0e3f5fc5">More...</a><br /></td></tr>
 <tr class="separator:ae926ed9264cd23650134184f0e3f5fc5"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -680,6 +688,85 @@ template&lt;typename S &gt; </div>
 
 </div>
 </div>
+<a id="aa762da688c695598f5787b8792fd1840"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa762da688c695598f5787b8792fd1840">&#9670;&nbsp;</a></span>initToeplitzConnectivity() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename S &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> initToeplitzConnectivity </td>
+          <td>(</td>
+          <td class="paramtype">const typename S::ParamValues &amp;&#160;</td>
+          <td class="paramname"><em>params</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialise toeplitz connectivity using a toeplitz connectivity snippet. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">S</td><td>type of toeplitz connectivitiy initialisation snippet (derived from <a class="el" href="../../de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html">InitToeplitzConnectivitySnippet::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">params</td><td>parameters for snippet wrapped in S::ParamValues object. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> object for passing to <code><a class="el" href="../../da/dfd/classModelSpec.html#abd4e9128a5d4f5f993907134218af0c2" title="Adds a synapse population to the model using weight update and postsynaptic models managed by the use...">ModelSpec::addSynapsePopulation</a></code> </dd></dl>
+
+</div>
+</div>
+<a id="a7135f5a6c83a0f4222a94c93d3521f42"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7135f5a6c83a0f4222a94c93d3521f42">&#9670;&nbsp;</a></span>initToeplitzConnectivity() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename S &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::enable_if&lt;std::is_same&lt;typename S::ParamValues, <a class="el" href="../../df/daa/namespaceSnippet.html#a53c1a4e7ca9880cbeea429409e0ecb8c">Snippet::ValueBase</a>&lt;0&gt; &gt;::value, <a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a>&gt;::type initToeplitzConnectivity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Initialise connectivity using a toeplitz connectivity snippet with no parameters. </p>
+<dl class="tparams"><dt>Template Parameters</dt><dd>
+  <table class="tparams">
+    <tr><td class="paramname">S</td><td>type of toeplitz connectivitiy initialisation snippet (derived from <a class="el" href="../../de/d65/classInitToeplitzConnectivitySnippet_1_1Base.html">InitToeplitzConnectivitySnippet::Base</a>). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> object for passing to <code><a class="el" href="../../da/dfd/classModelSpec.html#abd4e9128a5d4f5f993907134218af0c2" title="Adds a synapse population to the model using weight update and postsynaptic models managed by the use...">ModelSpec::addSynapsePopulation</a></code> </dd></dl>
+
+</div>
+</div>
 <a id="a82512da3fc2cd603ff00f8f5b7f2f1ce"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a82512da3fc2cd603ff00f8f5b7f2f1ce">&#9670;&nbsp;</a></span>initVar() <span class="overload">[1/2]</span></h2>
 
@@ -822,7 +909,7 @@ template&lt;typename S &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="../../dir_0d26f2923f12b39c28ccafc262d5bf81.html">genn</a></li><li class="navelem"><a class="el" href="../../dir_668e26affacdcc4ca8ede0bc97c4e18c.html">genn</a></li><li class="navelem"><a class="el" href="../../dc/de1/modelSpec_8h.html">modelSpec.h</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:50 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

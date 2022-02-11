@@ -1,7 +1,9 @@
 var searchData=
 [
+  ['kernel',['KERNEL',['../dd/dd5/synapseMatrixType_8h.html#a3c0f0120d3cb9e81daea1d2afa7fbe1fa35c10219c45ccfb5b07444fd7e17214c',1,'synapseMatrixType.h']]],
   ['kernelcustomtransposeupdate',['KernelCustomTransposeUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a64977076a17c7448e110f8323f2f8250',1,'CodeGenerator']]],
   ['kernelcustomupdate',['KernelCustomUpdate',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a9b14cc8680225688918636765a5c0141',1,'CodeGenerator']]],
+  ['kernelinit',['KernelInit',['../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1add547bb5d4f0509eb28ba750444c1ef1',1,'CodeGenerator::SynapseGroupMergedBase']]],
   ['kernelinitialize',['KernelInitialize',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61afede5c345b576112630109811e487421',1,'CodeGenerator']]],
   ['kernelinitializesparse',['KernelInitializeSparse',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61ab713764c21bfb4a0140d76ff83e69be5',1,'CodeGenerator']]],
   ['kernelmax',['KernelMax',['../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61a708928276d7abefd4fdfe1c4a87de5e1',1,'CodeGenerator']]],

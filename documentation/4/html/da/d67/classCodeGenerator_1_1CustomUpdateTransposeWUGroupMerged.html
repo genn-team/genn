@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -103,7 +103,7 @@ $(document).ready(function(){initNavTree('da/d67/classCodeGenerator_1_1CustomUpd
 </div><!--header-->
 <div class="contents">
 
-<p><code>#include &lt;<a class="el" href="../../dd/dfd/groupMerged_8h_source.html">groupMerged.h</a>&gt;</code></p>
+<p><code>#include &lt;<a class="el" href="../../df/d86/customUpdateGroupMerged_8h_source.html">customUpdateGroupMerged.h</a>&gt;</code></p>
 <div class="dynheader">
 Inheritance diagram for CodeGenerator::CustomUpdateTransposeWUGroupMerged:</div>
 <div class="dyncontent">
@@ -121,6 +121,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:aff0a0cebcf6512e1375da20a552d284b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75c6ea80a17bd65fe726559a09a4b041"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html#a75c6ea80a17bd65fe726559a09a4b041">generateRunner</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternal, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalFunc, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;definitionsInternalVar, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerVarDecl, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;runnerMergedStructAlloc) const</td></tr>
 <tr class="separator:a75c6ea80a17bd65fe726559a09a4b041"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa9b5143bbe0e278b0aa1a0f7fa64fba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html#aaa9b5143bbe0e278b0aa1a0f7fa64fba">generateCustomUpdate</a> (const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;backend, <a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;modelMerged, <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;popSubs) const</td></tr>
+<tr class="separator:aaa9b5143bbe0e278b0aa1a0f7fa64fba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_classCodeGenerator_1_1CustomUpdateWUGroupMergedBase"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_classCodeGenerator_1_1CustomUpdateWUGroupMergedBase')"><img src="../../closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html">CodeGenerator::CustomUpdateWUGroupMergedBase</a></td></tr>
 <tr class="memitem:a9ec3ac8d14e021e45bc17f910508195c inherit pub_methods_classCodeGenerator_1_1CustomUpdateWUGroupMergedBase"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d96/classCodeGenerator_1_1CustomUpdateWUGroupMergedBase.html#a9ec3ac8d14e021e45bc17f910508195c">isParamHeterogeneous</a> (size_t index) const</td></tr>
 <tr class="separator:a9ec3ac8d14e021e45bc17f910508195c inherit pub_methods_classCodeGenerator_1_1CustomUpdateWUGroupMergedBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -277,6 +279,46 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="aaa9b5143bbe0e278b0aa1a0f7fa64fba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa9b5143bbe0e278b0aa1a0f7fa64fba">&#9670;&nbsp;</a></span>generateCustomUpdate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a> &amp;&#160;</td>
+          <td class="paramname"><em>backend</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../de/d52/classCodeGenerator_1_1ModelSpecMerged.html">ModelSpecMerged</a> &amp;&#160;</td>
+          <td class="paramname"><em>modelMerged</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">Substitutions</a> &amp;&#160;</td>
+          <td class="paramname"><em>popSubs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="a75c6ea80a17bd65fe726559a09a4b041"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a75c6ea80a17bd65fe726559a09a4b041">&#9670;&nbsp;</a></span>generateRunner()</h2>
 
@@ -361,8 +403,8 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li><a class="el" href="../../dd/dfd/groupMerged_8h_source.html">groupMerged.h</a></li>
-<li><a class="el" href="../../d3/d35/groupMerged_8cc.html">groupMerged.cc</a></li>
+<li><a class="el" href="../../df/d86/customUpdateGroupMerged_8h_source.html">customUpdateGroupMerged.h</a></li>
+<li><a class="el" href="../../d3/d53/customUpdateGroupMerged_8cc.html">customUpdateGroupMerged.cc</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -371,7 +413,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../da/d67/classCodeGenerator_1_1CustomUpdateTransposeWUGroupMerged.html">CustomUpdateTransposeWUGroupMerged</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:54 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

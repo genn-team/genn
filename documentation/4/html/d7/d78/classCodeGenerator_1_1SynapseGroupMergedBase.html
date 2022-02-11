@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -112,13 +112,14 @@ Inheritance diagram for CodeGenerator::SynapseGroupMergedBase:</div>
  <div class="center">
   <img src="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.png" usemap="#CodeGenerator::SynapseGroupMergedBase_map" alt=""/>
   <map id="CodeGenerator::SynapseGroupMergedBase_map" name="CodeGenerator::SynapseGroupMergedBase_map">
-<area href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html" alt="CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;" shape="rect" coords="860,0,1194,24"/>
+<area href="../../df/dfd/classCodeGenerator_1_1GroupMerged.html" alt="CodeGenerator::GroupMerged&lt; SynapseGroupInternal &gt;" shape="rect" coords="1032,0,1366,24"/>
 <area href="../../dd/d96/classCodeGenerator_1_1PostsynapticUpdateGroupMerged.html" alt="CodeGenerator::PostsynapticUpdateGroupMerged" shape="rect" coords="0,112,334,136"/>
 <area href="../../df/df5/classCodeGenerator_1_1PresynapticUpdateGroupMerged.html" alt="CodeGenerator::PresynapticUpdateGroupMerged" shape="rect" coords="344,112,678,136"/>
 <area href="../../de/d5d/classCodeGenerator_1_1SynapseConnectivityInitGroupMerged.html" alt="CodeGenerator::SynapseConnectivityInitGroupMerged" shape="rect" coords="688,112,1022,136"/>
 <area href="../../d1/d09/classCodeGenerator_1_1SynapseDenseInitGroupMerged.html" alt="CodeGenerator::SynapseDenseInitGroupMerged" shape="rect" coords="1032,112,1366,136"/>
 <area href="../../d3/d00/classCodeGenerator_1_1SynapseDynamicsGroupMerged.html" alt="CodeGenerator::SynapseDynamicsGroupMerged" shape="rect" coords="1376,112,1710,136"/>
-<area href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html" alt="CodeGenerator::SynapseSparseInitGroupMerged" shape="rect" coords="1720,112,2054,136"/>
+<area href="../../d6/d98/classCodeGenerator_1_1SynapseKernelInitGroupMerged.html" alt="CodeGenerator::SynapseKernelInitGroupMerged" shape="rect" coords="1720,112,2054,136"/>
+<area href="../../db/df8/classCodeGenerator_1_1SynapseSparseInitGroupMerged.html" alt="CodeGenerator::SynapseSparseInitGroupMerged" shape="rect" coords="2064,112,2398,136"/>
 </map>
  </div></div>
 <table class="memberdecls">
@@ -139,12 +140,18 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a756a86ca96d36bd1ae043e2570454caa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a756a86ca96d36bd1ae043e2570454caa">isWUVarInitDerivedParamHeterogeneous</a> (size_t varIndex, size_t paramIndex) const</td></tr>
 <tr class="memdesc:a756a86ca96d36bd1ae043e2570454caa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the weight update model variable initialization derived parameter be implemented heterogeneously?  <a href="#a756a86ca96d36bd1ae043e2570454caa">More...</a><br /></td></tr>
 <tr class="separator:a756a86ca96d36bd1ae043e2570454caa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c1a1f9b0055be4a73da7d41ea104fb7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9c1a1f9b0055be4a73da7d41ea104fb7">isConnectivityInitParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
-<tr class="memdesc:a9c1a1f9b0055be4a73da7d41ea104fb7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the connectivity initialization parameter be implemented heterogeneously?  <a href="#a9c1a1f9b0055be4a73da7d41ea104fb7">More...</a><br /></td></tr>
-<tr class="separator:a9c1a1f9b0055be4a73da7d41ea104fb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab590e86fd32c52666a0b51b5b1ccec00"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab590e86fd32c52666a0b51b5b1ccec00">isConnectivityInitDerivedParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
-<tr class="memdesc:ab590e86fd32c52666a0b51b5b1ccec00"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the connectivity initialization parameter be implemented heterogeneously?  <a href="#ab590e86fd32c52666a0b51b5b1ccec00">More...</a><br /></td></tr>
-<tr class="separator:ab590e86fd32c52666a0b51b5b1ccec00"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5ac4f0327e71a823b590eeb74919fe8"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab5ac4f0327e71a823b590eeb74919fe8">isSparseConnectivityInitParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
+<tr class="memdesc:ab5ac4f0327e71a823b590eeb74919fe8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the sparse connectivity initialization parameter be implemented heterogeneously?  <a href="#ab5ac4f0327e71a823b590eeb74919fe8">More...</a><br /></td></tr>
+<tr class="separator:ab5ac4f0327e71a823b590eeb74919fe8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaf60d685c29c8a245f4230198348f79c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aaf60d685c29c8a245f4230198348f79c">isSparseConnectivityInitDerivedParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
+<tr class="memdesc:aaf60d685c29c8a245f4230198348f79c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the sparse connectivity initialization parameter be implemented heterogeneously?  <a href="#aaf60d685c29c8a245f4230198348f79c">More...</a><br /></td></tr>
+<tr class="separator:aaf60d685c29c8a245f4230198348f79c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad2392a4a99050e3470c5cb07204b1f9b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ad2392a4a99050e3470c5cb07204b1f9b">isToeplitzConnectivityInitParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
+<tr class="memdesc:ad2392a4a99050e3470c5cb07204b1f9b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?  <a href="#ad2392a4a99050e3470c5cb07204b1f9b">More...</a><br /></td></tr>
+<tr class="separator:ad2392a4a99050e3470c5cb07204b1f9b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad1d33fb739f7c22612d7833b1432a948"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ad1d33fb739f7c22612d7833b1432a948">isToeplitzConnectivityInitDerivedParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
+<tr class="memdesc:ad1d33fb739f7c22612d7833b1432a948"><td class="mdescLeft">&#160;</td><td class="mdescRight">Should the Toeplitz connectivity initialization parameter be implemented heterogeneously?  <a href="#ad1d33fb739f7c22612d7833b1432a948">More...</a><br /></td></tr>
+<tr class="separator:ad1d33fb739f7c22612d7833b1432a948"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a48725c21232538b2aec87430b8860e67"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a48725c21232538b2aec87430b8860e67">isSrcNeuronParamHeterogeneous</a> (size_t paramIndex) const</td></tr>
 <tr class="memdesc:a48725c21232538b2aec87430b8860e67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is presynaptic neuron parameter heterogeneous?  <a href="#a48725c21232538b2aec87430b8860e67">More...</a><br /></td></tr>
 <tr class="separator:a48725c21232538b2aec87430b8860e67"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -160,6 +167,12 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:acca59d8446d804a2721ef5779c259bb1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#acca59d8446d804a2721ef5779c259bb1">isKernelSizeHeterogeneous</a> (size_t dimensionIndex) const</td></tr>
 <tr class="memdesc:acca59d8446d804a2721ef5779c259bb1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Is kernel size heterogeneous in this dimension?  <a href="#acca59d8446d804a2721ef5779c259bb1">More...</a><br /></td></tr>
 <tr class="separator:acca59d8446d804a2721ef5779c259bb1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9db92b2d369be4fbdbad1d7c0e53f01e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9db92b2d369be4fbdbad1d7c0e53f01e">getKernelSize</a> (size_t dimensionIndex) const</td></tr>
+<tr class="memdesc:a9db92b2d369be4fbdbad1d7c0e53f01e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX)  <a href="#a9db92b2d369be4fbdbad1d7c0e53f01e">More...</a><br /></td></tr>
+<tr class="separator:a9db92b2d369be4fbdbad1d7c0e53f01e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad0a1400ca86aafdce60e4bbc142c68a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aad0a1400ca86aafdce60e4bbc142c68a">genKernelIndex</a> (std::ostream &amp;os, const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;subs) const</td></tr>
+<tr class="memdesc:aad0a1400ca86aafdce60e4bbc142c68a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generate an index into a kernel based on the id_kernel_XXX variables in subs.  <a href="#aad0a1400ca86aafdce60e4bbc142c68a">More...</a><br /></td></tr>
+<tr class="separator:aad0a1400ca86aafdce60e4bbc142c68a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af7d89910f2cbd43fc65e81f01da34b88"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#af7d89910f2cbd43fc65e81f01da34b88">getPreSlot</a> (unsigned int batchSize) const</td></tr>
 <tr class="separator:af7d89910f2cbd43fc65e81f01da34b88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7cebbb3164080a52c10ba1305cfd6b0"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa7cebbb3164080a52c10ba1305cfd6b0">getPostSlot</a> (unsigned int batchSize) const</td></tr>
@@ -217,8 +230,12 @@ Static Public Member Functions</h2></td></tr>
 <tr class="separator:adaee0630271800f5580f0e4a65002e78"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4fe2b272dd708047e7ae4cb6aa9f16ca"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a4fe2b272dd708047e7ae4cb6aa9f16ca">getPostISynIndex</a> (unsigned int batchSize, const std::string &amp;index)</td></tr>
 <tr class="separator:a4fe2b272dd708047e7ae4cb6aa9f16ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aad57a3c081554608923d52eeef586a8a"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aad57a3c081554608923d52eeef586a8a">getPreISynIndex</a> (unsigned int batchSize, const std::string &amp;index)</td></tr>
+<tr class="separator:aad57a3c081554608923d52eeef586a8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a874ee6a0be984907c272fde4dfb08f53"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a874ee6a0be984907c272fde4dfb08f53">getSynVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
 <tr class="separator:a874ee6a0be984907c272fde4dfb08f53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a52b43e04ae3eab2414aeaabdda6878cc"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a52b43e04ae3eab2414aeaabdda6878cc">getKernelVarIndex</a> (unsigned int batchSize, <a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a> varDuplication, const std::string &amp;index)</td></tr>
+<tr class="separator:a52b43e04ae3eab2414aeaabdda6878cc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-types"></a>
 Protected Types</h2></td></tr>
@@ -229,6 +246,7 @@ Protected Types</h2></td></tr>
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758">Role::DenseInit</a>, 
 <br />
 &#160;&#160;<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8">Role::SparseInit</a>, 
+<a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1add547bb5d4f0509eb28ba750444c1ef1">Role::KernelInit</a>, 
 <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8">Role::ConnectivityInit</a>
 <br />
  }</td></tr>
@@ -319,6 +337,7 @@ Additional Inherited Members</h2></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a6e619cecc4afcb5a30233e1768c0fb3d"></a>SynapseDynamics&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1afed34d89f75be5ff1cf0bd79bae8e758"></a>DenseInit&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1abffb964812bc335bf4453617eed383f8"></a>SparseInit&#160;</td><td class="fielddoc"></td></tr>
+<tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1add547bb5d4f0509eb28ba750444c1ef1"></a>KernelInit&#160;</td><td class="fielddoc"></td></tr>
 <tr><td class="fieldname"><a id="aa46d3df803bad1c0d293faa1dd5edea1a8536fa86c6fa6192ce06a365d55fd0f8"></a>ConnectivityInit&#160;</td><td class="fielddoc"></td></tr>
 </table>
 
@@ -392,6 +411,36 @@ Additional Inherited Members</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="aad0a1400ca86aafdce60e4bbc142c68a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad0a1400ca86aafdce60e4bbc142c68a">&#9670;&nbsp;</a></span>genKernelIndex()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void SynapseGroupMergedBase::genKernelIndex </td>
+          <td>(</td>
+          <td class="paramtype">std::ostream &amp;&#160;</td>
+          <td class="paramname"><em>os</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="../../de/d22/classCodeGenerator_1_1Substitutions.html">CodeGenerator::Substitutions</a> &amp;&#160;</td>
+          <td class="paramname"><em>subs</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Generate an index into a kernel based on the id_kernel_XXX variables in subs. </p>
+
+</div>
+</div>
 <a id="ab01b4adf06c19b2aa56e6064ca9b8e7f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab01b4adf06c19b2aa56e6064ca9b8e7f">&#9670;&nbsp;</a></span>getArchetypeCode()</h2>
 
@@ -437,6 +486,68 @@ Additional Inherited Members</h2></td></tr>
   </td>
   <td class="mlabels-right">
 <span class="mlabels"><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
+<a id="a9db92b2d369be4fbdbad1d7c0e53f01e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9db92b2d369be4fbdbad1d7c0e53f01e">&#9670;&nbsp;</a></span>getKernelSize()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string SynapseGroupMergedBase::getKernelSize </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>dimensionIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get expression for kernel size in dimension (may be literal or group-&gt;kernelSizeXXX) </p>
+
+</div>
+</div>
+<a id="a52b43e04ae3eab2414aeaabdda6878cc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a52b43e04ae3eab2414aeaabdda6878cc">&#9670;&nbsp;</a></span>getKernelVarIndex()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string SynapseGroupMergedBase::getKernelVarIndex </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>batchSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype"><a class="el" href="../../de/dfb/varAccess_8h.html#afabbd457a93205e571bff448ec134764">VarAccessDuplication</a>&#160;</td>
+          <td class="paramname"><em>varDuplication</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>index</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
   </tr>
 </table>
 </div><div class="memdoc">
@@ -711,6 +822,42 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
+<a id="aad57a3c081554608923d52eeef586a8a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aad57a3c081554608923d52eeef586a8a">&#9670;&nbsp;</a></span>getPreISynIndex()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::string CodeGenerator::SynapseGroupMergedBase::getPreISynIndex </td>
+          <td>(</td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>batchSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>index</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="acab2066c2bdfd7213199234c8b232216"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acab2066c2bdfd7213199234c8b232216">&#9670;&nbsp;</a></span>getPrePrevSpikeTimeIndex()</h2>
 
@@ -951,46 +1098,6 @@ Additional Inherited Members</h2></td></tr>
 
 </div>
 </div>
-<a id="ab590e86fd32c52666a0b51b5b1ccec00"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab590e86fd32c52666a0b51b5b1ccec00">&#9670;&nbsp;</a></span>isConnectivityInitDerivedParamHeterogeneous()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroupMergedBase::isConnectivityInitDerivedParamHeterogeneous </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>paramIndex</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Should the connectivity initialization parameter be implemented heterogeneously? </p>
-
-</div>
-</div>
-<a id="a9c1a1f9b0055be4a73da7d41ea104fb7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a9c1a1f9b0055be4a73da7d41ea104fb7">&#9670;&nbsp;</a></span>isConnectivityInitParamHeterogeneous()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool SynapseGroupMergedBase::isConnectivityInitParamHeterogeneous </td>
-          <td>(</td>
-          <td class="paramtype">size_t&#160;</td>
-          <td class="paramname"><em>paramIndex</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Should the connectivity initialization parameter be implemented heterogeneously? </p>
-
-</div>
-</div>
 <a id="acca59d8446d804a2721ef5779c259bb1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#acca59d8446d804a2721ef5779c259bb1">&#9670;&nbsp;</a></span>isKernelSizeHeterogeneous()</h2>
 
@@ -1008,6 +1115,46 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Is kernel size heterogeneous in this dimension? </p>
+
+</div>
+</div>
+<a id="aaf60d685c29c8a245f4230198348f79c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaf60d685c29c8a245f4230198348f79c">&#9670;&nbsp;</a></span>isSparseConnectivityInitDerivedParamHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroupMergedBase::isSparseConnectivityInitDerivedParamHeterogeneous </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>paramIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Should the sparse connectivity initialization parameter be implemented heterogeneously? </p>
+
+</div>
+</div>
+<a id="ab5ac4f0327e71a823b590eeb74919fe8"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab5ac4f0327e71a823b590eeb74919fe8">&#9670;&nbsp;</a></span>isSparseConnectivityInitParamHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroupMergedBase::isSparseConnectivityInitParamHeterogeneous </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>paramIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Should the sparse connectivity initialization parameter be implemented heterogeneously? </p>
 
 </div>
 </div>
@@ -1048,6 +1195,46 @@ Additional Inherited Members</h2></td></tr>
 </div><div class="memdoc">
 
 <p>Is presynaptic neuron parameter heterogeneous? </p>
+
+</div>
+</div>
+<a id="ad1d33fb739f7c22612d7833b1432a948"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad1d33fb739f7c22612d7833b1432a948">&#9670;&nbsp;</a></span>isToeplitzConnectivityInitDerivedParamHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroupMergedBase::isToeplitzConnectivityInitDerivedParamHeterogeneous </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>paramIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Should the Toeplitz connectivity initialization parameter be implemented heterogeneously? </p>
+
+</div>
+</div>
+<a id="ad2392a4a99050e3470c5cb07204b1f9b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad2392a4a99050e3470c5cb07204b1f9b">&#9670;&nbsp;</a></span>isToeplitzConnectivityInitParamHeterogeneous()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool SynapseGroupMergedBase::isToeplitzConnectivityInitParamHeterogeneous </td>
+          <td>(</td>
+          <td class="paramtype">size_t&#160;</td>
+          <td class="paramname"><em>paramIndex</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Should the Toeplitz connectivity initialization parameter be implemented heterogeneously? </p>
 
 </div>
 </div>
@@ -1222,7 +1409,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:56 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

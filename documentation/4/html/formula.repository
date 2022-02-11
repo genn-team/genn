@@ -19,24 +19,24 @@
 \form#18:$\beta$
 \form#19:${\rm M}\Omega$
 \form#20:\begin{eqnarray*} \frac{dV}{dt} &=& 0.04 V^2 + 5 V + 140 - U + I, \\ \frac{dU}{dt} &=& a (bV-U), \end{eqnarray*}
-\form#21:$\lambda$
-\form#22:$ p = \lambda \Delta t $
-\form#23:\begin{eqnarray*} C \frac{d V}{dt} &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*}
-\form#24:$y_i= m, h, n$
-\form#25:\begin{eqnarray*} \alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big) \\ \beta_n &=& 0.5\exp((-55-V)/40) \\ \alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big) \\ \beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big) \\ \alpha_h &=& 0.128\exp((-48-V)/18) \\ \beta_h &=& 4/\big(\exp((-25-V)/5)+1\big). \end{eqnarray*}
-\form#26:$C=0.143$
-\form#27:$g_{{\rm leak}}= 0.02672$
-\form#28:$\mu$
-\form#29:$E_{{\rm leak}}= -63.563$
-\form#30:$g_{{\rm Na}}=7.15$
-\form#31:$E_{{\rm Na}}= 50$
-\form#32:$g_{{\rm {\rm K}}}=1.43$
-\form#33:$E_{{\rm K}}= -95$
-\form#34:\[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \]
-\form#35:$V$
-\form#36:$E_{pre}$
-\form#37:$n \cdot N$
-\form#38:$N$
-\form#39:$n > 0$
-\form#40:$i \cdot N$
-\form#41:$0 \leq i < n$
+\form#21:$n \cdot N$
+\form#22:$N$
+\form#23:$n > 0$
+\form#24:$i \cdot N$
+\form#25:$0 \leq i < n$
+\form#26:$\lambda$
+\form#27:$ p = \lambda \Delta t $
+\form#28:\begin{eqnarray*} C \frac{d V}{dt} &=& -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &=& g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &=& g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt} &=& \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*}
+\form#29:$y_i= m, h, n$
+\form#30:\begin{eqnarray*} \alpha_n&=& 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big) \\ \beta_n &=& 0.5\exp((-55-V)/40) \\ \alpha_m &=& 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big) \\ \beta_m &=& 0.28(25+V)/\big(\exp((25+V)/5)-1\big) \\ \alpha_h &=& 0.128\exp((-48-V)/18) \\ \beta_h &=& 4/\big(\exp((-25-V)/5)+1\big). \end{eqnarray*}
+\form#31:$C=0.143$
+\form#32:$g_{{\rm leak}}= 0.02672$
+\form#33:$\mu$
+\form#34:$E_{{\rm leak}}= -63.563$
+\form#35:$g_{{\rm Na}}=7.15$
+\form#36:$E_{{\rm Na}}= 50$
+\form#37:$g_{{\rm {\rm K}}}=1.43$
+\form#38:$E_{{\rm K}}= -95$
+\form#39:\[ gSyn= g * tanh((V - E_{pre}) / V_{slope} \]
+\form#40:$V$
+\form#41:$E_{pre}$

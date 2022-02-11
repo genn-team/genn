@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -120,6 +120,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7fa33c9872ab0cf97d0b60fa41bf17fe">init_connectivity</a> (init_sparse_connect_snippet, param_space)</td></tr>
 <tr class="memdesc:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html">InitSparseConnectivitySnippet::Init</a> object to easily initialise connectivity using a snippet.  <a href="#a7fa33c9872ab0cf97d0b60fa41bf17fe">More...</a><br /></td></tr>
 <tr class="separator:a7fa33c9872ab0cf97d0b60fa41bf17fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab53fba750c385db51312447f17463f06"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ab53fba750c385db51312447f17463f06">init_toeplitz_connectivity</a> (init_toeplitz_connect_snippet, param_space)</td></tr>
+<tr class="memdesc:ab53fba750c385db51312447f17463f06"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> object to easily initialise connectivity using a snippet.  <a href="#ab53fba750c385db51312447f17463f06">More...</a><br /></td></tr>
+<tr class="separator:ab53fba750c385db51312447f17463f06"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a58d69fc68a1745c3aff4fecd4e6e456e">create_var_ref</a> (pop, var_name)</td></tr>
 <tr class="memdesc:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a <a class="el" href="../../d1/db6/classModels_1_1VarReference.html">Models::VarReference</a> pointing to a neuron or current source variable for initialising variable references.  <a href="#a58d69fc68a1745c3aff4fecd4e6e456e">More...</a><br /></td></tr>
 <tr class="separator:a58d69fc68a1745c3aff4fecd4e6e456e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -168,6 +171,9 @@ Functions</h2></td></tr>
 <tr class="memitem:a6afa899f0322db64b39395534d1e29d8"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a6afa899f0322db64b39395534d1e29d8">create_custom_sparse_connect_init_snippet_class</a> (class_name, param_names=None, derived_params=None, row_build_code=None, row_build_state_vars=None, col_build_code=None, col_build_state_vars=None, calc_max_row_len_func=None, calc_max_col_len_func=None, calc_kernel_size_func=None, extra_global_params=None, custom_body=None)</td></tr>
 <tr class="memdesc:a6afa899f0322db64b39395534d1e29d8"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom <a class="el" href="../../dc/ddd/namespaceInitSparseConnectivitySnippet.html" title="Base class for all sparse connectivity initialisation snippets. ">InitSparseConnectivitySnippet</a> class.  <a href="#a6afa899f0322db64b39395534d1e29d8">More...</a><br /></td></tr>
 <tr class="separator:a6afa899f0322db64b39395534d1e29d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade8879268d2849fd60e6bb5f8e99a66b"><td class="memItemLeft" align="right" valign="top">def&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ade8879268d2849fd60e6bb5f8e99a66b">create_custom_toeplitz_connect_init_snippet_class</a> (class_name, param_names=None, derived_params=None, diagonal_build_code=None, diagonal_build_state_vars=None, calc_max_row_len_func=None, calc_kernel_size_func=None, extra_global_params=None, custom_body=None)</td></tr>
+<tr class="memdesc:ade8879268d2849fd60e6bb5f8e99a66b"><td class="mdescLeft">&#160;</td><td class="mdescRight">This helper function creates a custom <a class="el" href="../../d1/dcf/namespaceInitToeplitzConnectivitySnippet.html" title="Base class for all toeplitz connectivity initialisation snippets. ">InitToeplitzConnectivitySnippet</a> class.  <a href="#ade8879268d2849fd60e6bb5f8e99a66b">More...</a><br /></td></tr>
+<tr class="separator:ade8879268d2849fd60e6bb5f8e99a66b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -874,6 +880,101 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="ade8879268d2849fd60e6bb5f8e99a66b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade8879268d2849fd60e6bb5f8e99a66b">&#9670;&nbsp;</a></span>create_custom_toeplitz_connect_init_snippet_class()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.create_custom_toeplitz_connect_init_snippet_class </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>class_name</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_names</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>derived_params</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>diagonal_build_code</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>diagonal_build_state_vars</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>calc_max_row_len_func</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>calc_kernel_size_func</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>extra_global_params</em> = <code>None</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>custom_body</em> = <code>None</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a custom <a class="el" href="../../d1/dcf/namespaceInitToeplitzConnectivitySnippet.html" title="Base class for all toeplitz connectivity initialisation snippets. ">InitToeplitzConnectivitySnippet</a> class. </p>
+<dl class="section see"><dt>See also</dt><dd><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a80f3b56cb2dc934ea04ed15a629c7db9" title="This helper function creates a custom NeuronModel class. ">create_custom_neuron_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a7c2e854789f74d6ffd92be2a487a0e5b" title="This helper function creates a custom WeightUpdateModel class. ">create_custom_weight_update_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a091ea4fe261201327c877528287f9611" title="This helper function creates a custom PostsynapticModel class. ">create_custom_postsynaptic_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#a1cd795d295c4cc4f05968f04dbf5b9d3" title="This helper function creates a custom NeuronModel class. ">create_custom_current_source_class</a> </dd>
+<dd>
+<a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html#ab404f74c9628546ff3dc41feab504833" title="This helper function creates a custom InitVarSnippet class. ">create_custom_init_var_snippet_class</a></dd></dl>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">class_name</td><td>name of the new class</td></tr>
+    <tr><td class="paramname">param_names</td><td>list of strings with param names of the model </td></tr>
+    <tr><td class="paramname">derived_params</td><td>list of pairs, where the first member is string with name of the derived parameter and the second MUST be an instance of the class which inherits from pygenn.genn_wrapper.DerivedParamFunc </td></tr>
+    <tr><td class="paramname">diagonal_build_code</td><td>string with diagonal building initialization code </td></tr>
+    <tr><td class="paramname">diagonal_build_state_vars</td><td>list of tuples of state variables, their types and their initial values to use across diagonal building loop </td></tr>
+    <tr><td class="paramname">calc_max_row_len_func</td><td>instance of class inheriting from CalcMaxLengthFunc used to calculate maximum row length of synaptic matrix </td></tr>
+    <tr><td class="paramname">calc_kernel_size_func</td><td>instance of class inheriting from CalcKernelSizeFunc used to calculate kernel dimensions </td></tr>
+    <tr><td class="paramname">extra_global_params</td><td>list of pairs of strings with names and types of additional parameters </td></tr>
+    <tr><td class="paramname">custom_body</td><td>dictionary with additional attributes and methods of the new class </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a7c2e854789f74d6ffd92be2a487a0e5b"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a7c2e854789f74d6ffd92be2a487a0e5b">&#9670;&nbsp;</a></span>create_custom_weight_update_class()</h2>
 
@@ -1350,6 +1451,43 @@ Variables</h2></td></tr>
 
 </div>
 </div>
+<a id="ab53fba750c385db51312447f17463f06"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab53fba750c385db51312447f17463f06">&#9670;&nbsp;</a></span>init_toeplitz_connectivity()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">def pygenn.genn_model.init_toeplitz_connectivity </td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>init_toeplitz_connect_snippet</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname"><em>param_space</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>This helper function creates a <a class="el" href="../../d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html">InitToeplitzConnectivitySnippet::Init</a> object to easily initialise connectivity using a snippet. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">init_toeplitz_connect_snippet</td><td>type of the <a class="el" href="../../d1/dcf/namespaceInitToeplitzConnectivitySnippet.html" title="Base class for all toeplitz connectivity initialisation snippets. ">InitToeplitzConnectivitySnippet</a> class as string or instance of class derived from InitSparseConnectivitySnippet::Custom. </td></tr>
+    <tr><td class="paramname">param_space</td><td>dict with param values for the <a class="el" href="../../d1/dcf/namespaceInitToeplitzConnectivitySnippet.html" title="Base class for all toeplitz connectivity initialisation snippets. ">InitToeplitzConnectivitySnippet</a> class </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="aa2daf7a01b3f49dcbc5dba9690020bc3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#aa2daf7a01b3f49dcbc5dba9690020bc3">&#9670;&nbsp;</a></span>init_var()</h2>
 
@@ -1437,7 +1575,7 @@ Variables</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/d6d/namespacepygenn.html">pygenn</a></li><li class="navelem"><a class="el" href="../../de/d6e/namespacepygenn_1_1genn__model.html">genn_model</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:38:00 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:46 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -4,6 +4,7 @@ var annotated_dup =
     [ "CurrentSourceModels", "d6/dd3/namespaceCurrentSourceModels.html", "d6/dd3/namespaceCurrentSourceModels" ],
     [ "CustomUpdateModels", "d4/d01/namespaceCustomUpdateModels.html", "d4/d01/namespaceCustomUpdateModels" ],
     [ "InitSparseConnectivitySnippet", "dc/ddd/namespaceInitSparseConnectivitySnippet.html", "dc/ddd/namespaceInitSparseConnectivitySnippet" ],
+    [ "InitToeplitzConnectivitySnippet", "d1/dcf/namespaceInitToeplitzConnectivitySnippet.html", "d1/dcf/namespaceInitToeplitzConnectivitySnippet" ],
     [ "InitVarSnippet", "d2/dfc/namespaceInitVarSnippet.html", "d2/dfc/namespaceInitVarSnippet" ],
     [ "Models", "dd/d20/namespaceModels.html", "dd/d20/namespaceModels" ],
     [ "NeuronModels", "da/dac/namespaceNeuronModels.html", "da/dac/namespaceNeuronModels" ],

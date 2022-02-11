@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -100,11 +100,15 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <li>in_syn
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a41f9e8f4119814db34ea4115fb45ead8">pygenn.genn_groups.SynapseGroup</a>
 </li>
+<li>includeModelNameInDLL
+: <a class="el" href="d1/d7a/structCodeGenerator_1_1PreferencesBase.html#ab4aadbfe6857bf535c1ee2eebb7402bb">CodeGenerator::PreferencesBase</a>
+</li>
 <li>ind
 : <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb">pygenn.genn_groups.SynapseGroup</a>
 </li>
 <li>Init()
 : <a class="el" href="d2/d7f/classInitSparseConnectivitySnippet_1_1Init.html#ae7016585811c7d0889832be64b40c8e9">InitSparseConnectivitySnippet::Init</a>
+, <a class="el" href="d3/d83/classInitToeplitzConnectivitySnippet_1_1Init.html#a433f14fa7c2c6dbbea0575de0880bf96">InitToeplitzConnectivitySnippet::Init</a>
 , <a class="el" href="d8/df6/classSnippet_1_1Init.html#ae1b490fba08a926f30d03977b37339c5">Snippet::Init&lt; SnippetBase &gt;</a>
 </li>
 <li>init_required
@@ -168,6 +172,9 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <li>is_scalar
 : <a class="el" href="d8/d40/classpygenn_1_1model__preprocessor_1_1ExtraGlobalParameter.html#a09fb96a7665b9411f81b6023f7a1abb4">pygenn.model_preprocessor.ExtraGlobalParameter</a>
 </li>
+<li>is_toeplitz()
+: <a class="el" href="d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#a0c34c0ad2ceb6e26ddfecf658896202a">pygenn.genn_groups.SynapseGroup</a>
+</li>
 <li>isAccessible()
 : <a class="el" href="dc/db2/classSpineMLSimulator_1_1StateVar.html#a1216c1525809a687dc520bfedbfecbb6">SpineMLSimulator::StateVar&lt; T &gt;</a>
 </li>
@@ -184,16 +191,15 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 : <a class="el" href="da/d3b/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1Base.html#a92f474c84b717ac14f223bf6e7a452dd">CodeGenerator::PresynapticUpdateStrategySIMT::Base</a>
 , <a class="el" href="d9/d0f/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpan.html#a7296b26b876fc618b16712f5fca40566">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpan</a>
 , <a class="el" href="d2/dc5/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanBitmask.html#a60e9dc5429ec24f75c16038660aeb755">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanBitmask</a>
+, <a class="el" href="d4/dd1/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PostSpanToeplitz.html#a5805b76fa03b415c1769db173141e671">CodeGenerator::PresynapticUpdateStrategySIMT::PostSpanToeplitz</a>
 , <a class="el" href="d9/d8e/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpan.html#a1a1b900ed7a854dc885110d34c6ec101">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpan</a>
 , <a class="el" href="d4/d53/classCodeGenerator_1_1PresynapticUpdateStrategySIMT_1_1PreSpanProcedural.html#a0280ea8603164098b6d48b5da7ea5933">CodeGenerator::PresynapticUpdateStrategySIMT::PreSpanProcedural</a>
 </li>
 <li>isConnectivityInitDerivedParamHeterogeneous()
 : <a class="el" href="d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html#aaebb384dbc38c2ad4363e1ec07c61f53">CodeGenerator::SynapseConnectivityHostInitGroupMerged</a>
-, <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab590e86fd32c52666a0b51b5b1ccec00">CodeGenerator::SynapseGroupMergedBase</a>
 </li>
 <li>isConnectivityInitParamHeterogeneous()
 : <a class="el" href="d9/df1/classCodeGenerator_1_1SynapseConnectivityHostInitGroupMerged.html#a82c2367299b50d45412350caaba0ecc4">CodeGenerator::SynapseConnectivityHostInitGroupMerged</a>
-, <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#a9c1a1f9b0055be4a73da7d41ea104fb7">CodeGenerator::SynapseGroupMergedBase</a>
 </li>
 <li>isCurrentSourceDerivedParamHeterogeneous()
 : <a class="el" href="d7/dee/classCodeGenerator_1_1NeuronGroupMergedBase.html#ad1683fd0ec24d069c1e1cafcfa4abff2">CodeGenerator::NeuronGroupMergedBase</a>
@@ -330,6 +336,9 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a26c3071dfdf87eaddb857a535894bf7a">WeightUpdateModels::Base</a>
 , <a class="el" href="df/d86/classWeightUpdateModels_1_1PiecewiseSTDP.html#a060eb8fe3f26e106c662519d23a93717">WeightUpdateModels::PiecewiseSTDP</a>
 </li>
+<li>isPresynapticOutputRequired()
+: <a class="el" href="dc/dfa/classSynapseGroup.html#a2b7e4cb34528b05bd9c52001ca154e38">SynapseGroup</a>
+</li>
 <li>isPrevPostSpikeTimeRequired()
 : <a class="el" href="d2/d05/classWeightUpdateModels_1_1Base.html#a1aaced8f8f26f219b81fc2e4c55ce9ae">WeightUpdateModels::Base</a>
 </li>
@@ -398,6 +407,12 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 : <a class="el" href="d1/d48/classCurrentSource.html#a69ae0ab08a8f9960574199ac40585fe3">CurrentSource</a>
 , <a class="el" href="d7/d3b/classNeuronGroup.html#a193c659939f14aa5442295804f203477">NeuronGroup</a>
 </li>
+<li>isSparseConnectivityInitDerivedParamHeterogeneous()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#aaf60d685c29c8a245f4230198348f79c">CodeGenerator::SynapseGroupMergedBase</a>
+</li>
+<li>isSparseConnectivityInitParamHeterogeneous()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ab5ac4f0327e71a823b590eeb74919fe8">CodeGenerator::SynapseGroupMergedBase</a>
+</li>
 <li>isSparseConnectivityInitRequired()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a1c2454ff904e5df412539aa6477e4f0e">SynapseGroup</a>
 </li>
@@ -431,6 +446,12 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <li>isTimingEnabled()
 : <a class="el" href="da/dfd/classModelSpec.html#acadfb9fd83c86d18ccf678e43d08ac5d">ModelSpec</a>
 </li>
+<li>isToeplitzConnectivityInitDerivedParamHeterogeneous()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ad1d33fb739f7c22612d7833b1432a948">CodeGenerator::SynapseGroupMergedBase</a>
+</li>
+<li>isToeplitzConnectivityInitParamHeterogeneous()
+: <a class="el" href="d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html#ad2392a4a99050e3470c5cb07204b1f9b">CodeGenerator::SynapseGroupMergedBase</a>
+</li>
 <li>isTransposeOperation()
 : <a class="el" href="db/dd4/classCustomUpdateWU.html#a64a6f218f085f4b9d80e0494f5f16320">CustomUpdateWU</a>
 </li>
@@ -462,7 +483,7 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 : <a class="el" href="da/da9/classCustomUpdateBase.html#a45266a406a10eb283660f66042af13bf">CustomUpdateBase</a>
 </li>
 <li>isVarQueueRequired()
-: <a class="el" href="d7/d3b/classNeuronGroup.html#aa0334b1ef880461db1959fd2210e0837">NeuronGroup</a>
+: <a class="el" href="d7/d3b/classNeuronGroup.html#aea0036098408c4e451602ff91396d426">NeuronGroup</a>
 </li>
 <li>isWeightSharingSlave()
 : <a class="el" href="dc/dfa/classSynapseGroup.html#a2948d9d9c159d940fe02042b04c81ef3">SynapseGroup</a>
@@ -513,7 +534,7 @@ $(document).ready(function(){initNavTree('functions_i.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Mon Nov 22 2021 17:38:11 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:53 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

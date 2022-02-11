@@ -1,7 +1,7 @@
 var classSharedLibraryModel =
 [
     [ "SharedLibraryModel", "d9/d7e/classSharedLibraryModel.html#a46fe7bc7fb733795b8a5d63414b94dc7", null ],
-    [ "SharedLibraryModel", "d9/d7e/classSharedLibraryModel.html#acf5a56c0d4cb263d4a5a58974523a2a5", null ],
+    [ "SharedLibraryModel", "d9/d7e/classSharedLibraryModel.html#aefade694e102298b9d6e2c77be6a3d05", null ],
     [ "~SharedLibraryModel", "d9/d7e/classSharedLibraryModel.html#a4973a04263365c9a251098b7df644be0", null ],
     [ "allocateExtraGlobalParam", "d9/d7e/classSharedLibraryModel.html#a12e8318b0e210e2e4529b7562e5ff800", null ],
     [ "allocateExtraGlobalParam", "d9/d7e/classSharedLibraryModel.html#a8500728c95b4d48ddd600456ea23ee28", null ],
@@ -32,7 +32,7 @@ var classSharedLibraryModel =
     [ "ncclGetUniqueID", "d9/d7e/classSharedLibraryModel.html#ae592408953c053c5731dac07b4219a03", null ],
     [ "ncclGetUniqueIDBytes", "d9/d7e/classSharedLibraryModel.html#a774be8b4029d20a0aad2d850c4dd0448", null ],
     [ "ncclInitCommunicator", "d9/d7e/classSharedLibraryModel.html#aafcc596cbaced7d2ea45220e751bb138", null ],
-    [ "open", "d9/d7e/classSharedLibraryModel.html#a62576a6b780dbbb666f028081006652b", null ],
+    [ "open", "d9/d7e/classSharedLibraryModel.html#aeb55b2188016309213361fc65fece69f", null ],
     [ "pullConnectivityFromDevice", "d9/d7e/classSharedLibraryModel.html#a4b7f7e6f05a42324a7313f0459e3f99b", null ],
     [ "pullCurrentSpikesEventsFromDevice", "d9/d7e/classSharedLibraryModel.html#a86b182e855f97c1796df74028c5f9ee7", null ],
     [ "pullCurrentSpikesFromDevice", "d9/d7e/classSharedLibraryModel.html#af6c7b50f91a08ddaf3f6c62553cc3707", null ],

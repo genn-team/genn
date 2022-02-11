@@ -17,5 +17,7 @@ var searchData=
   ['synapsegroup_2ecc',['synapseGroup.cc',['../da/d3e/synapseGroup_8cc.html',1,'']]],
   ['synapsegroup_2eh',['synapseGroup.h',['../de/db0/synapseGroup_8h.html',1,'']]],
   ['synapsegroupinternal_2eh',['synapseGroupInternal.h',['../de/d80/synapseGroupInternal_8h.html',1,'']]],
-  ['synapsematrixtype_2eh',['synapseMatrixType.h',['../dd/dd5/synapseMatrixType_8h.html',1,'']]]
+  ['synapsematrixtype_2eh',['synapseMatrixType.h',['../dd/dd5/synapseMatrixType_8h.html',1,'']]],
+  ['synapseupdategroupmerged_2ecc',['synapseUpdateGroupMerged.cc',['../da/dcc/synapseUpdateGroupMerged_8cc.html',1,'']]],
+  ['synapseupdategroupmerged_2eh',['synapseUpdateGroupMerged.h',['../da/d8b/synapseUpdateGroupMerged_8h.html',1,'']]]
 ];

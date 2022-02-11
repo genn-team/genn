@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -222,12 +222,12 @@ Additional Inherited Members</h2></td></tr>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Hodgkin-Huxley neurons with Traub &amp; Miles algorithm. </p>
 <p>This conductance based model has been taken from <a class="el" href="../../d0/de3/citelist.html#CITEREF_Traub1991">[9]</a> and can be described by the equations: </p><p class="formulaDsp">
-<img class="formulaDsp" alt="\begin{eqnarray*} C \frac{d V}{dt} &amp;=&amp; -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &amp;=&amp; g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &amp;=&amp; g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt} &amp;=&amp; \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*}" src="../../form_23.png"/>
+<img class="formulaDsp" alt="\begin{eqnarray*} C \frac{d V}{dt} &amp;=&amp; -I_{{\rm Na}} -I_K-I_{{\rm leak}}-I_M-I_{i,DC}-I_{i,{\rm syn}}-I_i, \\ I_{{\rm Na}}(t) &amp;=&amp; g_{{\rm Na}} m_i(t)^3 h_i(t)(V_i(t)-E_{{\rm Na}}) \\ I_{{\rm K}}(t) &amp;=&amp; g_{{\rm K}} n_i(t)^4(V_i(t)-E_{{\rm K}}) \\ \frac{dy(t)}{dt} &amp;=&amp; \alpha_y (V(t))(1-y(t))-\beta_y(V(t)) y(t), \end{eqnarray*}" src="../../form_28.png"/>
 </p>
-<p> where <img class="formulaInl" alt="$y_i= m, h, n$" src="../../form_24.png"/>, and </p><p class="formulaDsp">
-<img class="formulaDsp" alt="\begin{eqnarray*} \alpha_n&amp;=&amp; 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big) \\ \beta_n &amp;=&amp; 0.5\exp((-55-V)/40) \\ \alpha_m &amp;=&amp; 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big) \\ \beta_m &amp;=&amp; 0.28(25+V)/\big(\exp((25+V)/5)-1\big) \\ \alpha_h &amp;=&amp; 0.128\exp((-48-V)/18) \\ \beta_h &amp;=&amp; 4/\big(\exp((-25-V)/5)+1\big). \end{eqnarray*}" src="../../form_25.png"/>
+<p> where <img class="formulaInl" alt="$y_i= m, h, n$" src="../../form_29.png"/>, and </p><p class="formulaDsp">
+<img class="formulaDsp" alt="\begin{eqnarray*} \alpha_n&amp;=&amp; 0.032(-50-V)/\big(\exp((-50-V)/5)-1\big) \\ \beta_n &amp;=&amp; 0.5\exp((-55-V)/40) \\ \alpha_m &amp;=&amp; 0.32(-52-V)/\big(\exp((-52-V)/4)-1\big) \\ \beta_m &amp;=&amp; 0.28(25+V)/\big(\exp((25+V)/5)-1\big) \\ \alpha_h &amp;=&amp; 0.128\exp((-48-V)/18) \\ \beta_h &amp;=&amp; 4/\big(\exp((-25-V)/5)+1\big). \end{eqnarray*}" src="../../form_30.png"/>
 </p>
-<p> and typical parameters are <img class="formulaInl" alt="$C=0.143$" src="../../form_26.png"/> nF, <img class="formulaInl" alt="$g_{{\rm leak}}= 0.02672$" src="../../form_27.png"/> <img class="formulaInl" alt="$\mu$" src="../../form_28.png"/>S, <img class="formulaInl" alt="$E_{{\rm leak}}= -63.563$" src="../../form_29.png"/> mV, <img class="formulaInl" alt="$g_{{\rm Na}}=7.15$" src="../../form_30.png"/> <img class="formulaInl" alt="$\mu$" src="../../form_28.png"/>S, <img class="formulaInl" alt="$E_{{\rm Na}}= 50$" src="../../form_31.png"/> mV, <img class="formulaInl" alt="$g_{{\rm {\rm K}}}=1.43$" src="../../form_32.png"/> <img class="formulaInl" alt="$\mu$" src="../../form_28.png"/>S, <img class="formulaInl" alt="$E_{{\rm K}}= -95$" src="../../form_33.png"/> mV.</p>
+<p> and typical parameters are <img class="formulaInl" alt="$C=0.143$" src="../../form_31.png"/> nF, <img class="formulaInl" alt="$g_{{\rm leak}}= 0.02672$" src="../../form_32.png"/> <img class="formulaInl" alt="$\mu$" src="../../form_33.png"/>S, <img class="formulaInl" alt="$E_{{\rm leak}}= -63.563$" src="../../form_34.png"/> mV, <img class="formulaInl" alt="$g_{{\rm Na}}=7.15$" src="../../form_35.png"/> <img class="formulaInl" alt="$\mu$" src="../../form_33.png"/>S, <img class="formulaInl" alt="$E_{{\rm Na}}= 50$" src="../../form_36.png"/> mV, <img class="formulaInl" alt="$g_{{\rm {\rm K}}}=1.43$" src="../../form_37.png"/> <img class="formulaInl" alt="$\mu$" src="../../form_33.png"/>S, <img class="formulaInl" alt="$E_{{\rm K}}= -95$" src="../../form_38.png"/> mV.</p>
 <p>It has 4 variables:</p>
 <ul>
 <li><code>V</code> - membrane potential E</li>
@@ -461,7 +461,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/dac/namespaceNeuronModels.html">NeuronModels</a></li><li class="navelem"><a class="el" href="../../d2/dc3/classNeuronModels_1_1TraubMiles.html">TraubMiles</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:59 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.6.0</span>
+   &#160;<span id="projectnumber">4.7.0</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -107,7 +107,8 @@ $(document).ready(function(){initNavTree('d4/dc6/sectVariableInitialisation.html
 <li><a class="el" href="../../d7/d22/classInitVarSnippet_1_1NormalClipped.html">InitVarSnippet::NormalClipped</a></li>
 <li><a class="el" href="../../d4/d87/classInitVarSnippet_1_1NormalClippedDelay.html">InitVarSnippet::NormalClippedDelay</a></li>
 <li><a class="el" href="../../d8/d70/classInitVarSnippet_1_1Exponential.html" title="Initialises variable by sampling from the exponential distribution. ">InitVarSnippet::Exponential</a></li>
-<li><a class="el" href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the exponential distribution. ">InitVarSnippet::Gamma</a></li>
+<li><a class="el" href="../../d0/d54/classInitVarSnippet_1_1Gamma.html" title="Initialises variable by sampling from the gamma distribution. ">InitVarSnippet::Gamma</a></li>
+<li><a class="el" href="../../dc/dda/classInitVarSnippet_1_1Binomial.html" title="Initialises variable by sampling from the binomial distribution. ">InitVarSnippet::Binomial</a></li>
 </ul>
 <p> <div class='toggleable_div label_python' style='display: none;'> In Python, these models can be selected by their unqualified name e.g. "Normal".  </div> For example, to initialise a parameter using values drawn from the normal distribution:  <div class='toggleable_div label_cpp' style='display: none;'></p><div class="fragment"><div class="line">InitVarSnippet::Normal::ParamValues params(</div><div class="line">    0.05,   <span class="comment">// 0 - mean</span></div><div class="line">    0.01);  <span class="comment">// 1 - standard deviation</span></div><div class="line">    </div><div class="line"><a class="code" href="../../db/dbb/classSnippet_1_1InitialiserContainerBase.html">NeuronModels::TraubMiles::VarValues</a> ini(</div><div class="line">    initVar&lt;InitVarSnippet::Normal&gt;(params),     <span class="comment">// 1 - prob. for Na channel activation m</span></div><div class="line">    ...</div><div class="line">);</div></div><!-- fragment --><p> </div>  <div class='toggleable_div label_python' style='display: none;'></p><div class="fragment"><div class="line">params = {<span class="stringliteral">&quot;mean&quot;</span>: 0.05, <span class="stringliteral">&quot;sd&quot;</span>: 0.01}</div><div class="line">ini = {<span class="stringliteral">&quot;m&quot;</span>: genn_model.init_var(<span class="stringliteral">&quot;Normal&quot;</span>, params), ...}</div></div><!-- fragment --><p> </div> </p>
 <h1><a class="anchor" id="sect_new_var_init"></a>
@@ -141,7 +142,7 @@ Variable locations</h1>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../dc/d05/UserManual.html">User Manual</a></li>
-    <li class="footer">Generated on Mon Nov 22 2021 17:37:52 for GeNN by
+    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
