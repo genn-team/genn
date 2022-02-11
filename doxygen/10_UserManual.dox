@@ -884,16 +884,16 @@ Weight update model variables associated with the sparsely connected synaptic po
 \c g=[g_Pre0-Post1 g_pre0-post2 g_pre1-post0 X]
 - SynapseMatrixConnectivity::BITMASK is an alternative sparse matrix implementation where which synapses within the matrix are present is specified as a binary array (see \ref ex_mbody). This structure is somewhat less efficient than the ``SynapseMatrixConnectivity::SPARSE`` format and doesn't allow individual weights per synapse. However it does require the smallest amount of GPU memory for large networks.
 - SynapseMatrixConnectivity::PROCEDURAL is a new approach where, rather than being stored in memory, connectivity described using \ref sectSparseConnectivityInitialisation is generated 'on the fly' as spikes are processed (see \cite Knight2020 for more information). Therefore, this approach offers very large memory savings for a small performance cost but does not currently support plasticity.
+- SynapseMatrixConnectivity::TOEPLITZ is another new approach tailored to 
 
 \add_python_text{In Python\, SynapseMatrixConnectivity::SPARSE connectivity can be manually initialised from lists of pre and postsynaptic indices using the pygenn.SynapseGroup.set_sparse_connections method.}
 Furthermore the SynapseMatrixWeight defines how 
 - SynapseMatrixWeight::INDIVIDUAL allows each individual synapse to have unique weight update model variables. 
-Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::INDIVIDUAL_PSM allows each postsynapic neuron to have unique post synaptic model variables.
-Their values must be initialised at runtime and, if running on the GPU, copied across from the user side code, using the \c pushXXXXXStateToDevice function, where XXXX is the name of the synapse population.
 - SynapseMatrixWeight::GLOBAL saves memory by only maintaining one copy of the weight update model variables.
 This is automatically initialized to the initial value passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}.
 - SynapseMatrixWeight::PROCEDURAL generates weight update model variable values described using \ref sectVariableInitialisation 'on the fly' as spikes are processed. This is typically used alongside SynapseMatrixConnectivity::PROCEDURAL for large models with static connectivity and weights/delays sampled from probability distributions (see \cite Knight2020 for an example).
+- SynapseMatrixWeight::KERNEL saves memory by sharing a small kernel of weights between all synapses. The size of the kernel is defined by the sparse connectivity initialisation snippet (see \ref sectSparseConnectivityInitialisation) or Toeplitz  connectivity initialisation snippet (see TODO).
 
 Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight are sensible therefore, to reduce confusion, the SynapseMatrixType enumeration defines the following options which can be passed to \add_cpp_python_text{ModelSpec::addSynapsePopulation, pygenn.GeNNModel.add_synapse_population}:
 - SynapseMatrixType::SPARSE_GLOBALG
@@ -906,6 +906,8 @@ Only certain combinations of SynapseMatrixConnectivity and SynapseMatrixWeight a
 - SynapseMatrixType::BITMASK_GLOBALG_INDIVIDUAL_PSM
 - SynapseMatrixType::PROCEDURAL_GLOBALG
 - SynapseMatrixType::PROCEDURAL_PROCEDURALG
+- SynapseMatrixType::PROCEDURAL_KERNELG
+- SynapseMatrixType::TOEPLITZ_KERNELG
 
 \add_toggle_python
 In Python, these matrix types can be selected by their unqualified name e.g. "DENSE_INDIVIDUALG".
