@@ -4,7 +4,7 @@ import os
 import sys
 
 from copy import deepcopy
-from platform import system
+from platform import system, uname
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from shutil import copytree, rmtree
@@ -29,6 +29,7 @@ opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 windows = system() == "Windows"
+wsl = "microsoft" in uname().release
 
 # Determine correct suffix for GeNN libraries
 if windows:
@@ -90,19 +91,24 @@ backends = [("single_threaded_cpu", "SingleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    cuda_library_dirs = []
     if mac_os_x:
-        cuda_library_dir = os.path.join(cuda_path, "lib")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif windows:
-        cuda_library_dir = os.path.join(cuda_path, "lib", "x64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
     else:
-        cuda_library_dir = os.path.join(cuda_path, "lib64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
+
+    # If we're running on WSL, add additional library path so libcuda can be found
+    if wsl:
+        cuda_library_dirs.append("/usr/lib/wsl/lib")
 
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("cuda", "CUDA",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [cuda_library_dir],
+                      "library_dirs": cuda_library_dirs,
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if mac_os_x else []}))
 
 # If OpenCL was found, add backend configuration
