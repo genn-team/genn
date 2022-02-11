@@ -800,7 +800,8 @@ For convenience the methods this class should implement can be implemented using
 - \add_cpp_python_text{SET_DERIVED_PARAMS()\, SET_PARAM_NAMES()\, SET_VARS(), ``derived_params``\, ``param_names``\, ``var_name_types``} perform the same roles as they do in the neuron models discussed in \ref sect_own.
 - \add_cpp_python_text{DECLARE_CUSTOM_UPDATE_MODEL(TYPE\, NUM_PARAMS\, NUM_VARS\, NUM_VAR_REFS) is an extended version of ``DECLARE_MODEL()`` which declares the boilerplate code required for a custom update with variable references as well as variables and parameters,`class_name`: the name of the new model}.
 - \add_cpp_python_text{SET_VAR_REFS(),`var_refs`} defines the names, type strings (e.g. "float", "double", etc) and (optionally) access mode
-    of the varaible references. The variables defined here as `NAME` can then be used in the syntax \$(NAME) in the update code string. Variable reference types must match those of the underlying variables. 
+    of the variable references. The variables defined here as `NAME` can then be used in the syntax \$(NAME) in the update code string. Variable reference types must match those of the underlying variables.
+    supported access modes are \add_cpp_python_text{VarAccessMode::READ_WRITE, pygenn.genn_wrapper.Models.VarAccessMode_READ_WRITE} \add_cpp_python_text{VarAccessMode::READ_ONLY,pygenn.genn_wrapper.Models.VarAccessMode_READ_ONLY}, \add_cpp_python_text{VarAccessMode::REDUCE_SUM, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_SUM} and \add_cpp_python_text{VarAccessMode::REDUCE_MAX, pygenn.genn_wrapper.Models.VarAccessMode_REDUCE_MAX}.
 - \add_cpp_python_text{SET_UPDATE_CODE(UPDATE_CODE),``update_code=UPDATE_CODE``}: where UPDATE_CODE contains the code for to perform the custom update.
 
 For example, using these \add_cpp_python_text{macros,keyword arguments}, we can define a custom update which will set a referenced variable to the value of a custom update model state variable:
@@ -813,7 +814,7 @@ public:
     SET_UPDATE_CODE("$(r) = $(v);");
 
     SET_VARS({{"v", "scalar", VarAccess::READ_ONLY}});
-    SET_VAR_REFS({{"r", "scalar"}, 
+    SET_VAR_REFS({{"r", "scalar", VarAccessMode::READ_WRITE}, 
 };
 \end_toggle_code
 \add_toggle_code_python
@@ -821,9 +822,11 @@ reset_model = genn_model.create_custom_custom_update_class(
     "reset",
 
     var_name_types=[("v", "scalar", VarAccess_READ_ONLY)],
-    var_refs=[("r", "scalar")],
+    var_refs=[("r", "scalar", VarAccessMode_READ_WRITE)],
     update_code="$(r) = $(v);")
 \end_toggle_code
+
+When used in a model with batch size > 1, whether custom updates of this sort are batched or not depends on the variables their references point to. If any referenced variables have \add_cpp_python_text{VarAccess::READ_ONLY_DUPLICATE, pygenn.genn_wrapper.Models.VarAccess_READ_ONLY_DUPLICATE} or \add_cpp_python_text{VarAccess::READ_WRITE, pygenn.genn_wrapper.Models.VarAccess_READ_WRITE} access modes, then the update will be batched and any variables associated with the custom update which also have \add_cpp_python_text{VarAccess::READ_ONLY_DUPLICATE, pygenn.genn_wrapper.Models.VarAccess_READ_ONLY_DUPLICATE} or \add_cpp_python_text{VarAccess::READ_WRITE, pygenn.genn_wrapper.Models.VarAccess_READ_WRITE} access modes will be duplicated across the batches.
 
 \subsection custom_update_reduction Batch reduction
 As well as the standard variable access modes described in \ref subsect11, custom updates support variables with several 'reduction' access modes:
@@ -844,19 +847,24 @@ public:
         "$(gradient) = 0;\n");
 
     SET_VARS({{"reducedGradient", "scalar", VarAccess::REDUCE_BATCH_SUM}});
-    SET_VAR_REFS({{"gradient", "scalar"}, 
+    SET_VAR_REFS({{"gradient", "scalar", VarAccessMode::READ_ONLY}, 
 };
 \end_toggle_code
 \add_toggle_code_python
 gradient_batch_reduce_model = genn_model.create_custom_custom_update_class(
     "gradient_batch_reduce",
     var_name_types=[("reducedGradient", "scalar", VarAccess_REDUCE_BATCH_SUM)],
-    var_refs=[("gradient", "scalar")],
+    var_refs=[("gradient", "scalar", VarAccessMode_READ_ONLY)],
     update_code="""
     $(reducedGradient) = $(gradient);
     $(gradient) = 0;
     """)
 \end_toggle_code
+
+Custom updates can also perform the same sort of reduction operation _into_ variable references with the equivalent 'reduction' access modes:
+- \add_cpp_python_text{VarAccessMode::REDUCE_SUM, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_SUM``}
+- \add_cpp_python_text{VarAccessMode::REDUCE_MAX, ``pygenn.genn_wrapper.Models.VarAccess_REDUCE_MAX``}
+
 \note
 Reading from variables with a reduction access mode is undefined behaviour.
 
