@@ -198,7 +198,7 @@ public:
 // InitVarSnippet::Gamma
 //----------------------------------------------------------------------------
 //! Initialises variable by sampling from the gamma distribution
-/*! This snippet takes s parameters:
+/*! This snippet takes 2 parameters:
  *
     - \c a - distribution shape
     - \c b - distribution scale*/
