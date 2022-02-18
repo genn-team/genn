@@ -556,40 +556,40 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
 
             // If we're recording spikes or spike-like events, use enough threads to copy this block's recording words
             if(ng.getArchetype().isSpikeRecordingEnabled() || ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                if(m_KernelBlockSizes[KernelNeuronUpdate] == 32) {
-                    os << "if(" << getThreadID() << " == 0)";
-                }
-                else {
-                    os << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
-                }
+	        os << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronUpdate] / 32 << ")";
                 {
                     CodeStream::Scope b(os);
 
-                    // Calculate number of words which will be used to record this population's spikes in each batch
-                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+		    // Calculate number of words which will be used to record this population's spikes in each batch
+		    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+		    os << "const unsigned int popWordIdx = (" << popSubs["id"] << " / 32) + " << getThreadID() << ";" << std::endl;
+		    
+		    // Build global index
+		    std::string globalIndex = "(recordingTimestep * numRecordingWords * " + std::to_string(batchSize) + ") + popWordIdx";
+		    if(batchSize > 1) {
+		        globalIndex += " + (batch * numRecordingWords)";
+		    }
 
-                    // Build global index
-                    std::string globalIndex = "(recordingTimestep * numRecordingWords * " + std::to_string(batchSize) + ") + (" + popSubs["id"] + " / 32) + " + getThreadID();
-                    if(batchSize > 1) {
-                        globalIndex += " + (batch * numRecordingWords)";
-                    }
+		    os << "if(popWordIdx < numRecordingWords)";
+		    {
+		        CodeStream::Scope c(os);
+			// If we are recording spikes, copy word to correct location in global memory
+			if(ng.getArchetype().isSpikeRecordingEnabled()) {
+			    os << "group->recordSpk[" << globalIndex << "] = shSpkRecord";
+			    if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
+			        os << "[" << getThreadID() << "]";
+			    }
+			    os << ";" << std::endl;
+			}
 
-                    // If we are recording spikes, copy word to correct location in global memory
-                    if(ng.getArchetype().isSpikeRecordingEnabled()) {
-                        os << "group->recordSpk[" << globalIndex << "] = shSpkRecord";
-                        if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
-                            os << "[" << getThreadID() << "]";
-                        }
-                        os << ";" << std::endl;
-                    }
-
-                    // If we are recording spike-like events, copy word to correct location in global memory
-                    if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
-                        os << "group->recordSpkEvent[" << globalIndex << "] = shSpkEvntRecord";
-                        if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
-                            os << "[" << getThreadID() << "]";
-                        }
-                        os << ";" << std::endl;
+			// If we are recording spike-like events, copy word to correct location in global memory
+			if(ng.getArchetype().isSpikeEventRecordingEnabled()) {
+			    os << "group->recordSpkEvent[" << globalIndex << "] = shSpkEvntRecord";
+			    if(m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
+                                os << "[" << getThreadID() << "]";
+			    }
+			    os << ";" << std::endl;
+			}
                     }
                 }
             }
