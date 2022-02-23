@@ -81,7 +81,7 @@ public:
         // If it fails throw
         if(m_Library != nullptr) {
             m_AllocateMem = (VoidFunction)getSymbol("allocateMem");
-            m_AllocateRecordingBuffers = (EGPFunction)getSymbol("allocateRecordingBuffers", true);
+            m_AllocateRecordingBuffers = (EGPFreeFunction)getSymbol("allocateRecordingBuffers", true);
             m_FreeMem = (VoidFunction)getSymbol("freeMem");
             m_GetFreeDeviceMemBytes = (GetFreeMemFunction)getSymbol("getFreeDeviceMemBytes");
 
@@ -89,6 +89,12 @@ public:
             m_InitializeSparse = (VoidFunction)getSymbol("initializeSparse");
 
             m_StepTime = (VoidFunction)getSymbol("stepTime");
+            m_GetPopulation = (GetPopulationFunction)getSymbol("getPopulation", true);
+            if(m_GetPopulation == nullptr) {
+                std::cerr << "GeNN model not built without runtime population lookup support - please rebuild" << std::endl;
+                return false;
+                
+            }
             m_PullRecordingBuffersFromDevice = (VoidFunction)getSymbol("pullRecordingBuffersFromDevice", true);
             
             m_T = (scalar*)getSymbol("t");
@@ -113,276 +119,197 @@ public:
     void allocateExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check allocate exists
-        const auto funcs = getEGPFunctions(egpName + popName);
-        if(std::get<0>(funcs) == nullptr) {
+        const auto funcs = getEGPFunctions(popName, egpName);
+        if(std::get<1>(funcs) == nullptr) {
             throw std::runtime_error("You cannot allocate EGP '" + egpName + "' in population '" + popName + "'");
         }
 
         // Call allocate
-        std::get<0>(funcs)(count);
+        std::get<1>(funcs)(std::get<0>(funcs), count);
     }
     
     void allocateExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check allocate exists
-        const auto funcs = getEGPFunctions(egpName + varName + popName);
-        if(std::get<0>(funcs) == nullptr) {
+        const auto funcs = getEGPFunctions(popName, egpName + varName);
+        if(std::get<1>(funcs) == nullptr) {
             throw std::runtime_error("You cannot allocate EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call allocate
-        std::get<0>(funcs)(count);
+        std::get<1>(funcs)(std::get<0>(funcs),count);
     }
 
     void freeExtraGlobalParam(const std::string &popName, const std::string &egpName)
     {
         // Get EGP functions and check free exists
-        const auto funcs = getEGPFunctions(egpName + popName);
-        if(std::get<1>(funcs) == nullptr) {
+        const auto funcs = getEGPFunctions(popName, egpName);
+        if(std::get<2>(funcs) == nullptr) {
             throw std::runtime_error("You cannot free EGP '" + egpName + "' in population '" + popName + "'");
         }
 
         // Call free
-        std::get<1>(funcs)();
+        std::get<2>(funcs)(std::get<0>(funcs));
     }
     
     void freeExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName)
     {
         // Get EGP functions and check free exists
-        const auto funcs = getEGPFunctions(egpName + varName + popName);
-        if(std::get<1>(funcs) == nullptr) {
+        const auto funcs = getEGPFunctions(popName, egpName + varName);
+        if(std::get<2>(funcs) == nullptr) {
             throw std::runtime_error("You cannot free EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call free
-        std::get<1>(funcs)();
+        std::get<2>(funcs)(std::get<0>(funcs));
     }
 
     void pullStateFromDevice(const std::string &popName)
     {
         // Get push and pull state functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "State");
-        if(pushPull.second == nullptr) {
+        const auto funcs = getVarFunctions(popName, "", "State");
+        if(std::get<2>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull state from population '" + popName + "'");
         }
 
         // Call pull
-        pushPull.second();
+        std::get<2>(funcs)(std::get<0>(funcs));
     }
 
-    void pullSpikesFromDevice(const std::string &popName)
-    {
-        // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "Spikes");
-        if(pushPull.second == nullptr) {
-            throw std::runtime_error("You cannot pull spikes from population '" + popName + "'");
-        }
-
-        // Call pull
-        pushPull.second();
-    }
-    
-    void pullSpikeEventsFromDevice(const std::string &popName)
-    {
-        // Get push and pull spike events functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "SpikeEvents");
-        if(pushPull.second == nullptr) {
-            throw std::runtime_error("You cannot pull spike events from population '" + popName + "'");
-        }
-
-        // Call pull
-        pushPull.second();
-    }
-
-    void pullCurrentSpikesFromDevice(const std::string &popName)
-    {
-        // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikes");
-        if(pushPull.second == nullptr) {
-            throw std::runtime_error("You cannot pull current spikes from population '" + popName + "'");
-        }
-
-        // Call pull
-        pushPull.second();
-    }
-    
-    void pullCurrentSpikesEventsFromDevice(const std::string &popName)
-    {
-        // Get push and pull spike events functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikeEvents");
-        if(pushPull.second == nullptr) {
-            throw std::runtime_error("You cannot pull current spike events from population '" + popName + "'");
-        }
-
-        // Call pull
-        pushPull.second();
-    }
     
     void pullConnectivityFromDevice(const std::string &popName)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "Connectivity");
-        if(pushPull.second == nullptr) {
+        const auto funcs = getVarFunctions(popName, "", "Connectivity");
+        if(std::get<2>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull connectivity from population '" + popName + "'");
         }
 
         // Call pull
-        pushPull.second();
+        std::get<2>(funcs)(std::get<0>(funcs));
     }
 
     void pullVarFromDevice(const std::string &popName, const std::string &varName)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(varName + popName);
-        if(pushPull.second == nullptr) {
+        const auto funcs = getVarFunctions(popName, varName, "");
+        if(std::get<2>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull var '" + varName + "' from population '" + popName + "'");
         }
 
         // Call pull
-        pushPull.second();
+        std::get<2>(funcs)(std::get<0>(funcs));
     }
 
     void pullExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check pull exists
         const auto funcs = getEGPFunctions(egpName + popName);
-        if(std::get<3>(funcs) == nullptr) {
+        if(std::get<4>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull EGP '" + egpName + "' from population '" + popName + "'");
         }
 
         // Call pull
-        std::get<3>(funcs)(count);
+        std::get<4>(funcs)(count);
     }
     
     void pullExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check pull exists
         const auto funcs = getEGPFunctions(egpName + varName + popName);
-        if(std::get<3>(funcs) == nullptr) {
+        if(std::get<4>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call pull
-        std::get<3>(funcs)(count);
+        std::get<4>(funcs)(count);
     }
 
     void pushStateToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
         // Get push and pull state functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "State");
-        if(pushPull.first == nullptr) {
+        const auto funcs = getVarFunctions(popName, "", "State");
+        if(std::get<1>(funcs) == nullptr) {
             throw std::runtime_error("You cannot push state to population '" + popName + "'");
         }
 
         // Call push
-        pushPull.first(uninitialisedOnly);
+        std::get<1>(funcs)(std::get<0>(funcs), uninitialisedOnly);
     }
 
-    void pushSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
-    {
-        // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "Spikes");
-        if(pushPull.first == nullptr) {
-            throw std::runtime_error("You cannot push spikes to population '" + popName + "'");
-        }
-
-        // Call push
-        pushPull.first(uninitialisedOnly);
-    }
-    
-    void pushSpikeEventsToDevice(const std::string &popName, bool uninitialisedOnly = false)
-    {
-        // Get push and pull spike events functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "SpikeEvents");
-        if(pushPull.first == nullptr) {
-            throw std::runtime_error("You cannot push spike events to population '" + popName + "'");
-        }
-
-        // Call push
-        pushPull.first(uninitialisedOnly);
-    }
-
-    void pushCurrentSpikesToDevice(const std::string &popName, bool uninitialisedOnly = false)
-    {
-        // Get push and pull spikes functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikes");
-        if(pushPull.first == nullptr) {
-            throw std::runtime_error("You cannot push current spikes to population '" + popName + "'");
-        }
-
-        // Call push
-        pushPull.first(uninitialisedOnly);
-    }
-    
-    void pushCurrentSpikeEventsToDevice(const std::string &popName, bool uninitialisedOnly = false)
-    {
-        // Get push and pull spike events functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "CurrentSpikeEvents");
-        if(pushPull.first == nullptr) {
-            throw std::runtime_error("You cannot push current spike events to population '" + popName + "'");
-        }
-
-        // Call push
-        pushPull.first(uninitialisedOnly);
-    }
 
     void pushConnectivityToDevice(const std::string &popName, bool uninitialisedOnly = false)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(popName + "Connectivity");
-        if(pushPull.first == nullptr) {
+        const auto funcs = getVarFunctions(popName, "", "Connectivity");
+        if(std::get<1>(funcs) == nullptr) {
             throw std::runtime_error("You cannot push connectivity to population '" + popName + "'");
         }
 
         // Call push
-        pushPull.first(uninitialisedOnly);
+        std::get<1>(funcs)(std::get<0>(funcs), uninitialisedOnly);
     }
 
     void pushVarToDevice(const std::string &popName, const std::string &varName, bool uninitialisedOnly = false)
     {
         // Get push and pull connectivity functions and check pull exists
-        const auto pushPull = getPopPushPullFunction(varName + popName);
-        if(pushPull.first == nullptr) {
+        const auto funcs = getVarFunctions(popName, varName, "");
+        if(std::get<1>(funcs) == nullptr) {
             throw std::runtime_error("You cannot push var '" + varName + "' to population '" + popName + "'");
         }
 
         // Call push
-        pushPull.first(uninitialisedOnly);
+        std::get<1>(funcs)(std::get<0>(funcs), uninitialisedOnly);
     }
 
     void pushExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check push exists
-        const auto funcs = getEGPFunctions(egpName + popName);
-        if(std::get<2>(funcs) == nullptr) {
+        const auto funcs = getEGPFunctions(popName, egpName);
+        if(std::get<3>(funcs) == nullptr) {
             throw std::runtime_error("You cannot push EGP '" + egpName + "' to population '" + popName + "'");
         }
 
         // Call push
-        std::get<2>(funcs)(count);
+        std::get<3>(funcs)(std::get<0>(funcs), count);
     }
     
     void pushExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check push exists
         const auto funcs = getEGPFunctions(egpName + varName + popName);
-        if(std::get<2>(funcs) == nullptr) {
+        if(std::get<3>(funcs) == nullptr) {
             throw std::runtime_error("You cannot push EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call push
-        std::get<2>(funcs)(count);
+        std::get<3>(funcs)(std::get<0>(funcs), count);
     }
 
-    template<typename Writer, typename... WriterArgs>
-    SpikeRecorder<Writer> getSpikeRecorder(const std::string &popName, WriterArgs &&... writerArgs)
+    template<typename T>
+    T *getVar(const std::string &popName, const std::string &varName)
     {
-        // Get functions to access spikes
-        auto getSpikesFn = (typename SpikeRecorder<Writer>::GetCurrentSpikesFunc)getSymbol("get" + popName + "CurrentSpikes");
-        auto getSpikeCountFn = (typename SpikeRecorder<Writer>::GetCurrentSpikeCountFunc)getSymbol("get" + popName + "CurrentSpikeCount");
+        // Get push and pull connectivity functions and check pull exists
+        const auto funcs = getVarFunctions(popName, varName, "");
+        if(std::get<3>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot get var '" + varName + "' from population '" + popName + "'");
+        }
 
-        // Add cached recorder
-        return SpikeRecorder<Writer>(getSpikesFn, getSpikeCountFn, std::forward<WriterArgs>(writerArgs)...);
+        // Call get
+        return static_cast<T*>(std::get<3>(funcs)(std::get<0>(funcs)));
+    }
+
+    template<typename T>
+    T *getEGP(const std::string &popName, const std::string &varName)
+    {
+        // Get push and pull connectivity functions and check pull exists
+        const auto funcs = getEGPFunctions(popName, varName);
+        if(std::get<5>(funcs) == nullptr) {
+            throw std::runtime_error("You cannot get EGP '" + varName + "' from population '" + popName + "'");
+        }
+
+        // Call get
+        return static_cast<T*>(std::get<5>(funcs)(std::get<0>(funcs)));
     }
 
     // Gets a pointer to an array in the shared library
@@ -454,9 +381,7 @@ public:
         }
         m_NCCLInitCommunicator(rank, numRanks);
     }
-    
-    
-     
+
     void initialize()
     {
         m_Initialize();
@@ -549,63 +474,90 @@ public:
 
 private:
     //----------------------------------------------------------------------------
+    // Structs
+    //----------------------------------------------------------------------------
+    //! Structure containing the merged location of a population
+    /* NOTE: It is very important that this struct is kept synchronised with the one generated by GeNN */
+    struct Population 
+    {
+        unsigned int mergedGroupIndex;
+        unsigned int groupIndex;
+        const char *groupType;
+    };
+
+    //----------------------------------------------------------------------------
     // Typedefines
     //----------------------------------------------------------------------------
     typedef void (*VoidFunction)(void);
     typedef unsigned char* (*UCharPtrFunction)(void);
-    typedef void (*PushFunction)(bool);
-    typedef void (*PullFunction)(void);
-    typedef void (*EGPFunction)(unsigned int);
+    typedef void (*PushFunction)(unsigned int, bool);
+    typedef void (*PullFunction)(unsigned int);
+    typedef void* (*GetFunction)(unsigned int);
+    typedef void (*EGPFunction)(unsigned int, unsigned int);
+    typedef void (*EGPFreeFunction)(unsigned int);
     typedef size_t (*GetFreeMemFunction)(void);
     typedef void (*NCCLInitCommunicatorFunction)(int, int);
-
-    typedef std::pair<PushFunction, PullFunction> PushPullFunc;
-    typedef std::tuple<EGPFunction, VoidFunction, EGPFunction, EGPFunction> EGPFunc;
+    typedef Population (*GetPopulationFunction)(const char*);
+    
+    typedef std::tuple<unsigned int, PushFunction, PullFunction, GetFunction> PushPullFunc;
+    typedef std::tuple<unsigned int, EGPFunction, EGPFreeFunction, EGPFunction, EGPFunction, GetFunction> EGPFunc;
 
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
-    PushPullFunc getPopPushPullFunction(const std::string &description)
+    PushPullFunc getVarFunctions(const std::string &popName, const std::string &prefix, const std::string &suffix)
     {
         // If description is found, return associated push and pull functions
+        const std::string description = prefix + popName + suffix;
         const auto popVar = m_PopulationVars.find(description);
         if(popVar != m_PopulationVars.end()) {
             return popVar->second;
         }
         else {
+            // Get population struct for this population
+            const auto pop = m_GetPopulation(popName.c_str());
+            
             // Get symbols for push and pull functions
-            auto pushFunc = (PushFunction)getSymbol("push" + description + "ToDevice", true);
-            auto pullFunc = (PullFunction)getSymbol("pull" + description + "FromDevice", true);
+            const std::string mergedGroupStem = prefix + pop.groupType + "Group" + std::to_string(pop.mergedGroupIndex) + suffix;
+            auto pushFunc = (PushFunction)getSymbol("push" + mergedGroupStem + "ToDevice", true);
+            auto pullFunc = (PullFunction)getSymbol("pull" + mergedGroupStem + "FromDevice", true);
+            auto getFunc = (GetFunction)getSymbol("get" + mergedGroupStem, true);
 
             // Add to map
             auto newPopVar = m_PopulationVars.emplace(std::piecewise_construct,
                                                       std::forward_as_tuple(description),
-                                                      std::forward_as_tuple(pushFunc, pullFunc));
+                                                      std::forward_as_tuple(pop.groupIndex, pushFunc, pullFunc, getFunc));
 
             // Return newly added push and pull functions
             return newPopVar.first->second;
         }
     }
 
-    EGPFunc getEGPFunctions(const std::string &description)
+    EGPFunc getEGPFunctions(const std::string &popName, const std::string &prefix)
     {
         // If description is found, return associated EGP functions
+        const std::string description = prefix + popName;
         const auto popEGP = m_PopulationEPGs.find(description);
         if(popEGP != m_PopulationEPGs.end()) {
             return popEGP->second;
         }
         else {
+            // Get population struct for this population
+            const auto pop = m_GetPopulation(popName.c_str());
+            
             // Get symbols for push and pull functions
-            auto allocateFunc = (EGPFunction)getSymbol("allocate" + description, true);
-            auto freeFunc = (VoidFunction)getSymbol("free" + description, true);
-            auto pushFunc = (EGPFunction)getSymbol("push" + description + "ToDevice", true);
-            auto pullFunc = (EGPFunction)getSymbol("pull" + description + "FromDevice", true);
+            const std::string mergedGroupStem = prefix + pop.groupType + "Group" + std::to_string(pop.mergedGroupIndex);
+            auto allocateFunc = (EGPFunction)getSymbol("allocate" + mergedGroupStem, true);
+            auto freeFunc = (EGPFreeFunction)getSymbol("free" + mergedGroupStem, true);
+            auto pushFunc = (EGPFunction)getSymbol("push" + mergedGroupStem + "ToDevice", true);
+            auto pullFunc = (EGPFunction)getSymbol("pull" + mergedGroupStem + "FromDevice", true);
+            auto getFunc = (GetFunction)getSymbol("get" + mergedGroupStem, true);
 
             // Add to map
             auto newPopEGP = m_PopulationEPGs.emplace(std::piecewise_construct,
                                                       std::forward_as_tuple(description),
-                                                      std::forward_as_tuple(allocateFunc, freeFunc,
-                                                                            pushFunc, pullFunc));
+                                                      std::forward_as_tuple(pop.groupIndex, allocateFunc, freeFunc, 
+                                                                            pushFunc, pullFunc, getFunc));
 
             // Return newly functions
             return newPopEGP.first->second;
@@ -622,14 +574,15 @@ private:
 #endif
 
     VoidFunction m_AllocateMem;
-    EGPFunction m_AllocateRecordingBuffers;
+    EGPFreeFunction m_AllocateRecordingBuffers;
     VoidFunction m_FreeMem;
     GetFreeMemFunction m_GetFreeDeviceMemBytes;
     VoidFunction m_Initialize;
     VoidFunction m_InitializeSparse;
     VoidFunction m_StepTime;
+    GetPopulationFunction m_GetPopulation;
 
-    PullFunction m_PullRecordingBuffersFromDevice;
+    VoidFunction m_PullRecordingBuffersFromDevice;
 
     VoidFunction m_NCCLGenerateUniqueID;
     UCharPtrFunction m_NCCLGetUniqueID;
