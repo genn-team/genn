@@ -72,10 +72,15 @@ void declareSharedLibraryModel(pybind11::module &m, const std::string &typeStrin
              {
                  return pybind11::memoryview::from_memory(s.getSymbol(varName), bytes);
              })
-        .def("get_array",
-             [](SharedLibraryModel<T> &s, const std::string &varName, size_t bytes)
+        .def("get_var",
+             [](SharedLibraryModel<T> &s, const std::string &popName, const std::string &varName, size_t bytes)
              {
-                 return pybind11::memoryview::from_memory(*static_cast<void**>(s.getSymbol(varName)), bytes);
+                 return pybind11::memoryview::from_memory(s.template getVar<void>(popName, varName), bytes);
+             })
+        .def("get_egp",
+             [](SharedLibraryModel<T> &s, const std::string &popName, const std::string &varName, size_t bytes)
+             {
+                 return pybind11::memoryview::from_memory(s.template getEGP<void>(popName, varName), bytes);
              });
 }
 }

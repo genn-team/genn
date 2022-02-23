@@ -204,25 +204,25 @@ public:
     void pullExtraGlobalParam(const std::string &popName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check pull exists
-        const auto funcs = getEGPFunctions(egpName + popName);
+        const auto funcs = getEGPFunctions(popName, egpName);
         if(std::get<4>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull EGP '" + egpName + "' from population '" + popName + "'");
         }
 
         // Call pull
-        std::get<4>(funcs)(count);
+        std::get<4>(funcs)(std::get<0>(funcs), count);
     }
     
     void pullExtraGlobalParam(const std::string &popName, const std::string &varName, const std::string &egpName, unsigned int count)
     {
         // Get EGP functions and check pull exists
-        const auto funcs = getEGPFunctions(egpName + varName + popName);
+        const auto funcs = getEGPFunctions(popName, egpName + varName);
         if(std::get<4>(funcs) == nullptr) {
             throw std::runtime_error("You cannot pull EGP '" + egpName + "' for initializing '" + varName + "'in population '" + popName + "'");
         }
 
         // Call pull
-        std::get<4>(funcs)(count);
+        std::get<4>(funcs)(std::get<0>(funcs), count);
     }
 
     void pushStateToDevice(const std::string &popName, bool uninitialisedOnly = false)
@@ -310,13 +310,6 @@ public:
 
         // Call get
         return static_cast<T*>(std::get<5>(funcs)(std::get<0>(funcs)));
-    }
-
-    // Gets a pointer to an array in the shared library
-    template<typename T>
-    T *getArray(const std::string &varName)
-    {
-        return *(static_cast<T**>(getSymbol(varName)));
     }
 
     // Gets a scalar from the shared library
