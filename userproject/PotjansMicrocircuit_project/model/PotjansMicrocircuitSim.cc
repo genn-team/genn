@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
             for(unsigned int pop = 0; pop < Parameters::PopulationMax; pop++) {
                 // Get pointer to recording data
                 const std::string name = Parameters::getPopulationName(layer, pop);
-                const uint32_t *recordSpk = model.getArray<uint32_t>("recordSpk" + name);
+                const uint32_t *recordSpk = model.getVar<uint32_t>(name, "recordSpk");
 
                 // Write to text file
                 writeTextSpikeRecording(outDir + "/" + outLabel + "." + name + ".st", recordSpk, Parameters::getScaledNumNeurons(layer, pop), timesteps, Parameters::dtMs);
