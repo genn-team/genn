@@ -241,6 +241,8 @@ private:
         const std::string mergedGroupName = M::name + "Group" + std::to_string(this->getIndex());
         for(const auto &f : m_Fields) {
             // If this is pointer field
+            const std::string name = std::get<1>(f) + mergedGroupName;
+            const std::string group = "merged" + mergedGroupName + "[i]";
             if(std::holds_alternative<PointerField>(std::get<2>(f))) {
                 const auto pointerField = std::get<PointerField>(std::get<2>(f));
 
@@ -249,9 +251,7 @@ private:
                 const auto loc = std::get<0>(pointerField);
                 const std::string &fieldCount = std::get<2>(pointerField);
                 const unsigned int flags = std::get<3>(pointerField);
-                const std::string name = std::get<1>(f) + mergedGroupName;
                 const std::string count = fieldCount.empty() ? "count" : fieldCount;
-                const std::string group = "merged" + mergedGroupName + "[i]";
                 if((loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
                 {
                     if(flags & POINTER_FIELD_PUSH_PULL) {
@@ -334,6 +334,15 @@ private:
                         runnerFreeFunc << "auto *group = &" << group << ";" << std::endl;
                         backend.genFieldFree(runnerFreeFunc, std::get<0>(f), std::get<1>(f), loc);
                     }
+                }
+            }
+            // Otherwise, if it's a host-device scalar field
+            else if(std::holds_alternative<std::string>(std::get<2>(f))) {
+                definitions << "EXPORT_FUNC " << std::get<0>(f) << "* get" << name << "(unsigned int i);" << std::endl;
+                runnerGetterFunc << std::get<0>(f) << "* get" << name << "(unsigned int i)";
+                {
+                    CodeStream::Scope a(runnerGetterFunc);
+                    runnerGetterFunc << "return &" << group << "." << std::get<1>(f) << ";" << std::endl;
                 }
             }
         }
