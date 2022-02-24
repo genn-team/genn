@@ -187,7 +187,8 @@ class GeNNModel(ModelSpecInternal):
             "uint16_t":         np.uint16,
             "int16_t":          np.int16,
             "uint8_t":          np.uint8,
-            "int8_t":           np.int8}
+            "int8_t":           np.int8,
+            "bool":             np.bool8}
 
         # Add "scalar" type to genn_types - pointing at float or double as appropriate
         if precision == "float":
