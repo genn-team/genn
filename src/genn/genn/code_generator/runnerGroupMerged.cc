@@ -195,26 +195,26 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
     // Add pointers to connectivity data
     if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
         addField("unsigned int", "rowLength", getArchetype().getSparseConnectivityLocation(), 
-                 POINTER_FIELD_CONNECTIVITY, "group->numSrcNeurons", VarAccessDuplication::SHARED);
+                 POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, "group->numSrcNeurons", VarAccessDuplication::SHARED);
         addField(getArchetype().getSparseIndType(), "ind", getArchetype().getSparseConnectivityLocation(),
-                 POINTER_FIELD_CONNECTIVITY, "group->numSrcNeurons * group->rowStride", VarAccessDuplication::SHARED);
+                 POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, "group->numSrcNeurons * group->rowStride", VarAccessDuplication::SHARED);
 
         // Add additional structure for postsynaptic access
         if(backend.isPostsynapticRemapRequired() && !getArchetype().getWUModel()->getLearnPostCode().empty()) {
-            addField("unsigned int", "colLength", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY, 
+            addField("unsigned int", "colLength", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, 
                      "group->numTrgNeurons", VarAccessDuplication::SHARED);
-            addField("unsigned int", "remap", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY, 
+            addField("unsigned int", "remap", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, 
                      "group->numTrgNeurons * group->colStride", VarAccessDuplication::SHARED);
         }
 
         // Add additional structure for synapse dynamics access if required
         if(backend.isSynRemapRequired(getArchetype())) {
-            addField("unsigned int", "synRemap", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY, 
+            addField("unsigned int", "synRemap", VarLocation::DEVICE, POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, 
                      "(group->numSrcNeurons * group->rowStride) + 1", VarAccessDuplication::SHARED);
         }
     }
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
-        addField("uint32_t", "gp", getArchetype().getSparseConnectivityLocation(), POINTER_FIELD_CONNECTIVITY, 
+        addField("uint32_t", "gp", getArchetype().getSparseConnectivityLocation(), POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, 
                  "(((group->numSrcNeurons * group->rowStride) + 31) / 32)", VarAccessDuplication::SHARED);
     }
     
