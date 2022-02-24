@@ -84,25 +84,24 @@ class GroupMixin(object):
         """
         self._push_extra_global_param_to_device(egp_name)
     
-    def _assign_ext_ptr_array(self, var_name, var_size, var_type):
-        """Assign a variable to an external numpy array
+    def _get_var_view(self, var_name, var_count, var_type, is_egp=False):
+        """Get numpy-wrapped memory view of variable
 
         Args:
         var_name    --  string a fully qualified name of the variable to assign
-        var_size    --  int the size of the variable
+        var_count   --  int the size of the variable
         var_type    --  string type of the variable. The supported types are
                         char, unsigned char, short, unsigned short, int,
                         unsigned int, long, unsigned long, long long,
                         unsigned long long, float, double, long double
                         and scalar.
+        is_egp      --  boolean specifiying if this is an 
+                        extra global parameter or a state variable
 
         Returns numpy array of type var_type
 
         Raises ValueError if variable type is not supported
         """
-
-        internal_var_name = var_name + self.name
-
         if var_type == "scalar":
             var_type = self._model.precision
 
@@ -110,43 +109,19 @@ class GroupMixin(object):
         dtype = self._model.genn_types[var_type]
         
         # Calculate bytes
-        num_bytes = np.dtype(dtype).itemsize * var_size
+        num_bytes = np.dtype(dtype).itemsize * var_count
         
         # Get dtype view of array memoryview
-        array = np.asarray(self._model._slm.get_array(
-            internal_var_name, num_bytes)).view(dtype)
-        assert not array.flags["OWNDATA"]
-        return array
-
-    def _assign_ext_ptr_single(self, var_name, var_type):
-        """Assign a variable to an external scalar value containing one element
-
-        Args:
-        var_name    --  string a fully qualified name of the variable to assign
-        var_type    --  string type of the variable. The supported types are
-                        char, unsigned char, short, unsigned short, int,
-                        unsigned int, long, unsigned long, long long,
-                        unsigned long long, float, double, long double
-                        and scalar.
-
-        Returns numpy array of type var_type
-
-        Raises ValueError if variable type is not supported
-        """
-
-        internal_var_name = var_name + self.name
-
-        if var_type == "scalar":
-            var_type = self._model.precision
-
-        # Get numpy data type corresponding to type string
-        dtype = self._model.genn_types[var_type]
+        if is_egp:
+            var = np.asarray(self._model._slm.get_egp(self.name, var_name,
+                                                      num_bytes)).view(dtype)
+        else:
+            var = np.asarray(self._model._slm.get_var(self.name, var_name,
+                                                      num_bytes)).view(dtype)
         
-        # Get dtype view of array memoryview
-        array = np.asarray(self._model._slm.get_scalar(
-            internal_var_name, np.dtype(dtype).itemsize)).view(dtype)
-        assert not array.flags["OWNDATA"]
-        return array
+        # Check we haven't messed anything up and var is still owned by GeNN
+        assert not var.flags["OWNDATA"]
+        return var
 
     def _push_extra_global_param_to_device(self, egp_name, egp_dict=None):
         """Wrapper around GeNNModel.push_extra_global_param_to_device
@@ -218,8 +193,8 @@ class GroupMixin(object):
                               else self._model.batch_size)
 
                 # Get view
-                var_data.view = self._assign_ext_ptr_array(v.name, size * num_copies,
-                                                           var_data.type)
+                var_data.view = self._get_var_view(v.name, size * num_copies,
+                                                   var_data.type)
 
                 # If there is more than one copy, reshape view to 2D
                 if num_copies > 1:
@@ -240,20 +215,21 @@ class GroupMixin(object):
         # Loop through extra global params
         for egp_name, egp_data in iteritems(egp_dict):
             if egp_data.is_scalar:
+                assert False
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
-                                                            egp_data.type)
+                #egp_data.view = self._assign_ext_ptr_single(egp_name + egp_suffix,
+                #                                            egp_data.type)
                 # Copy values
-                egp_data.view[:] = egp_data.values
+                #egp_data.view[:] = egp_data.values
             elif egp_data.values is not None:
                 # Allocate memory
                 self._model._slm.allocate_extra_global_param(
                     self.name, egp_name + egp_suffix, len(egp_data.values))
 
                 # Assign view
-                egp_data.view = self._assign_ext_ptr_array(egp_name + egp_suffix,
-                                                           len(egp_data.values), 
-                                                           egp_data.type)
+                egp_data.view = self._get_var_view(egp_name + egp_suffix,
+                                                   len(egp_data.values), 
+                                                   egp_data.type, True)
 
                 # Copy values
                 egp_data.view[:] = egp_data.values
@@ -312,7 +288,7 @@ class NeuronGroupMixin(GroupMixin):
                                * batch_size)
 
             # Assign pointer to recording data
-            self._spike_recording_data = self._assign_ext_ptr_array(
+            self._spike_recording_data = self._get_var_view(
                 "recordSpk", recording_words, "uint32_t")
 
         # If spike-event recording is enabled
@@ -322,12 +298,12 @@ class NeuronGroupMixin(GroupMixin):
                                * batch_size)
 
             # Assign pointer to recording data
-            self._spike_event_recording_data = self._assign_ext_ptr_array(
+            self._spike_event_recording_data = self._get_var_view(
                 "recordSpkEvent", recording_words, "uint32_t")
 
         if self.num_delay_slots > 1:
-            self.spike_que_ptr = self._model._slm.assign_external_pointer_single_ui(
-                "spkQuePtr" + self.name)
+            self.spike_que_ptr = self._get_var_view("spkQuePtr", 1, 
+                                                    "uint32_t")
 
         # Load neuron state variables
         self._load_vars(self.neuron_model.get_vars())
@@ -346,7 +322,7 @@ class NeuronGroupMixin(GroupMixin):
     def _get_event_time_view(self, name):
         # Get view
         batch_size = self._model.batch_size
-        view = self._assign_ext_ptr_array(
+        view = self._get_var_view(
             name, self.size * self.num_delay_slots * batch_size,
             self._model.time_precision)
 
@@ -600,12 +576,12 @@ class SynapseGroupMixin(GroupMixin):
                 conn_loc = self.sparse_connectivity_location
                 if conn_loc & VarLocation.HOST:
                     # Get pointers to ragged data structure members
-                    ind = self._assign_ext_ptr_array("ind",
-                                                     self.weight_update_var_size,
-                                                     self._sparse_ind_type)
-                    row_length = self._assign_ext_ptr_array("rowLength",
-                                                            self.src.size,
-                                                            "unsigned int")
+                    ind = self._get_var_view("ind", 
+                                             self.weight_update_var_size,
+                                             self._sparse_ind_type)
+                    row_length = self._get_var_view("rowLength",
+                                                    self.src.size,
+                                                    "unsigned int")
                     # add pointers to the object
                     self._ind = ind
                     self._row_lengths = row_length
@@ -652,7 +628,7 @@ class SynapseGroupMixin(GroupMixin):
                     num_copies = (1 if (v.access & VarAccessDuplication.SHARED) != 0
                                     else self._model.batch_size)
                     # Get view
-                    var_data.view = self._assign_ext_ptr_array(
+                    var_data.view = self._get_var_view(
                         v.name, self.weight_update_var_size * num_copies, 
                         var_data.type)
 
@@ -683,7 +659,7 @@ class SynapseGroupMixin(GroupMixin):
                             self.post_vars, self.get_wu_post_var_location)
         
         # If this synapse group's postsynaptic model hasn't been fused
-        if not self._ps_model_fused:
+        if not self._post_output_model_fused:
             # Load postsynaptic update model variables
             self._load_vars(self.ps_model.get_vars(), self.trg.size,
                             self.psm_vars, self.get_ps_var_location)
@@ -691,7 +667,7 @@ class SynapseGroupMixin(GroupMixin):
             # If it's inSyn is accessible on the host
             if self.in_syn_location & VarLocation.HOST:
                 # Get view
-                self.in_syn = self._assign_ext_ptr_array(
+                self.in_syn = self._get_var_view(
                     "inSyn", self.trg.size * self._model.batch_size,
                     "scalar")
 
@@ -821,8 +797,8 @@ class CustomUpdateMixin(GroupMixin):
 
                     # Get view
                     size = self._synapse_group.weight_update_var_size * num_copies
-                    var_data.view = self._assign_ext_ptr_array(
-                        v.name, size, var_data.type)
+                    var_data.view = self._get_var_view(v.name, size,
+                                                       var_data.type)
 
                     # If there is more than one copy, reshape view to 2D
                     if num_copies > 1:
