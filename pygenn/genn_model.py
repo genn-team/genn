@@ -504,15 +504,19 @@ class GeNNModel(ModelSpecInternal):
         for k, v in iteritems(self._preferences):
             if hasattr(preferences, k):
                 setattr(preferences, k, v)
-        
+
+        # Ensure preferences are correctly configured for runtime lookup
+        preferences.generate_macro_population_lookup = False
+        preferences.generate_runtime_population_lookup = True
+
         # Create backend
         backend = self._backend_module.create_backend(self, output_path,
                                                       self.backend_log_level,
                                                       preferences)
 
         # Generate code
-        mem_alloc = generate_code(self, backend, share_path,
-                                  output_path, force_rebuild)
+        generate_code(self, backend, share_path,
+                      output_path, force_rebuild)
 
         # Build code
         if system() == "Windows":
@@ -522,7 +526,6 @@ class GeNNModel(ModelSpecInternal):
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
         self._built = True
-        return mem_alloc
 
     def load(self, path_to_model="./", num_recording_timesteps=None):
         """import the model as shared library and initialize it"""
