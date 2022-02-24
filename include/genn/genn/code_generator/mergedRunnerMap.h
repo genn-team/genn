@@ -21,7 +21,7 @@ namespace CodeGenerator
 class MergedRunnerMap
 {
 public:
-    typedef std::unordered_map<std::string, std::tuple<size_t, size_t, std::string>> Map;
+    typedef std::unordered_map<std::string, std::tuple<size_t, size_t, std::string, bool>> Map;
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
@@ -31,10 +31,11 @@ public:
         // Loop through merged groups
         for(const auto &g : mergedGroups) {
             // Loop through individual groups inside and add to map
+            const bool accessible = g.hasAccessibleFields();
             for(size_t i = 0; i < g.getGroups().size(); i++) {
                 auto result = m_Groups.emplace(std::piecewise_construct,
                                                std::forward_as_tuple(g.getGroups().at(i).get().getName()),
-                                               std::forward_as_tuple(g.getIndex(), i, MergedGroup::name));
+                                               std::forward_as_tuple(g.getIndex(), i, MergedGroup::name, accessible));
                 assert(result.second);
             }
         }

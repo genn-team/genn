@@ -144,7 +144,7 @@ void NeuronRunnerGroupMerged::genRecordingBufferPull(const BackendBase &backend,
             CodeStream::Scope b(runner);
             backend.genFieldPull(runner, "uint32_t*", "recordSpk", VarLocation::HOST_DEVICE, "numWords");
         }
-        // AllocaPullte spike event array if required
+        // Pull spike event array if required
         // **YUCK** maybe this should be renamed pullDynamicArray
         if(getArchetype().isSpikeEventRecordingEnabled()) {
             CodeStream::Scope b(runner);
@@ -217,8 +217,27 @@ SynapseRunnerGroupMerged::SynapseRunnerGroupMerged(size_t index, const std::stri
         addField("uint32_t", "gp", getArchetype().getSparseConnectivityLocation(), POINTER_FIELD_CONNECTIVITY | POINTER_FIELD_GET, 
                  "(((group->numSrcNeurons * group->rowStride) + 31) / 32)", VarAccessDuplication::SHARED);
     }
-    
-    addEGPs(getArchetype().getSparseConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
+
+    // Loop through EGPs
+    const auto *sparseInitSnippet = getArchetype().getSparseConnectivityInitialiser().getSnippet();
+    const std::string hostInitCode = sparseInitSnippet->getHostInitCode();
+    for(const auto &egp : sparseInitSnippet->getExtraGlobalParams()) {
+        // If EGP is a pointer, add field
+        if(Utils::isTypePointer(egp.type)) {
+            // If this EGP is allocated in host initialisation code, set manual allocation and no update flags
+            unsigned int flags = 0;
+            if(hostInitCode.find("$(allocate" + egp.name) != std::string::npos) {
+                flags |= POINTER_FIELD_MANUAL_ALLOC | POINTER_FIELD_NO_UPDATE;
+            }
+            // If this EGP isn't already pushed in host initialisation code, set push pull get flag
+            if(hostInitCode.find("$(push" + egp.name) == std::string::npos) {
+                flags |= POINTER_FIELD_PUSH_PULL_GET;
+            }
+            addField(Utils::getUnderlyingType(egp.type), egp.name,
+                     VarLocation::HOST_DEVICE, flags);
+        }
+    }
+
     addEGPs(getArchetype().getToeplitzConnectivityInitialiser().getSnippet()->getExtraGlobalParams());
 
   

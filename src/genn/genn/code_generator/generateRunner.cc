@@ -86,7 +86,8 @@ void genExtraGlobalParamTargets(const BackendBase &backend, CodeStream &os, cons
 
             // If field doesn't have a count i.e. it's allocated dynamically
             const std::string &count = std::get<2>(pointerField);
-            if(count.empty()) {
+            const unsigned int flags = std::get<3>(pointerField);
+            if(((flags & G::POINTER_FIELD_NO_UPDATE) == 0) && count.empty()) {
                 // Create three sub-streams to generate seperate data structure into
                 std::ostringstream fieldPushFunctionStart;
                 std::ostringstream fieldPushFunctionEnd;
@@ -566,7 +567,9 @@ void CodeGenerator::generateRunner(const filesystem::path &outputPath, const Mod
         {
             CodeStream::Scope b(runnerVarDecl);
             for(const auto &m : modelMerged.getMergedRunnerGroups().getGroups()) {
-                runnerVarDecl << "{\"" << m.first << "\", {" << std::get<0>(m.second) << ", " << std::get<1>(m.second) << ", \"" << std::get<2>(m.second) << "\"}}, " << std::endl;
+                if(std::get<3>(m.second)) {
+                    runnerVarDecl << "{\"" << m.first << "\", {" << std::get<0>(m.second) << ", " << std::get<1>(m.second) << ", \"" << std::get<2>(m.second) << "\"}}, " << std::endl;
+                }
             }
         } 
         runnerVarDecl << ";" << std::endl;

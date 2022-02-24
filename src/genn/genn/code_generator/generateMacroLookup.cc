@@ -50,8 +50,10 @@ void generateMacroLookup(const filesystem::path &outputPath, const ModelSpecMerg
     macroLookup << "// group macros" << std::endl;
     macroLookup << "// ------------------------------------------------------------------------" << std::endl;
     for(const auto &g : modelMerged.getMergedRunnerGroups().getGroups()) {
-        macroLookup << "#define MERGED_GROUP_" << g.first << " " << std::get<2>(g.second) << "Group" << std::get<0>(g.second) << std::endl;
-        macroLookup << "#define GROUP_" << g.first << " " << std::get<1>(g.second) << std::endl;
+        if(std::get<3>(g.second)) {
+            macroLookup << "#define MERGED_GROUP_" << g.first << " " << std::get<2>(g.second) << "Group" << std::get<0>(g.second) << std::endl;
+            macroLookup << "#define GROUP_" << g.first << " " << std::get<1>(g.second) << std::endl;
+        }
     }
 }
 }

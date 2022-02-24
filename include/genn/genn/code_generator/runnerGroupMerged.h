@@ -5,7 +5,7 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
-
+#include <iostream>
 //----------------------------------------------------------------------------
 // CodeGenerator::RunnerGroupMergedBase
 //----------------------------------------------------------------------------
@@ -23,6 +23,7 @@ public:
         POINTER_FIELD_STATE             = (1 << 3), //! Should this field be included in 'state'
         POINTER_FIELD_CONNECTIVITY      = (1 << 4), //! Should this field be included in 'connectivity'
         POINTER_FIELD_AUTO_INITIALISED  = (1 << 5), //! Has this field been auto-initialised?
+        POINTER_FIELD_NO_UPDATE         = (1 << 6), //! This (dynamic) pointer field doesn't ever need updating
         POINTER_FIELD_PUSH_PULL_GET = POINTER_FIELD_PUSH_PULL | POINTER_FIELD_GET,
     };
 
@@ -45,6 +46,39 @@ public:
     
     //! Does this group provide functions to push state
     bool hasPushStateFunction() const{ return anyAccesibleFieldsWithFlags(POINTER_FIELD_PUSH_PULL | POINTER_FIELD_STATE); }
+    
+    //! Does this group provide ANY accesible fields
+    bool hasAccessibleFields() const
+    { 
+        return std::any_of(getFields().cbegin(), getFields().cend(),
+                           [](const Field &f)
+                           {
+                               const unsigned int desiredFlags = (POINTER_FIELD_PUSH_PULL | POINTER_FIELD_GET | 
+                                                                  POINTER_FIELD_STATE | POINTER_FIELD_CONNECTIVITY);
+                               if(std::holds_alternative<PointerField>(std::get<2>(f))) {
+                                   const auto pointerField = std::get<PointerField>(std::get<2>(f));
+                                   const auto loc = std::get<0>(pointerField);
+                                   const unsigned int flags = std::get<3>(pointerField);
+                                   const std::string &fieldCount = std::get<2>(pointerField);
+                                   
+                                   // If field doesn't have manual alloc set and it has a dynamic size
+                                   // i.e. it will need an allocate and free function, return true
+                                   if((flags & POINTER_FIELD_MANUAL_ALLOC) == 0 && fieldCount.empty()
+                                      && (loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
+                                   {
+                                       return true;
+                                   }
+                                   // Otherwise, if ANY of the desired flags are set
+                                   // **NOTE** this is different logic than anyAccesibleFieldsWithFlags
+                                   else if(((flags & desiredFlags) != 0)
+                                           && (loc & VarLocation::HOST) && (loc & VarLocation::DEVICE))
+                                   {
+                                       return true;
+                                   }
+                               }
+                               return false;
+                           });
+    }
     
     //! Get group fields, sorted into order they will appear in struct
     std::vector<Field> getSortedFields(const BackendBase &backend) const
@@ -206,7 +240,7 @@ protected:
                                    return false;
                                }
                            });
-    }
+    }    
 
 private:
     //------------------------------------------------------------------------
