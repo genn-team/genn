@@ -186,7 +186,7 @@ public:
     virtual bool isPrevPreSpikeEventTimeRequired() const override { PYBIND11_OVERRIDE_NAME(bool, Base, "is_prev_pre_spike_event_time_required", isPrevPreSpikeEventTimeRequired); }
 };
 
-CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
+void generateCode(ModelSpecInternal &model, CodeGenerator::BackendBase &backend, 
                                      const std::string &sharePathStr, const std::string &outputPathStr, bool forceRebuild)
 {
     const filesystem::path outputPath(outputPathStr);
@@ -200,13 +200,12 @@ CodeGenerator::MemAlloc generateCode(ModelSpecInternal &model, CodeGenerator::Ba
 #ifdef _WIN32
     // Create MSBuild project to compile and link all generated modules
     std::ofstream makefile((outputPath / "runner.vcxproj").str());
-    CodeGenerator::generateMSBuild(makefile, model, backend, "", output.first);
+    CodeGenerator::generateMSBuild(makefile, model, backend, "", output);
 #else
     // Create makefile to compile and link all generated modules
     std::ofstream makefile((outputPath / "Makefile").str());
-    CodeGenerator::generateMakefile(makefile, backend, output.first);
+    CodeGenerator::generateMakefile(makefile, backend, output);
 #endif
-    return output.second;
 }
 
 void initLogging(plog::Severity gennLevel, plog::Severity codeGeneratorLevel)
@@ -331,7 +330,7 @@ PYBIND11_MODULE(genn, m)
     //------------------------------------------------------------------------
     // Free functions
     //------------------------------------------------------------------------
-    m.def("generate_code", &generateCode, pybind11::return_value_policy::move);
+    m.def("generate_code", &generateCode);
     m.def("init_logging", &initLogging);
     m.def("create_var_ref", pybind11::overload_cast<const NeuronGroup*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
     m.def("create_var_ref", pybind11::overload_cast<const CurrentSource*, const std::string&>(&createVarRef), pybind11::return_value_policy::move);
@@ -499,7 +498,7 @@ PYBIND11_MODULE(genn, m)
         .def_property_readonly("ps_var_initialisers", &SynapseGroup::getPSVarInitialisers)
         .def_property_readonly("kernel_size", &SynapseGroup::getKernelSize)
         .def_property_readonly("matrix_type", &SynapseGroup::getMatrixType)
-        .def_property_readonly("sparse_connectivity_initialiser", &SynapseGroup::getConnectivityInitialiser)
+        .def_property_readonly("sparse_connectivity_initialiser", &SynapseGroup::getSparseConnectivityInitialiser)
         .def_property_readonly("toeplitz_connectivity_initialiser", &SynapseGroup::getToeplitzConnectivityInitialiser)
     
         .def_property("ps_target_var", &SynapseGroup::getPSTargetVar, &SynapseGroup::setPSTargetVar)
@@ -515,7 +514,8 @@ PYBIND11_MODULE(genn, m)
         .def_property("back_prop_delay_steps",&SynapseGroup::getBackPropDelaySteps, &SynapseGroup::setBackPropDelaySteps)
         .def_property("narrow_sparse_ind_enabled",nullptr, &SynapseGroup::setNarrowSparseIndEnabled)
         // **NOTE** we use the 'publicist' pattern to expose some protected properties
-        .def_property_readonly("_ps_model_fused", &SynapseGroupInternal::isPSModelFused)
+        .def_property_readonly("_pre_output_model_fused", &SynapseGroupInternal::isPreOutputModelFused)
+        .def_property_readonly("_post_output_model_fused", &SynapseGroupInternal::isPostOutputModelFused)
         .def_property_readonly("_wu_pre_model_fused", &SynapseGroupInternal::isWUPreModelFused)
         .def_property_readonly("_wu_post_model_fused", &SynapseGroupInternal::isWUPostModelFused)
         .def_property_readonly("_sparse_ind_type", &SynapseGroupInternal::getSparseIndType)
@@ -726,23 +726,12 @@ PYBIND11_MODULE(genn, m)
         .def_readwrite("optimize_code", &CodeGenerator::PreferencesBase::optimizeCode)
         .def_readwrite("debug_code", &CodeGenerator::PreferencesBase::debugCode)
         .def_readwrite("enable_bitmask_optimisations", &CodeGenerator::PreferencesBase::enableBitmaskOptimisations)
-        .def_readwrite("generate_extra_global_param_pull", &CodeGenerator::PreferencesBase::generateExtraGlobalParamPull)
+        .def_readwrite("generate_runtime_population_lookup", &CodeGenerator::PreferencesBase::generateRuntimePopulationLookup)
+        .def_readwrite("generate_macro_population_lookup", &CodeGenerator::PreferencesBase::generateMacroPopulationLookup)
         .def_readwrite("log_level", &CodeGenerator::PreferencesBase::logLevel);
 
     //------------------------------------------------------------------------
     // genn.BackendBase
     //------------------------------------------------------------------------
     pybind11::class_<CodeGenerator::BackendBase>(m, "BackendBase");
-    
-    //------------------------------------------------------------------------
-    // genn.MemAlloc
-    //------------------------------------------------------------------------
-    pybind11::class_<CodeGenerator::MemAlloc>(m, "MemAlloc")
-        .def_property_readonly("host_bytes", &CodeGenerator::MemAlloc::getHostBytes)
-        .def_property_readonly("device_bytes", &CodeGenerator::MemAlloc::getDeviceBytes)
-        .def_property_readonly("zero_copy_bytes", &CodeGenerator::MemAlloc::getZeroCopyBytes)
-        .def_property_readonly("host_mbytes", &CodeGenerator::MemAlloc::getHostMBytes)
-        .def_property_readonly("device_mbytes", &CodeGenerator::MemAlloc::getDeviceMBytes)
-        .def_property_readonly("zero_copy_mbytes", &CodeGenerator::MemAlloc::getZeroCopyMBytes);
-
 }
