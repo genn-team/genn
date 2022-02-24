@@ -6,209 +6,92 @@ and defines class Variable
 from numbers import Number
 from weakref import proxy, ProxyTypes
 import numpy as np
-from six import iterkeys, itervalues
-from . import genn_wrapper
-from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
-                                  VarInitVector, VarRefVector, 
-                                  VarReferenceVector, WUVarReferenceVector)
-from .genn_wrapper.StlContainers import DoubleVector
+from six import iteritems, iterkeys, itervalues, string_types
 
-def prepare_model(model, group, param_space, var_space, model_family):
+from .genn import VarInit
+from .init_var_snippets import Uninitialised
+
+def prepare_model(model, group, var_space):
     """Prepare a model by checking its validity and extracting information
     about variables and parameters
 
     Args:
-    model           --  string or instance of a class derived from pygenn.genn_wrapper.NeuronModels.Custom or pygenn.genn_wrapper.WeightUpdateModels.Custom or pygenn.genn_wrapper.CurrentSourceModels.Custom
+    model           --  instance of a class derived from pygenn.genn.ModelBase
     group           --  group model will belong to
-    param_space     --  dict with model parameters
     var_space       --  dict with model variables
-    var_ref_space   --  optional dict with (custom update) model
-                        variable references
-    model_family    --  pygenn.genn_wrapper.NeuronModels or pygenn.genn_wrapper.WeightUpdateModels or pygenn.genn_wrapper.CurrentSourceModels
+    model_module    --  Module which should contain base class for models and functions to get built in models
 
     Returns:
-    tuple consisting of (model instance, model type, model parameter names,
-                         model parameters, list of variable names,
-                         dict mapping names of variables to instances of class Variable)
+    tuple consisting of (dict mapping names of variables to 
+    instances of class Variable, dict mapping names of egps to class ExtraGlobalParameter)
 
     """
-    m_instance, m_type = is_model_valid(model, model_family)
-    param_names = list(m_instance.get_param_names())
-    if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter values for {0}".format(
-            model_family.__name__))
-    params = param_space_to_vals(m_instance, param_space)
-
-    var_names = [vnt.name for vnt in m_instance.get_vars()]
-    if set(iterkeys(var_space)) != set(var_names):
-        raise ValueError("Invalid variable initializers for {0}".format(
-            model_family.__name__))
     vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
-            for vnt in m_instance.get_vars()}
+            for vnt in model.get_vars()}
 
     egps = {egp.name: ExtraGlobalParameter(egp.name, egp.type, group)
-            for egp in m_instance.get_extra_global_params()}
+            for egp in model.get_extra_global_params()}
 
-    return (m_instance, m_type, param_names, params,
-            var_names, vars, egps)
+    return vars, egps
 
-def prepare_snippet(snippet, param_space, snippet_family):
-    """Prepare a snippet by checking its validity and extracting
-    information about parameters
-
+def get_var_init(var_space):
+    """ Build a dictionary of VarInit objects to specify if and how
+    variables should be initialsed by GeNN
+    
     Args:
-    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom,
-                        pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet.Custom
-    param_space     --  dict with model parameters
-    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet, pygenn.genn_wrapper.InitSparseConnectivitySnippet
-                        or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet
-
+    var_space       --  dict with model variables
+    
     Returns:
-    tuple consisting of (snippet instance, snippet type,
-                         snippet parameter names, snippet parameters)
+    dict mapping variable names to VarInit objects
     """
-    s_instance, s_type = is_model_valid(snippet, snippet_family)
-    param_names = list(s_instance.get_param_names())
-    if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter initializers for {0}".format(
-            snippet_family.__name__))
-    params = param_space_to_val_vec(s_instance, param_space)
-
-    return (s_instance, s_type, param_names, params)
-
-
-def is_model_valid(model, model_family):
+    var_init = {}
+    for name, value in iteritems(var_space):
+        if isinstance(value, VarInit):
+            var_init[name] = value
+         # If no values are specified - mark as uninitialised
+        elif value is None:
+            var_init[name] = VarInit(Uninitialised(), {})
+        else:
+            # Try and iterate value - if they are iterable
+            # they must be loaded at simulate time
+            try:
+                iter(value)
+                var_init[name] = VarInit(Uninitialised(), {})
+            # Otherwise - they can be initialised on device as a scalar
+            except TypeError:
+                var_init[name] = VarInit(value)
+    return var_init
+            
+    
+def get_snippet(snippet, snippet_base_class, built_in_snippet_module):
     """Check whether the model is valid, i.e is native or derived
     from model_family.Custom
 
     Args:
-    model           --  string or instance of model_family.Custom
-    model_family    --  model family (NeuronModels, WeightUpdateModels or
-                        PostsynapticModels) to which model should belong to
+    model                   -- string or instance of pygenn.genn.SnippetBase
+    snippet_base_class      -- if model is an instance, base class it SHOULD have 
+    built_in_snippet_module -- if model is a string, module which should be searched
+                               for built in snippet
 
     Returns:
-    instance of the model and its type as string
+    instance of the snippet and its type as string
 
-    Raises ValueError if model is not valid (i.e. is not custom and is
-    not natively available)
+    Raises:
+    AttributeError  -- if snippet specified by name doesn't exist
+    Exception       -- if something other than a string or object derived 
+                       from snippet_base_class is provided
     """
-
-    if not isinstance(model, str):
-        if not isinstance(model, model_family.Custom):
-            model_type = type(model).__name__
-            if not hasattr(model_family, model_type):
-                raise ValueError("model '{0}' is not "
-                                 "supported".format(model_type))
-        else:
-            model_type = "Custom"
+    
+    # If model is a string, get function with 
+    # this name from module and call it
+    if isinstance(snippet, string_types):
+        return getattr(built_in_snippet_module, snippet)()
+    # Otherwise, if model is derived off correct 
+    # base class, return it directly
+    elif isinstance(snippet, snippet_base_class):
+        return snippet
     else:
-        model_type = model
-        if not hasattr(model_family, model_type):
-            raise ValueError("model '{0}' is not supported".format(model_type))
-        else:
-            model = getattr(model_family, model_type).get_instance()
-    return model, model_type
-
-
-def param_space_to_vals(model, param_space):
-    """Convert a param_space dict to ParamValues
-
-    Args:
-    model       --  instance of the model
-    param_space --  dict with parameters
-
-    Returns:
-    native model's ParamValues
-    """
-    return model.make_param_values(param_space_to_val_vec(model, param_space))
-
-
-def param_space_to_val_vec(model, param_space):
-    """Convert a param_space dict to a std::vector<double>
-
-    Args:
-    model     -- instance of the model
-    param_space -- dict with parameters
-
-    Returns:
-    native vector of parameters
-    """
-    if not all(isinstance(p, Number) for p in itervalues(param_space)):
-        raise ValueError("non-numeric parameters are not supported")
-
-    return DoubleVector([param_space[pn] for pn in model.get_param_names()])
-
-
-def var_space_to_vals(model, var_space):
-    """Convert a var_space dict to VarValues
-
-    Args:
-    model       -- instance of the model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_values(VarInitVector([var_space[vnt.name].init_val
-                                                for vnt in model.get_vars()]))
-
-def var_ref_space_to_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to VarReferences
-
-    Args:
-    model           -- instance of the model
-    var_ref_space   -- dict with variable references
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_var_references(
-        VarReferenceVector([var_ref_space[v.name][0]
-                            for v in model.get_var_refs()]))
-                                                
-def var_ref_space_to_wu_var_refs(model, var_ref_space):
-    """Convert a var_ref_space dict to WUVarReferences
-
-    Args:
-    model       -- instance of the model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_wuvar_references(
-        WUVarReferenceVector([var_ref_space[v.name][0]
-                              for v in model.get_var_refs()]))
-
-def pre_var_space_to_vals(model, var_space):
-    """Convert a var_space dict to PreVarValues
-
-    Args:
-    model       -- instance of the weight update model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_pre_var_values(
-        VarInitVector([var_space[vnt.name].init_val
-                       for vnt in model.get_pre_vars()]))
-
-
-def post_var_space_to_vals(model, var_space):
-    """Convert a var_space dict to PostVarValues
-
-    Args:
-    model       -- instance of the weight update model
-    var_space   -- dict with Variables
-
-    Returns:
-    native model's VarValues
-    """
-    return model.make_post_var_values(
-        VarInitVector([var_space[vnt.name].init_val
-                       for vnt in model.get_post_vars()]))
-
+        raise Exception("Invalid snippet")
 
 class Variable(object):
 
@@ -228,7 +111,6 @@ class Variable(object):
         self.type = variable_type
         self.group = proxy(group)
         self.view = None
-        self.needs_allocation = False
         self.set_values(values)
 
     def set_extra_global_init_param(self, param_name, param_values):
@@ -253,16 +135,12 @@ class Variable(object):
 
         # If an var initialiser is specified
         if isinstance(values, VarInit):
-            # Use it as initial value
-            self.init_val = values
-
             # Build extra global parameters dictionary from var init snippet
             self.extra_global_params =\
                 {egp.name: ExtraGlobalParameter(egp.name, egp.type, self.group)
-                 for egp in self.init_val.get_snippet().get_extra_global_params()}
+                 for egp in values.snippet.get_extra_global_params()}
         # If no values are specified - mark as uninitialised
         elif values is None:
-            self.init_val = genn_wrapper.uninitialised_var()
             self.extra_global_params = {}
         # Otherwise
         else:
@@ -270,14 +148,12 @@ class Variable(object):
             # they must be loaded at simulate time
             try:
                 iter(values)
-                self.init_val = genn_wrapper.uninitialised_var()
                 self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type].np_dtype)
+                    values, dtype=self.group._model.genn_types[self.type])
                 self.init_required = True
                 self.extra_global_params = {}
             # Otherwise - they can be initialised on device as a scalar
             except TypeError:
-                self.init_val = VarInit(values)
                 self.extra_global_params = {}
 
 class ExtraGlobalParameter(object):
@@ -327,7 +203,7 @@ class ExtraGlobalParameter(object):
             try:
                 iter(values)
                 self.values = np.asarray(
-                    values, dtype=self.group._model.genn_types[self.type].np_dtype)
+                    values, dtype=self.group._model.genn_types[self.type])
             # Otherwise give an error
             except TypeError:
                 raise ValueError("extra global variables can only be "

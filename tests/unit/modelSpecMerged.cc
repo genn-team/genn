@@ -112,7 +112,7 @@ void test(const std::pair<T, bool> (&modelModifiers)[N], M applyModifierFn)
         model.setName("test");
         model.setDT(0.1);
         model.setTiming(false);
-        model.setPrecision(GENN_FLOAT);
+        model.setPrecision(ScalarPrecision::FLOAT);
         model.setTimePrecision(TimePrecision::DEFAULT);
         model.setBatchSize(1);
         model.setSeed(0);
@@ -215,7 +215,7 @@ TEST(ModelSpecMerged, CompareModelChanges)
         {[](ModelSpecInternal &model) { model.setName("interesting_name"); }, false},
         {[](ModelSpecInternal &model) { model.setDT(1.0); }, false},
         {[](ModelSpecInternal &model) { model.setTiming(true); }, false},
-        {[](ModelSpecInternal &model) { model.setPrecision(GENN_DOUBLE); }, false},
+        {[](ModelSpecInternal &model) { model.setPrecision(ScalarPrecision::DOUBLE); }, false},
         {[](ModelSpecInternal &model) { model.setTimePrecision(TimePrecision::DOUBLE); }, false},
         {[](ModelSpecInternal &model) { model.setBatchSize(10); }, false},
         {[](ModelSpecInternal &model) { model.setSeed(1234); }, false}};

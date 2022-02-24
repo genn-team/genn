@@ -214,23 +214,22 @@ for(b = 0; b < builderNodes.size(); b++) {
                             if("dev_toolset" in nodeLabel) {
                                 makeCommand += ". /opt/rh/devtoolset-6/enable\n"
                             }
-                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn/genn_wrapper 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
+                            makeCommand += "make DYNAMIC=1 LIBRARY_DIRECTORY=" + pwd() + "/pygenn 1>> \"" + uniqueMsg + "\" 2>> \"" + uniqueMsg + "\"";
                             def makeStatusCode = sh script:makeCommand, returnStatus:true
                             if(makeStatusCode != 0) {
                                 setBuildStatus("Building Python wheels (" + env.NODE_NAME + ")", "FAILURE");
                             }
 
-                            // Create virtualenv, install numpy and make Python wheel
+                            // Create virtualenv, install numpy and pybind11; and make Python wheel
                             echo "Creating Python wheels";
                             script = """
                             rm -rf virtualenv
                             ${env.PYTHON} -m venv virtualenv
                             . virtualenv/bin/activate
 
-                            pip install wheel "numpy>=1.17"
+                            pip install wheel "numpy>=1.17" pybind11
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                             python setup.py bdist_wheel -d . 1>> "${uniqueMsg}" 2>> "${uniqueMsg}"
                             """
 
@@ -269,19 +268,16 @@ for(b = 0; b < builderNodes.size(); b++) {
                             CALL %VC_VARS_BAT%
                             CALL %ANACONDA_ACTIVATE_BAT%
 
-                            CALL conda install -y swig
-
                             ${env.PYTHON} -m venv virtualenv
                             pushd virtualenv\\Scripts
                             call activate
                             popd
 
-                            pip install wheel "numpy>=1.17"
+                            pip install wheel "numpy>=1.17" pybind11
 
-                            copy /Y lib\\genn*Release_DLL.* pygenn\\genn_wrapper
+                            copy /Y lib\\genn*Release_DLL.* pygenn
 
                             python setup.py clean --all
-                            python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             python setup.py bdist_wheel -d . >> "${uniqueMsg}" 2>&1
                             """
 

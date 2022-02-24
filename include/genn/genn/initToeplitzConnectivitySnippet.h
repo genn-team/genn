@@ -34,12 +34,6 @@ class GENN_EXPORT Base : public Snippet::Base
 {
 public:
     //----------------------------------------------------------------------------
-    // Typedefines
-    //----------------------------------------------------------------------------
-    typedef std::function<unsigned int(unsigned int, unsigned int, const std::unordered_map<std::string, double> &)> CalcMaxLengthFunc;
-    typedef std::function<std::vector<unsigned int>(const std::unordered_map<std::string, double> &)> CalcKernelSizeFunc;
-
-    //----------------------------------------------------------------------------
     // Declared virtuals
     //----------------------------------------------------------------------------
     virtual std::string getDiagonalBuildCode() const{ return ""; }

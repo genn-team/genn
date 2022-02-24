@@ -1,1 +1,0 @@
-from .genn_wrapper import *

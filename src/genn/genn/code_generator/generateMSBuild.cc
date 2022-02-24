@@ -62,12 +62,7 @@ void CodeGenerator::generateMSBuild(std::ostream &os, const ModelSpecInternal &m
     os << "\t<PropertyGroup>" << std::endl;
     os << "\t\t<LinkIncremental Condition=\"'$(Configuration)'=='Debug'\">true</LinkIncremental>" << std::endl;
     os << "\t\t<OutDir>../</OutDir>" << std::endl;
-    if(backend.getPreferences().includeModelNameInDLL) {
-        os << "\t\t<TargetName>runner_" << model.getName() << "_$(Configuration)</TargetName>" << std::endl;
-    }
-    else {
-        os << "\t\t<TargetName>runner_$(Configuration)</TargetName>" << std::endl;
-    }
+    os << "\t\t<TargetName>runner_" << model.getName() << "_$(Configuration)</TargetName>" << std::endl;
     os << "\t\t<TargetExt>.dll</TargetExt>" << std::endl;
     os << "\t</PropertyGroup>" << std::endl;
 

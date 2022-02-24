@@ -61,8 +61,8 @@ public:
             return ((name == other.name) && (type == other.type));
         }
 
-        std::string name;
-        std::string type;
+        const std::string name;
+        const std::string type;
     };
 
     //! Additional input variables, row state variables and other things have a name, a type and an initial value
@@ -72,17 +72,15 @@ public:
         {}
         ParamVal(const std::string &n, const std::string &t, double v) : ParamVal(n, t, Utils::writePreciseString(v))
         {}
-        ParamVal() : ParamVal("", "", "0.0")
-        {}
 
         bool operator == (const ParamVal &other) const
         {
             return ((name == other.name) && (type == other.type) && (value == other.value));
         }
 
-        std::string name;
-        std::string type;
-        std::string value;
+        const std::string name;
+        const std::string type;
+        const std::string value;
     };
 
     //! A derived parameter has a name and a function for obtaining its value
@@ -93,8 +91,8 @@ public:
             return (name == other.name);
         }
 
-        std::string name;
-        std::function<double(const std::unordered_map<std::string, double>&, double)> func;
+        const std::string name;
+        const std::function<double(const std::unordered_map<std::string, double>&, double)> func;
     };
 
 
@@ -105,6 +103,8 @@ public:
     typedef std::vector<EGP> EGPVec;
     typedef std::vector<ParamVal> ParamValVec;
     typedef std::vector<DerivedParam> DerivedParamVec;
+    typedef std::function<unsigned int(unsigned int, unsigned int, const std::unordered_map<std::string, double> &)> CalcMaxLengthFunc;
+    typedef std::function<std::vector<unsigned int>(const std::unordered_map<std::string, double> &)> CalcKernelSizeFunc;
 
     //----------------------------------------------------------------------------
     // Declared virtuals

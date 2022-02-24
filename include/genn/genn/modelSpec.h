@@ -44,12 +44,12 @@ using VarValues = std::unordered_map<std::string, Models::VarInit>;
 using VarReferences = std::unordered_map<std::string, Models::VarReference>;
 using WUVarReferences = std::unordered_map<std::string, Models::WUVarReference>;
 
-//! Floating point precision to use for models
-enum FloatType
+//! Floating point precision to use for "scalar" type variables models
+enum class ScalarPrecision
 {
-    GENN_FLOAT,
-    GENN_DOUBLE,
-    GENN_LONG_DOUBLE,
+    FLOAT,
+    DOUBLE,
+    LONG_DOUBLE,
 };
 
 //! Precision to use for variables which store time
@@ -211,7 +211,7 @@ public:
     void setName(const std::string &name){ m_Name = name; }
 
     //! Set numerical precision for floating point
-    void setPrecision(FloatType);
+    void setPrecision(ScalarPrecision scalarPrecision);
 
     //! Set numerical precision for time
     void setTimePrecision(TimePrecision timePrecision){ m_TimePrecision = timePrecision; }

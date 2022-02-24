@@ -117,8 +117,8 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
                                const SynapseGroup *transposeSG, const std::string &transposeVarName)
 :   VarReferenceBase(sg->getWUModel()->getVarIndex(varName), sg->getWUModel()->getVars(), [sg]() { return sg->getName(); }),
     m_SG(static_cast<const SynapseGroupInternal*>(sg)), m_TransposeSG(static_cast<const SynapseGroupInternal*>(transposeSG)),
-    m_TransposeVarIndex((transposeSG == nullptr) ? 0 : transposeSG->getWUModel()->getVarIndex(transposeVarName)),
-    m_TransposeVar((transposeSG == nullptr) ? Models::Base::Var() : transposeSG->getWUModel()->getVars().at(m_TransposeVarIndex)),
+    m_TransposeVarIndex((transposeSG == nullptr) ? std::nullopt : std::optional<size_t>(transposeSG->getWUModel()->getVarIndex(transposeVarName))),
+    m_TransposeVar((transposeSG == nullptr) ? std::nullopt : std::optional<Models::Base::Var>(transposeSG->getWUModel()->getVars().at(*m_TransposeVarIndex))),
     m_GetTransposeTargetName((transposeSG == nullptr) ? GetTargetNameFn() : [transposeSG]() { return transposeSG->getName(); })
 {
     if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
@@ -161,8 +161,7 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
 //----------------------------------------------------------------------------
 WUVarReference::WUVarReference(const CustomUpdateWU *cu, const std::string &varName)
 :   VarReferenceBase(cu->getCustomUpdateModel()->getVarIndex(varName), cu->getCustomUpdateModel()->getVars(), [cu]() { return cu->getName(); }),
-    m_SG(static_cast<const CustomUpdateWUInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr),
-    m_TransposeVarIndex(0)
+    m_SG(static_cast<const CustomUpdateWUInternal*>(cu)->getSynapseGroup()), m_TransposeSG(nullptr)
 {
 
 }

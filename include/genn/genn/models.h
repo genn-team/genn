@@ -3,6 +3,7 @@
 // Standard C++ includes
 #include <algorithm>
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -53,17 +54,15 @@ public:
         {}
         Var(const std::string &n, const std::string &t) : Var(n, t, VarAccess::READ_WRITE)
         {}
-        Var() : Var("", "", VarAccess::READ_WRITE)
-        {}
 
         bool operator == (const Var &other) const
         {
             return ((name == other.name) && (type == other.type) && (access == other.access));
         }
 
-        std::string name;
-        std::string type;
-        VarAccess access;
+        const std::string name;
+        const std::string type;
+        const VarAccess access;
     };
 
     struct VarRef
@@ -72,17 +71,15 @@ public:
         {}
         VarRef(const std::string &n, const std::string &t) : VarRef(n, t, VarAccessMode::READ_WRITE)
         {}
-        VarRef() : VarRef("", "", VarAccessMode::READ_WRITE)
-        {}
 
         bool operator == (const VarRef &other) const
         {
             return ((name == other.name) && (type == other.type) && (access == other.access));
         }
 
-        std::string name;
-        std::string type;
-        VarAccessMode access;
+        const std::string name;
+        const std::string type;
+        const VarAccessMode access;
     };
 
     //----------------------------------------------------------------------------
@@ -167,9 +164,9 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    size_t m_VarIndex;
-    Models::Base::Var m_Var;
-    GetTargetNameFn m_GetTargetName;
+    const size_t m_VarIndex;
+    const Models::Base::Var m_Var;
+    const GetTargetNameFn m_GetTargetName;
 };
 
 //----------------------------------------------------------------------------
@@ -209,8 +206,8 @@ private:
     //------------------------------------------------------------------------
     // Members
     //------------------------------------------------------------------------
-    unsigned int m_Size;
-    GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
+    const unsigned int m_Size;
+    const GetDelayNeuronGroupFn m_GetDelayNeuronGroup;
 };
 
 //----------------------------------------------------------------------------
@@ -229,8 +226,8 @@ public:
     const SynapseGroup *getSynapseGroup() const;
 
     const SynapseGroup *getTransposeSynapseGroup() const;
-    const Models::Base::Var &getTransposeVar() const { return m_TransposeVar; }
-    size_t getTransposeVarIndex() const { return m_TransposeVarIndex; }
+    const Models::Base::Var &getTransposeVar() const { return *m_TransposeVar; }
+    size_t getTransposeVarIndex() const { return *m_TransposeVarIndex; }
     std::string getTransposeTargetName() const { return m_GetTransposeTargetName(); }
 
 private:
@@ -239,9 +236,9 @@ private:
     //------------------------------------------------------------------------
     const SynapseGroupInternal *m_SG;
     const SynapseGroupInternal *m_TransposeSG;
-    size_t m_TransposeVarIndex;
-    Models::Base::Var m_TransposeVar;
-    GetTargetNameFn m_GetTransposeTargetName;
+    const std::optional<size_t> m_TransposeVarIndex;
+    const std::optional<Models::Base::Var> m_TransposeVar;
+    const GetTargetNameFn m_GetTransposeTargetName;
 };
 
 //----------------------------------------------------------------------------
