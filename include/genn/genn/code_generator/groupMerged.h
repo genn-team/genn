@@ -612,9 +612,6 @@ public:
     //! Should the postsynaptic model derived parameter be implemented heterogeneously?
     bool isPSMDerivedParamHeterogeneous(size_t childIndex, const std::string &paramName) const;
 
-    //! Should the GLOBALG postsynaptic model variable be implemented heterogeneously?
-    bool isPSMGlobalVarHeterogeneous(size_t childIndex, const std::string &varName) const;
-
     //! Should the postsynaptic model var init parameter be implemented heterogeneously?
     bool isPSMVarInitParamHeterogeneous(size_t childIndex, const std::string &varName, const std::string &paramName) const;
 
@@ -694,9 +691,6 @@ protected:
 
     //! Is the postsynaptic model parameter referenced?
     bool isPSMParamReferenced(size_t childIndex, const std::string &paramName) const;
-
-    //! Is the GLOBALG postsynaptic model variable referenced?
-    bool isPSMGlobalVarReferenced(size_t childIndex, const std::string &varName) const;
 
     //! Is the postsynaptic model var init parameter referenced?
     bool isPSMVarInitParamReferenced(size_t childIndex, const std::string &varName, const std::string &paramName) const;
@@ -1130,7 +1124,6 @@ private:
     void addPreOutputPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addSrcPointerField(const std::string &type, const std::string &name, const std::string &prefix);
     void addTrgPointerField(const std::string &type, const std::string &name, const std::string &prefix);
-    void addWeightSharingPointerField(const std::string &type, const std::string &name, const std::string &prefix);
 
     //! Is the weight update model parameter referenced?
     bool isWUParamReferenced(const std::string &paramName) const;

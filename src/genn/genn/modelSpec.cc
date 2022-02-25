@@ -408,7 +408,7 @@ SynapseGroup *ModelSpec::addSynapsePopulation(const std::string &name, SynapseMa
         auto result = m_LocalSynapseGroups.emplace(
             std::piecewise_construct,
             std::forward_as_tuple(name),
-            std::forward_as_tuple(name, nullptr, mtype, delaySteps,
+            std::forward_as_tuple(name, mtype, delaySteps,
                                   wum, weightParamValues, weightVarInitialisers, weightPreVarInitialisers, weightPostVarInitialisers,
                                   psm, postsynapticParamValues, postsynapticVarInitialisers,
                                   srcNeuronGrp, trgNeuronGrp,

@@ -53,10 +53,6 @@ VarReference VarReference::createVarRef(const CustomUpdate *cu, const std::strin
 //----------------------------------------------------------------------------
 VarReference VarReference::createPSMVarRef(const SynapseGroup *sg, const std::string &varName)
 {
-    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM)) {
-        throw std::runtime_error("Only individual postsynaptic model variables can be referenced.");
-    }
-
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal *>(sg);
     const auto *psm = sgInternal->getPSModel();
     return VarReference(sgInternal->getTrgNeuronGroup()->getNumNeurons(),
@@ -125,9 +121,6 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
         throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
     }
 
-    if(sg->isWeightSharingSlave()) {
-        throw std::runtime_error("Only weight update model variables in weight sharing master synapse group can be referenced.");
-    }
     // If a transpose synapse group is specified
     if(m_TransposeSG != nullptr) {
         // Check that tranpose group also has individual variables

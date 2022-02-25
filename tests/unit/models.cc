@@ -159,12 +159,7 @@ TEST(Models, PSMVarReference)
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
     model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
 
-    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses1", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
-                                                                                       "Pre", "Post",
-                                                                                       {}, {{"g", 1.0}},
-                                                                                       {{"tau", 5.0}}, {{"x", 0.0}});
-
-    auto *sg2 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses2", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, AlphaCurr>("Synapses1", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
                                                                                        "Pre", "Post",
                                                                                        {}, {{"g", 1.0}},
                                                                                        {{"tau", 5.0}}, {{"x", 0.0}});
@@ -175,14 +170,6 @@ TEST(Models, PSMVarReference)
     // Test error if variable doesn't exist
     try {
         auto psmMagic = createPSMVarRef(sg1, "Magic");
-        FAIL();
-    }
-    catch(const std::runtime_error &) {
-    }
-
-    // Test error if GLOBALG
-    try {
-        auto psmMagic = createPSMVarRef(sg2, "x");
         FAIL();
     }
     catch(const std::runtime_error &) {

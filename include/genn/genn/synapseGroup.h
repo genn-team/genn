@@ -145,9 +145,6 @@ public:
     //! Does synapse group need to handle spike-like events
     bool isSpikeEventRequired() const;
 
-    //! Is this synapse group a weight-sharing slave
-    bool isWeightSharingSlave() const { return (getWeightSharingMaster() != nullptr); }
-
     const WeightUpdateModels::Base *getWUModel() const{ return m_WUModel; }
 
     const std::unordered_map<std::string, double> &getWUParams() const{ return m_WUParams; }
@@ -160,7 +157,6 @@ public:
 
     const std::unordered_map<std::string, double> &getPSParams() const{ return m_PSParams; }
     const std::unordered_map<std::string, Models::VarInit> &getPSVarInitialisers() const{ return m_PSVarInitialisers; }
-    const std::unordered_map<std::string, double> getPSConstInitVals() const;
 
     const InitSparseConnectivitySnippet::Init &getConnectivityInitialiser() const{ return m_SparseConnectivityInitialiser; }
     const InitToeplitzConnectivitySnippet::Init &getToeplitzConnectivityInitialiser() const { return m_ToeplitzConnectivityInitialiser; }
@@ -232,7 +228,7 @@ protected:
     SynapseGroup(const std::string &name, SynapseMatrixType matrixType, unsigned int delaySteps,
                  const WeightUpdateModels::Base *wu, const std::unordered_map<std::string, double> &wuParams, const std::unordered_map<std::string, Models::VarInit> &wuVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPreVarInitialisers, const std::unordered_map<std::string, Models::VarInit> &wuPostVarInitialisers,
                  const PostsynapticModels::Base *ps, const std::unordered_map<std::string, double> &psParams, const std::unordered_map<std::string, Models::VarInit> &psVarInitialisers,
-                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
+                 NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup,
                  const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
                  const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                  VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,

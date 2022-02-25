@@ -277,16 +277,13 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             os << "*denDelayFront = " << model.scalarExpr(0.0) << ";" << std::endl;
         }
 
-        // If synapse group has individual postsynaptic variables, also pull these in a coalesced access
-        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            // **TODO** base behaviour from Models::Base
-            for (const auto &v : psm->getVars()) {
-                if(v.access & VarAccessMode::READ_ONLY) {
-                    os << "const ";
-                }
-                os << v.type << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
-                os << getVarIndex(batchSize, getVarAccessDuplication(v.access), neuronSubs["id"]) << "];" << std::endl;
+        // Pull postsynaptic model variables in a coalesced access
+        for (const auto &v : psm->getVars()) {
+            if(v.access & VarAccessMode::READ_ONLY) {
+                os << "const ";
             }
+            os << v.type << " lps" << v.name << " = group->" << v.name << "InSyn" << i << "[";
+            os << getVarIndex(batchSize, getVarAccessDuplication(v.access), neuronSubs["id"]) << "];" << std::endl;
         }
 
         Substitutions inSynSubs(&neuronSubs);
@@ -294,15 +291,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         
         // Allow synapse group's PS output var to override what Isyn points to
         inSynSubs.addVarSubstitution("Isyn", sg->getPSTargetVar(), true);
-
-        if (sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
-            inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");
-        }
-        else {
-            inSynSubs.addVarValueSubstitution(psm->getVars(), sg->getPSConstInitVals(),
-                                                [i, this](const std::string &v) { return isPSMGlobalVarHeterogeneous(i, v); },
-                                                "", "group->", "InSyn" + std::to_string(i));
-        }
+        inSynSubs.addVarNameSubstitution(psm->getVars(), "", "lps");
 
         inSynSubs.addParamValueSubstitution(psm->getParamNames(), sg->getPSParams(),
                                             [i, this](const std::string &p) { return isPSMParamHeterogeneous(i, p);  },

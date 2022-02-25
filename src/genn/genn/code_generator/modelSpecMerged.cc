@@ -131,7 +131,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseConnectivityHostInitGroups,
                            [](const SynapseGroupInternal &sg)
                            { 
-                               return (!sg.isWeightSharingSlave() && !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty()); 
+                               return !sg.getConnectivityInitialiser().getSnippet()->getHostInitCode().empty();
                            },
                            &SynapseGroupInternal::getConnectivityHostInitHashDigest);
 
