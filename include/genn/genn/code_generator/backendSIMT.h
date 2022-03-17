@@ -155,6 +155,7 @@ public:
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelBlockSizes.at(kernel); }
 
+    size_t getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     

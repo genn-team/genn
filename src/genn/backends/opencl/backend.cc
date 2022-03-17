@@ -892,7 +892,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             genFilteredMergedKernelDataStructures(
                 customUpdateKernels,
                 modelMerged.getMergedCustomUpdateGroups(),
-                [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelCustomUpdate); },
+                [&model, this](const CustomUpdateInternal &cg) { return getPaddedNumCustomUpdateThreads(cg, model.getBatchSize()); },
                 [g](const CustomUpdateGroupMerged &c){ return (c.getArchetype().getUpdateGroupName() == g.first); },
 
                 modelMerged.getMergedCustomUpdateWUGroups(),

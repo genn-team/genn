@@ -195,6 +195,12 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
     return numInitThreads;
 }
 //--------------------------------------------------------------------------
+size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const
+{
+    const size_t numCopies = cg.isBatched() ? batchSize : 1;
+    return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+}
+//--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
