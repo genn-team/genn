@@ -978,6 +978,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     Utils::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
 
+    Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
+    Utils::updateHash(getWUModel()->getLearnPostCode().empty(), hash);
+
     // Include variable initialiser hashes
     for(const auto &w : getWUVarInitialisers()) {
         Utils::updateHash(w.getHashDigest(), hash);
