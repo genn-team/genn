@@ -29,7 +29,11 @@ opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 windows = system() == "Windows"
-wsl = "microsoft" in uname().release
+
+if sys.version_info < (3, 3):
+    wsl = "microsoft" in uname()[2]
+else:
+    wsl = "microsoft" in uname().release
 
 # Determine correct suffix for GeNN libraries
 if windows:
