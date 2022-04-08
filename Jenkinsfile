@@ -195,7 +195,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                             def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
                             if(fileExists(uniqueCoverage)) {
                                 // Upload to code cov
-                                sh "curl -s https://codecov.io/bash | bash -s - -n " + env.NODE_NAME + " -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                                withCredentials([string(credentialsId: "codecov_token_genn", variable: "CODECOV_TOKEN")]) {
+                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + uniqueCoverage + ' -t $CODECOV_TOKEN';
+                                }
                             }
                             else {
                                 echo uniqueCoverage + " doesn't exist!";
