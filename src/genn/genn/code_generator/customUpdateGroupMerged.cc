@@ -32,8 +32,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
         // compilers SHOULD emit a warning if user code doesn't set it to something
         if(!(v.access & VarAccessModeAttribute::REDUCE)) {
             os << " = group->" << v.name << "[";
-            os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
-                                 getVarAccessDuplication(v.access),
+            os << cg.getVarIndex(getVarAccessDuplication(v.access),
                                  updateSubs[index]);
             os << "]";
         }
@@ -79,8 +78,7 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
     for(const auto &v : cm->getVars()) {
         if(v.access & VarAccessMode::READ_WRITE) {
             os << "group->" << v.name << "[";
-            os << cg.getVarIndex(modelMerged.getModel().getBatchSize(),
-                                 getVarAccessDuplication(v.access),
+            os << cg.getVarIndex(getVarAccessDuplication(v.access),
                                  updateSubs[index]);
             os << "] = l" << v.name << ";" << std::endl;
         }
@@ -177,26 +175,25 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStrea
                     [this, &modelMerged](const Models::VarReference &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
-                                              modelMerged.getModel().getBatchSize(),
                                               getVarAccessDuplication(varRef.getVar().access),
                                               index);
                     });
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If variable is shared, the batch size is one or this custom update isn't batched, batch offset isn't required
-    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
-        return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
+        return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
     }
     else {
-        return getVarIndex(batchSize, varDuplication, index);
+        return getVarIndex(varDuplication, index);
     }    
 }
 
@@ -239,16 +236,16 @@ boost::uuids::detail::sha1::digest_type CustomUpdateWUGroupMergedBase::getHashDi
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateWUGroupMergedBase::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
-std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const
+std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
-    return ((varDuplication == VarAccessDuplication::SHARED || batchSize == 1 || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
 CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
@@ -349,8 +346,7 @@ void CustomUpdateWUGroupMerged::generateCustomUpdate(const BackendBase&, CodeStr
     genCustomUpdate(os, popSubs, *this, modelMerged, "id_syn",
                     [this, &modelMerged](const Models::WUVarReference &varRef, const std::string &index) 
                     {  
-                        return getVarRefIndex(modelMerged.getModel().getBatchSize(),
-                                              getVarAccessDuplication(varRef.getVar().access),
+                        return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
                                               index);
                     });
 }
@@ -365,8 +361,7 @@ void CustomUpdateTransposeWUGroupMerged::generateCustomUpdate(const BackendBase&
     genCustomUpdate(os, popSubs, *this, modelMerged, "id_syn",
                     [this, &modelMerged](const Models::WUVarReference &varRef, const std::string &index) 
                     {
-                        return getVarRefIndex(modelMerged.getModel().getBatchSize(),
-                                              getVarAccessDuplication(varRef.getVar().access),
+                        return getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
                                               index);
                     });
 }

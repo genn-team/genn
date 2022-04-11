@@ -472,7 +472,7 @@ protected:
 
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
-    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu, unsigned int batchSize) const;
+    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
 
 private:
     //--------------------------------------------------------------------------
