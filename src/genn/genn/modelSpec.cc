@@ -176,12 +176,13 @@ void ModelSpec::finalize()
 
     // Custom update groups
     for(auto &c : m_CustomUpdates) {
-        c.second.finalize();
+        c.second.finalize(m_BatchSize);
         c.second.initDerivedParams(m_DT);
     }
 
     // Custom WUM update groups
     for(auto &c : m_CustomWUUpdates) {
+        c.second.finalize(m_BatchSize);
         c.second.initDerivedParams(m_DT);
     }
 
