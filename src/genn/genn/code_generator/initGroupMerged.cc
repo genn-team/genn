@@ -337,7 +337,8 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                 [&model, sg, i](CodeStream &os, Substitutions &varSubs)
                 {
                     genVariableFill(os, "denDelayInSyn" + std::to_string(i), model.scalarExpr(0.0),
-                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize(),
+                                    true, sg->getMaxDendriticDelayTimesteps());
                 });
 
             // Zero dendritic delay pointer
