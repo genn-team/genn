@@ -310,10 +310,10 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
 
     // Initialise neuron variables
     genInitNeuronVarCode(os, backend, popSubs, getArchetype().getNeuronModel()->getVars(), getArchetype().getVarInitialisers(), 
-                            "", "numNeurons", getArchetype().getNumDelaySlots(), getIndex(), model.getPrecision(), model.getBatchSize(),
-                            [this](size_t i){ return getArchetype().isVarQueueRequired(i); },
-                            [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
-                            [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+                         "", "numNeurons", getArchetype().getNumDelaySlots(), getIndex(), model.getPrecision(), model.getBatchSize(),
+                         [this](size_t i){ return getArchetype().isVarQueueRequired(i); },
+                         [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
 
     // Loop through incoming synaptic populations
     for(size_t i = 0; i < getSortedArchetypeMergedInSyns().size(); i++) {
@@ -321,25 +321,23 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
 
         const auto *sg = getSortedArchetypeMergedInSyns().at(i);
 
-        // If this synapse group's input variable should be initialised on device
-        // Generate target-specific code to initialise variable
+        // Zero InSyn
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
             [&model, i] (CodeStream &os, Substitutions &varSubs)
             {
-                os << "group->inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                genVariableFill(os, "inSynInSyn" + std::to_string(i), model.scalarExpr(0.0), 
+                                "id", "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+
             });
 
         // If dendritic delays are required
         if(sg->isDendriticDelayRequired()) {
+            // Zero dendritic delay buffer
             backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                 [&model, sg, i](CodeStream &os, Substitutions &varSubs)
                 {
-                    os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
-                    {
-                        CodeStream::Scope b(os);
-                        const std::string denDelayIndex = "(d * group->numNeurons) + " + varSubs["id"];
-                        os << "group->denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
-                    }
+                    genVariableFill(os, "denDelayInSyn" + std::to_string(i), model.scalarExpr(0.0),
+                                    "id", "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
                 });
 
             // Zero dendritic delay pointer
@@ -353,9 +351,9 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
         // If postsynaptic model variables should be individual
         if(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL_PSM) {
             genInitNeuronVarCode(os, backend, popSubs, sg->getPSModel()->getVars(), sg->getPSVarInitialisers(),
-                                    "InSyn" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),
-                                    [i, this](size_t v, size_t p) { return isPSMVarInitParamHeterogeneous(i, v, p); },
-                                    [i, this](size_t v, size_t p) { return isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
+                                 "InSyn" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),
+                                 [i, this](size_t v, size_t p) { return isPSMVarInitParamHeterogeneous(i, v, p); },
+                                 [i, this](size_t v, size_t p) { return isPSMVarInitDerivedParamHeterogeneous(i, v, p); });
         }
     }
 
@@ -364,11 +362,11 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
     for(size_t i = 0; i < getSortedArchetypeInSynWithPostVars().size(); i++) {
         const auto *sg = getSortedArchetypeInSynWithPostVars().at(i);
         genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPostVars(), sg->getWUPostVarInitialisers(),
-                                "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
-                                i, model.getPrecision(),  model.getBatchSize(),
-                                [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); },
-                                [i, this](size_t v, size_t p) { return isInSynWUMVarInitParamHeterogeneous(i, v, p); },
-                                [i, this](size_t v, size_t p) { return isInSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
+                             "WUPost" + std::to_string(i), "numNeurons", sg->getTrgNeuronGroup()->getNumDelaySlots(),
+                             i, model.getPrecision(),  model.getBatchSize(),
+                             [&sg](size_t){ return (sg->getBackPropDelaySteps() != NO_DELAY); },
+                             [i, this](size_t v, size_t p) { return isInSynWUMVarInitParamHeterogeneous(i, v, p); },
+                             [i, this](size_t v, size_t p) { return isInSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
     }
 
     // Loop through outgoing synaptic populations with presynaptic variables
@@ -376,22 +374,22 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
     for(size_t i = 0; i < getSortedArchetypeOutSynWithPreVars().size(); i++) {
         const auto *sg = getSortedArchetypeOutSynWithPreVars().at(i);
         genInitNeuronVarCode(os, backend, popSubs, sg->getWUModel()->getPreVars(), sg->getWUPreVarInitialisers(),
-                                "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
-                                i, model.getPrecision(),  model.getBatchSize(),
-                                [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); },
-                                [i, this](size_t v, size_t p) { return isOutSynWUMVarInitParamHeterogeneous(i, v, p); },
-                                [i, this](size_t v, size_t p) { return isOutSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
+                             "WUPre" + std::to_string(i), "numNeurons", sg->getSrcNeuronGroup()->getNumDelaySlots(),
+                             i, model.getPrecision(),  model.getBatchSize(),
+                             [&sg](size_t){ return (sg->getDelaySteps() != NO_DELAY); },
+                             [i, this](size_t v, size_t p) { return isOutSynWUMVarInitParamHeterogeneous(i, v, p); },
+                             [i, this](size_t v, size_t p) { return isOutSynWUMVarInitDerivedParamHeterogeneous(i, v, p); });
     }
 
     // Loop through outgoing synaptic populations with presynaptic output
     for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
-        // If this synapse group's pre-synaptic input variable should be initialised
-        // on device, generate target-specific code to initialise variable
+        // Zero revInSynOutSyn
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-            [&model, i] (CodeStream &os, Substitutions &varSubs)
-            {
-                os << "group->revInSynOutSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
-            });
+                                [&model, i] (CodeStream &os, Substitutions &varSubs)
+                                {
+                                    genVariableFill(os, "revInSynOutSyn" + std::to_string(i), model.scalarExpr(0.0),
+                                                    "id", "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+                                });
     }
     
     // Loop through current sources
@@ -400,9 +398,9 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
         const auto *cs = getSortedArchetypeCurrentSources().at(i);
 
         genInitNeuronVarCode(os, backend, popSubs, cs->getCurrentSourceModel()->getVars(), cs->getVarInitialisers(),
-                                "CS" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),
-                                [i, this](size_t v, size_t p) { return isCurrentSourceVarInitParamHeterogeneous(i, v, p); },
-                                [i, this](size_t v, size_t p) { return isCurrentSourceVarInitDerivedParamHeterogeneous(i, v, p); });
+                             "CS" + std::to_string(i), "numNeurons", i, model.getPrecision(),  model.getBatchSize(),
+                             [i, this](size_t v, size_t p) { return isCurrentSourceVarInitParamHeterogeneous(i, v, p); },
+                             [i, this](size_t v, size_t p) { return isCurrentSourceVarInitDerivedParamHeterogeneous(i, v, p); });
     }
 }
 //----------------------------------------------------------------------------
