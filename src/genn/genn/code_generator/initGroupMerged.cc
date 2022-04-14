@@ -326,7 +326,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
             [&model, i] (CodeStream &os, Substitutions &varSubs)
             {
                 genVariableFill(os, "inSynInSyn" + std::to_string(i), model.scalarExpr(0.0), 
-                                "id", "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+                                varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
 
             });
 
@@ -337,7 +337,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                 [&model, sg, i](CodeStream &os, Substitutions &varSubs)
                 {
                     genVariableFill(os, "denDelayInSyn" + std::to_string(i), model.scalarExpr(0.0),
-                                    "id", "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
                 });
 
             // Zero dendritic delay pointer
@@ -388,7 +388,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
                                 [&model, i] (CodeStream &os, Substitutions &varSubs)
                                 {
                                     genVariableFill(os, "revInSynOutSyn" + std::to_string(i), model.scalarExpr(0.0),
-                                                    "id", "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+                                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
                                 });
     }
     
