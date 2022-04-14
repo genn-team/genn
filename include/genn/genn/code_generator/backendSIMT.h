@@ -143,7 +143,6 @@ public:
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
     virtual bool isPopulationRNGRequired() const final { return true; }
 
-    virtual bool isSynRemapRequired(const SynapseGroupInternal &sg) const final;
     virtual bool isPostsynapticRemapRequired() const final { return true; }
 
     //------------------------------------------------------------------------

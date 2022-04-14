@@ -86,7 +86,6 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            {
                                return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                        (sg.isWUVarInitRequired()
-                                        || backend.isSynRemapRequired(sg)
                                         || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                            },
                            &SynapseGroupInternal::getWUInitHashDigest);

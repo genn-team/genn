@@ -1105,13 +1105,6 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             addWeightSharingPointerField("unsigned int", "colLength", backend.getDeviceVarPrefix() + "colLength");
             addWeightSharingPointerField("unsigned int", "remap", backend.getDeviceVarPrefix() + "remap");
         }
-
-        // Add additional structure for synapse dynamics access if required
-        if((role == Role::SynapseDynamics || role == Role::SparseInit) &&
-           backend.isSynRemapRequired(getArchetype()))
-        {
-            addWeightSharingPointerField("unsigned int", "synRemap", backend.getDeviceVarPrefix() + "synRemap");
-        }
     }
     else if(getArchetype().getMatrixType() & SynapseMatrixConnectivity::BITMASK) {
         addWeightSharingPointerField("uint32_t", "gp", backend.getDeviceVarPrefix() + "gp");
