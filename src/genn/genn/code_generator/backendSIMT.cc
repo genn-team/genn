@@ -976,7 +976,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             }
 
             if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "if (" << popSubs["id"] << " < (group->numSrcNeurons * group->rowStride))";
+                os << "if (" << cuSubs["id"] << " < (group->numSrcNeurons * group->rowStride))";
             }
             else {
                 os << "if (" << cuSubs["id"] << " < size)";
@@ -986,8 +986,8 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 
                 if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    os << "const unsigned int row = " << popSubs["id"] << " / group->rowStride;" << std::endl;
-                    os << "const unsigned int col = " << popSubs["id"] << " % group->rowStride;" << std::endl;
+                    os << "const unsigned int row = " << cuSubs["id"] << " / group->rowStride;" << std::endl;
+                    os << "const unsigned int col = " << cuSubs["id"] << " % group->rowStride;" << std::endl;
 
                     cuSubs.addVarSubstitution("id_pre", "row");
                     cuSubs.addVarSubstitution("id_post", "group->ind[" + cuSubs["id"] + "]");
