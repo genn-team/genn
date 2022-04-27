@@ -123,23 +123,25 @@ inline std::string writePreciseString(T value)
     return s.str();
 }
 
+//! Hash arithmetic types and enums
+template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type* = nullptr>
+inline void updateHash(const T& value, boost::uuids::detail::sha1& hash)
+{
+    hash.process_bytes(&value, sizeof(T));
+}
+
 //! Hash strings
 inline void updateHash(const std::string &string, boost::uuids::detail::sha1 &hash)
 {
+    updateHash(string.size(), hash);
     hash.process_bytes(string.data(), string.size());
-}
-
-//! Hash arithmetic types and enums
-template<typename T, typename std::enable_if<std::is_arithmetic<T>::value || std::is_enum<T>::value>::type * = nullptr>
-inline void updateHash(const T &value, boost::uuids::detail::sha1 &hash)
-{
-    hash.process_bytes(&value, sizeof(T));
 }
 
 //! Hash arrays of types which can, themselves, be hashed
 template<typename T, size_t N>
 inline void updateHash(const std::array<T, N> &array, boost::uuids::detail::sha1 &hash)
 {
+    updateHash(array.size(), hash);
     for(const auto &v : array) {
         updateHash(v, hash);
     }
@@ -149,6 +151,7 @@ inline void updateHash(const std::array<T, N> &array, boost::uuids::detail::sha1
 template<typename T>
 inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 &hash)
 {
+    updateHash(vector.size(), hash);
     for(const auto &v : vector) {
         updateHash(v, hash);
     }
@@ -157,6 +160,7 @@ inline void updateHash(const std::vector<T> &vector, boost::uuids::detail::sha1 
 //! Hash vectors of bools
 inline void updateHash(const std::vector<bool> &vector, boost::uuids::detail::sha1 &hash)
 {
+    updateHash(vector.size(), hash);
     for(bool v : vector) {
         updateHash(v, hash);
     }
