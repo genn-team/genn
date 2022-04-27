@@ -197,7 +197,7 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const
 {
-    const size_t numCopies = cg.isBatched() ? batchSize : 1;
+    const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
     return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
 }
 //--------------------------------------------------------------------------
@@ -857,8 +857,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
         os, kernelSubs, modelMerged.getMergedCustomUpdateGroups(), idStart,
         [&modelMerged, this](const CustomUpdateInternal &cu) 
         {
-            const unsigned int numCopies = (cu.isBatched() && !cu.isReduction()) ? modelMerged.getModel().getBatchSize() : 1;
-            return numCopies * padKernelSize(cu.getSize(), KernelCustomUpdate); 
+            return getPaddedNumCustomUpdateThreads(cu, modelMerged.getModel().getBatchSize());
         },
         [&updateGroup](const CustomUpdateGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [&modelMerged, this](CodeStream &os, const CustomUpdateGroupMerged &cg, Substitutions &popSubs)
@@ -885,7 +884,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         CodeStream::Scope b(os);
                         cuSubs.addVarSubstitution("batch", "batch");
 
-                        genCustomUpdateIndexCalculation(os, cg, batchSize);
+                        genCustomUpdateIndexCalculation(os, cg);
                         cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                         // Loop through reduction targets and generate reduction
@@ -902,7 +901,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             }
             // Otherwise
             else {
-                if(cg.getArchetype().isBatched() && batchSize > 1) {
+                if(cg.getArchetype().isBatched()) {
                     // Split ID into intra-batch ID and batch
                     // **TODO** fast-divide style optimisations here
                     os << "const unsigned int paddedSize = " << blockSize << " * ((group->size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
@@ -923,7 +922,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                 {
                     CodeStream::Scope b(os);
 
-                    genCustomUpdateIndexCalculation(os, cg, batchSize);
+                    genCustomUpdateIndexCalculation(os, cg);
                     cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
                 }
             }
@@ -954,7 +953,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
             Substitutions cuSubs(&popSubs);
             if(!cg.getArchetype().isReduction()) {
                 // If it's batched
-                if(cg.getArchetype().isBatched() && batchSize > 1) {
+                if(cg.getArchetype().isBatched()) {
                     os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
 
                     // Split ID into intra-batch ID and batch
@@ -1013,7 +1012,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 // Calculate batch offset if required
-                if(cg.getArchetype().isBatched() && batchSize > 1) {
+                if(cg.getArchetype().isBatched()) {
                     os << "const unsigned int batchOffset = size * batch;" << std::endl;
                 }
 
@@ -1059,7 +1058,6 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                                                          std::find_if(cg.getArchetype().getVarReferences().cbegin(), cg.getArchetype().getVarReferences().cend(),
                                                                       [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }));
             const std::string transposeVarName = cg.getArchetype().getCustomUpdateModel()->getVarRefs().at(transposeVarIdx).name;
-            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
             // To allow these kernels to be batched, we turn 2D grid into wide 1D grid of 2D block so calculate size
             os << "const unsigned int numXBlocks = (group->numTrgNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
@@ -1068,7 +1066,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
             os << "const unsigned int blockStart = " << popSubs["group_start_id"] << " / " << blockSize << ";" << std::endl;
 
             Substitutions synSubs(&popSubs);
-            if(cg.getArchetype().isBatched() && batchSize > 1) {
+            if(cg.getArchetype().isBatched()) {
                 // If there's multiple batches we also need to know how many Y blocks and hence total blocks there are
                 os << "const unsigned int numYBlocks = (group->numSrcNeurons + " << (blockSize - 1) << ") / " << blockSize << ";" << std::endl;
                 os << "const unsigned int numBlocks = numXBlocks * numYBlocks;" << std::endl;
@@ -1147,7 +1145,7 @@ void BackendSIMT::genCustomTransposeUpdateWUKernel(CodeStream &os, const Substit
                         {
                             CodeStream::Scope b(os);
                             os << "group->" << transposeVarName << "Transpose[";
-                            if(cg.getArchetype().isBatched() && batchSize > 1) {
+                            if(cg.getArchetype().isBatched()) {
                                 os << "batchOffset + ";
                             }
                             os << "((y + j) * group->numSrcNeurons) + x] = shTile[" << getThreadID(0) << "][" << getThreadID(1) << " + j];" << std::endl;

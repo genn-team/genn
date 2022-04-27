@@ -512,7 +512,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         // Get reference to group
                         os << "const auto *group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
 
-                        genCustomUpdateIndexCalculation(os, c, 1);
+                        genCustomUpdateIndexCalculation(os, c);
 
                         // Loop through group members
                         os << "for(unsigned int i = 0; i < group->size; i++)";
