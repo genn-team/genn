@@ -281,22 +281,11 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                      return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
                  });
 
-        // If the referenced synapse group requires synaptic remapping and matrix type is sparse, add field
-        if(backend.isSynRemapRequired(*getArchetype().getSynapseGroup())) {
-            addField("unsigned int*", "synRemap", 
-                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + "synRemap" + cg.getSynapseGroup()->getName(); 
-                     });
-        }
-        // Otherwise, add row length
-        else {
-            addField("unsigned int*", "rowLength",
-                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                     { 
-                         return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                     });
-        }
+        addField("unsigned int*", "rowLength",
+                [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                { 
+                    return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                });
     }
 
     // Add heterogeneous custom update model parameters
