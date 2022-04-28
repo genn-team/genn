@@ -95,7 +95,11 @@ BASEDIR=$(dirname "$0")
 make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    if [[ $(uname) == "Darwin" ]]; then
+        lldb -f "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    else
+        gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    fi
 else
     "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
 fi
