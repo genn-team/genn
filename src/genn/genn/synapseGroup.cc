@@ -149,7 +149,6 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
             // If sparse connectivity initialiser provides a function to calculate max row length
             auto calcMaxRowLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
             if(calcMaxRowLengthFunc) {
-
                 // Call function and if max connections we specify is less than the bound imposed by the snippet, give error
                 auto connectivityMaxRowLength = calcMaxRowLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
                                                                      m_SparseConnectivityInitialiser.getParams());
@@ -180,9 +179,9 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
             auto calcMaxColLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
             if (calcMaxColLengthFunc) {
                 // Call function and if max connections we specify is less than the bound imposed by the snippet, give error
-                auto connectivityMaxRowLength = calcMaxColLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
-                    m_SparseConnectivityInitialiser.getParams());
-                if (maxConnections < connectivityMaxRowLength) {
+                auto connectivityMaxColLength = calcMaxColLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
+                                                                     m_SparseConnectivityInitialiser.getParams());
+                if (maxConnections < connectivityMaxColLength) {
                     throw std::runtime_error("setMaxSourceConnections: max source connections must be higher than that already specified by sparse connectivity initialisation snippet.");
                 }
             }
