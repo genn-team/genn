@@ -2,7 +2,7 @@
 
 Release Notes for GeNN v4.7.1
 ====
-This release fixes several small issues found in the 4.7.0 release and includes an optimisation which could be very beneficial for some classes of model.
+This release fixes a plethora of issues found in the 4.7.0 release and also includes an optimisation which could be very beneficial for some classes of model.
 
 Bug fixes
 ---------
@@ -12,6 +12,8 @@ Bug fixes
 4. Fixed issue where initialization code for synapse groups could be incorrectly merged.
 5. Fixed issue when using custom updates on batched neuron group variables.
 6. Fixed issue in spike recording system where some permutations of kernel and neuron population size would result in memory corruption.
+7. Fixed (long-standing) issue where LLDB wasn't correctly invoked when running genn-buildmodel.sh -d on Mac.
+8. Fixed issue where sparse initialisation kernels weren't correctly generated if they were only required to initialise custom updates.
 
 Optimisations
 -------------
