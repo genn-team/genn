@@ -1181,7 +1181,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // Generate sparse initialisation kernel
     size_t idSparseInitStart = 0;
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
+    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()) {
         initializeKernels << "__attribute__((reqd_work_group_size(" << getKernelBlockSize(KernelInitializeSparse) << ", 1, 1)))" << std::endl;
         initializeKernels << "__kernel void " << KernelNames[KernelInitializeSparse] << "(";
         const bool anyCustomWUUpdateSparseInitGroups = !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty();
