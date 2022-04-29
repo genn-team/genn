@@ -6,7 +6,7 @@ This release fixes a plethora of issues found in the 4.7.0 release and also incl
 
 Bug fixes
 ---------
-1. Fixed issue meaning that manual changes to max synaptic row length (via SynapseGroup::setMaxConnections) were not detected and model might not be rebuilt. Additionally, reduce the strictness of checks in SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections so maximum synapstic row and column lengths can be overriden when sparse connectivity initialisation snippets are in use as long as overrided values are larger than those provided by snippet.
+1. Fixed issue meaning that manual changes to max synaptic row length (via SynapseGroup::setMaxConnections) were not detected and model might not be rebuilt. Additionally, reduce the strictness of checks in SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections so maximum synapstic row and column lengths can be overriden when sparse connectivity initialisation snippets are in use as long as overriding values are larger than those provided by snippet.
 2. Fixed issue preventing PyGeNN being built on Python 2.7
 3. Fixed issue meaning that `inSyn`, `denDelayInSyn` and `revInSynOutSyn` variables were not properly zeroed during initialisation (or reinitialisation) of batched models.
 4. Fixed issue where initialization code for synapse groups could be incorrectly merged.
@@ -17,7 +17,7 @@ Bug fixes
 
 Optimisations
 -------------
-1. When using synapse dynamics with sparse connectivity previously had very high memory requirements and poor performance. Both issues have been solved with a new algorithm.
+1. Using synapse dynamics with sparse connectivity previously had very high memory requirements and poor performance. Both issues have been solved with a new algorithm.
 
 Release Notes for GeNN v4.7.0
 ====
