@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.0</span>
+   &#160;<span id="projectnumber">4.7.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -284,9 +284,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a31bc245e4173e7a3249b8da968203fc7"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a31bc245e4173e7a3249b8da968203fc7">isPopulationRNGInitialisedOnDevice</a> () const =0</td></tr>
 <tr class="memdesc:a31bc245e4173e7a3249b8da968203fc7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?  <a href="#a31bc245e4173e7a3249b8da968203fc7">More...</a><br /></td></tr>
 <tr class="separator:a31bc245e4173e7a3249b8da968203fc7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d148b444482f719fbe33ed1313f4b8f"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2d148b444482f719fbe33ed1313f4b8f">isSynRemapRequired</a> (const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg) const =0</td></tr>
-<tr class="memdesc:a2d148b444482f719fbe33ed1313f4b8f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure for synapse group?  <a href="#a2d148b444482f719fbe33ed1313f4b8f">More...</a><br /></td></tr>
-<tr class="separator:a2d148b444482f719fbe33ed1313f4b8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98d6344fec8a12ae7ea7ac8bece8ed50"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a98d6344fec8a12ae7ea7ac8bece8ed50">isPostsynapticRemapRequired</a> () const =0</td></tr>
 <tr class="memdesc:a98d6344fec8a12ae7ea7ac8bece8ed50"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?  <a href="#a98d6344fec8a12ae7ea7ac8bece8ed50">More...</a><br /></td></tr>
 <tr class="separator:a98d6344fec8a12ae7ea7ac8bece8ed50"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -340,8 +337,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:ae65053ff14345bd6a3fde2a616043864"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab24ca7a4f8a0bf16643ab0d4cad91f91"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab24ca7a4f8a0bf16643ab0d4cad91f91">genSynapseIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a> &amp;sg, unsigned int batchSize) const</td></tr>
 <tr class="separator:ab24ca7a4f8a0bf16643ab0d4cad91f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd5e142961de31bc392edda5e2f2714a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afd5e142961de31bc392edda5e2f2714a">genCustomUpdateIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;cu, unsigned int batchSize) const</td></tr>
-<tr class="separator:afd5e142961de31bc392edda5e2f2714a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad32dd406351d26f540dec7f8c59966ba"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad32dd406351d26f540dec7f8c59966ba">genCustomUpdateIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;cu) const</td></tr>
+<tr class="separator:ad32dd406351d26f540dec7f8c59966ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Typedef Documentation</h2>
 <a id="adba20f0748ab61dd226b26bf116b04c2"></a>
@@ -1091,8 +1088,8 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="afd5e142961de31bc392edda5e2f2714a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afd5e142961de31bc392edda5e2f2714a">&#9670;&nbsp;</a></span>genCustomUpdateIndexCalculation()</h2>
+<a id="ad32dd406351d26f540dec7f8c59966ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad32dd406351d26f540dec7f8c59966ba">&#9670;&nbsp;</a></span>genCustomUpdateIndexCalculation()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1110,13 +1107,7 @@ template&lt;typename T &gt; </div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;&#160;</td>
-          <td class="paramname"><em>cu</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">unsigned int&#160;</td>
-          <td class="paramname"><em>batchSize</em>&#160;</td>
+          <td class="paramname"><em>cu</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -3741,36 +3732,6 @@ template&lt;typename T &gt; </div>
 
 </div>
 </div>
-<a id="a2d148b444482f719fbe33ed1313f4b8f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2d148b444482f719fbe33ed1313f4b8f">&#9670;&nbsp;</a></span>isSynRemapRequired()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">virtual bool CodeGenerator::BackendBase::isSynRemapRequired </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>sg</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure for synapse group? </p>
-
-<p>Implemented in <a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a194b18038c05fc2308d01da068023452">CodeGenerator::BackendSIMT</a>, and <a class="el" href="../../d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#afc37eebea325a761fae16aebe8e3c1ce">CodeGenerator::SingleThreadedCPU::Backend</a>.</p>
-
-</div>
-</div>
 <a id="ab2fbacdd19c72a8e91dfda79b9cf82b2"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ab2fbacdd19c72a8e91dfda79b9cf82b2">&#9670;&nbsp;</a></span>setPointerBytes()</h2>
 
@@ -3837,7 +3798,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html">BackendBase</a></li>
-    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
+    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.0</span>
+   &#160;<span id="projectnumber">4.7.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -98,7 +98,24 @@ $(document).ready(function(){initNavTree('df/ddb/ReleaseNotes.html','../../');})
 <div class="title">Release Notes </div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><h1>Release Notes for GeNN v4.7.0 </h1>
+<div class="textblock"><h1>Release Notes for GeNN v4.7.1 </h1>
+<p>This release fixes a plethora of issues found in the 4.7.0 release and also includes an optimisation which could be very beneficial for some classes of model.</p>
+<h2>Bug fixes </h2>
+<ol type="1">
+<li>Fixed issue meaning that manual changes to max synaptic row length (via <a class="el" href="../../dc/dfa/classSynapseGroup.html#aab6b2fb0ad30189bc11ee3dd7d48dbb2" title="Sets the maximum number of target neurons any source neurons can connect to. ">SynapseGroup::setMaxConnections</a>) were not detected and model might not be rebuilt. Additionally, reduce the strictness of checks in <a class="el" href="../../dc/dfa/classSynapseGroup.html#aab6b2fb0ad30189bc11ee3dd7d48dbb2" title="Sets the maximum number of target neurons any source neurons can connect to. ">SynapseGroup::setMaxConnections</a> and <a class="el" href="../../dc/dfa/classSynapseGroup.html#a93b12c08d634f1a2300f1b91ef34ea24" title="Sets the maximum number of source neurons any target neuron can connect to. ">SynapseGroup::setMaxSourceConnections</a> so maximum synapstic row and column lengths can be overriden when sparse connectivity initialisation snippets are in use as long as overriding values are larger than those provided by snippet.</li>
+<li>Fixed issue preventing PyGeNN being built on Python 2.7</li>
+<li>Fixed issue meaning that <code>inSyn</code>, <code>denDelayInSyn</code> and <code>revInSynOutSyn</code> variables were not properly zeroed during initialisation (or reinitialisation) of batched models.</li>
+<li>Fixed issue where initialization code for synapse groups could be incorrectly merged.</li>
+<li>Fixed issue when using custom updates on batched neuron group variables.</li>
+<li>Fixed issue in spike recording system where some permutations of kernel and neuron population size would result in memory corruption.</li>
+<li>Fixed (long-standing) issue where LLDB wasn't correctly invoked when running genn-buildmodel.sh -d on Mac.</li>
+<li>Fixed issue where sparse initialisation kernels weren't correctly generated if they were only required to initialise custom updates.</li>
+</ol>
+<h2>Optimisations </h2>
+<ol type="1">
+<li>Using synapse dynamics with sparse connectivity previously had very high memory requirements and poor performance. Both issues have been solved with a new algorithm.</li>
+</ol>
+<h1>Release Notes for GeNN v4.7.0 </h1>
 <p>This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.6.0 release.</p>
 <h2>User Side Changes </h2>
 <ol type="1">
@@ -562,7 +579,7 @@ The concept of "directInput" has been removed. Users can easily achieve the same
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
+    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

@@ -1,7 +1,5 @@
 var NAVTREEINDEX4 =
 {
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f":[18,0,9,0,4,3],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb":[18,0,9,0,4,46],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#adeae076892f9c8028bb381f4691ce6c3":[18,0,9,0,4,53],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#aeda75ea52b1cc1c75444a0371fe4b664":[18,0,9,0,4,13],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#af366111954258048aacaa0f0a03850b4":[18,0,9,0,4,27],
@@ -249,5 +247,7 @@ var NAVTREEINDEX4 =
 "d6/d93/classSpineMLSimulator_1_1Input_1_1SpikeBase.html#ada03f5aa003c9e527de47f1577c36a9a":[18,0,11,0,5,1],
 "d6/d97/classModels_1_1Base.html":[18,0,6,0],
 "d6/d97/classModels_1_1Base.html#a0278f97a8bbcf2928c563c08ec99a2a5":[18,0,6,0,6],
-"d6/d97/classModels_1_1Base.html#a39479ebc663055cfc5e6d09a9cb2e901":[18,0,6,0,7]
+"d6/d97/classModels_1_1Base.html#a39479ebc663055cfc5e6d09a9cb2e901":[18,0,6,0,7],
+"d6/d97/classModels_1_1Base.html#a55f5a6512bf3fbc71dc753a7f914783a":[18,0,6,0,2],
+"d6/d97/classModels_1_1Base.html#a5a6bc95969a38ac1ac68ab4a0ba94c75":[18,0,6,0,3]
 };

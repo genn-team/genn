@@ -1,7 +1,5 @@
 var NAVTREEINDEX3 =
 {
-"d3/df5/customUpdateModels_8h.html":[19,0,37],
-"d3/df5/customUpdateModels_8h.html#a8d6d4a547def292ea8860a85ed80c1a7":[19,0,37,3],
 "d3/df5/customUpdateModels_8h.html#acb2777aee9463ed36d489705851f74ed":[19,0,37,2],
 "d3/df5/customUpdateModels_8h.html#af5fc31e556cfb8724ac72739462fee53":[19,0,37,4],
 "d3/df5/customUpdateModels_8h_source.html":[19,0,37],
@@ -249,5 +247,7 @@ var NAVTREEINDEX3 =
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac4de8bf08ebcf36115712b639dee0b3f":[18,0,9,0,4,12],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ac97387dee5002396ddc6da5bd2fe16e1":[18,0,9,0,4,56],
 "d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#acf0622c21f3ab6a873acdd8a0d513874":[18,0,9,0,4,50],
-"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad07bd66807e3f6ab59dbe9b014060ca1":[18,0,9,0,4,9]
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad07bd66807e3f6ab59dbe9b014060ca1":[18,0,9,0,4,9],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad64df56c8184a34c85f256e09be9063f":[18,0,9,0,4,3],
+"d5/d49/classpygenn_1_1genn__groups_1_1SynapseGroup.html#ad9b056b4a4620bb9f186120e9e8e40cb":[18,0,9,0,4,46]
 };

@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.0</span>
+   &#160;<span id="projectnumber">4.7.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -211,9 +211,6 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:ada3c048e3548bcb2536c197d88340da3"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ada3c048e3548bcb2536c197d88340da3">isPopulationRNGRequired</a> () const final</td></tr>
 <tr class="memdesc:ada3c048e3548bcb2536c197d88340da3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends use different RNGs for different things. Does this one require population RNGs?  <a href="#ada3c048e3548bcb2536c197d88340da3">More...</a><br /></td></tr>
 <tr class="separator:ada3c048e3548bcb2536c197d88340da3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a194b18038c05fc2308d01da068023452"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a194b18038c05fc2308d01da068023452">isSynRemapRequired</a> (const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;sg) const final</td></tr>
-<tr class="memdesc:a194b18038c05fc2308d01da068023452"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure for synapse group?  <a href="#a194b18038c05fc2308d01da068023452">More...</a><br /></td></tr>
-<tr class="separator:a194b18038c05fc2308d01da068023452"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa157c2fa1dc333af77ad669ef98c8f80"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#aa157c2fa1dc333af77ad669ef98c8f80">isPostsynapticRemapRequired</a> () const final</td></tr>
 <tr class="memdesc:aa157c2fa1dc333af77ad669ef98c8f80"><td class="mdescLeft">&#160;</td><td class="mdescRight">Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?  <a href="#aa157c2fa1dc333af77ad669ef98c8f80">More...</a><br /></td></tr>
 <tr class="separator:aa157c2fa1dc333af77ad669ef98c8f80"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -222,6 +219,8 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:ae7ec8a229db7ec36b0645bd739a7cc7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a92359aa8b47a57f00eb48a7161af8f"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5a92359aa8b47a57f00eb48a7161af8f">getKernelBlockSize</a> (<a class="el" href="../../d0/d02/namespaceCodeGenerator.html#a6a85c4f8d1089575cef8bef2e27d6e61">Kernel</a> kernel) const</td></tr>
 <tr class="separator:a5a92359aa8b47a57f00eb48a7161af8f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7018f3fe0ece09238fe31e1055069e82"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a7018f3fe0ece09238fe31e1055069e82">getPaddedNumCustomUpdateThreads</a> (const <a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a> &amp;cg, unsigned int batchSize) const</td></tr>
+<tr class="separator:a7018f3fe0ece09238fe31e1055069e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5aca8573696d8e1e8163f888211c370d"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5aca8573696d8e1e8163f888211c370d">getPaddedNumCustomUpdateWUThreads</a> (const <a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a> &amp;cg, unsigned int batchSize) const</td></tr>
 <tr class="separator:a5aca8573696d8e1e8163f888211c370d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac517b101cc9bee44adb0c2fc7ec1066a"><td class="memItemLeft" align="right" valign="top">size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html#ac517b101cc9bee44adb0c2fc7ec1066a">getPaddedNumCustomUpdateTransposeWUThreads</a> (const <a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a> &amp;cg, unsigned int batchSize) const</td></tr>
@@ -457,8 +456,8 @@ Protected Member Functions</h2></td></tr>
 <tr class="separator:ae65053ff14345bd6a3fde2a616043864 inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab24ca7a4f8a0bf16643ab0d4cad91f91 inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ab24ca7a4f8a0bf16643ab0d4cad91f91">genSynapseIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d7/d78/classCodeGenerator_1_1SynapseGroupMergedBase.html">SynapseGroupMergedBase</a> &amp;sg, unsigned int batchSize) const</td></tr>
 <tr class="separator:ab24ca7a4f8a0bf16643ab0d4cad91f91 inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd5e142961de31bc392edda5e2f2714a inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#afd5e142961de31bc392edda5e2f2714a">genCustomUpdateIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;cu, unsigned int batchSize) const</td></tr>
-<tr class="separator:afd5e142961de31bc392edda5e2f2714a inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad32dd406351d26f540dec7f8c59966ba inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#ad32dd406351d26f540dec7f8c59966ba">genCustomUpdateIndexCalculation</a> (<a class="el" href="../../d9/df8/classCodeGenerator_1_1CodeStream.html">CodeStream</a> &amp;os, const <a class="el" href="../../d0/ddb/classCodeGenerator_1_1CustomUpdateGroupMerged.html">CustomUpdateGroupMerged</a> &amp;cu) const</td></tr>
+<tr class="separator:ad32dd406351d26f540dec7f8c59966ba inherit pro_methods_classCodeGenerator_1_1BackendBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Base class for Single Instruction Multiple Thread style backends. </p>
@@ -2040,6 +2039,34 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
+<a id="a7018f3fe0ece09238fe31e1055069e82"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7018f3fe0ece09238fe31e1055069e82">&#9670;&nbsp;</a></span>getPaddedNumCustomUpdateThreads()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">size_t CodeGenerator::BackendSIMT::getPaddedNumCustomUpdateThreads </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="../../d7/df7/classCustomUpdateInternal.html">CustomUpdateInternal</a> &amp;&#160;</td>
+          <td class="paramname"><em>cg</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>batchSize</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+</div>
+</div>
 <a id="ac517b101cc9bee44adb0c2fc7ec1066a"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#ac517b101cc9bee44adb0c2fc7ec1066a">&#9670;&nbsp;</a></span>getPaddedNumCustomUpdateTransposeWUThreads()</h2>
 
@@ -2360,36 +2387,6 @@ Protected Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a194b18038c05fc2308d01da068023452"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a194b18038c05fc2308d01da068023452">&#9670;&nbsp;</a></span>isSynRemapRequired()</h2>
-
-<div class="memitem">
-<div class="memproto">
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">bool CodeGenerator::BackendSIMT::isSynRemapRequired </td>
-          <td>(</td>
-          <td class="paramtype">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> &amp;&#160;</td>
-          <td class="paramname"><em>sg</em></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">final</span><span class="mlabel">virtual</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure for synapse group? </p>
-
-<p>Implements <a class="el" href="../../d3/d15/classCodeGenerator_1_1BackendBase.html#a2d148b444482f719fbe33ed1313f4b8f">CodeGenerator::BackendBase</a>.</p>
-
-</div>
-</div>
 <a id="a256d7519de033de9091e53e56edb94e4"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a256d7519de033de9091e53e56edb94e4">&#9670;&nbsp;</a></span>padKernelSize()</h2>
 
@@ -2462,7 +2459,7 @@ Protected Member Functions</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../d0/d02/namespaceCodeGenerator.html">CodeGenerator</a></li><li class="navelem"><a class="el" href="../../d1/de3/classCodeGenerator_1_1BackendSIMT.html">BackendSIMT</a></li>
-    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
+    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

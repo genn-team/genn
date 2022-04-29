@@ -23,6 +23,7 @@ var searchData=
   ['check_5fopencl_5ferrors',['CHECK_OPENCL_ERRORS',['../da/d2b/opencl_2utils_8h.html#acec154183efff3573f5ae83cc2752910',1,'utils.h']]],
   ['checknumdelayslots',['checkNumDelaySlots',['../d7/d3b/classNeuronGroup.html#a5e4a7f08a6b572f6a7c7b2b24e7bf7ce',1,'NeuronGroup']]],
   ['checkunreplacedvariables',['checkUnreplacedVariables',['../d0/d02/namespaceCodeGenerator.html#a10af4d74175240a715403e6b5f2103cf',1,'CodeGenerator']]],
+  ['checkvarreferencebatching',['checkVarReferenceBatching',['../da/da9/classCustomUpdateBase.html#a296997a7b32fdd67faa33a46dcd96cd3',1,'CustomUpdateBase']]],
   ['checkvarreferences',['checkVarReferences',['../da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166',1,'CustomUpdateBase']]],
   ['clangfeatures_2eh',['clangfeatures.h',['../d0/de5/clangfeatures_8h.html',1,'']]],
   ['clgeterrorstring',['clGetErrorString',['../dd/d8e/namespaceCodeGenerator_1_1OpenCL_1_1Utils.html#a0627304c2cb63946d92e2e7ae2267e7c',1,'CodeGenerator::OpenCL::Utils']]],

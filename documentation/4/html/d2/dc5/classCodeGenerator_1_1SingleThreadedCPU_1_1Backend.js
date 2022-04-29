@@ -60,6 +60,5 @@ var classCodeGenerator_1_1SingleThreadedCPU_1_1Backend =
     [ "isPopulationRNGInitialisedOnDevice", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a769924a8b809e8f83d4d28cb4b3b8bbb", null ],
     [ "isPopulationRNGRequired", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ac5219c47e156425cde0a7a5742858d02", null ],
     [ "isPostsynapticRemapRequired", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#a64fd5b57078c789d09ff4b1e276399fa", null ],
-    [ "isSynRemapRequired", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#afc37eebea325a761fae16aebe8e3c1ce", null ],
     [ "supportsNamespace", "d2/dc5/classCodeGenerator_1_1SingleThreadedCPU_1_1Backend.html#ac8230b149007bbac025c62e0c2be313d", null ]
 ];

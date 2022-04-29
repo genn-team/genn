@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.0</span>
+   &#160;<span id="projectnumber">4.7.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -155,6 +155,8 @@ Additional Inherited Members</h2></td></tr>
 <tr class="inherit_header pro_methods_classCustomUpdateWU"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_classCustomUpdateWU')"><img src="../../closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="../../db/dd4/classCustomUpdateWU.html">CustomUpdateWU</a></td></tr>
 <tr class="memitem:a21baa333480384dad198a25d837b3554 inherit pro_methods_classCustomUpdateWU"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a21baa333480384dad198a25d837b3554">CustomUpdateWU</a> (const std::string &amp;name, const std::string &amp;updateGroupName, const <a class="el" href="../../de/db4/classCustomUpdateModels_1_1Base.html">CustomUpdateModels::Base</a> *customUpdateModel, const std::vector&lt; double &gt; &amp;params, const std::vector&lt; <a class="el" href="../../d8/dee/classModels_1_1VarInit.html">Models::VarInit</a> &gt; &amp;varInitialisers, const std::vector&lt; <a class="el" href="../../dc/d6d/classModels_1_1WUVarReference.html">Models::WUVarReference</a> &gt; &amp;varReferences, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultVarLocation, <a class="el" href="../../d6/d8f/variableMode_8h.html#a2807180f6261d89020cf7d7d498fb087">VarLocation</a> defaultExtraGlobalParamLocation)</td></tr>
 <tr class="separator:a21baa333480384dad198a25d837b3554 inherit pro_methods_classCustomUpdateWU"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25f4696112572ebd7f2e0be0a80132b1 inherit pro_methods_classCustomUpdateWU"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a25f4696112572ebd7f2e0be0a80132b1">finalize</a> (unsigned int batchSize)</td></tr>
+<tr class="separator:a25f4696112572ebd7f2e0be0a80132b1 inherit pro_methods_classCustomUpdateWU"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a64a6f218f085f4b9d80e0494f5f16320 inherit pro_methods_classCustomUpdateWU"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a64a6f218f085f4b9d80e0494f5f16320">isTransposeOperation</a> () const</td></tr>
 <tr class="separator:a64a6f218f085f4b9d80e0494f5f16320 inherit pro_methods_classCustomUpdateWU"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45ee545d5c8deda64e44135dbd920160 inherit pro_methods_classCustomUpdateWU"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="../../dd/d48/classSynapseGroupInternal.html">SynapseGroupInternal</a> *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/dd4/classCustomUpdateWU.html#a45ee545d5c8deda64e44135dbd920160">getSynapseGroup</a> () const</td></tr>
@@ -195,6 +197,10 @@ Additional Inherited Members</h2></td></tr>
 <tr class="memitem:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166">checkVarReferences</a> (const std::vector&lt; V &gt; &amp;varRefs)</td></tr>
 <tr class="memdesc:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check if variable reference types match those specified in model.  <a href="../../da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166">More...</a><br /></td></tr>
 <tr class="separator:af063e15234b6e5e11768536695a72166 inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a296997a7b32fdd67faa33a46dcd96cd3 inherit pro_methods_classCustomUpdateBase"><td class="memTemplParams" colspan="2">template&lt;typename V &gt; </td></tr>
+<tr class="memitem:a296997a7b32fdd67faa33a46dcd96cd3 inherit pro_methods_classCustomUpdateBase"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a296997a7b32fdd67faa33a46dcd96cd3">checkVarReferenceBatching</a> (const std::vector&lt; V &gt; &amp;varRefs, unsigned int batchSize)</td></tr>
+<tr class="memdesc:a296997a7b32fdd67faa33a46dcd96cd3 inherit pro_methods_classCustomUpdateBase"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check if variable reference types match those specified in model.  <a href="../../da/da9/classCustomUpdateBase.html#a296997a7b32fdd67faa33a46dcd96cd3">More...</a><br /></td></tr>
+<tr class="separator:a296997a7b32fdd67faa33a46dcd96cd3 inherit pro_methods_classCustomUpdateBase"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="ad193d2ec4a9aa0ff72d5fb67e6a368eb"></a>
@@ -279,7 +285,7 @@ Additional Inherited Members</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/ddf/classCustomUpdateWUInternal.html">CustomUpdateWUInternal</a></li>
-    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
+    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>

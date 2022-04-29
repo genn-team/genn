@@ -18,7 +18,7 @@ var classCodeGenerator_1_1BackendBase =
     [ "genCurrentVariablePush", "d3/d15/classCodeGenerator_1_1BackendBase.html#a19e04bd3d4de38589b51600ad418cead", null ],
     [ "genCurrentVariablePushPull", "d3/d15/classCodeGenerator_1_1BackendBase.html#a67889d974494123157e2dd27b9145106", null ],
     [ "genCustomUpdate", "d3/d15/classCodeGenerator_1_1BackendBase.html#a28d2ba608f32d392b5dd81d2bd292cc4", null ],
-    [ "genCustomUpdateIndexCalculation", "d3/d15/classCodeGenerator_1_1BackendBase.html#afd5e142961de31bc392edda5e2f2714a", null ],
+    [ "genCustomUpdateIndexCalculation", "d3/d15/classCodeGenerator_1_1BackendBase.html#ad32dd406351d26f540dec7f8c59966ba", null ],
     [ "genDefinitionsInternalPreamble", "d3/d15/classCodeGenerator_1_1BackendBase.html#aded19522a63e1d95cd475890dc843ee3", null ],
     [ "genDefinitionsPreamble", "d3/d15/classCodeGenerator_1_1BackendBase.html#a1f01b0d362892758364d86a17eba4706", null ],
     [ "genDenseSynapseVariableRowInit", "d3/d15/classCodeGenerator_1_1BackendBase.html#ac126f4004336b46d5e8953ed635efef2", null ],
@@ -82,7 +82,6 @@ var classCodeGenerator_1_1BackendBase =
     [ "isPopulationRNGInitialisedOnDevice", "d3/d15/classCodeGenerator_1_1BackendBase.html#a31bc245e4173e7a3249b8da968203fc7", null ],
     [ "isPopulationRNGRequired", "d3/d15/classCodeGenerator_1_1BackendBase.html#a60b2bc7c3be9d6e3e014a6efe3dacbeb", null ],
     [ "isPostsynapticRemapRequired", "d3/d15/classCodeGenerator_1_1BackendBase.html#a98d6344fec8a12ae7ea7ac8bece8ed50", null ],
-    [ "isSynRemapRequired", "d3/d15/classCodeGenerator_1_1BackendBase.html#a2d148b444482f719fbe33ed1313f4b8f", null ],
     [ "setPointerBytes", "d3/d15/classCodeGenerator_1_1BackendBase.html#ab2fbacdd19c72a8e91dfda79b9cf82b2", null ],
     [ "supportsNamespace", "d3/d15/classCodeGenerator_1_1BackendBase.html#a3db5c6da768041efa01bb187f7127184", null ]
 ];

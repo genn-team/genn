@@ -40,6 +40,7 @@ var classCodeGenerator_1_1BackendSIMT =
     [ "getKernelBlockSize", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5a92359aa8b47a57f00eb48a7161af8f", null ],
     [ "getKernelBlockSize", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#ab859cfab6dec6d05271629e3306f601d", null ],
     [ "getNumInitialisationRNGStreams", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#ae7ec8a229db7ec36b0645bd739a7cc7a", null ],
+    [ "getPaddedNumCustomUpdateThreads", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a7018f3fe0ece09238fe31e1055069e82", null ],
     [ "getPaddedNumCustomUpdateTransposeWUThreads", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#ac517b101cc9bee44adb0c2fc7ec1066a", null ],
     [ "getPaddedNumCustomUpdateWUThreads", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a5aca8573696d8e1e8163f888211c370d", null ],
     [ "getSharedPrefix", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#affa3027a993b12f53733ecc5035c7a74", null ],
@@ -51,6 +52,5 @@ var classCodeGenerator_1_1BackendSIMT =
     [ "isGlobalHostRNGRequired", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a371711fa8405ff552e1ca977576d0108", null ],
     [ "isPopulationRNGRequired", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#ada3c048e3548bcb2536c197d88340da3", null ],
     [ "isPostsynapticRemapRequired", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#aa157c2fa1dc333af77ad669ef98c8f80", null ],
-    [ "isSynRemapRequired", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a194b18038c05fc2308d01da068023452", null ],
     [ "padKernelSize", "d1/de3/classCodeGenerator_1_1BackendSIMT.html#a256d7519de033de9091e53e56edb94e4", null ]
 ];

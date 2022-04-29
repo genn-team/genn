@@ -42,7 +42,7 @@
   <td style="padding-left: 0.5em; padding-bottom: 0.5em;" id="projectlogo"><img alt="Logo" src="../../GeNN-logo-55px.gif"/></td>
   <td style="padding-left: 3.5em; padding-bottom: 0.5em;">
    <div id="projectname">GeNN
-   &#160;<span id="projectnumber">4.7.0</span>
+   &#160;<span id="projectnumber">4.7.1</span>
    </div>
    <div id="projectbrief">GPU enhanced Neuronal Networks (GeNN)</div>
   </td>
@@ -178,6 +178,10 @@ Protected Member Functions</h2></td></tr>
 <tr class="memitem:af063e15234b6e5e11768536695a72166"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#af063e15234b6e5e11768536695a72166">checkVarReferences</a> (const std::vector&lt; V &gt; &amp;varRefs)</td></tr>
 <tr class="memdesc:af063e15234b6e5e11768536695a72166"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check if variable reference types match those specified in model.  <a href="#af063e15234b6e5e11768536695a72166">More...</a><br /></td></tr>
 <tr class="separator:af063e15234b6e5e11768536695a72166"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a296997a7b32fdd67faa33a46dcd96cd3"><td class="memTemplParams" colspan="2">template&lt;typename V &gt; </td></tr>
+<tr class="memitem:a296997a7b32fdd67faa33a46dcd96cd3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="../../da/da9/classCustomUpdateBase.html#a296997a7b32fdd67faa33a46dcd96cd3">checkVarReferenceBatching</a> (const std::vector&lt; V &gt; &amp;varRefs, unsigned int batchSize)</td></tr>
+<tr class="memdesc:a296997a7b32fdd67faa33a46dcd96cd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Helper function to check if variable reference types match those specified in model.  <a href="#a296997a7b32fdd67faa33a46dcd96cd3">More...</a><br /></td></tr>
+<tr class="separator:a296997a7b32fdd67faa33a46dcd96cd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="aad47959474b3b3b16a600abd6ca6e0f3"></a>
@@ -298,6 +302,46 @@ Protected Member Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a296997a7b32fdd67faa33a46dcd96cd3"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a296997a7b32fdd67faa33a46dcd96cd3">&#9670;&nbsp;</a></span>checkVarReferenceBatching()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename V &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void CustomUpdateBase::checkVarReferenceBatching </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; V &gt; &amp;&#160;</td>
+          <td class="paramname"><em>varRefs</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">unsigned int&#160;</td>
+          <td class="paramname"><em>batchSize</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Helper function to check if variable reference types match those specified in model. </p>
+
+</div>
+</div>
 <a id="af063e15234b6e5e11768536695a72166"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#af063e15234b6e5e11768536695a72166">&#9670;&nbsp;</a></span>checkVarReferences()</h2>
 
@@ -804,7 +848,7 @@ template&lt;typename V &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="../../da/da9/classCustomUpdateBase.html">CustomUpdateBase</a></li>
-    <li class="footer">Generated on Fri Feb 11 2022 17:17:45 for GeNN by
+    <li class="footer">Generated on Fri Apr 29 2022 10:38:21 for GeNN by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="../../doxygen.png" alt="doxygen"/></a> 1.8.13 </li>
   </ul>
