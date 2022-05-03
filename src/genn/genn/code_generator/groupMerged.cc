@@ -944,10 +944,6 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             addPSPointerField(precision, "inSyn", backend.getDeviceVarPrefix() + "inSyn");
         }
     }
-    // for all types of roles
-    if(getArchetype().isPresynapticOutputRequired()) {
-      addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
-    }
 
     if(role == Role::PresynapticUpdate) {
         if(getArchetype().isTrueSpikeRequired()) {
@@ -967,6 +963,11 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
 
     // If this structure is used for updating rather than initializing
     if(updateRole) {
+        // for all types of roles
+        if (getArchetype().isPresynapticOutputRequired()) {
+            addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
+        }
+
         // If presynaptic population has delay buffers
         if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             addSrcPointerField("unsigned int", "srcSpkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
