@@ -112,6 +112,7 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
         funcSubs.addVarSubstitution("t", "t");
+        funcSubs.addVarSubstitution("batch", "0");
 
         // Push any required EGPs
         pushEGPHandler(os);
@@ -282,6 +283,7 @@ void Backend::genSynapseUpdate(CodeStream &os, const ModelSpecMerged &modelMerge
         CodeStream::Scope b(os);
         Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
         funcSubs.addVarSubstitution("t", "t");
+        funcSubs.addVarSubstitution("batch", "0");
 
         // Push any required EGPs
         pushEGPHandler(os);
@@ -489,6 +491,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
             Substitutions funcSubs(getFunctionTemplates(model.getPrecision()));
             funcSubs.addVarSubstitution("t", "t");
+            funcSubs.addVarSubstitution("batch", "0");
 
             // Push any required EGPs
             pushEGPHandler(os);
