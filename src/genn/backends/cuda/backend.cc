@@ -442,7 +442,6 @@ void Backend::genNeuronUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
             os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronPrevSpikeTimeUpdate) << " * blockIdx.x + threadIdx.x;" << std::endl;
             if(model.getBatchSize() > 1) {
                 os << "const unsigned int batch = blockIdx.y;" << std::endl;
-                kernelSubs.addVarSubstitution("batch", "batch");
             }
             kernelSubs.addVarSubstitution("t", "t");
 
