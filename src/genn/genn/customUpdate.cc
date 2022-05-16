@@ -116,8 +116,11 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 }
 //----------------------------------------------------------------------------
-void CustomUpdate::finalize()
+void CustomUpdate::finalize(unsigned int batchSize)
 {
+    // Check variable reference batching
+    checkVarReferenceBatching(m_VarReferences, batchSize);
+
     // If any variable references have delays
     auto delayRef = std::find_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
                                  [](const auto &v) { return v.second.getDelayNeuronGroup() != nullptr; });
@@ -221,6 +224,13 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
             throw std::runtime_error("Each custom update can only calculate the tranpose of a single variable,");
         }
     }
+}
+//----------------------------------------------------------------------------
+void CustomUpdateWU::finalize(unsigned int batchSize)
+{
+    // Check variable reference types
+    checkVarReferenceBatching(m_VarReferences, batchSize);
+
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const

@@ -52,25 +52,27 @@ void setBuildStatus(String message, String state) {
 //--------------------------------------------------------------------------
 // Entry point
 //--------------------------------------------------------------------------
-// Build dictionary of available nodes and their labels
-def availableNodes = [:]
-for(node in jenkins.model.Jenkins.instance.nodes) {
-    if(node.getComputer().isOnline() && node.getComputer().countIdle() > 0) {
-        availableNodes[node.name] = node.getLabelString().split() as Set
+// Build list of available nodes and their labels
+def availableNodes = []
+for (node in jenkins.model.Jenkins.instance.nodes) {
+    if (node.getComputer().isOnline() && node.getComputer().countIdle() > 0) {
+        availableNodes.add([node.name, node.getLabelString().split() as Set])
     }
 }
 
+// Shuffle nodes so multiple compatible machines get used
+Collections.shuffle(availableNodes)
+
 // Loop through the desired builds
 def builderNodes = []
-for(b in desiredBuilds) {
+for (b in desiredBuilds) {
     // Loop through all available nodes
-    for(n in availableNodes) {
-        // If, after subtracting this node's labels, all build properties are satisfied
-        if((b - n.value).size() == 0) {
+    for (n = 0; n < availableNodes.size(); n++) {
+        // If this node has all desired properties
+        if(availableNodes[n][1].containsAll(b)) {
             // Add node's name to list of builders and remove it from dictionary of available nodes
-            // **YUCK** for some reason tuples aren't serializable so need to add an arraylist
-            builderNodes.add([n.key, n.value])
-            availableNodes.remove(n.key)
+            builderNodes.add(availableNodes[n])
+            availableNodes.remove(n)
             break
         }
     }
@@ -195,7 +197,9 @@ for(b = 0; b < builderNodes.size(); b++) {
                             def uniqueCoverage = "coverage_" + env.NODE_NAME + ".txt";
                             if(fileExists(uniqueCoverage)) {
                                 // Upload to code cov
-                                sh "curl -s https://codecov.io/bash | bash -s - -n " + env.NODE_NAME + " -f " + uniqueCoverage + " -t 04054241-1f5e-4c42-9564-9b99ede08113";
+                                withCredentials([string(credentialsId: "codecov_token_genn", variable: "CODECOV_TOKEN")]) {
+                                    sh 'curl -s https://codecov.io/bash | bash -s - -n ' + env.NODE_NAME + ' -f ' + uniqueCoverage + ' -t $CODECOV_TOKEN';
+                                }
                             }
                             else {
                                 echo uniqueCoverage + " doesn't exist!";

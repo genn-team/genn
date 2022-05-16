@@ -1243,14 +1243,6 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                 s.second.getSparseIndType(), "ind" + s.second.getName(), varLoc, size, mem);
 
-
-            // If synapse remap structure is required, allocate synRemap
-            // **THINK** this is over-allocating
-            if(backend.isSynRemapRequired(s.second)) {
-                backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
-                                    "unsigned int", "synRemap" + s.second.getName(), VarLocation::DEVICE, size + 1, mem);
-            }
-
             // **TODO** remap is not always required
             if(backend.isPostsynapticRemapRequired() && !s.second.getWUModel()->getLearnPostCode().empty()) {
                 const size_t postSize = (size_t)s.second.getTrgNeuronGroup()->getNumNeurons() * (size_t)s.second.getMaxSourceConnections();

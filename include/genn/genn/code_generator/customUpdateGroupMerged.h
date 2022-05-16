@@ -35,8 +35,8 @@ public:
     //----------------------------------------------------------------------------
     // Static API
     //----------------------------------------------------------------------------
-    std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getVarRefIndex(bool delay, unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -58,8 +58,8 @@ public:
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
-    std::string getVarIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
-    std::string getVarRefIndex(unsigned int batchSize, VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
+    std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
 protected:
     CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,

@@ -203,10 +203,10 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu, unsigned int batchSize) const
+void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
 {
     // If batching is enabled, calculate batch offset
-    if(cu.getArchetype().isBatched() && batchSize > 1) {
+    if(cu.getArchetype().isBatched()) {
         os << "const unsigned int batchOffset = group->size * batch;" << std::endl;
     }
             
@@ -216,7 +216,7 @@ void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os,
         os << "const unsigned int delayOffset = (*group->spkQuePtr * group->size);" << std::endl;
 
         // If batching is also enabled, calculate offset including delay and batch
-        if(cu.getArchetype().isBatched() && batchSize > 1) {
+        if(cu.getArchetype().isBatched()) {
             os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
     }

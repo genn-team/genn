@@ -126,8 +126,15 @@ void SynapseGroup::setSparseConnectivityLocation(VarLocation loc)
 void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 {
     if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if(m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
-            throw std::runtime_error("setMaxConnections: Synapse group already has max connections defined by sparse connectivity initialisation snippet.");
+        // If sparse connectivity initialiser provides a function to calculate max row length
+        auto calcMaxRowLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+        if(calcMaxRowLengthFunc) {
+            // Call function and if max connections we specify is less than the bound imposed by the snippet, give error
+            auto connectivityMaxRowLength = calcMaxRowLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
+                                                                 m_SparseConnectivityInitialiser.getParams());
+            if (maxConnections < connectivityMaxRowLength) {
+                throw std::runtime_error("setMaxConnections: max connections must be higher than that already specified by sparse connectivity initialisation snippet.");
+            }
         }
 
         m_MaxConnections = maxConnections;
@@ -143,8 +150,15 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
 void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
 {
     if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        if(m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
-            throw std::runtime_error("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
+        // If sparse connectivity initialiser provides a function to calculate max col length
+        auto calcMaxColLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
+        if (calcMaxColLengthFunc) {
+            // Call function and if max connections we specify is less than the bound imposed by the snippet, give error
+            auto connectivityMaxColLength = calcMaxColLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
+                                                                 m_SparseConnectivityInitialiser.getParams());
+            if (maxConnections < connectivityMaxColLength) {
+                throw std::runtime_error("setMaxSourceConnections: max source connections must be higher than that already specified by sparse connectivity initialisation snippet.");
+            }
         }
 
         m_MaxSourceConnections = maxConnections;
@@ -307,6 +321,11 @@ bool SynapseGroup::isDendriticDelayRequired() const
         return true;
     }
 
+    // If addToInSynDelay function is used in event code, return true
+    if(getWUModel()->getEventCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
     // If addToInSynDelay function is used in synapse dynamics, return true
     if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
         return true;
@@ -432,7 +451,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
+        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_FusedPreOutputSuffix(name), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -885,6 +904,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     Utils::updateHash(getMatrixType(), hash);
     Utils::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
+
+    Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
+    Utils::updateHash(getWUModel()->getLearnPostCode().empty(), hash);
 
     // Include variable initialiser hashes
     for(const auto &w : getWUVarInitialisers()) {

@@ -143,7 +143,6 @@ public:
     virtual bool isGlobalDeviceRNGRequired(const ModelSpecMerged &modelMerged) const final;
     virtual bool isPopulationRNGRequired() const final { return true; }
 
-    virtual bool isSynRemapRequired(const SynapseGroupInternal &sg) const final;
     virtual bool isPostsynapticRemapRequired() const final { return true; }
 
     //------------------------------------------------------------------------
@@ -155,6 +154,7 @@ public:
 
     size_t getKernelBlockSize(Kernel kernel) const { return m_KernelBlockSizes.at(kernel); }
 
+    size_t getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     size_t getPaddedNumCustomUpdateTransposeWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const;
     

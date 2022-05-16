@@ -21,7 +21,8 @@ const std::vector<Substitutions::FunctionTemplate> cpuSinglePrecisionFunctions =
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<float>($(0), $(1))($(rng))"},
-    {"gennrand_gamma", 1, "std::gamma_distribution<float>($(0), 1.0f)($(rng))"}
+    {"gennrand_gamma", 1, "std::gamma_distribution<float>($(0), 1.0f)($(rng))"},
+    {"gennrand_binomial", 2, "std::binomial_distribution<unsigned int>($(0), $(1))($(rng))"}
 };
 //--------------------------------------------------------------------------
 const std::vector<Substitutions::FunctionTemplate> cpuDoublePrecisionFunctions = {
@@ -29,7 +30,8 @@ const std::vector<Substitutions::FunctionTemplate> cpuDoublePrecisionFunctions =
     {"gennrand_normal", 0, "standardNormalDistribution($(rng))"},
     {"gennrand_exponential", 0, "standardExponentialDistribution($(rng))"},
     {"gennrand_log_normal", 2, "std::lognormal_distribution<double>($(0), $(1))($(rng))"},
-    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))"}
+    {"gennrand_gamma", 1, "std::gamma_distribution<double>($(0), 1.0)($(rng))"},
+    {"gennrand_binomial", 2, "std::binomial_distribution<unsigned int>($(0), $(1))($(rng))"}
 };
 
 //--------------------------------------------------------------------------
@@ -510,7 +512,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
                         // Get reference to group
                         os << "const auto *group = &mergedCustomUpdateGroup" << c.getIndex() << "[g]; " << std::endl;
 
-                        genCustomUpdateIndexCalculation(os, c, 1);
+                        genCustomUpdateIndexCalculation(os, c);
 
                         // Loop through group members
                         os << "for(unsigned int i = 0; i < group->size; i++)";

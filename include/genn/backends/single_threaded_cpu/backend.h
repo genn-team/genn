@@ -141,7 +141,6 @@ public:
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return false; }
 
-    virtual bool isSynRemapRequired(const SynapseGroupInternal&) const override{ return false; }
     virtual bool isPostsynapticRemapRequired() const override{ return true; }
 
     //! Backends which support batch-parallelism might require an additional host reduction phase after reduction kernels

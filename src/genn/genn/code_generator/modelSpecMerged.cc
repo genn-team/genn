@@ -86,7 +86,6 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            {
                                return ((sg.getMatrixType() & SynapseMatrixConnectivity::SPARSE) && 
                                        (sg.isWUVarInitRequired()
-                                        || backend.isSynRemapRequired(sg)
                                         || (backend.isPostsynapticRemapRequired() && !sg.getWUModel()->getLearnPostCode().empty())));
                            },
                            &SynapseGroupInternal::getWUInitHashDigest);
@@ -316,22 +315,27 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
     // Update hash with each group's variable locations
     // **NOTE** these only effects the runner - doesn't matter for modules so this is done he
     for(const auto &g : getModel().getNeuronGroups()) {
+        Utils::updateHash(g.second.getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
 
     for(const auto &g : getModel().getSynapseGroups()) {
+        Utils::updateHash(g.second.getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
 
     for(const auto &g : getModel().getLocalCurrentSources()) {
+        Utils::updateHash(g.second.getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
     
     for(const auto &g : getModel().getCustomUpdates()) {
+        Utils::updateHash(g.second.getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
 
     for(const auto &g : getModel().getCustomWUUpdates()) {
+        Utils::updateHash(g.second.getName(), hash);
         Utils::updateHash(g.second.getVarLocationHashDigest(), hash);
     }
 

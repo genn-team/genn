@@ -302,9 +302,10 @@ TEST(CustomUpdates, ReduceDuplicate)
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     VarValues sum2VarValues{{"mult", 1.0}};
     VarReferences sum2VarReferences{{"a", createVarRef(pop, "a")}, {"b", createVarRef(pop, "V")}};
+    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                {}, sum2VarValues, sum2VarReferences);
     try {
-        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                    {}, sum2VarValues, sum2VarReferences);
+        model.finalize();
         FAIL();
     }
     catch(const std::runtime_error &) {

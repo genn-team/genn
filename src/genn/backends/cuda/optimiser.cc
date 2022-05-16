@@ -163,6 +163,9 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
     // Loop through custom updates, add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomUpdates()) {
         groupSizes[KernelCustomUpdate].push_back(c.second.isBatched() ? (model.getBatchSize() * c.second.getSize()) : c.second.getSize());
+        if(c.second.isVarInitRequired()) {
+            groupSizes[KernelInitialize].push_back(c.second.getSize());
+        }
         customUpdateKernels.insert(c.second.getUpdateGroupName());
     }
 
@@ -184,6 +187,12 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
             }
             else {
                 groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons());
+            }
+        }
+
+        if(c.second.isVarInitRequired()) {
+            if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                groupSizes[KernelInitializeSparse].push_back(sgInternal->getMaxConnections());
             }
         }
     }
@@ -667,7 +676,7 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
 
     // Find ID of best device
     const int bestDeviceID = (int)std::distance(devices.cbegin(), bestDevice);
-    LOGI_BACKEND << "Optimal  device " << bestDeviceID << " - total occupancy:" << std::get<1>(*bestDevice) << ", number of small models:" << std::get<2>(*bestDevice) << ", SM version:" << std::get<0>(*bestDevice);
+    LOGI_BACKEND << "Optimal device " << bestDeviceID << " - total occupancy:" << std::get<1>(*bestDevice) << ", number of small models:" << std::get<2>(*bestDevice) << ", SM version:" << std::get<0>(*bestDevice);
 
     // Get optimal block size from best device
     blockSize = std::get<3>(*bestDevice);

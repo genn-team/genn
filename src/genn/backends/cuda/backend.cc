@@ -29,7 +29,8 @@ const std::vector<Substitutions::FunctionTemplate> cudaSinglePrecisionFunctions 
     {"gennrand_normal", 0, "curand_normal($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistFloat($(rng))"},
     {"gennrand_log_normal", 2, "curand_log_normal_float($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistFloat($(rng), $(0))"}
+    {"gennrand_gamma", 1, "gammaDistFloat($(rng), $(0))"},
+    {"gennrand_binomial", 2, "binomialDistFloat($(rng), $(0), $(1))"}
 };
 //--------------------------------------------------------------------------
 const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions = {
@@ -37,7 +38,8 @@ const std::vector<Substitutions::FunctionTemplate> cudaDoublePrecisionFunctions 
     {"gennrand_normal", 0, "curand_normal_double($(rng))"},
     {"gennrand_exponential", 0, "exponentialDistDouble($(rng))"},
     {"gennrand_log_normal", 2, "curand_log_normal_double($(rng), $(0), $(1))"},
-    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))"}
+    {"gennrand_gamma", 1, "gammaDistDouble($(rng), $(0))"},
+    {"gennrand_binomial", 2, "binomialDistDouble($(rng), $(0), $(1))"} 
 };
 //--------------------------------------------------------------------------
 // Timer
@@ -727,7 +729,7 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
         {
             genFilteredMergedKernelDataStructures(os, totalConstMem,
                                                   modelMerged.getMergedCustomUpdateGroups(),
-                                                  [this](const CustomUpdateInternal &cg){ return padKernelSize(cg.getSize(), KernelCustomUpdate); },
+                                                  [&model, this](const CustomUpdateInternal &cg){ return getPaddedNumCustomUpdateThreads(cg, model.getBatchSize()); },
                                                   [g](const CustomUpdateGroupMerged &cg){ return cg.getArchetype().getUpdateGroupName() == g; },
 
                                                   modelMerged.getMergedCustomUpdateWUGroups(),
@@ -929,7 +931,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 
     // Sparse initialization kernel code
     size_t idSparseInitStart = 0;
-    if(!modelMerged.getMergedSynapseSparseInitGroups().empty()) {
+    if(!modelMerged.getMergedSynapseSparseInitGroups().empty() || !modelMerged.getMergedCustomWUUpdateSparseInitGroups().empty()) {
         os << "extern \"C\" __global__ void " << KernelNames[KernelInitializeSparse] << "()";
         {
             CodeStream::Scope b(os);
@@ -1286,6 +1288,112 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         }
     }
     os << std::endl;
+
+    // The following code is an almost exact copy of numpy's
+    // rk_binomial_inversion function (numpy/random/mtrand/distributions.c)
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ inline unsigned int binomialDistFloatInternal(RNG *rng, unsigned int n, float p)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "const float q = 1.0f - p;" << std::endl;
+        os << "const float qn = expf(n * logf(q));" << std::endl;
+        os << "const float np = n * p;" << std::endl;
+        os << "const unsigned int bound = min(n, (unsigned int)(np + (10.0f * sqrtf((np * q) + 1.0f))));" << std::endl;
+
+        os << "unsigned int x = 0;" << std::endl;
+        os << "float px = qn;" << std::endl;
+        os << "float u = curand_uniform(rng);" << std::endl;
+        os << "while(u > px)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "x++;" << std::endl;
+            os << "if(x > bound)";
+            {
+                CodeStream::Scope b(os);
+                os << "x = 0;" << std::endl;
+                os << "px = qn;" << std::endl;
+                os << "u = curand_uniform(rng);" << std::endl;
+            }
+            os << "else";
+            {
+                CodeStream::Scope b(os);
+                os << "u -= px;" << std::endl;
+                os << "px = ((n - x + 1) * p * px) / (x * q);" << std::endl;
+            }
+        }
+        os << "return x;" << std::endl;
+    }
+    os << std::endl;
+
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ inline unsigned int binomialDistFloat(RNG *rng, unsigned int n, float p)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if(p <= 0.5f)";
+        {
+            CodeStream::Scope b(os);
+            os << "return binomialDistFloatInternal(rng, n, p);" << std::endl;
+
+        }
+        os << "else";
+        {
+            CodeStream::Scope b(os);
+            os << "return (n - binomialDistFloatInternal(rng, n, 1.0f - p));" << std::endl;
+        }
+    }
+
+    // The following code is an almost exact copy of numpy's
+    // rk_binomial_inversion function (numpy/random/mtrand/distributions.c)
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ inline unsigned int binomialDistDoubleInternal(RNG *rng, unsigned int n, double p)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "const double q = 1.0 - p;" << std::endl;
+        os << "const double qn = exp(n * log(q));" << std::endl;
+        os << "const double np = n * p;" << std::endl;
+        os << "const unsigned int bound = min(n, (unsigned int)(np + (10.0 * sqrt((np * q) + 1.0))));" << std::endl;
+
+        os << "unsigned int x = 0;" << std::endl;
+        os << "double px = qn;" << std::endl;
+        os << "double u = curand_uniform_double(rng);" << std::endl;
+        os << "while(u > px)" << std::endl;
+        {
+            CodeStream::Scope b(os);
+            os << "x++;" << std::endl;
+            os << "if(x > bound)";
+            {
+                CodeStream::Scope b(os);
+                os << "x = 0;" << std::endl;
+                os << "px = qn;" << std::endl;
+                os << "u = curand_uniform_double(rng);" << std::endl;
+            }
+            os << "else";
+            {
+                CodeStream::Scope b(os);
+                os << "u -= px;" << std::endl;
+                os << "px = ((n - x + 1) * p * px) / (x * q);" << std::endl;
+            }
+        }
+        os << "return x;" << std::endl;
+    }
+    os << std::endl;
+
+    os << "template<typename RNG>" << std::endl;
+    os << "__device__ inline unsigned int binomialDistDouble(RNG *rng, unsigned int n, double p)" << std::endl;
+    {
+        CodeStream::Scope b(os);
+        os << "if(p <= 0.5)";
+        {
+            CodeStream::Scope b(os);
+            os << "return binomialDistDoubleInternal(rng, n, p);" << std::endl;
+
+        }
+        os << "else";
+        {
+            CodeStream::Scope b(os);
+            os << "return (n - binomialDistDoubleInternal(rng, n, 1.0 - p));" << std::endl;
+        }
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const MemAlloc&) const

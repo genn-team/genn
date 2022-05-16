@@ -97,14 +97,8 @@ protected:
     template<typename V>
     void checkVarReferences(const std::unordered_map<std::string, V> &varRefs)
     {
-        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
-
-        // If target of any variable references is duplicated, custom update should be batched
-        m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
-                                [](const auto &v) { return (v.second.getVar().access & VarAccessDuplication::DUPLICATE); });
-
         // Loop through all variable references
-        for(const auto &modelVarRef : modelVarRefs) {
+        for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
             const auto varRef = varRefs.at(modelVarRef.name);
 
             // Check types of variable references against those specified in model
@@ -119,11 +113,30 @@ protected:
             {
                 throw std::runtime_error("Reduction target variable reference must be to SHARED variables.");
             }
+        }
+    }
 
-            // If custom update is batched, check that any variable references to shared variables are read-only
+    //! Helper function to check if variable reference types match those specified in model
+    template<typename V>
+    void checkVarReferenceBatching(const std::unordered_map<std::string, V>& varRefs, unsigned int batchSize)
+    {
+        // If target of any variable references is duplicated, custom update should be batched
+        if(batchSize > 1) {
+            m_Batched = std::any_of(varRefs.cbegin(), varRefs.cend(),
+                                    [](const auto &v) { return (v.second.getVar().access & VarAccessDuplication::DUPLICATE); });
+        }
+        else {
+            m_Batched = false;
+        }
+
+        // Loop through all variable references
+        for(const auto &modelVarRef : getCustomUpdateModel()->getVarRefs()) {
+            const auto varRef = varRefs.at(modelVarRef.name);
+
+             // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
-            if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED) 
-                && (modelVarRef.access != VarAccessMode::READ_ONLY))
+            if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
+               && (modelVarRef.access != VarAccessMode::READ_ONLY))
             {
                 throw std::runtime_error("Variable references to SHARED variables in batched custom updates must be read-only.");
             }
@@ -173,7 +186,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    void finalize();
+    void finalize(unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -214,6 +227,10 @@ protected:
                    const std::unordered_map<std::string, Models::VarInit> &varInitialisers, const std::unordered_map<std::string, Models::WUVarReference> &varReferences,
                    VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation);
 
+    //------------------------------------------------------------------------
+    // Protected methods
+    //------------------------------------------------------------------------
+    void finalize(unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods

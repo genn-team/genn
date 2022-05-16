@@ -1,5 +1,43 @@
 /*! \page ReleaseNotes Release Notes
 
+Release Notes for GeNN v4.7.1
+====
+This release fixes a plethora of issues found in the 4.7.0 release and also includes an optimisation which could be very beneficial for some classes of model.
+
+Bug fixes
+---------
+1. Fixed issue meaning that manual changes to max synaptic row length (via SynapseGroup::setMaxConnections) were not detected and model might not be rebuilt. Additionally, reduce the strictness of checks in SynapseGroup::setMaxConnections and SynapseGroup::setMaxSourceConnections so maximum synapstic row and column lengths can be overriden when sparse connectivity initialisation snippets are in use as long as overriding values are larger than those provided by snippet.
+2. Fixed issue preventing PyGeNN being built on Python 2.7
+3. Fixed issue meaning that `inSyn`, `denDelayInSyn` and `revInSynOutSyn` variables were not properly zeroed during initialisation (or reinitialisation) of batched models.
+4. Fixed issue where initialization code for synapse groups could be incorrectly merged.
+5. Fixed issue when using custom updates on batched neuron group variables.
+6. Fixed issue in spike recording system where some permutations of kernel and neuron population size would result in memory corruption.
+7. Fixed (long-standing) issue where LLDB wasn't correctly invoked when running genn-buildmodel.sh -d on Mac.
+8. Fixed issue where sparse initialisation kernels weren't correctly generated if they were only required to initialise custom updates.
+
+Optimisations
+-------------
+1. Using synapse dynamics with sparse connectivity previously had very high memory requirements and poor performance. Both issues have been solved with a new algorithm.
+
+Release Notes for GeNN v4.7.0
+====
+This release adds a number of significant new features to GeNN as well as including a number of bug fixes that have been identified since the 4.6.0 release.
+
+User Side Changes
+----
+1. While a wide range of convolutional type connectivity can be implemented using SynapseMatrixConnectivity::PROCEDURAL, the performance is often worse than sparse connectivity. SynapseMatrixConnectivity::TOEPLITZ provides a more efficient solution with InitToeplitzConnectivitySnippet::Conv2D and InitToeplitzConnectivitySnippet::AvgPoolConv2D implementing some typical connectivity patterns (see \ref sectToeplitzConnectivityInitialisation)
+2. Shared weight kernels had to be previously provided as extra global parameters via the InitVarSnippet::Kernel variable initialisation snippet. This meant kernels had to be manually allocated to the correct size and couldn't be initialised using standard functionality. SynapseMatrixWeight::KERNEL allows kernels to be treated as standard state variables (see \ref subsect34).
+3. Some presynaptic updates need to update the state of presynaptic neurons as well as postsynaptic. These updates can now be made using the \$(addToPre,...) function from presynaptic update code and the destination additional input variable can be specified using SynapseGroup::setPreTargetVar (see \ref sect34)
+4. On Windows, all models in the same directory would build their generated code into DLLs with the same name, prevented the the caching system introduced in v4.5.0 working properly. CodeGenerator::PreferencesBase::includeModelNameInDLL includes the name of the model in the DLL filename, resolving this problem. This is now the default behaviour in PyGeNN but, when using GeNN from C++, the flag must be manually set and MSBuild projects updated to link to the correct DLL.
+5. Neuron code can now sample the binomial distribution using \$(gennrand_binomial) and this can be used to initialise variables with InitVarSnippet::Binomial (see \ref neuron_rng and \ref sectVariableInitialisation)
+6. In the latest version of Windows Subsystem for Linux, CUDA is supported but libcuda is mounted in a non-standard location. GeNN's CUDA backend now adds this location to the linker paths.
+
+Bug fixes:
+----
+1. Fixed issues with some configurations of InitSparseConnectivitySnippet::Conv2D when stride > 1 which caused incorrect connectivity to be instantiated as well as crashes when this snippet was used to generate sparse connectivity.
+2. Fixed issue where, if \$(addToInSynDelay) was used in spike-like event code, it was not detected and dendritic delay structures were not correctly created.
+3. Fixed issue where precision wasn't being correctly applied to neuron additional input variable and  sparse connectivity row build state variable initialisation meaning double precision code could unintentially be generated.
+
 Release Notes for GeNN v4.6.0
 ====
 This release adds a number of significant new features to GeNN as well as several usability improvements for PyGeNN.

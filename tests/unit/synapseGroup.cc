@@ -168,6 +168,52 @@ public:
 };
 IMPLEMENT_SNIPPET(Continuous);
 
+class ContinuousDenDelay : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(ContinuousDenDelay, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+
+    SET_SYNAPSE_DYNAMICS_CODE("$(addToInSynDelay, $(g) * $(V_pre), 1);\n");
+};
+IMPLEMENT_MODEL(ContinuousDenDelay);
+
+class GradedDenDelay : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_MODEL(GradedDenDelay, 0, 1);
+
+    SET_VARS({{"g", "scalar"}});
+    SET_EVENT_THRESHOLD_CONDITION_CODE("$(V_pre) >= 0.1");
+    SET_EVENT_CODE("$(addToInSynDelay, $(g)*$(V_pre), 1);");
+};
+IMPLEMENT_MODEL(GradedDenDelay);
+
+class StaticPulseDynamics : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDynamics, 0, 1, 0, 0);
+
+    SET_VARS({ {"g", "scalar", VarAccess::READ_ONLY} });
+
+    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+    SET_SYNAPSE_DYNAMICS_CODE("$(g) *= 0.99;\n");
+};
+IMPLEMENT_MODEL(StaticPulseDynamics);
+
+class StaticPulsePostLearn : public WeightUpdateModels::Base
+{
+public:
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulsePostLearn, 0, 1, 0, 0);
+
+    SET_VARS({ {"g", "scalar", VarAccess::READ_ONLY} });
+
+    SET_SIM_CODE("$(addToInSyn, $(g));\n");
+    SET_LEARN_POST_CODE("$(g) *= 0.99;\n");
+};
+IMPLEMENT_MODEL(StaticPulsePostLearn);
+
 class PostRepeatVal : public InitVarSnippet::Base
 {
 public:
@@ -833,6 +879,62 @@ TEST(SynapseGroup, InitCompareWUDifferentHeterogeneousParamVarState)
     ASSERT_TRUE(modelSpecMerged.getMergedSynapseConnectivityInitGroups().at(0).isSparseConnectivityInitParamHeterogeneous("rowLength"));
 }
 
+
+TEST(SynapseGroup, InitCompareWUSynapseDynamicsPostLearn)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron groups to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons0", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons1", 10, paramVals, varVals);
+
+    InitSparseConnectivitySnippet::FixedNumberPostWithReplacement::ParamValues fixedNumberPostParams(8);
+    WeightUpdateModels::StaticPulse::VarValues staticPulseVarVals(0.1);
+    auto* sg0 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>("Synapses0", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Neurons0", "Neurons1",
+        {}, staticPulseVarVals,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumberPostParams));
+    auto* sg1 = model.addSynapsePopulation<StaticPulseDynamics, PostsynapticModels::DeltaCurr>("Synapses1", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Neurons0", "Neurons1",
+        {}, staticPulseVarVals,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumberPostParams));
+    auto* sg2 = model.addSynapsePopulation<StaticPulsePostLearn, PostsynapticModels::DeltaCurr>("Synapses2", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
+        "Neurons0", "Neurons1",
+        {}, staticPulseVarVals,
+        {}, {},
+        initConnectivity<InitSparseConnectivitySnippet::FixedNumberPostWithReplacement>(fixedNumberPostParams));
+    // Finalize model
+    model.finalize();
+
+    SynapseGroupInternal* sg0Internal = static_cast<SynapseGroupInternal*>(sg0);
+    SynapseGroupInternal* sg1Internal = static_cast<SynapseGroupInternal*>(sg1);
+    SynapseGroupInternal* sg2Internal = static_cast<SynapseGroupInternal*>(sg2);
+    ASSERT_NE(sg0Internal->getWUHashDigest(), sg1Internal->getWUHashDigest());
+    ASSERT_NE(sg0Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
+    ASSERT_NE(sg1Internal->getWUHashDigest(), sg2Internal->getWUHashDigest());
+    ASSERT_NE(sg0Internal->getWUInitHashDigest(), sg1Internal->getWUInitHashDigest());
+    ASSERT_NE(sg0Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
+    ASSERT_NE(sg1Internal->getWUInitHashDigest(), sg2Internal->getWUInitHashDigest());
+
+    // Create a backend
+    CodeGenerator::SingleThreadedCPU::Preferences preferences;
+    CodeGenerator::SingleThreadedCPU::Backend backend(model.getPrecision(), preferences);
+
+    // Merge model
+    CodeGenerator::ModelSpecMerged modelSpecMerged(model, backend);
+
+    // Check all groups are merged
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronUpdateGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedPresynapticUpdateGroups().size() == 3);
+    ASSERT_TRUE(modelSpecMerged.getMergedPostsynapticUpdateGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseDynamicsGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedNeuronInitGroups().size() == 2);
+    ASSERT_TRUE(modelSpecMerged.getMergedSynapseSparseInitGroups().size() == 3);
+}
 TEST(SynapseGroup, InvalidMatrixTypes)
 {
     ModelSpecInternal model;
@@ -897,6 +999,42 @@ TEST(SynapseGroup, InvalidMatrixTypes)
     }
     catch(const std::runtime_error &) {
     }
+}
+
+TEST(SynapseGroup, IsDendriticDelayRequired)
+{
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+
+    ModelSpec model;
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 10, paramVals, varVals);
+
+    WeightUpdateModels::StaticPulseDendriticDelay::VarValues staticPulseDendriticVarVals(0.1, 1);
+    GradedDenDelay::VarValues gradedDenDelayVarVars(0.1);
+    ContinuousDenDelay::VarValues contDenDelayVarVars(0.1);
+
+    auto *syn = model.addSynapsePopulation<WeightUpdateModels::StaticPulseDendriticDelay, PostsynapticModels::DeltaCurr>(
+            "Syn", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, staticPulseDendriticVarVals,
+            {}, {});
+
+    auto *synGraded = model.addSynapsePopulation<GradedDenDelay, PostsynapticModels::DeltaCurr>(
+            "SynGraded", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, gradedDenDelayVarVars,
+            {}, {});
+
+    auto *synContinuous = model.addSynapsePopulation<ContinuousDenDelay, PostsynapticModels::DeltaCurr>(
+            "SynContinuous", SynapseMatrixType::DENSE_GLOBALG, NO_DELAY,
+            "Pre", "Post",
+            {}, contDenDelayVarVars,
+            {}, {});
+
+    ASSERT_TRUE(syn->isDendriticDelayRequired());
+    ASSERT_TRUE(synGraded->isDendriticDelayRequired());
+    ASSERT_TRUE(synContinuous->isDendriticDelayRequired());
 }
 
 TEST(SynapseGroup, InvalidName)

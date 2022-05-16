@@ -319,25 +319,24 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
 
         const auto *sg = getSortedArchetypeMergedInSyns().at(i);
 
-        // If this synapse group's input variable should be initialised on device
-        // Generate target-specific code to initialise variable
+        // Zero InSyn
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
             [&model, i] (CodeStream &os, Substitutions &varSubs)
             {
-                os << "group->inSynInSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
+                genVariableFill(os, "inSynInSyn" + std::to_string(i), model.scalarExpr(0.0), 
+                                varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+
             });
 
         // If dendritic delays are required
         if(sg->isDendriticDelayRequired()) {
+            // Zero dendritic delay buffer
             backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
                 [&model, sg, i](CodeStream &os, Substitutions &varSubs)
                 {
-                    os << "for (unsigned int d = 0; d < " << sg->getMaxDendriticDelayTimesteps() << "; d++)";
-                    {
-                        CodeStream::Scope b(os);
-                        const std::string denDelayIndex = "(d * group->numNeurons) + " + varSubs["id"];
-                        os << "group->denDelayInSyn" << i << "[" << denDelayIndex << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
-                    }
+                    genVariableFill(os, "denDelayInSyn" + std::to_string(i), model.scalarExpr(0.0),
+                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize(),
+                                    true, sg->getMaxDendriticDelayTimesteps());
                 });
 
             // Zero dendritic delay pointer
@@ -380,13 +379,13 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
 
     // Loop through outgoing synaptic populations with presynaptic output
     for(size_t i = 0; i < getSortedArchetypeMergedPreOutputOutSyns().size(); i++) {
-        // If this synapse group's pre-synaptic input variable should be initialised
-        // on device, generate target-specific code to initialise variable
+        // Zero revInSynOutSyn
         backend.genVariableInit(os, "group->numNeurons", "id", popSubs,
-            [&model, i] (CodeStream &os, Substitutions &varSubs)
-            {
-                os << "group->revInSynOutSyn" << i << "[" << varSubs["id"] << "] = " << model.scalarExpr(0.0) << ";" << std::endl;
-            });
+                                [&model, i] (CodeStream &os, Substitutions &varSubs)
+                                {
+                                    genVariableFill(os, "revInSynOutSyn" + std::to_string(i), model.scalarExpr(0.0),
+                                                    varSubs["id"], "group->numNeurons", VarAccessDuplication::DUPLICATE, model.getBatchSize());
+                                });
     }
     
     // Loop through current sources

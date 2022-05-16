@@ -378,9 +378,6 @@ public:
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const = 0;
 
-    //! Different backends may implement synapse dynamics differently. Does this one require a synapse remapping data structure for synapse group?
-    virtual bool isSynRemapRequired(const SynapseGroupInternal &sg) const = 0;
-
     //! Different backends may implement synaptic plasticity differently. Does this one require a postsynaptic remapping data structure?
     virtual bool isPostsynapticRemapRequired() const = 0;
 
@@ -468,7 +465,7 @@ protected:
 
     void genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const;
 
-    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu, unsigned int batchSize) const;
+    void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
 
 private:
     //--------------------------------------------------------------------------
