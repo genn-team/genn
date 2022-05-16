@@ -944,10 +944,6 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
             addPSPointerField(precision, "inSyn", backend.getDeviceVarPrefix() + "inSyn");
         }
     }
-    // for all types of roles
-    if(getArchetype().isPresynapticOutputRequired()) {
-      addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
-    }
 
     if(role == Role::PresynapticUpdate) {
         if(getArchetype().isTrueSpikeRequired()) {
@@ -967,6 +963,11 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
 
     // If this structure is used for updating rather than initializing
     if(updateRole) {
+        // for all types of roles
+        if (getArchetype().isPresynapticOutputRequired()) {
+            addPreOutputPointerField(precision, "revInSyn", backend.getDeviceVarPrefix() + "revInSyn");
+        }
+
         // If presynaptic population has delay buffers
         if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {
             addSrcPointerField("unsigned int", "srcSpkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
@@ -1258,10 +1259,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     // Update hash with number of neurons in pre and postsynaptic population
     updateHash([](const SynapseGroupInternal &g) { return g.getSrcNeuronGroup()->getNumNeurons(); }, hash);
     updateHash([](const SynapseGroupInternal &g) { return g.getTrgNeuronGroup()->getNumNeurons(); }, hash);
+    updateHash([](const SynapseGroupInternal &g) { return g.getMaxConnections(); }, hash);
     updateHash([](const SynapseGroupInternal &g) { return g.getMaxSourceConnections(); }, hash);
-    // **NOTE** ideally we'd include the row stride but this needs a backend and it SHOULDN'T be necessary
-    // as I can't think of any way of changing this without changing the hash in other places
-
+    
     if(updateRole) {
         // Update hash with weight update model parameters and derived parameters
         updateHash([](const SynapseGroupInternal &g) { return g.getWUParams(); }, hash);
