@@ -215,7 +215,7 @@ size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUIntern
     }
     else {
         return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections(),
-                                            KernelCustomUpdate);
+                                         KernelCustomUpdate);
     }
 }
 //--------------------------------------------------------------------------
