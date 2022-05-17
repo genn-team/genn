@@ -86,6 +86,11 @@ void modelDefinition(ModelSpec &model)
     model.setDT(1.0);
     model.setName("custom_update");
 
+    InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParams(
+        3, 3,       // conv_kh, conv_kw
+        10, 10, 1,  // conv_ih, conv_iw, conv_ic
+        10, 10, 1); // conv_oh, conv_ow, conv_oc
+        
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource", 100, {}, {});
     auto *ng = model.addNeuronPopulation<TestNeuron>("Neuron", 100, {}, {0.0});
     auto *cs = model.addCurrentSource<TestCurrentSource>("CurrentSource", "Neuron", {}, {0.0});
@@ -97,9 +102,16 @@ void modelDefinition(ModelSpec &model)
     auto *sparseSG = model.addSynapsePopulation<TestWUM, TestPSM>(
         "Sparse", SynapseMatrixType::SPARSE_INDIVIDUALG, NO_DELAY,
         "SpikeSource", "Neuron",
-        {}, {0}, {0.0}, {0.0},
-        {}, {0},
+        {}, {0.0}, {0.0}, {0.0},
+        {}, {0.0},
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
+    auto *kernelSG = model.addSynapsePopulation<TestWUM, TestPSM>(
+        "Kernel", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, {0.0}, {0.0}, {0.0},
+        {}, {0.0},
+        initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParams));
+    
     TestCU::VarReferences cuTestVarReferences(createVarRef(ng, "V"));
     auto *cu = model.addCustomUpdate<TestCU>("CustomUpdate", "Test2", {}, {0.0}, cuTestVarReferences);
     
@@ -140,6 +152,10 @@ void modelDefinition(ModelSpec &model)
     SetTime::WUVarReferences wuSparseVarReferences(createWUVarRef(sparseSG, "g")); // R
     model.addCustomUpdate<SetTime>("WUSparseSetTime", "Test",
                                    {}, {0.0}, wuSparseVarReferences);
+    
+    SetTime::WUVarReferences wuKernelVarReferences(createWUVarRef(kernelSG, "g")); // R
+    model.addCustomUpdate<SetTime>("WUKernelSetTime", "Test",
+                                   {}, {0.0}, wuKernelVarReferences);
     
     SetTime::WUVarReferences wuCUVarReferences(createWUVarRef(cuWU, "C")); // R
     model.addCustomUpdate<SetTime>("CustomWUUpdateSetTime", "Test",
