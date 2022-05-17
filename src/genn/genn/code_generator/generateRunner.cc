@@ -726,6 +726,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                           runnerVarDecl, runnerMergedStructAlloc);
     }
 
+    // Loop through merged custom sparse WU update initialisation groups
+    for (const auto &m : modelMerged.getMergedCustomWUUpdateKernelInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
     // Loop through merged synapse connectivity initialisation groups
     for(const auto &m : modelMerged.getMergedSynapseConnectivityInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,

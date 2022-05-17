@@ -71,7 +71,49 @@ const std::vector<Substitutions::FunctionTemplate> &getFunctionTemplates(const s
 {
     return (precision == "double") ? cpuDoublePrecisionFunctions : cpuSinglePrecisionFunctions;
 }
+//-----------------------------------------------------------------------
+template<typename G>
+void genKernelVariableInit(CodeStream &os, const G &g, size_t numKernelDims, const Substitutions &kernelSubs, BackendBase::Handler handler)
+{
+    Substitutions varSubs(&kernelSubs);
 
+    // Define recursive function to generate nested kernel initialisation loops
+    // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
+    std::function<void(size_t)> generateRecursive =
+        [&handler, &os, &g, &varSubs, &generateRecursive, numKernelDims]
+        (size_t depth)
+        {
+            // Loop through this kernel dimensions
+            const std::string idxVar = "k" + std::to_string(depth);
+            os << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << g.getKernelSize(depth) << "; " << idxVar << "++)";
+            {
+                CodeStream::Scope b(os);
+
+                // Add substitution for this kernel index
+                varSubs.addVarSubstitution("id_kernel_" + std::to_string(depth), idxVar);
+
+                // If we've recursed through all dimensions
+                if (depth == (numKernelDims - 1)) {
+                    // Generate kernel index and use as "synapse" index
+                    // **TODO** rename
+                    os << "const unsigned int kernelInd = ";
+                    g.genKernelIndex(os, varSubs);
+                    os << ";" << std::endl;
+                    varSubs.addVarSubstitution("id_syn", "kernelInd");
+
+                    // Call handler
+                    handler(os, varSubs);
+                }
+                // Otherwise, recurse
+                else {
+                    generateRecursive(depth + 1);
+                }
+            }
+        };
+
+    // Generate loops through kernel indices recursively
+    generateRecursive(0);
+}
 }
 
 //--------------------------------------------------------------------------
@@ -1246,46 +1288,12 @@ void Backend::genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions
 //--------------------------------------------------------------------------
 void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const
 {
-    Substitutions varSubs(&kernelSubs);
-    
-    // Loop through kernel dimensions
-    const auto &kernelSize = sg.getArchetype().getKernelSize();
-    
-    // Define recursive function to generate nested kernel initialisation loops
-    // **NOTE** this is a std::function as type of auto lambda couldn't be determined inside for recursive call
-    std::function<void(size_t)> generateRecursive =\
-        [&handler, &kernelSize, &os, &sg, &varSubs, &generateRecursive](size_t depth)
-        {
-            // Loop through this kernel dimensions
-            const std::string idxVar = "k" + std::to_string(depth);
-            os << "for(unsigned int " << idxVar << " = 0; " << idxVar << " < " << sg.getKernelSize(depth) << "; " << idxVar << "++)";
-            {
-                CodeStream::Scope b(os);
-
-                // Add substitution for this kernel index
-                varSubs.addVarSubstitution("id_kernel_" + std::to_string(depth), idxVar);
-                
-                // If we've recursed through all dimensions
-                if(depth == (kernelSize.size() - 1)) {
-                    // Generate kernel index and use as "synapse" index
-                    // **TODO** rename
-                    os << "const unsigned int kernelInd = ";
-                    sg.genKernelIndex(os, varSubs);
-                    os << ";" << std::endl;
-                    varSubs.addVarSubstitution("id_syn", "kernelInd");
-                    
-                    // Call handler
-                    handler(os, varSubs);
-                }
-                // Otherwise, recurse
-                else {
-                    generateRecursive(depth + 1);
-                }
-            }
-        };
-        
-    // Generate loops through kernel indices recursively
-    generateRecursive(0);
+    genKernelVariableInit(os, sg, sg.getArchetype().getKernelSize().size(), kernelSubs, handler);
+}
+//--------------------------------------------------------------------------
+void Backend::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const
+{
+    genKernelVariableInit(os, cu, cu.getArchetype().getSynapseGroup()->getKernelSize().size(), kernelSubs, handler);
 }
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream&, const std::string&, const std::string&, VarLocation, bool, size_t) const

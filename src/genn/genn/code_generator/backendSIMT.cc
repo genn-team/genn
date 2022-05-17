@@ -93,6 +93,17 @@ void BackendSIMT::genKernelSynapseVariableInit(CodeStream &os, const SynapseKern
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
+void BackendSIMT::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const
+{
+    // Variable should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution("id"));
+
+    Substitutions varSubs(&kernelSubs);
+    varSubs.addVarSubstitution("id_syn", varSubs["id"]);
+
+    handler(os, varSubs);
+}
+//--------------------------------------------------------------------------
 bool BackendSIMT::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
 {
     // Host RNG is required if any synapse groups require a host initialization RNG
@@ -199,14 +210,12 @@ size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUIntern
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
     const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
 
-    if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        // **THINK** like for synapse dynamics kernels, this isn't really correct but correct value isn't known
-        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections(),
-                                         KernelCustomUpdate);
+    if(sgInternal->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        return numCopies * padKernelSize(sgInternal->getKernelSizeFlattened(), KernelCustomUpdate);
     }
     else {
-        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons(),
-                                         KernelCustomUpdate);
+        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections(),
+                                            KernelCustomUpdate);
     }
 }
 //--------------------------------------------------------------------------
@@ -944,11 +953,25 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [&modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
+            const SynapseGroupInternal *sg = cg.getArchetype().getSynapseGroup();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
-            // Calculate number of threads for update
-            os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
+            // Calculate size of each batch to update
+            if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                // Loop through kernel dimensions and multiply together
+                os << "const unsigned int size = ";
+                for (size_t i = 0; i < sg->getKernelSize().size(); i++) {
+                    os << cg.getKernelSize(i);
+                    if (i != (sg->getKernelSize().size() - 1)) {
+                        os << " * ";
+                    }
+                }
+                os << ";" << std::endl;
+            }
+            else {
+                os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
+            }
 
             // If update isn't a reduction
             Substitutions cuSubs(&popSubs);
@@ -975,32 +998,34 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
             }
 
-            if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "if (" << cuSubs["id"] << " < (group->numSrcNeurons * group->rowStride))";
-            }
-            else {
-                os << "if (" << cuSubs["id"] << " < size)";
-            }
+            // if this isn't a padding thread
+            os << "if (" << cuSubs["id"] << " < size)";
             {
                 CodeStream::Scope b(os);
 
-                if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    os << "const unsigned int row = " << cuSubs["id"] << " / group->rowStride;" << std::endl;
-                    os << "const unsigned int col = " << cuSubs["id"] << " % group->rowStride;" << std::endl;
-
-                    cuSubs.addVarSubstitution("id_pre", "row");
-                    cuSubs.addVarSubstitution("id_post", "group->ind[" + cuSubs["id"] + "]");
+                if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                     cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
-
-                    os << "if(col < group->rowLength[row])";
-                    os << CodeStream::OB(2);
+                    cuSubs.addVarSubstitution("id_kernel", cuSubs["id"]);
                 }
                 else {
-                    // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    cuSubs.addVarSubstitution("id_pre", "(" + cuSubs["id"] + " / group->rowStride)");
-                    cuSubs.addVarSubstitution("id_post", "(" + cuSubs["id"] + " % group->rowStride)");
-                    cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+                    if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
+                        os << "const unsigned int row = " << cuSubs["id"] << " / group->rowStride;" << std::endl;
+                        os << "const unsigned int col = " << cuSubs["id"] << " % group->rowStride;" << std::endl;
+
+                        cuSubs.addVarSubstitution("id_pre", "row");
+                        cuSubs.addVarSubstitution("id_post", "group->ind[" + cuSubs["id"] + "]");
+                        cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+
+                        os << "if(col < group->rowLength[row])";
+                        os << CodeStream::OB(2);
+                    }
+                    else {
+                        // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
+                        cuSubs.addVarSubstitution("id_pre", "(" + cuSubs["id"] + " / group->rowStride)");
+                        cuSubs.addVarSubstitution("id_post", "(" + cuSubs["id"] + " % group->rowStride)");
+                        cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+                    }
                 }
 
                 // Initialise reduction targets
@@ -1039,7 +1064,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                     }
                 }
 
-                if (cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(2);
                 }
             }

@@ -847,7 +847,7 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
-    // Update hash with sizes of pre and postsynaptic neuron groups
+    // Update hash with sizes of pre and postsynaptic neuron groups; and max row length
     updateHash([](const CustomUpdateWUInternal &cg) 
                {
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
@@ -858,8 +858,10 @@ boost::uuids::detail::sha1::digest_type CustomWUUpdateSparseInitGroupMerged::get
                    return static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
                }, hash);
 
-
-    // **TODO** rowstride
+    updateHash([](const CustomUpdateWUInternal& cg)
+               {
+                   return cg.getSynapseGroup()->getMaxConnections();
+               }, hash);
 
     return hash.get_digest();
 }
@@ -874,5 +876,65 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                      {
                          return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
+                     });
+}
+
+// ----------------------------------------------------------------------------
+// CustomWUUpdateKernelInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomWUUpdateKernelInitGroupMerged::name = "CustomWUUpdateKernelInit";
+//----------------------------------------------------------------------------
+CustomWUUpdateKernelInitGroupMerged::CustomWUUpdateKernelInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                         const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
+    : CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+{
+    // Loop through kernel size dimensions
+    for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
+        // If this dimension has a heterogeneous size, add it to struct
+        if (isKernelSizeHeterogeneous(d)) {
+            addField("unsigned int", "kernelSize" + std::to_string(d),
+                     [d](const CustomUpdateWUInternal &g, size_t) { return std::to_string(g.getSynapseGroup()->getKernelSize().at(d)); });
+        }
+    }
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomWUUpdateKernelInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+    // Update hash with kernel size
+    updateHash([](const CustomUpdateWUInternal &g) { return g.getSynapseGroup()->getKernelSize(); }, hash);
+
+    return hash.get_digest();
+}
+// ----------------------------------------------------------------------------
+void CustomWUUpdateKernelInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // If model is batched
+    if (modelMerged.getModel().getBatchSize() > 1) {
+        // Loop through kernel dimensions and multiply together to calculate batch stride
+        os << "const unsigned int batchStride = ";
+        const auto &kernelSize = getArchetype().getSynapseGroup()->getKernelSize();
+        for (size_t i = 0; i < kernelSize.size(); i++) {
+            os << getKernelSize(i);
+
+            if (i != (kernelSize.size() - 1)) {
+                os << " * ";
+            }
+        }
+        os << ";" << std::endl;;
+    }
+
+    genInitWUVarCode(os, popSubs, getArchetype().getCustomUpdateModel()->getVars(),
+                     getArchetype().getVarInitialisers(), "batchStride", getIndex(),
+                     modelMerged.getModel().getPrecision(), getArchetype().isBatched() ? modelMerged.getModel().getBatchSize() : 1,
+                     [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
+                     [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); },
+                     [&backend, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     {
+                         return backend.genKernelCustomUpdateVariableInit(os, *this, kernelSubs, handler);
                      });
 }

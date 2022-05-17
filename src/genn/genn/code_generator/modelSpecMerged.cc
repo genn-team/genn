@@ -102,7 +102,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                                return ((sg.getMatrixType() & SynapseMatrixWeight::KERNEL) && sg.isWUVarInitRequired());
                            },
                            &SynapseGroupInternal::getWUInitHashDigest);
-    
+
+    LOGD_CODE_GEN << "Merging custom kernel weight update initialization groups:";
+    createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateKernelInitGroups,
+                           [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) && cg.isVarInitRequired(); },
+                           &CustomUpdateWUInternal::getInitHashDigest);
+
     LOGD_CODE_GEN << "Merging neuron groups which require their spike queues updating:";
     createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSpikeQueueUpdateGroups,
                            [](const NeuronGroupInternal &){ return true; },
@@ -217,7 +222,8 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     assignGroups(backend, m_MergedSynapseConnectivityInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomUpdateInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomWUUpdateDenseInitGroups, memorySpaces);
-    assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);  
+    assignGroups(backend, m_MergedCustomWUUpdateSparseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedCustomWUUpdateKernelInitGroups, memorySpaces);  
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const BackendBase &backend) const
@@ -309,6 +315,11 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
 
     // Concatenate hash digest of custom sparse WU update init groups
     for(const auto &g : m_MergedCustomWUUpdateSparseInitGroups) {
+        Utils::updateHash(g.getHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of custom sparse WU update init groups
+    for (const auto &g : m_MergedCustomWUUpdateKernelInitGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
@@ -481,6 +492,11 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
 
     // Concatenate hash digest of archetype custom sparse WU update init group
     for(const auto &g : m_MergedCustomWUUpdateSparseInitGroups) {
+        Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
+    }
+
+    // Concatenate hash digest of archetype custom sparse WU update init group
+    for (const auto &g : m_MergedCustomWUUpdateKernelInitGroups) {
         Utils::updateHash(g.getArchetype().getInitHashDigest(), hash);
     }
 

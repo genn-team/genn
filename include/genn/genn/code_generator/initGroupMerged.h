@@ -416,4 +416,58 @@ public:
     static const std::string name;
 };
 
+// ----------------------------------------------------------------------------
+// CodeGenerator::CustomWUUpdateKernelInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomWUUpdateKernelInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>
+{
+public:
+    CustomWUUpdateKernelInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                        const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    //! Is kernel size heterogeneous in this dimension?
+    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
+    {
+        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
+    }
+
+    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
+    std::string getKernelSize(size_t dimensionIndex) const
+    {
+        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
+    }
+
+    //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
+    void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const
+    {
+        return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
+    }
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+
+private:
+    static const std::vector<unsigned int> &getGroupKernelSize(const CustomUpdateWUInternal &g)
+    {
+        return g.getSynapseGroup()->getKernelSize();
+    }
+};
+
 }   // namespace CodeGenerator
