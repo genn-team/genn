@@ -52,6 +52,7 @@ TEST_F(SimTest, CustomUpdateBatch)
             pullVNeuronDuplicateSetTimeFromDevice();
             pullVWUMDenseDuplicateSetTimeFromDevice();
             pullVWUMSparseDuplicateSetTimeFromDevice();
+            pullVWUMKernelDuplicateSetTimeFromDevice();
             pullVNeuronFromDevice();
             pullUNeuronFromDevice();
             pullVDenseFromDevice();
