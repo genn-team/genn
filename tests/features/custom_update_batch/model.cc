@@ -31,7 +31,7 @@ class SetTimeBatch : public CustomUpdateModels::Base
 {
 public:
     DECLARE_CUSTOM_UPDATE_MODEL(SetTimeBatch, 0, 1, 1);
-    
+
     SET_UPDATE_CODE(
         "$(V) = ($(batch) * 1000.0) + $(t);\n"
         "$(R) = ($(batch) * 1000.0) + $(t);\n");
@@ -45,7 +45,7 @@ class SetTime : public CustomUpdateModels::Base
 {
 public:
     DECLARE_CUSTOM_UPDATE_MODEL(SetTime, 0, 1, 1);
-    
+
     SET_UPDATE_CODE(
         "$(R) = $(V) + ($(batch) * 1000.0) + $(t);\n");
 
@@ -53,6 +53,35 @@ public:
     SET_VAR_REFS({{"R", "scalar", VarAccessMode::READ_WRITE}})
 };
 IMPLEMENT_MODEL(SetTime);
+
+class OneToOneKernel : public InitSparseConnectivitySnippet::Base
+{
+public:
+    DECLARE_SNIPPET(OneToOneKernel, 2);
+    
+    SET_PARAM_NAMES({"conv_kh", "conv_kw"});
+        
+    SET_ROW_BUILD_CODE(
+        "for(int i = 0; i < (int)$(conv_kw); i++) {\n"
+        "   if(($(id_pre) + i) < $(num_post)) {\n"
+        "       $(addSynapse, $(id_pre) + i, $(id_pre) % (int)$(conv_kh), i);\n"
+        "   }\n"
+        "}\n"
+        "$(endRow);\n");
+
+    SET_CALC_MAX_ROW_LENGTH_FUNC(
+        [](unsigned int, unsigned int, const std::vector<double> &pars)
+        {
+            return (unsigned int)pars[1];
+        });
+    
+    SET_CALC_KERNEL_SIZE_FUNC(
+        [](const std::vector<double> &pars)->std::vector<unsigned int>
+        {
+            return {(unsigned int)pars[0], (unsigned int)pars[1]};
+        });
+};
+IMPLEMENT_SNIPPET(OneToOneKernel);
 
 void modelDefinition(ModelSpec &model)
 {
@@ -82,6 +111,12 @@ void modelDefinition(ModelSpec &model)
         {}, {0.0, 0.0},
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::FixedProbability>({0.1}));
+    auto *kernelSG = model.addSynapsePopulation<TestWUM, PostsynapticModels::DeltaCurr>(
+        "Kernel", SynapseMatrixType::PROCEDURAL_KERNELG, NO_DELAY,
+        "SpikeSource", "Neuron",
+        {}, {0.0, 0.0},
+        {}, {},
+        initConnectivity<OneToOneKernel>({3, 3}));
     
     //---------------------------------------------------------------------------
     // Custom updates
@@ -109,5 +144,13 @@ void modelDefinition(ModelSpec &model)
     SetTime::WUVarReferences wumSparseSharedVarReferences(createWUVarRef(sparseSG, "U")); // R
     model.addCustomUpdate<SetTime>("WUMSparseSharedSetTime", "Test",
                                    {}, {0.0}, wumSparseSharedVarReferences);
+    
+    SetTimeBatch::WUVarReferences wumKernelDuplicateVarReferences(createWUVarRef(kernelSG, "V")); // R
+    model.addCustomUpdate<SetTimeBatch>("WUMKernelDuplicateSetTime", "Test",
+                                        {}, {0.0}, wumKernelDuplicateVarReferences);
+    
+    SetTime::WUVarReferences wumKernelSharedVarReferences(createWUVarRef(kernelSG, "U")); // R
+    model.addCustomUpdate<SetTime>("WUMKernelSharedSetTime", "Test",
+                                   {}, {0.0}, wumKernelSharedVarReferences);
 
 }

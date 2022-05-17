@@ -58,13 +58,16 @@ TEST_F(SimTest, CustomUpdateBatch)
             pullUDenseFromDevice();
             pullVSparseFromDevice();
             pullUSparseFromDevice();
-
+            pullVKernelFromDevice();
+            pullUKernelFromDevice();
+            
             // Check shared neuron and synapse variables match time
             ASSERT_TRUE(std::all_of(&UNeuron[0], &UNeuron[50],
                         [](scalar v) { return v == t; }));
             ASSERT_TRUE(std::all_of(&UDense[0], &UDense[50 * 50],
                         [](scalar v) { return v == t; }));
-
+            ASSERT_TRUE(std::all_of(&UKernel[0], &UKernel[3 * 3],
+                        [](scalar v) { return v == t; }));
             checkSparseVar(USparse, [](scalar v){ return v == t; });
     
             // Loop through batches
@@ -73,6 +76,8 @@ TEST_F(SimTest, CustomUpdateBatch)
                 const unsigned int endNeuronIdx = startNeuronIdx + 50;
                 const unsigned int startDenseSynIdx = b * (50 * 50);
                 const unsigned int endDenseSynIdx = startDenseSynIdx + (50 * 50);
+                const unsigned int startKernelIdx = b * (3 * 3);
+                const unsigned int endKernelIdx = startKernelIdx + (3 * 3);
                 const unsigned int startSparseSynIdx = b * (50 * maxRowLengthSparse);
                 const float batchOffset = b * 1000.0f;
                 
@@ -86,11 +91,16 @@ TEST_F(SimTest, CustomUpdateBatch)
                             [batchOffset](scalar v) { return v == (batchOffset + t); }));
                 ASSERT_TRUE(std::all_of(&VDense[startDenseSynIdx], &VDense[endDenseSynIdx],
                             [batchOffset](scalar v) { return v == (batchOffset + t); }));
-                
+
+                ASSERT_TRUE(std::all_of(&VWUMKernelDuplicateSetTime[startKernelIdx], &VWUMKernelDuplicateSetTime[endKernelIdx],
+                            [batchOffset](scalar v) { return v == (batchOffset + t); }));
+                ASSERT_TRUE(std::all_of(&VKernel[startKernelIdx], &VKernel[endKernelIdx],
+                            [batchOffset](scalar v) { return v == (batchOffset + t); }));
+
                 checkSparseVar(&VSparse[startSparseSynIdx],
                                [batchOffset](scalar v) { return v == (batchOffset + t); });
-               checkSparseVar(&VWUMSparseDuplicateSetTime[startSparseSynIdx],
-                              [batchOffset](scalar v) { return v == (batchOffset + t); });
+                checkSparseVar(&VWUMSparseDuplicateSetTime[startSparseSynIdx],
+                               [batchOffset](scalar v) { return v == (batchOffset + t); });
                 
             }
         }
