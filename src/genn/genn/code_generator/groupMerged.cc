@@ -775,50 +775,6 @@ bool SynapseGroupMergedBase::isTrgNeuronDerivedParamHeterogeneous(size_t paramIn
             isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getTrgNeuronGroup()->getDerivedParams(); }));
 }
 //----------------------------------------------------------------------------
-bool SynapseGroupMergedBase::isKernelSizeHeterogeneous(size_t dimensionIndex) const
-{
-    // Get size of this kernel dimension for archetype
-    const unsigned archetypeValue = getArchetype().getKernelSize().at(dimensionIndex);
-
-    // Return true if any of the other groups have a different value
-    return std::any_of(getGroups().cbegin(), getGroups().cend(),
-                       [archetypeValue, dimensionIndex](const GroupInternal &g)
-                       {
-                           return (g.getKernelSize().at(dimensionIndex) != archetypeValue);
-                       });
-}
-//----------------------------------------------------------------------------
-std::string SynapseGroupMergedBase::getKernelSize(size_t dimensionIndex) const
-{
-    // If kernel size if heterogeneous in this dimension, return group structure entry
-    if(isKernelSizeHeterogeneous(dimensionIndex)) {
-        return "group->kernelSize" + std::to_string(dimensionIndex);
-    }
-    // Otherwise, return literal
-    else {
-        return std::to_string(getArchetype().getKernelSize().at(dimensionIndex));
-    }
-}
-//----------------------------------------------------------------------------
-void SynapseGroupMergedBase::genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const
-{
-    // Loop through kernel dimensions to calculate array index
-    const auto &kernelSize = getArchetype().getKernelSize();
-    for(size_t i = 0; i < kernelSize.size(); i++) {
-        os << "(" << subs["id_kernel_" + std::to_string(i)];
-        // Loop through remainining dimensions of kernel and multiply
-        for(size_t j = i + 1; j < kernelSize.size(); j++) {
-            os << " * " << getKernelSize(j);
-        }
-        os << ")";
-
-        // If this isn't the last dimension, add +
-        if(i != (kernelSize.size() - 1)) {
-            os << " + ";
-        }
-    }
-}
-//----------------------------------------------------------------------------
 std::string SynapseGroupMergedBase::getPreSlot(unsigned int batchSize) const
 {
     if(getArchetype().getSrcNeuronGroup()->isDelayRequired()) {

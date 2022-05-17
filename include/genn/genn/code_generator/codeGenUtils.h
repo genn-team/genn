@@ -147,4 +147,53 @@ void neuronSubstitutionsInSynapticCode(CodeGenerator::Substitutions &substitutio
     // Substitute extra global parameters from neuron model
     substitutions.addVarNameSubstitution(nm->getExtraGlobalParams(), sourceSuffix, "group->", destSuffix);
 }
+
+template<typename G, typename K>
+bool isKernelSizeHeterogeneous(const G *group, size_t dimensionIndex, K getKernelSizeFn)
+{
+    // Get size of this kernel dimension for archetype
+    const unsigned archetypeValue = getKernelSizeFn(group->getArchetype()).at(dimensionIndex);
+
+    // Return true if any of the other groups have a different value
+    return std::any_of(group->getGroups().cbegin(), group->getGroups().cend(),
+                       [archetypeValue, dimensionIndex, getKernelSizeFn]
+                       (const G::GroupInternal& g)
+                       {
+                           return (getKernelSizeFn(g).at(dimensionIndex) != archetypeValue);
+                       });
+}
+
+template<typename G, typename K>
+std::string getKernelSize(const G *group, size_t dimensionIndex, K getKernelSizeFn)
+{
+    // If kernel size if heterogeneous in this dimension, return group structure entry
+    if (isKernelSizeHeterogeneous(group, dimensionIndex, getKernelSizeFn)) {
+        return "group->kernelSize" + std::to_string(dimensionIndex);
+    }
+    // Otherwise, return literal
+    else {
+        return std::to_string(getKernelSizeFn(group->getArchetype()).at(dimensionIndex));
+    }
+}
+
+template<typename G, typename K>
+void genKernelIndex(const G *group, std::ostream &os, const CodeGenerator::Substitutions &subs, 
+                    K getKernelSizeFn)
+{
+    // Loop through kernel dimensions to calculate array index
+    const auto &kernelSize = getKernelSizeFn(group->getArchetype());
+    for (size_t i = 0; i < kernelSize.size(); i++) {
+        os << "(" << subs["id_kernel_" + std::to_string(i)];
+        // Loop through remainining dimensions of kernel and multiply
+        for (size_t j = i + 1; j < kernelSize.size(); j++) {
+            os << " * " << getKernelSize(group, j, getKernelSizeFn);
+        }
+        os << ")";
+
+        // If this isn't the last dimension, add +
+        if (i != (kernelSize.size() - 1)) {
+            os << " + ";
+        }
+    }
+}
 }   // namespace CodeGenerator
