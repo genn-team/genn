@@ -1119,7 +1119,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                     mem, statePushPullFunctions, 
                     [&backend](const CustomUpdateWUInternal &c) 
                     { 
-                        return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*c.getSynapseGroup()); 
+                        const SynapseGroupInternal *sg = c.getSynapseGroup();
+                        if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                            return sg->getKernelSizeFlattened();
+                        }
+                        else {
+                            return sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg);
+                        }
                     });
     allVarStreams << std::endl;
 
