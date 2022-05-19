@@ -84,35 +84,6 @@ public:
 };
 IMPLEMENT_MODEL(NopCustomUpdateModel);
 
-class OneToOneKernel : public InitSparseConnectivitySnippet::Base
-{
-public:
-    DECLARE_SNIPPET(OneToOneKernel, 2);
-    
-    SET_PARAM_NAMES({"conv_kh", "conv_kw"});
-        
-    SET_ROW_BUILD_CODE(
-        "for(int i = 0; i < (int)$(conv_kw); i++) {\n"
-        "   if(($(id_pre) + i) < $(num_post)) {\n"
-        "       $(addSynapse, $(id_pre) + i, $(id_pre) % (int)$(conv_kh), i);\n"
-        "   }\n"
-        "}\n"
-        "$(endRow);\n");
-
-    SET_CALC_MAX_ROW_LENGTH_FUNC(
-        [](unsigned int, unsigned int, const std::vector<double> &pars)
-        {
-            return (unsigned int)pars[1];
-        });
-    
-    SET_CALC_KERNEL_SIZE_FUNC(
-        [](const std::vector<double> &pars)->std::vector<unsigned int>
-        {
-            return {(unsigned int)pars[0], (unsigned int)pars[1]};
-        });
-};
-IMPLEMENT_SNIPPET(OneToOneKernel);
-
 void modelDefinition(ModelSpec &model)
 {
 #ifdef CL_HPP_TARGET_OPENCL_VERSION
@@ -207,9 +178,10 @@ void modelDefinition(ModelSpec &model)
         initVar<InitVarSnippet::Gamma>(gammaParams),
         initVar<InitVarSnippet::Binomial>(binomialParams));
     
-    OneToOneKernel::ParamValues oneToOneKernelParams(
-        3,
-        3);
+    InitToeplitzConnectivitySnippet::Conv2D::ParamValues convParams(
+        3, 3,       // conv_kh, conv_kw
+        100, 100, 5,  // conv_ih, conv_iw, conv_ic
+        100, 100, 5); // conv_oh, conv_ow, conv_oc
     
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("SpikeSource1", 1, {}, {});
@@ -232,12 +204,12 @@ void modelDefinition(ModelSpec &model)
         {}, postsynapticInit,
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>());
     
-    model.addSynapsePopulation<WeightUpdateModelNoPrePost, PostsynapticModels::DeltaCurr>(
-        "Kernel", SynapseMatrixType::PROCEDURAL_KERNELG, NO_DELAY,
-        "SpikeSource1", "Pop",
+    SynapseGroup *sgKernel = model.addSynapsePopulation<WeightUpdateModelNoPrePost, PostsynapticModels::DeltaCurr>(
+        "Kernel", SynapseMatrixType::TOEPLITZ_KERNELG, NO_DELAY,
+        "SpikeSource2", "Pop",
         {}, weightUpdateInit, {}, {},
         {}, {},
-        initConnectivity<OneToOneKernel>(oneToOneKernelParams));
+        initToeplitzConnectivity<InitToeplitzConnectivitySnippet::Conv2D>(convParams));
         
     // Custom updates
     NopCustomUpdateModel::VarReferences neuronVarReferences(createVarRef(ng, "constant_val")); // R
@@ -267,6 +239,10 @@ void modelDefinition(ModelSpec &model)
     NopCustomUpdateModel::WUVarReferences wuDenseVarReferences(createWUVarRef(sgDense, "constant_val")); // R
     model.addCustomUpdate<NopCustomUpdateModel>("WUDenseCustomUpdate", "Test",
                                                {}, customUpdateInit, wuDenseVarReferences);
+    
+    NopCustomUpdateModel::WUVarReferences wuKernelVarReferences(createWUVarRef(sgKernel, "constant_val")); // R
+    model.addCustomUpdate<NopCustomUpdateModel>("WUKernelCustomUpdate", "Test",
+                                               {}, customUpdateInit, wuKernelVarReferences);
 
     model.setPrecision(GENN_FLOAT);
 }
