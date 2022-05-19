@@ -1270,7 +1270,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
             {
                 CodeStream::Scope b(os);
-                // If this post synapse requires an RNG for initialisation,
+                // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
                 if(cg.getArchetype().isInitRNGRequired()) {
@@ -1307,6 +1307,41 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
         });
     os << std::endl;
     
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Custom WU update groups with kernel connectivity" << std::endl;
+    genParallelGroup<CustomWUUpdateKernelInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomWUUpdateKernelInitGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getKernelSizeFlattened(), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "// only do this for existing kernel entries" << std::endl;
+            os << "if(" << popSubs["id"] << " < (";
+            const auto &kernelSize = cg.getArchetype().getSynapseGroup()->getKernelSize();
+
+            // Loop through kernel dimensions and multiply together
+            for (size_t i = 0; i < kernelSize.size(); i++) {
+                os << cg.getKernelSize(i);
+
+                if (i != (kernelSize.size() - 1)) {
+                    os << " * ";
+                }
+            }
+            os << "))";
+            {
+                CodeStream::Scope b(os);
+                // If this custom update requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if (cg.getArchetype().isInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+
+                popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                cg.generateInit(*this, os, modelMerged, popSubs);
+            }
+        });
+    os << std::endl;
+
     os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Synapse groups with kernel connectivity" << std::endl;
     genParallelGroup<SynapseKernelInitGroupMerged>(
