@@ -157,7 +157,7 @@ bool isKernelSizeHeterogeneous(const G *group, size_t dimensionIndex, K getKerne
     // Return true if any of the other groups have a different value
     return std::any_of(group->getGroups().cbegin(), group->getGroups().cend(),
                        [archetypeValue, dimensionIndex, getKernelSizeFn]
-                       (const G::GroupInternal& g)
+                       (const typename G::GroupInternal& g)
                        {
                            return (getKernelSizeFn(g).at(dimensionIndex) != archetypeValue);
                        });
