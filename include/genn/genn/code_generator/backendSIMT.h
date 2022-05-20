@@ -134,7 +134,7 @@ public:
         genSynapseVariableRowInit(os, kernelSubs, handler);
     }
     
-    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;
+    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const final;
     virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const final;
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
@@ -166,6 +166,7 @@ public:
     static size_t getNumPostsynapticUpdateThreads(const SynapseGroupInternal &sg);
     static size_t getNumSynapseDynamicsThreads(const SynapseGroupInternal &sg);
     static size_t getNumConnectivityInitThreads(const SynapseGroupInternal &sg);
+    static size_t getNumInitThreads(const SynapseGroupInternal &sg);
 
     //! Register a new presynaptic update strategy
     /*! This function should be called with strategies in ascending order of preference */

@@ -542,26 +542,56 @@ void NeuronInitGroupMerged::genInitSpikeTime(CodeStream &os, const BackendBase &
 }
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDenseInitGroupMerged
+// CodeGenerator::SynapseInitGroupMerged
 //----------------------------------------------------------------------------
-const std::string SynapseDenseInitGroupMerged::name = "SynapseDenseInit";
+const std::string SynapseInitGroupMerged::name = "SynapseInit";
 //----------------------------------------------------------------------------
-void SynapseDenseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+void SynapseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    // Loop through rows
-    os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
-    {
-        CodeStream::Scope b(os);
+    // If model is batched and has kernel weights
+    const bool kernel = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
+    if (kernel && modelMerged.getModel().getBatchSize() > 1) {
+        // Loop through kernel dimensions and multiply together to calculate batch stride
+        os << "const unsigned int batchStride = ";
+        const auto &kernelSize = getArchetype().getKernelSize();
+        for (size_t i = 0; i < kernelSize.size(); i++) {
+            os << getKernelSize(i);
+
+            if (i != (kernelSize.size() - 1)) {
+                os << " * ";
+            }
+        }
+        os << ";" << std::endl;;
+    }
+
+    
+    // If we're using non-kernel weights, generate loop over source neurons
+    if (!kernel) {
+        os << "for(unsigned int i = 0; i < group->numSrcNeurons; i++)";
+        os << CodeStream::OB(1);    
         popSubs.addVarSubstitution("id_pre", "i");
-        genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                         getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
-                         modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
-                         [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
-                         [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
-                         [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
-                         {
-                             backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler); 
-                         });
+    }
+
+    // Generate initialisation code
+    const std::string stride = kernel ? "batchStride" : "group->numSrcNeurons * group->rowStride";
+    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
+                     getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
+                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
+                     [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
+                     [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
+                     [&backend, kernel, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     {
+                         if (kernel) {
+                             backend.genKernelSynapseVariableInit(os, *this, kernelSubs, handler);
+                         }
+                         else {
+                             backend.genDenseSynapseVariableRowInit(os, kernelSubs, handler);
+                         }
+                     });
+
+    // If we're using non-kernel weights, close loop
+    if (!kernel) {
+        os << CodeStream::CB(1);
     }
 }
 
@@ -580,39 +610,6 @@ void SynapseSparseInitGroupMerged::generateInit(const BackendBase &backend, Code
                      [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
                      {
                          backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
-                     });
-}
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseKernelInitGroupMerged
-//----------------------------------------------------------------------------
-const std::string SynapseKernelInitGroupMerged::name = "SynapseKernelInit";
-//----------------------------------------------------------------------------
-void SynapseKernelInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
-{
-    // If model is batched
-    if(modelMerged.getModel().getBatchSize() > 1) {
-        // Loop through kernel dimensions and multiply together to calculate batch stride
-        os << "const unsigned int batchStride = ";
-        const auto &kernelSize = getArchetype().getKernelSize();
-        for(size_t i = 0; i < kernelSize.size(); i++) {
-            os << getKernelSize(i);
-
-            if(i != (kernelSize.size() - 1)) {
-                os << " * ";
-            }
-        }
-        os << ";" << std::endl;;
-    }
-
-    genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                     getArchetype().getWUVarInitialisers(), "batchStride", getIndex(),
-                     modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
-                     [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
-                     [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
-                     [&backend, this](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
-                     {
-                         backend.genKernelSynapseVariableInit(os, *this, kernelSubs, handler); 
                      });
 }
 

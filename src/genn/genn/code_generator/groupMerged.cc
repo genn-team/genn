@@ -876,7 +876,8 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
                              || (role == Role::SynapseDynamics));
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
-    if(role != Role::KernelInit) {
+    // If role isn't an init role or weights aren't kernel
+    if(role != Role::Init || !(getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL)) {
         addField("unsigned int", "rowStride",
                  [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
         addField("unsigned int", "numSrcNeurons",
@@ -1127,7 +1128,7 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit || role == Role::KernelInit);
+        const bool varInitRole = (role == Role::Init || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
@@ -1279,7 +1280,7 @@ boost::uuids::detail::sha1::digest_type SynapseGroupMergedBase::getHashDigest(Ro
     // Otherwise (weights are individual or procedural)
     else {
         const bool connectInitRole = (role == Role::ConnectivityInit);
-        const bool varInitRole = (role == Role::DenseInit || role == Role::SparseInit);
+        const bool varInitRole = (role == Role::Init || role == Role::SparseInit);
         const bool proceduralWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::PROCEDURAL);
         const bool individualWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);
         const bool kernelWeights = (getArchetype().getMatrixType() & SynapseMatrixWeight::INDIVIDUAL);

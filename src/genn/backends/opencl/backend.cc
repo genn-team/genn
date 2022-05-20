@@ -1084,8 +1084,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomUpdateInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomWUUpdateKernelInitGroups());
-    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseDenseInitGroups());
-    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseKernelInitGroups());
+    genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedSynapseSparseInitGroups());
     genMergedStructPreamble(os, modelMerged, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
@@ -1112,8 +1111,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedCustomUpdateInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedCustomWUUpdateKernelInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedSynapseDenseInitGroupStructs(initializeKernels, *this);
-    modelMerged.genMergedSynapseKernelInitGroupStructs(initializeKernels, *this);
+    modelMerged.genMergedSynapseInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(initializeKernels, *this);
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(initializeKernels, *this);
@@ -1126,8 +1124,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateDenseInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateKernelInitGroups(), [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getKernelSizeFlattened(), KernelInitialize); },
-        modelMerged.getMergedSynapseDenseInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(sg.getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        modelMerged.getMergedSynapseKernelInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(sg.getKernelSizeFlattened(), KernelInitialize); },
+        modelMerged.getMergedSynapseInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
         modelMerged.getMergedSynapseConnectivityInitGroups(), [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); });
 
     // Generate data structure for accessing merged groups from within sparse initialisation kernel
@@ -1142,8 +1139,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomUpdateInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomWUUpdateKernelInitGroups());
-    genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseDenseInitGroups());
-    genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseKernelInitGroups());
+    genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedSynapseSparseInitGroups());
     genMergedStructBuildKernels(initializeKernels, modelMerged, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
@@ -1155,19 +1151,17 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     const bool anyCustomUpdateInitGroups = !modelMerged.getMergedCustomUpdateInitGroups().empty();
     const bool anyCustomWUUpdateDenseInitGroups = !modelMerged.getMergedCustomWUUpdateDenseInitGroups().empty();
     const bool anyCustomWUUpdateKernelInitGroups = !modelMerged.getMergedCustomWUUpdateKernelInitGroups().empty();
-    const bool anyDenseInitGroups = !modelMerged.getMergedSynapseDenseInitGroups().empty();
-    const bool anyKernelInitGroups = !modelMerged.getMergedSynapseKernelInitGroups().empty();
+    const bool anySynapseInitGroups = !modelMerged.getMergedSynapseInitGroups().empty();
     const bool anyConnectivityInitGroups = !modelMerged.getMergedSynapseConnectivityInitGroups().empty();
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedNeuronInitGroups(), 
-                               anyCustomUpdateInitGroups || anyCustomWUUpdateDenseInitGroups || anyCustomWUUpdateKernelInitGroups || anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyCustomUpdateInitGroups || anyCustomWUUpdateDenseInitGroups || anyCustomWUUpdateKernelInitGroups || anySynapseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomUpdateInitGroups(), 
-                               anyCustomWUUpdateDenseInitGroups || anyCustomWUUpdateKernelInitGroups || anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyCustomWUUpdateDenseInitGroups || anyCustomWUUpdateKernelInitGroups || anySynapseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), 
-                               anyCustomWUUpdateKernelInitGroups || anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+                               anyCustomWUUpdateKernelInitGroups || anySynapseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedCustomWUUpdateKernelInitGroups(),
-                               anyDenseInitGroups || anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseDenseInitGroups(), anyKernelInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
-    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseKernelInitGroups(), anyConnectivityInitGroups || additionalParamsRequired);
+                               anySynapseInitGroups || anyConnectivityInitGroups || additionalParamsRequired);
+    genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseInitGroups(), anyConnectivityInitGroups || additionalParamsRequired);
     genMergedGroupKernelParams(initializeKernels, modelMerged.getMergedSynapseConnectivityInitGroups(), additionalParamsRequired);
     if(globalRNGRequired) {
         initializeKernels << "__global clrngPhilox432HostStream *d_rng";
@@ -1243,8 +1237,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomUpdateInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomWUUpdateKernelInitGroups(), "initializeProgram");
-            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseDenseInitGroups(), "initializeProgram");
-            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseKernelInitGroups(), "initializeProgram");
+            genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseConnectivityInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedSynapseSparseInitGroups(), "initializeProgram");
             genMergedStructBuild(os, modelMerged, modelMerged.getMergedCustomWUUpdateSparseInitGroups(), "initializeProgram");
@@ -1259,8 +1252,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomUpdateInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomWUUpdateDenseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedCustomWUUpdateKernelInitGroups(), start);
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseDenseInitGroups(), start);
-            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseKernelInitGroups(), start);
+            setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseInitGroups(), start);
             setMergedGroupKernelParams(os, KernelNames[KernelInitialize], modelMerged.getMergedSynapseConnectivityInitGroups(), start);
             if(shouldUseSubBufferAllocations()) {
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << (start + (globalRNGRequired ? 1 : 0)) << ", d_staticBuffer));" << std::endl;
@@ -1322,8 +1314,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
             if(globalRNGRequired) {
                 const size_t numInitGroups = (modelMerged.getMergedNeuronInitGroups().size() + modelMerged.getMergedCustomUpdateInitGroups().size() +
                                               modelMerged.getMergedCustomWUUpdateDenseInitGroups().size() + modelMerged.getMergedCustomWUUpdateKernelInitGroups().size() +
-                                              modelMerged.getMergedSynapseDenseInitGroups().size() + modelMerged.getMergedSynapseKernelInitGroups().size() + 
-                                              modelMerged.getMergedSynapseConnectivityInitGroups().size());
+                                              modelMerged.getMergedSynapseInitGroups().size() + modelMerged.getMergedSynapseConnectivityInitGroups().size());
 
                 os << "CHECK_OPENCL_ERRORS(" << KernelNames[KernelInitialize] << ".setArg(" << numInitGroups << ", d_rng));" << std::endl;
             }

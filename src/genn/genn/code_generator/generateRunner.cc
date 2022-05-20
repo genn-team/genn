@@ -714,14 +714,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
-    // Loop through merged dense synapse init groups
-    for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
-         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                          runnerVarDecl, runnerMergedStructAlloc);
-    }
-    
-    // Loop through merged kernel synapse init groups
-    for(const auto &m : modelMerged.getMergedSynapseKernelInitGroups()) {
+    // Loop through merged synapse init groups
+    for(const auto &m : modelMerged.getMergedSynapseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                           runnerVarDecl, runnerMergedStructAlloc);
     }

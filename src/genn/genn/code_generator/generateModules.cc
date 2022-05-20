@@ -161,7 +161,7 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronInitGroups().size() << " merged neuron init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomUpdateInitGroups().size() << " merged custom update init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateDenseInitGroups().size() << " merged custom WU update dense init groups";
-    LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDenseInitGroups().size() << " merged synapse dense init groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseInitGroups().size() << " merged synapse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityInitGroups().size() << " merged synapse connectivity init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateSparseInitGroups().size() << " merged custom WU update sparse init groups";
@@ -281,7 +281,7 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedNeuronInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomUpdateInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), backend);
-            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseDenseInitGroups(), backend);
+            modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseConnectivityInitGroups(), backend);
             modelMerged.genMergedGroupPush(os, modelMerged.getMergedSynapseSparseInitGroups(), backend);
         },
@@ -291,7 +291,7 @@ void CodeGenerator::generateInit(const filesystem::path &outputPath, const Model
             modelMerged.genScalarEGPPush<NeuronInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomUpdateInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<CustomWUUpdateDenseInitGroupMerged>(os, backend);
-            modelMerged.genScalarEGPPush<SynapseDenseInitGroupMerged>(os, backend);
+            modelMerged.genScalarEGPPush<SynapseInitGroupMerged>(os, backend);
             modelMerged.genScalarEGPPush<SynapseConnectivityInitGroupMerged>(os, backend);
         },
         // Initialise sparse push EGP handler

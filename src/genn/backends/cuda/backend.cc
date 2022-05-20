@@ -860,8 +860,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedNeuronInitGroupStructs(os, *this);
     modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseKernelInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateKernelInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
@@ -871,8 +870,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructArrayPush(os, modelMerged.getMergedNeuronInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseKernelInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateKernelInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
@@ -890,8 +888,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         modelMerged.getMergedNeuronInitGroups(), [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
         modelMerged.getMergedCustomUpdateInitGroups(), [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateDenseInitGroups(), [this](const CustomUpdateWUInternal &cg){ return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        modelMerged.getMergedSynapseDenseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(sg.getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        modelMerged.getMergedSynapseKernelInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(sg.getKernelSizeFlattened(), KernelInitialize); },
+        modelMerged.getMergedSynapseInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
         modelMerged.getMergedCustomWUUpdateKernelInitGroups(), [this](const CustomUpdateWUInternal &sg) { return padKernelSize(sg.getSynapseGroup()->getKernelSizeFlattened(), KernelInitialize); },
         modelMerged.getMergedSynapseConnectivityInitGroups(), [this](const SynapseGroupInternal &sg){ return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize); });
 

@@ -68,7 +68,7 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
                            &CustomUpdateWUInternal::getInitHashDigest);
 
     LOGD_CODE_GEN << "Merging synapse dense initialization groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseDenseInitGroups,
+    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseInitGroups,
                            [](const SynapseGroupInternal &sg)
                            {
                                return ((sg.getMatrixType() & SynapseMatrixConnectivity::DENSE) && sg.isWUVarInitRequired());
@@ -94,14 +94,6 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateSparseInitGroups,
                            [](const CustomUpdateWUInternal &cg) { return (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) && cg.isVarInitRequired(); },
                            &CustomUpdateWUInternal::getInitHashDigest);
-
-    LOGD_CODE_GEN << "Merging synapse kernel initialization groups:";
-    createMergedGroupsHash(model, backend, model.getSynapseGroups(), m_MergedSynapseKernelInitGroups,
-                           [&backend](const SynapseGroupInternal &sg)
-                           {
-                               return ((sg.getMatrixType() & SynapseMatrixWeight::KERNEL) && sg.isWUVarInitRequired());
-                           },
-                           &SynapseGroupInternal::getWUInitHashDigest);
 
     LOGD_CODE_GEN << "Merging custom kernel weight update initialization groups:";
     createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateKernelInitGroups,
@@ -216,9 +208,8 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
 
     // Loop through init groups and assign memory spaces
     assignGroups(backend, m_MergedNeuronInitGroups, memorySpaces);
-    assignGroups(backend, m_MergedSynapseDenseInitGroups, memorySpaces);
+    assignGroups(backend, m_MergedSynapseInitGroups, memorySpaces);
     assignGroups(backend, m_MergedSynapseSparseInitGroups, memorySpaces);
-    assignGroups(backend, m_MergedSynapseKernelInitGroups, memorySpaces);
     assignGroups(backend, m_MergedSynapseConnectivityInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomUpdateInitGroups, memorySpaces);
     assignGroups(backend, m_MergedCustomWUUpdateDenseInitGroups, memorySpaces);
@@ -283,8 +274,8 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
-    // Concatenate hash digest of synapse dense init groups
-    for(const auto &g : m_MergedSynapseDenseInitGroups) {
+    // Concatenate hash digest of synapse init groups
+    for(const auto &g : m_MergedSynapseInitGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
     }
 
@@ -292,12 +283,6 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getHashDigest(const Bac
     for(const auto &g : m_MergedSynapseSparseInitGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
     }
-
-    // Update hash with hash digest of synapse sparse init groups
-    for(const auto &g : m_MergedSynapseKernelInitGroups) {
-        Utils::updateHash(g.getHashDigest(), hash);
-    }
-
     // Concatenate hash digest of synapse connectivity init groups
     for(const auto &g : m_MergedSynapseConnectivityInitGroups) {
         Utils::updateHash(g.getHashDigest(), hash);
@@ -466,7 +451,7 @@ boost::uuids::detail::sha1::digest_type ModelSpecMerged::getInitArchetypeHashDig
     }
 
     // Concatenate hash digest of archetype synapse dense init group
-    for(const auto &g : m_MergedSynapseDenseInitGroups) {
+    for(const auto &g : m_MergedSynapseInitGroups) {
         Utils::updateHash(g.getArchetype().getWUInitHashDigest(), hash);
     }
 

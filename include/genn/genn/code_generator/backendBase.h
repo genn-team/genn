@@ -44,9 +44,8 @@ namespace CodeGenerator
     class CustomWUUpdateSparseInitGroupMerged;
     class CustomWUUpdateKernelInitGroupMerged;
     class SynapseConnectivityInitGroupMerged;
-    class SynapseDenseInitGroupMerged;
+    class SynapseInitGroupMerged;
     class SynapseSparseInitGroupMerged;
-    class SynapseKernelInitGroupMerged;
     
 }
 
@@ -283,7 +282,7 @@ public:
                                  const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genSparseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions &kernelSubs, Handler handler) const = 0;
-    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const = 0;
+    virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const = 0;
     virtual void genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'

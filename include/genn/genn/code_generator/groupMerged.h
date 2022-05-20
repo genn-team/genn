@@ -1122,9 +1122,8 @@ protected:
         PresynapticUpdate,
         PostsynapticUpdate,
         SynapseDynamics,
-        DenseInit,
+        Init,
         SparseInit,
-        KernelInit,
         ConnectivityInit,
     };
 

@@ -718,8 +718,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     modelMerged.genMergedCustomUpdateInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateDenseInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateKernelInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseDenseInitGroupStructs(os, *this);
-    modelMerged.genMergedSynapseKernelInitGroupStructs(os, *this);
+    modelMerged.genMergedSynapseInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseConnectivityInitGroupStructs(os, *this);
     modelMerged.genMergedSynapseSparseInitGroupStructs(os, *this);
     modelMerged.genMergedCustomWUUpdateSparseInitGroupStructs(os, *this);
@@ -729,8 +728,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
     genMergedStructArrayPush(os, modelMerged.getMergedCustomUpdateInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateDenseInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateKernelInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseDenseInitGroups());
-    genMergedStructArrayPush(os, modelMerged.getMergedSynapseKernelInitGroups());
+    genMergedStructArrayPush(os, modelMerged.getMergedSynapseInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseConnectivityInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedSynapseSparseInitGroups());
     genMergedStructArrayPush(os, modelMerged.getMergedCustomWUUpdateSparseInitGroups());
@@ -818,32 +816,16 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
         }
 
         os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Synapse groups with dense connectivity" << std::endl;
-        for(const auto &s : modelMerged.getMergedSynapseDenseInitGroups()) {
+        os << "// Synapse groups" << std::endl;
+        for(const auto &s : modelMerged.getMergedSynapseInitGroups()) {
             CodeStream::Scope b(os);
-            os << "// merged synapse dense init group " << s.getIndex() << std::endl;
+            os << "// merged synapse init group " << s.getIndex() << std::endl;
             os << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
             {
                 CodeStream::Scope b(os);
 
                 // Get reference to group
-                os << "const auto *group = &mergedSynapseDenseInitGroup" << s.getIndex() << "[g]; " << std::endl;
-                Substitutions popSubs(&funcSubs);
-                s.generateInit(*this, os, modelMerged, popSubs);
-            }
-        }
-        
-        os << "// ------------------------------------------------------------------------" << std::endl;
-        os << "// Synapse groups with kernel connectivity" << std::endl;
-        for(const auto &s : modelMerged.getMergedSynapseKernelInitGroups()) {
-            CodeStream::Scope b(os);
-            os << "// merged synapse dense init group " << s.getIndex() << std::endl;
-            os << "for(unsigned int g = 0; g < " << s.getGroups().size() << "; g++)";
-            {
-                CodeStream::Scope b(os);
-
-                // Get reference to group
-                os << "const auto *group = &mergedSynapseKernelInitGroup" << s.getIndex() << "[g]; " << std::endl;
+                os << "const auto *group = &mergedSynapseInitGroup" << s.getIndex() << "[g]; " << std::endl;
                 Substitutions popSubs(&funcSubs);
                 s.generateInit(*this, os, modelMerged, popSubs);
             }
@@ -1319,7 +1301,7 @@ void Backend::genDenseSynapseVariableRowInit(CodeStream &os, const Substitutions
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const
+void Backend::genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const
 {
     genKernelIteration(os, sg, sg.getArchetype().getKernelSize().size(), kernelSubs, handler);
 }
