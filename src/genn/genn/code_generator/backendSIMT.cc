@@ -1469,71 +1469,29 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
                 genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
             }
 
-            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
-            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
-            os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
-
-            os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
-
-            // Loop through blocks
-            os << "for(unsigned int r = 0; r < numBlocks; r++)";
-            {
-                CodeStream::Scope b(os);
-
-                // Calculate number of rows to process in this block
-                os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
-                os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
-                os << " : " << blockSize << ";" << std::endl;
-
-                // Use threads to copy block of sparse structure into shared memory
-                genSharedMemBarrier(os);
-                os << "if (" << getThreadID() << " < numRowsInBlock)";
+            // Generate sparse synapse variable initialisation code
+            genSparseSynapseVarInit<SynapseSparseInitGroupMerged>(
+                os, modelMerged, sg, popSubs, sg.getArchetype().isWUVarInitRequired(), 
+                [this](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions&)
                 {
-                    CodeStream::Scope b(os);
-                    os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
-                }
-                genSharedMemBarrier(os);
-
-                // Loop through rows
-                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // If there is a synapse for this thread to initialise
-                    os << "if(" << popSubs["id"] << " < shRowLength[i])";
-                    {
+                    // If postsynaptic learning is required
+                    if(!sg.getArchetype().getWUModel()->getLearnPostCode().empty()) {
                         CodeStream::Scope b(os);
 
-                        // Generate sparse initialisation code
-                        if(sg.getArchetype().isWUVarInitRequired()) {
-                            popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
-                            popSubs.addVarSubstitution("id_post", "group->ind[idx]");
-                            sg.generateInit(*this, os, modelMerged, popSubs);
-                        }
+                        // Extract index of synapse's postsynaptic target
+                        os << "const unsigned int postIndex = group->ind[idx];" << std::endl;
 
-                        // If postsynaptic learning is required
-                        if(!sg.getArchetype().getWUModel()->getLearnPostCode().empty()) {
-                            CodeStream::Scope b(os);
+                        // Atomically increment length of column of connectivity associated with this target
+                        // **NOTE** this returns previous length i.e. where to insert new entry
+                        os << "const unsigned int colLocation = " << getAtomic("unsigned int") << "(&group->colLength[postIndex], 1);" << std::endl;
 
-                            // Extract index of synapse's postsynaptic target
-                            os << "const unsigned int postIndex = group->ind[idx];" << std::endl;
+                        // From this calculate index into column-major matrix
+                        os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
 
-                            // Atomically increment length of column of connectivity associated with this target
-                            // **NOTE** this returns previous length i.e. where to insert new entry
-                            os << "const unsigned int colLocation = " << getAtomic("unsigned int") << "(&group->colLength[postIndex], 1);" << std::endl;
-
-                            // From this calculate index into column-major matrix
-                            os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
-
-                            // Add remapping entry at this location poining back to row-major index
-                            os << "group->remap[colMajorIndex] = idx;" << std::endl;
-                        }
+                        // Add remapping entry at this location poining back to row-major index
+                        os << "group->remap[colMajorIndex] = idx;" << std::endl;
                     }
-
-                    // If matrix is ragged, advance index to next row by adding stride
-                    os << "idx += group->rowStride;" << std::endl;
-                }
-            }
+                });
         });
 
     // Initialise weight update variables for synapse groups with sparse connectivity
@@ -1547,53 +1505,9 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
             if(cg.getArchetype().isInitRNGRequired()) {
                 genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
             }
-
-            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
-            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
-            os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
-
-            os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
-
-            // Loop through blocks
-            os << "for(unsigned int r = 0; r < numBlocks; r++)";
-            {
-                CodeStream::Scope b(os);
-
-                // Calculate number of rows to process in this block
-                os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
-                os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
-                os << " : " << blockSize << ";" << std::endl;
-
-                // Use threads to copy block of sparse structure into shared memory
-                genSharedMemBarrier(os);
-                os << "if (" << getThreadID() << " < numRowsInBlock)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
-                }
-
-                genSharedMemBarrier(os);
-
-                // Loop through rows
-                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // If there is a synapse for this thread to initialise
-                    os << "if(" << popSubs["id"] << " < shRowLength[i])";
-                    {
-                        CodeStream::Scope b(os);
-
-                        // Generate sparse initialisation code
-                        popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
-                        popSubs.addVarSubstitution("id_post", "group->ind[idx]");
-                        cg.generateInit(*this, os, modelMerged, popSubs);
-                    }
-
-                    // If matrix is ragged, advance index to next row by adding stride
-                    os << "idx += group->rowStride;" << std::endl;
-                }
-            }
+            
+            // Generate sparse synapse variable initialisation code
+            genSparseSynapseVarInit(os, modelMerged, cg, popSubs);
         });
 }
 //--------------------------------------------------------------------------

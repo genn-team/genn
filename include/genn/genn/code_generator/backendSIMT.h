@@ -324,6 +324,14 @@ private:
     }
 
     
+    template<typename T, typename S>
+    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
+                          S getPaddedSizeFunc, GroupHandler<T> handler) const
+    {
+        genParallelGroup(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
+                         [](const T &) { return true; }, handler);
+    }
+    
     template<typename G>
     std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg) const
     {
@@ -349,7 +357,7 @@ private:
         return reductionTargets;
     }
     
-    // Helper function to generate kernel code to initialise dense/kernel variables associated with synapse group or custom WU update
+    // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with dense/kernel connectivity
     template<typename G>
     void genSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, 
                            bool initRNGRequired, bool kernel, size_t kernelDimensions) const
@@ -424,13 +432,62 @@ private:
             g.generateInit(*this, os, modelMerged, popSubs);
         }
     }
-
-    template<typename T, typename S>
-    void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
-                          S getPaddedSizeFunc, GroupHandler<T> handler) const
+    
+    // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with sparse connectivity
+    template<typename G>
+    void genSparseSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, bool varInitRequired = true, 
+                                 GroupHandler<G> handler = [](CodeStream&, const G&, Substitutions&){}) const
     {
-        genParallelGroup(os, kernelSubs, groups, idStart, getPaddedSizeFunc,
-                         [](const T &) { return true; }, handler);
+        // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
+        const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
+        os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
+
+        os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
+
+        // Loop through blocks
+        os << "for(unsigned int r = 0; r < numBlocks; r++)";
+        {
+            CodeStream::Scope b(os);
+
+            // Calculate number of rows to process in this block
+            os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
+            os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
+            os << " : " << blockSize << ";" << std::endl;
+
+            // Use threads to copy block of sparse structure into shared memory
+            genSharedMemBarrier(os);
+            os << "if (" << getThreadID() << " < numRowsInBlock)";
+            {
+                CodeStream::Scope b(os);
+                os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
+            }
+            genSharedMemBarrier(os);
+
+            // Loop through rows
+            os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
+            {
+                CodeStream::Scope b(os);
+
+                // If there is a synapse for this thread to initialise
+                os << "if(" << popSubs["id"] << " < shRowLength[i])";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Generate initialisation code
+                    if(varInitRequired) {
+                        popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
+                        popSubs.addVarSubstitution("id_post", "group->ind[idx]");
+                        g.generateInit(*this, os, modelMerged, popSubs);
+                    }
+                    
+                    // Call handler
+                    handler(os, g, popSubs);
+                }
+
+                // If matrix is ragged, advance index to next row by adding stride
+                os << "idx += group->rowStride;" << std::endl;
+            }
+        }
     }
 
     void genEmitSpike(CodeStream &os, const Substitutions &subs, const std::string &suffix, bool recordingEnabled) const;
