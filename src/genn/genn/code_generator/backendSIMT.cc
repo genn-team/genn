@@ -93,7 +93,7 @@ void BackendSIMT::genKernelSynapseVariableInit(CodeStream &os, const SynapseInit
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cu, const Substitutions &kernelSubs, Handler handler) const
+void BackendSIMT::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged&, const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
     assert(kernelSubs.hasVarSubstitution("id"));
@@ -155,11 +155,11 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
                                                    return padKernelSize(cg.getSize(), KernelInitialize);
                                                });
     
-    // Add on total number of threads used for custom WU update groups with dense connectivity
-    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedCustomWUUpdateDenseInitGroups(),
+    // Add on total number of threads used for custom WU update initialization
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedCustomWUUpdateInitGroups(),
                                                [this](const CustomUpdateWUInternal &cg)
                                                {
-                                                   return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize);
+                                                   return padKernelSize(getNumInitThreads(cg), KernelInitialize);
                                                });
     
     // Add on total number of threads used for synapse initialisation
@@ -272,6 +272,16 @@ size_t BackendSIMT::getNumInitThreads(const SynapseGroupInternal &sg)
     }
     else {
         return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getNumInitThreads(const CustomUpdateWUInternal &cg)
+{
+    if (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        return cg.getSynapseGroup()->getKernelSizeFlattened();
+    }
+    else {
+        return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons();
     }
 }
 //--------------------------------------------------------------------------
@@ -1239,55 +1249,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Custom update groups" << std::endl;
-    genParallelGroup<CustomUpdateInitGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomUpdateInitGroups(), idStart,
-        [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
-        [&modelMerged, this](CodeStream &os, const CustomUpdateInitGroupMerged &cg, Substitutions &popSubs)
-        {
-            os << "// only do this for existing variables" << std::endl;
-            os << "if(" << popSubs["id"] << " < group->size)";
-            {
-                CodeStream::Scope b(os);
-
-                // If this custom update requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(cg.getArchetype().isInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-
-                cg.generateInit(*this, os, modelMerged, popSubs);
-            }
-        });
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Custom WU update groups with dense connectivity" << std::endl;
-    genParallelGroup<CustomWUUpdateDenseInitGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), idStart,
-        [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        [&modelMerged, this](CodeStream &os, const CustomWUUpdateDenseInitGroupMerged &cg, Substitutions &popSubs)
-        {
-            os << "// only do this for existing postsynaptic neurons" << std::endl;
-            os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
-            {
-                CodeStream::Scope b(os);
-                // If this custom update requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(cg.getArchetype().isInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-
-                popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                cg.generateInit(*this, os, modelMerged, popSubs);
-            }
-        });
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Synapse groups connectivity" << std::endl;
+    os << "// Synapse groups" << std::endl;
     genParallelGroup<SynapseInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedSynapseInitGroups(), idStart,
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
@@ -1298,9 +1260,8 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             // If synapse group has kernel weights, check ID against product of kernel dimensions
             const auto &kernelSize = sg.getArchetype().getKernelSize();
             if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                os << "(";
                 // Loop through kernel dimensions and multiply together
-                
+                os << "(";
                 for (size_t i = 0; i < kernelSize.size(); i++) {
                     os << sg.getKernelSize(i);
                     if (i != (kernelSize.size() - 1)) {
@@ -1366,37 +1327,106 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
             }
         });
     os << std::endl;
-    
+
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Custom WU update groups with kernel connectivity" << std::endl;
-    genParallelGroup<CustomWUUpdateKernelInitGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomWUUpdateKernelInitGroups(), idStart,
-        [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getKernelSizeFlattened(), KernelInitialize); },
-        [&modelMerged, this](CodeStream &os, const CustomWUUpdateKernelInitGroupMerged &cg, Substitutions &popSubs)
+    os << "// Custom update groups" << std::endl;
+    genParallelGroup<CustomUpdateInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomUpdateInitGroups(), idStart,
+        [this](const CustomUpdateInternal &cg) { return padKernelSize(cg.getSize(), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const CustomUpdateInitGroupMerged &cg, Substitutions &popSubs)
         {
-            os << "// only do this for existing kernel entries" << std::endl;
-            os << "if(" << popSubs["id"] << " < (";
-            const auto &kernelSize = cg.getArchetype().getSynapseGroup()->getKernelSize();
-
-            // Loop through kernel dimensions and multiply together
-            for (size_t i = 0; i < kernelSize.size(); i++) {
-                os << cg.getKernelSize(i);
-
-                if (i != (kernelSize.size() - 1)) {
-                    os << " * ";
-                }
-            }
-            os << "))";
+            os << "// only do this for existing variables" << std::endl;
+            os << "if(" << popSubs["id"] << " < group->size)";
             {
                 CodeStream::Scope b(os);
+
                 // If this custom update requires an RNG for initialisation,
                 // make copy of global phillox RNG and skip ahead by thread id
                 // **NOTE** not LOCAL id
-                if (cg.getArchetype().isInitRNGRequired()) {
+                if(cg.getArchetype().isInitRNGRequired()) {
                     genGlobalRNGSkipAhead(os, popSubs, "id");
                 }
 
-                popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                cg.generateInit(*this, os, modelMerged, popSubs);
+            }
+        });
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Custom WU update groups" << std::endl;
+    genParallelGroup<CustomWUUpdateInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomWUUpdateInitGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const CustomWUUpdateInitGroupMerged &cg, Substitutions &popSubs)
+        {
+            os << "if(" << popSubs["id"] << " < ";
+            
+            // If underlying synapse group has kernel weights, check ID against product of kernel dimensions
+            const SynapseGroup *sg = cg.getArchetype().getSynapseGroup();
+            const auto &kernelSize = sg->getKernelSize();
+            if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                // Loop through kernel dimensions and multiply together
+                os << "(";
+                for (size_t i = 0; i < kernelSize.size(); i++) {
+                    os << cg.getKernelSize(i);
+                    if (i != (kernelSize.size() - 1)) {
+                        os << " * ";
+                    }
+                }
+                os << ")";
+            }
+            // Otherwise, against number of postsynaptic neurons
+            else {
+                os << "group->numTrgNeurons";
+            }
+            os << ")";
+            {
+                CodeStream::Scope b(os);
+                
+                // If this custom update requires an RNG for initialisation,
+                // make copy of global phillox RNG and skip ahead by thread id
+                // **NOTE** not LOCAL id
+                if(cg.getArchetype().isInitRNGRequired()) {
+                    genGlobalRNGSkipAhead(os, popSubs, "id");
+                }
+
+                // If underlying synapse group has kernel weights
+                if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                    // Loop through kernel dimensions to generate seperate indices
+                    for (size_t i = 0; i < kernelSize.size(); i++) {
+                        os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
+
+                        // If this isn't the last dimension
+                        if (i < (kernelSize.size() - 1)) {
+                            // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
+                            os << " / (";
+                            for (size_t j = (kernelSize.size() - 1); j > i; j--) {
+                                os << cg.getKernelSize(j);
+
+                                if (j != (i + 1)) {
+                                    os << " * ";
+                                }
+                            }
+                            os << ")";
+                        }
+                        os << ")";
+
+                        // If this isn't the first dimension, take modulus of kernel size
+                        if (i > 0) {
+                            os << " % " << cg.getKernelSize(i);
+                        }
+
+                        os << ";" << std::endl;
+
+                        // Add substitution
+                        popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
+                    }
+                }
+                else {
+                    popSubs.addVarSubstitution("id_post", popSubs["id"]);
+                    
+                }
+
                 cg.generateInit(*this, os, modelMerged, popSubs);
             }
         });

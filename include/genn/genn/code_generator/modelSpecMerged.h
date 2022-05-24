@@ -119,7 +119,7 @@ public:
     const std::vector<CustomUpdateInitGroupMerged> &getMergedCustomUpdateInitGroups() const { return m_MergedCustomUpdateInitGroups; }
 
     //! Get merged custom updategroups with dense connectivity which require initialisation
-    const std::vector<CustomWUUpdateDenseInitGroupMerged> &getMergedCustomWUUpdateDenseInitGroups() const { return m_MergedCustomWUUpdateDenseInitGroups; }
+    const std::vector<CustomWUUpdateInitGroupMerged> &getMergedCustomWUUpdateInitGroups() const { return m_MergedCustomWUUpdateInitGroups; }
 
     //! Get merged synapse groups with dense connectivity which require initialisation
     const std::vector<SynapseInitGroupMerged> &getMergedSynapseInitGroups() const{ return m_MergedSynapseInitGroups; }
@@ -132,9 +132,6 @@ public:
 
     //! Get merged custom update groups with sparse connectivity which require initialisation
     const std::vector<CustomWUUpdateSparseInitGroupMerged> &getMergedCustomWUUpdateSparseInitGroups() const { return m_MergedCustomWUUpdateSparseInitGroups; }
-
-    //! Get merged custom update groups with kernel connectivity which require initialisation
-    const std::vector<CustomWUUpdateKernelInitGroupMerged> &getMergedCustomWUUpdateKernelInitGroups() const { return m_MergedCustomWUUpdateKernelInitGroups; }
 
     //! Get merged neuron groups which require their spike queues updating
     const std::vector<NeuronSpikeQueueUpdateGroupMerged> &getMergedNeuronSpikeQueueUpdateGroups() const { return m_MergedNeuronSpikeQueueUpdateGroups; }
@@ -169,12 +166,11 @@ public:
     void genMergedSynapseDynamicsGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDynamicsGroups); }
     void genMergedNeuronInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronInitGroups); }
     void genMergedCustomUpdateInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateInitGroups); }
-    void genMergedCustomWUUpdateDenseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateDenseInitGroups); }
+    void genMergedCustomWUUpdateInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateInitGroups); }
     void genMergedSynapseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseInitGroups); }
     void genMergedSynapseConnectivityInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityInitGroups); }
     void genMergedSynapseSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseSparseInitGroups); }
     void genMergedCustomWUUpdateSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateSparseInitGroups); }
-    void genMergedCustomWUUpdateKernelInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateKernelInitGroups); }
     void genMergedNeuronSpikeQueueUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronSpikeQueueUpdateGroups); }
     void genMergedNeuronPrevSpikeTimeUpdateStructs(CodeStream &os, const BackendBase &backend) const{ genMergedStructures(os, backend, m_MergedNeuronPrevSpikeTimeUpdateGroups); }
     void genMergedSynapseDendriticDelayUpdateStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDendriticDelayUpdateGroups); }
@@ -389,8 +385,8 @@ private:
     //! Merged custom update groups which require initialisation
     std::vector<CustomUpdateInitGroupMerged> m_MergedCustomUpdateInitGroups;
 
-    //! Merged custom update groups with dense connectivity which require initialisation
-    std::vector<CustomWUUpdateDenseInitGroupMerged> m_MergedCustomWUUpdateDenseInitGroups;
+    //! Merged custom update weight update groups which require initialisation
+    std::vector<CustomWUUpdateInitGroupMerged> m_MergedCustomWUUpdateInitGroups;
 
     //! Merged synapse groups with dense connectivity which require initialisation
     std::vector<SynapseInitGroupMerged> m_MergedSynapseInitGroups;
@@ -403,9 +399,6 @@ private:
 
     //! Merged custom update groups with sparse connectivity which require initialisation
     std::vector<CustomWUUpdateSparseInitGroupMerged> m_MergedCustomWUUpdateSparseInitGroups;
-
-    //! Merged custom update groups with kernel weights which require initialisation
-    std::vector<CustomWUUpdateKernelInitGroupMerged> m_MergedCustomWUUpdateKernelInitGroups;
 
     //! Merged neuron groups which require their spike queues updating
     std::vector<NeuronSpikeQueueUpdateGroupMerged> m_MergedNeuronSpikeQueueUpdateGroups;

@@ -702,28 +702,10 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
-    // Generate merged custom update initialisation groups
-    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
-    }
-
-    // Generate merged custom dense WU update initialisation groups
-    for(const auto &m : modelMerged.getMergedCustomWUUpdateDenseInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
-    }
-
     // Loop through merged synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                           runnerVarDecl, runnerMergedStructAlloc);
-    }
-
-    // Loop through merged custom sparse WU update initialisation groups
-    for (const auto &m : modelMerged.getMergedCustomWUUpdateKernelInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
     }
 
     // Loop through merged synapse connectivity initialisation groups
@@ -734,6 +716,18 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                          runnerVarDecl, runnerMergedStructAlloc);
     }
