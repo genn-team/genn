@@ -28,7 +28,7 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
         });
     });
 }
-}
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendSIMT
@@ -1255,76 +1255,8 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
         [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
         [&modelMerged, this](CodeStream &os, const SynapseInitGroupMerged &sg, Substitutions &popSubs)
         {
-            os << "if(" << popSubs["id"] << " < ";
-            
-            // If synapse group has kernel weights, check ID against product of kernel dimensions
-            const auto &kernelSize = sg.getArchetype().getKernelSize();
-            if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                // Loop through kernel dimensions and multiply together
-                os << "(";
-                for (size_t i = 0; i < kernelSize.size(); i++) {
-                    os << sg.getKernelSize(i);
-                    if (i != (kernelSize.size() - 1)) {
-                        os << " * ";
-                    }
-                }
-                os << ")";
-            }
-            // Otherwise, against number of postsynaptic neurons
-            else {
-                os << "group->numTrgNeurons";
-            }
-            os << ")";
-            {
-                CodeStream::Scope b(os);
-                
-                // If this synapse group requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(sg.getArchetype().isWUInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-
-                // If synapse group has kernel weights
-                if (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                    // Loop through kernel dimensions to generate seperate indices
-                    for (size_t i = 0; i < kernelSize.size(); i++) {
-                        os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
-
-                        // If this isn't the last dimension
-                        if (i < (kernelSize.size() - 1)) {
-                            // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
-                            os << " / (";
-                            for (size_t j = (kernelSize.size() - 1); j > i; j--) {
-                                os << sg.getKernelSize(j);
-
-                                if (j != (i + 1)) {
-                                    os << " * ";
-                                }
-                            }
-                            os << ")";
-                        }
-                        os << ")";
-
-                        // If this isn't the first dimension, take modulus of kernel size
-                        if (i > 0) {
-                            os << " % " << sg.getKernelSize(i);
-                        }
-
-                        os << ";" << std::endl;
-
-                        // Add substitution
-                        popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
-                    }
-                }
-                // Otherwise, just substitute postsynaptic index
-                else {
-                    popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                }
-
-                // Generate init code
-                sg.generateInit(*this, os, modelMerged, popSubs);
-            }
+            genSynapseVarInit(os, modelMerged, sg, popSubs, sg.getArchetype().isWUInitRNGRequired(), 
+                              (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL), sg.getArchetype().getKernelSize().size());
         });
     os << std::endl;
 
@@ -1359,76 +1291,9 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
         [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
         [&modelMerged, this](CodeStream &os, const CustomWUUpdateInitGroupMerged &cg, Substitutions &popSubs)
         {
-            os << "if(" << popSubs["id"] << " < ";
-            
-            // If underlying synapse group has kernel weights, check ID against product of kernel dimensions
             const SynapseGroup *sg = cg.getArchetype().getSynapseGroup();
-            const auto &kernelSize = sg->getKernelSize();
-            if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                // Loop through kernel dimensions and multiply together
-                os << "(";
-                for (size_t i = 0; i < kernelSize.size(); i++) {
-                    os << cg.getKernelSize(i);
-                    if (i != (kernelSize.size() - 1)) {
-                        os << " * ";
-                    }
-                }
-                os << ")";
-            }
-            // Otherwise, against number of postsynaptic neurons
-            else {
-                os << "group->numTrgNeurons";
-            }
-            os << ")";
-            {
-                CodeStream::Scope b(os);
-                
-                // If this custom update requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(cg.getArchetype().isInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-
-                // If underlying synapse group has kernel weights
-                if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
-                    // Loop through kernel dimensions to generate seperate indices
-                    for (size_t i = 0; i < kernelSize.size(); i++) {
-                        os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
-
-                        // If this isn't the last dimension
-                        if (i < (kernelSize.size() - 1)) {
-                            // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
-                            os << " / (";
-                            for (size_t j = (kernelSize.size() - 1); j > i; j--) {
-                                os << cg.getKernelSize(j);
-
-                                if (j != (i + 1)) {
-                                    os << " * ";
-                                }
-                            }
-                            os << ")";
-                        }
-                        os << ")";
-
-                        // If this isn't the first dimension, take modulus of kernel size
-                        if (i > 0) {
-                            os << " % " << cg.getKernelSize(i);
-                        }
-
-                        os << ";" << std::endl;
-
-                        // Add substitution
-                        popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
-                    }
-                }
-                else {
-                    popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                    
-                }
-
-                cg.generateInit(*this, os, modelMerged, popSubs);
-            }
+            genSynapseVarInit(os, modelMerged, cg, popSubs, cg.getArchetype().isInitRNGRequired(), 
+                              (sg->getMatrixType() & SynapseMatrixWeight::KERNEL), sg->getKernelSize().size());
         });
     os << std::endl;
 

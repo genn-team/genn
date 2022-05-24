@@ -348,6 +348,82 @@ private:
         }
         return reductionTargets;
     }
+    
+    // Helper function to generate kernel code to initialise dense/kernel variables associated with synapse group or custom WU update
+    template<typename G>
+    void genSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, 
+                           bool initRNGRequired, bool kernel, size_t kernelDimensions) const
+    {
+        os << "if(" << popSubs["id"] << " < ";
+        
+        // If synapse group has kernel weights, check ID against product of kernel dimensions
+        if (kernel) {
+            // Loop through kernel dimensions and multiply together
+            os << "(";
+            for (size_t i = 0; i < kernelDimensions; i++) {
+                os << g.getKernelSize(i);
+                if (i != (kernelDimensions - 1)) {
+                    os << " * ";
+                }
+            }
+            os << ")";
+        }
+        // Otherwise, against number of postsynaptic neurons
+        else {
+            os << "group->numTrgNeurons";
+        }
+        os << ")";
+        {
+            CodeStream::Scope b(os);
+            
+            // If an RNG is required for initialisation,
+            // make copy of global phillox RNG and skip ahead by thread id
+            // **NOTE** not LOCAL id
+            if(initRNGRequired) {
+                genGlobalRNGSkipAhead(os, popSubs, "id");
+            }
+
+            // If synapse group has kernel weights
+            if (kernel) {
+                // Loop through kernel dimensions to generate seperate indices
+                for (size_t i = 0; i < kernelDimensions; i++) {
+                    os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
+
+                    // If this isn't the last dimension
+                    if (i < (kernelDimensions - 1)) {
+                        // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
+                        os << " / (";
+                        for (size_t j = (kernelDimensions - 1); j > i; j--) {
+                            os << g.getKernelSize(j);
+
+                            if (j != (i + 1)) {
+                                os << " * ";
+                            }
+                        }
+                        os << ")";
+                    }
+                    os << ")";
+
+                    // If this isn't the first dimension, take modulus of kernel size
+                    if (i > 0) {
+                        os << " % " << g.getKernelSize(i);
+                    }
+
+                    os << ";" << std::endl;
+
+                    // Add substitution
+                    popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
+                }
+            }
+            // Otherwise, just substitute postsynaptic index
+            else {
+                popSubs.addVarSubstitution("id_post", popSubs["id"]);
+            }
+
+            // Generate init code
+            g.generateInit(*this, os, modelMerged, popSubs);
+        }
+    }
 
     template<typename T, typename S>
     void genParallelGroup(CodeStream &os, const Substitutions &kernelSubs, const std::vector<T> &groups, size_t &idStart,
