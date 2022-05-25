@@ -558,7 +558,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     // **NOTE** transpose variables don't matter for initialization
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().empty());
 }
 //--------------------------------------------------------------------------
@@ -609,7 +609,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().size() == 1);
 }
 //--------------------------------------------------------------------------
