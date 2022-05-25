@@ -575,7 +575,7 @@ void SynapseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream
     // Generate initialisation code
     const std::string stride = kernel ? "batchStride" : "group->numSrcNeurons * group->rowStride";
     genInitWUVarCode(os, popSubs, getArchetype().getWUModel()->getVars(),
-                     getArchetype().getWUVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
+                     getArchetype().getWUVarInitialisers(), stride, getIndex(),
                      modelMerged.getModel().getPrecision(), modelMerged.getModel().getBatchSize(),
                      [this](size_t v, size_t p) { return isWUVarInitParamHeterogeneous(v, p); },
                      [this](size_t v, size_t p) { return isWUVarInitDerivedParamHeterogeneous(v, p); },
