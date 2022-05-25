@@ -435,8 +435,8 @@ private:
     
     // Helper function to generate kernel code to initialise variables associated with synapse group or custom WU update with sparse connectivity
     template<typename G>
-    void genSparseSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, bool varInitRequired = true, 
-                                 GroupHandler<G> handler = [](CodeStream&, const G&, Substitutions&){}) const
+    void genSparseSynapseVarInit(CodeStream &os, const ModelSpecMerged &modelMerged, const G &g, Substitutions &popSubs, 
+                                 bool varInitRequired, GroupHandler<G> handler) const
     {
         // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
         const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);

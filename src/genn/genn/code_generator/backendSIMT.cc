@@ -1507,7 +1507,9 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
             }
             
             // Generate sparse synapse variable initialisation code
-            genSparseSynapseVarInit(os, modelMerged, cg, popSubs);
+            genSparseSynapseVarInit<CustomWUUpdateSparseInitGroupMerged>(
+                os, modelMerged, cg, popSubs, true,
+                [](CodeStream&, const CustomWUUpdateSparseInitGroupMerged&, Substitutions&){});
         });
 }
 //--------------------------------------------------------------------------
