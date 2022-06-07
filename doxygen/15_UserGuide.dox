@@ -167,7 +167,19 @@ GeNN has no explicitly hard-coded synapse and neuron variables. Users are free t
 - \c DT : Time step (typically in ms) for simulation;
 Neuron integration can be done in multiple sub-steps inside the neuron model for numerical stability (see Traub-Miles and Izhikevich neuron model variations in \ref sectNeuronModels).
 
-- \c inSyn: This is an intermediary synapse variable which contains the summed input into a postsynaptic neuron (originating from the \$(addToInSyn, X) or \$(addToInSynDelay, X, Y) functions of the weight update model used by incoming synapses) . 
+\note DT exceptionally does not require bracketing with $(.)
+
+- \c t : The current time as a floating point value
+
+- \c id : The index of the neuron/ synapse in the population
+
+- \c id_pre : Used in a synapse context. The index of the pre-synaptic neuron in its population.
+
+- \c id_post : Used in a synapse context. The index of the post-synaptic neuron in its population.
+
+- \c inSyn : This is an intermediary synapse variable which contains the summed input into a postsynaptic neuron (originating from the \$(addToInSyn, X) or \$(addToInSynDelay, X, Y) functions of the weight update model used by incoming synapses) . 
+
+- \c revInSyn : Like inSyn but for "inverse" input onto the pre-synaptic neuron. Used, e.g., for error backpropagation. Is targeted through the \$(addToPre, C) function.
 
 - \c Isyn : This is a local variable which contains the (summed) input current to a neuron. It is typically the sum of any explicit current input 
 and all synaptic inputs. The way its value is calculated during the update of the postsynaptic neuron is defined by the code provided in the postsynaptic model. For example, the standard PostsynapticModels::ExpCond postsynaptic model defines
