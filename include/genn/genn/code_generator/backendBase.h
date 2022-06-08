@@ -254,8 +254,10 @@ public:
 
     virtual void genVariableDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genVariableAllocation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
-    virtual void genVariableFree(CodeStream &os, const std::string &name, VarLocation loc) const = 0;
+    virtual void genVariableAllocation(CodeStream &allocate, CodeStream &perDeviceAllocate, 
+                                       const std::string &type, const std::string &name, 
+                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
+    virtual void genVariableFree(CodeStream &free, CodeStream &perDeviceFree, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -316,14 +318,18 @@ public:
                                     CodeStream &allocations, CodeStream &free, MemAlloc &memAlloc) const = 0;
 
     //! Generate an RNG with a state per population member
-    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations,
-                                  CodeStream &free, const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
+    virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
+                                  CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
+                                  const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
 
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
 
     //! Generate code to return amount of free 'device' memory in bytes
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const = 0;
+
+    //! Generate code to select a device for platforms where this is required
+    virtual void genSelectDevice(CodeStream &os, const std::string &device = "device") const {}
 
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
@@ -391,6 +397,9 @@ public:
     //! How many bytes of memory does 'device' have
     virtual size_t getDeviceMemoryBytes() const = 0;
 
+    //! How many devices should model be distributed across
+    virtual size_t getNumDevices() const { return 1; }
+
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
     //! Place arrays in these and their size in preferential order
@@ -422,13 +431,14 @@ public:
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
-    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
+    void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
+                  CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
                   const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
     {
         genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);
-        genVariableFree(free, name, loc);
-        genVariableAllocation(allocations, type, name, loc, count, memAlloc);
+        genVariableFree(free, perDeviceFree, name, loc);
+        genVariableAllocation(allocate, perDeviceAllocate, type, name, loc, count, memAlloc);
     }
 
     //! Get the size of the type
