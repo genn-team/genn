@@ -13,6 +13,7 @@ genn_help () {
     echo "-f            force model to be rebuilt even if GeNN doesn't think it's required"
     echo "-s standard   changes the C++ standard the model is built with"
     echo "-o outpath    changes the output directory"
+    echo "-n numdevices  select how many devices to distribute model across"
     echo "-i includepath    add additional include directories (seperated by colons)"
 }
 
@@ -31,8 +32,9 @@ BUILD_MODEL_INCLUDE=""
 GENERATOR_MAKEFILE="MakefileCUDA"
 CXX_STANDARD="c++11"
 FORCE_REBUILD=0
+NUM_DEVICES=1
 while [[ -n "${!OPTIND}" ]]; do
-    while getopts "cldvfs:o:i:h" option; do
+    while getopts "cldvfs:o:n:i:h" option; do
     case $option in
         c) GENERATOR_MAKEFILE="MakefileSingleThreadedCPU";;
         l) GENERATOR_MAKEFILE="MakefileOpenCL";;
@@ -42,6 +44,7 @@ while [[ -n "${!OPTIND}" ]]; do
         h) genn_help; exit;;
         s) CXX_STANDARD="$OPTARG";;
         o) OUT_PATH="$OPTARG";;
+        n) NUM_DEVICES="$OPTARG";;
         i) BUILD_MODEL_INCLUDE="$OPTARG";;
         ?) genn_help; exit;;
     esac
@@ -96,12 +99,12 @@ make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MA
 
 if [[ -n "$DEBUG" ]]; then
     if [[ $(uname) == "Darwin" ]]; then
-        lldb -f "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+        lldb -f "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD" "$NUM_DEVICES"
     else
-        gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+        gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD" "$NUM_DEVICES"
     fi
 else
-    "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD" "$NUM_DEVICES"
 fi
 
 # Remove the symbolic links in tmp to clean up

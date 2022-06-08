@@ -13,6 +13,7 @@ echo -d             enables the debugging mode
 echo -h             shows this help message
 echo -s             build GeNN without SDL checks
 echo -f             force model to be rebuilt even if GeNN doesn't think it's required
+echo -n numdevices  select how many devices to distribute model across
 echo -o outpath     changes the output directory
 echo -i includepath add additional include directories (seperated by semicolons)
 goto :eof
@@ -22,7 +23,7 @@ rem :: define genn-buildmodel.bat options separated by spaces
 rem :: -<option>:              option
 rem :: -<option>:""            option with argument
 rem :: -<option>:"<default>"   option with argument and default value
-set "OPTIONS=-o:"%CD%" -i:"" -d: -c: -h: -s: -f: -l:"
+set "OPTIONS=-o:"%CD%" -i:"" -n:"1" -d: -c: -h: -s: -f: -l:"
 for %%O in (%OPTIONS%) do for /f "tokens=1,* delims=:" %%A in ("%%O") do set "%%A=%%~B"
 
 :genn_option
@@ -127,9 +128,9 @@ msbuild "%GENN_PATH%..\src\genn\generator\generator.vcxproj" /m /verbosity:minim
     goto :eof
 )
 if defined -d (
-    devenv /debugexe "%GENERATOR%" "%GENN_PATH%.." "%-o%" "%FORCE_REBUILD%"
+    devenv /debugexe "%GENERATOR%" "%GENN_PATH%.." "%-o%" "%FORCE_REBUILD%" "%-n%"
 ) else (
-    "%GENERATOR%" "%GENN_PATH%.." "%-o%" "%FORCE_REBUILD%"
+    "%GENERATOR%" "%GENN_PATH%.." "%-o%" "%FORCE_REBUILD%" "%-n%"
 )
 
 echo Model build complete

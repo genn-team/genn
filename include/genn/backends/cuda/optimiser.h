@@ -25,7 +25,7 @@ namespace Optimiser
 {
 BACKEND_EXPORT Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                                      plog::Severity backendLevel, plog::IAppender *backendAppender, 
-                                     const Preferences &preferences);
+                                     unsigned int numDevices, const Preferences &preferences);
 }   // namespace Optimiser
 }   // namespace CUDA
 }   // namespace CodeGenerator

@@ -85,6 +85,8 @@ struct Preferences : public PreferencesBase
     //! If device select method is set to DeviceSelect::MANUAL, id of device to use
     unsigned int manualDeviceID = 0;
 
+    std::vector<unsigned int> manualDeviceIDs;
+
     //! How to select CUDA blocksize
     BlockSizeSelect blockSizeSelectMethod = BlockSizeSelect::OCCUPANCY;
 
@@ -124,7 +126,7 @@ class BACKEND_EXPORT Backend : public BackendSIMT
 {
 public:
     Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-            const std::string &scalarType, int device);
+            const std::string &scalarType, const std::vector<int> &deviceIDs);
 
     //--------------------------------------------------------------------------
     // CodeGenerator::BackendSIMT virtuals
@@ -269,7 +271,7 @@ public:
     virtual bool isHostReductionRequired() const override { return getPreferences<Preferences>().enableNCCLReductions; }
 
     //! How many bytes of memory does 'device' have
-    virtual size_t getDeviceMemoryBytes() const override{ return m_ChosenDevice.totalGlobalMem; }
+    virtual size_t getDeviceMemoryBytes() const override{ return getDeviceProps().totalGlobalMem * m_DeviceIDs.size(); }
 
     //! Some backends will have additional small, fast, memory spaces for read-only data which might
     //! Be well-suited to storing merged group structs. This method returns the prefix required to
@@ -284,8 +286,8 @@ public:
     //--------------------------------------------------------------------------
     // Public API
     //--------------------------------------------------------------------------
-    const cudaDeviceProp &getChosenCUDADevice() const{ return m_ChosenDevice; }
-    int getChosenDeviceID() const{ return m_ChosenDeviceID; }
+    const cudaDeviceProp &getDeviceProps() const{ return m_DeviceProps; }
+    const std::vector<int> &getDeviceIDs() const{ return m_DeviceIDs; }
     int getRuntimeVersion() const{ return m_RuntimeVersion; }
     std::string getNVCCFlags() const;
 
@@ -330,7 +332,7 @@ private:
     //! Get the safe amount of constant cache we can use
     size_t getChosenDeviceSafeConstMemBytes() const
     {
-        return m_ChosenDevice.totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
+        return getDeviceProps().totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
     void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
@@ -341,8 +343,8 @@ private:
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------
-    const int m_ChosenDeviceID;
-    cudaDeviceProp m_ChosenDevice;
+    const std::vector<int> m_DeviceIDs;
+    cudaDeviceProp m_DeviceProps;
     int m_RuntimeVersion;
 };
 }   // CUDA

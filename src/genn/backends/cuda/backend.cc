@@ -285,20 +285,20 @@ namespace CUDA
 {
 //--------------------------------------------------------------------------
 Backend::Backend(const KernelBlockSize &kernelBlockSizes, const Preferences &preferences,
-                 const std::string &scalarType, int device)
-:   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_ChosenDeviceID(device)
+                 const std::string &scalarType, const std::vector<int> &deviceIDs)
+:   BackendSIMT(kernelBlockSizes, preferences, scalarType), m_DeviceIDs(deviceIDs)
 {
-    // Set device
-    CHECK_CUDA_ERRORS(cudaSetDevice(device));
-
-    // Get device properties
-    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&m_ChosenDevice, device));
-
     // Get CUDA runtime version
     cudaRuntimeGetVersion(&m_RuntimeVersion);
 
+    // Select 1st device
+    //CHECK_CUDA_ERRORS(cudaSetDevice(m_DeviceIDs.front()));
+
+    // Get first device properties
+    CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&m_DeviceProps, m_DeviceIDs.front()));
+
     // Give a warning if automatic copy is used on pre-Pascal devices
-    if(getPreferences().automaticCopy && m_ChosenDevice.major < 6) {
+    if(getPreferences().automaticCopy && m_DeviceProps.major < 6) {
         LOGW << "Using automatic copy on pre-Pascal devices is supported but likely to be very slow - we recommend copying manually on these devices";
     }
 
@@ -320,7 +320,7 @@ bool Backend::areSharedMemAtomicsSlow() const
 {
     // If device is older than Maxwell, we shouldn't use shared memory as atomics are emulated
     // and actually slower than global memory (see https://devblogs.nvidia.com/gpu-pro-tip-fast-histograms-using-shared-atomics-maxwell/)
-    return (getChosenCUDADevice().major < 5);
+    return (getDeviceProps().major < 5);
 }
 //--------------------------------------------------------------------------
 std::string Backend::getThreadID(unsigned int axis) const
@@ -355,8 +355,8 @@ std::string Backend::getAtomic(const std::string &type, AtomicOperation op, Atom
 {
     // If operation is an atomic add
     if(op == AtomicOperation::ADD) {
-        if(((getChosenCUDADevice().major < 2) && (type == "float"))
-           || (((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)) && (type == "double")))
+        if(((getDeviceProps().major < 2) && (type == "float"))
+           || (((getDeviceProps().major < 6) || (getRuntimeVersion() < 8000)) && (type == "double")))
         {
             return "atomicAddSW";
         }
@@ -1109,7 +1109,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     os << std::endl;
 
     // If device is older than SM 6 or we're using a version of CUDA older than 8
-    if ((getChosenCUDADevice().major < 6) || (getRuntimeVersion() < 8000)){
+    if ((getDeviceProps().major < 6) || (getRuntimeVersion() < 8000)){
         os << "// software version of atomic add for double precision" << std::endl;
         os << "__device__ inline double atomicAddSW(double* address, double val)";
         {
@@ -1129,7 +1129,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     }
 
     // If we're using a CUDA device with SM < 2
-    if (getChosenCUDADevice().major < 2) {
+    if (getDeviceProps().major < 2) {
         os << "// software version of atomic add for single precision float" << std::endl;
         os << "__device__ inline float atomicAddSW(float* address, float val)" << std::endl;
         {
@@ -1442,7 +1442,7 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
     // If the model requires zero-copy
     if(modelMerged.getModel().zeroCopyInUse()) {
         // If device doesn't support mapping host memory error
-        if(!getChosenCUDADevice().canMapHostMemory) {
+        if(!getDeviceProps().canMapHostMemory) {
             throw std::runtime_error("Device does not support mapping CPU host memory!");
         }
 
@@ -1459,7 +1459,8 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
             os << "deviceID";
         }
         else {
-            os << m_ChosenDeviceID;
+            // **TEMP**
+            os << getDeviceIDs().front();
         }
         os << "));" << std::endl;
     }
@@ -1473,8 +1474,9 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         }
         else {
             // Get chosen device's PCI bus ID and write into code
+            // **TEMP**
             char pciBusID[32];
-            CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, m_ChosenDeviceID));
+            CHECK_CUDA_ERRORS(cudaDeviceGetPCIBusId(pciBusID, 32, getDeviceIDs().front()));
             os << "\"" << pciBusID << "\"";
         }
         os << "));" << std::endl;
@@ -1867,7 +1869,7 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
 //--------------------------------------------------------------------------
 void Backend::genMakefilePreamble(std::ostream &os) const
 {
-    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    const std::string architecture = "sm_" + std::to_string(getDeviceProps().major) + std::to_string(getDeviceProps().minor);
     std::string linkFlags = "--shared -arch " + architecture;
     
     // If NCCL reductions are enabled, link NCCL
@@ -1939,7 +1941,7 @@ void Backend::genMSBuildItemDefinitions(std::ostream &os) const
     // **YUCK** the CUDA Visual Studio plugin build system demands that you specify both a virtual an actual architecture 
     // (which NVCC itself doesn't require). While, in general, actual architectures are usable as virtual architectures, 
     // there is no compute_21 so we need to replace that with compute_20
-    const std::string architecture = std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    const std::string architecture = std::to_string(getDeviceProps().major) + std::to_string(getDeviceProps().minor);
     const std::string virtualArchitecture = (architecture == "21") ? "20" : architecture;
     os << "\t\t<CudaCompile>" << std::endl;
     os << "\t\t\t<TargetMachinePlatform>64</TargetMachinePlatform>" << std::endl;
@@ -1998,7 +2000,7 @@ Backend::MemorySpaces Backend::getMergedGroupMemorySpaces(const ModelSpecMerged 
 
     // Return available constant memory and to
     return {{"__device__ __constant__", (groupStartIDSize > getChosenDeviceSafeConstMemBytes()) ? 0 : (getChosenDeviceSafeConstMemBytes() - groupStartIDSize)},
-            {"__device__", m_ChosenDevice.totalGlobalMem}};
+            {"__device__", getDeviceProps().totalGlobalMem}};
 }
 //--------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
@@ -2009,7 +2011,7 @@ boost::uuids::detail::sha1::digest_type Backend::getHashDigest() const
     Utils::updateHash("CUDA", hash);
     
     // Update hash with chosen device ID and kernel block sizes
-    Utils::updateHash(m_ChosenDeviceID, hash);
+    Utils::updateHash(m_DeviceIDs, hash);
     Utils::updateHash(getKernelBlockSize(), hash);
 
     // Update hash with preferences
@@ -2025,7 +2027,7 @@ std::string Backend::getNVCCFlags() const
     // holds the answer! For future reference --display_error_number option can be used to get warning ids to use in --diag-supress
     // HOWEVER, on CUDA 7.5 and 8.0 this causes a fatal error and, as no warnings are shown when --diag-suppress is removed,
     // presumably this is because this warning simply wasn't implemented until CUDA 9
-    const std::string architecture = "sm_" + std::to_string(getChosenCUDADevice().major) + std::to_string(getChosenCUDADevice().minor);
+    const std::string architecture = "sm_" + std::to_string(getDeviceProps().major) + std::to_string(getDeviceProps().minor);
     std::string nvccFlags = "-x cu -arch " + architecture;
 #ifndef _WIN32
     nvccFlags += " -std=c++11 --compiler-options \"-fPIC -Wno-return-type-c-linkage\"";
@@ -2213,16 +2215,16 @@ void Backend::genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThrea
 {
     // Calculate grid size
     const size_t gridSize = ceilDivide(numThreadsX, getKernelBlockSize(kernel));
-    assert(gridSize < (size_t)getChosenCUDADevice().maxGridSize[0]);
-    assert(numBlockThreadsY < (size_t)getChosenCUDADevice().maxThreadsDim[0]);
+    assert(gridSize < (size_t)getDeviceProps().maxGridSize[0]);
+    assert(numBlockThreadsY < (size_t)getDeviceProps().maxThreadsDim[0]);
 
     os << "const dim3 threads(" << getKernelBlockSize(kernel) << ", " << numBlockThreadsY << ");" << std::endl;
     if(numBlockThreadsY > 1) {
-        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[2]);
+        assert(batchSize < (size_t)getDeviceProps().maxThreadsDim[2]);
         os << "const dim3 grid(" << gridSize << ", 1, " << batchSize << ");" << std::endl;
     }
     else {
-        assert(batchSize < (size_t)getChosenCUDADevice().maxThreadsDim[1]);
+        assert(batchSize < (size_t)getDeviceProps().maxThreadsDim[1]);
         os << "const dim3 grid(" << gridSize << ", " << batchSize << ");" << std::endl;
     }
 }

@@ -35,14 +35,15 @@ int main(int argc,     //!< number of arguments; expected to be 3
 {
     try
     {
-        if (argc != 4) {
-            std::cerr << "usage: generator <genn dir> <target dir> <force rebuild>" << std::endl;
+        if (argc != 5) {
+            std::cerr << "usage: generator <genn dir> <target dir> <force rebuild> <num devices>" << std::endl;
             return EXIT_FAILURE;
         }
 
         const filesystem::path gennPath(argv[1]);
         const filesystem::path targetPath(argv[2]);
         const bool forceRebuild = (std::stoi(argv[3]) != 0);
+        const int numDevices = std::stoi(argv[4]);
 
         // Create model
         // **NOTE** casting to external-facing model to hide model's internals
@@ -66,7 +67,7 @@ int main(int argc,     //!< number of arguments; expected to be 3
         // Create backend
         auto backend = Optimiser::createBackend(model, outputPath,
                                                 GENN_PREFERENCES.logLevel, &consoleAppender,
-                                                GENN_PREFERENCES);
+                                                numDevices, GENN_PREFERENCES);
 
         // Generate code
         const auto moduleNames = CodeGenerator::generateAll(model, backend, sharePath, 

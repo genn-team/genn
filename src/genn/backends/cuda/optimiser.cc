@@ -7,6 +7,7 @@
 #include <map>
 #include <mutex>
 #include <numeric>
+#include <queue>
 #include <thread>
 #include <tuple>
 
@@ -377,15 +378,15 @@ void analyseModule(const Module &module, unsigned int r, CUcontext context,
     }
 }
 //--------------------------------------------------------------------------
-KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &deviceProps, const ModelSpecInternal &model,
-                                           KernelBlockSize &blockSize, const Preferences &preferences,
-                                           const filesystem::path &outputPath)
+KernelOptimisationOutput optimizeBlockSize(const std::vector<int> deviceIDs, const cudaDeviceProp &deviceProps, 
+                                           const ModelSpecInternal &model, KernelBlockSize &blockSize, 
+                                           const Preferences &preferences, const filesystem::path &outputPath)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
 
-    // Select device
-    cudaSetDevice(deviceID);
+    // Select first device
+    cudaSetDevice(deviceIDs.front());
 
     // Calculate model group sizes
     std::set<std::string> customUpdateKernels;
@@ -396,7 +397,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     // Create CUDA drive API device and context for accessing kernel attributes
     CUdevice cuDevice;
     CUcontext cuContext;
-    CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceID));
+    CHECK_CU_ERRORS(cuDeviceGet(&cuDevice, deviceIDs.front()));
     CHECK_CU_ERRORS(cuCtxCreate(&cuContext, 0, cuDevice));
 
     // Get CUDA_PATH environment variable
@@ -433,7 +434,7 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
         std::fill(blockSize.begin(), blockSize.end(), repBlockSizes[r]);
 
         // Create backend
-        Backend backend(blockSize, preferences, model.getPrecision(), deviceID);
+        Backend backend(blockSize, preferences, model.getPrecision(), deviceIDs);
 
         // Create merged model
         ModelSpecMerged modelMerged(model, backend);
@@ -599,29 +600,28 @@ KernelOptimisationOutput optimizeBlockSize(int deviceID, const cudaDeviceProp &d
     return kernelsToOptimise;
 }
 //--------------------------------------------------------------------------
-int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSize,
-                        const Preferences &preferences, const filesystem::path &outputPath)
+std::vector<int> chooseOptimalDevice(unsigned int numDevices, const std::unordered_map<std::string, std::vector<int>> &matchingDevices,
+                                     const ModelSpecInternal &model, KernelBlockSize &blockSize,
+                                     const Preferences &preferences, const filesystem::path &outputPath)
 {
-    // Get number of devices
-    int deviceCount;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-    if(deviceCount == 0) {
-        throw std::runtime_error("No CUDA devices found");
-    }
-
     // Loop through devices
-    typedef std::tuple<int, size_t, size_t, KernelBlockSize> Device;
-    std::vector<Device> devices;
-    devices.reserve(deviceCount);
-    for(int d = 0; d < deviceCount; d++) {
-        // Get properties
+    typedef std::tuple<std::string, int, size_t, size_t, KernelBlockSize> Device;
+    std::vector<Device> deviceSets;
+    deviceSets.reserve(matchingDevices.size());
+    for(const auto &d : matchingDevices) {
+        // Copy desired number of device IDs from this set into new vector and return
+        std::vector<int> deviceIDs;
+        deviceIDs.reserve(numDevices);
+        std::copy_n(d.second.begin(), numDevices, std::back_inserter(deviceIDs));
+
+        // Get properties of first device in set
         cudaDeviceProp deviceProps;
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
+        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceIDs.front()));
         const int smVersion = (deviceProps.major * 10) + deviceProps.minor;
 
         // Optimise block size for this device
         KernelBlockSize optimalBlockSize;
-        const auto kernels = optimizeBlockSize(d, deviceProps, model, optimalBlockSize, preferences, outputPath);
+        const auto kernels = optimizeBlockSize(deviceIDs, deviceProps, model, optimalBlockSize, preferences, outputPath);
 
         // Sum up occupancy of each kernel
         const size_t totalOccupancy = std::accumulate(kernels.begin(), kernels.end(), size_t{0},
@@ -637,33 +637,33 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
                                                                 return acc + (kernel.second.first ? 1 : 0);
                                                             });
 
-        LOGD_BACKEND << "Device " << d << " - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;
-        devices.emplace_back(smVersion, totalOccupancy, numSmallModelKernels, optimalBlockSize);
+        LOGD_BACKEND << "Device type '" << d.first << "; - total occupancy:" << totalOccupancy << ", number of small models:" << numSmallModelKernels << ", SM version:" << smVersion;
+        deviceSets.emplace_back(d.first, smVersion, totalOccupancy, numSmallModelKernels, optimalBlockSize);
     }
 
     // Find best device
-    const auto bestDevice = std::min_element(devices.cbegin(), devices.cend(),
+    const auto bestDeviceSet = std::min_element(deviceSets.cbegin(), deviceSets.cend(),
         [](const Device &a, const Device &b)
         {
             // If 'a' have a higher number of small model kernels -  return true - it is better
-            const size_t numSmallModelKernelsA = std::get<2>(a);
-            const size_t numSmallModelKernelsB = std::get<2>(b);
+            const size_t numSmallModelKernelsA = std::get<3>(a);
+            const size_t numSmallModelKernelsB = std::get<3>(b);
             if (numSmallModelKernelsA > numSmallModelKernelsB) {
                 return true;
             }
             // Otherwise, if the two devices have an identical small model kernel count
             else if(numSmallModelKernelsA == numSmallModelKernelsB) {
                 // If 'a' has a higher total occupancy - return true - it is better
-                const size_t totalOccupancyA = std::get<1>(a);
-                const size_t totalOccupancyB = std::get<1>(b);
+                const size_t totalOccupancyA = std::get<2>(a);
+                const size_t totalOccupancyB = std::get<2>(b);
                 if(totalOccupancyA > totalOccupancyB) {
                     return true;
                 }
                 // Otherwise, if the two devices have identical occupancy
                 else if(totalOccupancyA == totalOccupancyB) {
                     // If 'a' has a higher SM version - return true - it's better
-                    const int smVersionA = std::get<0>(a);
-                    const int smVersionB = std::get<0>(b);
+                    const int smVersionA = std::get<1>(a);
+                    const int smVersionB = std::get<1>(b);
                     if(smVersionA > smVersionB) {
                         return true;
                     }
@@ -675,43 +675,43 @@ int chooseOptimalDevice(const ModelSpecInternal &model, KernelBlockSize &blockSi
         });
 
     // Find ID of best device
-    const int bestDeviceID = (int)std::distance(devices.cbegin(), bestDevice);
-    LOGI_BACKEND << "Optimal device " << bestDeviceID << " - total occupancy:" << std::get<1>(*bestDevice) << ", number of small models:" << std::get<2>(*bestDevice) << ", SM version:" << std::get<0>(*bestDevice);
+    //const int bestDeviceID = (int)std::distance(devices.cbegin(), bestDevice);
+    LOGI_BACKEND << "Optimal device type '" << std::get<0>(*bestDeviceSet) << "' - total occupancy:" << std::get<2>(*bestDeviceSet) << ", number of small models:" << std::get<3>(*bestDeviceSet) << ", SM version:" << std::get<1>(*bestDeviceSet);
 
     // Get optimal block size from best device
-    blockSize = std::get<3>(*bestDevice);
+    blockSize = std::get<4>(*bestDeviceSet);
 
-
-    // Return ID of best device
-    return bestDeviceID;
+    // Copy desired number of device IDs from this set into new vector and return
+    std::vector<int> deviceIDs;
+    deviceIDs.reserve(numDevices);
+    std::copy_n(matchingDevices.at(std::get<0>(*bestDeviceSet)).begin(), numDevices, std::back_inserter(deviceIDs));
+    return deviceIDs;
 }
 //--------------------------------------------------------------------------
-int chooseDeviceWithMostGlobalMemory()
+std::vector<int> chooseDeviceWithMostGlobalMemory(unsigned int numDevices, const std::unordered_map<std::string, std::vector<int>> &matchingDevices)
 {
-    // Get number of devices
-    int deviceCount;
-    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
-    if(deviceCount == 0) {
-        throw std::runtime_error("No CUDA devices found");
-    }
-
     // Loop through devices
     size_t mostGlobalMemory = 0;
-    int bestDevice = -1;
-    for(int d = 0; d < deviceCount; d++) {
-        // Get properties
+    std::string bestDeviceName;
+    for(const auto &d : matchingDevices) {
+        // Get properties of first device in matching group
         cudaDeviceProp deviceProps;
-        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
+        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d.second.front()));
 
         // If this device improves on previous best
         if(deviceProps.totalGlobalMem > mostGlobalMemory) {
             mostGlobalMemory = deviceProps.totalGlobalMem;
-            bestDevice = d;
+            bestDeviceName = d.first;
         }
     }
 
-    LOGI_BACKEND << "Using device " << bestDevice << " which has " << mostGlobalMemory << " bytes of global memory";
-    return bestDevice;
+    LOGI_BACKEND << "Using device '" << bestDeviceName << "' which has " << mostGlobalMemory << " bytes of global memory";
+
+    // Copy desired number of device IDs from this set into new vector and return
+    std::vector<int> deviceIDs;
+    deviceIDs.reserve(numDevices);
+    std::copy_n(matchingDevices.at(bestDeviceName).begin(), numDevices, std::back_inserter(deviceIDs));
+    return deviceIDs;
 }
 }
 // CodeGenerator::Backends::Optimiser
@@ -723,7 +723,7 @@ namespace Optimiser
 {
 Backend createBackend(const ModelSpecInternal &model, const filesystem::path &outputPath, 
                       plog::Severity backendLevel, plog::IAppender *backendAppender, 
-                      const Preferences &preferences)
+                      unsigned int numDevices, const Preferences &preferences)
 {
     // If there isn't already a plog instance, initialise one
     if(plog::get<Logging::CHANNEL_BACKEND>() == nullptr) {
@@ -734,6 +734,39 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
         plog::get<Logging::CHANNEL_BACKEND>()->setMaxSeverity(backendLevel);
     }
 
+    // Count CUDA devices
+    int deviceCount;
+    CHECK_CUDA_ERRORS(cudaGetDeviceCount(&deviceCount));
+    if (deviceCount == 0) {
+        throw std::runtime_error("No CUDA devices found");
+    }
+
+    // Build mapping from device names to IDs
+    std::unordered_map<std::string, std::vector<int>> matchingDevices;
+    for (int d = 0; d < deviceCount; d++) {
+        cudaDeviceProp deviceProps;
+        CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, d));
+        matchingDevices[deviceProps.name].push_back(d);
+    }
+
+    // Loop through device mapping
+    for (auto d = matchingDevices.begin(); d != matchingDevices.end();) {
+        LOGD_BACKEND << d->second.size() << " '" << d->first << "' devices detected";
+
+        // If there are not enough of these devices to provide the desired number of devices, remove from map
+        if(d->second.size() < numDevices) {
+            LOGD_BACKEND << "\tInsufficient";
+            d = matchingDevices.erase(d);
+        }
+        // Otherwise, go onto next device
+        else {
+            d++;
+        }
+    }
+
+    if (matchingDevices.empty()) {
+        throw std::runtime_error("Could not find " + std::to_string(numDevices) + " matching devices");
+    }
 
     // If optimal device should be chosen
     if(preferences.deviceSelectMethod == DeviceSelect::OPTIMAL) {
@@ -742,35 +775,87 @@ Backend createBackend(const ModelSpecInternal &model, const filesystem::path &ou
 
         // Choose optimal device
         KernelBlockSize cudaBlockSize;
-        const int deviceID = chooseOptimalDevice(model, cudaBlockSize, preferences, outputPath);
+        const auto deviceIDs = chooseOptimalDevice(numDevices, matchingDevices,
+                                                   model, cudaBlockSize, preferences, outputPath);
 
         // Create backend
-        return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+        return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceIDs);
     }
     // Otherwise
     else {
-        // If we should select device with most memory, do so otherwise use manually selected device
-        const int deviceID = (preferences.deviceSelectMethod == DeviceSelect::MOST_MEMORY)
-            ? chooseDeviceWithMostGlobalMemory() : preferences.manualDeviceID;
+        // If we should select devices with the most memory
+        std::vector<int> deviceIDs;
+        if (preferences.deviceSelectMethod == DeviceSelect::MOST_MEMORY) {
+            // Pick set of devices with the most memory
+            deviceIDs = chooseDeviceWithMostGlobalMemory(numDevices, matchingDevices);
+        }
+        // Otherwise, if we should select manually
+        else {
+            // If one device has been requested and manual device ID array is empty
+            // **NOTE** this is for backward compatibility
+            deviceIDs.reserve(numDevices);
+            if (numDevices == 1 && preferences.manualDeviceIDs.empty()) {
+                // Loop through sets of matching devices
+                for (const auto &d : matchingDevices) {
+                    // If manual device ID is in this set, add to device IDs and stop searching
+                    if (std::find(d.second.cbegin(), d.second.cend(), preferences.manualDeviceID) != d.second.cend()) {
+                        deviceIDs.push_back(preferences.manualDeviceID);
+                        break;
+                    }
+                }
+            }
+            // Otherwise
+            else {
+                // Check size of manual device IDs matches
+                if (preferences.manualDeviceIDs.size() != numDevices) {
+                    throw std::runtime_error("When selecting CUDA devices manually, manualDeviceIDs should contain an ID for each device");
+                }
 
+                // Loop through sets of matching devices
+                for (const auto &d : matchingDevices) {
+                    // Count number of manually-specified devices in this set
+                    const size_t numInSet = std::count_if(preferences.manualDeviceIDs.cbegin(), preferences.manualDeviceIDs.cend(),
+                                                          [&d](unsigned int m)
+                                                          {
+                                                              return (std::find(d.second.cbegin(), d.second.cend(), m) != d.second.cend());
+                                                          });
+                    // If all are found, copy manual decice IDs into device IDs and stop searching
+                    if (numInSet == preferences.manualDeviceIDs.size()) {
+                        std::copy(preferences.manualDeviceIDs.cbegin(), preferences.manualDeviceIDs.cend(),
+                                  std::back_inserter(deviceIDs));
+                        break;
+                    }
+                    // Otherwise, if SOME are found, give error as this means manual device IDs aren't all in one set
+                    else if (numInSet > 0) {
+                        throw std::runtime_error("Manually specified CUDA devices do not all match so cannot be used together");
+                    }
+                }
+            }
+
+            // Give error if all CUDA devices haven't been found
+            if (deviceIDs.size() != numDevices) {
+                throw std::runtime_error("Manually specified CUDA devices not found");
+            }
+            
+        }
+       
         // If we should pick kernel block sizes based on occupancy
         if(preferences.blockSizeSelectMethod == BlockSizeSelect::OCCUPANCY) {
-            // Get properties
+            // Get properties of first device in set
             cudaDeviceProp deviceProps;
-            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceID));
+            CHECK_CUDA_ERRORS(cudaGetDeviceProperties(&deviceProps, deviceIDs.front()));
 
             // Optimise block size
             KernelBlockSize cudaBlockSize;
-            optimizeBlockSize(deviceID, deviceProps, model, cudaBlockSize, preferences, outputPath);
+            optimizeBlockSize(deviceIDs, deviceProps, model, cudaBlockSize, preferences, outputPath);
 
             // Create backend
-            return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceID);
+            return Backend(cudaBlockSize, preferences, model.getPrecision(), deviceIDs);
         }
         // Otherwise, create backend using manual block sizes specified in preferences
         else {
-            return Backend(preferences.manualBlockSizes, preferences, model.getPrecision(), deviceID);
+            return Backend(preferences.manualBlockSizes, preferences, model.getPrecision(), deviceIDs);
         }
-
     }
 }
 }   // namespace Optimiser
