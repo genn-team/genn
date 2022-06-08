@@ -465,13 +465,13 @@ protected:
             // If this is a merged group used on the host, directly set array entry
             if(host) {
                 runnerMergedStructAlloc << "merged" << name << "Group" << getIndex() << "[" << groupIndex << "] = {";
-                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
+                generateStructFieldArguments(backend, runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << "};" << std::endl;
             }
             // Otherwise, call function to push to device
             else {
                 runnerMergedStructAlloc << "pushMerged" << name << "Group" << getIndex() << "ToDevice(" << groupIndex << ", ";
-                generateStructFieldArguments(runnerMergedStructAlloc, groupIndex, sortedFields);
+                generateStructFieldArguments(backend, runnerMergedStructAlloc, groupIndex, sortedFields);
                 runnerMergedStructAlloc << ");" << std::endl;
             }
         }
@@ -481,7 +481,7 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    void generateStructFieldArguments(CodeStream &os, size_t groupIndex, 
+    void generateStructFieldArguments(const BackendBase &backend, CodeStream &os, size_t groupIndex,
                                       const std::vector<Field> &sortedFields) const
     {
         // Get group by index
@@ -491,7 +491,15 @@ private:
         for(size_t fieldIndex = 0; fieldIndex < sortedFields.size(); fieldIndex++) {
             const auto &f = sortedFields[fieldIndex];
             const std::string fieldInitVal = std::get<2>(f)(g, groupIndex);
+            
             os << fieldInitVal;
+
+            // If field is a device pointer, add per-device pointer suffix
+            // **YUCK** this feels a bit gross
+            if (std::get<3>(f) != FieldType::Host && Utils::isTypePointer(std::get<0>(f))) {
+                os << backend.getPerDevicePointerSuffix();
+            }
+
             if(fieldIndex != (sortedFields.size() - 1)) {
                 os << ", ";
             }

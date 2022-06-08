@@ -373,9 +373,9 @@ public:
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
 
-    //! When backends require separate 'device' variables for each device, they can be identified with a suffix.
+    //! When backends require separate pointers for each device, selected with a suffix
     //! This function returns this so it can be used in otherwise platform-independent code.
-    virtual std::string getPerDeviceVarSuffix() const { return ""; }
+    virtual std::string getPerDevicePointerSuffix() const { return ""; }
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const = 0;

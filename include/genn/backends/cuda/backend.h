@@ -270,9 +270,9 @@ public:
     //! Get backend-specific allocate memory parameters
     virtual std::string getAllocateMemParams(const ModelSpecMerged &) const override;
 
-    //! When backends require separate 'device' variables for each device, they can be identified with a suffix.
+    //! When backends require separate pointers for each device, selected with a suffix.
     //! This function returns this so it can be used in otherwise platform-independent code.
-    virtual std::string getPerDeviceVarSuffix() const override { return "[device]"; }
+    virtual std::string getPerDevicePointerSuffix() const override { return "[device]"; }
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
