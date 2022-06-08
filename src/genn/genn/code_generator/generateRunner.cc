@@ -272,7 +272,7 @@ void genSplitDevice(const BackendBase &backend, CodeStream &os, const std::strin
             CodeStream::Scope b(os);
 
             // Select device
-            backend.genSelectDevice(os, "device");
+            backend.genSelectDevice(os);
 
             // Write per-device free code
             os << perDeviceStream.str() << std::endl;
@@ -288,7 +288,7 @@ void genSplitDevice(const BackendBase &backend, CodeStream &os, F generateFn)
     std::stringstream perDeviceStream;
     CodeStream crossDevice(crossDeviceStream);
     CodeStream perDevice(perDeviceStream);
-    generateFn(backend, crossDevice, perDevice);
+    generateFn(crossDevice, perDevice);
 
     // Generate code to 
     genSplitDevice(backend, os, crossDeviceStream, perDeviceStream);
@@ -312,15 +312,20 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
         extraGlobalParam << "void allocate" << name << "(unsigned int count)";
         {
             CodeStream::Scope a(extraGlobalParam);
-            backend.genExtraGlobalParamAllocation(extraGlobalParam, type, name, loc);
+            genSplitDevice(
+                backend, extraGlobalParam,
+                [&backend, &modelMerged, &name, &type, loc](CodeStream &crossDevice, CodeStream &perDevice)
+                {
+                    backend.genExtraGlobalParamAllocation(crossDevice, perDevice, type, name, loc);
 
-            // Get destinations in merged structures, this EGP 
-            // needs to be copied to and call push function
-            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name, backend);
-            for(const auto &v : mergedDestinations) {
-                extraGlobalParam << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                extraGlobalParam << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << name << ");" << std::endl;
-            }
+                    // Get destinations in merged structures, this EGP 
+                    // needs to be copied to and call push function
+                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations(name, backend);
+                    for (const auto &v : mergedDestinations) {
+                        perDevice << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                        perDevice << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << name << backend.getPerDeviceVarSuffix() << ");" << std::endl;
+                    }
+                });
         }
 
         // Write free function
@@ -329,11 +334,12 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             CodeStream::Scope a(extraGlobalParam);
 
             // Generate seperate cross-device and per-device free code for variable
-            genSplitDevice(backend, extraGlobalParam,
-                           [loc, &name](const BackendBase &backend, CodeStream &crossDevice, CodeStream &perDevice)
-                           {
-                               backend.genVariableFree(crossDevice, perDevice, name, loc);
-                           });
+            genSplitDevice(
+                backend, extraGlobalParam,
+                [&backend, &name, loc](CodeStream &crossDevice, CodeStream &perDevice)
+                {
+                    backend.genVariableFree(crossDevice, perDevice, name, loc);
+                });
         }
 
         // If variable can be pushed and pulled
@@ -345,7 +351,12 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
             extraGlobalParam << "void push" << name << "ToDevice(unsigned int count)";
             {
                 CodeStream::Scope a(extraGlobalParam);
-                backend.genExtraGlobalParamPush(extraGlobalParam, type, name, loc);
+                genSplitDevice(
+                    backend, extraGlobalParam,
+                    [&backend, &name, &type, loc](CodeStream &crossDevice, CodeStream &perDevice)
+                    {
+                        backend.genExtraGlobalParamPush(crossDevice, perDevice, type, name, loc);
+                    });
             }
 
             if(backend.getPreferences().generateExtraGlobalParamPull) {
@@ -356,7 +367,12 @@ void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &
                 extraGlobalParam << "void pull" << name << "FromDevice(unsigned int count)";
                 {
                     CodeGenerator::CodeStream::Scope a(extraGlobalParam);
-                    backend.genExtraGlobalParamPull(extraGlobalParam, type, name, loc);
+                    genSplitDevice(
+                        backend, extraGlobalParam,
+                        [&backend, &name, &type, loc](CodeStream &crossDevice, CodeStream &perDevice)
+                        {
+                            backend.genExtraGlobalParamPull(crossDevice, perDevice, type, name, loc);
+                        });
                 }
             }
         }
@@ -436,8 +452,13 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 // Generate code to allocate this EGP with count specified by $(0)
                 std::stringstream allocStream;
                 CodeGenerator::CodeStream alloc(allocStream);
-                backend.genExtraGlobalParamAllocation(alloc, egps[i].type + "*", egps[i].name,
-                                                      loc, "$(0)", "group->");
+                genSplitDevice(
+                    backend, alloc,
+                    [&backend, &egps, i, loc](CodeStream &crossDevice, CodeStream &perDevice)
+                    {
+                        backend.genExtraGlobalParamAllocation(crossDevice, perDevice, egps[i].type + "*", egps[i].name,
+                                                                loc, "$(0)", "group->");
+                    });
 
                 // Add substitution
                 subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
@@ -445,9 +466,13 @@ void genSynapseConnectivityHostInit(const BackendBase &backend, CodeStream &os,
                 // Generate code to push this EGP with count specified by $(0)
                 std::stringstream pushStream;
                 CodeStream push(pushStream);
-                backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
-                                                loc, "$(0)", "group->");
-
+                genSplitDevice(
+                    backend, push,
+                    [&backend, &egps, i, loc](CodeStream &crossDevice, CodeStream &perDevice)
+                    {
+                        backend.genExtraGlobalParamPush(crossDevice, perDevice, egps[i].type + "*", egps[i].name,
+                                                        loc, "$(0)", "group->");
+                    });
 
                 // Add substitution
                 subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
@@ -1122,9 +1147,6 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                 true, n.second.getExtraGlobalParamLocation(i));
         }
 
-        if(!n.second.getCurrentSources().empty()) {
-            allVarStreams << "// current source variables" << std::endl;
-        }
         for (auto const *cs : n.second.getCurrentSources()) {
             const auto csModel = cs->getCurrentSourceModel();
             const auto csVars = csModel->getVars();
@@ -1622,45 +1644,47 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             // Cache number of recording timesteps in global variable
             runner << "numRecordingTimesteps = timesteps;" << std::endl;
 
-            // Loop through neuron groups
-            for(const auto &n : model.getNeuronGroups()) {
-                CodeStream::Scope b(runner);
+            genSplitDevice(
+                backend, runner,
+                [&backend, &modelMerged](CodeStream &crossDevice, CodeStream &perDevice)
+                {
+                    // Loop through neuron groups
+                    const ModelSpecInternal &model = modelMerged.getModel();
+                    for (const auto &n : model.getNeuronGroups()) {
+                        // Calculate number of words required for spike/spike event buffers
+                        const std::string numWords = "(" + std::to_string(ceilDivide(n.second.getNumNeurons(), 32) * model.getBatchSize()) + " * timesteps)";
 
-                // Calculate number of words required for spike/spike event buffers
-                if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
-                    runner << "const unsigned int numWords = " << (ceilDivide(n.second.getNumNeurons(), 32) * model.getBatchSize()) << " * timesteps;" << std::endl;
-                }
+                        // Allocate spike array if required
+                        // **YUCK** maybe this should be renamed genDynamicArray
+                        if (n.second.isSpikeRecordingEnabled()) {
+                            backend.genExtraGlobalParamAllocation(crossDevice, perDevice, "uint32_t*", "recordSpk" + n.first, 
+                                                                  VarLocation::HOST_DEVICE, numWords);
 
-                // Allocate spike array if required
-                // **YUCK** maybe this should be renamed genDynamicArray
-                if(n.second.isSpikeRecordingEnabled()) {
-                    CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
+                            // Get destinations in merged structures, this EGP 
+                            // needs to be copied to and call push function
+                            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpk" + n.first, backend);
+                            for (const auto &v : mergedDestinations) {
+                                perDevice << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                                perDevice << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << "recordSpk" + n.first << backend.getPerDeviceVarSuffix() << ");" << std::endl;
+                            }
+                        }
 
-                    // Get destinations in merged structures, this EGP 
-                    // needs to be copied to and call push function
-                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpk" + n.first, backend);
-                    for(const auto &v : mergedDestinations) {
-                        runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                        runner << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << "recordSpk" + n.first << ");" << std::endl;
+                        // Allocate spike event array if required
+                        // **YUCK** maybe this should be renamed genDynamicArray
+                        if (n.second.isSpikeEventRecordingEnabled()) {
+                            backend.genExtraGlobalParamAllocation(crossDevice, perDevice, "uint32_t*", "recordSpkEvent" + n.first, 
+                                                                  VarLocation::HOST_DEVICE, numWords);
+
+                            // Get destinations in merged structures, this EGP 
+                            // needs to be copied to and call push function
+                            const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpkEvent" + n.first, backend);
+                            for (const auto &v : mergedDestinations) {
+                                perDevice << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
+                                perDevice << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << "recordSpkEvent" + n.first << backend.getPerDeviceVarSuffix() << ");" << std::endl;
+                            }
+                        }
                     }
-                }
-
-                // Allocate spike event array if required
-                // **YUCK** maybe this should be renamed genDynamicArray
-                if(n.second.isSpikeEventRecordingEnabled()) {
-                    CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamAllocation(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
-
-                    // Get destinations in merged structures, this EGP 
-                    // needs to be copied to and call push function
-                    const auto &mergedDestinations = modelMerged.getMergedEGPDestinations("recordSpkEvent" + n.first, backend);
-                    for(const auto &v : mergedDestinations) {
-                        runner << "pushMerged" << v.first << v.second.mergedGroupIndex << v.second.fieldName << "ToDevice(";
-                        runner << v.second.groupIndex << ", " << backend.getDeviceVarPrefix() << "recordSpkEvent" + n.first << ");" << std::endl;
-                    }
-                }
-            }
+                });
         }
         runner << std::endl;
 
@@ -1675,29 +1699,30 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 runner << "throw std::runtime_error(\"Recording buffer not allocated - cannot pull from device\");" << std::endl;
             }
 
-            // Loop through neuron groups
-            // **THINK** could use asynchronous copies and sync on last one
-            for(const auto &n : model.getNeuronGroups()) {
-                CodeStream::Scope b(runner);
+            genSplitDevice(
+                backend, runner,
+                [&backend, &modelMerged](CodeStream &crossDevice, CodeStream &perDevice)
+                {
+                    // Loop through neuron groups
+                    // **THINK** could use asynchronous copies and sync on last one
+                    const ModelSpecInternal &model = modelMerged.getModel();
+                    for (const auto &n : model.getNeuronGroups()) {
+                        // Calculate number of words required for spike/spike event buffers
+                        const std::string numWords = "(" + std::to_string(ceilDivide(n.second.getNumNeurons(), 32) * model.getBatchSize()) + " * timesteps)";
 
-                // Calculate number of words required for spike/spike event buffers
-                if(n.second.isSpikeRecordingEnabled() || n.second.isSpikeEventRecordingEnabled()) {
-                    runner << "const unsigned int numWords = " << (ceilDivide(n.second.getNumNeurons(), 32) * model.getBatchSize()) << " * numRecordingTimesteps;" << std::endl;
-                }
 
-                // Pull spike array if required
-                // **YUCK** maybe this should be renamed pullDynamicArray
-                if(n.second.isSpikeRecordingEnabled()) {
-                    CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, "numWords");
-                }
-                // AllocaPullte spike event array if required
-                // **YUCK** maybe this should be renamed pullDynamicArray
-                if(n.second.isSpikeEventRecordingEnabled()) {
-                    CodeStream::Scope b(runner);
-                    backend.genExtraGlobalParamPull(runner, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, "numWords");
-                }
-            }
+                        // Pull spike array if required
+                        // **YUCK** maybe this should be renamed pullDynamicArray
+                        if (n.second.isSpikeRecordingEnabled()) {
+                            backend.genExtraGlobalParamPull(crossDevice, perDevice, "uint32_t*", "recordSpk" + n.first, VarLocation::HOST_DEVICE, numWords);
+                        }
+                        // AllocaPullte spike event array if required
+                        // **YUCK** maybe this should be renamed pullDynamicArray
+                        if (n.second.isSpikeEventRecordingEnabled()) {
+                            backend.genExtraGlobalParamPull(crossDevice, perDevice, "uint32_t*", "recordSpkEvent" + n.first, VarLocation::HOST_DEVICE, numWords);
+                        }
+                    }
+                });
         }
         runner << std::endl;
     }
@@ -1753,10 +1778,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         CodeStream::Scope b(runner);
 
         // Update synaptic state
-        runner << "updateSynapses(t);" << std::endl;
+        genSplitDevice(backend, runner,
+                       [](CodeStream&, CodeStream &perDevice)
+                       {
+                           perDevice << "updateSynapses(t);" << std::endl;
+                       });
 
         // Generate code to advance host-side spike queues
-   
         for(const auto &n : model.getNeuronGroups()) {
             if (n.second.isDelayRequired()) {
                 runner << "spkQuePtr" << n.first << " = (spkQuePtr" << n.first << " + 1) % " << n.second.getNumDelaySlots() << ";" << std::endl;
@@ -1764,11 +1792,15 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         }
 
         // Update neuronal state
-        runner << "updateNeurons(t";
-        if(model.isRecordingInUse()) {
-            runner << ", (unsigned int)(iT % numRecordingTimesteps)";
-        }
-        runner << "); " << std::endl;
+        genSplitDevice(backend, runner,
+                       [&model](CodeStream &, CodeStream &perDevice)
+                       {
+                           perDevice << "updateNeurons(t";
+                           if (model.isRecordingInUse()) {
+                               perDevice << ", (unsigned int)(iT % numRecordingTimesteps)";
+                           }
+                           perDevice << "); " << std::endl;
+                       });
 
         // Generate code to advance host side dendritic delay buffers
         for(const auto &n : model.getNeuronGroups()) {

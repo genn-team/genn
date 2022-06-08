@@ -261,11 +261,11 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamAllocation(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamPush(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamPull(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const = 0;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
@@ -329,7 +329,7 @@ public:
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const = 0;
 
     //! Generate code to select a device for platforms where this is required
-    virtual void genSelectDevice(CodeStream &os, const std::string &device = "device") const {}
+    virtual void genSelectDevice(CodeStream &os) const {}
 
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
@@ -372,6 +372,10 @@ public:
 
     //! Different backends may have different or no pointer prefix (e.g. __global for OpenCL)
     virtual std::string getPointerPrefix() const { return ""; }
+
+    //! When backends require separate 'device' variables for each device, they can be identified with a suffix.
+    //! This function returns this so it can be used in otherwise platform-independent code.
+    virtual std::string getPerDeviceVarSuffix() const { return ""; }
 
     //! Should 'scalar' variables be implemented on device or can host variables be used directly?
     virtual bool isDeviceScalarRequired() const = 0;

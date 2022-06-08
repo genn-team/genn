@@ -1537,7 +1537,7 @@ void Backend::genVariableDefinition(CodeStream &definitions, CodeStream &definit
             if(::Utils::isTypePointer(type)) {
                 // Write host definition to internal definitions stream if type is device only
                 CodeStream &d = deviceType ? definitionsInternal : definitions;
-                d << "EXPORT_VAR " << type << " d_" << name << "[" << getDeviceIDs().size() << "]" << ";" << std::endl;
+                d << "EXPORT_VAR " << type << " d_" << name << "[" << getNumDevices() << "]" << ";" << std::endl;
             }
             // Otherwise we just need a device variable, made volatile for safety
             else {
@@ -1561,7 +1561,7 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
         if(loc & VarLocation::DEVICE) {
             // If the type is a pointer type we need a host and a device pointer
             if(::Utils::isTypePointer(type)) {
-                os << type << " d_" << name << "[" << getDeviceIDs().size() << "]" << ";" << std::endl;
+                os << type << " d_" << name << "[" << getNumDevices() << "]" << ";" << std::endl;
             }
             // Otherwise we just need a device variable, made volatile for safety
             else {
@@ -1630,7 +1630,7 @@ void Backend::genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream 
             definitions << "EXPORT_VAR " << type << " " << name << ";" << std::endl;
         }
         if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-            definitions << "EXPORT_VAR " << type << " d_" << name << ";" << std::endl;
+            definitions << "EXPORT_VAR " << type << " d_" << name << "[" << getNumDevices() << "];" << std::endl;
         }
     }
 }
@@ -1645,12 +1645,12 @@ void Backend::genExtraGlobalParamImplementation(CodeStream &os, const std::strin
             os << type << " " << name << ";" << std::endl;
         }
         if(loc & VarLocation::DEVICE && ::Utils::isTypePointer(type)) {
-            os << type << " d_" << name << ";" << std::endl;
+            os << type << " d_" << name << "[" << getNumDevices() << "];" << std::endl;
         }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+void Backend::genExtraGlobalParamAllocation(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                             VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     // Get underlying type
@@ -1661,27 +1661,27 @@ void Backend::genExtraGlobalParamAllocation(CodeStream &os, const std::string &t
     const std::string hostPointerToPointer = pointerToPointer ? (prefix + name) : ("&" + prefix + name);
     const std::string devicePointerToPointer = pointerToPointer ? (prefix + "d_" + name) : ("&" + prefix + "d_" + name);
     if(getPreferences().automaticCopy) {
-        os << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
+        crossDevice << "CHECK_CUDA_ERRORS(cudaMallocManaged(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            os << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
+            crossDevice << "CHECK_CUDA_ERRORS(cudaHostAlloc(" << hostPointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << "), " << flags << "));" << std::endl;
         }
 
         // If variable is present on device at all
         if(loc & VarLocation::DEVICE) {
             if(loc & VarLocation::ZERO_COPY) {
-                os << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << ", (void*)" << hostPointer << ", 0));" << std::endl;
+                perDevice << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void**)" << devicePointerToPointer << "[device], (void*)" << hostPointer << ", 0));" << std::endl;
             }
             else {
-                os << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << ", " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
+                perDevice << "CHECK_CUDA_ERRORS(cudaMalloc(" << devicePointerToPointer << "[device] , " << countVarName << " * sizeof(" << underlyingType << ")));" << std::endl;
             }
         }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+void Backend::genExtraGlobalParamPush(CodeStream&, CodeStream &perDevice, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     assert(!getPreferences().automaticCopy);
@@ -1694,13 +1694,13 @@ void Backend::genExtraGlobalParamPush(CodeStream &os, const std::string &type, c
         const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
         const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << devicePointer;
-        os << ", " << hostPointer;
-        os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
+        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(" << devicePointer << "[device]";
+        perDevice << ", " << hostPointer;
+        perDevice << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyHostToDevice));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+void Backend::genExtraGlobalParamPull(CodeStream&, CodeStream &perDevice, const std::string &type, const std::string &name,
                                       VarLocation loc, const std::string &countVarName, const std::string &prefix) const
 {
     assert(!getPreferences().automaticCopy);
@@ -1713,9 +1713,9 @@ void Backend::genExtraGlobalParamPull(CodeStream &os, const std::string &type, c
         const std::string hostPointer = pointerToPointer ? ("*" + prefix + name) : (prefix + name);
         const std::string devicePointer = pointerToPointer ? ("*" + prefix + "d_" + name) : (prefix + "d_" + name);
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << hostPointer;
-        os << ", " << devicePointer;
-        os << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
+        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(" << hostPointer;
+        perDevice << ", " << devicePointer << "[device]";
+        perDevice << ", " << countVarName << " * sizeof(" << underlyingType << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1879,7 +1879,7 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
         CodeStream::Scope b(os);
 
         // Select device
-        genSelectDevice(os, "device");
+        genSelectDevice(os);
 
         // Add free memory to total and return
         os << "size_t free;" << std::endl;
@@ -1891,11 +1891,11 @@ void Backend::genReturnFreeDeviceMemoryBytes(CodeStream &os) const
     os << "return totalFree;" << std::endl;
 }
 //--------------------------------------------------------------------------
-void Backend::genSelectDevice(CodeStream &os, const std::string &device) const
+void Backend::genSelectDevice(CodeStream &os) const
 {
     // If there's more than one device so we ever need to switch
     if (getDeviceIDs().size() > 1) {
-        os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceIDs[" << device << "]));" << std::endl;
+        os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceIDs[device]));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------

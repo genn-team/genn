@@ -198,11 +198,11 @@ public:
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genExtraGlobalParamImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
-    virtual void genExtraGlobalParamAllocation(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamAllocation(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                                VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPush(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamPush(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
-    virtual void genExtraGlobalParamPull(CodeStream &os, const std::string &type, const std::string &name, 
+    virtual void genExtraGlobalParamPull(CodeStream &crossDevice, CodeStream &perDevice, const std::string &type, const std::string &name,
                                          VarLocation loc, const std::string &countVarName = "count", const std::string &prefix = "") const override;
 
     //! Generate code for pushing an updated EGP value into the merged group structure on 'device'
@@ -255,7 +255,7 @@ public:
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const override;
 
     //! Generate code to select a device for platforms where this is required
-    virtual void genSelectDevice(CodeStream &os, const std::string &device = "device") const override;
+    virtual void genSelectDevice(CodeStream &os) const override;
 
     virtual void genMakefilePreamble(std::ostream &os) const override;
     virtual void genMakefileLinkRule(std::ostream &os) const override;
@@ -269,6 +269,10 @@ public:
 
     //! Get backend-specific allocate memory parameters
     virtual std::string getAllocateMemParams(const ModelSpecMerged &) const override;
+
+    //! When backends require separate 'device' variables for each device, they can be identified with a suffix.
+    //! This function returns this so it can be used in otherwise platform-independent code.
+    virtual std::string getPerDeviceVarSuffix() const override { return "[device]"; }
 
     //! Different backends seed RNGs in different ways. Does this one initialise population RNGS on device?
     virtual bool isPopulationRNGInitialisedOnDevice() const override { return true; }
