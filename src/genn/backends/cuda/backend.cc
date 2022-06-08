@@ -1441,7 +1441,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
     for (const auto d : getDeviceIDs()) {
         os << d << ", ";
     }
-    os << ";" << std::endl;
+    os << "};" << std::endl;
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
