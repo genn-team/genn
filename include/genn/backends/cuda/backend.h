@@ -216,8 +216,12 @@ public:
     //! When generating merged structures what type to use for simulation RNGs
     virtual std::string getMergedGroupSimRNGType() const override { return "curandState"; }
 
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const override;
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const override;
+    virtual void genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
+                                 const std::string &type, const std::string &name,
+                                 VarLocation loc, bool autoInitialized, size_t count, size_t hostOffet) const override;
+    virtual void genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
+                                 const std::string &type, const std::string &name,
+                                 VarLocation loc, size_t count, size_t hostOffet) const override;
 
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const override;

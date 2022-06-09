@@ -103,11 +103,48 @@ bool canPushPullVar(VarLocation loc)
             (loc & VarLocation::DEVICE));
 }
 //-------------------------------------------------------------------------
-bool genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                         VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::function<void()> handler)
+void genSplitDevice(const BackendBase &backend, CodeStream &os, 
+                    const std::ostringstream &crossDeviceStream, const std::ostringstream &perDeviceStream)
+{
+    // Write cross-device code
+    os << crossDeviceStream.str() << std::endl;
+
+    // If there's any per-device code
+    if (!perDeviceStream.str().empty()) {
+        // Loop through devices
+        os << "for(int device = 0; device < " << backend.getNumDevices() << "; device++)";
+        {
+            CodeStream::Scope b(os);
+
+            // Select device
+            backend.genSelectDevice(os);
+
+            // Write per-device free code
+            os << perDeviceStream.str() << std::endl;
+        }
+    }
+}
+//-------------------------------------------------------------------------
+template<typename F>
+void genSplitDevice(const BackendBase &backend, CodeStream &os, F generateFn)
+{
+    // Generate seperate cross-device and per-device code
+    std::ostringstream crossDeviceStream;
+    std::ostringstream perDeviceStream;
+    CodeStream crossDevice(crossDeviceStream);
+    CodeStream perDevice(perDeviceStream);
+    generateFn(crossDevice, perDevice);
+
+    // Generate code to 
+    genSplitDevice(backend, os, crossDeviceStream, perDeviceStream);
+}
+//-------------------------------------------------------------------------
+template<typename H>
+bool genVarPushPullScope(const BackendBase &backend, CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+                         VarLocation loc, const std::string &description, H handlerFn)
 {
     // If this variable has a location that allows pushing and pulling and automatic copying isn't enabled
-    if(canPushPullVar(loc) && !automaticCopyEnabled) {
+    if(canPushPullVar(loc) && !backend.getPreferences().automaticCopy) {
         definitionsFunc << "EXPORT_FUNC void push" << description << "ToDevice(bool uninitialisedOnly = false);" << std::endl;
         definitionsFunc << "EXPORT_FUNC void pull" << description << "FromDevice();" << std::endl;
 
@@ -117,7 +154,20 @@ bool genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
             CodeStream::Scope a(runnerPushFunc);
             CodeStream::Scope b(runnerPullFunc);
 
-            handler();
+            // Generate seperate code streams for cross and per device push and pull code
+            std::ostringstream crossDevicePushStream;
+            std::ostringstream perDevicePushStream;
+            std::ostringstream crossDevicePullStream;
+            std::ostringstream perDevicePullStream;
+            CodeStream crossDevicePush(crossDevicePushStream);
+            CodeStream perDevicePush(perDevicePushStream);
+            CodeStream crossDevicePull(crossDevicePullStream);
+            CodeStream perDevicePull(perDevicePullStream);
+            handler(crossDevicePush, perDevicePush, crossDevicePull, perDevicePull);
+
+            // Generate split bodies for the push and pull functions
+            genSplitDevice(backend, runnerPushFunc, crossDevicePushStream, perDevicePushStream);
+            genSplitDevice(backend, runnerPullFunc, crossDevicePullStream, perDevicePullStream);
         }
         runnerPushFunc << std::endl;
         runnerPullFunc << std::endl;
@@ -129,12 +179,13 @@ bool genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc
     }
 }
 //-------------------------------------------------------------------------
-void genVarPushPullScope(CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
-                         VarLocation loc, bool automaticCopyEnabled, const std::string &description, std::vector<std::string> &statePushPullFunction,
-                         std::function<void()> handler)
+template<typename H>
+void genVarPushPullScope(const BackendBase &backend, CodeStream &definitionsFunc, CodeStream &runnerPushFunc, CodeStream &runnerPullFunc,
+                         VarLocation loc, const std::string &description, std::vector<std::string> &statePushPullFunction,
+                         H handlerFn)
 {
     // Add function to vector if push pull function was actually required
-    if(genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, loc, automaticCopyEnabled, description, handler)) {
+    if(genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, loc, description, handlerFn)) {
         statePushPullFunction.push_back(description);
     }
 }
@@ -243,55 +294,22 @@ void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStr
                  CodeStream &definitionsInternal, CodeStream &runner, 
                  CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
                  CodeStream &push, CodeStream &pull, const std::string &type, const std::string &name,
-                 VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
+                 VarLocation loc, bool autoInitialized, size_t count, size_t hostOffset, MemAlloc &mem,
                  std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
-    genVarPushPullScope(definitionsFunc, push, pull, loc, backend.getPreferences().automaticCopy, name, statePushPullFunction,
-        [&]()
+    genVarPushPullScope(
+        backend, definitionsFunc, push, pull, loc, name, statePushPullFunction,
+        [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
         {
-            backend.genVariablePushPull(push, pull, type, name, loc, autoInitialized, count);
+            backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull,
+                                        type, name, loc, autoInitialized, count, hostOffset);
         });
 
     // Generate variables
     backend.genArray(definitionsVar, definitionsInternal, runner, 
                      allocate, perDeviceAllocate, free, perDeviceFree,
                      type, name, loc, count, mem);
-}
-//-------------------------------------------------------------------------
-void genSplitDevice(const BackendBase &backend, CodeStream &os, const std::stringstream &crossDeviceStream, const std::stringstream &perDeviceStream)
-{
-    // Write cross-device code
-    os << crossDeviceStream.str() << std::endl;
-
-    // If there's any per-device code
-    if (!perDeviceStream.str().empty()) {
-        // Loop through devices
-        os << "for(int device = 0; device < " << backend.getNumDevices() << "; device++)";
-        {
-            CodeStream::Scope b(os);
-
-            // Select device
-            backend.genSelectDevice(os);
-
-            // Write per-device free code
-            os << perDeviceStream.str() << std::endl;
-        }
-    }
-}
-//-------------------------------------------------------------------------
-template<typename F>
-void genSplitDevice(const BackendBase &backend, CodeStream &os, F generateFn)
-{
-    // Generate seperate cross-device and per-device code
-    std::stringstream crossDeviceStream;
-    std::stringstream perDeviceStream;
-    CodeStream crossDevice(crossDeviceStream);
-    CodeStream perDevice(perDeviceStream);
-    generateFn(crossDevice, perDevice);
-
-    // Generate code to 
-    genSplitDevice(backend, os, crossDeviceStream, perDeviceStream);
 }
 //-------------------------------------------------------------------------
 void genExtraGlobalParam(const ModelSpecMerged &modelMerged, const BackendBase &backend, CodeStream &definitionsVar,
@@ -603,21 +621,21 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
     runner << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl << std::endl;
 
     // Create codestreams to generate different sections of runner and definitions
-    std::stringstream runnerVarDeclStream;
-    std::stringstream runnerVarAllocStream;
-    std::stringstream runnerPerDeviceVarAllocStream;
-    std::stringstream runnerMergedStructAllocStream;
-    std::stringstream runnerVarFreeStream;
-    std::stringstream runnerPerDeviceVarFreeStream;
-    std::stringstream runnerExtraGlobalParamFuncStream;
-    std::stringstream runnerPushFuncStream;
-    std::stringstream runnerPullFuncStream;
-    std::stringstream runnerGetterFuncStream;
-    std::stringstream runnerStepTimeFinaliseStream;
-    std::stringstream definitionsVarStream;
-    std::stringstream definitionsFuncStream;
-    std::stringstream definitionsInternalVarStream;
-    std::stringstream definitionsInternalFuncStream;
+    std::ostringstream runnerVarDeclStream;
+    std::ostringstream runnerVarAllocStream;
+    std::ostringstream runnerPerDeviceVarAllocStream;
+    std::ostringstream runnerMergedStructAllocStream;
+    std::ostringstream runnerVarFreeStream;
+    std::ostringstream runnerPerDeviceVarFreeStream;
+    std::ostringstream runnerExtraGlobalParamFuncStream;
+    std::ostringstream runnerPushFuncStream;
+    std::ostringstream runnerPullFuncStream;
+    std::ostringstream runnerGetterFuncStream;
+    std::ostringstream runnerStepTimeFinaliseStream;
+    std::ostringstream definitionsVarStream;
+    std::ostringstream definitionsFuncStream;
+    std::ostringstream definitionsInternalVarStream;
+    std::ostringstream definitionsInternalFuncStream;
     CodeStream runnerVarDecl(runnerVarDeclStream);
     CodeStream runnerVarAlloc(runnerVarAllocStream);
     CodeStream runnerPerDeviceVarAlloc(runnerPerDeviceVarAllocStream);
@@ -924,20 +942,20 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), numSpikes, mem);
 
         // True spike push and pull functions
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                            backend.getPreferences().automaticCopy, n.first + "Spikes",
-                            [&]()
+        genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
+                            n.first + "Spikes",
+                            [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                             {
-                                backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
+                                backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull,
                                                             "unsigned int", "glbSpkCnt" + n.first, n.second.getSpikeLocation(), true, numSpikeCounts);
-                                backend.genVariablePushPull(runnerPushFunc, runnerPullFunc,
+                                backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull,
                                                             "unsigned int", "glbSpk" + n.first, n.second.getSpikeLocation(), true, numSpikes);
                             });
 
         // Current true spike push and pull functions
-        genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
-                            backend.getPreferences().automaticCopy, n.first + "CurrentSpikes", currentSpikePullFunctions,
-                            [&]()
+        genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeLocation(),
+                            n.first + "CurrentSpikes", currentSpikePullFunctions,
+                            [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                             {
                                 backend.genCurrentTrueSpikePush(runnerPushFunc, n.second, batchSize);
                                 backend.genCurrentTrueSpikePull(runnerPullFunc, n.second, batchSize);
@@ -971,20 +989,22 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                               numNeuronDelaySlots, mem);
 
             // Spike-like event push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "SpikeEvents",
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
+                                n.first + "SpikeEvents",
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "glbSpkCntEvnt" + n.first, 
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                "unsigned int", "glbSpkCntEvnt" + n.first,
                                                                 n.second.getSpikeLocation(), true, batchSize * n.second.getNumDelaySlots());
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "glbSpkEvnt" + n.first, 
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                "unsigned int", "glbSpkEvnt" + n.first,
                                                                 n.second.getSpikeLocation(), true, numNeuronDelaySlots);
                                 });
 
             // Current spike-like event push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeEventLocation(),
+                                n.first + "CurrentSpikeEvents", currentSpikeEventPullFunctions,
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
                                     backend.genCurrentSpikeLikeEventPush(runnerPushFunc, n.second, batchSize);
                                     backend.genCurrentSpikeLikeEventPull(runnerPullFunc, n.second, batchSize);
@@ -1016,12 +1036,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                              numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "SpikeTimes",
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
+                                n.first + "SpikeTimes",
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "sT" + n.first, n.second.getSpikeTimeLocation(), true, 
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                model.getTimePrecision(), "sT" + n.first, 
+                                                                n.second.getSpikeTimeLocation(), true, 
                                                                 numNeuronDelaySlots);
                                 });
         }
@@ -1034,12 +1055,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                              numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeTimeLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "PreviousSpikeTimes",
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeTimeLocation(),
+                                n.first + "PreviousSpikeTimes",
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "prevST" + n.first, n.second.getPrevSpikeTimeLocation(), true,
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                model.getTimePrecision(), "prevST" + n.first, 
+                                                                n.second.getPrevSpikeTimeLocation(), true,
                                                                 numNeuronDelaySlots);
                                 });
         }
@@ -1052,12 +1074,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                              numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "SpikeEventTimes",
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getSpikeTimeLocation(),
+                                n.first + "SpikeEventTimes",
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "seT" + n.first, n.second.getSpikeEventTimeLocation(), true, 
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                model.getTimePrecision(), "seT" + n.first, 
+                                                                n.second.getSpikeEventTimeLocation(), true, 
                                                                 numNeuronDelaySlots);
                                 });
         }
@@ -1070,12 +1093,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                              numNeuronDelaySlots, mem);
 
             // Generate push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeEventTimeLocation(),
-                                backend.getPreferences().automaticCopy, n.first + "PreviousSpikeEventTimes",
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getPrevSpikeEventTimeLocation(),
+                                n.first + "PreviousSpikeEventTimes",
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getTimePrecision(),
-                                                                "prevSET" + n.first, n.second.getPrevSpikeEventTimeLocation(), true, 
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                model.getTimePrecision(), "prevSET" + n.first, 
+                                                                n.second.getPrevSpikeEventTimeLocation(), true, 
                                                                 numNeuronDelaySlots);
                                 });
         }
@@ -1102,9 +1126,9 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                         n.second.getVarLocation(i), autoInitialized, count, mem, neuronStatePushPullFunctions);
 
             // Current variable push and pull functions
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
-                                backend.getPreferences().automaticCopy, "Current" + vars[i].name + n.first,
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, n.second.getVarLocation(i),
+                                "Current" + vars[i].name + n.first,
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
                                     backend.genCurrentVariablePushPull(runnerPushFunc, runnerPullFunc, n.second, vars[i].type,
                                                                        vars[i].name, n.second.getVarLocation(i), numCopies);
@@ -1336,12 +1360,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                  "uint32_t", "gp" + s.second.getName(), s.second.getSparseConnectivityLocation(), gpSize, mem);
 
                 // Generate push and pull functions for bitmask
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
-                                    backend.getPreferences().automaticCopy, s.second.getName() + "Connectivity", connectivityPushPullFunctions,
-                                    [&]()
+                genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                    s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+                                    [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                     {
                                         // Row lengths
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "uint32_t", "gp" + s.second.getName(),
+                                        backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                    "uint32_t", "gp" + s.second.getName(), 
                                                                     s.second.getSparseConnectivityLocation(), autoInitialized, gpSize);
                                     });
             }
@@ -1379,12 +1404,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 }
 
                 // Generate push and pull functions for sparse connectivity
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
-                                    backend.getPreferences().automaticCopy, s.second.getName() + "Connectivity", connectivityPushPullFunctions,
-                                    [&]()
+                genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getSparseConnectivityLocation(),
+                                    s.second.getName() + "Connectivity", connectivityPushPullFunctions,
+                                    [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                     {
                                         // Row lengths
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, "unsigned int", "rowLength" + s.second.getName(), 
+                                        backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                    "unsigned int", "rowLength" + s.second.getName(),
                                                                     s.second.getSparseConnectivityLocation(), autoInitialized, s.second.getSrcNeuronGroup()->getNumNeurons());
 
                                         // Target indices
@@ -1446,12 +1472,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         // **NOTE** we generated initialisation and declaration code earlier - here we just generate push and pull as we want this per-synapse group
         if(!s.second.isPSModelFused()) {
             // Add code to push and pull inSyn
-            genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
-                                backend.getPreferences().automaticCopy, "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                [&]()
+            genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getInSynLocation(),
+                                "inSyn" + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                 {
-                                    backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, model.getPrecision(), "inSyn" + s.second.getName(), s.second.getInSynLocation(),
-                                                                true, s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
+                                    backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                model.getPrecision(), "inSyn" + s.second.getName(), 
+                                                                s.second.getInSynLocation(), true, 
+                                                                s.second.getTrgNeuronGroup()->getNumNeurons() * batchSize);
                                 });
 
             // If this synapse group has individual postsynaptic model variables
@@ -1459,12 +1487,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                 const auto psmVars = psm->getVars();
                 for(size_t i = 0; i < psmVars.size(); i++) {
                     const bool autoInitialized = !s.second.getPSVarInitialisers()[i].getSnippet()->getCode().empty();
-                    genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
-                                        backend.getPreferences().automaticCopy, psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                        [&]()
+                    genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getPSVarLocation(i),
+                                        psmVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                        [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                         {
-                                            backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, psmVars[i].type, psmVars[i].name + s.second.getName(), s.second.getPSVarLocation(i),
-                                                                        autoInitialized, s.second.getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVars[i].access, batchSize));
+                                            backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                        psmVars[i].type, psmVars[i].name + s.second.getName(), 
+                                                                        s.second.getPSVarLocation(i), autoInitialized, 
+                                                                        s.second.getTrgNeuronGroup()->getNumNeurons() * getNumCopies(psmVars[i].access, batchSize));
                                         });
                 }
             }
@@ -1480,12 +1510,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             const auto wuPreVars = wu->getPreVars();
             for(size_t i = 0; i < wuPreVars.size(); i++) {
                 const bool autoInitialized = !s.second.getWUPreVarInitialisers()[i].getSnippet()->getCode().empty();
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPreVarLocation(i),
-                                    backend.getPreferences().automaticCopy, wuPreVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                    [&]()
+                genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPreVarLocation(i),
+                                    wuPreVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                    [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                     {
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPreVars[i].type, wuPreVars[i].name + s.second.getName(), s.second.getWUPreVarLocation(i),
-                                                                    autoInitialized, preSize * getNumCopies(wuPreVars[i].access, batchSize));
+                                        backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                    wuPreVars[i].type, wuPreVars[i].name + s.second.getName(), 
+                                                                    s.second.getWUPreVarLocation(i), autoInitialized, 
+                                                                    preSize * getNumCopies(wuPreVars[i].access, batchSize));
                                     });
             }
             
@@ -1500,12 +1532,14 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             const auto wuPostVars = s.second.getWUModel()->getPostVars();
             for(size_t i = 0; i < wuPostVars.size(); i++) {
                 const bool autoInitialized = !s.second.getWUPostVarInitialisers()[i].getSnippet()->getCode().empty();
-                genVarPushPullScope(definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPostVarLocation(i),
-                                    backend.getPreferences().automaticCopy, wuPostVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
-                                    [&]()
+                genVarPushPullScope(backend, definitionsFunc, runnerPushFunc, runnerPullFunc, s.second.getWUPostVarLocation(i),
+                                    wuPostVars[i].name + s.second.getName(), synapseGroupStatePushPullFunctions,
+                                    [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
                                     {
-                                        backend.genVariablePushPull(runnerPushFunc, runnerPullFunc, wuPostVars[i].type, wuPostVars[i].name + s.second.getName(), s.second.getWUPostVarLocation(i),
-                                                                    autoInitialized, postSize * getNumCopies(wuPostVars[i].access, batchSize));
+                                        backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull, 
+                                                                    wuPostVars[i].type, wuPostVars[i].name + s.second.getName(), 
+                                                                    s.second.getWUPostVarLocation(i), autoInitialized, 
+                                                                    postSize * getNumCopies(wuPostVars[i].access, batchSize));
                                     });
             }
             

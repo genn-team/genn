@@ -287,10 +287,14 @@ public:
     virtual void genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &sg, const Substitutions &kernelSubs, Handler handler) const = 0;
 
     //! Generate code for pushing a variable to the 'device'
-    virtual void genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const = 0;
+    virtual void genVariablePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                 const std::string &type, const std::string &name, 
+                                 VarLocation loc, bool autoInitialized, size_t count, size_t hostOffet) const = 0;
 
     //! Generate code for pulling a variable from the 'device'
-    virtual void genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const = 0;
+    virtual void genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
+                                 const std::string &type, const std::string &name, 
+                                 VarLocation loc, size_t count, size_t hostOffet) const = 0;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
     virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
@@ -419,11 +423,12 @@ public:
     // Public API
     //--------------------------------------------------------------------------
     //! Helper function to generate matching push and pull functions for a variable
-    void genVariablePushPull(CodeStream &push, CodeStream &pull,
-                             const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+    void genVariablePushPull(CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull,
+                             const std::string &type, const std::string &name, 
+                             VarLocation loc, bool autoInitialized, size_t count, size_t hostOffset) const
     {
-        genVariablePush(push, type, name, loc, autoInitialized, count);
-        genVariablePull(pull, type, name, loc, count);
+        genVariablePush(push, perDevicePush, type, name, loc, autoInitialized, count, hostOffset);
+        genVariablePull(pull, perDevicePull, type, name, loc, count, hostOffset);
     }
 
     //! Helper function to generate matching push and pull functions for the current state of a variable

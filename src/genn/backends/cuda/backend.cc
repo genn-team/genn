@@ -1734,34 +1734,38 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     return type;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, bool autoInitialized, size_t count) const
+void Backend::genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
+                              const std::string &type, const std::string &name,
+                              VarLocation loc, bool autoInitialized, size_t count, size_t hostOffet) const
 {
     assert(!getPreferences().automaticCopy);
 
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Only copy if uninitialisedOnly isn't set
         if(autoInitialized) {
-            os << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
+            perDevice << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
         }
 
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name;
-        os << ", " << name;
-        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << "[device]";
+        perDevice << ", &" << name << "[" << hostOffet << "]";
+        perDevice << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
 
         if(autoInitialized) {
-            os << CodeStream::CB(1101);
+            perDevice << CodeStream::CB(1101);
         }
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc, size_t count) const
+void Backend::genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
+                              const std::string &type, const std::string &name,
+                              VarLocation loc, size_t count, size_t hostOffet) const
 {
     assert(!getPreferences().automaticCopy);
 
     if(!(loc & VarLocation::ZERO_COPY)) {
-        os << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name;
-        os << ", d_"  << name;
-        os << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << hostOffet << "]";
+        perDevice << ", d_"  << name << "[device]";
+        perDevice << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
