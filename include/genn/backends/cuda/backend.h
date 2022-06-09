@@ -218,31 +218,40 @@ public:
 
     virtual void genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
                                  const std::string &type, const std::string &name,
-                                 VarLocation loc, bool autoInitialized, size_t count, size_t hostOffet) const override;
+                                 VarLocation loc, bool autoInitialized, size_t count) const override;
     virtual void genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
                                  const std::string &type, const std::string &name,
-                                 VarLocation loc, size_t count, size_t hostOffet) const override;
+                                 VarLocation loc, size_t count) const override;
 
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+    virtual void genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                        const NeuronGroupInternal &ng, const std::string &type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const override;
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+    virtual void genCurrentVariablePull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                        const NeuronGroupInternal &ng, const std::string &type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const override;
 
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
+    virtual void genCurrentTrueSpikePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                         const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePush(os, ng, batchSize, false);
+        genCurrentSpikePush(crossDevice, perDevice,  ng, batchSize, false);
     }
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
+    
+    virtual void genCurrentTrueSpikePull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                         const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePull(os, ng, batchSize, false);
+        genCurrentSpikePull(crossDevice, perDevice,  ng, batchSize, false);
     }
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
+    
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                              const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePush(os, ng, batchSize, true);
+        genCurrentSpikePush(crossDevice, perDevice,  ng, batchSize, true);
     }
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const override
+    
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                              const NeuronGroupInternal &ng, unsigned int batchSize) const override
     {
-        genCurrentSpikePull(os, ng, batchSize, true);
+        genCurrentSpikePull(crossDevice, perDevice, ng, batchSize, true);
     }
     
     virtual void genGlobalDeviceRNG(CodeStream &definitions, CodeStream &definitionsInternal, 
@@ -352,8 +361,10 @@ private:
         return getDeviceProps().totalConstMem - getPreferences<Preferences>().constantCacheOverhead;
     }
 
-    void genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
-    void genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
+    void genCurrentSpikePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                             const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
+    void genCurrentSpikePull(CodeStream &crossDevice, CodeStream &perDevice, 
+                             const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const;
 
     void genKernelDimensions(CodeStream &os, Kernel kernel, size_t numThreadsX, size_t batchSize, size_t numBlockThreadsY = 1) const;
 

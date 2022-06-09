@@ -289,32 +289,38 @@ public:
     //! Generate code for pushing a variable to the 'device'
     virtual void genVariablePush(CodeStream &crossDevice, CodeStream &perDevice, 
                                  const std::string &type, const std::string &name, 
-                                 VarLocation loc, bool autoInitialized, size_t count, size_t hostOffet) const = 0;
+                                 VarLocation loc, bool autoInitialized, size_t count) const = 0;
 
     //! Generate code for pulling a variable from the 'device'
     virtual void genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
                                  const std::string &type, const std::string &name, 
-                                 VarLocation loc, size_t count, size_t hostOffet) const = 0;
+                                 VarLocation loc, size_t count) const = 0;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
-    virtual void genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+    virtual void genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
+                                        const NeuronGroupInternal &ng, const std::string &type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const = 0;
 
     //! Generate code for pulling a variable's value in the current timestep from the 'device'
-    virtual void genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
+    virtual void genCurrentVariablePull(CodeStream &crossDevice, CodeStream &perDevice,  
+                                        const NeuronGroupInternal &ng, const std::string &type, 
                                         const std::string &name, VarLocation loc, unsigned int batchSize) const = 0;
 
     //! Generate code for pushing true spikes emitted by a neuron group in the current timestep to the 'device'
-    virtual void genCurrentTrueSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
+    virtual void genCurrentTrueSpikePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                         const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
 
     //! Generate code for pulling true spikes emitted by a neuron group in the current timestep from the 'device'
-    virtual void genCurrentTrueSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
+    virtual void genCurrentTrueSpikePull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                         const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
 
     //! Generate code for pushing spike-like events emitted by a neuron group in the current timestep to the 'device'
-    virtual void genCurrentSpikeLikeEventPush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
+    virtual void genCurrentSpikeLikeEventPush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                              const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
 
     //! Generate code for pulling spike-like events emitted by a neuron group in the current timestep from the 'device'
-    virtual void genCurrentSpikeLikeEventPull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
+    virtual void genCurrentSpikeLikeEventPull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                              const NeuronGroupInternal &ng, unsigned int batchSize) const = 0;
 
     //! Generate a single RNG instance
     /*! On single-threaded platforms this can be a standard RNG like M.T. but, on parallel platforms, it is likely to be a counter-based RNG */
@@ -333,7 +339,7 @@ public:
     virtual void genReturnFreeDeviceMemoryBytes(CodeStream &os) const = 0;
 
     //! Generate code to select a device for platforms where this is required
-    virtual void genSelectDevice(CodeStream &os) const {}
+    virtual void genSelectDevice(CodeStream &os) const = 0;
 
     //! This function can be used to generate a preamble for the GNU makefile used to build
     virtual void genMakefilePreamble(std::ostream &os) const = 0;
@@ -425,10 +431,10 @@ public:
     //! Helper function to generate matching push and pull functions for a variable
     void genVariablePushPull(CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull,
                              const std::string &type, const std::string &name, 
-                             VarLocation loc, bool autoInitialized, size_t count, size_t hostOffset) const
+                             VarLocation loc, bool autoInitialized, size_t count) const
     {
-        genVariablePush(push, perDevicePush, type, name, loc, autoInitialized, count, hostOffset);
-        genVariablePull(pull, perDevicePull, type, name, loc, count, hostOffset);
+        genVariablePush(push, perDevicePush, type, name, loc, autoInitialized, count);
+        genVariablePull(pull, perDevicePull, type, name, loc, count);
     }
 
     //! Helper function to generate matching push and pull functions for the current state of a variable

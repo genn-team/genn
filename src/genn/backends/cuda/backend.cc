@@ -1734,9 +1734,9 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
     return type;
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
+void Backend::genVariablePush(CodeStream&, CodeStream &perDevice,
                               const std::string &type, const std::string &name,
-                              VarLocation loc, bool autoInitialized, size_t count, size_t hostOffet) const
+                              VarLocation loc, bool autoInitialized, size_t count) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1745,10 +1745,13 @@ void Backend::genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
         if(autoInitialized) {
             perDevice << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
         }
+        
+        // Calculate size of device variable slice on each device
+        const size_t perDeviceCount = ceilDivide(count, getNumDevices());
 
         perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << "[device]";
-        perDevice << ", &" << name << "[" << hostOffet << "]";
-        perDevice << ", " << count << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+        perDevice << ", &" << name << "[" << perDeviceCount << " * device]";
+        perDevice << ", " << perDeviceCount << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
 
         if(autoInitialized) {
             perDevice << CodeStream::CB(1101);
@@ -1756,21 +1759,25 @@ void Backend::genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
+void Backend::genVariablePull(CodeStream&, CodeStream &perDevice,
                               const std::string &type, const std::string &name,
-                              VarLocation loc, size_t count, size_t hostOffet) const
+                              VarLocation loc, size_t count) const
 {
     assert(!getPreferences().automaticCopy);
 
     if(!(loc & VarLocation::ZERO_COPY)) {
-        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << hostOffet << "]";
+        // Calculate size of device variable slice on each device
+        const size_t perDeviceCount = ceilDivide(count, getNumDevices());
+        
+        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << perDeviceCount << " * device]";
         perDevice << ", d_"  << name << "[device]";
         perDevice << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
+void Backend::genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                     const NeuronGroupInternal &ng, const std::string &type, const std::string &name, 
+                                     VarLocation loc, unsigned int batchSize) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1794,12 +1801,13 @@ void Backend::genCurrentVariablePush(CodeStream &os, const NeuronGroupInternal &
     }
     // Otherwise, generate standard push
     else {
-        genVariablePush(os, type, name + ng.getName(), loc, false, ng.getNumNeurons() * batchSize);
+        genVariablePush(crossDevice, perDevice, type, name + ng.getName(), loc, false, ng.getNumNeurons() * batchSize);
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &ng, const std::string &type, 
-                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
+void Backend::genCurrentVariablePull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                     const NeuronGroupInternal &ng, const std::string &type, const std::string &name, 
+                                     VarLocation loc, unsigned int batchSize) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1822,7 +1830,7 @@ void Backend::genCurrentVariablePull(CodeStream &os, const NeuronGroupInternal &
     }
     // Otherwise, generate standard pull
     else {
-        genVariablePull(os, type, name + ng.getName(), loc, ng.getNumNeurons() * batchSize);
+        genVariablePull(crossDevice, perDevice, type, name + ng.getName(), loc, ng.getNumNeurons() * batchSize);
     }
 }
 //--------------------------------------------------------------------------
@@ -2092,7 +2100,8 @@ std::string Backend::getNVCCFlags() const
     return nvccFlags;
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
+void Backend::genCurrentSpikePush(CodeStream &crossDevice, CodeStream &perDevice, 
+                                  const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -2133,7 +2142,7 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
                     CodeStream::Scope b(os);
                     os << "const unsigned int spikeOffset = (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ") + (b * " << (ng.getNumNeurons() * ng.getNumDelaySlots()) << ");" << std::endl;
                     os << "CHECK_CUDA_ERRORS(cudaMemcpyAsync(d_" << spikePrefix << ng.getName() << " + spikeOffset";
-                    os << ", " << spikePrefix << ng.getName() << " + spikeOffset";
+                    os << ", " << spikePrefix <<CodeStream ng.getName() << " + spikeOffset";
                     os << ", " << spikeCntPrefix << ng.getName() << "[spkQuePtr" << ng.getName() << " + (b * " << ng.getNumDelaySlots() << ")] * sizeof(unsigned int)";
                     os << ", cudaMemcpyHostToDevice)); " << std::endl;
                 }
@@ -2171,7 +2180,8 @@ void Backend::genCurrentSpikePush(CodeStream &os, const NeuronGroupInternal &ng,
     }
 }
 //--------------------------------------------------------------------------
-void Backend::genCurrentSpikePull(CodeStream &os, const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
+void Backend::genCurrentSpikePull(CodeStream &crossDevice, CodeStream &perDevice, 
+                                  const NeuronGroupInternal &ng, unsigned int batchSize, bool spikeEvent) const
 {
     if(!(ng.getSpikeLocation() & VarLocation::ZERO_COPY)) {
         // Is delay required

@@ -163,7 +163,7 @@ bool genVarPushPullScope(const BackendBase &backend, CodeStream &definitionsFunc
             CodeStream perDevicePush(perDevicePushStream);
             CodeStream crossDevicePull(crossDevicePullStream);
             CodeStream perDevicePull(perDevicePullStream);
-            handler(crossDevicePush, perDevicePush, crossDevicePull, perDevicePull);
+            handlerFn(crossDevicePush, perDevicePush, crossDevicePull, perDevicePull);
 
             // Generate split bodies for the push and pull functions
             genSplitDevice(backend, runnerPushFunc, crossDevicePushStream, perDevicePushStream);
@@ -294,7 +294,7 @@ void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStr
                  CodeStream &definitionsInternal, CodeStream &runner, 
                  CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
                  CodeStream &push, CodeStream &pull, const std::string &type, const std::string &name,
-                 VarLocation loc, bool autoInitialized, size_t count, size_t hostOffset, MemAlloc &mem,
+                 VarLocation loc, bool autoInitialized, size_t count, MemAlloc &mem,
                  std::vector<std::string> &statePushPullFunction)
 {
     // Generate push and pull functions
@@ -303,7 +303,7 @@ void genVariable(const BackendBase &backend, CodeStream &definitionsVar, CodeStr
         [&](CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull)
         {
             backend.genVariablePushPull(push, perDevicePush, pull, perDevicePull,
-                                        type, name, loc, autoInitialized, count, hostOffset);
+                                        type, name, loc, autoInitialized, count);
         });
 
     // Generate variables
