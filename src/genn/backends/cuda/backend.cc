@@ -1573,8 +1573,13 @@ void Backend::genVariableImplementation(CodeStream &os, const std::string &type,
 //--------------------------------------------------------------------------
 void Backend::genVariableAllocation(CodeStream &allocate, CodeStream &perDeviceAllocate, 
                                     const std::string &type, const std::string &name, 
-                                    VarLocation loc, size_t count, MemAlloc &memAlloc) const
+                                    VarLocation loc, const Shape &shape, MemAlloc &memAlloc) const
 {
+    // Calculate total size of array
+    // **NOTE** we could be smarter here and pad etc
+    // **TODO** special case when last dimensions is 1 - signifies that whole variable needs to be present on all devices
+    const size_t count = std::accumulate(shape.cbegin(), shape.cend(), 1, std::multiplies<size_t>());
+    
     if(getPreferences().automaticCopy) {
         allocate << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
         memAlloc += MemAlloc::device(count * getSize(type));
@@ -1736,7 +1741,7 @@ std::string Backend::getMergedGroupFieldHostType(const std::string &type) const
 //--------------------------------------------------------------------------
 void Backend::genVariablePush(CodeStream&, CodeStream &perDevice,
                               const std::string &type, const std::string &name,
-                              VarLocation loc, bool autoInitialized, size_t count) const
+                              VarLocation loc, bool autoInitialized, const Shape &shape) const
 {
     assert(!getPreferences().automaticCopy);
 
@@ -1746,12 +1751,31 @@ void Backend::genVariablePush(CodeStream&, CodeStream &perDevice,
             perDevice << "if(!uninitialisedOnly)" << CodeStream::OB(1101);
         }
         
-        // Calculate size of device variable slice on each device
-        const size_t perDeviceCount = ceilDivide(count, getNumDevices());
-
-        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << "[device]";
-        perDevice << ", &" << name << "[" << perDeviceCount << " * device]";
-        perDevice << ", " << perDeviceCount << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+        // Calculate size of slice of last dimension which 
+        // **TODO** special case when last dimensions is 1 - signifies that whole variable needs to be present on all devices
+        const size_t numDims = shape.size();
+        const size_t perDeviceCount = ceilDivide(shape[numDims - 1], getNumDevices());
+        
+        // If we're using a single device or variable is 1D, perform standard 1D memcpy
+        if(getNumDevices() == 1 || (numDims == 1)) {
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_"  << name << "[device];
+            perDevice << ", &" << name << "[" << perDeviceCount << " * device]";
+            perDevice << ", " << perDeviceCount << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+        }
+        // Otherwise, if shape has higher dimensionality e.g 2D like (delay, neuron) or 3D like (batch, delay, neuron)
+        else {
+            // Multiply together remaining shape dimensions
+            const size_t remainingDimensions = std::accumulate(&shape[0], &shape[numDims - 1], 1, std::multiplies<size_t>());
+            
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
+            os << "d_"  << name << "[device]";                              // Destination memory address 
+            os << ", " << perDeviceCount << " * sizeof(" << type << ")";    // Pitch of destination memory (bytes)
+            os << ", &" << name << "[" << perDeviceCount << " * device]";   // Source memory address 
+            os << ", " << shape.back() << " * sizeof(" << type << ")";      // Pitch of source memory (bytes)
+            os << ", " << perDeviceCount << " * sizeof(" << type << ")";    // Width of matrix transfer (columns in bytes) 
+            os << ", " << remainingDimensions,                              // Height of matrix transfer (rows) 
+            os << ", cudaMemcpyHostToDevice));" << std::endl;               // Type of transfer
+        }
 
         if(autoInitialized) {
             perDevice << CodeStream::CB(1101);
@@ -1761,17 +1785,37 @@ void Backend::genVariablePush(CodeStream&, CodeStream &perDevice,
 //--------------------------------------------------------------------------
 void Backend::genVariablePull(CodeStream&, CodeStream &perDevice,
                               const std::string &type, const std::string &name,
-                              VarLocation loc, size_t count) const
+                              VarLocation loc, const Shape &shape) const
 {
     assert(!getPreferences().automaticCopy);
-
+    assert(!shape.empty());
+    
     if(!(loc & VarLocation::ZERO_COPY)) {
-        // Calculate size of device variable slice on each device
-        const size_t perDeviceCount = ceilDivide(count, getNumDevices());
+        // Calculate size of slice of last dimension which 
+        // **TODO** special case when last dimensions is 1 - signifies that whole variable needs to be present on all devices
+        const size_t numDims = shape.size();
+        const size_t perDeviceCount = ceilDivide(shape[numDims - 1], getNumDevices());
         
-        perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << perDeviceCount << " * device]";
-        perDevice << ", d_"  << name << "[device]";
-        perDevice << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+        // If we're using a single device or variable is 1D, perform standard 1D memcpy
+        if(getNumDevices() == 1 || (numDims == 1)) {
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << perDeviceCount << " * device]";
+            perDevice << ", d_"  << name << "[device]";
+            perDevice << ", " << count << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+        }
+        // Otherwise, if shape has higher dimensionality e.g 2D like (delay, neuron) or 3D like (batch, delay, neuron)
+        else {
+            // Multiply together remaining shape dimensions
+            const size_t remainingDimensions = std::accumulate(&shape[0], &shape[numDims - 1], 1, std::multiplies<size_t>());
+            
+            os << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
+            os << "&" << name << "[" << perDeviceCount << " * device]";     // Destination memory address 
+            os << ", " << shape.back() << " * sizeof(" << type << ")";      // Pitch of destination memory (bytes)
+            os << ", d_"  << name << "[device]";                            // Source memory address 
+            os << ", " << perDeviceCount << " * sizeof(" << type << ")";    // Pitch of source memory (bytes)
+            os << ", " << perDeviceCount << " * sizeof(" << type << ")";    // Width of matrix transfer (columns in bytes) 
+            os << ", " << remainingDimensions;                                         // Height of matrix transfer (rows) 
+            os << ", cudaMemcpyDeviceToHost));" << std::endl;               // Type of transfer
+        }
     }
 }
 //--------------------------------------------------------------------------

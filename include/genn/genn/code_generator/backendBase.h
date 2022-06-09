@@ -183,6 +183,8 @@ public:
 
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
     
+    typedef std::vector<size_t> Shape;
+    
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
     
@@ -256,7 +258,7 @@ public:
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const = 0;
     virtual void genVariableAllocation(CodeStream &allocate, CodeStream &perDeviceAllocate, 
                                        const std::string &type, const std::string &name, 
-                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const = 0;
+                                       VarLocation loc, const Shape &shape, MemAlloc &memAlloc) const = 0;
     virtual void genVariableFree(CodeStream &free, CodeStream &perDeviceFree, const std::string &name, VarLocation loc) const = 0;
 
     virtual void genExtraGlobalParamDefinition(CodeStream &definitions, CodeStream &definitionsInternal, const std::string &type, const std::string &name, VarLocation loc) const = 0;
@@ -289,12 +291,12 @@ public:
     //! Generate code for pushing a variable to the 'device'
     virtual void genVariablePush(CodeStream &crossDevice, CodeStream &perDevice, 
                                  const std::string &type, const std::string &name, 
-                                 VarLocation loc, bool autoInitialized, size_t count) const = 0;
+                                 VarLocation loc, bool autoInitialized, const Shape &shape) const = 0;
 
     //! Generate code for pulling a variable from the 'device'
     virtual void genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
                                  const std::string &type, const std::string &name, 
-                                 VarLocation loc, size_t count) const = 0;
+                                 VarLocation loc, const Shape &shape) const = 0;
 
     //! Generate code for pushing a variable's value in the current timestep to the 'device'
     virtual void genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
@@ -431,10 +433,10 @@ public:
     //! Helper function to generate matching push and pull functions for a variable
     void genVariablePushPull(CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull,
                              const std::string &type, const std::string &name, 
-                             VarLocation loc, bool autoInitialized, size_t count) const
+                             VarLocation loc, bool autoInitialized, const Shape &shape) const
     {
-        genVariablePush(push, perDevicePush, type, name, loc, autoInitialized, count);
-        genVariablePull(pull, perDevicePull, type, name, loc, count);
+        genVariablePush(push, perDevicePush, type, name, loc, autoInitialized, shape);
+        genVariablePull(pull, perDevicePull, type, name, loc, shape);
     }
 
     //! Helper function to generate matching push and pull functions for the current state of a variable
@@ -448,12 +450,12 @@ public:
     //! Helper function to generate matching definition, declaration, allocation and free code for an array
     void genArray(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                   CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
-                  const std::string &type, const std::string &name, VarLocation loc, size_t count, MemAlloc &memAlloc) const
+                  const std::string &type, const std::string &name, VarLocation loc, const Shape &shape, MemAlloc &memAlloc) const
     {
         genVariableDefinition(definitions, definitionsInternal, type + "*", name, loc);
         genVariableImplementation(runner, type + "*", name, loc);
         genVariableFree(free, perDeviceFree, name, loc);
-        genVariableAllocation(allocate, perDeviceAllocate, type, name, loc, count, memAlloc);
+        genVariableAllocation(allocate, perDeviceAllocate, type, name, loc, shape, memAlloc);
     }
 
     //! Get the size of the type

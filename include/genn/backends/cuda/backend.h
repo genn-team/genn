@@ -192,7 +192,7 @@ public:
     virtual void genVariableImplementation(CodeStream &os, const std::string &type, const std::string &name, VarLocation loc) const override;
     virtual void genVariableAllocation(CodeStream &allocate, CodeStream &perDeviceAllocate, 
                                        const std::string &type, const std::string &name, 
-                                       VarLocation loc, size_t count, MemAlloc &memAlloc) const override;
+                                       VarLocation loc, const Shape &shape, MemAlloc &memAlloc) const override;
     virtual void genVariableFree(CodeStream &free, CodeStream &perDeviceFree,
                                  const std::string &name, VarLocation loc) const override;
 
@@ -218,10 +218,10 @@ public:
 
     virtual void genVariablePush(CodeStream &crossDevice, CodeStream &perDevice,
                                  const std::string &type, const std::string &name,
-                                 VarLocation loc, bool autoInitialized, size_t count) const override;
+                                 VarLocation loc, bool autoInitialized, const Shape &shape) const override;
     virtual void genVariablePull(CodeStream &crossDevice, CodeStream &perDevice,
                                  const std::string &type, const std::string &name,
-                                 VarLocation loc, size_t count) const override;
+                                 VarLocation loc, const Shape &shape) const override;
 
     virtual void genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDevice, 
                                         const NeuronGroupInternal &ng, const std::string &type, 
