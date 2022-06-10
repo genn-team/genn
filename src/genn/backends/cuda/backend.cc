@@ -1757,24 +1757,23 @@ void Backend::genVariablePush(CodeStream&, CodeStream &perDevice,
         
         // If we're using a single device or variable is 1D, perform standard 1D memcpy
         if(getNumDevices() == 1 || (perDeviceShape.getNumDims() == 1)) {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&d_"  << name << "[device]";
-            perDevice << ", &" << name << "[" << perDeviceShape[-1] << " * device]";
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_"  << name << "[device]";
+            perDevice << ", " << name << " + (" << perDeviceShape[-1] << " * device)";
             perDevice << ", " << perDeviceShape[-1] << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         // Otherwise, if shape has higher dimensionality e.g 2D like (delay, neuron) or 3D like (batch, delay, neuron)
         else {
             // Flatten outer shape dimensions
-            const auto squeezedHostShape = hostShape.flattenOuter();
             const auto squeezedPerDeviceShape = perDeviceShape.flattenOuter();
             
             perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
-            perDevice << "d_"  << name << "[device]";                                       // Destination memory address 
-            perDevice << ", " << squeezedPerDeviceShape[1] << " * sizeof(" << type << ")";  // Pitch of destination memory (bytes)
-            perDevice << ", &" << name << "[" << squeezedPerDeviceShape[1] << " * device]"; // Source memory address 
-            perDevice << ", " << squeezedHostShape[1] << " * sizeof(" << type << ")";       // Pitch of source memory (bytes)
-            perDevice << ", " << squeezedPerDeviceShape[1] << " * sizeof(" << type << ")";  // Width of matrix transfer (columns in bytes) 
-            perDevice << ", " << squeezedPerDeviceShape[0],                                 // Height of matrix transfer (rows) 
-            perDevice << ", cudaMemcpyHostToDevice));" << std::endl;                        // Type of transfer
+            perDevice << "d_"  << name << "[device]";                                           // Destination memory address 
+            perDevice << ", " << squeezedPerDeviceShape[-1] << " * sizeof(" << type << ")";     // Pitch of destination memory (bytes)
+            perDevice << ", " << name << " + (" << squeezedPerDeviceShape[-1] << " * device)";  // Source memory address 
+            perDevice << ", " << hostShape[-1] << " * sizeof(" << type << ")";                  // Pitch of source memory (bytes)
+            perDevice << ", " << squeezedPerDeviceShape[-1] << " * sizeof(" << type << ")";     // Width of matrix transfer (columns in bytes) 
+            perDevice << ", " << squeezedPerDeviceShape[0],                                     // Height of matrix transfer (rows) 
+            perDevice << ", cudaMemcpyHostToDevice));" << std::endl;                            // Type of transfer
         }
 
         if(autoInitialized) {
@@ -1797,22 +1796,21 @@ void Backend::genVariablePull(CodeStream&, CodeStream &perDevice,
 
         // If we're using a single device or variable is 1D, perform standard 1D memcpy
         if(getNumDevices() == 1 || (perDeviceShape.getNumDims() == 1)) {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << perDeviceShape[0] << " * device]";
-            perDevice << ", &d_"  << name << "[device]";
-            perDevice << ", " << perDeviceShape[0] << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << " + (" << perDeviceShape[-1] << " * device)";
+            perDevice << ", d_"  << name << "[device]";
+            perDevice << ", " << perDeviceShape[-1] << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         // Otherwise, if shape has higher dimensionality e.g 2D like (delay, neuron) or 3D like (batch, delay, neuron)
         else {
             // Squeeze together outer shape dimensions
-            const auto squeezedHostShape = hostShape.flattenOuter();
             const auto squeezedPerDeviceShape = perDeviceShape.flattenOuter();
             
             perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
-            perDevice << "&" << name << "[" << squeezedHostShape[1] << " * device]";        // Destination memory address 
-            perDevice << ", " << squeezedHostShape[1] << " * sizeof(" << type << ")";       // Pitch of destination memory (bytes)
+            perDevice << name << " + (" << squeezedPerDeviceShape[-1] << " * device)";      // Destination memory address 
+            perDevice << ", " << hostShape[-1] << " * sizeof(" << type << ")";              // Pitch of destination memory (bytes)
             perDevice << ", d_"  << name << "[device]";                                     // Source memory address 
-            perDevice << ", " << squeezedPerDeviceShape[1] << " * sizeof(" << type << ")";  // Pitch of source memory (bytes)
-            perDevice << ", " << squeezedPerDeviceShape[1] << " * sizeof(" << type << ")";  // Width of matrix transfer (columns in bytes) 
+            perDevice << ", " << squeezedPerDeviceShape[-1] << " * sizeof(" << type << ")"; // Pitch of source memory (bytes)
+            perDevice << ", " << squeezedPerDeviceShape[-1] << " * sizeof(" << type << ")"; // Width of matrix transfer (columns in bytes) 
             perDevice << ", " << squeezedPerDeviceShape[0];                                 // Height of matrix transfer (rows) 
             perDevice << ", cudaMemcpyDeviceToHost));" << std::endl;                        // Type of transfer
         }
@@ -1827,20 +1825,27 @@ void Backend::genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDev
 
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+        // Get shape for host allocation and per-device allocation
+        const Shape shape(batchSize, ng.getNumDelaySlots(), ng.getNumNeurons());
+        const auto hostShape = shape.padInner(getNumDevices());
+        const auto perDeviceShape = shape.divideInner(getNumDevices());
+
         // If batch size is one, generate 1D memcpy to copy current timestep's data
-        if(batchSize == 1) {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+        if(shape[0] == 1) {
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_" << name << ng.getName() << "[device] + (spkQuePtr" << ng.getName() << " * " << perDeviceShape[2] << ")";
+            perDevice << ", " << name << ng.getName() << " + (" << perDeviceShape[2] << " * device) + (spkQuePtr" << ng.getName() << " * " << hostShape[2] << ")";
+            perDevice << ", " << perDeviceShape[2] << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         // Otherwise, perform a 2D memcpy to copy current timestep's data from each batch
         else {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            perDevice << ", " << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            perDevice << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            perDevice << ", " << batchSize << ", cudaMemcpyHostToDevice));" << std::endl;
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
+            perDevice << "d_" << name << ng.getName() << "[device] + (spkQuePtr" << ng.getName() << " * " << perDeviceShape[2] << ")";                              // Destination memory address 
+            perDevice << ", " << perDeviceShape[1] * perDeviceShape[2] << " * sizeof(" << type << ")";                                                              // Pitch of destination memory (bytes)
+            perDevice << ", " << name << ng.getName() << " + (" << perDeviceShape[2] << " * device) + (spkQuePtr" << ng.getName() << " * " << hostShape[2] << ")";  // Source memory address 
+            perDevice << ", " << hostShape[1] * hostShape[2] << " * sizeof(" << type << ")";                                                                        // Pitch of source memory (bytes)
+            perDevice << ", " << perDeviceShape[2] << " * sizeof(" << type << ")";                                                                                  // Width of matrix transfer (columns in bytes) 
+            perDevice << ", " << shape[0];                                                                                                                      // Height of matrix transfer (rows) 
+            perDevice << ", cudaMemcpyHostToDevice)); " << std::endl;                                                                                               // Type of transfer
         }
     }
     // Otherwise, generate standard push
@@ -1858,19 +1863,26 @@ void Backend::genCurrentVariablePull(CodeStream &crossDevice, CodeStream &perDev
 
     // If this variable requires queuing and isn't zero-copy
     if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+        // Get shape for host allocation and per-device allocation
+        const Shape shape(batchSize, ng.getNumDelaySlots(), ng.getNumNeurons());
+        const auto hostShape = shape.padInner(getNumDevices());
+        const auto perDeviceShape = shape.divideInner(getNumDevices());
+
         // If batch size is one, generate 1D memcpy to copy current timestep's data
-        if(batchSize == 1) {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << ng.getNumNeurons() << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
+        if(shape[0] == 1) {
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(" << name << ng.getName() << " + (" << perDeviceShape[2] << " * device) + (spkQuePtr" << ng.getName() << " * " << hostShape[2] << ")";
+            perDevice << ", d_" << name << ng.getName() << "[device] + (spkQuePtr" << ng.getName() << " * " << perDeviceShape[2] << ")";
+            perDevice << ", " << perDeviceShape[2] << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         else {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            perDevice << ", d_" << name << ng.getName() << " + (spkQuePtr" << ng.getName() << " * " << ng.getNumNeurons() << ")";
-            perDevice << ", " << ng.getNumNeurons() * ng.getNumDelaySlots() << " * sizeof(" << type << ")";
-            perDevice << ", " << ng.getNumNeurons() << " * sizeof(" << type << ")";
-            perDevice << ", " << batchSize << ", cudaMemcpyDeviceToHost));" << std::endl;
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
+            perDevice << name << ng.getName() << " + (" << perDeviceShape[2] << " * device) + (spkQuePtr" << ng.getName() << " * " << hostShape[2] << ")";  // Destination memory address 
+            perDevice << ", " << hostShape[1] * hostShape[2] << " * sizeof(" << type << ")";                                                                // Pitch of destination memory (bytes)
+            perDevice << ", d_" << name << ng.getName() << "[device] + (spkQuePtr" << ng.getName() << " * " << perDeviceShape[2] << ")";                    // Source memory address 
+            perDevice << ", " << perDeviceShape[1] * perDeviceShape[2] << " * sizeof(" << type << ")";                                                      // Pitch of source memory (bytes)
+            perDevice << ", " << perDeviceShape[2] << " * sizeof(" << type << ")";                                                                          // Width of matrix transfer (columns in bytes) 
+            perDevice << ", " << shape[0];                                                                                                                  // Height of matrix transfer (rows) 
+            perDevice << ", cudaMemcpyDeviceToHost));" << std::endl;                                                                                        // Type of transfer
         }
     }
     // Otherwise, generate standard pull
