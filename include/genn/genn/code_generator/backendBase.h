@@ -171,6 +171,70 @@ inline std::istream & operator >> (std::istream &in,  MemAlloc &m)
 }
 
 //--------------------------------------------------------------------------
+// Shape
+//--------------------------------------------------------------------------
+class Shape
+{
+public:
+    template<typename ...Dims>
+    explicit Shape(Dims... dims)
+    :   m_Dims{dims...}
+    {
+        assert(!m_Dims.empty());
+    }
+
+    explicit Shape(const std::vector<size_t> &dims)
+    :   m_Dims{dims}
+    {
+        assert(!m_Dims.empty());
+    }
+
+    explicit Shape(const std::vector<unsigned int> &dims)
+        : m_Dims(dims.cbegin(), dims.cend())
+    {
+        assert(!m_Dims.empty());
+    }
+
+    //--------------------------------------------------------------------------
+    // Public API
+    //--------------------------------------------------------------------------
+    const std::vector<size_t> getDims() const { return m_Dims; }
+    size_t getNumDims() const { return m_Dims.size(); }
+
+    //! Return shape with the n innermost (last) dimensions removed
+    Shape removeInner(size_t n) const;
+
+    //! Return shape with the innermost (last) dimension padded to a multiple of n
+    Shape padInner(size_t n) const;
+
+    //! Return shape with the innermost (last) dimension divided by n 
+    Shape divideInner(size_t n) const;
+
+    //! Squeeze (multiply-together) all outermost (first) dimensions
+    Shape squeezeOuter() const;
+
+    //! Multiply-together size of all dimensions
+    size_t getFlattenedSize() const;
+
+    //--------------------------------------------------------------------------
+    // Operators
+    //--------------------------------------------------------------------------
+    size_t operator [] (size_t i) const
+    {
+        return m_Dims.at(i);
+    }
+
+    //! Concatenate shapes
+    Shape operator + (const Shape &other) const;
+
+private:
+    //--------------------------------------------------------------------------
+    // Members
+    //--------------------------------------------------------------------------
+    const std::vector<size_t> m_Dims;
+};
+
+//--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
 class GENN_EXPORT BackendBase
@@ -182,8 +246,6 @@ public:
     typedef std::function<void(CodeStream &)> HostHandler;
 
     typedef std::function<void(CodeStream &, Substitutions&)> Handler;
-    
-    typedef std::vector<size_t> Shape;
     
     template<typename T>
     using GroupHandler = std::function <void(CodeStream &, const T &, Substitutions&)> ;
@@ -332,7 +394,7 @@ public:
     //! Generate an RNG with a state per population member
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                   CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const = 0;
+                                  const std::string &name, const Shape &shape, MemAlloc &memAlloc) const = 0;
 
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, CodeStream &allocations, CodeStream &free,
                           CodeStream &stepTimeFinalise, const std::string &name, bool updateInStepTime) const = 0;
@@ -440,11 +502,12 @@ public:
     }
 
     //! Helper function to generate matching push and pull functions for the current state of a variable
-    void genCurrentVariablePushPull(CodeStream &push, CodeStream &pull, const NeuronGroupInternal &ng, const std::string &type, 
+    void genCurrentVariablePushPull(CodeStream &push, CodeStream &perDevicePush, CodeStream &pull, CodeStream &perDevicePull, 
+                                    const NeuronGroupInternal &ng, const std::string &type,
                                     const std::string &name, VarLocation loc, unsigned int batchSize) const
     {
-        genCurrentVariablePush(push, ng, type, name, loc, batchSize);
-        genCurrentVariablePull(pull, ng, type, name, loc, batchSize);
+        genCurrentVariablePush(push, perDevicePush, ng, type, name, loc, batchSize);
+        genCurrentVariablePull(pull, perDevicePull, ng, type, name, loc, batchSize);
     }
 
     //! Helper function to generate matching definition, declaration, allocation and free code for an array

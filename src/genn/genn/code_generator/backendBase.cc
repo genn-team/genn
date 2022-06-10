@@ -1,5 +1,8 @@
 #include "code_generator/backendBase.h"
 
+// Standard C++ includes
+#include <numeric>
+
 // GeNN includes
 #include "gennUtils.h"
 #include "logging.h"
@@ -13,10 +16,65 @@
 #define TYPE(T) {#T, {sizeof(T), std::to_string(std::numeric_limits<T>::lowest())}}
 #define FLOAT_TYPE(T) {#T, {sizeof(T), Utils::writePreciseString(std::numeric_limits<T>::lowest())}}
 
+
+using namespace CodeGenerator;
+
+//--------------------------------------------------------------------------
+// CodeGenerator::Shape
+//--------------------------------------------------------------------------
+Shape Shape::removeInner(size_t n) const
+{
+    assert(n < m_Dims.size());
+    return Shape(std::vector<size_t>(m_Dims.cbegin(), m_Dims.cend() - n));
+}
+//--------------------------------------------------------------------------
+Shape Shape::padInner(size_t n) const
+{
+    // Create new vector of dimensions from all but innermost dimension
+    std::vector<size_t> newDims(m_Dims.cbegin(), m_Dims.cend() - 1);
+
+    // Pad innermost dimension to multiple of n, add to new list of dimensions and return
+    newDims.push_back(padSize(m_Dims.back(), n));
+    return Shape(newDims);
+}
+//--------------------------------------------------------------------------
+Shape Shape::divideInner(size_t n) const
+{
+    // Create new vector of dimensions from all but innermost dimension
+    std::vector<size_t> newDims(m_Dims.cbegin(), m_Dims.cend() - 1);
+
+    // Divide innermost dimension by n, add to new list of dimensions and return
+    newDims.push_back(ceilDivide(m_Dims.back(), n));
+    return Shape(newDims);
+}
+//--------------------------------------------------------------------------
+Shape Shape::squeezeOuter() const
+{
+    assert(m_Dims.size() >= 2);
+    return Shape(removeInner(1).getFlattenedSize(), m_Dims.back());
+}
+//--------------------------------------------------------------------------
+size_t Shape::getFlattenedSize() const
+{
+    return std::accumulate(m_Dims.cbegin(), m_Dims.cend(),
+                           1, std::multiplies<size_t>());
+}
+//--------------------------------------------------------------------------
+Shape Shape::operator + (const Shape &other) const
+{
+    std::vector<size_t> newDims;
+    newDims.reserve(getNumDims() + other.getNumDims());
+    std::copy(getDims().cbegin(), getDims().cend(),
+              std::back_inserter(newDims));
+    std::copy(other.getDims().cbegin(), other.getDims().cend(),
+              std::back_inserter(newDims));
+    return Shape(newDims);
+}
+
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
+BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char*)), m_Types{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
     TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
     TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
@@ -38,7 +96,7 @@ CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const Pre
     }
 }
 //--------------------------------------------------------------------------
-size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
+size_t BackendBase::getSize(const std::string &type) const
 {
      // If type is a pointer, any pointer should have the same type
     if(Utils::isTypePointer(type)) {
@@ -59,7 +117,7 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
     }
 }
 //--------------------------------------------------------------------------
-std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) const
+std::string BackendBase::getLowestValue(const std::string &type) const
 {
     assert(!Utils::isTypePointer(type));
 
@@ -75,7 +133,7 @@ std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) 
     }
 }
 //--------------------------------------------------------------------------
-bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
+bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
 {
     // Loop through merged groups and calculate maximum number of synapses
     size_t maxSynapses = 0;
@@ -88,7 +146,7 @@ bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const Syn
     return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
+void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
 {
     // If batching is enabled, calculate batch offset
     if(batchSize > 1) {
@@ -115,7 +173,7 @@ void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
 {
      // If batching is enabled
     if(batchSize > 1) {
@@ -203,7 +261,7 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
+void BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
 {
     // If batching is enabled, calculate batch offset
     if(cu.getArchetype().isBatched()) {

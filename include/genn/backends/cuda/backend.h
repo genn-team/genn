@@ -259,7 +259,7 @@ public:
                                     MemAlloc &memAlloc) const override;
     virtual void genPopulationRNG(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner, 
                                   CodeStream &allocate, CodeStream &perDeviceAllocate, CodeStream &free, CodeStream &perDeviceFree,
-                                  const std::string &name, size_t count, MemAlloc &memAlloc) const override;
+                                  const std::string &name, const Shape &shape, MemAlloc &memAlloc) const override;
     virtual void genTimer(CodeStream &definitions, CodeStream &definitionsInternal, CodeStream &runner,
                           CodeStream &allocations, CodeStream &free, CodeStream &stepTimeFinalise,
                           const std::string &name, bool updateInStepTime) const override;
