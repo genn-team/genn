@@ -1575,19 +1575,23 @@ void Backend::genVariableAllocation(CodeStream &allocate, CodeStream &perDeviceA
                                     const std::string &type, const std::string &name, 
                                     VarLocation loc, const Shape &shape, MemAlloc &memAlloc) const
 {
+    // Generate size of variable on host and device
+    const auto hostShape = shape.padInner(getNumDevices());
+    const auto perDeviceShape = shape.divideInner(getNumDevices());
+
     // Calculate total size of array
     // **NOTE** we could be smarter here and pad etc
     const size_t count = shape.getFlattenedSize();
     
     if(getPreferences().automaticCopy) {
-        allocate << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << count << " * sizeof(" << type << ")));" << std::endl;
+        allocate << "CHECK_CUDA_ERRORS(cudaMallocManaged(&" << name << ", " << hostShape.getFlattenedSize() << " * sizeof(" << type << ")));" << std::endl;
         memAlloc += MemAlloc::device(count * getSize(type));
     }
     else {
         if(loc & VarLocation::HOST) {
             const char *flags = (loc & VarLocation::ZERO_COPY) ? "cudaHostAllocMapped" : "cudaHostAllocPortable";
-            allocate << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << count << " * sizeof(" << type << "), " << flags << "));" << std::endl;
-            memAlloc += MemAlloc::host(count * getSize(type));
+            allocate << "CHECK_CUDA_ERRORS(cudaHostAlloc(&" << name << ", " << hostShape.getFlattenedSize() << " * sizeof(" << type << "), " << flags << "));" << std::endl;
+            memAlloc += MemAlloc::host(hostShape.getFlattenedSize() * getSize(type));
         }
 
         // If variable is present on device at all
@@ -1595,11 +1599,11 @@ void Backend::genVariableAllocation(CodeStream &allocate, CodeStream &perDeviceA
             // Insert call to correct helper depending on whether variable should be allocated in zero-copy mode or not
             if(loc & VarLocation::ZERO_COPY) {
                 perDeviceAllocate << "CHECK_CUDA_ERRORS(cudaHostGetDevicePointer((void **)&d_" << name << "[device], (void *)" << name << ", 0));" << std::endl;
-                memAlloc += MemAlloc::zeroCopy(count * getSize(type));
+                memAlloc += MemAlloc::zeroCopy(perDeviceShape.getFlattenedSize() * getSize(type));
             }
             else {
-                perDeviceAllocate << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << "[device], " << count << " * sizeof(" << type << ")));" << std::endl;
-                memAlloc += MemAlloc::device(count * getSize(type));
+                perDeviceAllocate << "CHECK_CUDA_ERRORS(cudaMalloc(&d_" << name << "[device], " << perDeviceShape.getFlattenedSize() << " * sizeof(" << type << ")));" << std::endl;
+                memAlloc += MemAlloc::device(perDeviceShape.getFlattenedSize() * getSize(type));
             }
         }
     }
