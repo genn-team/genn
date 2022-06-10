@@ -48,10 +48,24 @@ Shape Shape::divideInner(size_t n) const
     return Shape(newDims);
 }
 //--------------------------------------------------------------------------
-Shape Shape::squeezeOuter() const
+Shape Shape::flattenOuter() const
 {
     assert(m_Dims.size() >= 2);
     return Shape(removeInner(1).getFlattenedSize(), m_Dims.back());
+}
+//--------------------------------------------------------------------------
+Shape Shape::squeeze() const
+{
+    // Copy any dimensions that aren't 1s to newDims
+    std::vector<size_t> newDims;
+    std::copy_if(m_Dims.cbegin(), m_Dims.cend(), std::back_inserter(newDims),
+                 [](size_t dim) { return dim > 1; });
+
+    // If resultant dimensions vector is empty, add a 1
+    if (newDims.empty()) {
+        newDims.push_back(1);
+    }
+    return Shape(newDims);
 }
 //--------------------------------------------------------------------------
 size_t Shape::getFlattenedSize() const

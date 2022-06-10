@@ -210,8 +210,11 @@ public:
     //! Return shape with the innermost (last) dimension divided by n 
     Shape divideInner(size_t n) const;
 
-    //! Squeeze (multiply-together) all outermost (first) dimensions
-    Shape squeezeOuter() const;
+    //! Flatten (multiply-together) all outermost (first) dimensions
+    Shape flattenOuter() const;
+
+    //! Squeeze (remove dimensions which are 1)
+    Shape squeeze() const;
 
     //! Multiply-together size of all dimensions
     size_t getFlattenedSize() const;
@@ -219,9 +222,14 @@ public:
     //--------------------------------------------------------------------------
     // Operators
     //--------------------------------------------------------------------------
-    size_t operator [] (size_t i) const
+    size_t operator [] (int i) const
     {
-        return m_Dims.at(i);
+        if (i >= 0) {
+            return m_Dims.at(i);
+        }
+        else {
+            return m_Dims.at(m_Dims.size() + i);
+        }
     }
 
     //! Concatenate shapes

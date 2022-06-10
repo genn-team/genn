@@ -5,21 +5,6 @@
 #include "code_generator/backendBase.h"
 
 using namespace CodeGenerator;
-/* 
-
-    //! Multiply-together size of all dimensions
-    size_t getFlattenedSize() const;
-
-    //--------------------------------------------------------------------------
-    // Operators
-    //--------------------------------------------------------------------------
-    size_t operator [] (size_t i) const
-    {
-        return m_Dims.at(i);
-    }
-
-    //! Concatenate shapes
-    Shape operator + (const Shape &other) const;*/
 
 //--------------------------------------------------------------------------
 // Tests
@@ -94,10 +79,28 @@ TEST(Shape, DivideInner)
     ASSERT_EQ(divide3Inner[3], 3);
 }
 
-TEST(Shape, SqueezeOuter)
+TEST(Shape, Squeeze)
+{
+    const Shape fromScalarA(std::vector<size_t>{1, 2, 4, 1, 8});
+    const Shape fromScalarB(std::vector<size_t>{1, 1, 1});
+    const auto squeezeA = fromScalarA.squeeze();
+    const auto squeezeB = fromScalarB.squeeze();
+
+    // Check dimensionality
+    ASSERT_EQ(squeezeA.getNumDims(), 3);
+    ASSERT_EQ(squeezeB.getNumDims(), 1);
+
+    ASSERT_EQ(squeezeA[0], 2);
+    ASSERT_EQ(squeezeA[1], 4);
+    ASSERT_EQ(squeezeA[2], 8);
+
+    ASSERT_EQ(squeezeB[0], 1);
+}
+
+TEST(Shape, FlattenOuter)
 {
     const Shape fromScalar(std::vector<size_t>{1, 2, 4, 8});
-    const auto squeezeOuter = fromScalar.squeezeOuter();
+    const auto squeezeOuter = fromScalar.flattenOuter();
 
     // Check dimensionality is reduced
     ASSERT_EQ(squeezeOuter.getNumDims(), 2);

@@ -1751,20 +1751,21 @@ void Backend::genVariablePush(CodeStream&, CodeStream &perDevice,
         }
         
         // Get shape for host allocation and per-device allocation
-        const auto hostShape = shape.padInner(getNumDevices());
-        const auto perDeviceShape = shape.divideInner(getNumDevices());
+        const auto squeezedShape = shape.squeeze();
+        const auto hostShape = squeezedShape.padInner(getNumDevices());
+        const auto perDeviceShape = squeezedShape.divideInner(getNumDevices());
         
         // If we're using a single device or variable is 1D, perform standard 1D memcpy
         if(getNumDevices() == 1 || (perDeviceShape.getNumDims() == 1)) {
-            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(d_"  << name << "[device]";
-            perDevice << ", &" << name << "[" << perDeviceShape[0] << " * device]";
-            perDevice << ", " << perDeviceShape[0] << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
+            perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&d_"  << name << "[device]";
+            perDevice << ", &" << name << "[" << perDeviceShape[-1] << " * device]";
+            perDevice << ", " << perDeviceShape[-1] << " * sizeof(" << type << "), cudaMemcpyHostToDevice));" << std::endl;
         }
         // Otherwise, if shape has higher dimensionality e.g 2D like (delay, neuron) or 3D like (batch, delay, neuron)
         else {
-            // Squeeze together outer shape dimensions
-            const auto squeezedHostShape = hostShape.squeezeOuter();
-            const auto squeezedPerDeviceShape = perDeviceShape.squeezeOuter();
+            // Flatten outer shape dimensions
+            const auto squeezedHostShape = hostShape.flattenOuter();
+            const auto squeezedPerDeviceShape = perDeviceShape.flattenOuter();
             
             perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
             perDevice << "d_"  << name << "[device]";                                       // Destination memory address 
@@ -1790,20 +1791,21 @@ void Backend::genVariablePull(CodeStream&, CodeStream &perDevice,
     
     if(!(loc & VarLocation::ZERO_COPY)) {
         // Get shape for host allocation and per-device allocation
-        const auto hostShape = shape.padInner(getNumDevices());
-        const auto perDeviceShape = shape.divideInner(getNumDevices());
+        const auto squeezedShape = shape.squeeze();
+        const auto hostShape = squeezedShape.padInner(getNumDevices());
+        const auto perDeviceShape = squeezedShape.divideInner(getNumDevices());
 
         // If we're using a single device or variable is 1D, perform standard 1D memcpy
         if(getNumDevices() == 1 || (perDeviceShape.getNumDims() == 1)) {
             perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy(&" << name << "[" << perDeviceShape[0] << " * device]";
-            perDevice << ", d_"  << name << "[device]";
+            perDevice << ", &d_"  << name << "[device]";
             perDevice << ", " << perDeviceShape[0] << " * sizeof(" << type << "), cudaMemcpyDeviceToHost));" << std::endl;
         }
         // Otherwise, if shape has higher dimensionality e.g 2D like (delay, neuron) or 3D like (batch, delay, neuron)
         else {
             // Squeeze together outer shape dimensions
-            const auto squeezedHostShape = hostShape.squeezeOuter();
-            const auto squeezedPerDeviceShape = perDeviceShape.squeezeOuter();
+            const auto squeezedHostShape = hostShape.flattenOuter();
+            const auto squeezedPerDeviceShape = perDeviceShape.flattenOuter();
             
             perDevice << "CHECK_CUDA_ERRORS(cudaMemcpy2D(";
             perDevice << "&" << name << "[" << squeezedHostShape[1] << " * device]";        // Destination memory address 
