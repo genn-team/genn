@@ -965,7 +965,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
         const Shape neuronVarShape(batchSize, n.second.getNumDelaySlots(), n.second.getNumNeurons());
         const Shape spikeCountShape(batchSize,
                                     n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1,
-                                    backend.getNumDevices());
+                                    size_t{1});
         const Shape spikeShape(batchSize,
                                n.second.isTrueSpikeRequired() ? n.second.getNumDelaySlots() : 1,
                                n.second.getNumNeurons());
@@ -1015,7 +1015,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             
             const Shape spikeEventCountShape(batchSize,
                                              n.second.getNumDelaySlots(),
-                                             backend.getNumDevices());
+                                             size_t{1});
 
             // Spike-like event variables
             backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, 
@@ -1646,6 +1646,31 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
  
     // Write pre-amble to runner
     backend.genRunnerPreamble(runner, modelMerged, mem);
+
+    // Generate helper function for dividing sizes between devices
+    if (backend.getNumDevices() > 1) {
+        runner << "inline unsigned int getDeviceSize(unsigned int size, unsigned int device)";
+        {
+            CodeStream::Scope b(runner);
+
+            // Calculate size per device
+            runner << "const unsigned int perDeviceSize = (size + " << (backend.getNumDevices() - 1) << ") / " << backend.getNumDevices() << ";" << std::endl;
+
+            // If this is last device, calculate remainder
+            runner << "if(device == " << (backend.getNumDevices() - 1) << ")";
+            {
+                CodeStream::Scope b(runner);
+                runner << "return size - (perDeviceSize * " << (backend.getNumDevices() - 1) << ");" << std::endl;
+            }
+            // Otherwise, return padded per-device size
+            runner << "else";
+            {
+                CodeStream::Scope b(runner);
+                runner << "return perDeviceSize;";
+            }
+        }
+        runner << std::endl;
+    }
 
     // Write variable declarations to runner
     runner << runnerVarDeclStream.str();

@@ -89,8 +89,8 @@ NeuronPrevSpikeTimeUpdateGroupMerged::NeuronPrevSpikeTimeUpdateGroupMerged(size_
     }
 
     if(getArchetype().isDelayRequired()) {
-        addField("unsigned int", "numNeurons",
-                 [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
+        addDeviceSplitSizeField("numNeurons", backend.getNumDevices(),
+                                [&backend](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); });
     }
 }
 
@@ -202,9 +202,9 @@ NeuronGroupMergedBase::NeuronGroupMergedBase(size_t index, const std::string &pr
     orderNeuronGroupChildren(m_SortedCurrentSources, &NeuronGroupInternal::getCurrentSources,
                              init ? &CurrentSourceInternal::getInitHashDigest : &CurrentSourceInternal::getHashDigest);
 
-    addField("unsigned int", "numNeurons",
-              [](const NeuronGroupInternal &ng, size_t) { return std::to_string(ng.getNumNeurons()); });
-
+    addDeviceSplitSizeField("numNeurons", backend.getNumDevices(),
+                            [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); });
+    
     addPointerField("unsigned int", "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
     addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
 
@@ -628,8 +628,8 @@ SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(s
              [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
     addField("unsigned int", "numTrgNeurons",
              [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
-    addField("unsigned int", "rowStride",
-             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+    addDeviceSplitSizeField("rowStride", backend.getNumDevices(),
+                            [&backend](const SynapseGroupInternal &sg) { return backend.getSynapticMatrixRowStride(sg); });
 
     // Add heterogeneous connectivity initialiser model parameters
     addHeterogeneousParams<SynapseConnectivityHostInitGroupMerged>(
@@ -921,8 +921,8 @@ SynapseGroupMergedBase::SynapseGroupMergedBase(size_t index, const std::string &
     const WeightUpdateModels::Base *wum = getArchetype().getWUModel();
 
     if(role != Role::KernelInit) {
-        addField("unsigned int", "rowStride",
-                 [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+        addDeviceSplitSizeField("rowStride", backend.getNumDevices(),
+                                [&backend](const SynapseGroupInternal &sg) { return backend.getSynapticMatrixRowStride(sg); });
         addField("unsigned int", "numSrcNeurons",
                  [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
         addField("unsigned int", "numTrgNeurons",

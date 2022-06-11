@@ -217,6 +217,21 @@ protected:
         m_Fields.emplace_back(type, name, getFieldValue, fieldType);
     }
 
+    template<typename F>
+    void addDeviceSplitSizeField(const std::string &name, unsigned int numDevices, F getSizeFn)
+    {
+        addField("unsigned int", name,
+                 [getSizeFn, numDevices](const G &g, size_t)
+                 { 
+                     if (numDevices == 1) {
+                         return std::to_string(getSizeFn(g));
+                     }
+                     else {
+                         return "getDeviceSize(" + std::to_string(getSizeFn(g)) + ", device)";
+                     }
+                 });
+    }
+
     void addScalarField(const std::string &name, GetFieldValueFunc getFieldValue, FieldType fieldType = FieldType::Standard)
     {
         addField("scalar", name,
