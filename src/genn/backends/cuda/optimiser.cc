@@ -674,10 +674,6 @@ std::vector<int> chooseOptimalDevice(unsigned int numDevices, const std::unorder
             return false;
         });
 
-    // Find ID of best device
-    //const int bestDeviceID = (int)std::distance(devices.cbegin(), bestDevice);
-    LOGI_BACKEND << "Optimal device type '" << std::get<0>(*bestDeviceSet) << "' - total occupancy:" << std::get<2>(*bestDeviceSet) << ", number of small models:" << std::get<3>(*bestDeviceSet) << ", SM version:" << std::get<1>(*bestDeviceSet);
-
     // Get optimal block size from best device
     blockSize = std::get<4>(*bestDeviceSet);
 
@@ -685,6 +681,11 @@ std::vector<int> chooseOptimalDevice(unsigned int numDevices, const std::unorder
     std::vector<int> deviceIDs;
     deviceIDs.reserve(numDevices);
     std::copy_n(matchingDevices.at(std::get<0>(*bestDeviceSet)).begin(), numDevices, std::back_inserter(deviceIDs));
+    
+    LOGI_BACKEND << "Optimal device type '" << std::get<0>(*bestDeviceSet) << "' - total occupancy:" << std::get<2>(*bestDeviceSet) << ", number of small models:" << std::get<3>(*bestDeviceSet) << ", SM version:" << std::get<1>(*bestDeviceSet);
+    for(int d : deviceIDs) {
+        LOGI_BACKEND << "Device: " << d;
+    }
     return deviceIDs;
 }
 //--------------------------------------------------------------------------
