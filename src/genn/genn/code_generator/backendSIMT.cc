@@ -276,7 +276,7 @@ void BackendSIMT::genNeuronPrevSpikeTimeUpdateKernel(CodeStream &os, const Subst
     idStart = 0;
     genParallelGroup<NeuronPrevSpikeTimeUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups(), idStart,
-        [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
+        [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronUpdate); },
         [batchSize,this](CodeStream &os, const NeuronPrevSpikeTimeUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             CodeStream::Scope b(os);
@@ -435,7 +435,7 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
     idStart = 0;
     genParallelGroup<NeuronUpdateGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
-        [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronUpdate); },
+        [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronUpdate); },
         [batchSize, &modelMerged, this](CodeStream &os, const NeuronUpdateGroupMerged &ng, Substitutions &popSubs)
         {
             genNeuronIndexCalculation(os, ng, batchSize);
@@ -1172,7 +1172,7 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     idStart = 0;
     genParallelGroup<NeuronInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronInitGroups(), idStart,
-        [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelInitialize); },
+        [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelInitialize); },
         [&modelMerged, this](CodeStream &os, const NeuronInitGroupMerged &ng, Substitutions &popSubs)
         {
             os << "// only do this for existing neurons" << std::endl;
