@@ -1562,3 +1562,41 @@ CustomWUUpdateHostReductionGroupMerged::CustomWUUpdateHostReductionGroupMerged(s
                  return std::to_string(cg.getSynapseGroup()->getMaxConnections() * (size_t)cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
              });
 }
+
+// ----------------------------------------------------------------------------
+// NeuronSerializationGroupMerged
+//----------------------------------------------------------------------------
+const std::string NeuronSerializationGroupMerged::name = "NeuronSerialization";
+//----------------------------------------------------------------------------
+NeuronSerializationGroupMerged::NeuronSerializationGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                                               const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
+:   GroupMerged<NeuronGroupInternal>(index, precision, groups)
+{
+    addDeviceSplitSizeField("numNeurons", backend.getNumDevices(),
+                            [](const NeuronGroupInternal &ng) { return ng.getNumNeurons(); });
+    
+    if(getArchetype().isTrueSpikeRequired()) {
+        addPointerField("unsigned int", "spkCnt", backend.getDeviceVarPrefix() + "glbSpkCnt");
+        addPointerField("unsigned int", "spk", backend.getDeviceVarPrefix() + "glbSpk");
+    }
+
+    if(getArchetype().isSpikeEventRequired()) {
+        addPointerField("unsigned int", "spkCntEvnt", backend.getDeviceVarPrefix() + "glbSpkCntEvnt");
+        addPointerField("unsigned int", "spkEvnt", backend.getDeviceVarPrefix() + "glbSpkEvnt");
+    }
+
+    if(getArchetype().isDelayRequired()) {
+        addPointerField("unsigned int", "spkQuePtr", backend.getScalarAddressPrefix() + "spkQuePtr");
+    }
+
+    // **TODO** spike times
+
+    // Loop through variables
+    const auto vars = getArchetype().getNeuronModel()->getVars();
+    for(const auto &v : vars) {
+        // If this variable is accessed by outgoing synapse code, add pointer field
+        if(getArchetype().isVarOutSynAccessRequired(v.name)) {
+            addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
+        }
+    }
+}

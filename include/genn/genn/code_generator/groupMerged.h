@@ -1286,4 +1286,30 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
+
+// ----------------------------------------------------------------------------
+// NeuronSerializationGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT NeuronSerializationGroupMerged : public GroupMerged<NeuronGroupInternal>
+{
+public:
+    NeuronSerializationGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                   const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &group);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
 }   // namespace CodeGenerator
