@@ -306,8 +306,9 @@ NeuronGroup::NeuronGroup(const std::string &name, int numNeurons, const NeuronMo
                          const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                          VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation)
 :   m_Name(name), m_NumNeurons(numNeurons), m_NeuronModel(neuronModel), m_Params(params), m_VarInitialisers(varInitialisers),
-    m_NumDelaySlots(1), m_VarQueueRequired(varInitialisers.size(), false), m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation),
-    m_SpikeTimeLocation(defaultVarLocation), m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation),
+    m_NumDelaySlots(1), m_VarInSynAccessRequired(varInitialisers.size(), false), m_VarOutSynAccessRequired(varInitialisers.size(), false),
+    m_SpikeLocation(defaultVarLocation), m_SpikeEventLocation(defaultVarLocation), m_SpikeTimeLocation(defaultVarLocation), 
+    m_PrevSpikeTimeLocation(defaultVarLocation), m_SpikeEventTimeLocation(defaultVarLocation), m_PrevSpikeEventTimeLocation(defaultVarLocation),
     m_VarLocation(varInitialisers.size(), defaultVarLocation), m_ExtraGlobalParamLocation(neuronModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
     m_SpikeRecordingEnabled(false), m_SpikeEventRecordingEnabled(false)
 {
@@ -324,14 +325,14 @@ void NeuronGroup::checkNumDelaySlots(unsigned int requiredDelay)
     }
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updatePreVarQueues(const std::string &code)
+void NeuronGroup::updateInSynVarAccess(const std::string &code)
 {
-    updateVarQueues(code, "_pre");
+    updateVarAccess(code, "_post", m_VarInSynAccessRequired);
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updatePostVarQueues(const std::string &code)
+void NeuronGroup::updateOutSynVarAccess(const std::string &code)
 {
-    updateVarQueues(code, "_post");
+     updateVarAccess(code, "_pre", m_VarOutSynAccessRequired);
 }
 //----------------------------------------------------------------------------
 void NeuronGroup::initDerivedParams(double dt)
@@ -477,10 +478,14 @@ void NeuronGroup::addSpkEventCondition(const std::string &code, SynapseGroupInte
     m_SpikeEventCondition.emplace(code, wu->getSimSupportCode(), egpInThresholdCode || preVarInThresholdCode, synapseGroup);
 }
 //----------------------------------------------------------------------------
-bool NeuronGroup::isVarQueueRequired(const std::string &var) const
+bool NeuronGroup::isVarInSynAccessRequired(const std::string &var) const
 {
-    // Return flag corresponding to variable
-    return m_VarQueueRequired[getNeuronModel()->getVarIndex(var)];
+    return m_VarInSynAccessRequired.at(getNeuronModel()->getVarIndex(var));
+}
+//----------------------------------------------------------------------------
+bool NeuronGroup::isVarOutSynAccessRequired(const std::string &var) const
+{
+    return m_VarOutSynAccessRequired.at(getNeuronModel()->getVarIndex(var));
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
@@ -581,14 +586,16 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getVarLocationHashDigest() 
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
-void NeuronGroup::updateVarQueues(const std::string &code, const std::string &suffix)
+void NeuronGroup::updateVarAccess(const std::string &code, const std::string &suffix, std::vector<bool> &varAccessRequired)
 {
-    // Loop through variables
-    const auto vars = getNeuronModel()->getVars();
-    for(size_t i = 0; i < vars.size(); i++) {
-        // If the code contains a reference to this variable, set corresponding flag
-        if (code.find(vars[i].name + suffix) != std::string::npos) {
-            m_VarQueueRequired[i] = true;
+    if(!code.empty()) {
+        // Loop through variables
+        const auto vars = getNeuronModel()->getVars();
+        for(size_t i = 0; i < vars.size(); i++) {
+            // If the code contains a reference to this variable, set corresponding flag
+            if (code.find(vars[i].name + suffix) != std::string::npos) {
+                varAccessRequired[i] = true;
+            }
         }
     }
 }

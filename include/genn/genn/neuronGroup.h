@@ -206,11 +206,11 @@ protected:
     //! Checks delay slots currently provided by the neuron group against a required delay and extends if required
     void checkNumDelaySlots(unsigned int requiredDelay);
 
-    //! Update which presynaptic variables require queues based on piece of code
-    void updatePreVarQueues(const std::string &code);
+    //! Update which variables are accessed by piece of code running on incoming synapse
+    void updateInSynVarAccess(const std::string &code);
 
-    //! Update which postsynaptic variables  require queues based on piece of code
-    void updatePostVarQueues(const std::string &code);
+    //! Update which variables are accessed by piece of code running on outgoing synapse
+    void updateOutSynVarAccess(const std::string &code);
 
     void addSpkEventCondition(const std::string &code, SynapseGroupInternal *synapseGroup);
 
@@ -258,9 +258,18 @@ protected:
     //! Helper to get vector of outgoing synapse groups which have presynaptic variables
     std::vector<SynapseGroupInternal *> getFusedOutSynWithPreVars() const;
 
-    bool isVarQueueRequired(const std::string &var) const;
-    bool isVarQueueRequired(size_t index) const{ return m_VarQueueRequired[index]; }
+    //! Is variable accessed by incoming synapse code
+    bool isVarInSynAccessRequired(const std::string &var) const;
+    bool isVarInSynAccessRequired(size_t index) const{ return m_VarInSynAccessRequired.at(index); }
+    
+    //! Is variable accessed by outgoing synapse code
+    bool isVarOutSynAccessRequired(const std::string &var) const;
+    bool isVarOutSynAccessRequired(size_t index) const{ return m_VarOutSynAccessRequired.at(index); }
 
+    //! Is variable accessed by any kind of synapse code
+    bool isVarSynAccessRequired(const std::string &var) const{ return (isVarInSynAccessRequired(var) || isVarOutSynAccessRequired(var)); }
+    bool isVarSynAccessRequired(size_t index) const{ return (isVarInSynAccessRequired(index) || isVarOutSynAccessRequired(index)); }
+    
     //! Updates hash with neuron group
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
@@ -279,8 +288,8 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
-    //! Update which variables require queues based on piece of code
-    void updateVarQueues(const std::string &code, const std::string &suffix);
+    //! Update which variables are accessed by piece of code
+    void updateVarAccess(const std::string &code, const std::string &suffix, std::vector<bool> &varAccessRequired);
 
     //------------------------------------------------------------------------
     // Members
@@ -303,8 +312,11 @@ private:
     unsigned int m_NumDelaySlots;
     std::vector<CurrentSourceInternal*> m_CurrentSources;
 
-    //! Vector specifying which variables require queues
-    std::vector<bool> m_VarQueueRequired;
+    //! Vector specifying which variables are accessed from incoming synapse groups
+    std::vector<bool> m_VarInSynAccessRequired;
+    
+    //! Vector specifying which variables are accessed from outgoing synapse groups
+    std::vector<bool> m_VarOutSynAccessRequired;
 
     //! Location of spikes from neuron group
     VarLocation m_SpikeLocation;

@@ -140,28 +140,20 @@ void ModelSpec::finalize()
         s.second.initDerivedParams(m_DT);
 
         // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
-        if (!wu->getSimCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSimCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSimCode());
-        }
+        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getSimCode());
+        s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getSimCode());
 
         // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
-        if (!wu->getEventCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getEventCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getEventCode());
-        }
-
+        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getEventCode());
+        s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getEventCode());
+        
         // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
-        if (!wu->getLearnPostCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getLearnPostCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getLearnPostCode());
-        }
-
+        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getLearnPostCode());
+        s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getLearnPostCode());
+        
         // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
-        if (!wu->getSynapseDynamicsCode().empty()) {
-            s.second.getSrcNeuronGroup()->updatePreVarQueues(wu->getSynapseDynamicsCode());
-            s.second.getTrgNeuronGroup()->updatePostVarQueues(wu->getSynapseDynamicsCode());
-        }
+        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getSynapseDynamicsCode());
+        s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getSynapseDynamicsCode());
 
         // Set flag specifying whether any of this synapse groups variables are referenced by a custom update
         s.second.setWUVarReferencedByCustomUpdate(std::any_of(getCustomWUUpdates().cbegin(), getCustomWUUpdates().cend(),

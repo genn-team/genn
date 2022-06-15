@@ -81,7 +81,7 @@ VarReference VarReference::createWUPostVarRef(const SynapseGroup *sg, const std:
 //----------------------------------------------------------------------------
 VarReference::VarReference(const NeuronGroupInternal *ng, const std::string &varName)
 :   VarReferenceBase(ng->getNeuronModel()->getVarIndex(varName), ng->getNeuronModel()->getVars(), [ng](){ return ng->getName(); }),
-    m_Size(ng->getNumNeurons()), m_GetDelayNeuronGroup([ng, varName]() { return (ng->isDelayRequired() && ng->isVarQueueRequired(varName)) ? ng : nullptr; })
+    m_Size(ng->getNumNeurons()), m_GetDelayNeuronGroup([ng, varName]() { return (ng->isDelayRequired() && ng->isVarSynAccessRequired(varName)) ? ng : nullptr; })
 {
 }
 //----------------------------------------------------------------------------

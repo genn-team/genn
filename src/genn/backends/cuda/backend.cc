@@ -1827,8 +1827,8 @@ void Backend::genCurrentVariablePush(CodeStream &crossDevice, CodeStream &perDev
 {
     assert(!getPreferences().automaticCopy);
 
-    // If this variable requires queuing and isn't zero-copy
-    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+    // If this variable is accessed by the synapse, has a delay and isn't zero-copy
+    if(ng.isVarSynAccessRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Get shape for host allocation and per-device allocation
         const Shape shape(batchSize, ng.getNumDelaySlots(), ng.getNumNeurons());
         const auto hostShape = shape.padInner(getNumDevices());
@@ -1865,8 +1865,8 @@ void Backend::genCurrentVariablePull(CodeStream &crossDevice, CodeStream &perDev
 {
     assert(!getPreferences().automaticCopy);
 
-    // If this variable requires queuing and isn't zero-copy
-    if(ng.isVarQueueRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
+     // If this variable is accessed by the synapse, has a delay and isn't zero-copy
+    if(ng.isVarSynAccessRequired(name) && ng.isDelayRequired() && !(loc & VarLocation::ZERO_COPY)) {
         // Get shape for host allocation and per-device allocation
         const Shape shape(batchSize, ng.getNumDelaySlots(), ng.getNumNeurons());
         const auto hostShape = shape.padInner(getNumDevices());

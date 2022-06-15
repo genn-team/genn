@@ -18,8 +18,8 @@ public:
     }
     
     using NeuronGroup::checkNumDelaySlots;
-    using NeuronGroup::updatePreVarQueues;
-    using NeuronGroup::updatePostVarQueues;
+    using NeuronGroup::updateInSynVarAccess;
+    using NeuronGroup::updateOutSynVarAccess;
     using NeuronGroup::addSpkEventCondition;
     using NeuronGroup::addInSyn;
     using NeuronGroup::addOutSyn;
@@ -38,7 +38,9 @@ public:
     using NeuronGroup::getFusedOutSynWithPreCode;
     using NeuronGroup::getFusedInSynWithPostVars;
     using NeuronGroup::getFusedOutSynWithPreVars;
-    using NeuronGroup::isVarQueueRequired;
+    using NeuronGroup::isVarInSynAccessRequired;
+    using NeuronGroup::isVarOutSynAccessRequired;
+    using NeuronGroup::isVarSynAccessRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
     using NeuronGroup::getSpikeQueueUpdateHashDigest;

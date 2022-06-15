@@ -55,7 +55,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                           const Models::Base::VarVec &vars, const std::vector<Models::VarInit> &varInitialisers, 
                           const std::string &fieldSuffix, const std::string &countMember, 
                           size_t numDelaySlots, const size_t groupIndex, const std::string &ftype, unsigned int batchSize,
-                          Q isVarQueueRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
+                          Q isVarSynAccessRequired, P isParamHeterogeneousFn, D isDerivedParamHeterogeneousFn)
 {
     const std::string count = "group->" + countMember;
     for (size_t k = 0; k < vars.size(); k++) {
@@ -67,7 +67,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
 
             // Generate target-specific code to initialise variable
             backend.genVariableInit(os, count, "id", popSubs,
-                [&vars, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
+                [&vars, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, k, count, isVarSynAccessRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
                 (CodeStream &os, Substitutions &varSubs)
                 {
                     // Substitute in parameters and derived parameters for initialising variables
@@ -90,7 +90,7 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
                     
                     // Fill value across all delay slots and batches
                     genVariableFill(os,  vars[k].name + fieldSuffix, "initVal", varSubs["id"], count, 
-                                    getVarAccessDuplication(vars[k].access), batchSize, isVarQueueRequired(k), numDelaySlots);
+                                    getVarAccessDuplication(vars[k].access), batchSize, isVarSynAccessRequired(k), numDelaySlots);
                 });
         }
     }
@@ -311,7 +311,7 @@ void NeuronInitGroupMerged::generateInit(const BackendBase &backend, CodeStream 
     // Initialise neuron variables
     genInitNeuronVarCode(os, backend, popSubs, getArchetype().getNeuronModel()->getVars(), getArchetype().getVarInitialisers(), 
                          "", "numNeurons", getArchetype().getNumDelaySlots(), getIndex(), model.getPrecision(), model.getBatchSize(),
-                         [this](size_t i){ return getArchetype().isVarQueueRequired(i); },
+                         [this](size_t i){ return getArchetype().isVarSynAccessRequired(i); },
                          [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
                          [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
 

@@ -188,7 +188,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
             os << "const ";
         }
         os << v.type << " l" << v.name << " = group->" << v.name << "[";
-        const bool delayed = (getArchetype().isVarQueueRequired(v.name) && getArchetype().isDelayRequired());
+        const bool delayed = (getArchetype().isVarSynAccessRequired(v.name) && getArchetype().isDelayRequired());
         os << getReadVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "];" << std::endl;
     }
 
@@ -633,7 +633,7 @@ void NeuronUpdateGroupMerged::generateNeuronUpdate(const BackendBase &backend, C
         // If state variables is read/writes - meaning that it may have been updated - or it is delayed -
         // meaning that it needs to be copied into next delay slot whatever - copy neuron state variables
         // back to global state variables dd_V etc  
-        const bool delayed = (getArchetype().isVarQueueRequired(v.name) && getArchetype().isDelayRequired());
+        const bool delayed = (getArchetype().isVarSynAccessRequired(v.name) && getArchetype().isDelayRequired());
         if((v.access & VarAccessMode::READ_WRITE) || delayed) {
             os << "group->" << v.name << "[";
             os << getWriteVarIndex(delayed, batchSize, getVarAccessDuplication(v.access), popSubs["id"]) << "] = l" << v.name << ";" << std::endl;

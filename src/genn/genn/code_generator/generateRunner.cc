@@ -1158,7 +1158,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             const auto *varInitSnippet = n.second.getVarInitialisers()[i].getSnippet();
             const unsigned int numCopies = getNumCopies(vars[i].access, batchSize);
             const Shape varShape(numCopies,
-                                 n.second.isVarQueueRequired(i) ? n.second.getNumDelaySlots() : 1,
+                                 n.second.isVarSynAccessRequired(i) ? n.second.getNumDelaySlots() : 1,
                                  n.second.getNumNeurons());
             const bool autoInitialized = !varInitSnippet->getCode().empty();
             genVariable(backend, definitionsVar, definitionsFunc, definitionsInternalVar, runnerVarDecl,
@@ -1177,7 +1177,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                 });
 
             // Write getter to get access to correct pointer
-            const bool delayRequired = (n.second.isVarQueueRequired(i) &&  n.second.isDelayRequired());
+            const bool delayRequired = (n.second.isVarSynAccessRequired(i) &&  n.second.isDelayRequired());
             genVarGetterScope(definitionsFunc, runnerGetterFunc, n.second.getVarLocation(i),
                               "Current" + vars[i].name + n.first, vars[i].type + "*",
                               [&]()
