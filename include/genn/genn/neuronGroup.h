@@ -265,7 +265,8 @@ protected:
     //! Is variable accessed by outgoing synapse code
     bool isVarOutSynAccessRequired(const std::string &var) const;
     bool isVarOutSynAccessRequired(size_t index) const{ return m_VarOutSynAccessRequired.at(index); }
-
+    bool isVarOutSynAccessRequired() const;
+    
     //! Is variable accessed by any kind of synapse code
     bool isVarSynAccessRequired(const std::string &var) const{ return (isVarInSynAccessRequired(var) || isVarOutSynAccessRequired(var)); }
     bool isVarSynAccessRequired(size_t index) const{ return (isVarInSynAccessRequired(index) || isVarOutSynAccessRequired(index)); }
@@ -277,6 +278,10 @@ protected:
     //! Updates hash with neuron group initialisation
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
+    
+    //! Updates hash with neuron group serialization (for multi-device communication)
+    /*! NOTE: this can only be called after model is finalized */
+    boost::uuids::detail::sha1::digest_type getSerializationHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getSpikeQueueUpdateHashDigest() const;
 

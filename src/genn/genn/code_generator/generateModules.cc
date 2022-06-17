@@ -166,6 +166,8 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseSparseInitGroups().size() << " merged synapse sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedCustomWUUpdateSparseInitGroups().size() << " merged custom WU update sparse init groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronSpikeQueueUpdateGroups().size() << " merged neuron spike queue update groups";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronPrevSpikeTimeUpdateGroups().size() << " merged neuron groups which require their previous spike times updating";
+    LOGI_CODE_GEN << "\t" << modelMerged.getMergedNeuronSerializationGroups().size() << " merged neuron groups which require state serialization for multi-device simulation";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseDendriticDelayUpdateGroups().size() << " merged synapse dendritic delay update groups";
     LOGI_CODE_GEN << "\t" << modelMerged.getMergedSynapseConnectivityHostInitGroups().size() << " merged synapse connectivity host init groups";
 

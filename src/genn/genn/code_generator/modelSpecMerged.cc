@@ -112,7 +112,14 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronPrevSpikeTimeUpdateGroups,
                            [](const NeuronGroupInternal &ng){ return (ng.isPrevSpikeTimeRequired() || ng.isPrevSpikeEventTimeRequired()); },
                            &NeuronGroupInternal::getPrevSpikeTimeUpdateHashDigest);
-
+    
+    if(backend.getNumDevices() > 1) {
+        LOGD_CODE_GEN << "Merging neuron groups which state serialization for multi-device simulation:";
+        createMergedGroupsHash(model, backend, model.getNeuronGroups(), m_MergedNeuronSerializationGroups,
+                            [](const NeuronGroupInternal &ng){ return ng.isTrueSpikeRequired() ||ng.isSpikeEventRequired() || ng.isVarOutSynAccessRequired(); },
+                            &NeuronGroupInternal::getSerializationHashDigest);
+    }
+    
     // Build vector of merged synapse groups which require dendritic delay
     std::vector<std::reference_wrapper<const SynapseGroupInternal>> synapseGroupsWithDendriticDelay;
     for(const auto &n : model.getNeuronGroups()) {

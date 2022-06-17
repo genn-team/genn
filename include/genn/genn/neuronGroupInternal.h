@@ -43,6 +43,7 @@ public:
     using NeuronGroup::isVarSynAccessRequired;
     using NeuronGroup::getHashDigest;
     using NeuronGroup::getInitHashDigest;
+    using NeuronGroup::getSerializationHashDigest;
     using NeuronGroup::getSpikeQueueUpdateHashDigest;
     using NeuronGroup::getPrevSpikeTimeUpdateHashDigest;
     using NeuronGroup::getVarLocationHashDigest;

@@ -488,6 +488,11 @@ bool NeuronGroup::isVarOutSynAccessRequired(const std::string &var) const
     return m_VarOutSynAccessRequired.at(getNeuronModel()->getVarIndex(var));
 }
 //----------------------------------------------------------------------------
+bool NeuronGroup::isVarOutSynAccessRequired() const
+{
+    return (std::find(m_VarOutSynAccessRequired.cbegin(), m_VarOutSynAccessRequired.cend(), true) != m_VarOutSynAccessRequired.cend());
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -552,6 +557,18 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     // Update hash with hash list built from fused outgoing synapses with presynaptic output
     updateHashList(getFusedPreOutputOutSyn(), hash, &SynapseGroupInternal::getPreOutputInitHashDigest);
     return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type NeuronGroup::getSerializationHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getNeuronModel()->getHashDigest(), hash);
+    Utils::updateHash(isSpikeTimeRequired(), hash);
+    Utils::updateHash(isPrevSpikeTimeRequired(), hash);
+    Utils::updateHash(isSpikeEventRequired(), hash);
+    Utils::updateHash(isTrueSpikeRequired(), hash);
+    Utils::updateHash(getNumDelaySlots(), hash);
+    Utils::updateHash(m_VarOutSynAccessRequired, hash);
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type NeuronGroup::getSpikeQueueUpdateHashDigest() const
