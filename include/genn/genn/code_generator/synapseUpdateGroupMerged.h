@@ -15,9 +15,9 @@ namespace CodeGenerator
 class GENN_EXPORT PresynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PresynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    PresynapticUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::PresynapticUpdate, 
                                groups.front().get().getWUModel()->getSimCode() + groups.front().get().getWUModel()->getEventCode() + groups.front().get().getWUModel()->getEventThresholdConditionCode(), groups)
     {}
 
@@ -52,9 +52,9 @@ public:
 class GENN_EXPORT PostsynapticUpdateGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    PostsynapticUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    PostsynapticUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                   const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::PostsynapticUpdate, 
                                groups.front().get().getWUModel()->getLearnPostCode(), groups)
     {}
 
@@ -85,9 +85,9 @@ public:
 class GENN_EXPORT SynapseDynamicsGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDynamicsGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseDynamicsGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::SynapseDynamics, 
                                groups.front().get().getWUModel()->getSynapseDynamicsCode(), groups)
     {}
 

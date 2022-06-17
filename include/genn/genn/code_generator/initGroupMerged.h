@@ -11,7 +11,7 @@ namespace CodeGenerator
 class GENN_EXPORT NeuronInitGroupMerged : public NeuronGroupMergedBase
 {
 public:
-    NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                           const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -100,9 +100,9 @@ private:
 class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseDenseInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::DenseInit, "", groups)
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::DenseInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -132,9 +132,9 @@ public:
 class GENN_EXPORT SynapseSparseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseSparseInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::SparseInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -164,9 +164,9 @@ public:
 class GENN_EXPORT SynapseKernelInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseKernelInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseKernelInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                  const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::KernelInit, "", groups)
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::KernelInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -197,9 +197,9 @@ public:
 class GENN_EXPORT SynapseConnectivityInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseConnectivityInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseConnectivityInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
+    :   SynapseGroupMergedBase(index, model, backend, SynapseGroupMergedBase::Role::ConnectivityInit, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
@@ -257,9 +257,9 @@ public:
     }
 
 protected:
-    CustomUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+    CustomUpdateInitGroupMergedBase(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                     const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
+    :   GroupMerged<G>(index, model, groups)
     {
          // Loop through variables
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
@@ -331,7 +331,7 @@ private:
 class GENN_EXPORT CustomUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateInternal>
 {
 public:
-    CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                 const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -362,7 +362,7 @@ public:
 class GENN_EXPORT CustomWUUpdateDenseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomWUUpdateDenseInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -392,7 +392,7 @@ public:
 class GENN_EXPORT CustomWUUpdateSparseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomWUUpdateSparseInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                         const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------

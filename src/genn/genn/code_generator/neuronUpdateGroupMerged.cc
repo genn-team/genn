@@ -10,9 +10,9 @@ using namespace CodeGenerator;
 //----------------------------------------------------------------------------
 const std::string NeuronUpdateGroupMerged::name = "NeuronUpdate";
 //----------------------------------------------------------------------------
-NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+NeuronUpdateGroupMerged::NeuronUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend, 
                                                  const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   NeuronGroupMergedBase(index, precision, timePrecision, backend, false, groups)
+:   NeuronGroupMergedBase(index, model, backend, false, groups)
 {
     // Build vector of vectors containing each child group's incoming synapse groups
     // with postsynaptic updates, ordered to match those of the archetype group

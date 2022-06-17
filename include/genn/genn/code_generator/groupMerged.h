@@ -10,6 +10,7 @@
 #include "gennExport.h"
 #include "currentSourceInternal.h"
 #include "customUpdateInternal.h"
+#include "modelSpecInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
 
@@ -52,8 +53,8 @@ public:
     typedef std::tuple<std::string, std::string, GetFieldValueFunc, FieldType> Field;
 
 
-    GroupMerged(size_t index, const std::string &precision, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
-    :   m_Index(index), m_LiteralSuffix((precision == "float") ? "f" : ""), m_Groups(std::move(groups))
+    GroupMerged(size_t index, const ModelSpecInternal &model, const std::vector<std::reference_wrapper<const GroupInternal>> groups)
+    :   m_Index(index), m_LiteralSuffix((model.getPrecision() == "float") ? "f" : ""), m_Groups(std::move(groups))
     {}
 
     //------------------------------------------------------------------------
@@ -537,7 +538,7 @@ private:
 class GENN_EXPORT NeuronSpikeQueueUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSpikeQueueUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
+    NeuronSpikeQueueUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                       const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -565,7 +566,7 @@ public:
 class GENN_EXPORT NeuronPrevSpikeTimeUpdateGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecison, const BackendBase &backend,
+    NeuronPrevSpikeTimeUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                          const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -646,7 +647,7 @@ protected:
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
-    NeuronGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronGroupMergedBase(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                           bool init, const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups);
 
     void updateBaseHash(bool init, boost::uuids::detail::sha1 &hash) const;
@@ -961,7 +962,7 @@ private:
 class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
 
     //------------------------------------------------------------------------
@@ -987,7 +988,7 @@ public:
 class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
 {
 public:
-    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseConnectivityHostInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -1142,7 +1143,7 @@ protected:
         ConnectivityInit,
     };
 
-    SynapseGroupMergedBase(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    SynapseGroupMergedBase(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                            Role role, const std::string &archetypeCode, const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -1214,9 +1215,9 @@ template<typename G>
 class CustomUpdateHostReductionGroupMergedBase : public GroupMerged<G>
 {
 protected:
-     CustomUpdateHostReductionGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+     CustomUpdateHostReductionGroupMergedBase(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                    const std::vector<std::reference_wrapper<const G>> &groups)
-    :   GroupMerged<G>(index, precision, groups)
+    :   GroupMerged<G>(index, model, groups)
     {
         // Loop through variables and add pointers if they are reduction targets
         const CustomUpdateModels::Base *cm = this->getArchetype().getCustomUpdateModel();
@@ -1241,7 +1242,7 @@ protected:
 class GENN_EXPORT CustomUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateInternal>
 {
 public:
-    CustomUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateHostReductionGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -1267,7 +1268,7 @@ public:
 class GENN_EXPORT CustomWUUpdateHostReductionGroupMerged : public CustomUpdateHostReductionGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateHostReductionGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomWUUpdateHostReductionGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                            const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //------------------------------------------------------------------------
@@ -1293,7 +1294,7 @@ public:
 class GENN_EXPORT NeuronSerializationGroupMerged : public GroupMerged<NeuronGroupInternal>
 {
 public:
-    NeuronSerializationGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    NeuronSerializationGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                    const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &group);
 
     //------------------------------------------------------------------------

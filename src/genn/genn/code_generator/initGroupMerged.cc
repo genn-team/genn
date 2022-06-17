@@ -158,9 +158,9 @@ void genInitWUVarCode(CodeStream &os, const Substitutions &popSubs,
 //----------------------------------------------------------------------------
 const std::string NeuronInitGroupMerged::name = "NeuronInit";
 //----------------------------------------------------------------------------
-NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+NeuronInitGroupMerged::NeuronInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                              const std::vector<std::reference_wrapper<const NeuronGroupInternal>> &groups)
-:   NeuronGroupMergedBase(index, precision, timePrecision, backend, true, groups)
+:   NeuronGroupMergedBase(index, model, backend, true, groups)
 {
     // Build vector of vectors containing each child group's incoming 
     // synapse groups, ordered to match those of the archetype group
@@ -718,9 +718,9 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
 //----------------------------------------------------------------------------
 const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
 //----------------------------------------------------------------------------
-CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal>(index, model, backend, groups)
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
@@ -753,9 +753,9 @@ void CustomUpdateInitGroupMerged::generateInit(const BackendBase &backend, CodeS
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateDenseInitGroupMerged::name = "CustomWUUpdateDenseInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateDenseInitGroupMerged::CustomWUUpdateDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomWUUpdateDenseInitGroupMerged::CustomWUUpdateDenseInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                                                        const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, model, backend, groups)
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
@@ -814,9 +814,9 @@ void CustomWUUpdateDenseInitGroupMerged::generateInit(const BackendBase &backend
 //----------------------------------------------------------------------------
 const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSparseInit";
 //----------------------------------------------------------------------------
-CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, model, backend, groups)
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });

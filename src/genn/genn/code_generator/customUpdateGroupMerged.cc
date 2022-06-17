@@ -101,9 +101,9 @@ void genCustomUpdate(CodeStream &os, Substitutions &baseSubs, const C &cg,
 //----------------------------------------------------------------------------
 const std::string CustomUpdateGroupMerged::name = "CustomUpdate";
 //----------------------------------------------------------------------------
-CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
+CustomUpdateGroupMerged::CustomUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                                  const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   GroupMerged<CustomUpdateInternal>(index, precision, groups)
+:   GroupMerged<CustomUpdateInternal>(index, model, groups)
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
@@ -248,9 +248,9 @@ std::string CustomUpdateWUGroupMergedBase::getVarRefIndex(VarAccessDuplication v
     return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
 }
 //----------------------------------------------------------------------------
-CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
+:   GroupMerged<CustomUpdateWUInternal>(index, model, groups)
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomUpdateWUInternal &cg, size_t) 

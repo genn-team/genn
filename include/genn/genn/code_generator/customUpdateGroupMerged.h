@@ -11,7 +11,7 @@ namespace CodeGenerator
 class GENN_EXPORT CustomUpdateGroupMerged : public GroupMerged<CustomUpdateInternal>
 {
 public:
-    CustomUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                             const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups);
 
     //----------------------------------------------------------------------------
@@ -62,7 +62,7 @@ public:
     std::string getVarRefIndex(VarAccessDuplication varDuplication, const std::string &index) const;
 
 protected:
-    CustomUpdateWUGroupMergedBase(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+    CustomUpdateWUGroupMergedBase(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                   const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
 };
@@ -73,9 +73,9 @@ protected:
 class GENN_EXPORT CustomUpdateWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    CustomUpdateWUGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                               const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-        : CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
+        : CustomUpdateWUGroupMergedBase(index, model, backend, groups)
     {
     }
 
@@ -104,9 +104,9 @@ public:
 class GENN_EXPORT CustomUpdateTransposeWUGroupMerged : public CustomUpdateWUGroupMergedBase
 {
 public:
-    CustomUpdateTransposeWUGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+    CustomUpdateTransposeWUGroupMerged(size_t index, const ModelSpecInternal &model, const BackendBase &backend,
                                        const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-        : CustomUpdateWUGroupMergedBase(index, precision, timePrecision, backend, groups)
+        : CustomUpdateWUGroupMergedBase(index, model, backend, groups)
     {
     }
 
