@@ -1599,4 +1599,40 @@ NeuronSerializationGroupMerged::NeuronSerializationGroupMerged(size_t index, con
             addPointerField(v.type, v.name, backend.getDeviceVarPrefix() + v.name);
         }
     }
+    
+    addField("uint8_t*", "buffer", [](const NeuronGroupInternal&, size_t) { return "buffer+="; });
+}
+//----------------------------------------------------------------------------
+size_t NeuronSerializationGroupMerged::getBufferBytes(const BackendBase &backend, unsigned int batchSize) const
+{
+    // Loop through groups
+    size_t bufferBytes = 0;
+    for(const auto &g : getGroups()) {
+        // Calculate neurons per-device
+        const unsigned neuronsPerDevice = ceilDivide(g.get().getNumNeurons(), backend.getNumDevices());
+        
+        // Calculate how many words will be required for spike bitfields
+        const size_t spikeBytes = ceilDivide(neuronsPerDevice, 32) * batchSize * sizeof(uint32_t);
+        
+        if(getArchetype().isTrueSpikeRequired()) {
+            bufferBytes += spikeBytes;
+        }
+        
+        if(getArchetype().isSpikeEventRequired()) {
+            bufferBytes += spikeBytes;
+        }
+        
+        // Loop through variables
+        const auto vars = getArchetype().getNeuronModel()->getVars();
+        for(const auto &v : vars) {
+            // If this variable is accessed by outgoing synapse code, add enough bytes 
+            if(getArchetype().isVarOutSynAccessRequired(v.name)) {
+                bufferBytes += backend.getSize(v.type) * neuronsPerDevice;
+            }
+        }
+    }
+   
+    
+    // Return total bytes
+    return bufferBytes;
 }

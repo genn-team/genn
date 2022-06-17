@@ -1306,6 +1306,9 @@ public:
         generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
+    
+    //! Get number of bytes this merged group will require
+    size_t getBufferBytes(const BackendBase &backend, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants

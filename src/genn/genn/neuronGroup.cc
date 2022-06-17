@@ -499,7 +499,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getHashDigest() const
     Utils::updateHash(isSpikeRecordingEnabled(), hash);
     Utils::updateHash(isSpikeEventRecordingEnabled(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
-    Utils::updateHash(m_VarQueueRequired, hash);
+    Utils::updateHash(m_VarInSynAccessRequired, hash);
+    Utils::updateHash(m_VarOutSynAccessRequired, hash);
 
     // Update hash with hash list built from current sources
     updateHashList(getCurrentSources(), hash, &CurrentSourceInternal::getHashDigest);
@@ -527,7 +528,8 @@ boost::uuids::detail::sha1::digest_type NeuronGroup::getInitHashDigest() const
     Utils::updateHash(isSpikeEventRequired(), hash);
     Utils::updateHash(isSimRNGRequired(), hash);
     Utils::updateHash(getNumDelaySlots(), hash);
-    Utils::updateHash(m_VarQueueRequired, hash);
+    Utils::updateHash(m_VarInSynAccessRequired, hash);
+    Utils::updateHash(m_VarOutSynAccessRequired, hash);
     Utils::updateHash(getNeuronModel()->getVars(), hash);
 
     // Include variable initialiser hashes

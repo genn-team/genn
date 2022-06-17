@@ -140,19 +140,19 @@ void ModelSpec::finalize()
         s.second.initDerivedParams(m_DT);
 
         // Mark any pre or postsyaptic neuron variables referenced in sim code as requiring queues
-        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getSimCode());
+        s.second.getSrcNeuronGroup()->updateOutSynVarAccess(wu->getSimCode());
         s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getSimCode());
 
         // Mark any pre or postsyaptic neuron variables referenced in event code as requiring queues
-        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getEventCode());
+        s.second.getSrcNeuronGroup()->updateOutSynVarAccess(wu->getEventCode());
         s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getEventCode());
         
         // Mark any pre or postsyaptic neuron variables referenced in postsynaptic update code as requiring queues
-        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getLearnPostCode());
+        s.second.getSrcNeuronGroup()->updateOutSynVarAccess(wu->getLearnPostCode());
         s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getLearnPostCode());
         
         // Mark any pre or postsyaptic neuron variables referenced in synapse dynamics code as requiring queues
-        s.second.getSrcNeuronGroup()->updateOutSynAccess(wu->getSynapseDynamicsCode());
+        s.second.getSrcNeuronGroup()->updateOutSynVarAccess(wu->getSynapseDynamicsCode());
         s.second.getTrgNeuronGroup()->updateInSynVarAccess(wu->getSynapseDynamicsCode());
 
         // Set flag specifying whether any of this synapse groups variables are referenced by a custom update

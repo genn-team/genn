@@ -27,36 +27,6 @@ using namespace CodeGenerator;
 //--------------------------------------------------------------------------
 namespace
 {
-/*void addShapeDim(std::vector<size_t>&)
-{
-}
-//--------------------------------------------------------------------------
-template<typename ...Dims>
-void addShapeDim(std::vector<size_t> &shape, size_t dim, Dims... dims)
-{
-    shape.push_back(dim);
-    
-    // Add remaining dimensions
-    addShapeDim(shape, dims...);
-}
-//--------------------------------------------------------------------------
-template<typename ...Dims>
-void addShapeDim(std::vector<size_t> &shape, const std::vector<size_t> &otherShape, Dims... dims)
-{
-    std::copy(otherShape.cbegin(), otherShape.cend(), std::back_inserter(shape));
-    
-    // Add remaining dimensions
-    addShapeDim(shape, dims...);
-}
-//--------------------------------------------------------------------------
-template<typename ...Dims>
-std::vector<size_t> buildShape(Dims... dims)
-{
-    std::vector<size_t> shape;
-    addShapeDim(shape, dims...);
-    return shape;
-}*/
-//--------------------------------------------------------------------------
 unsigned int getNumCopies(VarAccess varAccess, unsigned int batchSize)
 {
     return (varAccess & VarAccessDuplication::SHARED) ? 1 : batchSize;
