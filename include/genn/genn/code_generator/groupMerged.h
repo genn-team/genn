@@ -1315,5 +1315,11 @@ public:
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+    
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    size_t getBufferBytes(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const;
 };
 }   // namespace CodeGenerator

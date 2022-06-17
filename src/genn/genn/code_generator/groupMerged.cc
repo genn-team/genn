@@ -1,5 +1,8 @@
 #include "code_generator/groupMerged.h"
 
+// Standard C++ includes
+#include <numeric>
+
 // PLOG includes
 #include <plog/Log.h>
 
@@ -1600,39 +1603,49 @@ NeuronSerializationGroupMerged::NeuronSerializationGroupMerged(size_t index, con
         }
     }
     
-    addField("uint8_t*", "buffer", [](const NeuronGroupInternal&, size_t) { return "buffer+="; });
+    // Return field which advances buffer pointer
+    addField("uint8_t*", "buffer", 
+             [&backend, &model, this](const NeuronGroupInternal &ng, size_t) 
+             {
+                 return "serializeBuffer += " + std::to_string(getBufferBytes(ng, backend, model.getBatchSize())); 
+             });
 }
 //----------------------------------------------------------------------------
 size_t NeuronSerializationGroupMerged::getBufferBytes(const BackendBase &backend, unsigned int batchSize) const
 {
-    // Loop through groups
+    // Return sum of buffer bytes required for each element in merged group
+    return std::accumulate(getGroups().cbegin(), getGroups().cend(), size_t{0},
+                           [&backend, batchSize, this](size_t acc, std::reference_wrapper<const GroupInternal> ng)
+                           {
+                               return acc + getBufferBytes(ng.get(), backend, batchSize);           
+                           });
+}
+//----------------------------------------------------------------------------
+size_t NeuronSerializationGroupMerged::getBufferBytes(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const
+{
+    // Calculate neurons per-device
+    const unsigned neuronsPerDevice = ceilDivide(ng.getNumNeurons(), backend.getNumDevices());
+    
+    // Calculate how many words will be required for spike bitfields
+    const size_t spikeBytes = ceilDivide(neuronsPerDevice, 32) * batchSize * sizeof(uint32_t);
+    
+    // Add size of spike buffers for spikes and spike-like-events if required
     size_t bufferBytes = 0;
-    for(const auto &g : getGroups()) {
-        // Calculate neurons per-device
-        const unsigned neuronsPerDevice = ceilDivide(g.get().getNumNeurons(), backend.getNumDevices());
-        
-        // Calculate how many words will be required for spike bitfields
-        const size_t spikeBytes = ceilDivide(neuronsPerDevice, 32) * batchSize * sizeof(uint32_t);
-        
-        if(getArchetype().isTrueSpikeRequired()) {
-            bufferBytes += spikeBytes;
-        }
-        
-        if(getArchetype().isSpikeEventRequired()) {
-            bufferBytes += spikeBytes;
-        }
-        
-        // Loop through variables
-        const auto vars = getArchetype().getNeuronModel()->getVars();
-        for(const auto &v : vars) {
-            // If this variable is accessed by outgoing synapse code, add enough bytes 
-            if(getArchetype().isVarOutSynAccessRequired(v.name)) {
-                bufferBytes += backend.getSize(v.type) * neuronsPerDevice;
-            }
+    if(ng.isTrueSpikeRequired()) {
+        bufferBytes += spikeBytes;
+    }
+    if(ng.isSpikeEventRequired()) {
+        bufferBytes += spikeBytes;
+    }
+    
+    // Loop through variables
+    const auto vars = ng.getNeuronModel()->getVars();
+    for(const auto &v : vars) {
+        // If this variable is accessed by outgoing synapse code, add enough bytes 
+        if(ng.isVarOutSynAccessRequired(v.name)) {
+            bufferBytes += backend.getSize(v.type) * neuronsPerDevice;
         }
     }
-   
     
-    // Return total bytes
     return bufferBytes;
 }
