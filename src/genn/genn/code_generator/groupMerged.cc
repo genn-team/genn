@@ -1604,10 +1604,10 @@ NeuronSerializationGroupMerged::NeuronSerializationGroupMerged(size_t index, con
     }
     
     // Return field which advances buffer pointer
-    addField("uint8_t*", "buffer", 
+    addField("unsigned int", "bufferOffset", 
              [&backend, &model, this](const NeuronGroupInternal &ng, size_t) 
              {
-                 return "serializeBuffer += " + std::to_string(getBufferBytes(ng, backend, model.getBatchSize())); 
+                 return std::to_string(getBufferBytes(ng, backend, model.getBatchSize())); 
              });
 }
 //----------------------------------------------------------------------------

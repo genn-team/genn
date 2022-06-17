@@ -180,7 +180,9 @@ public:
 
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
                          HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const override;
-
+    
+    virtual void genNeuronSerialization(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
+    
     virtual void genDefinitionsPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerged &modelMerged) const override;
     virtual void genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc &memAlloc) const override;

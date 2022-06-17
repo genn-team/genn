@@ -700,12 +700,13 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
     preambleHandler(os);
 
     // Generate data structure for accessing merged groups
-    // **NOTE** constant cache is preferentially given to neuron and synapse groups as, typically, they are launched more often 
+    // **NOTE** constant cache is preferentially given to neuron, synapse groups and serialization groups as, typically, they are launched more often 
     // than custom update kernels so subtract constant memory requirements of synapse group start ids from total constant memory
     const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
                                              getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
-                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
+                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()) + 
+                                             getGroupStartIDSize(modelMerged.getMergedNeuronSerializationGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
 
     // Build set containing union of all custom update groupsnames
@@ -1042,6 +1043,93 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
                 os << KernelNames[KernelInitializeSparse] << "<<<grid, threads>>>();" << std::endl;
                 os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
             }
+        }
+    }
+}
+//--------------------------------------------------------------------------
+void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    // Generate struct definitions
+    modelMerged.genMergedNeuronSerializationStructs(os, *this);
+
+    // Generate arrays of merged structs and functions to push them
+    genMergedStructArrayPush(os, modelMerged.getMergedNeuronSerializationGroups());
+   
+    // Generate data structure for accessing merged groups
+    // **NOTE** constant cache is preferentially given to neuron and synapse groups
+    const size_t timestepGroupStartIDSize = (getGroupStartIDSize(modelMerged.getMergedPresynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedPostsynapticUpdateGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedSynapseDynamicsGroups()) +
+                                             getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
+    size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
+    
+    // **NOTE** DEserialization requires access to all neurons rather than just those on device
+    genMergedKernelDataStructures(
+        os, totalConstMem,
+        modelMerged.getMergedNeuronSerializationGroups(), 
+        [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronDeserialize); }),
+        
+    // **NOTE** Serialization only requires access to neurons on device
+    genMergedKernelDataStructures(
+        os, totalConstMem,
+        modelMerged.getMergedNeuronSerializationGroups(), 
+        [this](const NeuronGroupInternal &sg){ return padKernelSize(ceilDivide(sg.getNumNeurons(), getNumDevices()), KernelNeuronSerialize); });
+    os << std::endl;
+
+    // If there are any serialzation groups
+    size_t idDeserializeStart = 0;
+    size_t idSerializeStart = 0;
+    if(!modelMerged.getMergedNeuronSerializationGroups().empty()) {
+        // Deserialization kernel code
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronDeserialize] << "()";
+        {
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+
+            // common variables for all cases
+            CodeStream::Scope b(os);
+
+            os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronDeserialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genNeuronDeserializationKernel(os, kernelSubs, modelMerged, idDeserializeStart);
+        }
+        
+        // Deserialization kernel code
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSerialize] << "()";
+        {
+            Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
+
+            // common variables for all cases
+            CodeStream::Scope b(os);
+
+            os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSerialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
+            genNeuronSerializationKernel(os, kernelSubs, modelMerged, idSerializeStart);
+        }
+    }
+    
+    os << "void neuronDeserialize()";
+    {
+        CodeStream::Scope b(os);
+
+        // If there are any de-serialization threads
+        if(idDeserializeStart > 0) {
+            //Timer t(os, "neuronDeserialize", model.isTimingEnabled(), true);
+
+            genKernelDimensions(os, KernelNeuronDeserialize, idDeserializeStart, model.getBatchSize());
+            os << KernelNames[KernelNeuronDeserialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
+        }
+    }
+    
+    os << "void neuronSerialize()";
+    {
+        CodeStream::Scope b(os);
+
+        // If there are any de-serialization threads
+        if(idSerializeStart > 0) {
+            //Timer t(os, "neuronDeserialize", model.isTimingEnabled(), true);
+
+            genKernelDimensions(os, KernelNeuronSerialize, idSerializeStart, model.getBatchSize());
+            os << KernelNames[KernelNeuronSerialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
 }

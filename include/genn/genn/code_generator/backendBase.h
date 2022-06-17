@@ -300,6 +300,11 @@ public:
     virtual void genInit(CodeStream &os, const ModelSpecMerged &modelMerged, 
                          HostHandler preambleHandler, HostHandler initPushEGPHandler, HostHandler initSparsePushEGPHandler) const = 0;
 
+    //! Generate platform-specific function to serialize model for multi-device simulation
+    /*! \param os                           CodeStream to write function to
+        \param modelMerged                  merged model to generate code for*/
+    virtual void genNeuronSerialization(CodeStream &os, const ModelSpecMerged &modelMerged) const = 0;
+    
     //! Gets the stride used to access synaptic matrix rows, taking into account sparse data structure, padding etc
     virtual size_t getSynapticMatrixRowStride(const SynapseGroupInternal &sg) const = 0;
     

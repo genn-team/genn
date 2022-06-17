@@ -44,6 +44,8 @@ const char *BackendSIMT::KernelNames[KernelMax] = {
     "initializeSparseKernel",
     "neuronSpikeQueueUpdateKernel",
     "neuronPrevSpikeTimeUpdateKernel",
+    "neuronSerializeKernel",
+    "neuronDeserializeKernel",
     "synapseDendriticDelayUpdateKernel",
     "customUpdate",
     "customTransposeUpdate"};
@@ -590,6 +592,67 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
                             os << ";" << std::endl;
                         }
                     }
+                }
+            }
+        });
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genNeuronDeserializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
+{
+    idStart = 0;
+    genParallelGroup<NeuronSerializationGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
+        [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronDeserialize); },
+        [modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
+        {
+            genNeuronIndexCalculation(os, ng, modelMerged.getModel().getBatchSize());
+            os << std::endl;
+
+            // If we're 
+            // **TODO** here we actually need to look at all neurons
+            os << "if(" << popSubs["id"] << " < group->numNeurons)";
+            {
+                CodeStream::Scope b(os);
+            }
+        });
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genNeuronSerializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
+{
+    // If any neuron groups have spikes which need serializing
+    if(std::any_of(modelMerged.getMergedNeuronSerializationGroups().cbegin(), modelMerged.getMergedNeuronSerializationGroups().cend(),
+                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isTrueSpikeRequired(); }))
+    {
+        genRecordingSharedMemInit(os, "");
+    }
+
+    // If any neuron groups have spike-like events which need serializing
+    if(std::any_of(modelMerged.getMergedNeuronSerializationGroups().cbegin(), modelMerged.getMergedNeuronSerializationGroups().cend(),
+                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
+    {
+        genRecordingSharedMemInit(os, "Evnt");
+    }
+
+    genSharedMemBarrier(os);
+    
+    idStart = 0;
+    genParallelGroup<NeuronSerializationGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedNeuronSerializationGroups(), idStart,
+        [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronSerialize); },
+        [modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
+        {
+            genNeuronIndexCalculation(os, ng, modelMerged.getModel().getBatchSize());
+            os << std::endl;
+
+            // If there is a local neuron for this 
+            os << "if(" << popSubs["id"] << " < group->numNeurons)";
+            {
+                CodeStream::Scope b(os);
+                
+                if(ng.getArchetype().isTrueSpikeRequired()) {
+                    
+                }
+                if(ng.getArchetype().isSpikeEventRequired()) {
                 }
             }
         });

@@ -881,6 +881,12 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                                  runnerVarDecl, runnerPerDeviceMergedStructAlloc);
             }
 
+            // Loop through neuron groups whose state requires serialization for multi-device simulation
+            for (const auto &m : modelMerged.getMergedNeuronSerializationGroups()) {
+                m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                                 runnerVarDecl, runnerPerDeviceMergedStructAlloc);
+            }
+            
             // Loop through neuron groups whose spike queues need resetting
             for (const auto &m : modelMerged.getMergedNeuronSpikeQueueUpdateGroups()) {
                 m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,

@@ -90,9 +90,9 @@ bool shouldRebuildModel(const filesystem::path &outputPath, const boost::uuids::
 //--------------------------------------------------------------------------
 // CodeGenerator
 //--------------------------------------------------------------------------
-std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const ModelSpecInternal &model, const BackendBase &backend,
-                                                                         const filesystem::path &sharePath, const filesystem::path &outputPath,
-                                                                         bool forceRebuild)
+std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInternal &model, const BackendBase &backend,
+                                                          const filesystem::path &sharePath, const filesystem::path &outputPath,
+                                                          bool forceRebuild)
 {
     // Create directory for generated code
     filesystem::create_directory(outputPath);
@@ -176,8 +176,8 @@ std::pair<std::vector<std::string>, MemAlloc> CodeGenerator::generateAll(const M
     return std::make_pair(modules, mem);
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                         const BackendBase &backend, const std::string &suffix)
+void generateNeuronUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                          const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream neuronUpdateStream((outputPath / ("neuronUpdate" + suffix + ".cc")).str());
@@ -205,8 +205,21 @@ void CodeGenerator::generateNeuronUpdate(const filesystem::path &outputPath, con
         });
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                         const BackendBase &backend, const std::string &suffix)
+void generateNeuronSerialize(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                             const BackendBase &backend, const std::string &suffix = "")
+{
+    // Create output stream to write to file and wrap in CodeStream
+    std::ofstream neuronSerializeStream((outputPath / ("neuronSerialize" + suffix + ".cc")).str());
+    CodeStream neuronSerialize(neuronSerializeStream);
+
+    neuronSerialize << "#include \"definitionsInternal" << suffix << ".h\"" << std::endl;
+    
+    // Neuron
+    backend.genNeuronSerialization(neuronSerialize, modelMerged);
+}
+//--------------------------------------------------------------------------
+void generateCustomUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                          const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream customUpdateStream((outputPath / ("customUpdate" + suffix + ".cc")).str());
@@ -235,8 +248,8 @@ void CodeGenerator::generateCustomUpdate(const filesystem::path &outputPath, con
         });
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                          const BackendBase &backend, const std::string &suffix)
+void generateSynapseUpdate(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                           const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream synapseUpdateStream((outputPath / ("synapseUpdate" + suffix + ".cc")).str());
@@ -267,8 +280,8 @@ void CodeGenerator::generateSynapseUpdate(const filesystem::path &outputPath, co
         });
 }
 //--------------------------------------------------------------------------
-void CodeGenerator::generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
-                                 const BackendBase &backend, const std::string &suffix)
+void generateInit(const filesystem::path &outputPath, const ModelSpecMerged &modelMerged, 
+                  const BackendBase &backend, const std::string &suffix)
 {
     // Create output stream to write to file and wrap in CodeStream
     std::ofstream initStream((outputPath / ("init" + suffix + ".cc")).str());
