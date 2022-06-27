@@ -1050,6 +1050,7 @@ void Backend::genInit(CodeStream &os, const ModelSpecMerged &modelMerged,
 void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &modelMerged) const
 {
     // Generate struct definitions
+    const ModelSpecInternal &model = modelMerged.getModel();
     modelMerged.genMergedNeuronSerializationStructs(os, *this);
 
     // Generate arrays of merged structs and functions to push them
@@ -1063,13 +1064,11 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
                                              getGroupStartIDSize(modelMerged.getMergedNeuronUpdateGroups()));
     size_t totalConstMem = (getChosenDeviceSafeConstMemBytes() > timestepGroupStartIDSize) ? (getChosenDeviceSafeConstMemBytes() - timestepGroupStartIDSize) : 0;
     
-    // **NOTE** DEserialization requires access to all neurons rather than just those on device
     genMergedKernelDataStructures(
         os, totalConstMem,
         modelMerged.getMergedNeuronSerializationGroups(), 
-        [this](const NeuronGroupInternal &ng){ return padKernelSize(ng.getNumNeurons(), KernelNeuronDeserialize); }),
+        [this](const NeuronGroupInternal &ng){ return padKernelSize(ceilDivide(sg.getNumNeurons(), getNumDevices()), KernelNeuronDeserialize); }),
         
-    // **NOTE** Serialization only requires access to neurons on device
     genMergedKernelDataStructures(
         os, totalConstMem,
         modelMerged.getMergedNeuronSerializationGroups(), 
@@ -1079,9 +1078,11 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
     // If there are any serialzation groups
     size_t idDeserializeStart = 0;
     size_t idSerializeStart = 0;
+    size_t bufferDeserializeStart = 0;
+    size_t bufferSeserializeStart = 0;
     if(!modelMerged.getMergedNeuronSerializationGroups().empty()) {
         // Deserialization kernel code
-        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronDeserialize] << "()";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronDeserialize] << "(uint8_t *d_serializationBuffer)";
         {
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
@@ -1089,11 +1090,11 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
             CodeStream::Scope b(os);
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronDeserialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genNeuronDeserializationKernel(os, kernelSubs, modelMerged, idDeserializeStart);
+            genNeuronDeserializationKernel(os, kernelSubs, modelMerged, idDeserializeStart, bufferDeserializeStart);
         }
         
         // Deserialization kernel code
-        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSerialize] << "()";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSerialize] << "(unsigned int device, uint8_t *d_serializationBuffer)";
         {
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
@@ -1101,9 +1102,12 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
             CodeStream::Scope b(os);
 
             os << "const unsigned int id = " << getKernelBlockSize(KernelNeuronSerialize) << " * blockIdx.x + threadIdx.x;" << std::endl;
-            genNeuronSerializationKernel(os, kernelSubs, modelMerged, idSerializeStart);
+            genNeuronSerializationKernel(os, kernelSubs, modelMerged, idSerializeStart, bufferSeserializeStart);
         }
     }
+
+    assert(idDeserializeStart == idSerializeStart);
+    assert(bufferDeserializeStart == bufferSeserializeStart);
     
     os << "void neuronDeserialize()";
     {
@@ -1114,12 +1118,12 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
             //Timer t(os, "neuronDeserialize", model.isTimingEnabled(), true);
 
             genKernelDimensions(os, KernelNeuronDeserialize, idDeserializeStart, model.getBatchSize());
-            os << KernelNames[KernelNeuronDeserialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
+            os << KernelNames[KernelNeuronDeserialize] << "<<<grid, threads>>>(d_SerializationBuffer);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
     
-    os << "void neuronSerialize()";
+    os << "void neuronSerialize(unsigned int device)";
     {
         CodeStream::Scope b(os);
 
@@ -1128,7 +1132,7 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
             //Timer t(os, "neuronDeserialize", model.isTimingEnabled(), true);
 
             genKernelDimensions(os, KernelNeuronSerialize, idSerializeStart, model.getBatchSize());
-            os << KernelNames[KernelNeuronSerialize] << "<<<grid, threads>>>(deviceRNGSeed);" << std::endl;
+            os << KernelNames[KernelNeuronSerialize] << "<<<grid, threads>>>(device, d_SerializationBuffer);" << std::endl;
             os << "CHECK_CUDA_ERRORS(cudaPeekAtLastError());" << std::endl;
         }
     }
@@ -1164,11 +1168,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os <<"#include <cuda_fp16.h>" << std::endl;
     }
 
-    // If NCCL is enabled
-    if(getPreferences<Preferences>().enableNCCLReductions) {
-        // Include NCCL header
+    // If we require NCCL
+    if (getNumDevices() > 1 || getPreferences<Preferences>().enableNCCLReductions) {
         os << "#include <nccl.h>" << std::endl;
         os << std::endl;
+
         // Define NCCL ID and communicator
         os << "EXPORT_VAR ncclUniqueId ncclID;" << std::endl;
         os << "EXPORT_VAR ncclComm_t ncclCommunicator;" << std::endl;
@@ -1181,6 +1185,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
         os << "        throw std::runtime_error(__FILE__\": \" + std::to_string(__LINE__) + \": nccl error \" + std::to_string(error) + \": \" + ncclGetErrorString(error));\\" << std::endl;
         os << "    }\\" << std::endl;
         os << "}" << std::endl;
+    }
+    
+    // If we're using multiple devices, declare array of serialization buffers
+    if (getNumDevices() > 1) {
+        os << "EXPORT_VAR uint8_t *d_SerializationBuffer[" << getNumDevices() << "];" << std::endl;
     }
 
     os << std::endl;
@@ -1483,9 +1492,11 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
             os << "return (n - binomialDistDoubleInternal(rng, n, 1.0 - p));" << std::endl;
         }
     }
+
+   
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
@@ -1524,12 +1535,17 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
         os << std::endl;
     }
 
-    // Generate array of device IDs
+    // Define array of device IDs
     os << "const int deviceIDs[] = {";
     for (const auto d : getDeviceIDs()) {
         os << d << ", ";
     }
     os << "};" << std::endl;
+
+    // If we're using multiple devices, define array of serialization buffers
+    if (getNumDevices() > 1) {
+        os << "uint8_t *d_SerializationBuffer[" << getNumDevices() << "];" << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
@@ -1578,6 +1594,20 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
         os << "CHECK_CUDA_ERRORS(cudaSetDevice(deviceID));" << std::endl;
     }
     os << std::endl;
+
+    // If we're using multiple devices
+    if (getNumDevices() > 1) {
+        // Loop through devices
+        os << "for(int device = 0; device < " << getNumDevices() << "; device++)";
+        {
+            CodeStream::Scope b(os);
+
+            // Select device and allocate serialization buffer
+            genSelectDevice(os);
+            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_SerializationBuffer[device], " << getNumDevices() * modelMerged.getSerializationBufferBytes(*this) << "));" << std::endl;
+        }
+        os << std::endl;
+    }
 }
 //--------------------------------------------------------------------------
 void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
@@ -1585,6 +1615,20 @@ void Backend::genFreeMemPreamble(CodeStream &os, const ModelSpecMerged&) const
     // Free NCCL communicator
     if(getPreferences<Preferences>().enableNCCLReductions) {
         os << "CHECK_NCCL_ERRORS(ncclCommDestroy(ncclCommunicator));" << std::endl;
+    }
+
+    // If we're using multiple devices
+    if (getNumDevices() > 1) {
+        // Loop through devices
+        os << "for(int device = 0; device < " << getNumDevices() << "; device++)";
+        {
+            CodeStream::Scope b(os);
+
+            // Select device and free serialization buffer
+            genSelectDevice(os);
+            os << "CHECK_CUDA_ERRORS(cudaFree(&d_SerializationBuffer[device]));" << std::endl;
+        }
+        os << std::endl;
     }
 }
 //--------------------------------------------------------------------------

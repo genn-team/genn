@@ -32,7 +32,7 @@ enum Kernel
     KernelNeuronSpikeQueueUpdate,
     KernelNeuronPrevSpikeTimeUpdate,
     KernelNeuronSerialize,
-    KernelNeuronDeerialize,
+    KernelNeuronDeserialize,
     KernelSynapseDendriticDelayUpdate,
     KernelCustomUpdate,
     KernelCustomTransposeUpdate,
@@ -185,8 +185,8 @@ protected:
     void genNeuronSpikeQueueUpdateKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
 
     void genNeuronUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genNeuronDeserializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
-    void genNeuronSerializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;
+    void genNeuronDeserializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart, size_t &bufferStart) const;
+    void genNeuronSerializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart, size_t &bufferStart) const;
     
     void genSynapseDendriticDelayUpdateKernel(CodeStream &os, const ModelSpecMerged &modelMerged, size_t &idStart) const;
     void genPresynapticUpdateKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const;

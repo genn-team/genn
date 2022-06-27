@@ -1,5 +1,8 @@
 #include "code_generator/modelSpecMerged.h"
 
+// Standard C++ includes
+#include <numeric>
+
 // GeNN includes
 #include "logging.h"
 #include "modelSpecInternal.h"
@@ -210,6 +213,9 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
             m_PostsynapticDynamicsSupportCode.addSupportCode(sg->getPSModel()->getSupportCode());
         }
     }
+
+    // Loop through neuron serialization groups and assign memory spaces
+    assignGroups(backend, m_MergedNeuronSerializationGroups, memorySpaces);
 
     // Loop through custom update groups and assign memory spaces
     assignGroups(backend, m_MergedCustomUpdateGroups, memorySpaces);
@@ -510,4 +516,13 @@ bool ModelSpecMerged::anyPointerEGPs() const
     }
 
     return false;
+}
+//----------------------------------------------------------------------------
+size_t ModelSpecMerged::getSerializationBufferBytes(const BackendBase &backend) const
+{
+    return std::accumulate(m_MergedNeuronSerializationGroups.cbegin(), m_MergedNeuronSerializationGroups.cend(), size_t{0},
+                           [&backend, this](size_t acc, const NeuronSerializationGroupMerged &g)
+                           {
+                               return acc + g.getBufferBytes(backend, getModel().getBatchSize());
+                           });
 }

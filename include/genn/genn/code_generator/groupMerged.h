@@ -1316,6 +1316,8 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
     
+    static std::string getVarIndex(bool delay, unsigned int batchSize, const std::string &index);
+
 private:
     //----------------------------------------------------------------------------
     // Private methods

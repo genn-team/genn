@@ -1603,11 +1603,16 @@ NeuronSerializationGroupMerged::NeuronSerializationGroupMerged(size_t index, con
         }
     }
     
-    // Return field which advances buffer pointer
+    // Add offset of this group within merged group's section of buffer
     addField("unsigned int", "bufferOffset", 
-             [&backend, &model, this](const NeuronGroupInternal &ng, size_t) 
+             [&backend, &model, this](const NeuronGroupInternal&, size_t i) 
              {
-                 return std::to_string(getBufferBytes(ng, backend, model.getBatchSize())); 
+                 const size_t offset = std::accumulate(getGroups().cbegin(), getGroups().cbegin() + i, size_t{0},
+                                                       [&backend, &model, this](size_t acc, std::reference_wrapper<const NeuronGroupInternal> ng)
+                                                       {
+                                                           return acc + getBufferBytes(ng.get(), backend, model.getBatchSize());
+                                                       });
+                 return std::to_string(offset);
              });
 }
 //----------------------------------------------------------------------------
@@ -1615,10 +1620,20 @@ size_t NeuronSerializationGroupMerged::getBufferBytes(const BackendBase &backend
 {
     // Return sum of buffer bytes required for each element in merged group
     return std::accumulate(getGroups().cbegin(), getGroups().cend(), size_t{0},
-                           [&backend, batchSize, this](size_t acc, std::reference_wrapper<const GroupInternal> ng)
+                           [&backend, batchSize, this](size_t acc, std::reference_wrapper<const NeuronGroupInternal> ng)
                            {
                                return acc + getBufferBytes(ng.get(), backend, batchSize);           
                            });
+}
+//----------------------------------------------------------------------------
+std::string NeuronSerializationGroupMerged::getVarIndex(bool delay, unsigned int batchSize, const std::string &index)
+{
+    if (delay) {
+        return ((batchSize == 1) ? "writeDelayOffset + " : "writeBatchDelayOffset + ") + index;
+    }
+    else {
+        return ((batchSize == 1) ? "" : "batchOffset + ") + index;
+    }
 }
 //----------------------------------------------------------------------------
 size_t NeuronSerializationGroupMerged::getBufferBytes(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const

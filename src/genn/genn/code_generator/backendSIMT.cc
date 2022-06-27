@@ -597,64 +597,161 @@ void BackendSIMT::genNeuronUpdateKernel(CodeStream &os, const Substitutions &ker
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronDeserializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
+void BackendSIMT::genNeuronDeserializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart, size_t &bufferStart) const
 {
     idStart = 0;
     genParallelGroup<NeuronSerializationGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
-        [this](const NeuronGroupInternal &ng) { return padKernelSize(ng.getNumNeurons(), KernelNeuronDeserialize); },
-        [modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
+        [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronDeserialize); },
+        [&bufferStart, &modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
         {
-            genNeuronIndexCalculation(os, ng, modelMerged.getModel().getBatchSize());
+            //genNeuronIndexCalculation(os, ng, modelMerged.getModel().getBatchSize());
             os << std::endl;
 
-            // If we're 
-            // **TODO** here we actually need to look at all neurons
+            // If there is a local neuron for this 
+            // **NOTE** this may actually just be a padding neuron to make populations a multiple of device size but that's ok
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
             {
+                // Loop through devices
                 CodeStream::Scope b(os);
+                os << "for(unsigned int device = 0; device < " << getNumDevices() << "; device++)";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Get pointer to start of this device's serialization buffer
+                    os << "const uint8_t *deviceSerializationBuffer = d_serializationBuffer[(device * " << modelMerged.getSerializationBufferBytes(*this) << ") + " << bufferStart << " + group->bufferOffset];" << std::endl;
+
+                }
             }
+
+            // Update buffer start
+            bufferStart += ng.getBufferBytes(*this, modelMerged.getModel().getBatchSize());
         });
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genNeuronSerializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart) const
-{
-    // If any neuron groups have spikes which need serializing
-    if(std::any_of(modelMerged.getMergedNeuronSerializationGroups().cbegin(), modelMerged.getMergedNeuronSerializationGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isTrueSpikeRequired(); }))
-    {
-        genRecordingSharedMemInit(os, "");
-    }
-
-    // If any neuron groups have spike-like events which need serializing
-    if(std::any_of(modelMerged.getMergedNeuronSerializationGroups().cbegin(), modelMerged.getMergedNeuronSerializationGroups().cend(),
-                   [](const NeuronUpdateGroupMerged &n) { return n.getArchetype().isSpikeEventRequired(); }))
-    {
-        genRecordingSharedMemInit(os, "Evnt");
-    }
-
-    genSharedMemBarrier(os);
-    
+void BackendSIMT::genNeuronSerializationKernel(CodeStream &os, const Substitutions &kernelSubs, const ModelSpecMerged &modelMerged, size_t &idStart, size_t &bufferStart) const
+{   
     idStart = 0;
     genParallelGroup<NeuronSerializationGroupMerged>(
         os, kernelSubs, modelMerged.getMergedNeuronSerializationGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronSerialize); },
-        [modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
+        [&bufferStart, &modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
         {
-            genNeuronIndexCalculation(os, ng, modelMerged.getModel().getBatchSize());
+            //genNeuronIndexCalculation(os, ng, modelMerged.getModel().getBatchSize());
             os << std::endl;
 
+            // Get pointer to start of this device's serialization buffer
+            os << "uint8_t *deviceSerializationBuffer = d_serializationBuffer[(device * " << modelMerged.getSerializationBufferBytes(*this) << ") + " << bufferStart << " + group->bufferOffset];" << std::endl;
+
             // If there is a local neuron for this 
+            const unsigned int batchSize = modelMerged.getModel().getBatchSize();
             os << "if(" << popSubs["id"] << " < group->numNeurons)";
             {
                 CodeStream::Scope b(os);
                 
                 if(ng.getArchetype().isTrueSpikeRequired()) {
+                    // If there is a spike for this thread to process
+                    os << "if(" << popSubs["id"] << " < group->spkCnt[";
+                    if (ng.getArchetype().isDelayRequired()) {
+                        os << "*group->spkQuePtr";
+                        if (batchSize > 1) {
+                            os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                        }
+                    }
+                    else {
+                        os << ((batchSize > 1) ? "batch" : "0");
+                    }
+                    os << "])";
+                    {
+                        const std::string spike = "group->spk[" + ng.getVarIndex(ng.getArchetype().isDelayRequired(), batchSize, popSubs["id"]) + "]";
+                        if (m_KernelBlockSizes[KernelNeuronSerialize] == 32) {
+                            os << getAtomic("unsigned int", AtomicOperation::OR) << "(&shSpkRecord, 1 << " << getThreadID() << ");" << std::endl;
+                        }
+                        else {
+                            os << getAtomic("unsigned int", AtomicOperation::OR) << "(&shSpkRecord[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
+                        }
+                    }
+
+                    /*
                     
                 }
                 if(ng.getArchetype().isSpikeEventRequired()) {
+                    /*if (m_KernelBlockSizes[KernelNeuronSerialize] == 32) {
+                        os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkEvntRecord, 1 << " << getThreadID() << ");" << std::endl;
+                    }
+                    else {
+                        os << getAtomic("unsigned int", AtomicOperation::OR, AtomicMemSpace::SHARED) << "(&shSpkEvntRecord[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
+                    }*/
+                }
+
+                // Loop through variables
+                for (const auto &v : ng.getArchetype().getNeuronModel()->getVars()) {
+                    // If variable needs serializing
+                    if (ng.getArchetype().isVarOutSynAccessRequired(v.name)) {
+                        assert(false);
+                        // Align device serialization buffer
+                        os << "if((deviceSerializationBuffer % sizeof(" << v.type << ")) != 0)";
+                        {
+                            CodeStream::Scope b(os);
+                            os << "deviceSerializationBuffer += (sizeof(" << v.type << ") - (deviceSerializationBuffer % sizeof(" << v.type << ")));" << std::endl;
+                        }
+
+                        // Cast buffer variable type and copy
+                        // **TODO** batching
+                        os << "((" << v.type << "*)deviceSerializationBuffer)[" << popSubs["id"] << "] = l" << v.name << ";" << std::endl;
+
+                        // Advance serialization buffer for next variable
+                        // **TODO** batching
+                        os << "deviceSerializationBuffer += (group->numNeurons * sizeof(" << v.type << "));" << std::endl;
+                    }
                 }
             }
+
+            genSharedMemBarrier(os);
+
+            // If we need to serialize spikes or spike like events, use enough threads to copy this block's recording words
+            if (ng.getArchetype().isSpikeEventRequired() || ng.getArchetype().isTrueSpikeRequired()) {
+                os << "if(" << getThreadID() << " < " << m_KernelBlockSizes[KernelNeuronSerialize] / 32 << ")";
+                {
+                    os << "const unsigned int numRecordingWords = (group->numNeurons + 31) / 32;" << std::endl;
+                    os << "const unsigned int popWordIdx = (" << popSubs["id"] << " / 32) + " << getThreadID() << ";" << std::endl;
+
+                    os << "if(popWordIdx < numRecordingWords)";
+                    {
+                        CodeStream::Scope c(os);
+
+                        // Build global index
+                        std::string globalIndex = "popWordIdx";
+                        if (batchSize > 1) {
+                            globalIndex += " + (batch * numRecordingWords)";
+                        }
+
+                        // If we need to serialize spikes, copy word to correct location in serialization buffer
+                        if (ng.getArchetype().isTrueSpikeRequired()) {
+                            os << "((uint32_t*)deviceSerializationBuffer)[" << globalIndex << "] = shSpkRecord";
+                            if (m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
+                                os << "[" << getThreadID() << "]";
+                            }
+                            os << ";" << std::endl;
+
+                            // Advance buffer
+                            os << "deviceSerializationBuffer += (numRecordingWords * " << batchSize << " * sizeof(uint32_t));" << std::endl;
+                        }
+
+                        // If we need to serialize spike-like events, copy word to correct location in serialization buffer
+                        if (ng.getArchetype().isSpikeEventRequired()) {
+                            os << "((uint32_t*)deviceSerializationBuffer)[" << globalIndex << "] = shSpkEvntRecord";
+                            if (m_KernelBlockSizes[KernelNeuronUpdate] != 32) {
+                                os << "[" << getThreadID() << "]";
+                            }
+                            os << ";" << std::endl;
+                        }
+                    }
+                }
+            }
+
+            // Update buffer start
+            bufferStart += ng.getBufferBytes(*this, batchSize);
         });
 }
 //--------------------------------------------------------------------------
