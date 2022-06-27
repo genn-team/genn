@@ -108,6 +108,7 @@ std::pair<std::vector<std::string>, MemAlloc> generateAll(const ModelSpecInterna
         mem = generateRunner(outputPath, modelMerged, backend);
         generateSynapseUpdate(outputPath, modelMerged, backend);
         generateNeuronUpdate(outputPath, modelMerged, backend);
+        generateNeuronSerialize(outputPath, modelMerged, backend);
         generateCustomUpdate(outputPath, modelMerged, backend);
         generateInit(outputPath, modelMerged, backend);
 

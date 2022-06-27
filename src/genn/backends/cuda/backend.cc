@@ -1067,12 +1067,12 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
     genMergedKernelDataStructures(
         os, totalConstMem,
         modelMerged.getMergedNeuronSerializationGroups(), 
-        [this](const NeuronGroupInternal &ng){ return padKernelSize(ceilDivide(sg.getNumNeurons(), getNumDevices()), KernelNeuronDeserialize); }),
+        [this](const NeuronGroupInternal &ng){ return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronDeserialize); }),
         
     genMergedKernelDataStructures(
         os, totalConstMem,
         modelMerged.getMergedNeuronSerializationGroups(), 
-        [this](const NeuronGroupInternal &sg){ return padKernelSize(ceilDivide(sg.getNumNeurons(), getNumDevices()), KernelNeuronSerialize); });
+        [this](const NeuronGroupInternal &ng){ return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronSerialize); });
     os << std::endl;
 
     // If there are any serialzation groups
@@ -1496,7 +1496,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
    
 }
 //--------------------------------------------------------------------------
-void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerged, const MemAlloc&) const
+void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const MemAlloc&) const
 {
 #ifdef _WIN32
     // **YUCK** on Windows, disable "function assumed not to throw an exception but does" warning
@@ -1505,7 +1505,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged &modelMerg
 #endif
 
      // If NCCL is enabled
-    if(getPreferences<Preferences>().enableNCCLReductions) {
+    if(getNumDevices() > 1 || getPreferences<Preferences>().enableNCCLReductions) {
         // Define NCCL ID and communicator
         os << "ncclUniqueId ncclID;" << std::endl;
         os << "ncclComm_t ncclCommunicator;" << std::endl;

@@ -601,7 +601,7 @@ void BackendSIMT::genNeuronDeserializationKernel(CodeStream &os, const Substitut
 {
     idStart = 0;
     genParallelGroup<NeuronSerializationGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedNeuronUpdateGroups(), idStart,
+        os, kernelSubs, modelMerged.getMergedNeuronSerializationGroups(), idStart,
         [this](const NeuronGroupInternal &ng) { return padKernelSize(ceilDivide(ng.getNumNeurons(), getNumDevices()), KernelNeuronDeserialize); },
         [&bufferStart, &modelMerged, this](CodeStream &os, const NeuronSerializationGroupMerged &ng, Substitutions &popSubs)
         {
@@ -649,26 +649,28 @@ void BackendSIMT::genNeuronSerializationKernel(CodeStream &os, const Substitutio
             {
                 CodeStream::Scope b(os);
                 
-                if(ng.getArchetype().isTrueSpikeRequired()) {
-                    // If there is a spike for this thread to process
-                    os << "if(" << popSubs["id"] << " < group->spkCnt[";
-                    if (ng.getArchetype().isDelayRequired()) {
-                        os << "*group->spkQuePtr";
-                        if (batchSize > 1) {
-                            os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
-                        }
-                    }
-                    else {
-                        os << ((batchSize > 1) ? "batch" : "0");
-                    }
-                    os << "])";
-                    {
-                        const std::string spike = "group->spk[" + ng.getVarIndex(ng.getArchetype().isDelayRequired(), batchSize, popSubs["id"]) + "]";
-                        if (m_KernelBlockSizes[KernelNeuronSerialize] == 32) {
-                            os << getAtomic("unsigned int", AtomicOperation::OR) << "(&shSpkRecord, 1 << " << getThreadID() << ");" << std::endl;
+                if(ng.getArchetype().isTrueSpikeRequired() || ng.getArchetype().isSpikeEventRequired()) {
+                    if(ng.getArchetype().isTrueSpikeRequired()) {
+                        // If there is a spike for this thread to process
+                        os << "if(" << popSubs["id"] << " < group->spkCnt[";
+                        if (ng.getArchetype().isDelayRequired()) {
+                            os << "*group->spkQuePtr";
+                            if (batchSize > 1) {
+                                os << " + (batch * " << ng.getArchetype().getNumDelaySlots() << ")";
+                            }
                         }
                         else {
-                            os << getAtomic("unsigned int", AtomicOperation::OR) << "(&shSpkRecord[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
+                            os << ((batchSize > 1) ? "batch" : "0");
+                        }
+                        os << "])";
+                        {
+                            const std::string spike = "group->spk[" + ng.getVarIndex(ng.getArchetype().isDelayRequired(), batchSize, popSubs["id"]) + "]";
+                            if (m_KernelBlockSizes[KernelNeuronSerialize] == 32) {
+                                os << getAtomic("unsigned int", AtomicOperation::OR) << "(&shSpkRecord, 1 << " << getThreadID() << ");" << std::endl;
+                            }
+                            else {
+                                os << getAtomic("unsigned int", AtomicOperation::OR) << "(&shSpkRecord[" << getThreadID() << " / 32], 1 << (" << getThreadID() << " % 32));" << std::endl;
+                            }
                         }
                     }
 
