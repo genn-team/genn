@@ -1610,19 +1610,19 @@ NeuronSerializationGroupMerged::NeuronSerializationGroupMerged(size_t index, con
                  const size_t offset = std::accumulate(getGroups().cbegin(), getGroups().cbegin() + i, size_t{0},
                                                        [&backend, &model, this](size_t acc, std::reference_wrapper<const NeuronGroupInternal> ng)
                                                        {
-                                                           return acc + getBufferBytes(ng.get(), backend, model.getBatchSize());
+                                                           return acc + getBufferWords(ng.get(), backend, model.getBatchSize());
                                                        });
                  return std::to_string(offset);
              });
 }
 //----------------------------------------------------------------------------
-size_t NeuronSerializationGroupMerged::getBufferBytes(const BackendBase &backend, unsigned int batchSize) const
+size_t NeuronSerializationGroupMerged::getBufferWords(const BackendBase &backend, unsigned int batchSize) const
 {
     // Return sum of buffer bytes required for each element in merged group
     return std::accumulate(getGroups().cbegin(), getGroups().cend(), size_t{0},
                            [&backend, batchSize, this](size_t acc, std::reference_wrapper<const NeuronGroupInternal> ng)
                            {
-                               return acc + getBufferBytes(ng.get(), backend, batchSize);           
+                               return acc + getBufferWords(ng.get(), backend, batchSize);           
                            });
 }
 //----------------------------------------------------------------------------
@@ -1636,21 +1636,21 @@ std::string NeuronSerializationGroupMerged::getVarIndex(bool delay, unsigned int
     }
 }
 //----------------------------------------------------------------------------
-size_t NeuronSerializationGroupMerged::getBufferBytes(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const
+size_t NeuronSerializationGroupMerged::getBufferWords(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const
 {
     // Calculate neurons per-device
     const unsigned neuronsPerDevice = ceilDivide(ng.getNumNeurons(), backend.getNumDevices());
     
     // Calculate how many words will be required for spike bitfields
-    const size_t spikeBytes = ceilDivide(neuronsPerDevice, 32) * batchSize * sizeof(uint32_t);
+    const size_t spikeWords = ceilDivide(neuronsPerDevice, 32) * batchSize;
     
     // Add size of spike buffers for spikes and spike-like-events if required
-    size_t bufferBytes = 0;
+    size_t bufferWords = 0;
     if(ng.isTrueSpikeRequired()) {
-        bufferBytes += spikeBytes;
+        bufferWords += spikeWords;
     }
     if(ng.isSpikeEventRequired()) {
-        bufferBytes += spikeBytes;
+        bufferWords += spikeWords;
     }
     
     // Loop through variables
@@ -1658,9 +1658,9 @@ size_t NeuronSerializationGroupMerged::getBufferBytes(const NeuronGroupInternal 
     for(const auto &v : vars) {
         // If this variable is accessed by outgoing synapse code, add enough bytes 
         if(ng.isVarOutSynAccessRequired(v.name)) {
-            bufferBytes += backend.getSize(v.type) * neuronsPerDevice;
+            bufferWords += ceilDivide(backend.getSize(v.type) * neuronsPerDevice, sizeof(uint32_t));
         }
     }
     
-    return bufferBytes;
+    return bufferWords;
 }

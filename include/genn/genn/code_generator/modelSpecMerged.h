@@ -220,7 +220,7 @@ public:
     bool anyPointerEGPs() const;
 
     //! Get total size of serialization buffer
-    size_t getSerializationBufferBytes(const BackendBase &backend) const;
+    size_t getSerializationBufferWords(const BackendBase &backend) const;
 
     //! Get the map of destinations within the merged data structures for a particular extra global parameter
     const MergedEGPDestinations &getMergedEGPDestinations(const std::string &name, const BackendBase &backend) const

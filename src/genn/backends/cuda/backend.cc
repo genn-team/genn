@@ -1082,7 +1082,7 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
     size_t bufferSeserializeStart = 0;
     if(!modelMerged.getMergedNeuronSerializationGroups().empty()) {
         // Deserialization kernel code
-        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronDeserialize] << "(uint8_t *d_serializationBuffer)";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronDeserialize] << "(uint32_t *d_serializationBuffer)";
         {
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
@@ -1094,7 +1094,7 @@ void Backend::genNeuronSerialization(CodeStream &os, const ModelSpecMerged &mode
         }
         
         // Deserialization kernel code
-        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSerialize] << "(unsigned int device, uint8_t *d_serializationBuffer)";
+        os << "extern \"C\" __global__ void " << KernelNames[KernelNeuronSerialize] << "(unsigned int device, uint32_t *d_serializationBuffer)";
         {
             Substitutions kernelSubs(getFunctionTemplates(model.getPrecision()));
 
@@ -1189,7 +1189,7 @@ void Backend::genDefinitionsInternalPreamble(CodeStream &os, const ModelSpecMerg
     
     // If we're using multiple devices, declare array of serialization buffers
     if (getNumDevices() > 1) {
-        os << "EXPORT_VAR uint8_t *d_SerializationBuffer[" << getNumDevices() << "];" << std::endl;
+        os << "EXPORT_VAR uint32_t *d_SerializationBuffer[" << getNumDevices() << "];" << std::endl;
     }
 
     os << std::endl;
@@ -1544,7 +1544,7 @@ void Backend::genRunnerPreamble(CodeStream &os, const ModelSpecMerged&, const Me
 
     // If we're using multiple devices, define array of serialization buffers
     if (getNumDevices() > 1) {
-        os << "uint8_t *d_SerializationBuffer[" << getNumDevices() << "];" << std::endl;
+        os << "uint32_t *d_SerializationBuffer[" << getNumDevices() << "];" << std::endl;
     }
 }
 //--------------------------------------------------------------------------
@@ -1604,7 +1604,7 @@ void Backend::genAllocateMemPreamble(CodeStream &os, const ModelSpecMerged &mode
 
             // Select device and allocate serialization buffer
             genSelectDevice(os);
-            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_SerializationBuffer[device], " << getNumDevices() * modelMerged.getSerializationBufferBytes(*this) << "));" << std::endl;
+            os << "CHECK_CUDA_ERRORS(cudaMalloc(&d_SerializationBuffer[device], " << getNumDevices() * modelMerged.getSerializationBufferWords(*this) << "));" << std::endl;
         }
         os << std::endl;
     }

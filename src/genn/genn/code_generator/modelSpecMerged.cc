@@ -518,11 +518,11 @@ bool ModelSpecMerged::anyPointerEGPs() const
     return false;
 }
 //----------------------------------------------------------------------------
-size_t ModelSpecMerged::getSerializationBufferBytes(const BackendBase &backend) const
+size_t ModelSpecMerged::getSerializationBufferWords(const BackendBase &backend) const
 {
     return std::accumulate(m_MergedNeuronSerializationGroups.cbegin(), m_MergedNeuronSerializationGroups.cend(), size_t{0},
                            [&backend, this](size_t acc, const NeuronSerializationGroupMerged &g)
                            {
-                               return acc + g.getBufferBytes(backend, getModel().getBatchSize());
+                               return acc + g.getBufferWords(backend, getModel().getBatchSize());
                            });
 }

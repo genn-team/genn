@@ -1309,7 +1309,7 @@ public:
     }
     
     //! Get number of bytes this merged group will require
-    size_t getBufferBytes(const BackendBase &backend, unsigned int batchSize) const;
+    size_t getBufferWords(const BackendBase &backend, unsigned int batchSize) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -1322,6 +1322,6 @@ private:
     //----------------------------------------------------------------------------
     // Private methods
     //----------------------------------------------------------------------------
-    size_t getBufferBytes(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const;
+    size_t getBufferWords(const NeuronGroupInternal &ng, const BackendBase &backend, unsigned int batchSize) const;
 };
 }   // namespace CodeGenerator

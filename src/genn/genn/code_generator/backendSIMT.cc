@@ -619,13 +619,13 @@ void BackendSIMT::genNeuronDeserializationKernel(CodeStream &os, const Substitut
                     CodeStream::Scope b(os);
 
                     // Get pointer to start of this device's serialization buffer
-                    os << "const uint8_t *deviceSerializationBuffer = d_serializationBuffer[(device * " << modelMerged.getSerializationBufferBytes(*this) << ") + " << bufferStart << " + group->bufferOffset];" << std::endl;
+                    os << "const uint32_t *deviceSerializationBuffer = d_serializationBuffer[(device * " << modelMerged.getSerializationBufferWords(*this) << ") + " << bufferStart << " + group->bufferOffset];" << std::endl;
 
                 }
             }
 
             // Update buffer start
-            bufferStart += ng.getBufferBytes(*this, modelMerged.getModel().getBatchSize());
+            bufferStart += ng.getBufferWords(*this, modelMerged.getModel().getBatchSize());
         });
 }
 //--------------------------------------------------------------------------
@@ -641,7 +641,7 @@ void BackendSIMT::genNeuronSerializationKernel(CodeStream &os, const Substitutio
             os << std::endl;
 
             // Get pointer to start of this device's serialization buffer
-            os << "uint8_t *deviceSerializationBuffer = d_serializationBuffer[(device * " << modelMerged.getSerializationBufferBytes(*this) << ") + " << bufferStart << " + group->bufferOffset];" << std::endl;
+            os << "uint32_t *deviceSerializationBuffer = d_serializationBuffer[(device * " << modelMerged.getSerializationBufferWords(*this) << ") + " << bufferStart << " + group->bufferOffset];" << std::endl;
 
             // If there is a local neuron for this 
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
@@ -753,7 +753,7 @@ void BackendSIMT::genNeuronSerializationKernel(CodeStream &os, const Substitutio
             }
 
             // Update buffer start
-            bufferStart += ng.getBufferBytes(*this, batchSize);
+            bufferStart += ng.getBufferWords(*this, batchSize);
         });
 }
 //--------------------------------------------------------------------------
