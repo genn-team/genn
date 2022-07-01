@@ -1498,7 +1498,8 @@ class CustomUpdate(Group):
         # If this is a custom weight update
         if self.custom_wu_update:
             # Assert that population has individual synapse variables
-            assert self._synapse_group.has_individual_synapse_vars
+            assert (self._synapse_group.has_individual_synapse_vars or
+                    self._synapse_group.has_kernel_synapse_vars)
 
             # Loop through state variables
             for v in self.custom_update_model.get_vars():
@@ -1545,7 +1546,8 @@ class CustomUpdate(Group):
         # If this is a custom weight update
         if self.custom_wu_update:
             # Assert that population has individual synapse variables
-            assert self._synapse_group.has_individual_synapse_vars
+            assert (self._synapse_group.has_individual_synapse_vars or
+                    self._synapse_group.has_kernel_synapse_vars)
 
             # Loop through custom update state variables
             for v in self.custom_update_model.get_vars():
