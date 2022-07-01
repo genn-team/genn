@@ -95,19 +95,19 @@ private:
 
 
 //----------------------------------------------------------------------------
-// CodeGenerator::SynapseDenseInitGroupMerged
+// CodeGenerator::SynapseInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT SynapseDenseInitGroupMerged : public SynapseGroupMergedBase
+class GENN_EXPORT SynapseInitGroupMerged : public SynapseGroupMergedBase
 {
 public:
-    SynapseDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
+    SynapseInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::DenseInit, "", groups)
+    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::Init, "", groups)
     {}
 
     boost::uuids::detail::sha1::digest_type getHashDigest() const
     {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::DenseInit);
+        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::Init);
     }
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
@@ -157,39 +157,6 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-
-//----------------------------------------------------------------------------
-// CodeGenerator::SynapseKernelInitGroupMerged
-//----------------------------------------------------------------------------
-class GENN_EXPORT SynapseKernelInitGroupMerged : public SynapseGroupMergedBase
-{
-public:
-    SynapseKernelInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend, 
-                                 const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
-    :   SynapseGroupMergedBase(index, precision, timePrecision, backend, SynapseGroupMergedBase::Role::KernelInit, "", groups)
-    {}
-
-    boost::uuids::detail::sha1::digest_type getHashDigest() const
-    {
-        return SynapseGroupMergedBase::getHashDigest(SynapseGroupMergedBase::Role::KernelInit);
-    }
-
-    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
-                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
-                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
-    {
-        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                           runnerVarDecl, runnerMergedStructAlloc, name);
-    }
-
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
-
-    //----------------------------------------------------------------------------
-    // Static constants
-    //----------------------------------------------------------------------------
-    static const std::string name;
-};
-
 
 // ----------------------------------------------------------------------------
 // CodeGenerator::SynapseConnectivityInitGroupMerged
@@ -357,13 +324,13 @@ public:
 
 
 // ----------------------------------------------------------------------------
-// CodeGenerator::CustomWUUpdateDenseInitGroupMerged
+// CodeGenerator::CustomWUUpdateInitGroupMerged
 //----------------------------------------------------------------------------
-class GENN_EXPORT CustomWUUpdateDenseInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>
+class GENN_EXPORT CustomWUUpdateInitGroupMerged : public CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>
 {
 public:
-    CustomWUUpdateDenseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
-                                       const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
+    CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                  const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups);
 
     //----------------------------------------------------------------------------
     // Public API
@@ -380,10 +347,37 @@ public:
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
+    //! Is kernel size heterogeneous in this dimension?
+    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
+    {
+        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
+    }
+
+    //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
+    std::string getKernelSize(size_t dimensionIndex) const
+    {
+        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
+    }
+
+    //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
+    void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const
+    {
+        return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
+    }
+
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
     static const std::string name;
+
+private:
+    //----------------------------------------------------------------------------
+    // Private static methods
+    //----------------------------------------------------------------------------
+    static const std::vector<unsigned int> &getGroupKernelSize(const CustomUpdateWUInternal &g)
+    {
+        return g.getSynapseGroup()->getKernelSize();
+    }
 };
 
 // ----------------------------------------------------------------------------
@@ -415,5 +409,4 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
-
 }   // namespace CodeGenerator

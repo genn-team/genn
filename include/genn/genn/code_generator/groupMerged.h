@@ -1049,13 +1049,22 @@ public:
     bool isTrgNeuronDerivedParamHeterogeneous(size_t paramIndex) const;
 
     //! Is kernel size heterogeneous in this dimension?
-    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const;
+    bool isKernelSizeHeterogeneous(size_t dimensionIndex) const
+    {
+        return CodeGenerator::isKernelSizeHeterogeneous(this, dimensionIndex, getGroupKernelSize);
+    }
     
     //! Get expression for kernel size in dimension (may be literal or group->kernelSizeXXX)
-    std::string getKernelSize(size_t dimensionIndex) const;
+    std::string getKernelSize(size_t dimensionIndex) const
+    {
+        return CodeGenerator::getKernelSize(this, dimensionIndex, getGroupKernelSize);
+    }
     
     //! Generate an index into a kernel based on the id_kernel_XXX variables in subs
-    void genKernelIndex(std::ostream &os, const CodeGenerator::Substitutions &subs) const;
+    void genKernelIndex(std::ostream& os, const CodeGenerator::Substitutions& subs) const
+    {
+        return CodeGenerator::genKernelIndex(this, os, subs, getGroupKernelSize);
+    }
 
     std::string getPreSlot(unsigned int batchSize) const;
     std::string getPostSlot(unsigned int batchSize) const;
@@ -1113,9 +1122,8 @@ protected:
         PresynapticUpdate,
         PostsynapticUpdate,
         SynapseDynamics,
-        DenseInit,
+        Init,
         SparseInit,
-        KernelInit,
         ConnectivityInit,
     };
 
@@ -1177,6 +1185,11 @@ private:
 
     //! Is postsynaptic neuron derived parameter referenced?
     bool isTrgNeuronDerivedParamReferenced(size_t paramIndex) const;
+
+    static const std::vector<unsigned int>& getGroupKernelSize(const SynapseGroupInternal& g)
+    {
+        return g.getKernelSize();
+    }
 
     //------------------------------------------------------------------------
     // Members

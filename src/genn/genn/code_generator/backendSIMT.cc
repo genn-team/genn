@@ -28,7 +28,7 @@ size_t getNumMergedGroupThreads(const std::vector<T> &groups, G getNumThreads)
         });
     });
 }
-}
+}   // Anonymous namespace
 
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendSIMT
@@ -82,11 +82,22 @@ void BackendSIMT::genVariableInit(CodeStream &os, const std::string &, const std
     handler(os, varSubs);
 }
 //--------------------------------------------------------------------------
-void BackendSIMT::genKernelSynapseVariableInit(CodeStream &os, const SynapseKernelInitGroupMerged &, const Substitutions &kernelSubs, Handler handler) const
+void BackendSIMT::genKernelSynapseVariableInit(CodeStream &os, const SynapseInitGroupMerged &, const Substitutions &kernelSubs, Handler handler) const
 {
     // Variable should already be provided via parallelism
     assert(kernelSubs.hasVarSubstitution("id"));
     
+    Substitutions varSubs(&kernelSubs);
+    varSubs.addVarSubstitution("id_syn", varSubs["id"]);
+
+    handler(os, varSubs);
+}
+//--------------------------------------------------------------------------
+void BackendSIMT::genKernelCustomUpdateVariableInit(CodeStream &os, const CustomWUUpdateInitGroupMerged&, const Substitutions &kernelSubs, Handler handler) const
+{
+    // Variable should already be provided via parallelism
+    assert(kernelSubs.hasVarSubstitution("id"));
+
     Substitutions varSubs(&kernelSubs);
     varSubs.addVarSubstitution("id_syn", varSubs["id"]);
 
@@ -144,32 +155,25 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
                                                    return padKernelSize(cg.getSize(), KernelInitialize);
                                                });
     
-    // Add on total number of threads used for custom WU update groups with dense connectivity
-    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedCustomWUUpdateDenseInitGroups(),
+    // Add on total number of threads used for custom WU update initialization
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedCustomWUUpdateInitGroups(),
                                                [this](const CustomUpdateWUInternal &cg)
                                                {
-                                                   return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize);
+                                                   return padKernelSize(getNumInitThreads(cg), KernelInitialize);
                                                });
     
-    // Add on total number of threads used for dense synapse initialisation
-    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseDenseInitGroups(),
+    // Add on total number of threads used for synapse initialisation
+    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseInitGroups(),
                                                [this](const SynapseGroupInternal &sg)
                                                {
-                                                   return padKernelSize(sg.getTrgNeuronGroup()->getNumNeurons(), KernelInitialize);
-                                               });
-    
-    // Add on total number of threads used for kernel synapse initialisation
-    numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseKernelInitGroups(),
-                                               [this](const SynapseGroupInternal &sg)
-                                               {
-                                                   return padKernelSize(sg.getKernelSizeFlattened(), KernelInitialize);
+                                                   return padKernelSize(getNumInitThreads(sg), KernelInitialize);
                                                });
 
     // Add on total number of threads used for synapse connectivity initialisation
     numInitThreads += getNumMergedGroupThreads(modelMerged.getMergedSynapseConnectivityInitGroups(),
                                                [this](const SynapseGroupInternal &sg)
                                                {
-                                                   return padKernelSize(sg.getSrcNeuronGroup()->getNumNeurons(), KernelInitialize);
+                                                   return padKernelSize(getNumConnectivityInitThreads(sg), KernelInitialize);
                                                });
 
     // Add on total number of threads used for sparse synapse initialisation
@@ -199,13 +203,11 @@ size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUIntern
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
     const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
 
-    if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        // **THINK** like for synapse dynamics kernels, this isn't really correct but correct value isn't known
-        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections(),
-                                         KernelCustomUpdate);
+    if(sgInternal->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        return numCopies * padKernelSize(sgInternal->getKernelSizeFlattened(), KernelCustomUpdate);
     }
     else {
-        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getTrgNeuronGroup()->getNumNeurons(),
+        return numCopies * padKernelSize((size_t)sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections(),
                                          KernelCustomUpdate);
     }
 }
@@ -260,6 +262,26 @@ size_t BackendSIMT::getNumConnectivityInitThreads(const SynapseGroupInternal &sg
     // Otherwise, give an error
     else {
         throw std::runtime_error("Cannot calculate number of connectivity init threads without connectivity building code");
+    }
+}
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getNumInitThreads(const SynapseGroupInternal &sg)
+{
+    if (sg.getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        return sg.getKernelSizeFlattened();
+    }
+    else {
+        return sg.getTrgNeuronGroup()->getNumNeurons();
+    }
+}
+//--------------------------------------------------------------------------
+size_t BackendSIMT::getNumInitThreads(const CustomUpdateWUInternal &cg)
+{
+    if (cg.getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        return cg.getSynapseGroup()->getKernelSizeFlattened();
+    }
+    else {
+        return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons();
     }
 }
 //--------------------------------------------------------------------------
@@ -944,11 +966,25 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
         [&updateGroup](const CustomUpdateWUGroupMerged &cg) { return  (cg.getArchetype().getUpdateGroupName() == updateGroup); },
         [&modelMerged, this](CodeStream &os, const CustomUpdateWUGroupMerged &cg, Substitutions &popSubs)
         {
+            const SynapseGroupInternal *sg = cg.getArchetype().getSynapseGroup();
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
-            // Calculate number of threads for update
-            os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
+            // Calculate size of each batch to update
+            if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                // Loop through kernel dimensions and multiply together
+                os << "const unsigned int size = ";
+                for (size_t i = 0; i < sg->getKernelSize().size(); i++) {
+                    os << cg.getKernelSize(i);
+                    if (i != (sg->getKernelSize().size() - 1)) {
+                        os << " * ";
+                    }
+                }
+                os << ";" << std::endl;
+            }
+            else {
+                os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
+            }
 
             // If update isn't a reduction
             Substitutions cuSubs(&popSubs);
@@ -975,32 +1011,34 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
             }
 
-            if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                os << "if (" << cuSubs["id"] << " < (group->numSrcNeurons * group->rowStride))";
-            }
-            else {
-                os << "if (" << cuSubs["id"] << " < size)";
-            }
+            // if this isn't a padding thread
+            os << "if (" << cuSubs["id"] << " < size)";
             {
                 CodeStream::Scope b(os);
 
-                if(cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-                    // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    os << "const unsigned int row = " << cuSubs["id"] << " / group->rowStride;" << std::endl;
-                    os << "const unsigned int col = " << cuSubs["id"] << " % group->rowStride;" << std::endl;
-
-                    cuSubs.addVarSubstitution("id_pre", "row");
-                    cuSubs.addVarSubstitution("id_post", "group->ind[" + cuSubs["id"] + "]");
+                if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
                     cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
-
-                    os << "if(col < group->rowLength[row])";
-                    os << CodeStream::OB(2);
+                    cuSubs.addVarSubstitution("id_kernel", cuSubs["id"]);
                 }
                 else {
-                    // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
-                    cuSubs.addVarSubstitution("id_pre", "(" + cuSubs["id"] + " / group->rowStride)");
-                    cuSubs.addVarSubstitution("id_post", "(" + cuSubs["id"] + " % group->rowStride)");
-                    cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+                    if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                        // **OPTIMIZE * *we can do a fast constant divide optimization here and use the result to calculate the remainder
+                        os << "const unsigned int row = " << cuSubs["id"] << " / group->rowStride;" << std::endl;
+                        os << "const unsigned int col = " << cuSubs["id"] << " % group->rowStride;" << std::endl;
+
+                        cuSubs.addVarSubstitution("id_pre", "row");
+                        cuSubs.addVarSubstitution("id_post", "group->ind[" + cuSubs["id"] + "]");
+                        cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+
+                        os << "if(col < group->rowLength[row])";
+                        os << CodeStream::OB(2);
+                    }
+                    else {
+                        // **OPTIMIZE** we can do a fast constant divide optimization here and use the result to calculate the remainder
+                        cuSubs.addVarSubstitution("id_pre", "(" + cuSubs["id"] + " / group->rowStride)");
+                        cuSubs.addVarSubstitution("id_post", "(" + cuSubs["id"] + " % group->rowStride)");
+                        cuSubs.addVarSubstitution("id_syn", cuSubs["id"]);
+                    }
                 }
 
                 // Initialise reduction targets
@@ -1039,7 +1077,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                     }
                 }
 
-                if (cg.getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+                if (sg->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                     os << CodeStream::CB(2);
                 }
             }
@@ -1211,6 +1249,18 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
+    os << "// Synapse groups" << std::endl;
+    genParallelGroup<SynapseInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedSynapseInitGroups(), idStart,
+        [this](const SynapseGroupInternal &sg) { return padKernelSize(getNumInitThreads(sg), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const SynapseInitGroupMerged &sg, Substitutions &popSubs)
+        {
+            genSynapseVarInit(os, modelMerged, sg, popSubs, sg.getArchetype().isWUInitRNGRequired(), 
+                              (sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL), sg.getArchetype().getKernelSize().size());
+        });
+    os << std::endl;
+
+    os << "// ------------------------------------------------------------------------" << std::endl;
     os << "// Custom update groups" << std::endl;
     genParallelGroup<CustomUpdateInitGroupMerged>(
         os, kernelSubs, modelMerged.getMergedCustomUpdateInitGroups(), idStart,
@@ -1235,113 +1285,15 @@ void BackendSIMT::genInitializeKernel(CodeStream &os, const Substitutions &kerne
     os << std::endl;
 
     os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Custom WU update groups with dense connectivity" << std::endl;
-    genParallelGroup<CustomWUUpdateDenseInitGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedCustomWUUpdateDenseInitGroups(), idStart,
-        [this](const CustomUpdateWUInternal &cg) { return padKernelSize(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        [&modelMerged, this](CodeStream &os, const CustomWUUpdateDenseInitGroupMerged &cg, Substitutions &popSubs)
+    os << "// Custom WU update groups" << std::endl;
+    genParallelGroup<CustomWUUpdateInitGroupMerged>(
+        os, kernelSubs, modelMerged.getMergedCustomWUUpdateInitGroups(), idStart,
+        [this](const CustomUpdateWUInternal &cg) { return padKernelSize(getNumInitThreads(cg), KernelInitialize); },
+        [&modelMerged, this](CodeStream &os, const CustomWUUpdateInitGroupMerged &cg, Substitutions &popSubs)
         {
-            os << "// only do this for existing postsynaptic neurons" << std::endl;
-            os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
-            {
-                CodeStream::Scope b(os);
-                // If this post synapse requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(cg.getArchetype().isInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-
-                popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                cg.generateInit(*this, os, modelMerged, popSubs);
-            }
-        });
-    os << std::endl;
-
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Synapse groups with dense connectivity" << std::endl;
-    genParallelGroup<SynapseDenseInitGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedSynapseDenseInitGroups(), idStart,
-        [this](const SynapseGroupInternal &sg) { return padKernelSize(sg.getTrgNeuronGroup()->getNumNeurons(), KernelInitialize); },
-        [&modelMerged, this](CodeStream &os, const SynapseDenseInitGroupMerged &sg, Substitutions &popSubs)
-        {
-            os << "// only do this for existing postsynaptic neurons" << std::endl;
-            os << "if(" << popSubs["id"] << " < group->numTrgNeurons)";
-            {
-                CodeStream::Scope b(os);
-                // If this post synapse requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(sg.getArchetype().isWUInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-
-                popSubs.addVarSubstitution("id_post", popSubs["id"]);
-                sg.generateInit(*this, os, modelMerged, popSubs);
-            }
-        });
-    os << std::endl;
-    
-    os << "// ------------------------------------------------------------------------" << std::endl;
-    os << "// Synapse groups with kernel connectivity" << std::endl;
-    genParallelGroup<SynapseKernelInitGroupMerged>(
-        os, kernelSubs, modelMerged.getMergedSynapseKernelInitGroups(), idStart,
-        [this](const SynapseGroupInternal &sg) { return padKernelSize(sg.getKernelSizeFlattened(), KernelInitialize); },
-        [&modelMerged, this](CodeStream &os, const SynapseKernelInitGroupMerged &sg, Substitutions &popSubs)
-        {
-            os << "// only do this for existing kernel entries" << std::endl;
-            os << "if(" << popSubs["id"] << " < (";
-            const auto &kernelSize = sg.getArchetype().getKernelSize();
-            
-            // Loop through kernel dimensions and multiply together
-            for(size_t i = 0; i < kernelSize.size(); i++) {
-                os << sg.getKernelSize(i);
-                
-                if(i != (kernelSize.size() - 1)) {
-                    os << " * ";
-                }
-            }
-            os << "))";
-            {
-                CodeStream::Scope b(os);
-                // If this post synapse requires an RNG for initialisation,
-                // make copy of global phillox RNG and skip ahead by thread id
-                // **NOTE** not LOCAL id
-                if(sg.getArchetype().isWUInitRNGRequired()) {
-                    genGlobalRNGSkipAhead(os, popSubs, "id");
-                }
-                
-                // Loop through kernel dimensions to generate seperate indices
-                for(size_t i = 0; i < kernelSize.size(); i++) {
-                    os << "const unsigned int kernelID" << i << " = (" << popSubs["id"];
-                    
-                    // If this isn't the last dimension
-                    if(i < (kernelSize.size() - 1)) {
-                        // Loop backwards through other kernel and generate code to divide by product of subsequent dimensions
-                        os << " / (";
-                        for(size_t j = (kernelSize.size() - 1); j > i; j--) {
-                            os << sg.getKernelSize(j);
-                            
-                            if(j != (i + 1)) {
-                                os << " * ";
-                            }
-                        }
-                        os << ")";
-                    }
-                    os << ")";
-                    
-                    // If this isn't the first dimension, take modulus of kernel size
-                    if (i > 0) {
-                        os << " % " << sg.getKernelSize(i);
-                    }
-                    
-                    os << ";" << std::endl;
-                    
-                    // Add substitution
-                    popSubs.addVarSubstitution("id_kernel_" + std::to_string(i), "kernelID" + std::to_string(i));
-                }
-                sg.generateInit(*this, os, modelMerged, popSubs);
-            }
+            const SynapseGroup *sg = cg.getArchetype().getSynapseGroup();
+            genSynapseVarInit(os, modelMerged, cg, popSubs, cg.getArchetype().isInitRNGRequired(), 
+                              (sg->getMatrixType() & SynapseMatrixWeight::KERNEL), sg->getKernelSize().size());
         });
     os << std::endl;
 
@@ -1517,71 +1469,29 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
                 genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
             }
 
-            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
-            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
-            os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
-
-            os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
-
-            // Loop through blocks
-            os << "for(unsigned int r = 0; r < numBlocks; r++)";
-            {
-                CodeStream::Scope b(os);
-
-                // Calculate number of rows to process in this block
-                os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
-                os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
-                os << " : " << blockSize << ";" << std::endl;
-
-                // Use threads to copy block of sparse structure into shared memory
-                genSharedMemBarrier(os);
-                os << "if (" << getThreadID() << " < numRowsInBlock)";
+            // Generate sparse synapse variable initialisation code
+            genSparseSynapseVarInit<SynapseSparseInitGroupMerged>(
+                os, modelMerged, sg, popSubs, sg.getArchetype().isWUVarInitRequired(), 
+                [this](CodeStream &os, const SynapseSparseInitGroupMerged &sg, Substitutions&)
                 {
-                    CodeStream::Scope b(os);
-                    os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
-                }
-                genSharedMemBarrier(os);
-
-                // Loop through rows
-                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // If there is a synapse for this thread to initialise
-                    os << "if(" << popSubs["id"] << " < shRowLength[i])";
-                    {
+                    // If postsynaptic learning is required
+                    if(!sg.getArchetype().getWUModel()->getLearnPostCode().empty()) {
                         CodeStream::Scope b(os);
 
-                        // Generate sparse initialisation code
-                        if(sg.getArchetype().isWUVarInitRequired()) {
-                            popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
-                            popSubs.addVarSubstitution("id_post", "group->ind[idx]");
-                            sg.generateInit(*this, os, modelMerged, popSubs);
-                        }
+                        // Extract index of synapse's postsynaptic target
+                        os << "const unsigned int postIndex = group->ind[idx];" << std::endl;
 
-                        // If postsynaptic learning is required
-                        if(!sg.getArchetype().getWUModel()->getLearnPostCode().empty()) {
-                            CodeStream::Scope b(os);
+                        // Atomically increment length of column of connectivity associated with this target
+                        // **NOTE** this returns previous length i.e. where to insert new entry
+                        os << "const unsigned int colLocation = " << getAtomic("unsigned int") << "(&group->colLength[postIndex], 1);" << std::endl;
 
-                            // Extract index of synapse's postsynaptic target
-                            os << "const unsigned int postIndex = group->ind[idx];" << std::endl;
+                        // From this calculate index into column-major matrix
+                        os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
 
-                            // Atomically increment length of column of connectivity associated with this target
-                            // **NOTE** this returns previous length i.e. where to insert new entry
-                            os << "const unsigned int colLocation = " << getAtomic("unsigned int") << "(&group->colLength[postIndex], 1);" << std::endl;
-
-                            // From this calculate index into column-major matrix
-                            os << "const unsigned int colMajorIndex = (postIndex * group->colStride) + colLocation;" << std::endl;
-
-                            // Add remapping entry at this location poining back to row-major index
-                            os << "group->remap[colMajorIndex] = idx;" << std::endl;
-                        }
+                        // Add remapping entry at this location poining back to row-major index
+                        os << "group->remap[colMajorIndex] = idx;" << std::endl;
                     }
-
-                    // If matrix is ragged, advance index to next row by adding stride
-                    os << "idx += group->rowStride;" << std::endl;
-                }
-            }
+                });
         });
 
     // Initialise weight update variables for synapse groups with sparse connectivity
@@ -1595,53 +1505,11 @@ void BackendSIMT::genInitializeSparseKernel(CodeStream &os, const Substitutions 
             if(cg.getArchetype().isInitRNGRequired()) {
                 genGlobalRNGSkipAhead(os, popSubs, std::to_string(numInitializeThreads) + " + id");
             }
-
-            // Calculate how many blocks rows need to be processed in (in order to store row lengths in shared memory)
-            const size_t blockSize = getKernelBlockSize(KernelInitializeSparse);
-            os << "const unsigned int numBlocks = (group->numSrcNeurons + " << blockSize << " - 1) / " << blockSize << ";" << std::endl;
-
-            os << "unsigned int idx = " << popSubs["id"] << ";" << std::endl;
-
-            // Loop through blocks
-            os << "for(unsigned int r = 0; r < numBlocks; r++)";
-            {
-                CodeStream::Scope b(os);
-
-                // Calculate number of rows to process in this block
-                os << "const unsigned numRowsInBlock = (r == (numBlocks - 1))";
-                os << " ? ((group->numSrcNeurons - 1) % " << blockSize << ") + 1";
-                os << " : " << blockSize << ";" << std::endl;
-
-                // Use threads to copy block of sparse structure into shared memory
-                genSharedMemBarrier(os);
-                os << "if (" << getThreadID() << " < numRowsInBlock)";
-                {
-                    CodeStream::Scope b(os);
-                    os << "shRowLength[" << getThreadID() << "] = group->rowLength[(r * " << blockSize << ") + " << getThreadID() << "];" << std::endl;
-                }
-
-                genSharedMemBarrier(os);
-
-                // Loop through rows
-                os << "for(unsigned int i = 0; i < numRowsInBlock; i++)";
-                {
-                    CodeStream::Scope b(os);
-
-                    // If there is a synapse for this thread to initialise
-                    os << "if(" << popSubs["id"] << " < shRowLength[i])";
-                    {
-                        CodeStream::Scope b(os);
-
-                        // Generate sparse initialisation code
-                        popSubs.addVarSubstitution("id_pre", "((r * " + std::to_string(blockSize) + ") + i)");
-                        popSubs.addVarSubstitution("id_post", "group->ind[idx]");
-                        cg.generateInit(*this, os, modelMerged, popSubs);
-                    }
-
-                    // If matrix is ragged, advance index to next row by adding stride
-                    os << "idx += group->rowStride;" << std::endl;
-                }
-            }
+            
+            // Generate sparse synapse variable initialisation code
+            genSparseSynapseVarInit<CustomWUUpdateSparseInitGroupMerged>(
+                os, modelMerged, cg, popSubs, true,
+                [](CodeStream&, const CustomWUUpdateSparseInitGroupMerged&, Substitutions&){});
         });
 }
 //--------------------------------------------------------------------------

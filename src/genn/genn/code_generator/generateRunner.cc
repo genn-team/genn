@@ -702,26 +702,8 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                          runnerVarDecl, runnerMergedStructAlloc);
     }
 
-    // Generate merged custom update initialisation groups
-    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
-    }
-
-    // Generate merged custom dense WU update initialisation groups
-    for(const auto &m : modelMerged.getMergedCustomWUUpdateDenseInitGroups()) {
-        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                         runnerVarDecl, runnerMergedStructAlloc);
-    }
-
-    // Loop through merged dense synapse init groups
-    for(const auto &m : modelMerged.getMergedSynapseDenseInitGroups()) {
-         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
-                          runnerVarDecl, runnerMergedStructAlloc);
-    }
-    
-    // Loop through merged kernel synapse init groups
-    for(const auto &m : modelMerged.getMergedSynapseKernelInitGroups()) {
+    // Loop through merged synapse init groups
+    for(const auto &m : modelMerged.getMergedSynapseInitGroups()) {
          m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                           runnerVarDecl, runnerMergedStructAlloc);
     }
@@ -734,6 +716,18 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
 
     // Loop through merged sparse synapse init groups
     for(const auto &m : modelMerged.getMergedSynapseSparseInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomUpdateInitGroups()) {
+        m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                         runnerVarDecl, runnerMergedStructAlloc);
+    }
+
+    // Generate merged custom WU update initialisation groups
+    for(const auto &m : modelMerged.getMergedCustomWUUpdateInitGroups()) {
         m.generateRunner(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
                          runnerVarDecl, runnerMergedStructAlloc);
     }
@@ -1119,7 +1113,13 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
                     mem, statePushPullFunctions, 
                     [&backend](const CustomUpdateWUInternal &c) 
                     { 
-                        return c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*c.getSynapseGroup()); 
+                        const SynapseGroupInternal *sg = c.getSynapseGroup();
+                        if (sg->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+                            return sg->getKernelSizeFlattened();
+                        }
+                        else {
+                            return sg->getSrcNeuronGroup()->getNumNeurons() * backend.getSynapticMatrixRowStride(*sg);
+                        }
                     });
     allVarStreams << std::endl;
 

@@ -252,40 +252,57 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
 :   GroupMerged<CustomUpdateWUInternal>(index, precision, groups)
 {
-    addField("unsigned int", "rowStride",
-             [&backend](const CustomUpdateWUInternal &cg, size_t) 
-             { 
-                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                 return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
-             });
-    
-    addField("unsigned int", "numSrcNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t) 
-             {
-                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                 return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
-             });
-
-    addField("unsigned int", "numTrgNeurons",
-             [](const CustomUpdateWUInternal &cg, size_t)
-             { 
-                 const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-                 return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
-             });
-
-    // If synapse group has sparse connectivity
-    if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-        addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
+    // If underlying synapse group has kernel weights
+    if (getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
+        // Loop through kernel size dimensions
+        for (size_t d = 0; d < getArchetype().getSynapseGroup()->getKernelSize().size(); d++) {
+            // If this dimension has a heterogeneous size, add it to struct
+            if (isKernelSizeHeterogeneous(d)) {
+                addField("unsigned int", "kernelSize" + std::to_string(d),
+                         [d](const CustomUpdateWUInternal &cu, size_t) 
+                         {
+                             return std::to_string(cu.getSynapseGroup()->getKernelSize().at(d));
+                         });
+            }
+        }
+    }
+    // Otherwise
+    else {
+        addField("unsigned int", "rowStride",
                  [&backend](const CustomUpdateWUInternal &cg, size_t) 
                  { 
-                     return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(backend.getSynapticMatrixRowStride(*sgInternal)); 
+                 });
+    
+        addField("unsigned int", "numSrcNeurons",
+                 [](const CustomUpdateWUInternal &cg, size_t) 
+                 {
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getSrcNeuronGroup()->getNumNeurons()); 
                  });
 
-        addField("unsigned int*", "rowLength",
-                [&backend](const CustomUpdateWUInternal &cg, size_t) 
-                { 
-                    return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
-                });
+        addField("unsigned int", "numTrgNeurons",
+                 [](const CustomUpdateWUInternal &cg, size_t)
+                 { 
+                     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
+                     return std::to_string(sgInternal->getTrgNeuronGroup()->getNumNeurons()); 
+                 });
+
+        // If synapse group has sparse connectivity
+        if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
+            addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind", 
+                     [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                     { 
+                         return backend.getDeviceVarPrefix() + "ind" + cg.getSynapseGroup()->getName(); 
+                     });
+
+            addField("unsigned int*", "rowLength",
+                    [&backend](const CustomUpdateWUInternal &cg, size_t) 
+                    { 
+                        return backend.getDeviceVarPrefix() + "rowLength" + cg.getSynapseGroup()->getName(); 
+                    });
+        }
     }
 
     // Add heterogeneous custom update model parameters
@@ -309,7 +326,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     addVarReferences(varRefs, backend.getDeviceVarPrefix(),
                     [](const CustomUpdateWUInternal &cg) { return cg.getVarReferences(); });
 
-     // Loop through variables
+    // Loop through variables
     for(size_t v = 0; v < varRefs.size(); v++) {
         // If variable has a transpose 
         if(getArchetype().getVarReferences().at(v).getTransposeSynapseGroup() != nullptr) {
@@ -325,6 +342,7 @@ CustomUpdateWUGroupMergedBase::CustomUpdateWUGroupMergedBase(size_t index, const
     // Add EGPs to struct
     this->addEGPs(cm->getExtraGlobalParams(), backend.getDeviceVarPrefix());
 }
+
 // ----------------------------------------------------------------------------
 // CustomUpdateWUGroupMerged
 //----------------------------------------------------------------------------

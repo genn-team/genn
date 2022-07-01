@@ -115,18 +115,19 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
     m_TransposeVar((transposeSG == nullptr) ? Models::Base::Var() : transposeSG->getWUModel()->getVars().at(m_TransposeVarIndex)),
     m_GetTransposeTargetName((transposeSG == nullptr) ? GetTargetNameFn() : [transposeSG]() { return transposeSG->getName(); })
 {
-    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-        throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
+    if(!(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) && !(sg->getMatrixType() & SynapseMatrixWeight::KERNEL)) {
+        throw std::runtime_error("Only INDIVIDUAL or KERNEL weight update variables can be referenced.");
     }
 
     if(sg->isWeightSharingSlave()) {
         throw std::runtime_error("Only weight update model variables in weight sharing master synapse group can be referenced.");
     }
+
     // If a transpose synapse group is specified
     if(m_TransposeSG != nullptr) {
-        // Check that tranpose group also has individual variables
-        if(!(m_TransposeSG->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
-            throw std::runtime_error("Only INDIVIDUAL weight update models can be referenced.");
+        // Check that both tranpose and original group has individual variables
+        if(!(m_TransposeSG->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || !(sg->getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+            throw std::runtime_error("Transpose updates can only reference INDIVIDUAL weight update variables.");
         }
 
         // Check that both the tranpose and main synapse groups have dense connectivity
@@ -146,7 +147,7 @@ WUVarReference::WUVarReference(const SynapseGroup *sg, const std::string &varNam
             throw std::runtime_error("Transpose updates can only be performed on variables with the same type");
         }
 
-        // Check duplicatedness of varibles
+        // Check duplicatedness of variables
         if((getVar().access & VarAccessDuplication::DUPLICATE) != (getTransposeVar().access & VarAccessDuplication::DUPLICATE)) {
             throw std::runtime_error("Transpose updates can only be performed on similarly batched variables");
         }
