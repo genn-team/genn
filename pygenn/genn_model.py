@@ -42,7 +42,7 @@ run a simulation using GeNNModel::
 from collections import namedtuple, OrderedDict
 from distutils.spawn import find_executable
 from importlib import import_module
-from os import path
+from os import path, environ
 from platform import system
 from psutil import cpu_count
 from setuptools import msvc
@@ -86,6 +86,24 @@ for b in ["CUDA", "SingleThreadedCPU", "OpenCL"]:
     # Otherwise add to (ordered) dictionary
     else:
         backend_modules[b] = m
+
+# If we're on windows
+if system() == "Windows":
+    # Get environment and cache in class, convertings
+    # all keys to upper-case for consistency
+    _msvc_env = msvc.msvc14_get_vc_env("x86_amd64")
+    _msvc_env = {k.upper(): v for k, v in iteritems(_msvc_env)}
+    
+    # Update process's environment with this
+    # **NOTE** this handles both child processes (manually launching msbuild)
+    # and stuff within this process (running the code generator)
+    environ.update(_msvc_env)
+    
+    # Find MSBuild in path
+    # **NOTE** we need to do this because setting the path via 
+    # check_call's env kwarg does not effect finding the executable
+    # **NOTE** shutil.which would be nicer, but isn't in Python < 3.3
+    _msbuild = find_executable("msbuild",  _msvc_env["PATH"])
 
 GeNNType = namedtuple("GeNNType", ["np_dtype", "assign_ext_ptr_array", "assign_ext_ptr_single"])
 
@@ -158,8 +176,6 @@ class GeNNModel(object):
         self.current_sources = {}
         self.custom_updates = {}
         self.dT = 0.1
-        self._msvc_env = None
-        self._msbuild = "msbuild"
 
         # Build dictionary containing conversions between GeNN C++ types and numpy types
         self.genn_types = {
@@ -562,20 +578,6 @@ class GeNNModel(object):
             raise Exception("GeNN model already built")
         self._path_to_model = path_to_model
 
-        # If we're on windows and the MSVC environment hasn't been determined
-        if system() == "Windows" and self._msvc_env is None:
-            # Get environment and cache in class, convertings
-            # all keys to upper-case for consistency
-            msvc_env = msvc.msvc14_get_vc_env("x86_amd64")
-            self._msvc_env = {k.upper(): v for k, v in iteritems(msvc_env)}
-            
-            # Find MSBuild in path
-            # **NOTE** we need to do this because setting the path via 
-            # check_call's env kwarg does not effect finding the executable
-            # **NOTE** shutil.which would be nicer, but isn't in Python < 3.3
-            self._msbuild = find_executable("msbuild", 
-                                            self._msvc_env["PATH"])
-
         # Create output path
         output_path = path.join(path_to_model, self.model_name + "_CODE")
         share_path = path.join(path.split(__file__)[0], "share")
@@ -608,8 +610,8 @@ class GeNNModel(object):
 
         # Build code
         if system() == "Windows":
-            check_call([self._msbuild, "/p:Configuration=Release", "/m", "/verbosity:minimal",
-                        path.join(output_path, "runner.vcxproj")], env=self._msvc_env)
+            check_call([_msbuild, "/p:Configuration=Release", "/m", "/verbosity:minimal",
+                        path.join(output_path, "runner.vcxproj")])
         else:
             check_call(["make", "-j", str(cpu_count(logical=False)), "-C", output_path])
 
