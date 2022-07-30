@@ -11,6 +11,10 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
+#include "code_generator/customUpdateGroupMerged.h"
+#include "code_generator/initGroupMerged.h"
+#include "code_generator/neuronUpdateGroupMerged.h"
+#include "code_generator/synapseUpdateGroupMerged.h"
 #include "code_generator/supportCodeMerged.h"
 
 // Forward declarations
@@ -115,10 +119,10 @@ public:
     const std::vector<CustomUpdateInitGroupMerged> &getMergedCustomUpdateInitGroups() const { return m_MergedCustomUpdateInitGroups; }
 
     //! Get merged custom updategroups with dense connectivity which require initialisation
-    const std::vector<CustomWUUpdateDenseInitGroupMerged> &getMergedCustomWUUpdateDenseInitGroups() const { return m_MergedCustomWUUpdateDenseInitGroups; }
+    const std::vector<CustomWUUpdateInitGroupMerged> &getMergedCustomWUUpdateInitGroups() const { return m_MergedCustomWUUpdateInitGroups; }
 
     //! Get merged synapse groups with dense connectivity which require initialisation
-    const std::vector<SynapseDenseInitGroupMerged> &getMergedSynapseDenseInitGroups() const{ return m_MergedSynapseDenseInitGroups; }
+    const std::vector<SynapseInitGroupMerged> &getMergedSynapseInitGroups() const{ return m_MergedSynapseInitGroups; }
 
     //! Get merged synapse groups which require connectivity initialisation
     const std::vector<SynapseConnectivityInitGroupMerged> &getMergedSynapseConnectivityInitGroups() const{ return m_MergedSynapseConnectivityInitGroups; }
@@ -162,8 +166,8 @@ public:
     void genMergedSynapseDynamicsGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDynamicsGroups); }
     void genMergedNeuronInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedNeuronInitGroups); }
     void genMergedCustomUpdateInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomUpdateInitGroups); }
-    void genMergedCustomWUUpdateDenseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateDenseInitGroups); }
-    void genMergedSynapseDenseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseDenseInitGroups); }
+    void genMergedCustomWUUpdateInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateInitGroups); }
+    void genMergedSynapseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseInitGroups); }
     void genMergedSynapseConnectivityInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseConnectivityInitGroups); }
     void genMergedSynapseSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedSynapseSparseInitGroups); }
     void genMergedCustomWUUpdateSparseInitGroupStructs(CodeStream &os, const BackendBase &backend) const { genMergedStructures(os, backend, m_MergedCustomWUUpdateSparseInitGroups); }
@@ -381,11 +385,11 @@ private:
     //! Merged custom update groups which require initialisation
     std::vector<CustomUpdateInitGroupMerged> m_MergedCustomUpdateInitGroups;
 
-    //! Merged custom update groups with dense connectivity which require initialisation
-    std::vector<CustomWUUpdateDenseInitGroupMerged> m_MergedCustomWUUpdateDenseInitGroups;
+    //! Merged custom update weight update groups which require initialisation
+    std::vector<CustomWUUpdateInitGroupMerged> m_MergedCustomWUUpdateInitGroups;
 
     //! Merged synapse groups with dense connectivity which require initialisation
-    std::vector<SynapseDenseInitGroupMerged> m_MergedSynapseDenseInitGroups;
+    std::vector<SynapseInitGroupMerged> m_MergedSynapseInitGroups;
 
     //! Merged synapse groups which require connectivity initialisation
     std::vector<SynapseConnectivityInitGroupMerged> m_MergedSynapseConnectivityInitGroups;

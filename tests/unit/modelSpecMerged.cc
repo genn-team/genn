@@ -256,6 +256,30 @@ TEST(ModelSpecMerged, CompareNeuronPopSizeChanges)
          });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareNeuronNameChanges)
+{
+    // Make array of neuron population names and flags determining whether the hashes should match baseline
+    const std::pair<std::string, bool> modelModifiers[] = {
+        {"Neurons",     true},
+        {"Neurons",     true},
+        {"neurons",     false},
+        {"nrns",        false},
+        {"n_euron_s",   false},
+        {"Neurons_1",   false}};
+    
+    test(modelModifiers, 
+         [](const std::string &name, ModelSpecInternal &model)
+         {
+             // Default neuron parameters
+             NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 4.0);
+             NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+
+             // Add population with specified name
+             model.addNeuronPopulation<NeuronModels::Izhikevich>(name, 100, 
+                                                                 paramVals, varVals);
+         });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareNeuronParamChanges)
 {
     // Izhikevcih parameter sets
@@ -342,6 +366,32 @@ TEST(ModelSpecMerged, CompareNeuronSpikeTimeLocationChanges)
 TEST(ModelSpecMerged, CompareNeuronSpikeEventTimeLocationChanges)
 {
     testNeuronVarLocation([](NeuronGroup *pop, VarLocation varLocation) {pop->setSpikeEventTimeLocation(varLocation); });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCurrentSourceNameChanges)
+{
+    // Make array of current source names and flags determining whether the hashes should match baseline
+    const std::pair<std::string, bool> modelModifiers[] = {
+        {"CurrentSource",   true},
+        {"CurrentSource",   true},
+        {"currentsource",   false},
+        {"crns",            false},
+        {"c_urrent_source", false},
+        {"CurrentSource_1", false}};
+    
+    test(modelModifiers, 
+         [](const std::string &name, ModelSpecInternal &model)
+         {
+             // Add population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             CurrentSourceModels::DC::ParamValues paramVals(3.0);
+             model.addCurrentSource<CurrentSourceModels::DC>(name, "Neurons",
+                                                             paramVals, {});
+         });
 }
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCurrentSourceParamChanges)
@@ -435,6 +485,36 @@ TEST(ModelSpecMerged, CompareCurrentSourceVarLocationChanges)
               auto *cs = model.addCurrentSource<CurrentSourceModels::PoissonExp>("CS", "Neurons",
                                                                                  paramVals, varVals);
               cs->setVarLocation("current", varLocation);
+         });
+}
+//--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareSynapseNameChanges)
+{
+    // Make array of synapse group names and flags determining whether the hashes should match baseline
+    const std::pair<std::string, bool> modelModifiers[] = {
+        {"SynapseGroup",    true},
+        {"SynapseGroup",    true},
+        {"synapsegroup",    false},
+        {"sgrp",            false},
+        {"s_ynapse_group", false},
+        {"SynapseGroup_1", false}};
+    
+    test(modelModifiers, 
+         [](const std::string &name, ModelSpecInternal &model)
+         {
+             // Add populations
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+             model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 100, 
+                                                                 neuronParamVals, neuronVarVals);
+
+             model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+                name, SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+                "Pre", "Post",
+                {}, {1.0},
+                {}, {});
          });
 }
 //--------------------------------------------------------------------------
@@ -808,6 +888,33 @@ TEST(ModelSpecMerged, CompareDendriticDelayLocationChanges)
     testSynapseVarLocation([](SynapseGroup *pop, VarLocation varLocation) {pop->setDendriticDelayLocation(varLocation); });
 }
 //--------------------------------------------------------------------------
+TEST(ModelSpecMerged, CompareCustomUpdateNameChanges)
+{
+    // Make array of current source names and flags determining whether the hashes should match baseline
+    const std::pair<std::string, bool> modelModifiers[] = {
+        {"CustomUpdate",    true},
+        {"CustomUpdate",    true},
+        {"customupdate",    false},
+        {"cupdaate",        false},
+        {"c_ustom_update",  false},
+        {"CustomUpdate_1", false}};
+    
+    test(modelModifiers, 
+         [](const std::string &name, ModelSpecInternal &model)
+         {
+             // Add population
+             NeuronModels::Izhikevich::VarValues neuronVarVals(0.0, 0.0);
+             NeuronModels::Izhikevich::ParamValues neuronParamVals(0.02, 0.2, -65.0, 4.0);
+             auto *neurons = model.addNeuronPopulation<NeuronModels::Izhikevich>("Neurons", 100, 
+                                                                                 neuronParamVals, neuronVarVals);
+
+             Sum::ParamValues paramVals(5.0);
+             Sum::VarValues vals(0.0);
+             Sum::VarReferences varRefs(createVarRef(neurons, "V"));
+             model.addCustomUpdate<Sum>(name, "Group", paramVals, vals, varRefs);
+         });
+}
+//--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCustomUpdateParamChanges)
 {
     // Custom update model "b" parameters
@@ -906,7 +1013,6 @@ TEST(ModelSpecMerged, CompareCustomUpdateVarLocationChanges)
 //--------------------------------------------------------------------------
 TEST(ModelSpecMerged, CompareCustomUpdateVarRefTargetChanges)
 {
-
     // Make array of population parameters to build model with and flags determining whether the hashes should match baseline
     const std::pair<std::vector<std::string>, bool> modelModifiers[] = {
         {{"V", "U"},    true},

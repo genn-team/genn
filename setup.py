@@ -4,7 +4,7 @@ import os
 import sys
 
 from copy import deepcopy
-from platform import system
+from platform import system, uname
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 from shutil import copytree, rmtree
@@ -29,6 +29,11 @@ opencl_installed = opencl_path is not None and os.path.exists(opencl_path)
 mac_os_x = system() == "Darwin"
 linux = system() == "Linux"
 windows = system() == "Windows"
+
+if sys.version_info < (3, 3):
+    wsl = "microsoft" in uname()[2]
+else:
+    wsl = "microsoft" in uname().release
 
 # Determine correct suffix for GeNN libraries
 if windows:
@@ -65,7 +70,7 @@ extension_kwargs = {
     "swig_opts": swig_opts,
     "include_dirs": include_dirs,
     "library_dirs": [genn_wrapper_path],
-    "extra_compile_args" : ["/wd\"4251\"", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"] if windows else ["-std=c++11"],
+    "extra_compile_args" : ["/wd4251", "-DWIN32_LEAN_AND_MEAN", "-DNOMINMAX"] if windows else ["-std=c++11"],
     "extra_link_args": []}
 
 # Always package LibGeNN
@@ -90,19 +95,24 @@ backends = [("single_threaded_cpu", "SingleThreadedCPU", {})]
 # If CUDA was found, add backend configuration
 if cuda_installed:
     # Get CUDA library directory
+    cuda_library_dirs = []
     if mac_os_x:
-        cuda_library_dir = os.path.join(cuda_path, "lib")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib"))
     elif windows:
-        cuda_library_dir = os.path.join(cuda_path, "lib", "x64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib", "x64"))
     else:
-        cuda_library_dir = os.path.join(cuda_path, "lib64")
+        cuda_library_dirs.append(os.path.join(cuda_path, "lib64"))
+
+    # If we're running on WSL, add additional library path so libcuda can be found
+    if wsl:
+        cuda_library_dirs.append("/usr/lib/wsl/lib")
 
     # Add backend
     # **NOTE** on Mac OS X, a)runtime_library_dirs doesn't work b)setting rpath is required to find CUDA
     backends.append(("cuda", "CUDA",
                      {"libraries": ["cuda", "cudart"],
                       "include_dirs": [os.path.join(cuda_path, "include")],
-                      "library_dirs": [cuda_library_dir],
+                      "library_dirs": cuda_library_dirs,
                       "extra_link_args": ["-Wl,-rpath," + cuda_library_dir] if mac_os_x else []}))
 
 # If OpenCL was found, add backend configuration
@@ -145,6 +155,7 @@ ext_modules = [Extension('_StlContainers', ["pygenn/genn_wrapper/generated/StlCo
                Extension('_Models', ["pygenn/genn_wrapper/swig/Models.i"], **genn_extension_kwargs),
                Extension('_InitVarSnippet', ["pygenn/genn_wrapper/generated/InitVarSnippet.i", "pygenn/genn_wrapper/generated/initVarSnippetCustom.cc"], **genn_extension_kwargs),
                Extension('_InitSparseConnectivitySnippet', ["pygenn/genn_wrapper/generated/InitSparseConnectivitySnippet.i", "pygenn/genn_wrapper/generated/initSparseConnectivitySnippetCustom.cc"], **genn_extension_kwargs),
+               Extension('_InitToeplitzConnectivitySnippet', ["pygenn/genn_wrapper/generated/InitToeplitzConnectivitySnippet.i", "pygenn/genn_wrapper/generated/initToeplitzConnectivitySnippetCustom.cc"], **genn_extension_kwargs),
                Extension('_NeuronModels', ["pygenn/genn_wrapper/generated/NeuronModels.i", "pygenn/genn_wrapper/generated/neuronModelsCustom.cc"], **genn_extension_kwargs),
                Extension('_PostsynapticModels', ["pygenn/genn_wrapper/generated/PostsynapticModels.i", "pygenn/genn_wrapper/generated/postsynapticModelsCustom.cc"], **genn_extension_kwargs),
                Extension('_WeightUpdateModels', ["pygenn/genn_wrapper/generated/WeightUpdateModels.i", "pygenn/genn_wrapper/generated/weightUpdateModelsCustom.cc"], **genn_extension_kwargs),
@@ -177,8 +188,12 @@ for filename, namespace, kwargs in backends:
     ext_modules.append(Extension("_" + namespace + "Backend", ["pygenn/genn_wrapper/generated/" + namespace + "Backend.i"],
                                  **backend_extension_kwargs))
 
+# Read version from txt file
+with open(os.path.join(genn_path, "version.txt")) as version_file:
+    version = version_file.read().strip()
+
 setup(name = "pygenn",
-      version = "0.4.6",
+      version = version,
       packages = find_packages(),
       package_data={"pygenn": package_data},
 
@@ -189,6 +204,7 @@ setup(name = "pygenn",
       ext_modules=ext_modules,
 
       # Requirements
-      install_requires=["numpy>=1.17", "six", "deprecated", "psutil"],
+      install_requires=["numpy>=1.17", "six", "deprecated", "psutil",
+                        "importlib-metadata>=1.0;python_version<'3.8'"],
       zip_safe=False,  # Partly for performance reasons
 )

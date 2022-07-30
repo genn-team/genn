@@ -197,10 +197,11 @@ public:
 //----------------------------------------------------------------------------
 // InitVarSnippet::Gamma
 //----------------------------------------------------------------------------
-//! Initialises variable by sampling from the exponential distribution
-/*! This snippet takes 1 parameter:
+//! Initialises variable by sampling from the gamma distribution
+/*! This snippet takes 2 parameters:
  *
-    - \c lambda - mean event rate (events per unit time/distance)*/
+    - \c a - distribution shape
+    - \c b - distribution scale*/
 class Gamma : public Base
 {
 public:
@@ -209,5 +210,23 @@ public:
     SET_CODE("$(value) = $(b) * $(gennrand_gamma, $(a));");
 
     SET_PARAM_NAMES({"a", "b"});
+};
+
+//----------------------------------------------------------------------------
+// InitVarSnippet::Binomial
+//----------------------------------------------------------------------------
+//! Initialises variable by sampling from the binomial distribution
+/*! This snippet takes 2 parameters:
+ *
+    - \c n - number of trials
+    - \c p - success probability for each trial*/
+class Binomial : public Base
+{
+public:
+    DECLARE_SNIPPET(InitVarSnippet::Binomial, 2);
+
+    SET_CODE("$(value) = $(gennrand_binomial, (unsigned int)$(n), $(p));");
+
+    SET_PARAM_NAMES({"n", "p"});
 };
 }   // namespace InitVarSnippet

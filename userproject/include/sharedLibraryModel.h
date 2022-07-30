@@ -40,9 +40,10 @@ public:
     {
     }
 
-    SharedLibraryModel(const std::string &pathToModel, const std::string &modelName)
+    SharedLibraryModel(const std::string &pathToModel, const std::string &modelName,
+                       bool includeModelNameInDLL = false)
     {
-        if(!open(pathToModel, modelName)) {
+        if(!open(pathToModel, modelName, includeModelNameInDLL)) {
             throw std::runtime_error("Unable to open library");
         }
     }
@@ -63,13 +64,15 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    bool open(const std::string &pathToModel, const std::string &modelName)
+    bool open(const std::string &pathToModel, const std::string &modelName,
+              bool includeModelNameInDLL = false)
     {
 #ifdef _WIN32
+        const std::string runnerName = includeModelNameInDLL ? ("runner_" + modelName) : "runner";
 #ifdef _DEBUG
-        const std::string libraryName = pathToModel + "\\runner_Debug.dll";
+        const std::string libraryName = pathToModel + "\\" + runnerName + "_Debug.dll";
 #else
-        const std::string libraryName = pathToModel + "\\runner_Release.dll";
+        const std::string libraryName = pathToModel + "\\" + runnerName + "_Release.dll";
 #endif
         m_Library = LoadLibrary(libraryName.c_str());
 #else

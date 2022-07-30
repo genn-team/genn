@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 
 // GeNN includes
 #include "gennUtils.h"
@@ -90,6 +91,21 @@ void SynapseGroup::setPSTargetVar(const std::string &varName)
     }
 }
 //----------------------------------------------------------------------------
+void SynapseGroup::setPreTargetVar(const std::string &varName)
+{
+    // If varname is either 'ISyn' or name of a presynaptic neuron group additional input variable, store
+    const auto additionalInputVars = getSrcNeuronGroup()->getNeuronModel()->getAdditionalInputVars();
+    if(varName == "Isyn" || 
+       std::find_if(additionalInputVars.cbegin(), additionalInputVars.cend(), 
+                    [&varName](const Models::Base::ParamVal &v){ return (v.name == varName); }) != additionalInputVars.cend())
+    {
+        m_PreTargetVar = varName;
+    }
+    else {
+        throw std::runtime_error("Presynaptic neuron group has no input variable '" + varName + "'");
+    }
+}
+//----------------------------------------------------------------------------
 void SynapseGroup::setPSExtraGlobalParamLocation(const std::string &paramName, VarLocation loc)
 {
     const size_t extraGlobalParamIndex = getPSModel()->getExtraGlobalParamIndex(paramName);
@@ -105,8 +121,8 @@ void SynapseGroup::setSparseConnectivityExtraGlobalParamLocation(const std::stri
         throw std::runtime_error("setSparseConnectivityExtraGlobalParamLocation: Synapse group is a weight sharing slave. Sparse connectivity EGP location can only be set on the master.");
     }
     else {
-        const size_t extraGlobalParamIndex = m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
-        if(!Utils::isTypePointer(m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
+        const size_t extraGlobalParamIndex = m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName);
+        if(!Utils::isTypePointer(m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParams()[extraGlobalParamIndex].type)) {
             throw std::runtime_error("Only extra global parameters with a pointer type have a location");
         }
         m_ConnectivityExtraGlobalParamLocation[extraGlobalParamIndex] = loc;
@@ -130,11 +146,21 @@ void SynapseGroup::setMaxConnections(unsigned int maxConnections)
     }
     else {
         if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc()) {
-                throw std::runtime_error("setMaxConnections: Synapse group already has max connections defined by connectivity initialisation snippet.");
+            // If sparse connectivity initialiser provides a function to calculate max row length
+            auto calcMaxRowLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+            if(calcMaxRowLengthFunc) {
+                // Call function and if max connections we specify is less than the bound imposed by the snippet, give error
+                auto connectivityMaxRowLength = calcMaxRowLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
+                                                                     m_SparseConnectivityInitialiser.getParams());
+                if (maxConnections < connectivityMaxRowLength) {
+                    throw std::runtime_error("setMaxConnections: max connections must be higher than that already specified by sparse connectivity initialisation snippet.");
+                }
             }
 
             m_MaxConnections = maxConnections;
+        }
+        else if(getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
+            throw std::runtime_error("setMaxConnections: Synapse group already has max connections defined by toeplitz connectivity initialisation snippet.");
         }
         else {
             throw std::runtime_error("setMaxConnections: Synapse group is densely connected. Setting max connections is not required in this case.");
@@ -149,8 +175,15 @@ void SynapseGroup::setMaxSourceConnections(unsigned int maxConnections)
     }
     else {
         if(getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
-            if(m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc()) {
-                throw std::runtime_error("setMaxSourceConnections: Synapse group already has max source connections defined by connectivity initialisation snippet.");
+            // If sparse connectivity initialiser provides a function to calculate max col length
+            auto calcMaxColLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
+            if (calcMaxColLengthFunc) {
+                // Call function and if max connections we specify is less than the bound imposed by the snippet, give error
+                auto connectivityMaxColLength = calcMaxColLengthFunc(getSrcNeuronGroup()->getNumNeurons(), getTrgNeuronGroup()->getNumNeurons(),
+                                                                     m_SparseConnectivityInitialiser.getParams());
+                if (maxConnections < connectivityMaxColLength) {
+                    throw std::runtime_error("setMaxSourceConnections: max source connections must be higher than that already specified by sparse connectivity initialisation snippet.");
+                }
             }
 
             m_MaxSourceConnections = maxConnections;
@@ -221,6 +254,11 @@ unsigned int SynapseGroup::getMaxSourceConnections() const
     // **NOTE** these get retrived from weight sharing master 
     // as they can be set AFTER creation of synapse group
     return isWeightSharingSlave() ? getWeightSharingMaster()->getMaxSourceConnections() : m_MaxSourceConnections;
+}
+//----------------------------------------------------------------------------
+size_t SynapseGroup::getKernelSizeFlattened() const
+{
+    return std::accumulate(getKernelSize().cbegin(), getKernelSize().cend(), 1, std::multiplies<unsigned int>());
 }
 //----------------------------------------------------------------------------
 VarLocation SynapseGroup::getSparseConnectivityLocation() const
@@ -357,7 +395,7 @@ VarLocation SynapseGroup::getSparseConnectivityExtraGlobalParamLocation(const st
         return getWeightSharingMaster()->getSparseConnectivityExtraGlobalParamLocation(paramName);
     }
     else {
-        return m_ConnectivityExtraGlobalParamLocation[m_ConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
+        return m_ConnectivityExtraGlobalParamLocation[m_SparseConnectivityInitialiser.getSnippet()->getExtraGlobalParamIndex(paramName)];
     }
 }
 //----------------------------------------------------------------------------
@@ -380,6 +418,11 @@ bool SynapseGroup::isDendriticDelayRequired() const
         return true;
     }
 
+    // If addToInSynDelay function is used in event code, return true
+    if(getWUModel()->getEventCode().find("$(addToInSynDelay") != std::string::npos) {
+        return true;
+    }
+
     // If addToInSynDelay function is used in synapse dynamics, return true
     if(getWUModel()->getSynapseDynamicsCode().find("$(addToInSynDelay") != std::string::npos) {
         return true;
@@ -388,10 +431,43 @@ bool SynapseGroup::isDendriticDelayRequired() const
     return false;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::isPresynapticOutputRequired() const
+{
+    // If addToPre function is used in sim_code, return true
+    if(getWUModel()->getSimCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in learn_post_code, return true
+    if(getWUModel()->getLearnPostCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in event_code, return true
+    if(getWUModel()->getEventCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    // If addToPre function is used in synapse_dynamics, return true
+    if(getWUModel()->getSynapseDynamicsCode().find("$(addToPre") != std::string::npos) {
+        return true;
+    }
+
+    return false;
+}
+//----------------------------------------------------------------------------
 bool SynapseGroup::isProceduralConnectivityRNGRequired() const
 {
-    return ((m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) &&
-            Utils::isRNGRequired(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode()));
+    if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
+        return (Utils::isRNGRequired(m_SparseConnectivityInitialiser.getSnippet()->getRowBuildCode())
+                || Utils::isRNGRequired(m_SparseConnectivityInitialiser.getSnippet()->getColBuildCode()));
+    }
+    else if(m_MatrixType & SynapseMatrixConnectivity::TOEPLITZ) {
+        return (Utils::isRNGRequired(m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode()));
+    }
+    else {
+        return false;
+    }
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isPSInitRNGRequired() const
@@ -408,7 +484,7 @@ bool SynapseGroup::isWUInitRNGRequired() const
     }
 
     // Return true if matrix has sparse or bitmask connectivity and an RNG is required to initialise connectivity
-    const auto *snippet = m_ConnectivityInitialiser.getSnippet();
+    const auto *snippet = m_SparseConnectivityInitialiser.getSnippet();
     return (((m_MatrixType & SynapseMatrixConnectivity::SPARSE) || (m_MatrixType & SynapseMatrixConnectivity::BITMASK))
             && (Utils::isRNGRequired(snippet->getRowBuildCode()) || Utils::isRNGRequired(snippet->getColBuildCode())));
 }
@@ -425,14 +501,14 @@ bool SynapseGroup::isWUPostInitRNGRequired() const
 //----------------------------------------------------------------------------
 bool SynapseGroup::isHostInitRNGRequired() const
 {
-    return (m_ConnectivityInitialiser.getSnippet()->getHostInitCode().find("$(rng)") != std::string::npos);
+    return (m_SparseConnectivityInitialiser.getSnippet()->getHostInitCode().find("$(rng)") != std::string::npos);
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::isWUVarInitRequired() const
 {
-    // If this synapse group has per-synapse state variables and isn't a
+    // If this synapse group has per-synapse or kernel state variables and isn't a
     // weight sharing slave, return true if any of them have initialisation code which doesn't require a kernel
-    if (!isWeightSharingSlave() && (getMatrixType() & SynapseMatrixWeight::INDIVIDUAL)) {
+    if (!isWeightSharingSlave() && ((getMatrixType() & SynapseMatrixWeight::INDIVIDUAL) || (getMatrixType() & SynapseMatrixWeight::KERNEL))) {
         return std::any_of(m_WUVarInitialisers.cbegin(), m_WUVarInitialisers.cend(),
                            [](const Models::VarInit &init)
                            { 
@@ -459,6 +535,7 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
                            const PostsynapticModels::Base *ps, const std::vector<double> &psParams, const std::vector<Models::VarInit> &psVarInitialisers,
                            NeuronGroupInternal *srcNeuronGroup, NeuronGroupInternal *trgNeuronGroup, const SynapseGroupInternal *weightSharingMaster,
                            const InitSparseConnectivitySnippet::Init &connectivityInitialiser,
+                           const InitToeplitzConnectivitySnippet::Init &toeplitzInitialiser,
                            VarLocation defaultVarLocation, VarLocation defaultExtraGlobalParamLocation,
                            VarLocation defaultSparseConnectivityLocation, bool defaultNarrowSparseIndEnabled)
     :   m_Name(name), m_SpanType(SpanType::POSTSYNAPTIC), m_NumThreadsPerSpike(1), m_DelaySteps(delaySteps), m_BackPropDelaySteps(0),
@@ -470,9 +547,9 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
         m_WUVarLocation(wuVarInitialisers.size(), defaultVarLocation), m_WUPreVarLocation(wuPreVarInitialisers.size(), defaultVarLocation),
         m_WUPostVarLocation(wuPostVarInitialisers.size(), defaultVarLocation), m_WUExtraGlobalParamLocation(wu->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
         m_PSVarLocation(psVarInitialisers.size(), defaultVarLocation), m_PSExtraGlobalParamLocation(ps->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_ConnectivityInitialiser(connectivityInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation),
+        m_SparseConnectivityInitialiser(connectivityInitialiser), m_ToeplitzConnectivityInitialiser(toeplitzInitialiser), m_SparseConnectivityLocation(defaultSparseConnectivityLocation), 
         m_ConnectivityExtraGlobalParamLocation(connectivityInitialiser.getSnippet()->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation), 
-        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_PSTargetVar("Isyn")
+        m_FusedPSVarSuffix(name), m_FusedWUPreVarSuffix(name), m_FusedWUPostVarSuffix(name), m_FusedPreOutputSuffix(name), m_PSTargetVar("Isyn"), m_PreTargetVar("Isyn")
 {
     // Validate names
     Utils::validatePopName(name, "Synapse group");
@@ -481,13 +558,18 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
 
     // If connectivity is procedural
     if(m_MatrixType & SynapseMatrixConnectivity::PROCEDURAL) {
+        // If there's a toeplitz initialiser, give an error
+        if(!m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode().empty()) {
+            throw std::runtime_error("Cannot use procedural connectivity with toeplitz initialisation snippet");
+        }
+
         // If there's no row build code, give an error
-        if(m_ConnectivityInitialiser.getSnippet()->getRowBuildCode().empty()) {
+        if(m_SparseConnectivityInitialiser.getSnippet()->getRowBuildCode().empty()) {
             throw std::runtime_error("Cannot use procedural connectivity without specifying a connectivity initialisation snippet with row building code");
         }
 
         // If there's column build code, give an error
-        if(!m_ConnectivityInitialiser.getSnippet()->getColBuildCode().empty()) {
+        if(!m_SparseConnectivityInitialiser.getSnippet()->getColBuildCode().empty()) {
             throw std::runtime_error("Cannot use procedural connectivity with connectivity initialisation snippets with column building code");
         }
 
@@ -508,23 +590,94 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
             throw std::runtime_error("Procedural weights used without procedural connectivity cannot currently access RNG.");
         }
     }
+    
+    // If synapse group has Toeplitz connectivity
+    if(m_MatrixType & SynapseMatrixConnectivity::TOEPLITZ) {
+        // Give an error if there is sparse connectivity initialiser code
+        if(!m_SparseConnectivityInitialiser.getSnippet()->getRowBuildCode().empty() || !m_SparseConnectivityInitialiser.getSnippet()->getColBuildCode().empty()) {
+            throw std::runtime_error("Cannot use TOEPLITZ connectivity with sparse connectivity initialisation snippet.");
+        }
 
-    // If connectivitity initialisation snippet provides a function to calculate kernel size, call it
-    auto calcKernelSizeFunc = m_ConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
-    if(calcKernelSizeFunc) {
-        m_KernelSize = calcKernelSizeFunc(m_ConnectivityInitialiser.getParams());
+        // Give an error if there isn't toeplitz connectivity initialiser code
+        if(m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode().empty()) {
+            throw std::runtime_error("TOEPLITZ connectivity requires toeplitz connectivity initialisation snippet.");
+        }
+
+        // Give an error if connectivity initialisation snippet uses RNG
+        if(::Utils::isRNGRequired(m_ToeplitzConnectivityInitialiser.getSnippet()->getDiagonalBuildCode())) {
+            throw std::runtime_error("TOEPLITZ connectivity cannot currently access RNG.");
+        }
+
+        // If the weight update model has code for postsynaptic-spike triggered updating, give an error
+        if(!m_WUModel->getLearnPostCode().empty()) {
+            throw std::runtime_error("TOEPLITZ connectivity cannot be used for synapse groups with postsynaptic spike-triggered learning");
+        }
+
+        // If toeplitz initialisation snippet provides a function to calculate kernel size, call it
+        auto calcKernelSizeFunc = m_ToeplitzConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
+        if(calcKernelSizeFunc) {
+            m_KernelSize = calcKernelSizeFunc(m_ToeplitzConnectivityInitialiser.getParams());
+        }
+        else {
+            throw std::runtime_error("TOEPLITZ connectivity requires a toeplitz connectivity initialisation snippet which specifies a kernel size.");
+        }
+
+        // If toeplitz initialisation snippet provides a function to calculate max row length, call it
+        auto calcMaxRowLengthFunc = m_ToeplitzConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+        if(calcMaxRowLengthFunc) {
+            m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                    m_ToeplitzConnectivityInitialiser.getParams());
+        }
+        else {
+            throw std::runtime_error("TOEPLITZ connectivity requires a toeplitz connectivity initialisation snippet which specifies a max row length.");
+        }
+
+        // No postsynaptic update through toeplitz matrices for now
+        m_MaxSourceConnections = 0;
+    }
+    // Otherwise
+    else {
+        // If sparse connectivitity initialisation snippet provides a function to calculate kernel size, call it
+        auto calcKernelSizeFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcKernelSizeFunc();
+        if(calcKernelSizeFunc) {
+            m_KernelSize = calcKernelSizeFunc(m_SparseConnectivityInitialiser.getParams());
+        }
+
+        // If connectivitity initialisation snippet provides a function to calculate row length, call it
+        // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+        auto calcMaxRowLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
+        if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+            m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                    m_SparseConnectivityInitialiser.getParams());
+        }
+        // Otherwise, default to the size of the target population
+        else {
+            m_MaxConnections = trgNeuronGroup->getNumNeurons();
+        }
+
+        // If connectivitity initialisation snippet provides a function to calculate row length, call it
+        // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
+        auto calcMaxColLengthFunc = m_SparseConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
+        if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
+            m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
+                                                          m_SparseConnectivityInitialiser.getParams());
+        }
+        // Otherwise, default to the size of the source population
+        else {
+            m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
+        }
     }
 
     // If connectivity initialisation snippet defines a kernel and matrix type doesn't support it, give error
-    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) 
-       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG)) 
+    if(!m_KernelSize.empty() && (m_MatrixType != SynapseMatrixType::PROCEDURAL_PROCEDURALG) && (m_MatrixType != SynapseMatrixType::TOEPLITZ_KERNELG)
+       && (m_MatrixType != SynapseMatrixType::SPARSE_INDIVIDUALG) && (m_MatrixType != SynapseMatrixType::PROCEDURAL_KERNELG)) 
     {
-        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG or SPARSE_INDIVIDUALG connectivity.");
+        throw std::runtime_error("Connectivity initialisation snippet which use a kernel can only be used with PROCEDURAL_PROCEDURALG, PROCEDURAL_KERNELG, TOEPLITZ_KERNELG or SPARSE_INDIVIDUALG connectivity.");
     }
 
     // If connectivity is dense and there is connectivity initialiser code, give error
     if((m_MatrixType & SynapseMatrixConnectivity::DENSE) 
-       && (!m_ConnectivityInitialiser.getSnippet()->getRowBuildCode().empty() || !m_ConnectivityInitialiser.getSnippet()->getColBuildCode().empty())) 
+       && (!m_SparseConnectivityInitialiser.getSnippet()->getRowBuildCode().empty() || !m_SparseConnectivityInitialiser.getSnippet()->getColBuildCode().empty())) 
     {
         throw std::runtime_error("Cannot use DENSE connectivity with connectivity initialisation snippet.");
     }
@@ -532,34 +685,10 @@ SynapseGroup::SynapseGroup(const std::string &name, SynapseMatrixType matrixType
     // If synapse group uses sparse or procedural connectivity but no kernel size is provided, 
     // check that no variable's initialisation snippets require a kernel
     if(((m_MatrixType == SynapseMatrixType::SPARSE_INDIVIDUALG) || (m_MatrixType == SynapseMatrixType::PROCEDURAL_PROCEDURALG)) &&
-       m_KernelSize.empty() &&  std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
-                                            [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
+       m_KernelSize.empty() && std::any_of(getWUVarInitialisers().cbegin(), getWUVarInitialisers().cend(), 
+                                           [](const Models::VarInit &v) { return v.getSnippet()->requiresKernel(); }))
     {
         throw std::runtime_error("Variable initialisation snippets which use $(id_kernel) must be used with a connectivity initialisation snippet which specifies how kernel size is calculated.");
-    }
-
-    // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
-    auto calcMaxRowLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxRowLengthFunc();
-    if(calcMaxRowLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
-        m_MaxConnections = calcMaxRowLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
-                                                m_ConnectivityInitialiser.getParams());
-    }
-    // Otherwise, default to the size of the target population
-    else {
-        m_MaxConnections = trgNeuronGroup->getNumNeurons();
-    }
-
-    // If connectivitity initialisation snippet provides a function to calculate row length, call it
-    // **NOTE** only do this for sparse connectivity as this should not be set for bitmasks
-    auto calcMaxColLengthFunc = m_ConnectivityInitialiser.getSnippet()->getCalcMaxColLengthFunc();
-    if(calcMaxColLengthFunc && (m_MatrixType & SynapseMatrixConnectivity::SPARSE)) {
-        m_MaxSourceConnections = calcMaxColLengthFunc(srcNeuronGroup->getNumNeurons(), trgNeuronGroup->getNumNeurons(),
-                                                      m_ConnectivityInitialiser.getParams());
-    }
-    // Otherwise, default to the size of the source population
-    else {
-        m_MaxSourceConnections = srcNeuronGroup->getNumNeurons();
     }
 
     // Check that the source neuron group supports the desired number of delay steps
@@ -606,7 +735,8 @@ void SynapseGroup::initDerivedParams(double dt)
     }
 
     // Initialise any derived connectivity initialiser parameters
-    m_ConnectivityInitialiser.initDerivedParams(dt);
+    m_SparseConnectivityInitialiser.initDerivedParams(dt);
+    m_ToeplitzConnectivityInitialiser.initDerivedParams(dt);
 }
 //----------------------------------------------------------------------------
 bool SynapseGroup::canPSBeFused() const
@@ -676,6 +806,12 @@ bool SynapseGroup::canWUMPostUpdateBeFused() const
     return true;
 }
 //----------------------------------------------------------------------------
+bool SynapseGroup::canPreOutputBeFused() const
+{
+    // There are no variables or other non-constant objects, so these can presumably always be fused
+    return true;
+}
+//----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
 {
     boost::uuids::detail::sha1 hash;
@@ -702,6 +838,11 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUHashDigest() const
     // If connectivity is procedural, include connectivitiy initialiser hash
     if(getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) {
         Utils::updateHash(getConnectivityInitialiser().getHashDigest(), hash);
+    }
+
+    // If connectivity is Toepltiz, include Toeplitz connectivitiy initialiser hash
+    if(getMatrixType() & SynapseMatrixConnectivity::TOEPLITZ) {
+        Utils::updateHash(getToeplitzConnectivityInitialiser().getHashDigest(), hash);
     }
     return hash.get_digest();
 }
@@ -741,6 +882,13 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSFuseHashDigest() cons
     Utils::updateHash(getPSTargetVar(), hash);
     Utils::updateHash(getPSParams(), hash);
     Utils::updateHash(getPSDerivedParams(), hash);
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(getPreTargetVar(), hash);
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
@@ -844,6 +992,9 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getWUInitHashDigest() cons
     Utils::updateHash(getSparseIndType(), hash);
     Utils::updateHash(getWUModel()->getVars(), hash);
 
+    Utils::updateHash(getWUModel()->getSynapseDynamicsCode().empty(), hash);
+    Utils::updateHash(getWUModel()->getLearnPostCode().empty(), hash);
+
     // Include variable initialiser hashes
     for(const auto &w : getWUVarInitialisers()) {
         Utils::updateHash(w.getHashDigest(), hash);
@@ -885,6 +1036,12 @@ boost::uuids::detail::sha1::digest_type SynapseGroup::getPSInitHashDigest() cons
     for(const auto &p : getPSVarInitialisers()) {
         Utils::updateHash(p.getHashDigest(), hash);
     }
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type SynapseGroup::getPreOutputInitHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------

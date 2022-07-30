@@ -301,9 +301,10 @@ TEST(CustomUpdates, ReduceDuplicate)
     // Create custom update which tries to create a read-write refernece to a (which isn't batched)
     Sum2::VarValues sum2VarValues(1.0);
     Sum2::VarReferences sum2VarReferences(createVarRef(pop, "a"), createVarRef(pop, "V"));
+    model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
+                                {}, sum2VarValues, sum2VarReferences);
     try {
-        model.addCustomUpdate<Sum2>("Sum1", "CustomUpdate",
-                                    {}, sum2VarValues, sum2VarReferences);
+        model.finalize();
         FAIL();
     }
     catch(const std::runtime_error &) {
@@ -557,7 +558,7 @@ TEST(CustomUpdates, CompareDifferentWUTranspose)
     // **NOTE** transpose variables don't matter for initialization
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().size() == 2);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().empty());
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().empty());
 }
 //--------------------------------------------------------------------------
@@ -608,7 +609,7 @@ TEST(CustomUpdates, CompareDifferentWUConnectivity)
     // Check correct groups are merged
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateTransposeWUGroups().empty());
     ASSERT_TRUE(modelSpecMerged.getMergedCustomUpdateWUGroups().size() == 2);
-    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateDenseInitGroups().size() == 1);
+    ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateInitGroups().size() == 1);
     ASSERT_TRUE(modelSpecMerged.getMergedCustomWUUpdateSparseInitGroups().size() == 1);
 }
 //--------------------------------------------------------------------------

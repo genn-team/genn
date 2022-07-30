@@ -66,8 +66,8 @@ void modelDefinition(ModelSpec &model)
 
     // Izhikevich model initial conditions - tonic spiking
     NeuronModels::Izhikevich::VarValues exIzh_ini(
-        -65,        //0 - V
-        -20);       //1 - U
+        -65,        // 0 - V
+        -20);       // 1 - U
 
 
 

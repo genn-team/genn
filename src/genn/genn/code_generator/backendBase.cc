@@ -6,6 +6,8 @@
 
 // GeNN code generator includes
 #include "code_generator/groupMerged.h"
+#include "code_generator/customUpdateGroupMerged.h"
+#include "code_generator/neuronUpdateGroupMerged.h"
 
 // Macro for simplifying defining type sizes
 #define TYPE(T) {#T, {sizeof(T), std::to_string(std::numeric_limits<T>::lowest())}}
@@ -128,6 +130,19 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
         else {
             os << "const unsigned int synBatchOffset = preBatchOffset * group->rowStride;" << std::endl;
         }
+        
+        // If synapse group has kernel weights
+        const auto &kernelSize = sg.getArchetype().getKernelSize();
+        if((sg.getArchetype().getMatrixType() & SynapseMatrixWeight::KERNEL) && !kernelSize.empty()) {
+            // Loop through kernel dimensions and multiply together
+            os << "const unsigned int kernBatchOffset = ";
+            for(size_t i = 0; i < kernelSize.size(); i++) {
+                os << sg.getKernelSize(i) << " * ";
+            }
+            
+            // And finally by batch
+            os << "batch;" << std::endl;
+        }
     }
 
     // If presynaptic neuron group has variable queues, calculate offset to read from its variables with axonal delay
@@ -188,10 +203,10 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu, unsigned int batchSize) const
+void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
 {
     // If batching is enabled, calculate batch offset
-    if(cu.getArchetype().isBatched() && batchSize > 1) {
+    if(cu.getArchetype().isBatched()) {
         os << "const unsigned int batchOffset = group->size * batch;" << std::endl;
     }
             
@@ -201,7 +216,7 @@ void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os,
         os << "const unsigned int delayOffset = (*group->spkQuePtr * group->size);" << std::endl;
 
         // If batching is also enabled, calculate offset including delay and batch
-        if(cu.getArchetype().isBatched() && batchSize > 1) {
+        if(cu.getArchetype().isBatched()) {
             os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
     }

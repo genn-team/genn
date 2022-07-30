@@ -98,7 +98,7 @@ public:
     - \c beta - roughly speaking equivalent to the input resistance, i.e. it regulates the scale of the input into the neuron, typically \f$\beta\f$= 2.64 \f${\rm M}\Omega\f$.
 
     \note
-    The initial values array for the `RulkovMap` type needs two entries for `V` and `Vpre` and the
+    The initial values array for the `RulkovMap` type needs two entries for `V` and `preV` and the
     parameter array needs four entries for `Vspike`, `alpha`, `y` and `beta`,  *in that order*.*/
 class RulkovMap : public Base
 {
@@ -182,7 +182,7 @@ public:
 // NeuronModels::IzhikevichVariable
 //----------------------------------------------------------------------------
 //! Izhikevich neuron with variable parameters \cite izhikevich2003simple.
-/*! This is the same model as Izhikevich but parameters are defined as
+/*! This is the same model as NeuronModels::Izhikevich but parameters are defined as
     "variables" in order to allow users to provide individual values for each
     individual neuron instead of fixed values for all neurons across the population.
 
@@ -267,13 +267,13 @@ public:
 // NeuronModels::SpikeSourceArray
 //----------------------------------------------------------------------------
 //! Spike source array
-/*! A neuron which reads spike times from a global spikes array
+/*! A neuron which reads spike times from a global spikes array.
     It has 2 variables:
 
     - \c startSpike - Index of the next spike in the global array
     - \c endSpike   - Index of the spike next to the last in the globel array
 
-    and 1 global parameter:
+    and 1 extra global parameter:
 
     - \c spikeTimes - Array with all spike times
 
@@ -297,12 +297,12 @@ public:
 //----------------------------------------------------------------------------
 //! Poisson neurons
 /*! Poisson neurons have constant membrane potential (\c Vrest) unless they are
-    activated randomly to the \c Vspike value if (t- \c SpikeTime ) > \c trefract.
+    activated randomly to the \c Vspike value if (t- \c spikeTime ) > \c trefract.
 
     It has 2 variables:
 
     - \c V - Membrane potential (mV)
-    - \c SpikeTime - Time at which the neuron spiked for the last time (ms)
+    - \c spikeTime - Time at which the neuron spiked for the last time (ms)
 
     and 4 parameters:
 
@@ -312,13 +312,20 @@ public:
     - \c Vrest - Membrane potential at rest (mV)
 
     \note The initial values array for the `Poisson` type needs two entries
-    for `V`, and `SpikeTime` and the parameter array needs four entries for
-    `therate`, `trefract`, `Vspike` and `Vrest`,  *in that order*.
+    for `V`, and `spikeTime` and the parameter array needs four entries for
+    `trefract`, `tspike`, `Vspike` and `Vrest`,  *in that order*.
+    \note The refractory period and the spike duration both start at the beginning of the spike. That means that the refractory period should be longer or equal to the spike duration. If this is not the case, undefined model behaviour occurs.
+
+    It has two extra global parameters:
+
+    - \c firingProb - an array of firing probabilities/ average rates; this can extend to \f$n \cdot N\f$, where \f$N\f$ is the number of neurons, for \f$n > 0\f$ firing patterns
+    - \c offset - an unsigned integer that points to the start of the currently used input pattern; typically taking values of \f$i \cdot N\f$, \f$0 \leq i < n\f$. 
 
     \note This model uses a linear approximation for the probability
     of firing a spike in a given time step of size `DT`, i.e. the
     probability of firing is \f$\lambda\f$ times `DT`: \f$ p = \lambda \Delta t
-    \f$. This approximation is usually very good, especially for typical,
+    \f$, where $\lambda$ corresponds to the value of the relevant entry of `firingProb`. 
+    This approximation is usually very good, especially for typical,
     quite small time steps and moderate firing rates. However, it is worth
     noting that the approximation becomes poor for very high firing rates
     and large time steps.*/
@@ -348,7 +355,9 @@ public:
 // NeuronModels::PoissonNew
 //----------------------------------------------------------------------------
 //! Poisson neurons
-/*! It has 1 state variable:
+/*! This neuron model emits spikes according to the Poisson distribution with a mean firing
+  rate as determined by its single parameter. 
+  It has 1 state variable:
 
     - \c timeStepToSpike - Number of timesteps to next spike
 
@@ -418,7 +427,7 @@ public:
     - \c EK - K equi potential in mV
     - \c gl - Leak conductance in 1/(mOhms * cm^2)
     - \c El - Leak equi potential in mV
-    - \c Cmem - Membrane capacity density in muF/cm^2
+    - \c C - Membrane capacity density in muF/cm^2
 
     \note
     Internally, the ordinary differential equations defining the model are integrated with a
@@ -479,7 +488,9 @@ public:
 // NeuronModels::TraubMilesFast
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm: Original fast implementation, using 25 inner iterations.
-/*! There are singularities in this model, which can be  easily hit in float precision*/
+/*! There are singularities in this model, which can be easily hit in float precision
+  \note See NeuronModels::TraubMiles for variable and parameter names.
+*/
 class TraubMilesFast : public TraubMiles
 {
 public:
@@ -510,7 +521,9 @@ public:
 // NeuronModels::TraubMilesAlt
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm
-/*! Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.*/
+/*! Using a workaround to avoid singularity: adding the munimum numerical value of the floating point precision used.
+  \note See NeuronModels::TraubMiles for variable and parameter names.
+*/
 class TraubMilesAlt : public TraubMiles
 {
 public:
@@ -544,7 +557,9 @@ public:
 // NeuronModels::TraubMilesNStep
 //----------------------------------------------------------------------------
 //! Hodgkin-Huxley neurons with Traub & Miles algorithm.
-/*! Same as standard TraubMiles model but number of inner loops can be set using a parameter*/
+/*! Same as standard TraubMiles model but number of inner loops can be set using a parameter
+  \note See NeuronModels::TraubMiles for variable and parameter names.
+*/
 class TraubMilesNStep : public TraubMiles
 {
 public:

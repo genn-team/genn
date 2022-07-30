@@ -54,6 +54,8 @@ TEST_F(SimTest, CustomUpdate)
             pullVWUSparseSetTimeFromDevice();
             pullgSparseFromDevice();
             pullSparseConnectivityFromDevice();
+            pullVWUKernelSetTimeFromDevice();
+            pullgKernelFromDevice();
             pullVCustomWUUpdateSetTimeFromDevice();
             pullCCustomWUUpdateFromDevice();
 
@@ -96,6 +98,11 @@ TEST_F(SimTest, CustomUpdate)
             EXPECT_TRUE(std::all_of(&VWUDenseSetTime[0], &VWUDenseSetTime[100 * 100],
                         [](scalar v) { return v == t; }));
             EXPECT_TRUE(std::all_of(&gDense[0], &gDense[100 * 100],
+                        [](scalar v) { return v == t; }));
+
+            EXPECT_TRUE(std::all_of(&VWUKernelSetTime[0], &VWUKernelSetTime[3 * 3],
+                        [](scalar v) { return v == t; }));
+            EXPECT_TRUE(std::all_of(&gKernel[0], &gKernel[3 * 3],
                         [](scalar v) { return v == t; }));
 
             EXPECT_TRUE(std::all_of(&VCustomWUUpdateSetTime[0], &VCustomWUUpdateSetTime[100 * 100],

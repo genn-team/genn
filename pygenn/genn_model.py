@@ -59,7 +59,8 @@ from . import genn_wrapper
 from .genn_wrapper import SharedLibraryModelNumpy as slm
 from .genn_wrapper.Models import (Var, VarRef, VarInit, VarReference, 
                                   WUVarReference, VarVector, VarRefVector)
-from .genn_wrapper.InitSparseConnectivitySnippet import Init
+from .genn_wrapper.InitSparseConnectivitySnippet import Init as InitSparse
+from .genn_wrapper.InitToeplitzConnectivitySnippet import Init as InitToeplitz
 from .genn_wrapper.Snippet import (make_dpf, EGP, ParamVal, DerivedParam,
                                    EGPVector, ParamValVector,
                                    DerivedParamVector)
@@ -589,7 +590,10 @@ class GeNNModel(object):
         for k, v in iteritems(self._preferences):
             if hasattr(preferences, k):
                 setattr(preferences, k, v)
-
+        
+        # When using PyGeNN, always include model name in DLL
+        preferences.includeModelNameInDLL = True
+        
         # Create backend
         backend = self._backend_module.create_backend(self._model, output_path,
                                                       self.backend_log_level,
@@ -618,7 +622,7 @@ class GeNNModel(object):
             raise Exception("GeNN model already loaded")
         self._path_to_model = path_to_model
 
-        self._slm.open(self._path_to_model, self.model_name)
+        self._slm.open(self._path_to_model, self.model_name, True)
 
         self._slm.allocate_mem()
 
@@ -947,7 +951,34 @@ def init_connectivity(init_sparse_connect_snippet, param_space):
     s_instance.__disown__()
 
     # Use add function to create suitable VarInit
-    return Init(s_instance, params)
+    return InitSparse(s_instance, params)
+
+def init_toeplitz_connectivity(init_toeplitz_connect_snippet, param_space):
+    """This helper function creates a InitToeplitzConnectivitySnippet::Init
+    object to easily initialise connectivity using a snippet.
+
+    Args:
+    init_toeplitz_connect_snippet   -- type of the InitToeplitzConnectivitySnippet
+                                       class as string or instance of class
+                                       derived from
+                                       InitSparseConnectivitySnippet::Custom.
+    param_space                     -- dict with param values for the
+                                       InitToeplitzConnectivitySnippet class
+    """
+    # Prepare snippet
+    (s_instance, s_type, param_names, params) = \
+        prepare_snippet(init_toeplitz_connect_snippet, param_space,
+                        genn_wrapper.InitToeplitzConnectivitySnippet)
+
+    # **YUCK** VarInit (and GeNN) assume that the snippet will live forever but
+    # as far as Python is concerned, s_instance is never used again so it will be
+    # destroyed. Disowning it here hands over it's ownership to C++
+    # **NOTE** this isn't the case with models as references to neuron and synapse
+    # models are kept within NeuronGroup and SynapseGroup objects
+    s_instance.__disown__()
+
+    # Use add function to create suitable VarInit
+    return InitToeplitz(s_instance, params)
 
 def create_var_ref(pop, var_name):
     """This helper function creates a Models::VarReference
@@ -1083,11 +1114,6 @@ def create_custom_neuron_class(class_name, param_names=None,
     if support_code is not None:
         body["get_support_code"] = lambda self: dedent(support_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-
     if additional_input_vars:
         body["get_additional_input_vars"] = \
             lambda self: ParamValVector([ParamVal(a[0], a[1], a[2])
@@ -1102,13 +1128,14 @@ def create_custom_neuron_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, genn_wrapper.NeuronModels.Custom, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_postsynaptic_class(class_name, param_names=None,
                                      var_name_types=None, derived_params=None,
                                      decay_code=None, apply_input_code=None,
-                                     support_code=None, custom_body=None):
+                                     support_code=None, extra_global_params=None,
+                                     custom_body=None):
     """This helper function creates a custom PostsynapticModel class.
     See also:
     create_custom_neuron_class
@@ -1130,6 +1157,8 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
     decay_code          --  string with the decay code
     apply_input_code    --  string with the apply input code
     support_code        --  string with the support code
+    extra_global_params --  list of pairs of strings with names and
+                            types of additional parameters
     custom_body         --  dictionary with additional attributes and methods
                             of the new class
     """
@@ -1152,7 +1181,7 @@ def create_custom_postsynaptic_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, genn_wrapper.PostsynapticModels.Custom, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_weight_update_class(class_name, param_names=None,
@@ -1285,11 +1314,6 @@ def create_custom_weight_update_class(class_name, param_names=None,
         body["get_synapse_dynamics_suppport_code"] = \
             lambda self: dedent(synapse_dynamics_suppport_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-
     if pre_var_name_types is not None:
         body["get_pre_vars"] = \
             lambda self: VarVector([Var(*vn)
@@ -1329,7 +1353,7 @@ def create_custom_weight_update_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, genn_wrapper.WeightUpdateModels.Custom, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_current_source_class(class_name, param_names=None,
@@ -1370,17 +1394,12 @@ def create_custom_current_source_class(class_name, param_names=None,
     if injection_code is not None:
         body["get_injection_code"] = lambda self: dedent(injection_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-
     if custom_body is not None:
         body.update(custom_body)
 
     return create_custom_model_class(
         class_name, genn_wrapper.CurrentSourceModels.Custom, param_names,
-        var_name_types, derived_params, body)
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_custom_update_class(class_name, param_names=None,
@@ -1424,11 +1443,6 @@ def create_custom_custom_update_class(class_name, param_names=None,
     if update_code is not None:
         body["get_update_code"] = lambda self: dedent(update_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-    
     if var_refs is not None:
         body["get_var_refs"] = \
             lambda self: VarRefVector([VarRef(*v)
@@ -1438,11 +1452,11 @@ def create_custom_custom_update_class(class_name, param_names=None,
 
     return create_custom_model_class(
         class_name, genn_wrapper.CustomUpdateModels.Custom, param_names,
-        var_name_types, derived_params, body)        
+        var_name_types, derived_params, extra_global_params, body)
 
 
 def create_custom_model_class(class_name, base, param_names, var_name_types,
-                              derived_params, custom_body):
+                              derived_params, extra_global_params, custom_body):
     """This helper function completes a custom model class creation.
 
     This part is common for all model classes and is nearly useless on its own
@@ -1464,6 +1478,8 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
     derived_params  --  list of pairs, where the first member is string with
                         name of the derived parameter and the second should 
                         be a functor returned by create_dpf_class
+    extra_global_params --  list of pairs of strings with names and types of
+                            additional parameters
     custom_body     --  dictionary with attributes and methods of the new class
     """
 
@@ -1481,11 +1497,15 @@ def create_custom_model_class(class_name, base, param_names, var_name_types,
         body["get_vars"] = \
             lambda self: VarVector([Var(*vn)
                                     for vn in var_name_types])
-
     if derived_params is not None:
         body["get_derived_params"] = \
             lambda self: DerivedParamVector([DerivedParam(dp[0], make_dpf(dp[1]))
                                              for dp in derived_params])
+    
+    if extra_global_params is not None:
+        body["get_extra_global_params"] = \
+            lambda self: EGPVector([EGP(egp[0], egp[1])
+                                    for egp in extra_global_params])
 
     if custom_body is not None:
         body.update(custom_body)
@@ -1562,18 +1582,18 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
     create_custom_sparse_connect_init_snippet_class
 
     Args:
-    class_name      --  name of the new class
+    class_name          --  name of the new class
 
     Keyword args:
-    param_names     --  list of strings with param names of the model
-    derived_params  --  list of pairs, where the first member is string with
-                        name of the derived parameter and the second MUST be
-                        an instance of the pygenn.genn_wrapper.DerivedParamFunc class
-    var_init_code   --  string with the variable initialization code
-    extra_global_params     --  list of pairs of strings with names and
-                                types of additional parameters
-    custom_body     --  dictionary with additional attributes and methods of
-                        the new class
+    param_names         --  list of strings with param names of the model
+    derived_params      --  list of pairs, where the first member is string with
+                            name of the derived parameter and the second MUST be
+                            an instance of the pygenn.genn_wrapper.DerivedParamFunc class
+    var_init_code       --  string with the variable initialization code
+    extra_global_params --  list of pairs of strings with names and
+                            types of additional parameters
+    custom_body         --  dictionary with additional attributes and methods of
+                            the new class
     """
 
     if not isinstance(custom_body, dict) and custom_body is not None:
@@ -1584,17 +1604,12 @@ def create_custom_init_var_snippet_class(class_name, param_names=None,
     if var_init_code is not None:
         body["get_code"] = lambda self: dedent(var_init_code)
 
-    if extra_global_params is not None:
-        body["get_extra_global_params"] = \
-            lambda self: EGPVector([EGP(egp[0], egp[1])
-                                    for egp in extra_global_params])
-
     if custom_body is not None:
         body.update(custom_body)
 
     return create_custom_model_class(
         class_name, genn_wrapper.InitVarSnippet.Custom, param_names,
-        None, derived_params, body)
+        None, derived_params, extra_global_params, body)
 
 
 def create_custom_sparse_connect_init_snippet_class(class_name,
@@ -1681,6 +1696,76 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
         body["get_calc_kernel_size_func"] = \
             lambda self: make_cksf(calc_kernel_size_func)
 
+    if custom_body is not None:
+        body.update(custom_body)
+
+    return create_custom_model_class(
+        class_name, genn_wrapper.InitSparseConnectivitySnippet.Custom, param_names,
+        None, derived_params, extra_global_params, body)
+
+def create_custom_toeplitz_connect_init_snippet_class(class_name,
+                                                      param_names=None,
+                                                      derived_params=None,
+                                                      diagonal_build_code=None,
+                                                      diagonal_build_state_vars=None,
+                                                      calc_max_row_len_func=None,
+                                                      calc_kernel_size_func=None,
+                                                      extra_global_params=None,
+                                                      custom_body=None):
+    """This helper function creates a custom
+    InitToeplitzConnectivitySnippet class.
+    See also:
+    create_custom_neuron_class
+    create_custom_weight_update_class
+    create_custom_postsynaptic_class
+    create_custom_current_source_class
+    create_custom_init_var_snippet_class
+
+    Args:
+    class_name                  --  name of the new class
+
+    Keyword args:
+    param_names                 --  list of strings with param names of the model
+    derived_params              --  list of pairs, where the first member is string
+                                    with name of the derived parameter and the
+                                    second MUST be an instance of the class which
+                                    inherits from pygenn.genn_wrapper.DerivedParamFunc
+    diagonal_build_code         --  string with diagonal building initialization code
+    diagonal_build_state_vars   --  list of tuples of state variables, their types
+                                    and their initial values to use across
+                                    diagonal building loop
+    calc_max_row_len_func       --  instance of class inheriting from
+                                    CalcMaxLengthFunc used to calculate maximum
+                                    row length of synaptic matrix
+    calc_kernel_size_func       --  instance of class inheriting from CalcKernelSizeFunc
+                                    used to calculate kernel dimensions
+    extra_global_params         --  list of pairs of strings with names and
+                                    types of additional parameters
+    custom_body                 --  dictionary with additional attributes and
+                                    methods of the new class
+    """
+
+    if not isinstance(custom_body, dict) and custom_body is not None:
+        raise ValueError("custom_body must be an instance of dict or None")
+
+    body = {}
+
+    if diagonal_build_code is not None:
+        body["get_diagonal_build_code"] = lambda self: dedent(diagonal_build_code)
+
+    if diagonal_build_state_vars is not None:
+        body["get_diagonal_build_state_vars"] = \
+            lambda self: ParamValVector([ParamVal(r[0], r[1], r[2])
+                                         for r in diagonal_build_state_vars])
+
+    if calc_max_row_len_func is not None:
+        body["get_calc_max_row_length_func"] = \
+            lambda self: make_cmlf(calc_max_row_len_func)
+
+    if calc_kernel_size_func is not None:
+        body["get_calc_kernel_size_func"] = \
+            lambda self: make_cksf(calc_kernel_size_func)
+
     if extra_global_params is not None:
         body["get_extra_global_params"] = \
             lambda self: EGPVector([EGP(egp[0], egp[1])
@@ -1690,5 +1775,5 @@ def create_custom_sparse_connect_init_snippet_class(class_name,
         body.update(custom_body)
 
     return create_custom_model_class(
-        class_name, genn_wrapper.InitSparseConnectivitySnippet.Custom, param_names,
+        class_name, genn_wrapper.InitToeplitzConnectivitySnippet.Custom, param_names,
         None, derived_params, body)

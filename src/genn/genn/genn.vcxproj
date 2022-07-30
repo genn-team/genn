@@ -23,25 +23,26 @@
     <ClCompile Include="code_generator\backendSIMT.cc" />
     <ClCompile Include="code_generator\codeGenUtils.cc" />
     <ClCompile Include="code_generator\codeStream.cc" />
-    <ClCompile Include="code_generator\generateAll.cc" />
-    <ClCompile Include="code_generator\generateCustomUpdate.cc" />
-    <ClCompile Include="code_generator\generateInit.cc" />
+    <ClCompile Include="code_generator\customUpdateGroupMerged.cc" />
+    <ClCompile Include="code_generator\generateModules.cc" />
     <ClCompile Include="code_generator\generateMakefile.cc" />
     <ClCompile Include="code_generator\generateMSBuild.cc" />
-    <ClCompile Include="code_generator\generateNeuronUpdate.cc" />
     <ClCompile Include="code_generator\generateRunner.cc" />
     <ClCompile Include="code_generator\generateSupportCode.cc" />
-    <ClCompile Include="code_generator\generateSynapseUpdate.cc" />
     <ClCompile Include="code_generator\groupMerged.cc" />
+    <ClCompile Include="code_generator\initGroupMerged.cc" />
+    <ClCompile Include="code_generator\neuronUpdateGroupMerged.cc" />
     <ClCompile Include="code_generator\modelSpecMerged.cc" />
     <ClCompile Include="code_generator\presynapticUpdateStrategySIMT.cc" />
     <ClCompile Include="code_generator\substitutions.cc" />
     <ClCompile Include="binomial.cc" />
+    <ClCompile Include="code_generator\synapseUpdateGroupMerged.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
     <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="customUpdateModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
+    <ClCompile Include="initToeplitzConnectivitySnippet.cc" />
     <ClCompile Include="initVarSnippet.cc" />
     <ClCompile Include="logging.cc" />
     <ClCompile Include="models.cc" />
@@ -63,20 +64,20 @@
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\backendSIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeGenUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\codeStream.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateAll.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateCustomUpdate.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateInit.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\customUpdateGroupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateModules.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMakefile.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateMSBuild.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateNeuronUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateRunner.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSupportCode.h" />
-    <ClInclude Include="..\..\..\include\genn\genn\code_generator\generateSynapseUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\groupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\initGroupMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\neuronUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\modelSpecMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\presynapticUpdateStrategySIMT.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\substitutions.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\supportCodeMerged.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\code_generator\synapseUpdateGroupMerged.h" />
     <ClInclude Include="..\..\..\include\genn\genn\code_generator\teeStream.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
@@ -87,6 +88,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\gennExport.h" />
     <ClInclude Include="..\..\..\include\genn\genn\gennUtils.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initSparseConnectivitySnippet.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\initToeplitzConnectivitySnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\initVarSnippet.h" />
     <ClInclude Include="..\..\..\include\genn\genn\logging.h" />
     <ClInclude Include="..\..\..\include\genn\genn\models.h" />
@@ -153,15 +155,15 @@
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
   <Target Name="ReadGitHashAndVersion" BeforeTargets="PrepareForBuild">
-    <Exec Command="git -C $(MSBuildThisFileDirectory) rev-parse HEAD 2> NUL" ConsoleToMsBuild="true" EchoOff="true" IgnoreExitCode="true">
+    <Exec Command="git -C $(MSBuildThisFileDirectory) rev-parse HEAD 2&gt; NUL" ConsoleToMsBuild="true" EchoOff="true" IgnoreExitCode="true">
       <Output TaskParameter="ConsoleOutput" PropertyName="GitHash" />
     </Exec>
     <ReadLinesFromFile File="..\..\..\version.txt">
-        <Output TaskParameter="Lines" PropertyName="GeNNVersion" />
+      <Output TaskParameter="Lines" PropertyName="GeNNVersion" />
     </ReadLinesFromFile>
     <ItemGroup>
       <ClCompile>
-       <PreprocessorDefinitions>%(PreprocessorDefinitions);GIT_HASH="$(GitHash)";GENN_VERSION="$(GeNNVersion)"</PreprocessorDefinitions>
+        <PreprocessorDefinitions>%(PreprocessorDefinitions);GIT_HASH="$(GitHash)";GENN_VERSION="$(GeNNVersion)"</PreprocessorDefinitions>
       </ClCompile>
     </ItemGroup>
   </Target>

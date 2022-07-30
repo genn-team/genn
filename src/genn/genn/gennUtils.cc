@@ -31,7 +31,8 @@ GenericFunction randomFuncs[] = {
     {"gennrand_normal", 0},
     {"gennrand_exponential", 0},
     {"gennrand_log_normal", 2},
-    {"gennrand_gamma", 1}
+    {"gennrand_gamma", 1},
+    {"gennrand_binomial", 2}
 };
 }
 

@@ -9,7 +9,7 @@ import numpy as np
 from six import iterkeys, itervalues
 from . import genn_wrapper
 from .genn_wrapper.Models import (VarInit, VarReference, WUVarReference,
-                                  VarInitVector, VarRefVector, 
+                                  VarInitVector, VarRefVector,
                                   VarReferenceVector, WUVarReferenceVector)
 from .genn_wrapper.StlContainers import DoubleVector
 
@@ -35,14 +35,22 @@ def prepare_model(model, group, param_space, var_space, model_family):
     m_instance, m_type = is_model_valid(model, model_family)
     param_names = list(m_instance.get_param_names())
     if set(iterkeys(param_space)) != set(param_names):
-        raise ValueError("Invalid parameter values for {0}".format(
-            model_family.__name__))
+        raise ValueError(
+            "Invalid parameter values for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
+                model_family.__name__, model.__class__.__name__,
+                sorted(param_names), sorted(iterkeys(param_space))
+            )
+        )
     params = param_space_to_vals(m_instance, param_space)
 
     var_names = [vnt.name for vnt in m_instance.get_vars()]
     if set(iterkeys(var_space)) != set(var_names):
-        raise ValueError("Invalid variable initializers for {0}".format(
-            model_family.__name__))
+        raise ValueError(
+            "Invalid variable initializers for {0}({1}): \nneed -> {2}\ngot -> {3}".format(
+                model_family.__name__, model.__class__.__name__,
+                sorted(var_names), sorted(iterkeys(var_space))
+            )
+        )
     vars = {vnt.name: Variable(vnt.name, vnt.type, var_space[vnt.name], group)
             for vnt in m_instance.get_vars()}
 
@@ -57,9 +65,11 @@ def prepare_snippet(snippet, param_space, snippet_family):
     information about parameters
 
     Args:
-    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom or pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom
+    snippet         --  string or instance of a class derived from pygenn.genn_wrapper.InitVarSnippet.Custom,
+                        pygenn.genn_wrapper.InitSparseConnectivitySnippet.Custom or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet.Custom
     param_space     --  dict with model parameters
-    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet or pygenn.genn_wrapper.InitSparseConnectivitySnippet
+    snippet_family  --  pygenn.genn_wrapper.InitVarSnippet, pygenn.genn_wrapper.InitSparseConnectivitySnippet
+                        or pygenn.genn_wrapper.InitToeplitzConnectivitySnippet
 
     Returns:
     tuple consisting of (snippet instance, snippet type,
@@ -163,7 +173,7 @@ def var_ref_space_to_var_refs(model, var_ref_space):
     return model.make_var_references(
         VarReferenceVector([var_ref_space[v.name][0]
                             for v in model.get_var_refs()]))
-                                                
+
 def var_ref_space_to_wu_var_refs(model, var_ref_space):
     """Convert a var_ref_space dict to WUVarReferences
 

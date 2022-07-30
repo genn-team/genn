@@ -1,0 +1,30 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.30501.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "decode_matrix_conn_gen_kernelg_procedural", "decode_matrix_conn_gen_kernelg_procedural.vcxproj", "{90AB305F-E5E9-4018-A780-C7DCA308914B}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D2908C4D-455F-433C-9C52-DC8CA6A118AE} = {D2908C4D-455F-433C-9C52-DC8CA6A118AE}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "runner", "decode_matrix_conn_gen_kernelg_procedural_CODE\runner.vcxproj", "{D2908C4D-455F-433C-9C52-DC8CA6A118AE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{90AB305F-E5E9-4018-A780-C7DCA308914B}.Debug|x64.ActiveCfg = Debug|x64
+		{90AB305F-E5E9-4018-A780-C7DCA308914B}.Debug|x64.Build.0 = Debug|x64
+		{90AB305F-E5E9-4018-A780-C7DCA308914B}.Release|x64.ActiveCfg = Release|x64
+		{90AB305F-E5E9-4018-A780-C7DCA308914B}.Release|x64.Build.0 = Release|x64
+		{D2908C4D-455F-433C-9C52-DC8CA6A118AE}.Debug|x64.ActiveCfg = Debug|x64
+		{D2908C4D-455F-433C-9C52-DC8CA6A118AE}.Debug|x64.Build.0 = Debug|x64
+		{D2908C4D-455F-433C-9C52-DC8CA6A118AE}.Release|x64.ActiveCfg = Release|x64
+		{D2908C4D-455F-433C-9C52-DC8CA6A118AE}.Release|x64.Build.0 = Release|x64
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

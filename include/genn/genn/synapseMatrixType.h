@@ -10,6 +10,7 @@ enum class SynapseMatrixConnectivity : unsigned int
     BITMASK     = (1 << 1),
     SPARSE      = (1 << 2),
     PROCEDURAL  = (1 << 3),
+    TOEPLITZ    = (1 << 4),
 };
 
 //! Flags defining different types of synaptic matrix connectivity
@@ -19,6 +20,7 @@ enum class SynapseMatrixWeight : unsigned int
     INDIVIDUAL      = (1 << 6),
     PROCEDURAL      = (1 << 7),
     INDIVIDUAL_PSM  = (1 << 8),
+    KERNEL          = (1 << 9)
 };
 
 //! Supported combinations of SynapticMatrixConnectivity and SynapticMatrixWeight
@@ -36,6 +38,8 @@ enum class SynapseMatrixType : unsigned int
     PROCEDURAL_GLOBALG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL),
     PROCEDURAL_GLOBALG_INDIVIDUAL_PSM   = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::GLOBAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
     PROCEDURAL_PROCEDURALG              = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    PROCEDURAL_KERNELG                  = static_cast<unsigned int>(SynapseMatrixConnectivity::PROCEDURAL) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
+    TOEPLITZ_KERNELG                    = static_cast<unsigned int>(SynapseMatrixConnectivity::TOEPLITZ) | static_cast<unsigned int>(SynapseMatrixWeight::KERNEL) | static_cast<unsigned int>(SynapseMatrixWeight::INDIVIDUAL_PSM),
 };
 
 //----------------------------------------------------------------------------
@@ -62,10 +66,10 @@ inline SynapseMatrixType operator | (SynapseMatrixWeight weightType, SynapseMatr
 // **THINK** these are kinda nasty as they can return things that aren't actually in the bit enums i.e. ORd together things
 inline SynapseMatrixConnectivity getSynapseMatrixConnectivity(SynapseMatrixType type)
 {
-    return static_cast<SynapseMatrixConnectivity>(static_cast<unsigned int>(type) & 0x15);
+    return static_cast<SynapseMatrixConnectivity>(static_cast<unsigned int>(type) & 0x1F);
 }
 
 inline SynapseMatrixWeight getSynapseMatrixWeight(SynapseMatrixType type)
 {
-    return static_cast<SynapseMatrixWeight>(static_cast<unsigned int>(type) & ~0x15);
+    return static_cast<SynapseMatrixWeight>(static_cast<unsigned int>(type) & ~0x1F);
 }

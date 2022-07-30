@@ -1,7 +1,9 @@
 # Determine whether OS is Darwin i.e. Mac OS X and whether the kernel is 32 or 64 bit
 OS_SIZE				:=$(shell getconf LONG_BIT)
 OS_UPPER			:=$(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OS_RELEASE_UPPER		:=$(shell uname -r 2>/dev/null | tr [:lower:] [:upper:])
 DARWIN				:=$(strip $(findstring DARWIN,$(OS_UPPER)))
+MICROSOFT			:=$(strip $(findstring MICROSOFT,$(OS_RELEASE_UPPER)))
 
 # Get directory of this makefile i.e. GeNN directory (means make can be invoked else where)
 GENN_DIR			:= $(abspath $(dir $(lastword $(MAKEFILE_LIST)))../../)
@@ -25,7 +27,7 @@ endif
 
 ifdef COVERAGE
     GENN_PREFIX			:=$(GENN_PREFIX)_coverage
-    
+
     # Use clang's source-based coverage on OS X
     ifeq ($(DARWIN),DARWIN)
         CXXFLAGS		+=-O0 -fprofile-instr-generate -fcoverage-mapping

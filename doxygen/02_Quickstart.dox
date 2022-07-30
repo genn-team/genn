@@ -243,7 +243,7 @@ There are several steps to be completed to define a neuronal network model.
       \ref sect_new_var_init section for more information on 
       initialising these variables to hetererogenous values.
 
-   c) A pygenn.genn_model.GeNNModel object needs to be created and the floating point precision to use should be set (see \ref floatPrecision for more information on floating point precision), i.e. 
+   c) A pygenn.GeNNModel object needs to be created and the floating point precision to use should be set (see \ref floatPrecision for more information on floating point precision), i.e. 
       \code
       model = GeNNModel("float", "example")
       \endcode  
@@ -266,7 +266,7 @@ There are several steps to be completed to define a neuronal network model.
     model.load()
     \endcode
     \note
-    If the model isn't changed, pygenn.genn_model.GeNNModel.build doesn't need to be called.
+    If the model isn't changed, pygenn.GeNNModel.build doesn't need to be called.
 
 4. Also, within the same script, the programmer defines their own "simulation" code. In this code,
 
@@ -279,7 +279,7 @@ There are several steps to be completed to define a neuronal network model.
       \note
       The initial values or initialisation "snippets" specified when defining the model are automatically applied. 
 
-   c) They use pygenn.genn_model.GeNNModel.step_time() to run one time step on either the CPU or GPU depending on the available hardware.
+   c) They use pygenn.GeNNModel.step_time() to run one time step on either the CPU or GPU depending on the available hardware.
     
    d) They use functions like pygenn.genn_groups.Group.pull_state_from_device etc to transfer the
       results from GPU calculations to the main memory of the host computer

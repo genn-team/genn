@@ -19,6 +19,8 @@ genn_help () {
 # handle script errors
 genn_error () { # $1=line, $2=code, $3=message
     echo "genn-buildmodel.sh:$1: error $2: $3"
+    rm $OUT_PATH
+    rm $MODEL_PATH
     exit "$2"
 }
 trap 'genn_error $LINENO 50 "command failure"' ERR
@@ -93,7 +95,11 @@ BASEDIR=$(dirname "$0")
 make -j $CORE_COUNT -C $BASEDIR/../src/genn/generator -f $GENERATOR_MAKEFILE $MACROS
 
 if [[ -n "$DEBUG" ]]; then
-    gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    if [[ $(uname) == "Darwin" ]]; then
+        lldb -f "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    else
+        gdb -tui --args "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
+    fi
 else
     "$GENERATOR" "$BASEDIR/../" "$OUT_PATH" "$FORCE_REBUILD"
 fi
