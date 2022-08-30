@@ -29,10 +29,6 @@ source version upon which the next release will be based. There are other
 branches in the repository that are used for specific development 
 purposes and are opened and closed without warning.
 
-An alternative to using git is to download the full content of
-GeNN sources by clicking on the "Download ZIP" button on the bottom right
-of the GeNN Github page (\a https://github.com/genn-team/genn).
-
 \section installing Installing GeNN
 
 Installing GeNN comprises a few simple steps to create the GeNN
