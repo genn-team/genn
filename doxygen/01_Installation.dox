@@ -93,7 +93,7 @@ repository.
     be added to your login script (e.g. `.profile` or `.bashrc`)
 
 This normally completes the installation. Windows users must close
-and reopen their command window so changes to the path take effect/
+and reopen their command window so changes to the path take effect.
 
 If you are using GeNN in Windows, the Visual Studio development
 environment must be set up within every instance of the CMD.EXE command
