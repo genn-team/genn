@@ -41,20 +41,23 @@ location. Otherwise enter the directory where you downloaded the Git
 repository.
 
 (ii) Add GeNN's "bin" directory to your path, e.g. if you are running Linux or Mac OS X and extracted/downloaded GeNN to
-     $HOME/GeNN, then you can add:
+     $HOME/GeNN, this can be done with:
       \code
       export PATH=$PATH:$HOME/GeNN/bin
       \endcode
-       to your login script (e.g. `.profile` or `.bashrc`). If you are using
+      to make this change persistent, this can be added to your login script (e.g. `.profile` or `.bashrc`) using your favourite text editor or with:
+      \code
+      echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
+      \endcode. 
+     If you are using
      WINDOWS, the path should be a windows path as it will be
      interpreted by the Visual C++ compiler `cl`, and environment
      variables are best set using `SETX` in a Windows cmd window.
      To do so, open a Windows cmd window by typing `cmd` in the search
      field of the start menu, followed by the `enter` key.
      In the `cmd` window type:
-      \code
-      setx PATH "C:\Users\me\GeNN\bin;%PATH%"
-      \endcode 
+     \image html path_windows.png
+     \image latex path_windows.png width=10cm
       where `C:\Users\me\GeNN` is the path to your GeNN directory.
 
 (iv) Install the C++ compiler on the machine, if not already present.
