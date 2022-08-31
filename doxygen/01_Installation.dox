@@ -8,10 +8,7 @@ version using the Git version control system.
 \section Downloading Downloading a release
 Point your browser to \a https://github.com/genn-team/genn/releases
 and download a release from the list by clicking the relevant source
-code button. Note that GeNN is only distributed in the form of source
-code due to its code generation design. Binary distributions would not
-make sense in this framework and hence are not provided. 
-After downloading continue to install GeNN as described in the \ref installing section below.
+code button. After downloading continue to install GeNN as described in the \ref installing section below.
 
 \section GitSnapshot Obtaining a Git snapshot
 
@@ -29,10 +26,6 @@ source version upon which the next release will be based. There are other
 branches in the repository that are used for specific development 
 purposes and are opened and closed without warning.
 
-An alternative to using git is to download the full content of
-GeNN sources by clicking on the "Download ZIP" button on the bottom right
-of the GeNN Github page (\a https://github.com/genn-team/genn).
-
 \section installing Installing GeNN
 
 Installing GeNN comprises a few simple steps to create the GeNN
@@ -44,29 +37,30 @@ While GeNN models are normally simulated using CUDA on NVIDIA GPUs, if you want 
 location. Otherwise enter the directory where you downloaded the Git
 repository.
 
-(ii) Add GeNN's "bin" directory to your path, e.g. if you are running Linux or Mac OS X and extracted/downloaded GeNN to
-     $HOME/GeNN, then you can add:
+(ii) Add GeNN's 'bin' directory to your path, e.g. if you are running Linux or Mac OS X and extracted/downloaded GeNN to
+     $HOME/GeNN, this can be done with:
       \code
       export PATH=$PATH:$HOME/GeNN/bin
       \endcode
-       to your login script (e.g. `.profile` or `.bashrc`). If you are using
-     WINDOWS, the path should be a windows path as it will be
-     interpreted by the Visual C++ compiler `cl`, and environment
-     variables are best set using `SETX` in a Windows cmd window.
-     To do so, open a Windows cmd window by typing `cmd` in the search
-     field of the start menu, followed by the `enter` key.
-     In the `cmd` window type:
+      to make this change persistent, this can be added to your login script (e.g. `.profile` or `.bashrc`) using your favourite text editor or with:
       \code
-      setx PATH "C:\Users\me\GeNN\bin;%PATH%"
-      \endcode 
-      where `C:\Users\me\GeNN` is the path to your GeNN directory.
+      echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
+      \endcode. 
+     If you are using Windows, the easiest way to modify the path is 
+     by using the 'Environment variables' GUI, which can be accessed by clicking start and searching for 
+     (by starting to type) 'Edit environment variables for your account'.
+     In the upper 'User variables' section, scroll down until you see 'Path',
+     select it and click 'Edit'.
+     Now add a new directory to the path by clicking 'New' in the 'Edit environment variable' window e.g.:
+     \image html path_windows.png
+     \image latex path_windows.png width=10cm
+     if GeNN is installed in a sub-directory of your home directory (`%USERPROFILE%` is an environment variable which points to the current user's home directory) called `genn`.
 
 (iv) Install the C++ compiler on the machine, if not already present.
      For Windows, download Microsoft Visual Studio Community Edition from
      \a https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx.
      When installing Visual Studio, one should select the 'Desktop 
-    development with C++' configuration and the 'Windows 8.1 SDK' and 'Windows 
-    Universal CRT' individual components.
+    development with C++' configuration.
      Mac users should download and set up Xcode from
      \a https://developer.apple.com/xcode/index.html
      , Linux users should install the GNU compiler collection gcc and g++
@@ -80,24 +74,23 @@ repository.
     with each other. The latest C++ compiler need not necessarily be
     compatible with the latest CUDA toolkit.
 
-(vi) Set the `CUDA_PATH` variable if it is not already set by the
-    system, by putting
+(vi) GeNN uses the `CUDA_PATH` environment variable to determine which 
+    version of CUDA to build against. On Windows, this is set automatically when 
+    installing CUDA. However, if you choose, you can verify which version is 
+    selected by looking for the `CUDA_PATH` environment variable in the lower 'System variables' section of the GUI you used to configure the path:
+    \image html cuda_path_windows.png
+    \image latex cuda_path_windows.png width=10cm
+    here, CUDA 10.1 and 11.4 are installed and CUDA 11.4 is selected via `CUDA_PATH`.
+    However, on Linux and Mac you need to set `CUDA_PATH` manually with:
     \code
     export CUDA_PATH=/usr/local/cuda
     \endcode
-    in your login script (or, if CUDA is installed in a non-standard
-    location, the appropriate path to the main CUDA directory). 
-    For most people, this will be done by the CUDA install script and
-    the default value of /usr/local/cuda is fine. In Windows, usually CUDA_PATH
-    is already set after installing the CUDA toolkit. If not,
-    set this variable with:
-    \code
-    setx CUDA_PATH C:\path\to\cuda
-    \endcode
+    assuming CUDA is installed in /usr/local/cuda (the standard location 
+    on Ubuntu Linux). Again, to make this change persistent, this can
+    be added to your login script (e.g. `.profile` or `.bashrc`)
 
 This normally completes the installation. Windows users must close
-and reopen their command window to ensure variables set using `SETX`
-are initialised.
+and reopen their command window so changes to the path take effect.
 
 If you are using GeNN in Windows, the Visual Studio development
 environment must be set up within every instance of the CMD.EXE command
@@ -107,15 +100,6 @@ Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt.
 create a shortcut for this tool on the desktop, for convenience.
 
 \section pygenn Installing PyGeNN
-Building PyGeNN is a little involved so we recommend installing a prebuilt binary wheel from our Releases page or direct from our <a href="https://gen-ci.inf.sussex.ac.uk/job/GeNN/job/genn/job/master/">build server</a>.
-
-\subsection pygenn_wheel Installing PyGeNN from binary wheels
- - Select a suitable wheel from the Releases page (all wheels are build for CUDA 10 except for on Mac OS which is built for CUDA 9). For example, if you have a Linux system with Python 3.7 you would pick ``pygenn-0.2.1-cp37-cp37m-linux_x86_64.whl``. If you do not have CUDA installed, ignore the CUDA version and pick the wheel that otherwise matches your platform.
- - Install the wheel using pip:
- \code
- pip install pygenn-0.2.1-cp37-cp37m-linux_x86_64.whl
- \endcode
- 
 \subsection pygenn_source_nix Installing PyGeNN from source on Linux or Mac OSX
  - Navigate to the GeNN directory and build a dynamic library version of GeNN, directly into the PyGeNN directory with:
  \code
@@ -127,7 +111,7 @@ Building PyGeNN is a little involved so we recommend installing a prebuilt binar
  \endcode
  
 \subsection pygenn_source_windows Installing PyGeNN from source on Windows
- - Ensure that you have at least Python 3.5 and Visual Studio 2015 installed (extensions for earlier versions of Python cannot be built using any versions of Visual Studio new enough to support C++11). If you are using Visual Studio 2019, you need at least Python 3.7.5. These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in different way (please let us know if you suceed in doing so!)
+ - Ensure that you have at least Python 3.5 and Visual Studio 2015 installed (extensions for earlier versions of Python cannot be built using any versions of Visual Studio new enough to compile GeNN). If you are using Visual Studio 2019, you need at least Python 3.7.5. These instructions assume that the Anaconda platform was used to install Python, but it _should_ be possible to install PyGeNN using suitable versions of Python installed in a different way (please let us know if you succeed in doing so!)
  - This process requires a command prompt with the environment correctly configured for both Visual Studio **and** Anaconda. To create one, launch an "x64 Native Tools Command Prompt" from your chosen version of Visual Studio's start menu folder and _activate_ your chosen version of Anaconda by running the ``activate.bat`` in its ``Scripts`` directory. For example, if your user is called "me" and Anaconda is installed in your home directory, you would run:
  \code
  c:\Users\Me\Anaconda3\Scripts\activate.bat c:\Users\Me\Anaconda3
