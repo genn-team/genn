@@ -130,7 +130,7 @@ In order to get a quick start and run one of the the provided example models, na
 
 ## Simulating a new model
 
-The sample projects listed above are already quite highly integrated examples. If one was to use the library to develop a new C++ model, the following would be done:
+The sample projects listed above are already quite highly integrated examples. If you wanted to use GeNN to develop a new C++ model, you would do the following:
 
 1. The neuronal network of interest is defined in a model definition file,
     e.g. ``Example1.cc``.  
