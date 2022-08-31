@@ -65,6 +65,8 @@ At the moment, the following example projects are provided with GeNN:
 
 - Classifier based on an abstraction of the insect olfactory system \([Schmuker et al. 2014][@Schmukeretal2014]\)
 
+- Cortical microcircuit model \([Potjans et al. 2014][@Potjans2014]\)
+
 - Toy examples:
     - Single neuron population of Izhikevich neuron(s) receiving Poisson spike trains as input
     - Single neuron population of Izhikevich neuron(s) with no synapses
@@ -96,6 +98,8 @@ If you use GeNN in your work, please cite "Yavuz, E., Turner, J. and Nowotny, T.
 [@Izhikevich2003]: https://doi.org/10.1109/TNN.2003.820440 "Izhikevich, E. M. Simple model of spiking neurons. IEEE transactions on neural networks 14, 1569–1572 (2003)"
 
 [@Nowotnyetal2005]: https://doi.org/10.1007/s00422-005-0019-7 "Nowotny, T., Huerta, R., Abarbanel, H. D. & Rabinovich, M. I. Self-organization in the olfactory system: one shot odor recognition in insects. Biological cybernetics 93, 436–446 (2005)"
+
+[@Potjans2014]: https://doi.org/10.1093/cercor/bhs358 "Potjans, T. C., & Diesmann, M. The Cell-Type Specific Cortical Microcircuit: Relating Structure and Activity in a Full-Scale Spiking Network Model. Cerebral Cortex, 24(3), 785–806 (2014)"
 
 [@Schmukeretal2014]: https://doi.org/10.1073/pnas.1303053111 "Schmuker, M., Pfeil, T. and Nawrot, M.P. A neuromorphic network for generic multivariate data classification. Proceedings of the National Academy of Sciences, 111(6), pp.2081-2086 (2014)"
 
