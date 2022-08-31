@@ -6,47 +6,105 @@ GeNN is a GPU-enhanced Neuronal Network simulation environment based on code gen
 
 ## INSTALLING GeNN 
 
-These instructions are for installing the release obtained from https://github.com/genn-team/genn/releases. For full instructions and cloning git branches of the project, see the documentation available at http://genn-team.github.io/genn/
+You can download GeNN either as a zip file of a stable release or a
+snapshot of the most recent stable version or the unstable development
+version using the Git version control system.
 
-### WINDOWS INSTALL
+### Downloading a release
+Point your browser to https://github.com/genn-team/genn/releases
+and download a release from the list by clicking the relevant source
+code button. Note that GeNN is only distributed in the form of source
+code due to its code generation design. Binary distributions would not
+make sense in this framework and hence are not provided. 
+After downloading continue to install GeNN as described in the \ref installing section below.
 
-1. Download and unpack GeNN.zip to a convenient location, then download and install the Microsoft Visual C++ compiler and IDE from: http://www.visualstudio.com/en-us/downloads. Be sure to select the 'Desktop development with C++' configuration' and the 'Windows 8.1 SDK' and 'Windows Universal CRT' individual components. If your machine has an NVIDIA GPU, then download and install a compatible version of the Nvidia CUDA toolkit from: https://developer.nvidia.com/cuda-downloads. Note that the latest version of Visual Studio is not necessarily compatible with the latest version of the CUDA toolkit.
+### Obtaining a Git snapshot
 
-2. Ensure that the `CUDA_PATH` environment variable is defined and points to the location of the Nvidia CUDA toolkit installation; and that the CUDA `bin` directory is included in the path. These can be checked by using: `ECHO %CUDA_PATH%` and `ECHO %PATH%` respectively (although they are usully set automatically by the CUDA installer on Windows systems). If not, correct this using: `SETX CUDA_PATH "[drive]\Program Files\NVIDIA GPU Computing Toolkit\CUDA[version]"` and `SETX PATH "%PATH%;%CUDA_PATH%`.
-
-3. Add the `bin` sub-directory of the directory in which GeNN is located to your `PATH` variable. For example, if you extracted GeNN to `c:\Users\me\GeNN`, use: `SETX PATH "c:\Users\me\GeNN\bin;%PATH%"`.
-
-4. To access a developer command prompt, use the shortcut link in: start menu -\> all programs -\> Microsoft Visual Studio -\> Visual Studio Tools -\> x64 Native Tools Command Prompt which will launch an instance of cmd.exe with a build environment already set up. Alternatively, from any cmd console window, run the vscvsrsall.bat script under the Visual C++ directory before compiling any projects.
-
-This completes the installation. Note that the command window must be restarted to initialise the variables set using the `SETX` command.
-
-### LINUX / MAC INSTALL
-
-1. Unpack GeNN.zip in a convenient location, then download and install a compatible version of the Nvidia CUDA toolkit from: https://developer.nvidia.com/cuda-downloads and the GNU GCC compiler collection and GNU Make build environment if it is not already present on the system. Note that the latest versions of GCC / Clang / Linux are not necessarily compatible with the latest version of the CUDA toolkit.
-
-2. Ensure that the environment variable `CUDA_PATH` is set to the location of your Nvidia CUDA toolkit installation and that the CUDA binary directory is in your path. 
-For example, if your CUDA toolkit was installed to `/usr/local/cuda`, you can use: 
-	```sh
-	echo "export CUDA_PATH=/usr/local/cuda" >> ~/.bash_profile
-	echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
-	```
-
-4. Add GeNN's `bin` directory to your $PATH variable. For example, if you extracted GeNN to `/home/me/genn`, you can use: `echo "export PATH=$PATH:/home/me/genn/bin" >> ~/.bash_profile`
-
-This completes the installation. Note that you must either logout and in again or run `source ~/.bash_profile` for the changes to `.bash_profile` to take effect.
-
-### ARCH LINUX INSTALL
-For Arch Linux there are GeNN packages available [from the AUR](https://aur.archlinux.org/packages/?O=0&K=genn).
-
-Install with your AUR helper of choice, like so:
-```sh
-yay -S genn
+If it is not yet installed on your system, download and install Git
+(http://git-scm.com/). Then clone the GeNN repository from Github
+```bash
+git clone https://github.com/genn-team/genn.git
 ```
+The github url of GeNN in the command above can be copied from the
+HTTPS clone URL displayed on the GeNN Github page (https://github.com/genn-team/genn).
 
-If you do not want CUDA support (i.e. if you don't have an NVIDIA GPU), there is a CPU-only version of the package:
-```sh
-yay -S genn_cpu_only
-```
+This will clone the entire repository, including all open branches.
+By default git will check out the master branch which contains the
+source version upon which the next release will be based. There are other 
+branches in the repository that are used for specific development 
+purposes and are opened and closed without warning.
+
+### Installing GeNN
+
+Installing GeNN comprises a few simple steps [^1] to create the GeNN
+development environment:
+
+[^1]: While GeNN models are normally simulated using CUDA on NVIDIA GPUs, if you want to use GeNN on a machine without an NVIDIA GPU, you can skip steps v and vi and use GeNN in "CPU_ONLY" mode.
+
+(i) If you have downloaded a zip file, unpack GeNN.zip in a convenient
+location. Otherwise enter the directory where you downloaded the Git
+repository.
+
+(ii) Add GeNN's 'bin' directory to your path, e.g. if you are running Linux or Mac OS X and extracted/downloaded GeNN to
+     $HOME/GeNN, this can be done with:
+      ```bash
+      export PATH=$PATH:$HOME/GeNN/bin
+      ```
+      to make this change persistent, this can be added to your login script (e.g. `.profile` or `.bashrc`) using your favourite text editor or with:
+      ```bash
+      echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
+      ```
+     If you are using Windows, the easiest way to modify the path is 
+     by using the 'Environment variables' GUI, which can be accessed by clicking start and searching for 
+     (by starting to type) 'Edit environment variables for your account'.
+     In the upper 'User variables' section, scroll down until you see 'Path',
+     select it and click 'Edit'.
+     Now add a new directory to the path by clicking 'New' in the 'Edit environment variable' window e.g.:
+     ![Screenshot of windows edit environment variable window](/doxygen/images/path_windows.png)
+     if GeNN is installed in a sub-directory of your home directory (``%USERPROFILE%`` is an environment variable which points to the current user's home directory) called ``genn``.
+
+(iv) Install the C++ compiler on the machine, if not already present.
+     For Windows, download Microsoft Visual Studio Community Edition from
+     https://www.visualstudio.com/en-us/downloads/download-visual-studio-vs.aspx.
+     When installing Visual Studio, one should select the 'Desktop 
+    development with C++' configuration.
+     Mac users should download and set up Xcode from
+     https://developer.apple.com/xcode/index.html
+     , Linux users should install the GNU compiler collection gcc and g++
+     from their Linux distribution repository, or alternatively from
+     https://gcc.gnu.org/index.html
+     
+(v) If your machine has a GPU and you haven't installed CUDA already, 
+    obtain a fresh installation of the NVIDIA CUDA toolkit from
+    https://developer.nvidia.com/cuda-downloads
+    Again, be sure to pick CUDA and C++ compiler versions which are compatible
+    with each other. The latest C++ compiler need not necessarily be
+    compatible with the latest CUDA toolkit.
+
+(vi) GeNN uses the ``CUDA_PATH`` environment variable to determine which 
+    version of CUDA to build against. On Windows, this is set automatically when 
+    installing CUDA. However, if you choose, you can verify which version is 
+    selected by looking for the ``CUDA_PATH`` environment variable in the lower 'System variables' section of the GUI you used to configure the path:
+    \image html cuda_path_windows.png
+    \image latex cuda_path_windows.png width=10cm
+    here, CUDA 10.1 and 11.4 are installed and CUDA 11.4 is selected via ``CUDA_PATH``.
+    However, on Linux and Mac you need to set ``CUDA_PATH`` manually with:
+    ```bash
+    export CUDA_PATH=/usr/local/cuda
+    ```
+    assuming CUDA is installed in /usr/local/cuda (the standard location 
+    on Ubuntu Linux). Again, to make this change persistent, this can
+    be added to your login script (e.g. ``.profile`` or ``.bashrc``)
+
+This normally completes the installation. Windows users must close
+and reopen their command window so changes to the path take effect.
+
+If you are using GeNN in Windows, the Visual Studio development
+environment must be set up within every instance of the CMD.EXE command
+window used. One can open an instance of CMD.EXE with the development
+environment already set up by navigating to Start - All Programs - 
+Microsoft Visual Studio - Visual Studio Tools - x64 Native Tools Command Prompt. You may also wish to
+create a shortcut for this tool on the desktop, for convenience.
 
 ## USING GeNN 
 
