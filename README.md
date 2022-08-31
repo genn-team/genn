@@ -130,19 +130,80 @@ In order to get a quick start and run one of the the provided example models, na
 
 ## Simulating a new model
 
-The sample projects listed above are already quite highly integrated examples. If one was to use the library for GPU code generation of their own model, the following would be done:
+The sample projects listed above are already quite highly integrated examples. If one was to use the library to develop a new C++ model, the following would be done:
 
-1. The model in question is defined in a file, say `Model1.cc`.
+1. The neuronal network of interest is defined in a model definition file,
+    e.g. ``Example1.cc``.  
 
-2. This file needs to
-	- include `modelSpec.h`
-	- contains the model's definition in the form of a function `void modelDefinition(NNmodel &model)`  (`MBody1.cc`) shows a typical example)
+2.  Within the the model definition file ``Example1.cc``, the following tasks
+    need to be completed:
 
-3. The programmer defines their own modeling code along similar lines as `MBody1Sim.cc`, etcetera. In this code,
-	- they define input patterns (e.g. for Poisson neurons like in the example)
-	- they use `stepTime();` to run one time step on whatever backend the model was built using.
-	- they use functions like `copyStateFromDevice();` etcetera to obtain results from GPU calculations.
-	- the simulation code is then produced in the following two steps: `genn-buildmodel.[sh|bat] ./modelFile.cc` and `make clean && make`
+    1.  The GeNN file ``modelSpec.h`` needs to be included,
+        ```c++
+        #include "modelSpec.h"
+        ```
+
+    2.  The values for initial variables and parameters for neuron and synapse
+        populations need to be defined, e.g.
+        ```c++
+        NeuronModels::PoissonNew::ParamValues poissonParams(
+        10.0);      // 0 - firing rate
+        ```
+        would define the (homogeneous) parameters for a population of Poisson
+        neurons [^2].
+        [^2]: The number of required parameters and their meaning is defined by the
+        neuron or synapse type. Refer to the [User manual](https://genn-team.github.io/genn/documentation/4/html/dc/d05/UserManual.html) for details. We recommend, however, to use comments like
+        in the above example to achieve maximal clarity of each parameter's
+        meaning.
+
+        If heterogeneous parameter values are required for a particular
+        population of neurons (or synapses), they need to be defined as "variables"
+        rather than parameters.  See the [User manual](https://genn-team.github.io/genn/documentation/4/html/dc/d05/UserManual.html) for how to define new neuron (or synapse) types and the [Variable initialisation](https://genn-team.github.io/genn/documentation/4/html/d4/dc6/sectVariableInitialisation.html) section for more information on 
+        initialising these variables to hetererogenous values.
+
+    c)  The actual network needs to be defined in the form of a function
+        ``modelDefinition`` [^3], i.e. 
+        ```c++
+        void modelDefinition(ModelSpec &model); 
+        ```
+        [^3]: The name ``modelDefinition`` and its parameter of type ``ModelSpec&``
+        are fixed and cannot be changed if GeNN is to recognize it as a
+        model definition.
+
+    d)  Inside ``modelDefinition()``, The time step ``DT`` needs to be defined, e.g.
+        ```c++
+        model.setDT(0.1);
+        ```
+        \note
+        All provided examples and pre-defined model elements in GeNN work with
+        units of mV, ms, nF and uS. However, the choice of units is entirely
+        left to the user if custom model elements are used.
+
+   [MBody1.cc](userproject/MBody1_project/model/MBody1.cc) shows a typical example of a model definition function. In
+   its core it contains calls to ``ModelSpec::addNeuronPopulation`` and
+   ``ModelSpec::addSynapsePopulation`` to build up the network. For a full range
+   of options for defining a network, refer to the [User manual](https://genn-team.github.io/genn/documentation/4/html/dc/d05/UserManual.html).
+
+3.  The programmer defines their own "simulation" code similar to
+    the code in [MBody1Sim.cc](userproject/MBody1_project/model/MBody1Sim.cc). In this code,
+
+    1.  They can manually define the connectivity matrices between neuron groups. 
+        Refer to the \ref subsect34 section for the required format of
+        connectivity matrices for dense or sparse connectivities.
+
+    2.  They can define input patterns or individual initial values for neuron and 
+        / or synapse variables.
+        \note
+        The initial values or initialisation "snippets" given in the ``modelDefinition`` are automatically applied. 
+
+    3.  They use ``stepTime()`` to run one time step on either the CPU or GPU depending on the options passed to genn-buildmodel.
+    
+    4.  They use functions like ``copyStateFromDevice()`` etc to transfer the
+        results from GPU calculations to the main memory of the host computer
+        for further processing.
+
+    5.  They analyze the results. In the most simple case this could just be
+        writing the relevant data to output files.
 
 For more details on how to use GeNN, please see [documentation](http://genn-team.github.io/genn/).
 
