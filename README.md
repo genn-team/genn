@@ -161,7 +161,7 @@ The sample projects listed above are already quite highly integrated examples. I
         rather than parameters.  See the [User manual](https://genn-team.github.io/genn/documentation/4/html/dc/d05/UserManual.html) for how to define new neuron (or synapse) types and the [Variable initialisation](https://genn-team.github.io/genn/documentation/4/html/d4/dc6/sectVariableInitialisation.html) section for more information on 
         initialising these variables to hetererogenous values.
 
-    c)  The actual network needs to be defined in the form of a function
+    3.  The actual network needs to be defined in the form of a function
         ``modelDefinition`` [^3], i.e. 
         ```c++
         void modelDefinition(ModelSpec &model); 
@@ -170,7 +170,7 @@ The sample projects listed above are already quite highly integrated examples. I
         are fixed and cannot be changed if GeNN is to recognize it as a
         model definition.
 
-    d)  Inside ``modelDefinition()``, The time step ``DT`` needs to be defined, e.g.
+    4.  Inside ``modelDefinition()``, The time step ``DT`` needs to be defined, e.g.
         ```c++
         model.setDT(0.1);
         ```
