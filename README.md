@@ -43,22 +43,22 @@ location. Otherwise enter the directory where you downloaded the Git
 repository.
 
 (ii) Add GeNN's 'bin' directory to your path, e.g. if you are running Linux or Mac OS X and extracted/downloaded GeNN to
-     $HOME/GeNN, this can be done with:
+``$HOME/GeNN``, this can be done with:
 ```bash
 export PATH=$PATH:$HOME/GeNN/bin
 ```
-      to make this change persistent, this can be added to your login script (e.g. `.profile` or `.bashrc`) using your favourite text editor or with:
+to make this change persistent, this can be added to your login script (e.g. `.profile` or `.bashrc`) using your favourite text editor or with:
 ```bash
 echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
 ```
-     If you are using Windows, the easiest way to modify the path is 
-     by using the 'Environment variables' GUI, which can be accessed by clicking start and searching for 
-     (by starting to type) 'Edit environment variables for your account'.
-     In the upper 'User variables' section, scroll down until you see 'Path',
-     select it and click 'Edit'.
-     Now add a new directory to the path by clicking 'New' in the 'Edit environment variable' window e.g.:
-     ![Screenshot of windows edit environment variable window](/doxygen/images/path_windows.png)
-     if GeNN is installed in a sub-directory of your home directory (``%USERPROFILE%`` is an environment variable which points to the current user's home directory) called ``genn``.
+ If you are using Windows, the easiest way to modify the path is 
+ by using the 'Environment variables' GUI, which can be accessed by clicking start and searching for 
+ (by starting to type) 'Edit environment variables for your account'.
+ In the upper 'User variables' section, scroll down until you see 'Path',
+ select it and click 'Edit'.
+ Now add a new directory to the path by clicking 'New' in the 'Edit environment variable' window e.g.:
+ ![Screenshot of windows edit environment variable window](/doxygen/images/path_windows.png)
+ if GeNN is installed in a sub-directory of your home directory (``%USERPROFILE%`` is an environment variable which points to the current user's home directory) called ``genn``.
 
 (iv) Install the C++ compiler on the machine, if not already present.
      For Windows, download Microsoft Visual Studio Community Edition from
@@ -84,13 +84,13 @@ echo "export PATH=$PATH:$CUDA_PATH/bin" >> ~/.bash_profile
     selected by looking for the ``CUDA_PATH`` environment variable in the lower 'System variables' section of the GUI you used to configure the path:
     ![Screenshot of windows edit environment variable window](/doxygen/images/cuda_path_windows.png)
     here, CUDA 10.1 and 11.4 are installed and CUDA 11.4 is selected via ``CUDA_PATH``.
-    However, on Linux and Mac you need to set ``CUDA_PATH`` manually with:
+However, on Linux and Mac you need to set ``CUDA_PATH`` manually with:
 ```bash
 export CUDA_PATH=/usr/local/cuda
 ```
-    assuming CUDA is installed in /usr/local/cuda (the standard location 
-    on Ubuntu Linux). Again, to make this change persistent, this can
-    be added to your login script (e.g. ``.profile`` or ``.bashrc``)
+assuming CUDA is installed in /usr/local/cuda (the standard location 
+on Ubuntu Linux). Again, to make this change persistent, this can
+be added to your login script (e.g. ``.profile`` or ``.bashrc``)
 
 This normally completes the installation. Windows users must close
 and reopen their command window so changes to the path take effect.
