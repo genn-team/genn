@@ -179,10 +179,10 @@ The sample projects listed above are already quite highly integrated examples. I
         units of mV, ms, nF and uS. However, the choice of units is entirely
         left to the user if custom model elements are used.
 
-   [MBody1.cc](userproject/MBody1_project/model/MBody1.cc) shows a typical example of a model definition function. In
-   its core it contains calls to ``ModelSpec::addNeuronPopulation`` and
-   ``ModelSpec::addSynapsePopulation`` to build up the network. For a full range
-   of options for defining a network, refer to the [User manual](https://genn-team.github.io/genn/documentation/4/html/dc/d05/UserManual.html).
+    [MBody1.cc](userproject/MBody1_project/model/MBody1.cc) shows a typical example of a model definition function. In
+    its core it contains calls to ``ModelSpec::addNeuronPopulation`` and
+    ``ModelSpec::addSynapsePopulation`` to build up the network. For a full range
+    of options for defining a network, refer to the [User manual](https://genn-team.github.io/genn/documentation/4/html/dc/d05/UserManual.html).
 
 3.  The programmer defines their own "simulation" code similar to
     the code in [MBody1Sim.cc](userproject/MBody1_project/model/MBody1Sim.cc). In this code,
