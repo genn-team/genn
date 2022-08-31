@@ -84,13 +84,13 @@ development environment:
     selected by looking for the ``CUDA_PATH`` environment variable in the lower 'System variables' section of the GUI you used to configure the path:
     ![Screenshot of windows edit environment variable window](/doxygen/images/cuda_path_windows.png)
     here, CUDA 10.1 and 11.4 are installed and CUDA 11.4 is selected via ``CUDA_PATH``.
-However, on Linux and Mac you need to set ``CUDA_PATH`` manually with:
-```bash
-export CUDA_PATH=/usr/local/cuda
-```
-assuming CUDA is installed in /usr/local/cuda (the standard location 
-on Ubuntu Linux). Again, to make this change persistent, this can
-be added to your login script (e.g. ``.profile`` or ``.bashrc``)
+    However, on Linux and Mac you need to set ``CUDA_PATH`` manually with:
+    ```bash
+    export CUDA_PATH=/usr/local/cuda
+    ```
+    assuming CUDA is installed in /usr/local/cuda (the standard location 
+    on Ubuntu Linux). Again, to make this change persistent, this can
+    be added to your login script (e.g. ``.profile`` or ``.bashrc``)
 
 This normally completes the installation. Windows users must close
 and reopen their command window so changes to the path take effect.
