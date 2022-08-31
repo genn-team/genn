@@ -4,7 +4,7 @@
 
 GeNN is a GPU-enhanced Neuronal Network simulation environment based on code generation for Nvidia CUDA.
 
-## INSTALLING GeNN 
+## Installation
 
 You can download GeNN either as a zip file of a stable release or a
 snapshot of the most recent stable version or the unstable development
@@ -13,10 +13,7 @@ version using the Git version control system.
 ### Downloading a release
 Point your browser to https://github.com/genn-team/genn/releases
 and download a release from the list by clicking the relevant source
-code button. Note that GeNN is only distributed in the form of source
-code due to its code generation design. Binary distributions would not
-make sense in this framework and hence are not provided. 
-After downloading continue to install GeNN as described in the \ref installing section below.
+code button. After downloading continue to install GeNN as described in the [GitHub installing section](#installing-genn) below.
 
 ### Obtaining a Git snapshot
 
