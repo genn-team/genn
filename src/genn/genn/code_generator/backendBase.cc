@@ -108,8 +108,8 @@ void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const
         // If batching is also enabled
         if(batchSize > 1) {
             // Calculate batched delay slots
-            os << "const unsigned int readBatchDelaySlot = ($(batch) * " << ng.getArchetype().getNumDelaySlots() << ") + readDelaySlot;" << std::endl;
-            os << "const unsigned int writeBatchDelaySlot = ($(batch) * " << ng.getArchetype().getNumDelaySlots() << ") + writeDelaySlot;" << std::endl;
+            os << "const unsigned int readBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + readDelaySlot;" << std::endl;
+            os << "const unsigned int writeBatchDelaySlot = (batch * " << ng.getArchetype().getNumDelaySlots() << ") + writeDelaySlot;" << std::endl;
 
             // Calculate current batch offset
             os << "const unsigned int batchDelayOffset = batchOffset * " << ng.getArchetype().getNumDelaySlots() << ";" << std::endl;
