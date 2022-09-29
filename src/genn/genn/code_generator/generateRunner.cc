@@ -1210,7 +1210,7 @@ MemAlloc CodeGenerator::generateRunner(const filesystem::path &outputPath, const
             for(size_t i = 0; i < wuPostVars.size(); i++) {
                 backend.genArray(definitionsVar, definitionsInternalVar, runnerVarDecl, runnerVarAlloc, runnerVarFree,
                                  wuPostVars[i].type, wuPostVars[i].name + sg->getFusedWUPostVarSuffix(), sg->getWUPostVarLocation(i),
-                                 getVarSize(wuPostVars[i].access, sg->getSrcNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots), mem);
+                                 getVarSize(wuPostVars[i].access, sg->getTrgNeuronGroup()->getNumNeurons(), batchSize, postDelaySlots), mem);
                 
                 // Loop through EGPs required to initialize WUM variable
                 const auto *varInitSnippet = sg->getWUPostVarInitialisers()[i].getSnippet();
