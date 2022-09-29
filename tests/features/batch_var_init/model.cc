@@ -18,12 +18,33 @@ public:
 };
 IMPLEMENT_SNIPPET(Gradient3D);
 
+class PSM : public PostsynapticModels::Base
+{
+public:
+    DECLARE_MODEL(PSM, 0, 1);
+
+    SET_CURRENT_CONVERTER_CODE("$(inSyn); $(inSyn) = 0");
+    SET_VARS({{"psm", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+};
+IMPLEMENT_MODEL(PSM);
+
+class Neuron : public NeuronModels::Base
+{
+public:
+    DECLARE_MODEL(Neuron, 0, 1);
+
+    SET_VARS({{"V", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+};
+IMPLEMENT_MODEL(Neuron);
+
 class StaticPulseDuplicate : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDuplicate, 0, 1, 0, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(StaticPulseDuplicate, 0, 1, 1, 1);
 
     SET_VARS({{"g", "scalar", VarAccess::READ_ONLY_DUPLICATE}});
+    SET_PRE_VARS({{"pre", "int", VarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_POST_VARS({{"post", "int", VarAccess::READ_ONLY_SHARED_NEURON}});
 
     SET_SIM_CODE("$(addToInSyn, $(g));\n");
 };
@@ -44,22 +65,7 @@ void modelDefinition(ModelSpec &model)
     model.setDT(0.1);
     model.setName("batch_var_init");
     model.setBatchSize(10);
-    
-    // LIF model parameters
-    NeuronModels::LIF::ParamValues lifParams(
-        1.0,    // 0 - C
-        20.0,   // 1 - TauM
-        0.0,    // 2 - Vrest
-        0.0,    // 3 - Vreset
-        20.0,   // 4 - Vthresh
-        0.0,    // 5 - Ioffset
-        5.0);   // 6 - TauRefrac
 
-    // LIF initial conditions
-    NeuronModels::LIF::VarValues lifInit(
-        0.0,     // 0 - V
-        0.0);   // 1 - RefracTime
-        
     // Connectivity parameters 
     InitSparseConnectivitySnippet::Conv2D::ParamValues convParams(
         3, 3,       // conv_kh, conv_kw
@@ -73,13 +79,13 @@ void modelDefinition(ModelSpec &model)
     
     // Neuron populations
     model.addNeuronPopulation<NeuronModels::SpikeSource>("Pre", 64 * 64 * 1, {}, {});
-    model.addNeuronPopulation<NeuronModels::LIF>("Post", 62 * 62 * 4, lifParams, lifInit);
+    model.addNeuronPopulation<Neuron>("Post", 62 * 62 * 4, {}, {33});
     
-    model.addSynapsePopulation<StaticPulseDuplicate, PostsynapticModels::DeltaCurr>(
+    model.addSynapsePopulation<StaticPulseDuplicate, PSM>(
         "Kernel", SynapseMatrixType::PROCEDURAL_KERNELG, NO_DELAY,
         "Pre", "Post",
-        {}, weightUpdateInit, {}, {},
-        {}, {},
+        {}, weightUpdateInit, {13}, {31},
+        {}, {33},
         initConnectivity<InitSparseConnectivitySnippet::Conv2D>(convParams));
 
     model.setPrecision(GENN_FLOAT);
