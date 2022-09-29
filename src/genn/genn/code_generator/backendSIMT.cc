@@ -933,6 +933,8 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                 os << "// only do this for existing neurons" << std::endl;
                 os << "if(" << cuSubs["id"] << " < " << (32 * modelMerged.getModel().getBatchSize()) << ")";
                 {
+                    CodeStream::Scope b(os);
+
                     // Split ID into lane and batch
                     os << "const unsigned int lane = " << cuSubs["id"] << " % 32;" << std::endl;
                     os << "const unsigned int batch = " << cuSubs["id"] << " / 32;" << std::endl;
