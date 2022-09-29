@@ -195,7 +195,13 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
 size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const
 {
     const size_t numCopies = (cg.isBatched() && !cg.isBatchReduction()) ? batchSize : 1;
-    return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+
+    if (cg.isNeuronReduction()) {
+        return padKernelSize(32 * numCopies, KernelCustomUpdate);
+    }
+    else {
+        return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+    }
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
@@ -924,7 +930,56 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             }
             // Otherwise, if this is a neuron reduction
             else if (cg.getArchetype().isNeuronReduction()) {
-                assert(false);
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << cuSubs["id"] << " < " << (32 * modelMerged.getModel().getBatchSize()) << ")";
+                {
+                    // Split ID into lane and batch
+                    os << "const unsigned int lane = " << cuSubs["id"] << " % 32;" << std::endl;
+                    os << "const unsigned int batch = " << cuSubs["id"] << " / 32;" << std::endl;
+                    cuSubs.addVarSubstitution("batch", "batch");
+
+                    genCustomUpdateIndexCalculation(os, cg);
+
+                    // Initialise reduction targets
+                    const auto reductionTargets = genInitReductionTargets(os, cg);
+
+                    // Loop through warps of data
+                    // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
+                    // if this isn't the case (TF uses a threshold of 1024), we should do something smarter
+                    os << "for(unsigned int idx = lane; idx < group->size; idx += 32)";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Re-substitute id with loop index
+                        Substitutions reductionSubs(&cuSubs);
+                        reductionSubs.addVarSubstitution("id", "idx", true);
+
+                        cg.generateCustomUpdate(*this, os, modelMerged, reductionSubs);
+
+                        // Loop through reduction targets and generate reduction
+                        for (const auto &r : reductionTargets) {
+                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                        }
+                    }
+
+                    // Perform warp reduction into first lane
+                    // **YUCK** CUDA-specific
+                    for (unsigned int i = 16; i > 0; i /= 2) {
+                        for (const auto &r : reductionTargets) {
+                            os << getReductionOperation("lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, lr" + r.name + ", " + std::to_string(i) + ")",
+                                                        r.access, r.type) << ";" << std::endl;
+                        }
+                    }
+
+                    // In first lane, loop through reduction targets and write reduced value back to memory
+                    os << "if(lane == 0)";
+                    {
+                        CodeStream::Scope b(os);
+                        for (const auto &r : reductionTargets) {
+                            os << "group->" << r.name << "[batch] = lr" << r.name << ";" << std::endl;
+                        }
+                    }
+                }
             }
             // Otherwise
             else {
