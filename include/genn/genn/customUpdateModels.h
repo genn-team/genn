@@ -43,7 +43,7 @@ public:
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Is this custom update a reduction operation?
-    bool isReduction() const;
+    //bool isReduction() const;
 
     //! Validate names of parameters etc
     void validate() const;

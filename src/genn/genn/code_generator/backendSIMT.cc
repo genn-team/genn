@@ -194,14 +194,14 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const
 {
-    const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
+    const size_t numCopies = (cg.isBatched() && !cg.isBatchReduction()) ? batchSize : 1;
     return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-    const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
+    const size_t numCopies = (cg.isBatched() && !cg.isBatchReduction()) ? batchSize : 1;
 
     if(sgInternal->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         return numCopies * padKernelSize(sgInternal->getKernelSizeFlattened(), KernelCustomUpdate);
@@ -888,9 +888,9 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
-            // If update is a reduction
+            // If update is a batch reduction
             Substitutions cuSubs(&popSubs);
-            if(cg.getArchetype().isReduction()) {
+            if(cg.getArchetype().isBatchReduction()) {
                 os << "// only do this for existing neurons" << std::endl;
                 os << "if(" << cuSubs["id"] << " < group->size)";
                 {
@@ -921,6 +921,10 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         os << "group->" << r.name << "[" << cuSubs["id"] << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
+            }
+            // Otherwise, if this is a neuron reduction
+            else if (cg.getArchetype().isNeuronReduction()) {
+                assert(false);
             }
             // Otherwise
             else {
@@ -986,9 +990,9 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
             }
 
-            // If update isn't a reduction
+            // If update isn't a batch reduction
             Substitutions cuSubs(&popSubs);
-            if(!cg.getArchetype().isReduction()) {
+            if(!cg.getArchetype().isBatchReduction()) {
                 // If it's batched
                 if(cg.getArchetype().isBatched()) {
                     os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
@@ -1045,7 +1049,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 const auto reductionTargets = genInitReductionTargets(os, cg);
 
                 // If this is a reduction
-                if(cg.getArchetype().isReduction()) {
+                if(cg.getArchetype().isBatchReduction()) {
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
                     // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
@@ -1062,7 +1066,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                 // If this is a reduction
-                if(cg.getArchetype().isReduction()) {
+                if(cg.getArchetype().isBatchReduction()) {
                     // Loop through reduction targets and generate reduction
                     for(const auto &r : reductionTargets) {
                         os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;

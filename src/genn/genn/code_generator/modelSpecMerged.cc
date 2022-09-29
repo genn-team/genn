@@ -154,12 +154,12 @@ ModelSpecMerged::ModelSpecMerged(const ModelSpecInternal &model, const BackendBa
     if(backend.isHostReductionRequired()) {
         LOGD_CODE_GEN << "Merging custom weight update groups:";
         createMergedGroupsHash(model, backend, model.getCustomUpdates(), m_MergedCustomUpdateHostReductionGroups,
-                               [](const CustomUpdateInternal &cg) { return cg.isReduction(); },
+                               [](const CustomUpdateInternal &cg) { return cg.isBatchReduction(); },
                                &CustomUpdateInternal::getHashDigest);
 
         LOGD_CODE_GEN << "Merging custom weight transpose update groups:";
         createMergedGroupsHash(model, backend, model.getCustomWUUpdates(), m_MergedCustomWUUpdateHostReductionGroups,
-                               [](const CustomUpdateWUInternal &cg) { return cg.isReduction(); },
+                               [](const CustomUpdateWUInternal &cg) { return cg.isBatchReduction(); },
                                &CustomUpdateWUInternal::getHashDigest);
     }
 

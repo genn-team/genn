@@ -181,7 +181,7 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
         else {
             customUpdateKernels.insert(c.second.getUpdateGroupName());
 
-            const size_t numCopies = (c.second.isBatched() && !c.second.isReduction()) ? model.getBatchSize() : 1;
+            const size_t numCopies = (c.second.isBatched() && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
             if(sgInternal->getMatrixType() & SynapseMatrixConnectivity::SPARSE) {
                 groupSizes[KernelCustomUpdate].push_back(numCopies * sgInternal->getSrcNeuronGroup()->getNumNeurons() * sgInternal->getMaxConnections());
             }

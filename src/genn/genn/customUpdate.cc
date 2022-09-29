@@ -197,8 +197,8 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     // If this is a transpose operation
     if(isTransposeOperation()) {
         // Check that it isn't also a reduction
-        if(getCustomUpdateModel()->isReduction()) {
-            throw std::runtime_error("Custom updates cannot perform both transpose and reduction operations.");
+        if(isBatchReduction()) {
+            throw std::runtime_error("Custom updates cannot perform both transpose and batch reduction operations.");
         }
 
         // Give error if any of the variable references aren't dense
