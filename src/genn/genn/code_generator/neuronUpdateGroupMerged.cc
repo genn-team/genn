@@ -664,7 +664,7 @@ std::string NeuronUpdateGroupMerged::getVarIndex(unsigned int batchSize, VarAcce
 {
     // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
     if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-        return (batchSize == 1) ? "0" : "$(batch)";
+        return (batchSize == 1) ? "0" : "batch";
     }
     else if(varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
         return index;

@@ -1351,7 +1351,7 @@ std::string SynapseGroupMergedBase::getVarIndex(bool delay, unsigned int batchSi
     }
     else {
         if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
-            return (batchSize == 1) ? "0" : "$(batch)";
+            return (batchSize == 1) ? "0" : "batch";
         }
         else if (varDuplication == VarAccessDuplication::SHARED || batchSize == 1) {
             return index;
