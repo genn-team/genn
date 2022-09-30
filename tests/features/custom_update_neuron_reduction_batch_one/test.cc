@@ -28,20 +28,29 @@ public:
     virtual void Init()
     {
         // Initialise variables to reduce
-        std::iota(&VNeuron[0], &VNeuron[50], 0.0f);
+        std::iota(&YNeuron[0], &YNeuron[50], 0.0f);
     }
 };
 
 TEST_F(SimTest, CustomUpdateNeuronReductionBatchOne)
 {
-    // Launch reduction
-    updateTest();
+    // Perform three step softmax
+    updateSoftmax1();
+    updateSoftmax2();
+    updateSoftmax3();
 
-    // Download reductions
-    pullNeuronReduceStateFromDevice();
-
-    ASSERT_FLOAT_EQ(SumNeuronReduce[0], std::accumulate(&VNeuron[0], &VNeuron[50], 0.0f));
-    ASSERT_FLOAT_EQ(MaxNeuronReduce[0], *std::max_element(&VNeuron[0], &VNeuron[50]));
+    // Check max reduction
+    pullSoftmax1StateFromDevice();
+    const float maxY = *std::max_element(&YNeuron[0], &YNeuron[50]);
+    ASSERT_FLOAT_EQ(MaxYSoftmax1[0], maxY);
+    
+    // Calculate sum of exponentials
+    pullSoftmax2StateFromDevice();
+    const float sumExp = std::accumulate(&YNeuron[0], &YNeuron[50], 0.0f,
+                                         [maxY](float acc, float y){ return acc + exp(y - maxY); });
+    ASSERT_FLOAT_EQ(SumExpPiSoftmax2[0], sumExp);
+    //ASSERT_FLOAT_EQ(SumNeuronReduce[0], std::accumulate(&VNeuron[0], &VNeuron[50], 0.0f));
+    
    
 }
 
