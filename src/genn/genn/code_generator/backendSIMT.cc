@@ -914,6 +914,8 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         cuSubs.addVarSubstitution("batch", "batch");
 
                         genCustomUpdateIndexCalculation(os, cg);
+                        
+                        // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                         // Loop through reduction targets and generate reduction
@@ -956,6 +958,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         Substitutions reductionSubs(&cuSubs);
                         reductionSubs.addVarSubstitution("id", "idx", true);
 
+                        // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
                         cg.generateCustomUpdate(*this, os, modelMerged, reductionSubs);
 
                         // Loop through reduction targets and generate reduction

@@ -219,10 +219,14 @@ void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os,
     // If axonal delays are required
     if(cu.getArchetype().getDelayNeuronGroup() != nullptr) {
         // We should read from delay slot pointed to be spkQuePtr
-        os << "const unsigned int delayOffset = (*group->spkQuePtr * group->size);" << std::endl;
+        os << "const unsigned int delaySlot = *group->spkQuePtr;" << std::endl;
+        os << "const unsigned int delayOffset = (delaySlot * group->size);" << std::endl;
 
         // If batching is also enabled, calculate offset including delay and batch
         if(cu.getArchetype().isBatched()) {
+            os << "const unsigned int batchDelaySlot = (batch * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ") + delaySlot;" << std::endl;
+
+            // Calculate current batch offset
             os << "const unsigned int batchDelayOffset = delayOffset + (batchOffset * " << cu.getArchetype().getDelayNeuronGroup()->getNumDelaySlots() << ");" << std::endl;
         }
     }
