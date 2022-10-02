@@ -49,7 +49,12 @@ TEST_F(SimTest, CustomUpdateNeuronReductionBatchOne)
     const float sumExp = std::accumulate(&YNeuron[0], &YNeuron[50], 0.0f,
                                          [maxY](float acc, float y){ return acc + exp(y - maxY); });
     ASSERT_FLOAT_EQ(SumExpPiSoftmax2[0], sumExp);
-    //ASSERT_FLOAT_EQ(SumNeuronReduce[0], std::accumulate(&VNeuron[0], &VNeuron[50], 0.0f));
+    
+    // Calculate final softmax values
+    pullNeuronStateFromDevice();
+    for(int i = 0; i < 50; i++) {
+        ASSERT_FLOAT_EQ(exp(YNeuron[i] - maxY) / sumExp, PiNeuron[i]);
+    }
     
    
 }
