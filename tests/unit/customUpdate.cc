@@ -520,8 +520,8 @@ TEST(CustomUpdates, NeuronBatchReduction)
     ReduceDouble::VarValues reduceVars(0.0, 0.0);
     
     try {
-        amodel.addCustomUpdate<ReduceDouble>("Reduction", "CustomUpdate",
-                                             {}, reduceVars, reduceVarReferences);
+        model.addCustomUpdate<ReduceDouble>("Reduction", "CustomUpdate",
+                                            {}, reduceVars, reduceVarReferences);
         FAIL();
     }
     catch (const std::runtime_error &) {
