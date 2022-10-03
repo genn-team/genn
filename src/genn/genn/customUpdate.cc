@@ -107,6 +107,11 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     // Check variable reference types
     checkVarReferences(m_VarReferences);
 
+    // Check only one type of reduction is specified
+    if (isBatchReduction() && isNeuronReduction()) {
+        throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
+    }
+
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                    [this](const Models::VarReference &v) { return v.getSize() != m_Size; }))
@@ -195,6 +200,8 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 
     // Give error if custom update model includes any shared neuron variables
+    // **NOTE** because there's no way to reference neuron variables with WUVarReferences, 
+    // this safely checks for attempts to do neuron reductions
     const auto vars = getCustomUpdateModel()->getVars();
     if (std::any_of(vars.cbegin(), vars.cend(),
                     [](const Models::Base::Var &v)
