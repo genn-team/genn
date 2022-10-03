@@ -162,7 +162,10 @@ void calcGroupSizes(const CUDA::Preferences &preferences, const ModelSpecInterna
 
     // Loop through custom updates, add size to vector of custom update groups and update group name to set
     for(const auto &c : model.getCustomUpdates()) {
-        groupSizes[KernelCustomUpdate].push_back(c.second.isBatched() ? (model.getBatchSize() * c.second.getSize()) : c.second.getSize());
+        const size_t numCopies = (c.second.isBatched() && !c.second.isBatchReduction()) ? model.getBatchSize() : 1;
+        const size_t size = numCopies * (c.second.isNeuronReduction() ? 32 : c.second.getSize());
+
+        groupSizes[KernelCustomUpdate].push_back(size);
         if(c.second.isVarInitRequired()) {
             groupSizes[KernelInitialize].push_back(c.second.getSize());
         }
