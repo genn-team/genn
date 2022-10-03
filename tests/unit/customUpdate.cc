@@ -15,6 +15,19 @@
 //--------------------------------------------------------------------------
 namespace
 {
+class IzhikevichVariableShared : public NeuronModels::Izhikevich
+{
+public:
+    DECLARE_MODEL(IzhikevichVariableShared, 0, 6);
+
+    SET_PARAM_NAMES({});
+    SET_VARS({{"V","scalar"}, {"U", "scalar"},
+              {"a", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"b", "scalar", VarAccess::READ_ONLY_SHARED_NEURON},
+              {"c", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}, {"d", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+};
+IMPLEMENT_MODEL(IzhikevichVariableShared);
+
+
 class Sum : public CustomUpdateModels::Base
 {
     DECLARE_CUSTOM_UPDATE_MODEL(Sum, 0, 1, 2);
@@ -38,6 +51,18 @@ class Sum2 : public CustomUpdateModels::Base
                   {"b", "scalar", VarAccessMode::READ_ONLY}});
 };
 IMPLEMENT_MODEL(Sum2);
+
+class Sum3 : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(Sum3, 0, 2, 2);
+
+    SET_UPDATE_CODE("$(sum) = $(scale) * ($(a) + $(b));\n");
+
+    SET_VARS({{"sum", "scalar"}, {"scale", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
+    SET_VAR_REFS({{"a", "scalar", VarAccessMode::READ_ONLY},
+                  {"b", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(Sum3);
 
 class Cont : public WeightUpdateModels::Base
 {
@@ -73,6 +98,45 @@ class Reduce : public CustomUpdateModels::Base
                   {"reduction", "scalar", VarAccessMode::REDUCE_SUM}});
 };
 IMPLEMENT_MODEL(Reduce);
+
+class ReduceDouble : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(ReduceDouble, 0, 2, 2);
+
+    SET_UPDATE_CODE(
+        "$(reduction1) = $(var1);\n"
+        "$(reduction2) = $(var2);\n");
+
+    SET_VARS({{"reduction1", "scalar", VarAccess::REDUCE_BATCH_SUM},
+              {"reduction2", "scalar", VarAccess::REDUCE_NEURON_SUM}});
+
+    SET_VAR_REFS({{"var1", "scalar", VarAccessMode::READ_ONLY},
+                  {"var2", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(ReduceDouble);
+
+class ReduceSharedVar : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(ReduceSharedVar, 0, 1, 1);
+
+    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+
+    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_BATCH_SUM}})
+    SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(ReduceSharedVar);
+
+
+class ReduceNeuronSharedVar : public CustomUpdateModels::Base
+{
+    DECLARE_CUSTOM_UPDATE_MODEL(ReduceNeuronSharedVar, 0, 1, 1);
+
+    SET_UPDATE_CODE("$(reduction) = $(var);\n");
+
+    SET_VARS({{"reduction", "scalar", VarAccess::REDUCE_NEURON_SUM}})
+    SET_VAR_REFS({{"var", "scalar", VarAccessMode::READ_ONLY}});
+};
+IMPLEMENT_MODEL(ReduceNeuronSharedVar);
 }
 //--------------------------------------------------------------------------
 // Tests
@@ -308,6 +372,159 @@ TEST(CustomUpdates, ReduceDuplicate)
         FAIL();
     }
     catch(const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateNeuron)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (copy of izhikevich model where a, b, c and d are shared_neuron) to model
+    IzhikevichVariableShared::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<IzhikevichVariableShared>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
+                                             {}, {}, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_TRUE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateNeuronInternal)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5); 
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    ReduceNeuronSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "V"));
+    ReduceNeuronSharedVar::VarValues reduceVars(0.0);
+    auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
+                                                            {}, reduceVars, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_TRUE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeSharedNeuronInternal)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce a
+    ReduceNeuronSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "a"));
+    ReduceNeuronSharedVar::VarValues reduceVars(0.0);
+    auto *cu = model.addCustomUpdate<ReduceNeuronSharedVar>("Reduction", "CustomUpdate",
+                                                            {}, reduceVars, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_FALSE(cuInternal->isBatched());
+    ASSERT_FALSE(cuInternal->isBatchReduction());
+    ASSERT_TRUE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateBatch)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    Reduce::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "a"));
+    auto *cu = model.addCustomUpdate<Reduce>("Reduction", "CustomUpdate",
+                                             {}, {}, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->isBatchReduction());
+    ASSERT_FALSE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, ReductionTypeDuplicateBatchInternal)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    ReduceSharedVar::VarReferences reduceVarReferences(createVarRef(pop, "V"));
+    ReduceSharedVar::VarValues reduceVars(0.0);
+    auto *cu = model.addCustomUpdate<ReduceSharedVar>("Reduction", "CustomUpdate",
+                                                      {}, reduceVars, reduceVarReferences);
+    model.finalize();
+    auto *cuInternal = static_cast<CustomUpdateInternal *>(cu);
+    ASSERT_TRUE(cuInternal->isBatched());
+    ASSERT_TRUE(cuInternal->isBatchReduction());
+    ASSERT_FALSE(cuInternal->isNeuronReduction());
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, NeuronSharedCustomUpdateWU)
+{
+    ModelSpecInternal model;
+
+    // Add two neuron group to model
+    NeuronModels::Izhikevich::ParamValues paramVals(0.02, 0.2, -65.0, 8.0);
+    NeuronModels::Izhikevich::VarValues varVals(0.0, 0.0);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Pre", 10, paramVals, varVals);
+    model.addNeuronPopulation<NeuronModels::Izhikevich>("Post", 25, paramVals, varVals);
+
+    auto *sg1 = model.addSynapsePopulation<WeightUpdateModels::StaticPulse, PostsynapticModels::DeltaCurr>(
+        "Synapses", SynapseMatrixType::DENSE_INDIVIDUALG, NO_DELAY,
+        "Pre", "Post",
+        {}, {1.0},
+        {}, {});
+
+    Sum3::VarValues sumVarValues(0.0, 1.0);
+    Sum3::WUVarReferences sumVarReferences(createWUVarRef(sg1, "g"), createWUVarRef(sg1, "g"));
+
+    try {
+        model.addCustomUpdate<Sum3>("SumWeight", "CustomUpdate",
+                                   {}, sumVarValues, sumVarReferences);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
+    }
+}
+//--------------------------------------------------------------------------
+TEST(CustomUpdates, NeuronBatchReduction)
+{
+    ModelSpecInternal model;
+    model.setBatchSize(5);
+
+    // Add neuron (arbitrary choice of model with read_only variables) to model
+    NeuronModels::IzhikevichVariable::VarValues izkVarVals(0.0, 0.0, 0.02, 0.2, -65.0, 8.);
+    auto *pop = model.addNeuronPopulation<NeuronModels::IzhikevichVariable>("Pop", 10, {}, izkVarVals);
+
+    // Create custom update which tries to reduce V into A
+    ReduceDouble::VarReferences reduceVarReferences(createVarRef(pop, "V"), createVarRef(pop, "U"));
+    ReduceDouble::VarValues reduceVars(0.0, 0.0);
+    
+    try {
+        auto *cu = model.addCustomUpdate<ReduceDouble>("Reduction", "CustomUpdate",
+                                                       {}, reduceVars, reduceVarReferences);
+        FAIL();
+    }
+    catch (const std::runtime_error &) {
     }
 }
 //--------------------------------------------------------------------------
