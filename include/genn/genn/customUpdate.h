@@ -167,9 +167,9 @@ protected:
              // If custom update is batched, check that any variable references to shared variables are read-only
             // **NOTE** if custom update isn't batched, it's totally fine to write to shared variables
             if(m_Batched && (varRef.getVar().access & VarAccessDuplication::SHARED)
-               && (modelVarRef.access != VarAccessMode::READ_ONLY))
+               && (modelVarRef.access == VarAccessMode::READ_WRITE))
             {
-                throw std::runtime_error("Variable references to SHARED variables in batched custom updates must be read-only.");
+                throw std::runtime_error("Variable references to SHARED variables in batched custom updates cannot be read-write.");
             }
         }
     }
