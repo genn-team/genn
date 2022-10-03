@@ -903,7 +903,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     CodeStream::Scope b(os);
 
                     // Initialise reduction targets
-                    const auto reductionTargets = genInitReductionTargets(os, cg);
+                    const auto reductionTargets = genInitReductionTargets(os, cg, cuSubs["id"]);
 
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
@@ -925,9 +925,8 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     }
 
                     // Loop through reduction targets and write reduced value back to memory
-                    // **TODO** broken with delay
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << cuSubs["id"] << "] = lr" << r.name << ";" << std::endl;
+                        os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
             }
@@ -978,12 +977,11 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     }
 
                     // In first lane, loop through reduction targets and write reduced value back to memory
-                    // **TODO** broken with delay
                     os << "if(lane == 0)";
                     {
                         CodeStream::Scope b(os);
                         for (const auto &r : reductionTargets) {
-                            os << "group->" << r.name << "[batch] = lr" << r.name << ";" << std::endl;
+                            os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                         }
                     }
                 }
@@ -1108,7 +1106,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 // Initialise reduction targets
-                const auto reductionTargets = genInitReductionTargets(os, cg);
+                const auto reductionTargets = genInitReductionTargets(os, cg, cuSubs["id_syn"]);
 
                 // If this is a reduction
                 if(cg.getArchetype().isBatchReduction()) {
@@ -1139,7 +1137,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << cuSubs["id_syn"] << "] = lr" << r.name << ";" << std::endl;
+                        os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
 

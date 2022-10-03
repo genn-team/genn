@@ -9,6 +9,7 @@
 #include "code_generator/customUpdateGroupMerged.h"
 #include "code_generator/neuronUpdateGroupMerged.h"
 
+
 // Macro for simplifying defining type sizes
 #define TYPE(T) {#T, {sizeof(T), std::to_string(std::numeric_limits<T>::lowest())}}
 #define FLOAT_TYPE(T) {#T, {sizeof(T), Utils::writePreciseString(std::numeric_limits<T>::lowest())}}
@@ -16,7 +17,9 @@
 //--------------------------------------------------------------------------
 // CodeGenerator::BackendBase
 //--------------------------------------------------------------------------
-CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
+namespace CodeGenerator
+{
+BackendBase::BackendBase(const std::string &scalarType, const PreferencesBase &preferences)
 :   m_PointerBytes(sizeof(char*)), m_Types{{TYPE(char), TYPE(wchar_t), TYPE(signed char), TYPE(short),
     TYPE(signed short), TYPE(short int), TYPE(signed short int), TYPE(int), TYPE(signed int), TYPE(long),
     TYPE(signed long), TYPE(long int), TYPE(signed long int), TYPE(long long), TYPE(signed long long), TYPE(long long int),
@@ -38,7 +41,7 @@ CodeGenerator::BackendBase::BackendBase(const std::string &scalarType, const Pre
     }
 }
 //--------------------------------------------------------------------------
-size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
+size_t BackendBase::getSize(const std::string &type) const
 {
      // If type is a pointer, any pointer should have the same type
     if(Utils::isTypePointer(type)) {
@@ -59,7 +62,7 @@ size_t CodeGenerator::BackendBase::getSize(const std::string &type) const
     }
 }
 //--------------------------------------------------------------------------
-std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) const
+std::string BackendBase::getLowestValue(const std::string &type) const
 {
     assert(!Utils::isTypePointer(type));
 
@@ -75,7 +78,7 @@ std::string CodeGenerator::BackendBase::getLowestValue(const std::string &type) 
     }
 }
 //--------------------------------------------------------------------------
-bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
+bool BackendBase::areSixtyFourBitSynapseIndicesRequired(const SynapseGroupMergedBase &sg) const
 {
     // Loop through merged groups and calculate maximum number of synapses
     size_t maxSynapses = 0;
@@ -88,7 +91,7 @@ bool CodeGenerator::BackendBase::areSixtyFourBitSynapseIndicesRequired(const Syn
     return ((maxSynapses & 0xFFFFFFFF00000000ULL) != 0);
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
+void BackendBase::genNeuronIndexCalculation(CodeStream &os, const NeuronUpdateGroupMerged &ng, unsigned int batchSize) const
 {
     // If batching is enabled, calculate batch offset
     if(batchSize > 1) {
@@ -121,7 +124,7 @@ void CodeGenerator::BackendBase::genNeuronIndexCalculation(CodeStream &os, const
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
+void BackendBase::genSynapseIndexCalculation(CodeStream &os, const SynapseGroupMergedBase &sg, unsigned int batchSize) const
 {
      // If batching is enabled
     if(batchSize > 1) {
@@ -209,7 +212,7 @@ void CodeGenerator::BackendBase::genSynapseIndexCalculation(CodeStream &os, cons
     }
 }
 //-----------------------------------------------------------------------
-void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
+void BackendBase::genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const
 {
     // If batching is enabled, calculate batch offset
     if(cu.getArchetype().isBatched()) {
@@ -231,3 +234,25 @@ void CodeGenerator::BackendBase::genCustomUpdateIndexCalculation(CodeStream &os,
         }
     }
 }
+//-----------------------------------------------------------------------
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
+{
+    return genInitReductionTargets(os, cg, idx,
+                                   [&cg](const Models::VarReference &varRef, const std::string &index)
+                                   {
+                                       return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
+                                                                getVarAccessDuplication(varRef.getVar().access),
+                                                                index);
+                                   });
+}
+//-----------------------------------------------------------------------
+std::vector<BackendBase::ReductionTarget> BackendBase::genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const
+{
+    return genInitReductionTargets(os, cg, idx,
+                                   [&cg](const Models::WUVarReference &varRef, const std::string &index)
+                                   {
+                                       return cg.getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
+                                                                index);
+                                   });
+}
+}   // namespace CodeGenerator

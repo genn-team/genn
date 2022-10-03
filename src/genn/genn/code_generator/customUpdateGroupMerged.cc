@@ -172,7 +172,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, modelMerged, "id",
-                    [this, &modelMerged](const Models::VarReference &varRef, const std::string &index)
+                    [this](const Models::VarReference &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
                                               getVarAccessDuplication(varRef.getVar().access),
@@ -187,9 +187,11 @@ std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplica
         return getArchetype().isBatched() ? "batch" : "0";
     }
     else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
+        assert(!index.empty());
         return index;
     }
     else {
+        assert(!index.empty());
         return "batchOffset + " + index;
     }
 }
@@ -202,9 +204,11 @@ std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplica
             return getArchetype().isBatched() ? "batchDelaySlot" : "delaySlot";
         }
         else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
+            assert(!index.empty());
             return "delayOffset + " + index;
         }
         else {
+            assert(!index.empty());
             return "batchDelayOffset + " + index;
         }
     }
