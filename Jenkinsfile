@@ -230,7 +230,7 @@ for(b = 0; b < builderNodes.size(); b++) {
                             rm -rf virtualenv
                             ${env.PYTHON} -m venv virtualenv
                             . virtualenv/bin/activate
-
+                            pip install --upgrade pip
                             pip install wheel "numpy>=1.17"
 
                             python setup.py clean --all
