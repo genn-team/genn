@@ -559,19 +559,49 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                         genCustomUpdateIndexCalculation(os, c);
 
-                        // Loop through group members
-                        os << "for(unsigned int i = 0; i < group->size; i++)";
-                        {
-                            CodeStream::Scope b(os);
+                        if (c.getArchetype().isNeuronReduction()) {
+                            // Initialise reduction targets
+                            const auto reductionTargets = genInitReductionTargets(os, c);
 
-                            Substitutions popSubs(&funcSubs);
-                            popSubs.addVarSubstitution("id", "i");
+                            // Loop through group members
+                            os << "for(unsigned int i = 0; i < group->size; i++)";
+                            {
+                                CodeStream::Scope b(os);
 
-                            // Generate custom update
-                            c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+                                Substitutions popSubs(&funcSubs);
+                                popSubs.addVarSubstitution("id", "i");
+
+                                // Generate custom update
+                                c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+
+                                // Loop through reduction targets and generate reduction
+                                for (const auto &r : reductionTargets) {
+                                    os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                                }
+                            }
 
                             // Write back reductions
-                            genWriteBackReductions(os, c, popSubs["id"]);
+                            // **TODO** broken with delay
+                            for (const auto &r : reductionTargets) {
+                                os << "group->" << r.name << "[0] = lr" << r.name << ";" << std::endl;
+                            }
+                        }
+                        else {
+                            // Loop through group members
+                            os << "for(unsigned int i = 0; i < group->size; i++)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                Substitutions popSubs(&funcSubs);
+                                popSubs.addVarSubstitution("id", "i");
+
+                                // Generate custom update
+                                c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+
+                                // Write back reductions
+                                // **TODO** broken with delay
+                                genWriteBackReductions(os, c, popSubs["id"]);
+                            }
                         }
                     }
                 }

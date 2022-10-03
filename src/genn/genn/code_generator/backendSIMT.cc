@@ -925,6 +925,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     }
 
                     // Loop through reduction targets and write reduced value back to memory
+                    // **TODO** broken with delay
                     for(const auto &r : reductionTargets) {
                         os << "group->" << r.name << "[" << cuSubs["id"] << "] = lr" << r.name << ";" << std::endl;
                     }
@@ -977,6 +978,7 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                     }
 
                     // In first lane, loop through reduction targets and write reduced value back to memory
+                    // **TODO** broken with delay
                     os << "if(lane == 0)";
                     {
                         CodeStream::Scope b(os);
