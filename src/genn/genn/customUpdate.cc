@@ -107,6 +107,11 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     // Check variable reference types
     checkVarReferences(m_VarReferences);
 
+    // Check only one type of reduction is specified
+    if (isBatchReduction() && isNeuronReduction()) {
+        throw std::runtime_error("Custom updates cannot perform batch and neuron reductions simultaneously.");
+    }
+
     // Give error if any sizes differ
     if(std::any_of(m_VarReferences.cbegin(), m_VarReferences.cend(),
                    [this](const Models::VarReference &v) { return v.getSize() != m_Size; }))
@@ -194,11 +199,24 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         throw std::runtime_error("All referenced variables must belong to the same synapse group.");
     }
 
+    // Give error if custom update model includes any shared neuron variables
+    // **NOTE** because there's no way to reference neuron variables with WUVarReferences, 
+    // this safely checks for attempts to do neuron reductions
+    const auto vars = getCustomUpdateModel()->getVars();
+    if (std::any_of(vars.cbegin(), vars.cend(),
+                    [](const Models::Base::Var &v)
+                    {
+                        return (v.access & VarAccessDuplication::SHARED_NEURON);
+                    }))
+    {
+        throw std::runtime_error("Custom weight updates cannot use models with SHARED_NEURON variables.");
+    }
+
     // If this is a transpose operation
     if(isTransposeOperation()) {
         // Check that it isn't also a reduction
-        if(getCustomUpdateModel()->isReduction()) {
-            throw std::runtime_error("Custom updates cannot perform both transpose and reduction operations.");
+        if(isBatchReduction()) {
+            throw std::runtime_error("Custom weight updates cannot perform both transpose and batch reduction operations.");
         }
 
         // Give error if any of the variable references aren't dense
@@ -209,7 +227,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
                            return !(v.getSynapseGroup()->getMatrixType() & SynapseMatrixConnectivity::DENSE); 
                        }))
         {
-            throw std::runtime_error("Custom updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
+            throw std::runtime_error("Custom weight updates that perform a transpose operation can currently only be used on DENSE synaptic matrices.");
         }
 
         // If there's more than one variable with a transpose give error
@@ -217,7 +235,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
         if(std::count_if(m_VarReferences.cbegin(), m_VarReferences.cend(),
                         [](const Models::WUVarReference &v) { return v.getTransposeSynapseGroup() != nullptr; }) > 1)
         {
-            throw std::runtime_error("Each custom update can only calculate the tranpose of a single variable,");
+            throw std::runtime_error("Each custom weight update can only calculate the tranpose of a single variable,");
         }
     }
 }
@@ -226,7 +244,6 @@ void CustomUpdateWU::finalize(unsigned int batchSize)
 {
     // Check variable reference types
     checkVarReferenceBatching(m_VarReferences, batchSize);
-
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateWU::isTransposeOperation() const

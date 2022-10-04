@@ -58,4 +58,11 @@ void WeightUpdateModels::Base::validate() const
     {
         throw std::runtime_error("Weight update models cannot include variables with REDUCE access modes - they are only supported by custom update models");
     }
+
+    // If any variables have shared neuron duplication mode, give an error
+    if (std::any_of(vars.cbegin(), vars.cend(),
+                    [](const Models::Base::Var &v) { return (v.access & VarAccessDuplication::SHARED_NEURON); }))
+    {
+        throw std::runtime_error("Weight update models cannot include variables with SHARED_NEURON access modes - they are only supported on pre, postsynaptic or neuron variables");
+    }
 }

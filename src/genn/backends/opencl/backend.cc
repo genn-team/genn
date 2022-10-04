@@ -835,6 +835,13 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 {
     const ModelSpecInternal &model = modelMerged.getModel();
 
+    // Give error if there are any neuron reductions in model
+    if (std::any_of(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
+                    [](const ModelSpec::CustomUpdateValueType &c) { return c.second.isNeuronReduction(); }))
+    {
+        throw std::runtime_error("OpenCL backend does not currently support neuron reductions.");
+    }
+
     // Build map containing union of all custom update groupsnames
     std::map<std::string, std::pair<size_t, size_t>> customUpdateGroups;
     std::transform(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),

@@ -559,19 +559,47 @@ void Backend::genCustomUpdate(CodeStream &os, const ModelSpecMerged &modelMerged
 
                         genCustomUpdateIndexCalculation(os, c);
 
-                        // Loop through group members
-                        os << "for(unsigned int i = 0; i < group->size; i++)";
-                        {
-                            CodeStream::Scope b(os);
+                        if (c.getArchetype().isNeuronReduction()) {
+                            // Initialise reduction targets
+                            const auto reductionTargets = genInitReductionTargets(os, c);
 
-                            Substitutions popSubs(&funcSubs);
-                            popSubs.addVarSubstitution("id", "i");
+                            // Loop through group members
+                            os << "for(unsigned int i = 0; i < group->size; i++)";
+                            {
+                                CodeStream::Scope b(os);
 
-                            // Generate custom update
-                            c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+                                Substitutions popSubs(&funcSubs);
+                                popSubs.addVarSubstitution("id", "i");
+
+                                // Generate custom update
+                                c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+
+                                // Loop through reduction targets and generate reduction
+                                for (const auto &r : reductionTargets) {
+                                    os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                                }
+                            }
 
                             // Write back reductions
-                            genWriteBackReductions(os, c, popSubs["id"]);
+                            for (const auto &r : reductionTargets) {
+                                os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                            }
+                        }
+                        else {
+                            // Loop through group members
+                            os << "for(unsigned int i = 0; i < group->size; i++)";
+                            {
+                                CodeStream::Scope b(os);
+
+                                Substitutions popSubs(&funcSubs);
+                                popSubs.addVarSubstitution("id", "i");
+
+                                // Generate custom update
+                                c.generateCustomUpdate(*this, os, modelMerged, popSubs);
+
+                                // Write back reductions
+                                genWriteBackReductions(os, c, popSubs["id"]);
+                            }
                         }
                     }
                 }
@@ -1776,6 +1804,27 @@ void Backend::genEmitSpike(CodeStream &os, const NeuronUpdateGroupMerged &ng, co
         os << "group->recordSpk" << recordSuffix << "[(recordingTimestep * numRecordingWords) + (" << subs["id"] << " / 32)]";
         os << " |= (1 << (" << subs["id"] << " % 32));" << std::endl;
     }
+}
+//--------------------------------------------------------------------------
+void Backend::genWriteBackReductions(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx) const
+{
+    genWriteBackReductions(os, cg, idx,
+                           [&cg](const Models::VarReference &varRef, const std::string &index)
+                           {
+                               return cg.getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
+                                                        getVarAccessDuplication(varRef.getVar().access),
+                                                        index);
+                           });
+}
+//--------------------------------------------------------------------------
+void Backend::genWriteBackReductions(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx) const
+{
+    genWriteBackReductions(os, cg, idx,
+                           [&cg](const Models::WUVarReference &varRef, const std::string &index)
+                           {
+                               return cg.getVarRefIndex(getVarAccessDuplication(varRef.getVar().access),
+                                                        index);
+                           });
 }
 }   // namespace SingleThreadedCPU
 }   // namespace CodeGenerator

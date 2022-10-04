@@ -62,37 +62,63 @@ void genInitNeuronVarCode(CodeStream &os, const BackendBase &backend, const Subs
         const auto &varInit = varInitialisers.at(k);
 
         // If this variable has any initialisation code
-        if(!varInit.getSnippet()->getCode().empty()) {
+        if (!varInit.getSnippet()->getCode().empty()) {
             CodeStream::Scope b(os);
 
-            // Generate target-specific code to initialise variable
-            backend.genVariableInit(os, count, "id", popSubs,
-                [&vars, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, k, count, isVarQueueRequired, isParamHeterogeneousFn, isDerivedParamHeterogeneousFn, numDelaySlots]
-                (CodeStream &os, Substitutions &varSubs)
-                {
-                    // Substitute in parameters and derived parameters for initialising variables
-                    varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
-                                                      [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
-                                                      "", "group->", vars[k].name + fieldSuffix);
-                    varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
-                                                    [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
-                                                    "", "group->", vars[k].name + fieldSuffix);
-                    varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
-                                                   "", "group->", vars[k].name + fieldSuffix);
+            Substitutions varSubs(&popSubs);
 
-                    // Generate initial value into temporary variable
-                    os << vars[k].type << " initVal;" << std::endl;
-                    varSubs.addVarSubstitution("value", "initVal");
-                    std::string code = varInit.getSnippet()->getCode();
-                    varSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
-                    code = ensureFtype(code, ftype);
-                    os << code << std::endl;
-                    
-                    // Fill value across all delay slots and batches
-                    genVariableFill(os,  vars[k].name + fieldSuffix, "initVal", varSubs["id"], count, 
-                                    getVarAccessDuplication(vars[k].access), batchSize, isVarQueueRequired(k), numDelaySlots);
-                });
+            // Substitute in parameters and derived parameters for initialising variables
+            varSubs.addParamValueSubstitution(varInit.getSnippet()->getParamNames(), varInit.getParams(),
+                                              [k, isParamHeterogeneousFn](size_t p) { return isParamHeterogeneousFn(k, p); },
+                                              "", "group->", vars[k].name + fieldSuffix);
+            varSubs.addVarValueSubstitution(varInit.getSnippet()->getDerivedParams(), varInit.getDerivedParams(),
+                                            [k, isDerivedParamHeterogeneousFn](size_t p) { return isDerivedParamHeterogeneousFn(k, p); },
+                                            "", "group->", vars[k].name + fieldSuffix);
+            varSubs.addVarNameSubstitution(varInit.getSnippet()->getExtraGlobalParams(),
+                                           "", "group->", vars[k].name + fieldSuffix);
+
+            // If variable is shared between neurons
+            if (getVarAccessDuplication(vars[k].access) == VarAccessDuplication::SHARED_NEURON) {
+                backend.genPopVariableInit(
+                    os, varSubs,
+                    [&vars, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, k, numDelaySlots, isVarQueueRequired]
+                    (CodeStream &os, Substitutions &varInitSubs)
+                    {
+                        // Generate initial value into temporary variable
+                        os << vars[k].type << " initVal;" << std::endl;
+                        varInitSubs.addVarSubstitution("value", "initVal");
+                        std::string code = varInit.getSnippet()->getCode();
+                        varInitSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
+                        code = ensureFtype(code, ftype);
+                        os << code << std::endl;
+
+                        // Fill value across all delay slots and batches
+                        genScalarFill(os, vars[k].name + fieldSuffix, "initVal", getVarAccessDuplication(vars[k].access),
+                                      batchSize, isVarQueueRequired(k), numDelaySlots);
+                    });
+            }
+            // Otherwise
+            else {
+                backend.genVariableInit(
+                    os, count, "id", varSubs,
+                    [&vars, &varInit, &fieldSuffix, &ftype, batchSize, groupIndex, k, count, numDelaySlots, isVarQueueRequired]
+                    (CodeStream &os, Substitutions &varInitSubs)
+                    {
+                        // Generate initial value into temporary variable
+                        os << vars[k].type << " initVal;" << std::endl;
+                        varInitSubs.addVarSubstitution("value", "initVal");
+                        std::string code = varInit.getSnippet()->getCode();
+                        varInitSubs.applyCheckUnreplaced(code, "initVar : " + vars[k].name + "merged" + std::to_string(groupIndex));
+                        code = ensureFtype(code, ftype);
+                        os << code << std::endl;
+
+                        // Fill value across all delay slots and batches
+                        genVariableFill(os, vars[k].name + fieldSuffix, "initVal", varInitSubs["id"], count,
+                                        getVarAccessDuplication(vars[k].access), batchSize, isVarQueueRequired(k), numDelaySlots);
+                    });
+            }
         }
+            
     }
 }
 //------------------------------------------------------------------------

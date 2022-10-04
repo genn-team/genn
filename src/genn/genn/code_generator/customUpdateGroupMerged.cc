@@ -172,7 +172,7 @@ boost::uuids::detail::sha1::digest_type CustomUpdateGroupMerged::getHashDigest()
 void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
     genCustomUpdate(os, popSubs, *this, modelMerged, "id",
-                    [this, &modelMerged](const Models::VarReference &varRef, const std::string &index)
+                    [this](const Models::VarReference &varRef, const std::string &index)
                     {
                         return getVarRefIndex(varRef.getDelayNeuronGroup() != nullptr,
                                               getVarAccessDuplication(varRef.getVar().access),
@@ -182,15 +182,35 @@ void CustomUpdateGroupMerged::generateCustomUpdate(const BackendBase&, CodeStrea
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const
 {
-    // If variable is shared, the batch size is one or this custom update isn't batched, batch offset isn't required
-    return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "" : "batchOffset + ") + index;
+    // **YUCK** there's a lot of duplication in these methods - do they belong elsewhere?
+    if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+        return getArchetype().isBatched() ? "batch" : "0";
+    }
+    else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
+        assert(!index.empty());
+        return index;
+    }
+    else {
+        assert(!index.empty());
+        return "batchOffset + " + index;
+    }
 }
 //----------------------------------------------------------------------------
 std::string CustomUpdateGroupMerged::getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const
 {
     // If delayed, variable is shared, the batch size is one or this custom update isn't batched, batch delay offset isn't required
     if(delay) {
-        return ((varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) ? "delayOffset + " : "batchDelayOffset + ") + index;
+        if (varDuplication == VarAccessDuplication::SHARED_NEURON) {
+            return getArchetype().isBatched() ? "batchDelaySlot" : "delaySlot";
+        }
+        else if (varDuplication == VarAccessDuplication::SHARED || !getArchetype().isBatched()) {
+            assert(!index.empty());
+            return "delayOffset + " + index;
+        }
+        else {
+            assert(!index.empty());
+            return "batchDelayOffset + " + index;
+        }
     }
     else {
         return getVarIndex(varDuplication, index);

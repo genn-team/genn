@@ -18,6 +18,7 @@
 #include "codeStream.h"
 #include "gennExport.h"
 #include "gennUtils.h"
+#include "varAccess.h"
 #include "variableMode.h"
 
 // Forward declarations
@@ -452,6 +453,23 @@ public:
 
 protected:
     //--------------------------------------------------------------------------
+    // ReductionTarget
+    //--------------------------------------------------------------------------
+    //! Simple struct to hold reduction targets
+    struct ReductionTarget
+    {
+        ReductionTarget(const std::string &n, const std::string &t, VarAccessMode a, const std::string &i)
+            : name(n), type(t), access(a), index(i)
+        {
+        }
+
+        const std::string name;
+        const std::string type;
+        const VarAccessMode access;
+        const std::string index;
+    };
+
+    //--------------------------------------------------------------------------
     // Protected API
     //--------------------------------------------------------------------------
     void addType(const std::string &type, size_t size, const std::string &lowestValue = "")
@@ -471,7 +489,51 @@ protected:
 
     void genCustomUpdateIndexCalculation(CodeStream &os, const CustomUpdateGroupMerged &cu) const;
 
+    //! Helper function to generate initialisation code for any reduction operations carried out be custom update group.
+    //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const CustomUpdateGroupMerged &cg, const std::string &idx = "") const;
+
+    //! Helper function to generate initialisation code for any reduction operations carried out be custom weight update group.
+    //! //! Returns vector of ReductionTarget structs, providing all information to write back reduction results to memory
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const CustomUpdateWUGroupMerged &cg, const std::string &idx = "") const;
+
 private:
+    //--------------------------------------------------------------------------
+    // Private API
+    //--------------------------------------------------------------------------
+    template<typename G, typename R>
+    std::vector<ReductionTarget> genInitReductionTargets(CodeStream &os, const G &cg, const std::string &idx, R getVarRefIndexFn) const
+    {
+        // Loop through variables
+        std::vector<ReductionTarget> reductionTargets;
+        const auto *cm = cg.getArchetype().getCustomUpdateModel();
+        for (const auto &v : cm->getVars()) {
+            // If variable is a reduction target, define variable initialised to correct initial value for reduction
+            if (v.access & VarAccessModeAttribute::REDUCE) {
+                os << v.type << " lr" << v.name << " = " << getReductionInitialValue(*this, getVarAccessMode(v.access), v.type) << ";" << std::endl;
+                reductionTargets.emplace_back(v.name, v.type, getVarAccessMode(v.access),
+                                              cg.getVarIndex(getVarAccessDuplication(v.access), idx));
+            }
+        }
+
+        // Loop through variable references
+        const auto modelVarRefs = cm->getVarRefs();
+        const auto &varRefs = cg.getArchetype().getVarReferences();
+        for (size_t i = 0; i < varRefs.size(); i++) {
+            const auto varRef = varRefs.at(i);
+            const auto modelVarRef = modelVarRefs.at(i);
+
+            // If variable reference is a reduction target, define variable initialised to correct initial value for reduction
+            if (modelVarRef.access & VarAccessModeAttribute::REDUCE) {
+                os << modelVarRef.type << " lr" << modelVarRef.name << " = " << getReductionInitialValue(*this, modelVarRef.access, modelVarRef.type) << ";" << std::endl;
+                reductionTargets.emplace_back(modelVarRef.name, modelVarRef.type, modelVarRef.access,
+                                              getVarRefIndexFn(varRef, idx));
+            }
+        }
+        return reductionTargets;
+    }
+
+
     //--------------------------------------------------------------------------
     // Members
     //--------------------------------------------------------------------------

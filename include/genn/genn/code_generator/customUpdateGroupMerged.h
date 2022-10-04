@@ -33,9 +33,6 @@ public:
 
     void generateCustomUpdate(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
-    //----------------------------------------------------------------------------
-    // Static API
-    //----------------------------------------------------------------------------
     std::string getVarIndex(VarAccessDuplication varDuplication, const std::string &index) const;
     std::string getVarRefIndex(bool delay, VarAccessDuplication varDuplication, const std::string &index) const;
 

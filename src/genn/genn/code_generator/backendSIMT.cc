@@ -194,14 +194,20 @@ size_t BackendSIMT::getNumInitialisationRNGStreams(const ModelSpecMerged &modelM
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateThreads(const CustomUpdateInternal &cg, unsigned int batchSize) const
 {
-    const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
-    return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+    const size_t numCopies = (cg.isBatched() && !cg.isBatchReduction()) ? batchSize : 1;
+
+    if (cg.isNeuronReduction()) {
+        return padKernelSize(32 * numCopies, KernelCustomUpdate);
+    }
+    else {
+        return numCopies * padKernelSize(cg.getSize(), KernelCustomUpdate);
+    }
 }
 //--------------------------------------------------------------------------
 size_t BackendSIMT::getPaddedNumCustomUpdateWUThreads(const CustomUpdateWUInternal &cg, unsigned int batchSize) const
 {
     const SynapseGroupInternal *sgInternal = static_cast<const SynapseGroupInternal*>(cg.getSynapseGroup());
-    const size_t numCopies = (cg.isBatched() && !cg.isReduction()) ? batchSize : 1;
+    const size_t numCopies = (cg.isBatched() && !cg.isBatchReduction()) ? batchSize : 1;
 
     if(sgInternal->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         return numCopies * padKernelSize(sgInternal->getKernelSizeFlattened(), KernelCustomUpdate);
@@ -888,16 +894,16 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
             const size_t blockSize = getKernelBlockSize(KernelCustomUpdate);
             const unsigned int batchSize = modelMerged.getModel().getBatchSize();
 
-            // If update is a reduction
+            // If update is a batch reduction
             Substitutions cuSubs(&popSubs);
-            if(cg.getArchetype().isReduction()) {
+            if(cg.getArchetype().isBatchReduction()) {
                 os << "// only do this for existing neurons" << std::endl;
                 os << "if(" << cuSubs["id"] << " < group->size)";
                 {
                     CodeStream::Scope b(os);
 
                     // Initialise reduction targets
-                    const auto reductionTargets = genInitReductionTargets(os, cg);
+                    const auto reductionTargets = genInitReductionTargets(os, cg, cuSubs["id"]);
 
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
@@ -908,6 +914,8 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
                         cuSubs.addVarSubstitution("batch", "batch");
 
                         genCustomUpdateIndexCalculation(os, cg);
+                        
+                        // **THINK** it would be great to 'lift' reads of SHARED variables out of this loop
                         cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                         // Loop through reduction targets and generate reduction
@@ -918,7 +926,63 @@ void BackendSIMT::genCustomUpdateKernel(CodeStream &os, const Substitutions &ker
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << cuSubs["id"] << "] = lr" << r.name << ";" << std::endl;
+                        os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                    }
+                }
+            }
+            // Otherwise, if this is a neuron reduction
+            else if (cg.getArchetype().isNeuronReduction()) {
+                os << "// only do this for existing neurons" << std::endl;
+                os << "if(" << cuSubs["id"] << " < " << (32 * modelMerged.getModel().getBatchSize()) << ")";
+                {
+                    CodeStream::Scope b(os);
+
+                    // Split ID into lane and batch
+                    os << "const unsigned int lane = " << cuSubs["id"] << " % 32;" << std::endl;
+                    os << "const unsigned int batch = " << cuSubs["id"] << " / 32;" << std::endl;
+                    cuSubs.addVarSubstitution("batch", "batch");
+
+                    genCustomUpdateIndexCalculation(os, cg);
+
+                    // Initialise reduction targets
+                    const auto reductionTargets = genInitReductionTargets(os, cg);
+
+                    // Loop through warps of data
+                    // **TODO** this approach is good for reductions where there are small numbers of neurons but large batches sizes but,
+                    // if this isn't the case (TF uses a threshold of 1024), we should do something smarter
+                    os << "for(unsigned int idx = lane; idx < group->size; idx += 32)";
+                    {
+                        CodeStream::Scope b(os);
+
+                        // Re-substitute id with loop index
+                        Substitutions reductionSubs(&cuSubs);
+                        reductionSubs.addVarSubstitution("id", "idx", true);
+
+                        // **THINK** it would be great to 'lift' reads of NEURON_SHARED variables out of this loop
+                        cg.generateCustomUpdate(*this, os, modelMerged, reductionSubs);
+
+                        // Loop through reduction targets and generate reduction
+                        for (const auto &r : reductionTargets) {
+                            os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
+                        }
+                    }
+
+                    // Perform warp reduction into first lane
+                    // **YUCK** CUDA-specific
+                    for (unsigned int i = 16; i > 0; i /= 2) {
+                        for (const auto &r : reductionTargets) {
+                            os << getReductionOperation("lr" + r.name, "__shfl_down_sync(0xFFFFFFFF, lr" + r.name + ", " + std::to_string(i) + ")",
+                                                        r.access, r.type) << ";" << std::endl;
+                        }
+                    }
+
+                    // In first lane, loop through reduction targets and write reduced value back to memory
+                    os << "if(lane == 0)";
+                    {
+                        CodeStream::Scope b(os);
+                        for (const auto &r : reductionTargets) {
+                            os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
+                        }
                     }
                 }
             }
@@ -986,9 +1050,9 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 os << "const unsigned int size = group->numSrcNeurons * group->rowStride;" << std::endl;
             }
 
-            // If update isn't a reduction
+            // If update isn't a batch reduction
             Substitutions cuSubs(&popSubs);
-            if(!cg.getArchetype().isReduction()) {
+            if(!cg.getArchetype().isBatchReduction()) {
                 // If it's batched
                 if(cg.getArchetype().isBatched()) {
                     os << "const unsigned int paddedSize = " << blockSize << " * ((size + " << blockSize << " - 1) / " << blockSize << ");" << std::endl;
@@ -1042,10 +1106,10 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 }
 
                 // Initialise reduction targets
-                const auto reductionTargets = genInitReductionTargets(os, cg);
+                const auto reductionTargets = genInitReductionTargets(os, cg, cuSubs["id_syn"]);
 
                 // If this is a reduction
-                if(cg.getArchetype().isReduction()) {
+                if(cg.getArchetype().isBatchReduction()) {
                     // Loop through batches
                     // **TODO** this naive approach is good for reduction when there are lots of neurons/synapses but,
                     // if this isn't the case (TF uses a threshold of 4096), we should do something smarter
@@ -1062,7 +1126,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
                 cg.generateCustomUpdate(*this, os, modelMerged, cuSubs);
 
                 // If this is a reduction
-                if(cg.getArchetype().isReduction()) {
+                if(cg.getArchetype().isBatchReduction()) {
                     // Loop through reduction targets and generate reduction
                     for(const auto &r : reductionTargets) {
                         os << getReductionOperation("lr" + r.name, "l" + r.name, r.access, r.type) << ";" << std::endl;
@@ -1073,7 +1137,7 @@ void BackendSIMT::genCustomUpdateWUKernel(CodeStream &os, const Substitutions &k
 
                     // Loop through reduction targets and write reduced value back to memory
                     for(const auto &r : reductionTargets) {
-                        os << "group->" << r.name << "[" << cuSubs["id_syn"] << "] = lr" << r.name << ";" << std::endl;
+                        os << "group->" << r.name << "[" << r.index << "] = lr" << r.name << ";" << std::endl;
                     }
                 }
 

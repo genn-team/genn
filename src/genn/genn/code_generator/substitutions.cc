@@ -43,7 +43,15 @@ void CodeGenerator::Substitutions::addFuncSubstitution(const std::string &source
 //--------------------------------------------------------------------------
 bool CodeGenerator::Substitutions::hasVarSubstitution(const std::string &source) const
 {
-    return (m_VarSubstitutions.find(source) != m_VarSubstitutions.end());
+    if (m_VarSubstitutions.find(source) != m_VarSubstitutions.end()) {
+        return true;
+    }
+    else if (m_Parent) {
+        return m_Parent->hasVarSubstitution(source);
+    }
+    else {
+        return false;
+    }
 }
 //--------------------------------------------------------------------------
 const std::string &CodeGenerator::Substitutions::getVarSubstitution(const std::string &source) const

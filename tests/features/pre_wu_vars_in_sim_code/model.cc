@@ -43,12 +43,12 @@ IMPLEMENT_MODEL(PostNeuron);
 class WeightUpdateModel : public WeightUpdateModels::Base
 {
 public:
-    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 1, 1, 0);
+    DECLARE_WEIGHT_UPDATE_MODEL(WeightUpdateModel, 0, 1, 2, 0);
 
     SET_VARS({{"w", "scalar"}});
-    SET_PRE_VARS({{"s", "scalar"}});
+    SET_PRE_VARS({{"s", "scalar"}, {"p", "scalar", VarAccess::READ_ONLY_SHARED_NEURON}});
 
-    SET_SIM_CODE("$(w)= $(s);");
+    SET_SIM_CODE("$(w)= $(s) * $(p);");
     SET_PRE_SPIKE_CODE("$(s) = $(t);\n");
 };
 
@@ -73,7 +73,7 @@ void modelDefinition(ModelSpec &model)
 
     model.addSynapsePopulation<WeightUpdateModel, PostsynapticModels::DeltaCurr>(
         "syn", SynapseMatrixType::SPARSE_INDIVIDUALG, 20, "pre", "post",
-        {}, WeightUpdateModel::VarValues(0.0), WeightUpdateModel::PreVarValues(std::numeric_limits<float>::lowest()), {},
+        {}, WeightUpdateModel::VarValues(0.0), WeightUpdateModel::PreVarValues(std::numeric_limits<float>::lowest(), 1.0), {},
         {}, {},
         initConnectivity<InitSparseConnectivitySnippet::OneToOne>({}));
 
