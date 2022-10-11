@@ -30,7 +30,7 @@ void CustomConnectivityUpdateModels::Base::validate() const
 
     Utils::validateVecNames(getPreVars(), "Presynaptic variable");
     Utils::validateVecNames(getPostVars(), "Presynaptic variable");
-    Utils::validateVecNames(getWUVarRefs(), "WU variable reference");
+    Utils::validateVecNames(getVarRefs(), "Synapse variable reference");
     Utils::validateVecNames(getPreVarRefs(), "Presynaptic variable reference");
     Utils::validateVecNames(getPostVarRefs(), "Postsynaptic variable reference");
 

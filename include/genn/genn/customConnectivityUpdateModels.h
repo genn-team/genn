@@ -8,19 +8,19 @@
 // Macros
 //----------------------------------------------------------------------------
 #define DECLARE_CUSTOM_CONNECTIVITY_UPDATE_MODEL(TYPE, NUM_PARAMS, NUM_VARS, NUM_PRE_VARS, NUM_POST_VARS,   \
-                                                 NUM_WU_VAR_REFS, NUM_PRE_VAR_REFS, NUM_POST_VAR_REFS)      \
+                                                 NUM_VAR_REFS, NUM_PRE_VAR_REFS, NUM_POST_VAR_REFS)         \
     DECLARE_SNIPPET(TYPE, NUM_PARAMS);                                                                      \
     typedef Models::VarInitContainerBase<NUM_VARS> VarValues;                                               \
     typedef Models::VarInitContainerBase<NUM_PRE_VARS> PreVarValues;                                        \
     typedef Models::VarInitContainerBase<NUM_POST_VARS> PostVarValues;                                      \
-    typedef Models::WUVarReferenceContainerBase<NUM_WU_VAR_REFS> WUVarReferences;                           \
+    typedef Models::WUVarReferenceContainerBase<NUM_VAR_REFS> VarReferences;                                \
     typedef Models::VarReferenceContainerBase<NUM_PRE_VAR_REFS> PreVarReferences;                           \
     typedef Models::VarReferenceContainerBase<NUM_POST_VAR_REFS> PostVarReferences
 
 #define SET_PRE_VARS(...) virtual VarVec getPreVars() const override{ return __VA_ARGS__; }
 #define SET_POST_VARS(...) virtual VarVec getPostVars() const override{ return __VA_ARGS__; }
 
-#define SET_WU_VAR_REFS(...) virtual VarRefVec getWUVarRefs() const override{ return __VA_ARGS__; }
+#define SET_VAR_REFS(...) virtual VarRefVec getVarRefs() const override{ return __VA_ARGS__; }
 #define SET_PRE_VAR_REFS(...) virtual VarRefVec getPreVarRefs() const override{ return __VA_ARGS__; }
 #define SET_POST_VAR_REFS(...) virtual VarRefVec getPostVarRefs() const override{ return __VA_ARGS__; }
 
@@ -48,8 +48,8 @@ public:
     //! across all synapses going to the same postsynaptic neuron
     virtual VarVec getPostVars() const { return {}; }
 
-    //! Gets names and types (as strings) of weight update variable references
-    virtual VarRefVec getWUVarRefs() const { return {}; }
+    //! Gets names and types (as strings) of synapse variable references
+    virtual VarRefVec getVarRefs() const { return {}; }
 
     //! Gets names and types (as strings) of presynaptic variable references
     virtual VarRefVec getPreVarRefs() const { return {}; }
