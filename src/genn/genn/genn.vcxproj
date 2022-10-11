@@ -39,6 +39,7 @@
     <ClCompile Include="code_generator\synapseUpdateGroupMerged.cc" />
     <ClCompile Include="currentSource.cc" />
     <ClCompile Include="currentSourceModels.cc" />
+    <ClCompile Include="customConnectivityUpdateModels.cc" />
     <ClCompile Include="customUpdate.cc" />
     <ClCompile Include="customUpdateModels.cc" />
     <ClCompile Include="initSparseConnectivitySnippet.cc" />
@@ -82,6 +83,7 @@
     <ClInclude Include="..\..\..\include\genn\genn\currentSource.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\currentSourceModels.h" />
+    <ClInclude Include="..\..\..\include\genn\genn\customConnectivityUpdateModels.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdate.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdateInternal.h" />
     <ClInclude Include="..\..\..\include\genn\genn\customUpdateModels.h" />
