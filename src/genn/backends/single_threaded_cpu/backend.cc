@@ -1484,6 +1484,26 @@ bool Backend::isGlobalHostRNGRequired(const ModelSpecMerged &modelMerged) const
         return true;
     }
 
+    // If any custom updates require an RNG fo initialisation, return true
+    if(std::any_of(model.getCustomUpdates().cbegin(), model.getCustomUpdates().cend(),
+                   [](const ModelSpec::CustomUpdateValueType &c)
+                   {
+                       return (c.second.isInitRNGRequired());
+                   }))
+    {
+        return true;
+    }
+
+    // If any custom WU updates require an RNG fo initialisation, return true
+    if(std::any_of(model.getCustomWUUpdates().cbegin(), model.getCustomWUUpdates().cend(),
+                   [](const ModelSpec::CustomUpdateWUValueType &c)
+                   {
+                       return (c.second.isInitRNGRequired());
+                   }))
+    {
+        return true;
+    }
+
     return false;
 }
 //--------------------------------------------------------------------------
