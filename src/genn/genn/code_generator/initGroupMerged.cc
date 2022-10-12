@@ -948,3 +948,16 @@ void CustomWUUpdateSparseInitGroupMerged::generateInit(const BackendBase &backen
                          return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler); 
                      });
 }
+
+// ----------------------------------------------------------------------------
+// CustomConnectivityUpdatePreInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomConnectivityUpdatePreInitGroupMerged::name = "CustomConnectivityUpdatePreInit";
+//----------------------------------------------------------------------------
+CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                                       const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
+:   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPreVarInitialisers, &CustomConnectivityUpdateModels::Base::getPreVars>(
+        index, precision, backend, groups)
+{
+
+}

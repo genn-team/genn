@@ -407,10 +407,132 @@ public:
     static const std::string name;
 };
 
-class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdateInitGroupMergedBase
+//----------------------------------------------------------------------------
+template<const std::vector<Models::VarInit> &(CustomConnectivityUpdate::*I)(void) const,
+         Models::Base::VarVec (CustomConnectivityUpdateModels::Base::*V)(void) const>
+class GENN_EXPORT CustomConnectivityUpdateInitGroupMergedBase : public GroupMerged<CustomConnectivityUpdateInternal>
 {
+protected:
+    CustomConnectivityUpdateInitGroupMergedBase(size_t index, const std::string &precision, const BackendBase &backend,
+                                                const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
+    :   GroupMerged<CustomConnectivityUpdateInternal>(index, precision, groups)
+    {
+        // Loop through variables
+        const CustomConnectivityUpdateModels::Base *cm = this->getArchetype().getCustomConnectivityUpdateModel();
+        const auto vars = (cm->*V)();
+        const auto &varInit = (this->getArchetype().*I)();
+        assert(vars.size() == varInit.size());
+        for (size_t v = 0; v < vars.size(); v++) {
+            // If we're not initialising or if there is initialization code for this variable
+            const auto var = vars[v];
+            if (!varInit[v].getSnippet()->getCode().empty()) {
+                this->addPointerField(var.type, var.name, backend.getDeviceVarPrefix() + var.name);
+            }
 
+            // Add any var init EGPs to structure
+            this->addEGPs(varInit[v].getSnippet()->getExtraGlobalParams(), backend.getDeviceVarPrefix(), var.name);
+        }
+
+        this->template addHeterogeneousVarInitParams<CustomConnectivityUpdateInitGroupMergedBase<I, V>>(
+            vars, I, &CustomConnectivityUpdateInitGroupMergedBase<I, V>::isVarInitParamHeterogeneous);
+
+        this->template addHeterogeneousVarInitDerivedParams<CustomConnectivityUpdateInitGroupMergedBase<I, V>>(
+            vars, I, &CustomConnectivityUpdateInitGroupMergedBase<I, V>::isVarInitDerivedParamHeterogeneous);
+    }
+
+    //----------------------------------------------------------------------------
+    // Protected methods
+    //----------------------------------------------------------------------------
+    //! Should the var init parameter be implemented heterogeneously?
+    bool isVarInitParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+    {
+        return (isVarInitParamReferenced(varIndex, paramIndex) &&
+                this->isParamValueHeterogeneous(paramIndex, 
+                                                [varIndex](const CustomConnectivityUpdateInternal &cg)
+                                                { 
+                                                    return (cg.*I)().at(varIndex).getParams(); 
+                                                }));
+    }
+
+    //! Should the var init derived parameter be implemented heterogeneously?
+    bool isVarInitDerivedParamHeterogeneous(size_t varIndex, size_t paramIndex) const
+    {
+        return (isVarInitDerivedParamReferenced(varIndex, paramIndex) &&
+                this->isParamValueHeterogeneous(paramIndex, 
+                                                [varIndex](const CustomConnectivityUpdateInternal &cg) 
+                                                { 
+                                                    return (cg.*I)().at(varIndex).getDerivedParams();
+                                                }));
+    }
+
+    void updateBaseHash(boost::uuids::detail::sha1 &hash) const
+    {
+        // Update hash with archetype's hash digest
+        Utils::updateHash(this->getArchetype().getInitHashDigest(), hash);
+
+        // Update hash with each group's variable initialisation parameters and derived parameters
+        this->template updateVarInitParamHash<CustomConnectivityUpdateInitGroupMergedBase<I, V>>(
+            I, &CustomConnectivityUpdateInitGroupMergedBase<I, V>::isVarInitParamHeterogeneous, hash);
+
+        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<I, V>>(
+            I, &CustomConnectivityUpdateInitGroupMergedBase<I, V>::isVarInitDerivedParamHeterogeneous, hash);
+    }
+
+private:
+    //----------------------------------------------------------------------------
+    // Private methods
+    //----------------------------------------------------------------------------
+    //! Is the var init parameter referenced?
+    bool isVarInitParamReferenced(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = (this->getArchetype().*I)().at(varIndex).getSnippet();
+        const std::string paramName = varInitSnippet->getParamNames().at(paramIndex);
+        return this->isParamReferenced({varInitSnippet->getCode()}, paramName);
+    }
+
+    //! Is the var init derived parameter referenced?
+    bool isVarInitDerivedParamReferenced(size_t varIndex, size_t paramIndex) const
+    {
+        // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+        const auto *varInitSnippet = (this->getArchetype().*I)().at(varIndex).getSnippet();
+        const std::string derivedParamName = varInitSnippet->getDerivedParams().at(paramIndex).name;
+        return this->isParamReferenced({varInitSnippet->getCode()}, derivedParamName);
+    }
 };
+
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdatePreInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPreVarInitialisers,
+                                                                                                                  &CustomConnectivityUpdateModels::Base::getPreVars>
+{
+    CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                               const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
+
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    /*boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;*/
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
+
 
 class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged
 {

@@ -9,6 +9,7 @@
 // GeNN includes
 #include "gennExport.h"
 #include "currentSourceInternal.h"
+#include "customConnectivityUpdateInternal.h"
 #include "customUpdateInternal.h"
 #include "neuronGroupInternal.h"
 #include "synapseGroupInternal.h"
