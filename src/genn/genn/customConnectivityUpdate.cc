@@ -15,31 +15,32 @@
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::setVarLocation(const std::string &varName, VarLocation loc)
 {
-
+    m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)] = loc;
 }
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::setPreVarLocation(const std::string &varName, VarLocation loc)
 {
-
+    m_VarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)] = loc;
 }
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::setPostVarLocation(const std::string &varName, VarLocation loc)
 {
-
+    m_VarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)] = loc;
 }
 //------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getVarLocation(const std::string &varName) const
 {
-
+    return m_VarLocation[getCustomConnectivityUpdateModel()->getVarIndex(varName)];
 }
 //------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getPreVarLocation(const std::string &varName) const
 {
+    return m_VarLocation[getCustomConnectivityUpdateModel()->getPreVarIndex(varName)];
 }
 //------------------------------------------------------------------------
 VarLocation CustomConnectivityUpdate::getPostVarLocation(const std::string &varName) const
 {
-
+    return m_VarLocation[getCustomConnectivityUpdateModel()->getPostVarIndex(varName)];
 }
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isVarInitRequired() const
@@ -69,7 +70,30 @@ CustomConnectivityUpdate::CustomConnectivityUpdate(const std::string &name, cons
 //------------------------------------------------------------------------
 void CustomConnectivityUpdate::initDerivedParams(double dt)
 {
+    auto derivedParams = getCustomConnectivityUpdateModel()->getDerivedParams();
 
+    // Reserve vector to hold derived parameters
+    m_DerivedParams.reserve(derivedParams.size());
+
+    // Loop through derived parameters
+    for (const auto &d : derivedParams) {
+        m_DerivedParams.push_back(d.func(getParams(), dt));
+    }
+
+    // Initialise derived parameters for synaptic variable initialisers
+    for (auto &v : m_VarInitialisers) {
+        v.initDerivedParams(dt);
+    }
+
+    // Initialise derived parameters for presynaptic variable initialisers
+    for (auto &v : m_PreVarInitialisers) {
+        v.initDerivedParams(dt);
+    }
+
+    // Initialise derived parameters for postsynaptic variable initialisers
+    for (auto &v : m_PostVarInitialisers) {
+        v.initDerivedParams(dt);
+    }
 }
 //------------------------------------------------------------------------
 bool CustomConnectivityUpdate::isInitRNGRequired() const
@@ -94,5 +118,10 @@ void CustomConnectivityUpdate::updateInitHash(boost::uuids::detail::sha1 &hash) 
 //------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdate::getVarLocationHashDigest() const
 {
-
+    boost::uuids::detail::sha1 hash;
+    Utils::updateHash(m_VarLocation, hash);
+    Utils::updateHash(m_PreVarLocation, hash);
+    Utils::updateHash(m_PostVarLocation, hash);
+    Utils::updateHash(m_ExtraGlobalParamLocation, hash);
+    return hash.get_digest();
 }

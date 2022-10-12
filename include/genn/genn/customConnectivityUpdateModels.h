@@ -69,6 +69,18 @@ public:
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
+    //! Find the index of a named presynaptic variable
+    size_t getPreVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getPreVars());
+    }
+
+    //! Find the index of a named postsynaptic variable
+    size_t getPostVarIndex(const std::string &varName) const
+    {
+        return getNamedVecIndex(varName, getPostVars());
+    }
+
     //! Update hash from model
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
