@@ -48,6 +48,10 @@ public:
     const std::vector<Models::VarInit> &getPreVarInitialisers() const { return m_PreVarInitialisers; }
     const std::vector<Models::VarInit> &getPostVarInitialisers() const { return m_PostVarInitialisers; }
 
+    const std::vector<Models::WUVarReference> &getVarReferences() const{ return m_VarReferences;  }
+    const std::vector<Models::VarReference> &getPreVarReferences() const{ return m_PreVarReferences;  }
+    const std::vector<Models::VarReference> &getPostVarReferences() const{ return m_PostVarReferences;  }
+
     //! Get variable location for synaptic state variable
     VarLocation getVarLocation(const std::string &varName) const;
 
@@ -66,35 +70,30 @@ public:
     //! Get variable location for postsynaptic state variable
     VarLocation getPostVarLocation(size_t index) const { return m_PostVarLocation.at(index); }
 
-    //! Is var init code required for any variables in this custom update group's custom update model?
+    //! Is var init code required for any synaptic variables in this custom connectivity update group?
     bool isVarInitRequired() const;
 
+    //! Is var init code required for any presynaptic variables in this custom connectivity update group?
+    bool isPreVarInitRequired() const;
+
+    //! Is var init code required for any postsynaptic variables in this custom connectivity update group?
+    bool isPostVarInitRequired() const;
+
 protected:
-    CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName,
-                             const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel, 
+    CustomConnectivityUpdate(const std::string &name, const std::string &updateGroupName, const SynapseGroupInternal *synapseGroup,
+                             const CustomConnectivityUpdateModels::Base *customConnectivityUpdateModel,
                              const std::vector<double> &params, const std::vector<Models::VarInit> &varInitialisers,
                              const std::vector<Models::VarInit> &preVarInitialisers, const std::vector<Models::VarInit> &postVarInitialisers,
                              const std::vector<Models::WUVarReference> &varReferences, const std::vector<Models::VarReference> &preVarReferences,
                              const std::vector<Models::VarReference> &postVarReferences, VarLocation defaultVarLocation,
-                             VarLocation defaultExtraGlobalParamLocation)
-        : m_Name(name), m_UpdateGroupName(updateGroupName), m_CustomConnectivityUpdateModel(customConnectivityUpdateModel), 
-        m_Params(params), m_VarInitialisers(varInitialisers), m_PreVarInitialisers(preVarInitialisers), m_PostVarInitialisers(postVarInitialisers),
-        m_VarLocation(varInitialisers.size(), defaultVarLocation), m_PreVarLocation(preVarInitialisers.size()), m_PostVarLocation(postVarInitialisers.size()),
-        m_VarReferences(varReferences), m_PreVarReferences(preVarReferences), m_PostVarReferences(postVarReferences),
-        m_SynapseGroup(m_VarReferences.empty() ? nullptr : static_cast<const SynapseGroupInternal *>(m_VarReferences.front().getSynapseGroup())),
-        m_ExtraGlobalParamLocation(customConnectivityUpdateModel->getExtraGlobalParams().size(), defaultExtraGlobalParamLocation),
-        m_Batched(false)
-    {
-        // Validate names
-        Utils::validatePopName(name, "Custom update");
-        Utils::validatePopName(updateGroupName, "Custom update group name");
-        getCustomConnectivityUpdateModel()->validate();
-    }
+                             VarLocation defaultExtraGlobalParamLocation);
 
     //------------------------------------------------------------------------
     // Protected methods
     //------------------------------------------------------------------------
     void initDerivedParams(double dt);
+
+    void finalize(unsigned int batchSize);
 
     //------------------------------------------------------------------------
     // Protected const methods
@@ -106,16 +105,15 @@ protected:
 
     bool isZeroCopyEnabled() const;
 
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool isBatched() const { return m_Batched; }
+    const SynapseGroupInternal *getSynapseGroup() const { return m_SynapseGroup; }
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    void updateHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
-    void updateInitHash(boost::uuids::detail::sha1 &hash) const;
+    boost::uuids::detail::sha1::digest_type getInitHashDigest() const;
 
     boost::uuids::detail::sha1::digest_type getVarLocationHashDigest() const;
 
@@ -125,6 +123,7 @@ private:
     //------------------------------------------------------------------------
     const std::string m_Name;
     const std::string m_UpdateGroupName;
+    const SynapseGroupInternal *m_SynapseGroup;
 
     const CustomConnectivityUpdateModels::Base *m_CustomConnectivityUpdateModel;
     const std::vector<double> m_Params;
@@ -144,9 +143,4 @@ private:
     const std::vector<Models::WUVarReference> m_VarReferences;
     const std::vector<Models::VarReference> m_PreVarReferences;
     const std::vector<Models::VarReference> m_PostVarReferences;
-
-    const SynapseGroupInternal *m_SynapseGroup;
-
-    //! Is this custom update batched i.e. run in parallel across model batches
-    bool m_Batched;
 };

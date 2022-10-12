@@ -26,7 +26,7 @@ VarLocation CustomUpdateBase::getVarLocation(const std::string &varName) const
 bool CustomUpdateBase::isVarInitRequired() const
 {
     return std::any_of(m_VarInitialisers.cbegin(), m_VarInitialisers.cend(),
-                        [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
+                       [](const Models::VarInit &init){ return !init.getSnippet()->getCode().empty(); });
 }
 //----------------------------------------------------------------------------
 void CustomUpdateBase::initDerivedParams(double dt)
@@ -49,12 +49,8 @@ void CustomUpdateBase::initDerivedParams(double dt)
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isInitRNGRequired() const
 {
-    // If initialising the neuron variables require an RNG, return true
-    if(Utils::isRNGRequired(getVarInitialisers())) {
-        return true;
-    }
-
-    return false;
+    // Return whether initialising variables require an RNG
+    return Utils::isRNGRequired(getVarInitialisers());
 }
 //----------------------------------------------------------------------------
 bool CustomUpdateBase::isZeroCopyEnabled() const
@@ -105,7 +101,7 @@ CustomUpdate::CustomUpdate(const std::string &name, const std::string &updateGro
     }
 
     // Check variable reference types
-    checkVarReferences(m_VarReferences);
+    Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Check only one type of reduction is specified
     if (isBatchReduction() && isNeuronReduction()) {
@@ -186,7 +182,7 @@ CustomUpdateWU::CustomUpdateWU(const std::string &name, const std::string &updat
     }
 
     // Check variable reference types
-    checkVarReferences(m_VarReferences);
+    Models::checkVarReferences(m_VarReferences, getCustomUpdateModel()->getVarRefs());
 
     // Give error if references point to different synapse groups
     // **NOTE** this could be relaxed for dense

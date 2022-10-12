@@ -274,4 +274,29 @@ GENN_EXPORT void updateHash(const Base::Var &v, boost::uuids::detail::sha1 &hash
 GENN_EXPORT void updateHash(const Base::VarRef &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const VarReference &v, boost::uuids::detail::sha1 &hash);
 GENN_EXPORT void updateHash(const WUVarReference &v, boost::uuids::detail::sha1 &hash);
+
+
+//! Helper function to check if variable reference types match those specified in model
+template<typename V>
+void checkVarReferences(const std::vector<V> &varRefs, const Base::VarRefVec &modelVarRefs)
+{
+    // Loop through all variable references
+    for(size_t i = 0; i < varRefs.size(); i++) {
+        const auto varRef = varRefs.at(i);
+        const auto modelVarRef = modelVarRefs.at(i);
+
+        // Check types of variable references against those specified in model
+        // **THINK** due to GeNN's current string-based type system this is rather conservative
+        if(varRef.getVar().type != modelVarRef.type) {
+            throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
+        }
+
+        // Check that no reduction targets reference duplicated variables
+        if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
+            && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
+        {
+            throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
+        }
+    }
+}
 } // Models

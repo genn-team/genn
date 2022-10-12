@@ -122,31 +122,6 @@ protected:
 
     //! Helper function to check if variable reference types match those specified in model
     template<typename V>
-    void checkVarReferences(const std::vector<V> &varRefs)
-    {
-        // Loop through all variable references
-        const auto modelVarRefs = getCustomUpdateModel()->getVarRefs();
-        for(size_t i = 0; i < varRefs.size(); i++) {
-            const auto varRef = varRefs.at(i);
-            const auto modelVarRef = modelVarRefs.at(i);
-
-            // Check types of variable references against those specified in model
-            // **THINK** due to GeNN's current string-based type system this is rather conservative
-            if(varRef.getVar().type != modelVarRef.type) {
-                throw std::runtime_error("Incompatible type for variable reference '" + modelVarRef.name + "'");
-            }
-
-            // Check that no reduction targets reference duplicated variables
-            if((varRef.getVar().access & VarAccessDuplication::DUPLICATE) 
-                && (modelVarRef.access & VarAccessModeAttribute::REDUCE))
-            {
-                throw std::runtime_error("Reduction target variable reference must be to SHARED or SHARED_NEURON variables.");
-            }
-        }
-    }
-
-    //! Helper function to check if variable reference types match those specified in model
-    template<typename V>
     void checkVarReferenceBatching(const std::vector<V>& varRefs, unsigned int batchSize)
     {
         // If target of any variable references is duplicated, custom update should be batched
@@ -225,7 +200,7 @@ protected:
     bool isBatchReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED); }
     bool isNeuronReduction() const { return isReduction(getVarReferences(), VarAccessDuplication::SHARED_NEURON); }
 
-     //! Updates hash with custom update
+    //! Updates hash with custom update
     /*! NOTE: this can only be called after model is finalized */
     boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
