@@ -26,8 +26,8 @@ public:
     using CustomConnectivityUpdate::isInitRNGRequired;
     using CustomConnectivityUpdate::isZeroCopyEnabled;
     using CustomConnectivityUpdate::getVarLocationHashDigest;
-
-    //using CustomUpdate::finalize;
+    using CustomConnectivityUpdate::getSynapseGroup;
+    using CustomConnectivityUpdate::finalize;
     using CustomConnectivityUpdate::getHashDigest;
     using CustomConnectivityUpdate::getInitHashDigest;
 };

@@ -476,7 +476,7 @@ protected:
         this->template updateVarInitParamHash<CustomConnectivityUpdateInitGroupMergedBase<I, V>>(
             I, &CustomConnectivityUpdateInitGroupMergedBase<I, V>::isVarInitParamHeterogeneous, hash);
 
-        this->template updateVarInitDerivedParamHash<CustomUpdateInitGroupMergedBase<I, V>>(
+        this->template updateVarInitDerivedParamHash<CustomConnectivityUpdateInitGroupMergedBase<I, V>>(
             I, &CustomConnectivityUpdateInitGroupMergedBase<I, V>::isVarInitDerivedParamHeterogeneous, hash);
     }
 
@@ -515,7 +515,7 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomConn
     //----------------------------------------------------------------------------
     // Public API
     //----------------------------------------------------------------------------
-    /*boost::uuids::detail::sha1::digest_type getHashDigest() const;
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
 
     void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
                         CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
@@ -525,7 +525,7 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomConn
                            runnerVarDecl, runnerMergedStructAlloc, name);
     }
 
-    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;*/
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
 
     //----------------------------------------------------------------------------
     // Static constants
@@ -533,14 +533,63 @@ class GENN_EXPORT CustomConnectivityUpdatePreInitGroupMerged : public CustomConn
     static const std::string name;
 };
 
-
-class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdatePostInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomConnectivityUpdatePostInitGroupMerged : public CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPostVarInitialisers,
+                                                                                                                   &CustomConnectivityUpdateModels::Base::getPostVars>
 {
+    CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 
-class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged
+//----------------------------------------------------------------------------
+// CustomConnectivityUpdateSparseInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT CustomConnectivityUpdateSparseInitGroupMerged : public CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getVarInitialisers,
+                                                                                                                     &CustomConnectivityUpdateModels::Base::getVars>
 {
+    CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                  const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups);
 
+    //----------------------------------------------------------------------------
+    // Public API
+    //----------------------------------------------------------------------------
+    boost::uuids::detail::sha1::digest_type getHashDigest() const;
+
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
 };
 }   // namespace CodeGenerator

@@ -959,5 +959,109 @@ CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroup
 :   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPreVarInitialisers, &CustomConnectivityUpdateModels::Base::getPreVars>(
         index, precision, backend, groups)
 {
+    addField("unsigned int", "size",
+             [](const CustomConnectivityUpdateInternal &c, size_t) 
+             { 
+                 return std::to_string(c.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); 
+             });
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePreInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
 
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+    // Update hash with size of custom update
+    updateHash([](const CustomConnectivityUpdateInternal &cg) 
+               { 
+                   return cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons(); 
+               }, hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityUpdatePreInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // Initialise presynaptic custom connectivity update variables
+    genInitNeuronVarCode(os, backend, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getPreVars(), getArchetype().getPreVarInitialisers(),
+                         "", "size", getIndex(), modelMerged.getModel().getPrecision(), 1,
+                         [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+}
+
+// ----------------------------------------------------------------------------
+// CustomConnectivityUpdatePostInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomConnectivityUpdatePostInitGroupMerged::name = "CustomConnectivityUpdatePostInit";
+//----------------------------------------------------------------------------
+CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                                         const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
+:   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPostVarInitialisers, &CustomConnectivityUpdateModels::Base::getPostVars>(
+        index, precision, backend, groups)
+{
+    addField("unsigned int", "size",
+             [](const CustomConnectivityUpdateInternal &c, size_t)
+             {
+                 return std::to_string(c.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons());
+             });
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomConnectivityUpdatePostInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+    // Update hash with size of custom update
+    updateHash([](const CustomConnectivityUpdateInternal &cg)
+               {
+                   return cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons();
+               }, hash);
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityUpdatePostInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // Initialise presynaptic custom connectivity update variables
+    genInitNeuronVarCode(os, backend, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getPostVars(), getArchetype().getPostVarInitialisers(),
+                         "", "size", getIndex(), modelMerged.getModel().getPrecision(), 1,
+                         [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+}
+
+// ----------------------------------------------------------------------------
+// CustomConnectivityUpdateSparseInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string CustomConnectivityUpdateSparseInitGroupMerged::name = "CustomConnectivityUpdateSparseInit";
+//----------------------------------------------------------------------------
+CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                                         const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
+:   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getVarInitialisers, &Models::Base::getVars>(
+        index, precision, backend, groups)
+{
+}
+//----------------------------------------------------------------------------
+boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupMerged::getHashDigest() const
+{
+    boost::uuids::detail::sha1 hash;
+
+    // Update hash with generic custom update init data
+    updateBaseHash(hash);
+
+
+
+    return hash.get_digest();
+}
+//----------------------------------------------------------------------------
+void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
+{
+    // Initialise presynaptic custom connectivity update variables
+    genInitNeuronVarCode(os, backend, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getVars(), getArchetype().getVarInitialisers(),
+                         "", "size", getIndex(), modelMerged.getModel().getPrecision(), 1,
+                         [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
+                         [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
 }
