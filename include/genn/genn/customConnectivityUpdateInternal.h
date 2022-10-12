@@ -25,7 +25,6 @@ public:
     using CustomConnectivityUpdate::getDerivedParams;
     using CustomConnectivityUpdate::isInitRNGRequired;
     using CustomConnectivityUpdate::isZeroCopyEnabled;
-    using CustomConnectivityUpdate::isBatched;
     using CustomConnectivityUpdate::getVarLocationHashDigest;
 
     //using CustomUpdate::finalize;

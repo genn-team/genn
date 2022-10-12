@@ -16,7 +16,7 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateModels::Base::ge
     Utils::updateHash(getPreVars(), hash);
     Utils::updateHash(getPostVars(), hash);
 
-    Utils::updateHash(getWUVarRefs(), hash);
+    Utils::updateHash(getVarRefs(), hash);
     Utils::updateHash(getPreVarRefs(), hash);
     Utils::updateHash(getPostVarRefs(), hash);
     
