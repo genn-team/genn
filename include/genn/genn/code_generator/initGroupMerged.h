@@ -200,6 +200,51 @@ private:
     void genInitConnectivity(CodeStream &os, Substitutions &popSubs, const std::string &ftype, bool rowNotColumns) const;
 };
 
+
+// ----------------------------------------------------------------------------
+// SynapseConnectivityHostInitGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseConnectivityHostInitGroupMerged : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name, true);
+    }
+
+    void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const;
+
+    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+
+private:
+    //------------------------------------------------------------------------
+    // Private methods
+    //------------------------------------------------------------------------
+     //! Is the connectivity initialization parameter referenced?
+    bool isSparseConnectivityInitParamReferenced(size_t paramIndex) const;
+
+    //! Is the connectivity initialization derived parameter referenced?
+    bool isSparseConnectivityInitDerivedParamReferenced(size_t paramIndex) const;
+};
+
 //----------------------------------------------------------------------------
 // CodeGenerator::CustomUpdateInitGroupMergedBase
 //----------------------------------------------------------------------------

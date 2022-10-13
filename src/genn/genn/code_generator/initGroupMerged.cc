@@ -736,6 +736,154 @@ void SynapseConnectivityInitGroupMerged::genInitConnectivity(CodeStream &os, Sub
     }
 }
 
+
+// ----------------------------------------------------------------------------
+// CodeGenerator::SynapseConnectivityHostInitGroupMerged
+//----------------------------------------------------------------------------
+const std::string SynapseConnectivityHostInitGroupMerged::name = "SynapseConnectivityHostInit";
+//------------------------------------------------------------------------
+SynapseConnectivityHostInitGroupMerged::SynapseConnectivityHostInitGroupMerged(size_t index, const std::string &precision, const std::string&, const BackendBase &backend,
+                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+{
+    // **TODO** these could be generic
+    addField("unsigned int", "numSrcNeurons",
+             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getSrcNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "numTrgNeurons",
+             [](const SynapseGroupInternal &sg, size_t) { return std::to_string(sg.getTrgNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "rowStride",
+             [&backend](const SynapseGroupInternal &sg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(sg)); });
+
+    // Add heterogeneous connectivity initialiser model parameters
+    addHeterogeneousParams<SynapseConnectivityHostInitGroupMerged>(
+        getArchetype().getConnectivityInitialiser().getSnippet()->getParamNames(), "",
+        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getParams(); },
+        &SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous);
+
+    // Add heterogeneous connectivity initialiser derived parameters
+    addHeterogeneousDerivedParams<SynapseConnectivityHostInitGroupMerged>(
+        getArchetype().getConnectivityInitialiser().getSnippet()->getDerivedParams(), "",
+        [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); },
+        &SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous);
+
+    // Add EGP pointers to struct for both host and device EGPs if they are seperate
+    const auto egps = getArchetype().getConnectivityInitialiser().getSnippet()->getExtraGlobalParams();
+    for(const auto &e : egps) {
+        addField(e.type + "*", e.name,
+                 [e](const SynapseGroupInternal &g, size_t) { return "&" + e.name + g.getName(); },
+                 FieldType::Host);
+
+        if(!backend.getDeviceVarPrefix().empty()) {
+            addField(e.type + "*", backend.getDeviceVarPrefix() + e.name,
+                     [e, &backend](const SynapseGroupInternal &g, size_t)
+                     {
+                         return "&" + backend.getDeviceVarPrefix() + e.name + g.getName();
+                     });
+        }
+        if(!backend.getHostVarPrefix().empty()) {
+            addField(e.type + "*", backend.getHostVarPrefix() + e.name,
+                     [e, &backend](const SynapseGroupInternal &g, size_t)
+                     {
+                         return "&" + backend.getHostVarPrefix() + e.name + g.getName();
+                     });
+        }
+    }
+}
+//-------------------------------------------------------------------------
+void SynapseConnectivityHostInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const
+{
+    CodeStream::Scope b(os);
+    os << "// merged synapse connectivity host init group " << getIndex() << std::endl;
+    os << "for(unsigned int g = 0; g < " << getGroups().size() << "; g++)";
+    {
+        CodeStream::Scope b(os);
+
+        // Get reference to group
+        os << "const auto *group = &mergedSynapseConnectivityHostInitGroup" << getIndex() << "[g]; " << std::endl;
+
+        const auto &connectInit = getArchetype().getConnectivityInitialiser();
+
+        // If matrix type is procedural then initialized connectivity init snippet will potentially be used with multiple threads per spike. 
+        // Otherwise it will only ever be used for initialization which uses one thread per row
+        const size_t numThreads = (getArchetype().getMatrixType() & SynapseMatrixConnectivity::PROCEDURAL) ? getArchetype().getNumThreadsPerSpike() : 1;
+
+        // Create substitutions
+        Substitutions subs;
+        subs.addVarSubstitution("rng", "hostRNG");
+        subs.addVarSubstitution("num_pre", "group->numSrcNeurons");
+        subs.addVarSubstitution("num_post", "group->numTrgNeurons");
+        subs.addVarSubstitution("num_threads", std::to_string(numThreads));
+        subs.addVarNameSubstitution(connectInit.getSnippet()->getExtraGlobalParams(), "", "*group->");
+        subs.addParamValueSubstitution(connectInit.getSnippet()->getParamNames(), connectInit.getParams(),
+                                       [this](size_t p) { return isConnectivityInitParamHeterogeneous(p); },
+                                       "", "group->");
+        subs.addVarValueSubstitution(connectInit.getSnippet()->getDerivedParams(), connectInit.getDerivedParams(),
+                                     [this](size_t p) { return isConnectivityInitDerivedParamHeterogeneous(p); },
+                                     "", "group->");
+
+        // Loop through EGPs
+        const auto egps = connectInit.getSnippet()->getExtraGlobalParams();
+        for(size_t i = 0; i < egps.size(); i++) {
+            const auto loc = getArchetype().getSparseConnectivityExtraGlobalParamLocation(i);
+            // If EGP is a pointer and located on the host
+            if(Utils::isTypePointer(egps[i].type) && (loc & VarLocation::HOST)) {
+                // Generate code to allocate this EGP with count specified by $(0)
+                std::stringstream allocStream;
+                CodeGenerator::CodeStream alloc(allocStream);
+                backend.genExtraGlobalParamAllocation(alloc, egps[i].type + "*", egps[i].name,
+                                                      loc, "$(0)", "group->");
+
+                // Add substitution
+                subs.addFuncSubstitution("allocate" + egps[i].name, 1, allocStream.str());
+
+                // Generate code to push this EGP with count specified by $(0)
+                std::stringstream pushStream;
+                CodeStream push(pushStream);
+                backend.genExtraGlobalParamPush(push, egps[i].type + "*", egps[i].name,
+                                                loc, "$(0)", "group->");
+
+
+                // Add substitution
+                subs.addFuncSubstitution("push" + egps[i].name, 1, pushStream.str());
+            }
+        }
+        std::string code = connectInit.getSnippet()->getHostInitCode();
+        subs.applyCheckUnreplaced(code, "hostInitSparseConnectivity : merged" + std::to_string(getIndex()));
+        code = ensureFtype(code, modelMerged.getModel().getPrecision());
+
+        // Write out code
+        os << code << std::endl;
+    }
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitParamHeterogeneous(size_t paramIndex) const
+{
+    return (isSparseConnectivityInitParamReferenced(paramIndex) &&
+            isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg){ return sg.getConnectivityInitialiser().getParams(); }));
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityHostInitGroupMerged::isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const
+{
+    return (isSparseConnectivityInitDerivedParamReferenced(paramIndex) &&
+            isParamValueHeterogeneous(paramIndex, [](const SynapseGroupInternal &sg) { return sg.getConnectivityInitialiser().getDerivedParams(); }));
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitParamReferenced(size_t paramIndex) const
+{
+    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const std::string paramName = connectInitSnippet->getParamNames().at(paramIndex);
+    return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
+}
+//----------------------------------------------------------------------------
+bool SynapseConnectivityHostInitGroupMerged::isSparseConnectivityInitDerivedParamReferenced(size_t paramIndex) const
+{
+    // If parameter isn't referenced in code, there's no point implementing it hetereogeneously!
+    const auto *connectInitSnippet = getArchetype().getConnectivityInitialiser().getSnippet();
+    const std::string paramName = connectInitSnippet->getDerivedParams().at(paramIndex).name;
+    return isParamReferenced({connectInitSnippet->getHostInitCode()}, paramName);
+}
+
 // ----------------------------------------------------------------------------
 // CustomUpdateInitGroupMerged
 //----------------------------------------------------------------------------
