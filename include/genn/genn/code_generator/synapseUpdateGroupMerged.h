@@ -111,4 +111,30 @@ public:
     //----------------------------------------------------------------------------
     static const std::string name;
 };
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
+//----------------------------------------------------------------------------
+class GENN_EXPORT SynapseDendriticDelayUpdateGroupMerged : public GroupMerged<SynapseGroupInternal>
+{
+public:
+    SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &timePrecision, const BackendBase &backend,
+                                           const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &group);
+
+    //------------------------------------------------------------------------
+    // Public API
+    //------------------------------------------------------------------------
+    void generateRunner(const BackendBase &backend, CodeStream &definitionsInternal,
+                        CodeStream &definitionsInternalFunc, CodeStream &definitionsInternalVar,
+                        CodeStream &runnerVarDecl, CodeStream &runnerMergedStructAlloc) const
+    {
+        generateRunnerBase(backend, definitionsInternal, definitionsInternalFunc, definitionsInternalVar,
+                           runnerVarDecl, runnerMergedStructAlloc, name);
+    }
+
+    //----------------------------------------------------------------------------
+    // Static constants
+    //----------------------------------------------------------------------------
+    static const std::string name;
+};
 }

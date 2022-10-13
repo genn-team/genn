@@ -314,3 +314,20 @@ void SynapseDynamicsGroupMerged::generateSynapseUpdate(const BackendBase &backen
     applySynapseSubstitutions(os, wum->getSynapseDynamicsCode(), "synapseDynamics",
                               *this, popSubs, modelMerged, backend.supportsNamespace());
 }
+
+
+//----------------------------------------------------------------------------
+// CodeGenerator::SynapseDendriticDelayUpdateGroupMerged
+//----------------------------------------------------------------------------
+const std::string SynapseDendriticDelayUpdateGroupMerged::name = "SynapseDendriticDelayUpdate";
+//----------------------------------------------------------------------------
+SynapseDendriticDelayUpdateGroupMerged::SynapseDendriticDelayUpdateGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
+                                                                               const std::vector<std::reference_wrapper<const SynapseGroupInternal>> &groups)
+:   GroupMerged<SynapseGroupInternal>(index, precision, groups)
+{
+    addField("unsigned int*", "denDelayPtr", 
+             [&backend](const SynapseGroupInternal &sg, size_t) 
+             {
+                 return backend.getScalarAddressPrefix() + "denDelayPtr" + sg.getFusedPSVarSuffix(); 
+             });
+}
