@@ -223,12 +223,6 @@ public:
 
     void generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged) const;
 
-    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
-
-    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
-    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
-
     //----------------------------------------------------------------------------
     // Static constants
     //----------------------------------------------------------------------------
@@ -238,6 +232,12 @@ private:
     //------------------------------------------------------------------------
     // Private methods
     //------------------------------------------------------------------------
+    //! Should the connectivity initialization parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityInitParamHeterogeneous(size_t paramIndex) const;
+
+    //! Should the connectivity initialization derived parameter be implemented heterogeneously for EGP init?
+    bool isConnectivityInitDerivedParamHeterogeneous(size_t paramIndex) const;
+
      //! Is the connectivity initialization parameter referenced?
     bool isSparseConnectivityInitParamReferenced(size_t paramIndex) const;
 
