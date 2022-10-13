@@ -1046,6 +1046,26 @@ CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseIni
 :   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdate, &CustomConnectivityUpdate::getVarInitialisers>(
         index, precision, backend, groups, groups.front().get().getCustomConnectivityUpdateModel()->getVars())
 {
+    addField("unsigned int", "rowStride",
+             [&backend](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
+
+    addField("unsigned int", "numSrcNeurons",
+             [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getSrcNeuronGroup()->getNumNeurons()); });
+    addField("unsigned int", "numTrgNeurons",
+             [](const CustomConnectivityUpdateInternal &cg, size_t) { return std::to_string(cg.getSynapseGroup()->getTrgNeuronGroup()->getNumNeurons()); });
+
+    addField("unsigned int*", "rowLength",
+             [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
+             {
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 return backend.getDeviceVarPrefix() + "rowLength" + sg->getName();
+             });
+    addField(getArchetype().getSynapseGroup()->getSparseIndType() + "*", "ind",
+             [&backend](const CustomConnectivityUpdateInternal &cg, size_t)
+             {
+                 const SynapseGroupInternal *sg = cg.getSynapseGroup();
+                 return backend.getDeviceVarPrefix() + "ind" + sg->getName();
+             });
 }
 //----------------------------------------------------------------------------
 boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupMerged::getHashDigest() const
@@ -1055,16 +1075,35 @@ boost::uuids::detail::sha1::digest_type CustomConnectivityUpdateSparseInitGroupM
     // Update hash with generic custom update init data
     updateBaseHash(hash);
 
+    // Update hash with sizes of pre and postsynaptic neuron groups; and max row length
+    updateHash([](const CustomConnectivityUpdateInternal &cg)
+               {
+                   return static_cast<const SynapseGroupInternal *>(cg.getSynapseGroup())->getSrcNeuronGroup()->getNumNeurons();
+               }, hash);
 
+    updateHash([](const CustomConnectivityUpdateInternal &cg)
+               {
+                   return static_cast<const SynapseGroupInternal *>(cg.getSynapseGroup())->getTrgNeuronGroup()->getNumNeurons();
+               }, hash);
+
+    updateHash([](const CustomConnectivityUpdateInternal &cg)
+               {
+                   return cg.getSynapseGroup()->getMaxConnections();
+               }, hash);
 
     return hash.get_digest();
 }
 //----------------------------------------------------------------------------
 void CustomConnectivityUpdateSparseInitGroupMerged::generateInit(const BackendBase &backend, CodeStream &os, const ModelSpecMerged &modelMerged, Substitutions &popSubs) const
 {
-    // Initialise presynaptic custom connectivity update variables
-    genInitNeuronVarCode(os, backend, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getVars(), getArchetype().getVarInitialisers(),
-                         "", "size", getIndex(), modelMerged.getModel().getPrecision(), 1,
-                         [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
-                         [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); });
+    // Initialise custom connectivity update variables
+    genInitWUVarCode(os, popSubs, getArchetype().getCustomConnectivityUpdateModel()->getVars(),
+                     getArchetype().getVarInitialisers(), "group->numSrcNeurons * group->rowStride", getIndex(),
+                     modelMerged.getModel().getPrecision(), false,
+                     [this](size_t v, size_t p) { return isVarInitParamHeterogeneous(v, p); },
+                     [this](size_t v, size_t p) { return isVarInitDerivedParamHeterogeneous(v, p); },
+                     [&backend](CodeStream &os, const Substitutions &kernelSubs, BackendBase::Handler handler)
+                     {
+                         return backend.genSparseSynapseVariableRowInit(os, kernelSubs, handler);
+                     });
 }
