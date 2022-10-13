@@ -743,7 +743,8 @@ const std::string CustomUpdateInitGroupMerged::name = "CustomUpdateInit";
 //----------------------------------------------------------------------------
 CustomUpdateInitGroupMerged::CustomUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                          const std::vector<std::reference_wrapper<const CustomUpdateInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateInternal, CustomUpdateBase, &CustomUpdateBase::getVarInitialisers>(
+        index, precision, backend, groups, groups.front().get().getCustomUpdateModel()->getVars())
 {
     addField("unsigned int", "size",
              [](const CustomUpdateInternal &c, size_t) { return std::to_string(c.getSize()); });
@@ -778,7 +779,8 @@ const std::string CustomWUUpdateInitGroupMerged::name = "CustomWUUpdateInit";
 //----------------------------------------------------------------------------
 CustomWUUpdateInitGroupMerged::CustomWUUpdateInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                              const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateBase, &CustomUpdateBase::getVarInitialisers>(
+        index, precision, backend, groups, groups.front().get().getCustomUpdateModel()->getVars())
 {
     if(getArchetype().getSynapseGroup()->getMatrixType() & SynapseMatrixWeight::KERNEL) {
         // Loop through kernel size dimensions
@@ -886,7 +888,8 @@ const std::string CustomWUUpdateSparseInitGroupMerged::name = "CustomWUUpdateSpa
 //----------------------------------------------------------------------------
 CustomWUUpdateSparseInitGroupMerged::CustomWUUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                          const std::vector<std::reference_wrapper<const CustomUpdateWUInternal>> &groups)
-:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal>(index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomUpdateWUInternal, CustomUpdateBase, &CustomUpdateBase::getVarInitialisers>(
+        index, precision, backend, groups, groups.front().get().getCustomUpdateModel()->getVars())
 {
     addField("unsigned int", "rowStride",
              [&backend](const CustomUpdateWUInternal &cg, size_t) { return std::to_string(backend.getSynapticMatrixRowStride(*cg.getSynapseGroup())); });
@@ -956,8 +959,8 @@ const std::string CustomConnectivityUpdatePreInitGroupMerged::name = "CustomConn
 //----------------------------------------------------------------------------
 CustomConnectivityUpdatePreInitGroupMerged::CustomConnectivityUpdatePreInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                        const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPreVarInitialisers, &CustomConnectivityUpdateModels::Base::getPreVars>(
-        index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdate, &CustomConnectivityUpdate::getPreVarInitialisers>(
+        index, precision, backend, groups, groups.front().get().getCustomConnectivityUpdateModel()->getPreVars())
 {
     addField("unsigned int", "size",
              [](const CustomConnectivityUpdateInternal &c, size_t) 
@@ -998,8 +1001,8 @@ const std::string CustomConnectivityUpdatePostInitGroupMerged::name = "CustomCon
 //----------------------------------------------------------------------------
 CustomConnectivityUpdatePostInitGroupMerged::CustomConnectivityUpdatePostInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getPostVarInitialisers, &CustomConnectivityUpdateModels::Base::getPostVars>(
-        index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdate, &CustomConnectivityUpdate::getPostVarInitialisers>(
+        index, precision, backend, groups, groups.front().get().getCustomConnectivityUpdateModel()->getPostVars())
 {
     addField("unsigned int", "size",
              [](const CustomConnectivityUpdateInternal &c, size_t)
@@ -1040,8 +1043,8 @@ const std::string CustomConnectivityUpdateSparseInitGroupMerged::name = "CustomC
 //----------------------------------------------------------------------------
 CustomConnectivityUpdateSparseInitGroupMerged::CustomConnectivityUpdateSparseInitGroupMerged(size_t index, const std::string &precision, const std::string &, const BackendBase &backend,
                                                                                          const std::vector<std::reference_wrapper<const CustomConnectivityUpdateInternal>> &groups)
-:   CustomConnectivityUpdateInitGroupMergedBase<&CustomConnectivityUpdate::getVarInitialisers, &Models::Base::getVars>(
-        index, precision, backend, groups)
+:   CustomUpdateInitGroupMergedBase<CustomConnectivityUpdateInternal, CustomConnectivityUpdate, &CustomConnectivityUpdate::getVarInitialisers>(
+        index, precision, backend, groups, groups.front().get().getCustomConnectivityUpdateModel()->getVars())
 {
 }
 //----------------------------------------------------------------------------
